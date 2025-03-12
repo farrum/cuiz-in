@@ -5,7 +5,7 @@ import PointsDisplay from '@/components/PointsDisplay';
 import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { UserCog, LogOut } from 'lucide-react';
+import { UserCog, LogOut, Wallet, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userName, setUserName] = useState('');
+  const [userUpi, setUserUpi] = useState('');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   
   useEffect(() => {
@@ -26,6 +27,10 @@ const Profile: React.FC = () => {
     }
     
     setUserName(name);
+    
+    // Get UPI ID
+    const upiId = localStorage.getItem('quiz_app_user_upi');
+    setUserUpi(upiId || '');
     
     // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
@@ -41,6 +46,16 @@ const Profile: React.FC = () => {
       title: "Logged Out",
       description: "Your progress is saved. See you again soon!",
     });
+  };
+  
+  const copyUpiId = () => {
+    if (userUpi) {
+      navigator.clipboard.writeText(userUpi);
+      toast({
+        title: "UPI ID Copied",
+        description: "Your UPI ID has been copied to clipboard.",
+      });
+    }
   };
   
   return (
@@ -67,6 +82,20 @@ const Profile: React.FC = () => {
                 Active Player
               </div>
             </div>
+            
+            {userUpi && (
+              <div className="mt-4 flex items-center bg-secondary/50 px-3 py-2 rounded-md inline-flex">
+                <Wallet className="h-4 w-4 mr-2 text-primary" />
+                <span className="text-sm font-medium mr-2">UPI ID: {userUpi}</span>
+                <button 
+                  onClick={copyUpiId}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  title="Copy UPI ID"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
           
           <Button 

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Key, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Key, Eye, EyeOff, Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ const UserRegistrationForm: React.FC = () => {
     fullName: '',
     email: '',
     phone: '',
+    upiId: '',
     password: '',
     confirmPassword: '',
   });
@@ -54,6 +55,12 @@ const UserRegistrationForm: React.FC = () => {
       newErrors.phone = 'Phone number should be 10 digits';
     }
     
+    if (!formData.upiId.trim()) {
+      newErrors.upiId = 'UPI ID is required';
+    } else if (!/^[\w\.\-]{3,}@[a-zA-Z]{3,}$/i.test(formData.upiId)) {
+      newErrors.upiId = 'UPI ID format should be username@bank';
+    }
+    
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
@@ -83,6 +90,7 @@ const UserRegistrationForm: React.FC = () => {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
       localStorage.setItem('quiz_app_user_email', formData.email);
       localStorage.setItem('quiz_app_user_phone', formData.phone);
+      localStorage.setItem('quiz_app_user_upi', formData.upiId);
       
       // Initialize points if first time
       if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
@@ -154,6 +162,20 @@ const UserRegistrationForm: React.FC = () => {
             />
           </div>
           {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
+        </div>
+        
+        <div>
+          <div className="relative">
+            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Input
+              name="upiId"
+              placeholder="UPI ID (e.g., yourname@bankname)"
+              value={formData.upiId}
+              onChange={handleChange}
+              className={`pl-10 ${errors.upiId ? 'border-destructive' : ''}`}
+            />
+          </div>
+          {errors.upiId && <p className="text-destructive text-sm mt-1">{errors.upiId}</p>}
         </div>
         
         <div>
