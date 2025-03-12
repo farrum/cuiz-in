@@ -4,7 +4,7 @@ import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, ArrowUpCircle } from 'lucide-react';
+import { IndianRupee, ArrowUpCircle } from 'lucide-react';
 
 interface WithdrawalRequest {
   id: string;
@@ -89,7 +89,7 @@ const WithdrawalSection: React.FC = () => {
     
     toast({
       title: "Withdrawal Requested",
-      description: `Your withdrawal request for $${amount.toFixed(2)} has been submitted`,
+      description: `Your withdrawal request for ₹${amount.toFixed(2)} has been submitted`,
     });
     
     // Simulate processing in a real app
@@ -115,7 +115,7 @@ const WithdrawalSection: React.FC = () => {
     <div className="quiz-card">
       <div className="flex items-center space-x-3 mb-6">
         <div className="bg-primary/10 p-3 rounded-full">
-          <DollarSign className="w-6 h-6 text-primary" />
+          <IndianRupee className="w-6 h-6 text-primary" />
         </div>
         <div>
           <h3 className="text-xl font-medium">Cash Withdrawal</h3>
@@ -126,17 +126,17 @@ const WithdrawalSection: React.FC = () => {
       <div className="bg-secondary p-4 rounded-xl mb-6">
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">Available for withdrawal</span>
-          <span className="text-2xl font-bold">${cashAvailable.toFixed(2)}</span>
+          <span className="text-2xl font-bold">₹{cashAvailable.toFixed(2)}</span>
         </div>
         <div className="text-xs text-muted-foreground mt-1">
-          100 points = $1.00
+          100 points = ₹1.00
         </div>
       </div>
       
       <form onSubmit={handleWithdrawalRequest} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="amount">
-            Withdrawal Amount ($)
+            Withdrawal Amount (₹)
           </label>
           <Input
             id="amount"
@@ -160,7 +160,7 @@ const WithdrawalSection: React.FC = () => {
           </label>
           <Input
             id="payment"
-            placeholder="PayPal email or bank account"
+            placeholder="UPI ID or bank account"
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           />
@@ -187,7 +187,7 @@ const WithdrawalSection: React.FC = () => {
                 className="flex items-center justify-between p-3 rounded-lg bg-secondary"
               >
                 <div>
-                  <div className="font-medium">${withdrawal.amount.toFixed(2)}</div>
+                  <div className="font-medium">₹{withdrawal.amount.toFixed(2)}</div>
                   <div className="text-xs text-muted-foreground">
                     {new Date(withdrawal.date).toLocaleDateString()}
                   </div>

@@ -1,3 +1,4 @@
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -121,7 +122,7 @@ export const getRandomQuestions = (count: number): QuizQuestion[] => {
 // Calculate how much money user can withdraw
 export const calculateCashAmount = (points: number): number => {
   const validPoints = Math.floor(points / 100) * 100;
-  return validPoints / 100; // $1 for every 100 points
+  return validPoints / 100; // ₹1 for every 100 points
 };
 
 // Check if answer is correct

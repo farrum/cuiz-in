@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
-import { DollarSign } from 'lucide-react';
+import { IndianRupee } from 'lucide-react';
 
 interface PointsDisplayProps {
   animateUpdate?: boolean;
@@ -53,8 +53,8 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         </div>
         
         <div className="mt-2 flex items-center text-sm text-muted-foreground">
-          <DollarSign className="w-4 h-4 mr-1" />
-          <span>${cashAmount.toFixed(2)} available</span>
+          <IndianRupee className="w-4 h-4 mr-1" />
+          <span>₹{cashAmount.toFixed(2)} available</span>
         </div>
       </div>
     </div>

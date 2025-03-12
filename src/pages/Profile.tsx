@@ -109,7 +109,7 @@ const Profile: React.FC = () => {
               <div className="bg-secondary p-3 rounded-lg">
                 <div className="text-sm text-muted-foreground">Withdrawals</div>
                 <div className="text-2xl font-bold">
-                  ${(JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]')
+                  ₹{(JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]')
                     .filter((w: any) => w.status === 'completed')
                     .reduce((acc: number, curr: any) => acc + curr.amount, 0)).toFixed(2)}
                 </div>
