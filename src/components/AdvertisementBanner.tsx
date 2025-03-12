@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 
 interface AdvertisementBannerProps {
-  position?: 'top' | 'bottom';
+  position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
   className?: string;
+  size?: 'small' | 'medium' | 'large';
 }
 
 const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({ 
   position = 'top',
   className = '',
+  size = 'medium',
 }) => {
   const [adLoaded, setAdLoaded] = useState(false);
   
@@ -20,11 +22,39 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     return () => clearTimeout(timer);
   }, []);
+
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'small':
+        return 'px-2 py-2';
+      case 'large':
+        return 'px-6 py-4';
+      default:
+        return 'px-4 py-3';
+    }
+  };
+
+  const getPositionClasses = () => {
+    switch (position) {
+      case 'top':
+        return 'mb-6';
+      case 'bottom':
+        return 'mt-6';
+      case 'left':
+        return 'mr-6';
+      case 'right':
+        return 'ml-6';
+      case 'middle':
+        return 'my-6';
+      default:
+        return 'mb-6';
+    }
+  };
   
   return (
     <div 
-      className={`w-full px-4 py-3 bg-secondary/30 border border-secondary rounded-lg 
-      flex items-center justify-center ${position === 'top' ? 'mb-6' : 'mt-6'} 
+      className={`w-full ${getSizeClasses()} bg-secondary/30 border border-secondary rounded-lg 
+      flex items-center justify-center ${getPositionClasses()} 
       transition-all duration-300 ${adLoaded ? 'opacity-100' : 'opacity-50'} ${className}`}
     >
       <div className="text-center">

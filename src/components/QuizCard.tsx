@@ -1,23 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { QuizQuestion, checkAnswer, STORAGE_KEYS } from '../utils/quizData';
+import { QuizQuestion, STORAGE_KEYS } from '../utils/quizData';
 import { cn } from '@/utils/animations';
-import { CheckCircle, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface QuizCardProps {
   question: QuizQuestion;
   onComplete: (points: number, correct: boolean) => void;
-  onNext: () => void;
 }
 
-const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, onNext }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
   const [animation, setAnimation] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Animation effect when a new question is received
   useEffect(() => {
@@ -29,20 +26,10 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, onNext }) => 
   // Reset state when question changes
   useEffect(() => {
     setSelectedOption(null);
-    setIsAnswered(false);
-    setIsCorrect(false);
   }, [question]);
 
   const handleOptionClick = (option: string) => {
-    if (isAnswered) return;
-    
     setSelectedOption(option);
-    setIsAnswered(true);
-    
-    const correct = checkAnswer(question, option);
-    setIsCorrect(correct);
-    
-    const pointsEarned = correct ? question.points : 0;
     
     // Save completed question to localStorage
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
@@ -51,33 +38,14 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, onNext }) => 
       localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
     }
     
-    // Show toast with result
-    toast({
-      title: correct ? "Correct!" : "Incorrect",
-      description: correct 
-        ? `You earned ${pointsEarned} points!` 
-        : `The correct answer was ${question.correctAnswer}`,
-      variant: correct ? "default" : "destructive",
-    });
+    const isCorrect = question.correctAnswer === option;
+    const pointsEarned = isCorrect ? question.points : 0;
     
     // Tell parent component about the result
-    onComplete(pointsEarned, correct);
-  };
-
-  const getOptionClass = (option: string) => {
-    if (!isAnswered) {
-      return cn("quiz-option", selectedOption === option && "quiz-option-selected");
-    }
+    onComplete(pointsEarned, isCorrect);
     
-    if (option === question.correctAnswer) {
-      return "quiz-option quiz-option-correct";
-    }
-    
-    if (selectedOption === option && option !== question.correctAnswer) {
-      return "quiz-option quiz-option-incorrect";
-    }
-    
-    return "quiz-option opacity-60";
+    // Navigate to answer page
+    navigate(`/answer/${question.id}/${encodeURIComponent(option)}`);
   };
 
   return (
@@ -106,39 +74,23 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, onNext }) => 
           <button
             key={option}
             onClick={() => handleOptionClick(option)}
-            disabled={isAnswered}
             className={cn(
-              getOptionClass(option),
-              "group text-left",
-              isAnswered && option === question.correctAnswer && "ring-2 ring-green-500"
+              "quiz-option group text-left",
+              selectedOption === option && "quiz-option-selected"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="relative z-10 flex items-center justify-between">
               <span className="flex-1">{option}</span>
-              {isAnswered && option === question.correctAnswer && (
-                <CheckCircle className="w-5 h-5 text-green-500 ml-2" />
-              )}
-              {isAnswered && selectedOption === option && option !== question.correctAnswer && (
-                <XCircle className="w-5 h-5 text-red-500 ml-2" />
-              )}
             </div>
             
             <div className={cn(
               "absolute inset-0 w-0 bg-accent/10 transition-all duration-300",
-              !isAnswered && "group-hover:w-full"
+              "group-hover:w-full"
             )} />
           </button>
         ))}
       </div>
-      
-      {isAnswered && (
-        <div className="mt-4 flex justify-end animate-fade-in">
-          <Button onClick={onNext} className="btn-shine">
-            Next Question
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

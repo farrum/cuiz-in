@@ -1,4 +1,3 @@
-
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -19,7 +18,8 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: 'Paris',
     points: 10,
     difficulty: 'easy',
-    category: 'Geography'
+    category: 'Geography',
+    explanation: 'Paris is the capital and most populous city of France. It is located on the Seine River, in the north of the country.'
   },
   {
     id: '2',
@@ -28,7 +28,8 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: 'Mars',
     points: 10,
     difficulty: 'easy',
-    category: 'Astronomy'
+    category: 'Astronomy',
+    explanation: 'Mars appears reddish because of iron oxide (rust) prevalent on its surface, giving it the nickname "The Red Planet".'
   },
   {
     id: '3',

@@ -73,10 +73,9 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
-  };
-  
-  const handleNextQuestion = () => {
-    loadNewQuestion();
+    
+    // Load new question is now handled by the answer page
+    // so we don't call loadNewQuestion() here anymore
   };
 
   return (
@@ -84,6 +83,9 @@ const QuizPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        {/* First Advertisement - Top */}
+        <AdvertisementBanner position="top" />
+        
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           <PointsDisplay animateUpdate className="flex-1" />
           
@@ -101,7 +103,10 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="mb-10">
+        {/* Second Advertisement - After Stats */}
+        <AdvertisementBanner position="middle" size="small" />
+        
+        <div className="mb-6 mt-6">
           <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
             <div 
               className="absolute inset-y-0 left-0 bg-primary transition-all duration-1000"
@@ -113,8 +118,8 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Top Advertisement Banner */}
-        <AdvertisementBanner position="top" />
+        {/* Third Advertisement - Before Question */}
+        <AdvertisementBanner position="middle" />
         
         {isLoading ? (
           <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
@@ -127,7 +132,6 @@ const QuizPage: React.FC = () => {
           <QuizCard
             question={currentQuestion}
             onComplete={handleQuestionComplete}
-            onNext={handleNextQuestion}
           />
         ) : (
           <div className="quiz-card text-center">
@@ -135,7 +139,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        {/* Bottom Advertisement Banner */}
+        {/* Fourth Advertisement - Bottom */}
         <AdvertisementBanner position="bottom" />
       </main>
     </div>
