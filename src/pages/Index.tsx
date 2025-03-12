@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Award, UserPlus, DollarSign, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -47,7 +47,8 @@ const Index: React.FC = () => {
     if (userName) {
       navigate('/quiz');
     } else {
-      setShowNameInput(true);
+      // Instead of showing name input, navigate to registration page
+      navigate('/register');
     }
   };
   
@@ -128,7 +129,7 @@ const Index: React.FC = () => {
                 <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
               
-              {hasStarted && (
+              {hasStarted ? (
                 <Button 
                   variant="outline" 
                   size="lg"
@@ -136,6 +137,16 @@ const Index: React.FC = () => {
                   className="text-lg"
                 >
                   View Profile
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => navigate('/register')}
+                  className="text-lg group"
+                >
+                  Register
+                  <UserPlus className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               )}
             </div>

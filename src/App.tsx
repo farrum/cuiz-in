@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import QuizPage from "./pages/QuizPage";
 import AnswerPage from "./pages/AnswerPage";
 import Profile from "./pages/Profile";
+import Registration from "./pages/Registration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/register" element={<Registration />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
