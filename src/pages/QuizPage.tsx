@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
 import PointsDisplay from '@/components/PointsDisplay';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { STORAGE_KEYS, QuizQuestion, getRandomQuestion } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
@@ -112,6 +113,9 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Top Advertisement Banner */}
+        <AdvertisementBanner position="top" />
+        
         {isLoading ? (
           <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -130,6 +134,9 @@ const QuizPage: React.FC = () => {
             <p>No questions available. Please try again later.</p>
           </div>
         )}
+        
+        {/* Bottom Advertisement Banner */}
+        <AdvertisementBanner position="bottom" />
       </main>
     </div>
   );
