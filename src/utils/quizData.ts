@@ -6,6 +6,7 @@ export interface QuizQuestion {
   correctAnswer: string;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
+  points?: number; // Added points as optional property
   explanation?: string;
 }
 
