@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Award, User, Home, UserPlus, Target } from 'lucide-react';
+import { Award, User, Home, UserPlus, Target, Shield } from 'lucide-react';
 import { cn } from "@/utils/animations";
 import { DAILY_TARGET, MONTHLY_TARGET, getPointsForToday, getPointsForMonth } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +11,7 @@ const Header: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [todayPoints, setTodayPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Handle scroll event to change header appearance
   useEffect(() => {
@@ -35,6 +36,10 @@ const Header: React.FC = () => {
 
     updatePoints();
     window.addEventListener('pointsUpdated', updatePoints);
+    
+    // Check if user is admin
+    const userData = localStorage.getItem('quiz_app_user_name');
+    setIsAdmin(userData === 'admin');
     
     return () => window.removeEventListener('pointsUpdated', updatePoints);
   }, []);
@@ -83,6 +88,7 @@ const Header: React.FC = () => {
             { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
             { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
             { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+            ...(isAdmin ? [{ path: '/admin', label: 'Admin', icon: <Shield className="w-5 h-5" /> }] : []),
           ].map((item, index) => (
             <Link
               key={item.path}

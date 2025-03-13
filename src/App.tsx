@@ -10,6 +10,7 @@ import AnswerPage from "./pages/AnswerPage";
 import Profile from "./pages/Profile";
 import Registration from "./pages/Registration";
 import ReferralPage from "./pages/ReferralPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
