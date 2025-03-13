@@ -51,65 +51,56 @@ const Header: React.FC = () => {
           : "bg-transparent"
       )}
     >
-      <div className="max-w-7xl mx-auto flex flex-col space-y-2">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center space-x-2 animate-fade-in">
             <Award className="w-8 h-8 text-primary" />
             <span className="text-xl font-semibold">QuizPoints</span>
           </Link>
           
-          <nav className="flex items-center space-x-1">
-            {[
-              { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
-              { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
-              { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
-              { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
-            ].map((item, index) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
-                  location.pathname === item.path
-                    ? "text-primary-foreground bg-primary shadow-md"
-                    : "text-foreground hover:bg-secondary",
-                  `animate-slide-up delay-[${index * 100}ms]`
-                )}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                {item.icon}
-                <span className="hidden sm:inline">{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* Progress bars for daily and monthly targets */}
-        <div className="flex gap-4 text-xs items-center">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Target className="w-4 h-4" />
-            <span>Daily:</span>
-          </div>
-          <div className="flex-1">
-            <Progress value={dailyProgress} className="h-2" />
-          </div>
-          <div className="font-medium">
-            {todayPoints}/{DAILY_TARGET}
+          {/* Smaller progress bars for daily and monthly targets */}
+          <div className="hidden md:flex flex-col gap-1 w-40">
+            <div className="flex text-xs items-center gap-1">
+              <Target className="w-3 h-3 text-muted-foreground" />
+              <div className="flex-1">
+                <Progress value={dailyProgress} className="h-1.5" />
+              </div>
+              <span className="text-xs text-muted-foreground">{todayPoints}/{DAILY_TARGET}</span>
+            </div>
+            <div className="flex text-xs items-center gap-1">
+              <Target className="w-3 h-3 text-muted-foreground" />
+              <div className="flex-1">
+                <Progress value={monthlyProgress} className="h-1.5" />
+              </div>
+              <span className="text-xs text-muted-foreground">{monthlyPoints}/{MONTHLY_TARGET}</span>
+            </div>
           </div>
         </div>
         
-        <div className="flex gap-4 text-xs items-center">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Target className="w-4 h-4" />
-            <span>Monthly:</span>
-          </div>
-          <div className="flex-1">
-            <Progress value={monthlyProgress} className="h-2" />
-          </div>
-          <div className="font-medium">
-            {monthlyPoints}/{MONTHLY_TARGET}
-          </div>
-        </div>
+        <nav className="flex items-center space-x-1">
+          {[
+            { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
+            { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
+            { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
+            { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+          ].map((item, index) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
+                location.pathname === item.path
+                  ? "text-primary-foreground bg-primary shadow-md"
+                  : "text-foreground hover:bg-secondary",
+                `animate-slide-up delay-[${index * 100}ms]`
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {item.icon}
+              <span className="hidden sm:inline">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );
