@@ -9,6 +9,7 @@ import QuizPage from "./pages/QuizPage";
 import AnswerPage from "./pages/AnswerPage";
 import Profile from "./pages/Profile";
 import Registration from "./pages/Registration";
+import ReferralPage from "./pages/ReferralPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Registration />} />
+          <Route path="/referral" element={<ReferralPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

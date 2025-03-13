@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Award, User, Home } from 'lucide-react';
+import { Award, User, Home, UserPlus, Target } from 'lucide-react';
 import { cn } from "@/utils/animations";
+import { DAILY_TARGET, MONTHLY_TARGET, getPointsForToday, getPointsForMonth } from '@/utils/quizData';
+import { Progress } from '@/components/ui/progress';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [todayPoints, setTodayPoints] = useState(0);
+  const [monthlyPoints, setMonthlyPoints] = useState(0);
   
   // Handle scroll event to change header appearance
   useEffect(() => {
@@ -22,6 +26,22 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Get current points data
+  useEffect(() => {
+    const updatePoints = () => {
+      setTodayPoints(getPointsForToday());
+      setMonthlyPoints(getPointsForMonth());
+    };
+
+    updatePoints();
+    window.addEventListener('pointsUpdated', updatePoints);
+    
+    return () => window.removeEventListener('pointsUpdated', updatePoints);
+  }, []);
+
+  const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
+  const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
+
   return (
     <header 
       className={cn(
@@ -31,35 +51,65 @@ const Header: React.FC = () => {
           : "bg-transparent"
       )}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 animate-fade-in">
-          <Award className="w-8 h-8 text-primary" />
-          <span className="text-xl font-semibold">QuizPoints</span>
-        </Link>
+      <div className="max-w-7xl mx-auto flex flex-col space-y-2">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2 animate-fade-in">
+            <Award className="w-8 h-8 text-primary" />
+            <span className="text-xl font-semibold">QuizPoints</span>
+          </Link>
+          
+          <nav className="flex items-center space-x-1">
+            {[
+              { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
+              { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
+              { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
+              { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+            ].map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
+                  location.pathname === item.path
+                    ? "text-primary-foreground bg-primary shadow-md"
+                    : "text-foreground hover:bg-secondary",
+                  `animate-slide-up delay-[${index * 100}ms]`
+                )}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {item.icon}
+                <span className="hidden sm:inline">{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* Progress bars for daily and monthly targets */}
+        <div className="flex gap-4 text-xs items-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Target className="w-4 h-4" />
+            <span>Daily:</span>
+          </div>
+          <div className="flex-1">
+            <Progress value={dailyProgress} className="h-2" />
+          </div>
+          <div className="font-medium">
+            {todayPoints}/{DAILY_TARGET}
+          </div>
+        </div>
         
-        <nav className="flex items-center space-x-1">
-          {[
-            { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
-            { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
-            { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
-          ].map((item, index) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
-                location.pathname === item.path
-                  ? "text-primary-foreground bg-primary shadow-md"
-                  : "text-foreground hover:bg-secondary",
-                `animate-slide-up delay-[${index * 100}ms]`
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              {item.icon}
-              <span className="hidden sm:inline">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
+        <div className="flex gap-4 text-xs items-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Target className="w-4 h-4" />
+            <span>Monthly:</span>
+          </div>
+          <div className="flex-1">
+            <Progress value={monthlyProgress} className="h-2" />
+          </div>
+          <div className="font-medium">
+            {monthlyPoints}/{MONTHLY_TARGET}
+          </div>
+        </div>
       </div>
     </header>
   );
