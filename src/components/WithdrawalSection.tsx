@@ -3,14 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from "@/hooks/use-toast";
-import { IndianRupee, ArrowUpCircle } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { IndianRupee, ArrowUpCircle, Award } from 'lucide-react';
 
 interface WithdrawalRequest {
   id: string;
   amount: number;
   date: string;
   status: 'pending' | 'completed' | 'rejected';
+  type?: 'regular' | 'achievement';
+}
+
+interface Achievement {
+  id: string;
+  type: string;
+  month: string;
+  reward: number;
+  date: string;
+  claimed: boolean;
 }
 
 const WithdrawalSection: React.FC = () => {
@@ -21,10 +31,22 @@ const WithdrawalSection: React.FC = () => {
     const saved = localStorage.getItem('quiz_app_withdrawals');
     return saved ? JSON.parse(saved) : [];
   });
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const { toast } = useToast();
   
   useEffect(() => {
     const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setCashAvailable(calculateCashAmount(savedPoints));
+    
+    // Load achievements
+    const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
+    setAchievements(savedAchievements);
+    
+    // Get UPI ID from localStorage for payment method
+    const upiId = localStorage.getItem('quiz_app_user_upi');
+    if (upiId) {
+      setPaymentMethod(upiId);
+    }
   }, []);
   
   const handleWithdrawalRequest = (e: React.FormEvent) => {
@@ -64,7 +86,8 @@ const WithdrawalSection: React.FC = () => {
       id: Date.now().toString(),
       amount,
       date: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      type: 'regular'
     };
     
     const updatedWithdrawals = [...withdrawals, newWithdrawal];
@@ -85,7 +108,6 @@ const WithdrawalSection: React.FC = () => {
     
     // Reset form
     setWithdrawalAmount('');
-    setPaymentMethod('');
     
     toast({
       title: "Withdrawal Requested",
@@ -93,6 +115,38 @@ const WithdrawalSection: React.FC = () => {
     });
     
     // Simulate processing in a real app
+    setTimeout(() => {
+      simulateWithdrawalProcessing(newWithdrawal.id);
+    }, 5000);
+  };
+  
+  const handleClaimAchievement = (achievement: Achievement) => {
+    // Create a withdrawal request for the achievement reward
+    const newWithdrawal: WithdrawalRequest = {
+      id: Date.now().toString(),
+      amount: achievement.reward,
+      date: new Date().toISOString(),
+      status: 'pending',
+      type: 'achievement'
+    };
+    
+    const updatedWithdrawals = [...withdrawals, newWithdrawal];
+    setWithdrawals(updatedWithdrawals);
+    localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
+    
+    // Mark achievement as claimed
+    const updatedAchievements = achievements.map(a => 
+      a.id === achievement.id ? { ...a, claimed: true } : a
+    );
+    setAchievements(updatedAchievements);
+    localStorage.setItem('quiz_app_achievements', JSON.stringify(updatedAchievements));
+    
+    toast({
+      title: "Reward Claimed",
+      description: `Your reward of ₹${achievement.reward.toFixed(2)} has been requested for withdrawal`,
+    });
+    
+    // Simulate processing
     setTimeout(() => {
       simulateWithdrawalProcessing(newWithdrawal.id);
     }, 5000);
@@ -110,6 +164,15 @@ const WithdrawalSection: React.FC = () => {
       description: "Your withdrawal has been processed successfully",
     });
   };
+  
+  const formatMonth = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  };
+  
+  // Filter unclaimed achievements
+  const unclaimedAchievements = achievements.filter(a => !a.claimed);
 
   return (
     <div className="quiz-card">
@@ -122,6 +185,41 @@ const WithdrawalSection: React.FC = () => {
           <p className="text-sm text-muted-foreground">Convert your points to cash</p>
         </div>
       </div>
+      
+      {/* Unclaimed Monthly Target Rewards */}
+      {unclaimedAchievements.length > 0 && (
+        <div className="mb-8">
+          <h4 className="font-medium mb-3 flex items-center">
+            <Award className="w-5 h-5 mr-2 text-primary" />
+            Available Rewards
+          </h4>
+          
+          <div className="space-y-4">
+            {unclaimedAchievements.map((achievement) => (
+              <div key={achievement.id} className="p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="font-medium">Monthly Target Completed</h5>
+                    <p className="text-sm text-muted-foreground">
+                      {formatMonth(achievement.month)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold mb-2">₹{achievement.reward.toFixed(2)}</div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleClaimAchievement(achievement)}
+                      className="btn-shine"
+                    >
+                      Claim Reward
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="bg-secondary p-4 rounded-xl mb-6">
         <div className="flex justify-between items-center">
@@ -190,6 +288,11 @@ const WithdrawalSection: React.FC = () => {
                   <div className="font-medium">₹{withdrawal.amount.toFixed(2)}</div>
                   <div className="text-xs text-muted-foreground">
                     {new Date(withdrawal.date).toLocaleDateString()}
+                    {withdrawal.type === 'achievement' && (
+                      <span className="ml-2 px-1 bg-primary/10 text-primary rounded text-xs">
+                        Reward
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div>

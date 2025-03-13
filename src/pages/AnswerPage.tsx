@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { quizQuestions, STORAGE_KEYS } from '@/utils/quizData';
+import { quizQuestions, STORAGE_KEYS, calculatePoints } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle } from 'lucide-react';
 
@@ -69,8 +69,8 @@ const AnswerPage: React.FC = () => {
                     </h4>
                     <p className="text-muted-foreground">
                       {isCorrect 
-                        ? `You earned ${question.points} points!` 
-                        : `The correct answer was: ${question.correctAnswer}`}
+                        ? `You earned 2 points!` 
+                        : `You earned 0.5 points. The correct answer was: ${question.correctAnswer}`}
                     </p>
                   </div>
                 </div>

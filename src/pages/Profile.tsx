@@ -4,12 +4,22 @@ import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
 import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
-import { STORAGE_KEYS } from '@/utils/quizData';
-import { UserCog, LogOut, Wallet, Copy } from 'lucide-react';
+import { STORAGE_KEYS, getPointsForToday, getPointsForMonth, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
+import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from '@/components/ui/progress';
+
+interface Achievement {
+  id: string;
+  type: string;
+  month: string;
+  reward: number;
+  date: string;
+  claimed: boolean;
+}
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +27,9 @@ const Profile: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [userUpi, setUserUpi] = useState('');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
+  const [dailyPoints, setDailyPoints] = useState(0);
+  const [monthlyPoints, setMonthlyPoints] = useState(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   
   useEffect(() => {
     // Load user data
@@ -35,6 +48,27 @@ const Profile: React.FC = () => {
     // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
+    
+    // Get daily and monthly points
+    setDailyPoints(getPointsForToday());
+    setMonthlyPoints(getPointsForMonth());
+    
+    // Get achievements
+    const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
+    setAchievements(savedAchievements);
+    
+    // Set up listener for point updates
+    const handlePointsUpdate = () => {
+      setDailyPoints(getPointsForToday());
+      setMonthlyPoints(getPointsForMonth());
+      
+      // Refresh achievements
+      const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
+      setAchievements(updatedAchievements);
+    };
+    
+    window.addEventListener('pointsUpdated', handlePointsUpdate);
+    return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
   }, [navigate]);
   
   const handleLogout = () => {
@@ -56,6 +90,12 @@ const Profile: React.FC = () => {
         description: "Your UPI ID has been copied to clipboard.",
       });
     }
+  };
+  
+  const formatMonth = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   };
   
   return (
@@ -109,6 +149,40 @@ const Profile: React.FC = () => {
           </Button>
         </div>
         
+        {/* Daily & Monthly Targets */}
+        <div className="glass rounded-2xl p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="bg-primary/10 p-2 rounded-full">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="font-medium">Progress Targets</h3>
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-sm font-medium">Daily Target</h4>
+                <span className="text-sm font-bold">{dailyPoints.toFixed(1)} / {DAILY_TARGET} points</span>
+              </div>
+              <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                Every correct answer: +2 points, Every incorrect answer: +0.5 points
+              </p>
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-sm font-medium">Monthly Target</h4>
+                <span className="text-sm font-bold">{monthlyPoints.toFixed(1)} / {MONTHLY_TARGET} points</span>
+              </div>
+              <Progress value={(monthlyPoints / MONTHLY_TARGET) * 100} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                Complete the monthly target to earn ₹8,000 reward!
+              </p>
+            </div>
+          </div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <PointsDisplay animateUpdate />
           
@@ -146,6 +220,48 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Achievements Section */}
+        {achievements.length > 0 && (
+          <div className="glass rounded-2xl p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Award className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-medium">Achievements</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {achievements.map((achievement) => (
+                <div key={achievement.id} className="bg-secondary/30 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="mr-4 p-2 bg-primary/10 rounded-full">
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Monthly Target Completed</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {formatMonth(achievement.month)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">₹{achievement.reward.toFixed(2)}</div>
+                      <div className="text-xs">
+                        {achievement.claimed ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">Claimed</span>
+                        ) : (
+                          <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full">Available</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         <Tabs defaultValue="referrals" className="w-full animate-fade-in">
           <TabsList className="grid w-full grid-cols-2 mb-8">

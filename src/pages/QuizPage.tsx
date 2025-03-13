@@ -4,7 +4,18 @@ import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
 import PointsDisplay from '@/components/PointsDisplay';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { STORAGE_KEYS, QuizQuestion, getRandomQuestion } from '@/utils/quizData';
+import { 
+  STORAGE_KEYS, 
+  QuizQuestion, 
+  getRandomQuestion, 
+  calculatePoints,
+  logPointsForDay,
+  logPointsForMonth,
+  DAILY_TARGET,
+  getPointsForToday,
+  getPointsForMonth,
+  MONTHLY_TARGET
+} from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +24,8 @@ const QuizPage: React.FC = () => {
   const [streak, setStreak] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [userPoints, setUserPoints] = useState(0);
+  const [dailyPoints, setDailyPoints] = useState(0);
+  const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
@@ -25,6 +38,10 @@ const QuizPage: React.FC = () => {
     // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
+    
+    // Load daily and monthly points
+    setDailyPoints(getPointsForToday());
+    setMonthlyPoints(getPointsForMonth());
     
     // Get first question
     loadNewQuestion();
@@ -41,11 +58,41 @@ const QuizPage: React.FC = () => {
     }, 600);
   };
   
-  const handleQuestionComplete = (points: number, isCorrect: boolean) => {
+  const handleQuestionComplete = (isCorrect: boolean) => {
+    // Calculate points using the new system
+    const pointsEarned = calculatePoints(isCorrect);
+    
     // Update user points
-    const newTotal = userPoints + points;
+    const newTotal = userPoints + pointsEarned;
     setUserPoints(newTotal);
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
+    
+    // Update daily and monthly points
+    logPointsForDay(pointsEarned);
+    logPointsForMonth(pointsEarned);
+    
+    // Refresh daily and monthly points
+    const updatedDailyPoints = getPointsForToday();
+    const updatedMonthlyPoints = getPointsForMonth();
+    setDailyPoints(updatedDailyPoints);
+    setMonthlyPoints(updatedMonthlyPoints);
+    
+    // Check for daily target completion
+    if (updatedDailyPoints >= DAILY_TARGET && dailyPoints < DAILY_TARGET) {
+      toast({
+        title: "Daily Target Achieved!",
+        description: "Congratulations! You've reached your daily target of 400 points.",
+      });
+    }
+    
+    // Check for monthly target completion
+    if (updatedMonthlyPoints >= MONTHLY_TARGET && monthlyPoints < MONTHLY_TARGET) {
+      toast({
+        title: "Monthly Target Achieved!",
+        description: "Amazing! You've reached your monthly target of 12,000 points. ₹8,000 reward is available for withdrawal!",
+      });
+    }
+    
     window.dispatchEvent(new Event('pointsUpdated'));
     
     // Update questions answered
@@ -63,6 +110,8 @@ const QuizPage: React.FC = () => {
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
+        logPointsForDay(bonusPoints);
+        logPointsForMonth(bonusPoints);
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({
@@ -73,9 +122,6 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
-    
-    // Load new question is now handled by the answer page
-    // so we don't call loadNewQuestion() here anymore
   };
 
   return (
@@ -100,6 +146,19 @@ const QuizPage: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+        
+        {/* Daily & Monthly Target Progress */}
+        <div className="glass rounded-2xl p-4 mb-8">
+          <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
+          <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2 mb-4" />
+          
+          <h4 className="text-sm font-medium mb-3">Monthly Target: {monthlyPoints.toFixed(1)} / {MONTHLY_TARGET} points</h4>
+          <Progress value={(monthlyPoints / MONTHLY_TARGET) * 100} className="h-2" />
+          
+          <div className="mt-3 text-xs text-muted-foreground">
+            Complete the monthly target to earn ₹8,000 reward!
           </div>
         </div>
         

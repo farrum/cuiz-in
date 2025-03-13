@@ -7,7 +7,7 @@ import { cn } from '@/utils/animations';
 
 interface QuizCardProps {
   question: QuizQuestion;
-  onComplete: (points: number, correct: boolean) => void;
+  onComplete: (isCorrect: boolean) => void;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
@@ -39,10 +39,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
     }
     
     const isCorrect = question.correctAnswer === option;
-    const pointsEarned = isCorrect ? question.points : 0;
     
     // Tell parent component about the result
-    onComplete(pointsEarned, isCorrect);
+    onComplete(isCorrect);
     
     // Navigate to answer page
     navigate(`/answer/${question.id}/${encodeURIComponent(option)}`);
@@ -63,7 +62,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
           {question.category}
         </span>
         <span className="ml-2 inline-block px-3 py-1 rounded-full bg-secondary">
-          {question.difficulty} • {question.points} pts
+          {question.difficulty}
         </span>
       </div>
       
