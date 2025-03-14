@@ -21,68 +21,20 @@ export const useAuthRole = (
 
     try {
       console.log('Checking role for user ID:', user.id);
-      console.log('User email:', user.email);
       
-      // First check for admin role - explicit check for quizadmin
-      if (user.email === 'quizadmin@quizpoints.com') {
-        console.log('User is quizadmin, ensuring admin role is set');
-        
-        // Ensure the admin role is set for quizadmin
-        const { data: existingRole, error: checkError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-          
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking admin role:', checkError);
-        }
-          
-        if (!existingRole) {
-          console.log('Setting admin role for quizadmin');
-          
-          // Delete any existing roles first
-          await supabase
-            .from('user_roles')
-            .delete()
-            .eq('user_id', user.id);
-            
-          // Set admin role
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'admin'
-            });
-            
-          if (roleError) {
-            console.error('Error setting admin role:', roleError);
-          }
-        }
-        
-        setIsAdmin(true);
-        setUserRole('admin');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Standard role check for other users
-      const { data: adminData, error: adminError } = await supabase
+      // Check for admin role
+      const { data: adminRole, error: adminError } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('*')
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .maybeSingle();
       
-      if (adminError) {
-        console.log('Admin role check error:', adminError);
-        if (adminError.code !== 'PGRST116') { // Not found error
-          console.error('Error checking admin role:', adminError);
-        }
+      if (adminError && adminError.code !== 'PGRST116') { // Not found error
+        console.error('Error checking admin role:', adminError);
       }
         
-      if (adminData) {
+      if (adminRole) {
         console.log('User has admin role');
         setIsAdmin(true);
         setUserRole('admin');
@@ -90,22 +42,19 @@ export const useAuthRole = (
         return;
       }
       
-      // Then check for team_leader role
-      const { data: leaderData, error: leaderError } = await supabase
+      // Check for team_leader role
+      const { data: leaderRole, error: leaderError } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('*')
         .eq('user_id', user.id)
         .eq('role', 'team_leader')
         .maybeSingle();
       
-      if (leaderError) {
-        console.log('Team leader role check error:', leaderError);
-        if (leaderError.code !== 'PGRST116') { // Not found error
-          console.error('Error checking team_leader role:', leaderError);
-        }
+      if (leaderError && leaderError.code !== 'PGRST116') { // Not found error
+        console.error('Error checking team_leader role:', leaderError);
       }
         
-      if (leaderData) {
+      if (leaderRole) {
         console.log('User has team_leader role');
         setIsAdmin(false);
         setUserRole('team_leader');
@@ -114,7 +63,7 @@ export const useAuthRole = (
       }
       
       // Default to player role
-      console.log('User defaulting to player role');
+      console.log('User has player role');
       setIsAdmin(false);
       setUserRole('player');
       setIsLoading(false);

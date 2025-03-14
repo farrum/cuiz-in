@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import PasswordResetDialog from './PasswordResetDialog';
 
 const LoginForm: React.FC = () => {
   const { toast } = useToast();
   const { signIn, refreshUserRole } = useAuth();
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -23,10 +22,10 @@ const LoginForm: React.FC = () => {
     setIsLoggingIn(true);
 
     // Simple validation
-    if (!identifier || !password) {
+    if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please enter both username/email and password",
+        description: "Please enter both email and password",
         variant: "destructive"
       });
       setIsLoggingIn(false);
@@ -34,10 +33,11 @@ const LoginForm: React.FC = () => {
     }
 
     try {
-      // Handle special case for admin
-      if (identifier.toLowerCase() === 'quizadmin') {
-        console.log('Logging in admin from user login');
-        const adminEmail = 'quizadmin@quizpoints.com';
+      // Special case for quizadmin
+      if (email.toLowerCase() === 'quizadmin') {
+        const adminEmail = 'clouddriveback@gmail.com';
+        console.log('Logging in admin from user login with email:', adminEmail);
+        
         const { error } = await signIn(adminEmail, password);
         
         if (error) {
@@ -48,47 +48,20 @@ const LoginForm: React.FC = () => {
         return;
       }
       
-      // For email login
-      if (identifier.includes('@')) {
-        console.log('Logging in with email:', identifier);
-        const { error } = await signIn(identifier, password);
-        
-        if (error) {
-          throw error;
-        }
-        
-        await refreshUserRole();
-        return;
-      }
-      
-      // For username login
-      console.log('Looking up email for username:', identifier);
-      
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', identifier)
-        .maybeSingle();
-        
-      if (profileError || !profileData) {
-        console.error('Profile lookup error:', profileError);
-        throw new Error('Invalid username or password');
-      }
-
-      // Try to sign in directly with the identifier as username
-      const { error } = await signIn(identifier, password);
+      // Standard email login
+      console.log('Logging in with email:', email);
+      const { error } = await signIn(email, password);
       
       if (error) {
         throw error;
       }
       
       await refreshUserRole();
-      
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
         title: "Authentication Failed",
-        description: error.message || "Invalid username/email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive"
       });
     } finally {
@@ -106,9 +79,9 @@ const LoginForm: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Username or Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email or quizadmin"
                 className="pl-10"
               />
             </div>

@@ -90,15 +90,7 @@ export type Database = {
           user_id?: string | null
           username?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "login_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       monthly_points: {
         Row: {
@@ -184,22 +176,7 @@ export type Database = {
           selected_answer?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_attempts_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_attempts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       quiz_questions: {
         Row: {
@@ -253,22 +230,7 @@ export type Database = {
           referee_id?: string | null
           referrer_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "referrals_referee_id_fkey"
-            columns: ["referee_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -329,7 +291,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "team_leader" | "player"
+      app_role: "admin" | "team_leader" | "player"
     }
     CompositeTypes: {
       [_ in never]: never

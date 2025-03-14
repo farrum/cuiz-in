@@ -12,6 +12,7 @@ export const useAuthSignUp = (refreshUserRole: () => Promise<void>) => {
         password,
         options: {
           data: {
+            username: userData.fullName || userData.username || email.split('@')[0],
             full_name: userData.fullName,
             phone: userData.phone,
             upi_id: userData.upiId,
@@ -24,78 +25,9 @@ export const useAuthSignUp = (refreshUserRole: () => Promise<void>) => {
         return response;
       }
 
-      if (response.data?.user) {
-        console.log('User created with ID:', response.data.user.id);
-        
-        // Update profile data in the profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            username: userData.fullName || userData.username || email.split('@')[0],
-            updated_at: new Date().toISOString(),
-            points: 10 // Start with 10 points
-          })
-          .eq('id', response.data.user.id);
-          
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-        } else {
-          console.log('Profile updated successfully');
-        }
-          
-        // Set new users as 'player' role by default
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: response.data.user.id,
-            role: 'player'
-          });
-          
-        if (roleError) {
-          console.error('Error setting user role:', roleError);
-        } else {
-          console.log('User role set to player');
-          
-          // Initialize daily and monthly points
-          const today = new Date().toISOString().split('T')[0];
-          const yearMonth = today.substring(0, 7).replace('-', '_');
-          
-          // Create initial daily points entry
-          const { error: dailyPointsError } = await supabase
-            .from('daily_points')
-            .insert({
-              user_id: response.data.user.id,
-              date: today,
-              points: 0
-            });
-            
-          if (dailyPointsError) {
-            console.error('Error creating daily points entry:', dailyPointsError);
-          } else {
-            console.log('Daily points entry created');
-          }
-          
-          // Create initial monthly points entry
-          const { error: monthlyPointsError } = await supabase
-            .from('monthly_points')
-            .insert({
-              user_id: response.data.user.id,
-              year_month: yearMonth,
-              points: 0
-            });
-            
-          if (monthlyPointsError) {
-            console.error('Error creating monthly points entry:', monthlyPointsError);
-          } else {
-            console.log('Monthly points entry created');
-          }
-        }
-        
-        console.log('User registered successfully:', response.data.user.id);
-      } else {
-        console.log('No user data in response');
-      }
-
+      // Trigger handle_new_user() will automatically create profile and set player role
+      console.log('User registered successfully:', response?.data?.user?.id || 'No ID found');
+      
       return response;
     } catch (error) {
       console.error('Exception during signup:', error);

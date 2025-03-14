@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
@@ -42,12 +41,12 @@ const AdminLogin: React.FC = () => {
     try {
       // Special handling for admin user
       if (username.toLowerCase() === 'quizadmin') {
-        // Always use the fixed email for the admin account
-        const adminEmail = 'quizadmin@quizpoints.com';
+        // Use the admin email
+        const adminEmail = 'clouddriveback@gmail.com';
         console.log('Admin login attempt with email:', adminEmail);
         
-        // Direct login attempt for admin user
-        const { error, data } = await signIn(adminEmail, password);
+        //  Direct login attempt for admin user
+        const { error } = await signIn(adminEmail, password);
         
         if (error) {
           console.error('Admin login error:', error);
@@ -61,7 +60,6 @@ const AdminLogin: React.FC = () => {
         }
         
         console.log('Admin login successful, refreshing role');
-        // Refresh role to ensure admin privileges
         await refreshUserRole();
         
         navigate('/admin');
@@ -69,60 +67,12 @@ const AdminLogin: React.FC = () => {
         return;
       }
       
-      // For non-admin users
-      let email = username;
+      toast({
+        title: "Access Denied",
+        description: "Invalid admin username",
+        variant: "destructive"
+      });
       
-      if (!username.includes('@')) {
-        console.log('Looking up email for username:', username);
-        
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', username)
-          .single();
-          
-        if (profileError) {
-          console.error('Profile lookup error:', profileError);
-          toast({
-            title: "Authentication Failed",
-            description: "Invalid username or password",
-            variant: "destructive"
-          });
-          setIsLoggingIn(false);
-          return;
-        }
-        
-        // Try to sign in directly with the username/password
-        const { error } = await signIn(email, password);
-        
-        if (error) {
-          throw error;
-        }
-      } else {
-        // Email-based login
-        console.log('Signing in with email:', email);
-        const { error } = await signIn(email, password);
-        
-        if (error) {
-          throw error;
-        }
-      }
-      
-      // Refresh the user role after login
-      await refreshUserRole();
-      
-      if (userRole !== 'admin') {
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin privileges",
-          variant: "destructive"
-        });
-        navigate('/login');
-        setIsLoggingIn(false);
-        return;
-      }
-      
-      navigate('/admin');
     } catch (error: any) {
       console.error('Admin login error:', error);
       toast({
