@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Users, UserCheck, Search, Calendar, BarChart3, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface TeamMember {
   id: string;
@@ -22,6 +22,7 @@ interface TeamMember {
 const TeamMembersList: React.FC = () => {
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +40,16 @@ const TeamMembersList: React.FC = () => {
           .select('referee_id')
           .eq('referrer_id', user.id);
 
-        if (referralError) throw referralError;
+        if (referralError) {
+          console.error('Error fetching referrals:', referralError);
+          toast({
+            title: "Error loading team",
+            description: referralError.message,
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
 
         if (!referralData || referralData.length === 0) {
           setTeamMembers([]);
@@ -56,7 +66,16 @@ const TeamMembersList: React.FC = () => {
           .select('*')
           .in('id', refereeIds);
 
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          toast({
+            title: "Error loading team members",
+            description: profilesError.message,
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
 
         // Get today's date and current month for filtering
         const today = new Date().toISOString().split('T')[0];
@@ -69,7 +88,9 @@ const TeamMembersList: React.FC = () => {
           .in('user_id', refereeIds)
           .eq('date', today);
 
-        if (dailyPointsError) throw dailyPointsError;
+        if (dailyPointsError) {
+          console.error('Error fetching daily points:', dailyPointsError);
+        }
 
         // Get monthly points for team members
         const { data: monthlyPointsData, error: monthlyPointsError } = await supabase
@@ -78,7 +99,9 @@ const TeamMembersList: React.FC = () => {
           .in('user_id', refereeIds)
           .eq('year_month', currentMonth);
 
-        if (monthlyPointsError) throw monthlyPointsError;
+        if (monthlyPointsError) {
+          console.error('Error fetching monthly points:', monthlyPointsError);
+        }
 
         // Combine the data
         const members: TeamMember[] = profilesData.map(profile => {
@@ -87,9 +110,9 @@ const TeamMembersList: React.FC = () => {
 
           return {
             id: profile.id,
-            username: profile.username,
+            username: profile.username || 'Anonymous User',
             points: profile.points || 0,
-            created_at: profile.created_at,
+            created_at: profile.created_at || new Date().toISOString(),
             daily_points: dailyPointsRecord?.points || 0,
             monthly_points: monthlyPointsRecord?.points || 0
           };
@@ -102,13 +125,18 @@ const TeamMembersList: React.FC = () => {
         setTotalTeamPoints(total);
       } catch (error) {
         console.error('Error loading team members:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load team members. Please try again later.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadTeamMembers();
-  }, [user]);
+  }, [user, toast]);
 
   // Filter members based on search term
   const filteredMembers = teamMembers.filter(member => 

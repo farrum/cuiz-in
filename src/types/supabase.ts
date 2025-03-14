@@ -62,3 +62,10 @@ export interface QuizQuestion {
   created_at: string | null;
   active: boolean | null;
 }
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referee_id: string;
+  created_at: string | null;
+}
