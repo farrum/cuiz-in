@@ -51,6 +51,7 @@ const UserLogin: React.FC = () => {
     }
 
     try {
+      console.log('Attempting login with:', identifier);
       const { error } = await signIn(identifier, password);
       
       if (error) {
@@ -120,7 +121,7 @@ const UserLogin: React.FC = () => {
     }
   };
 
-  // Create admin user on first load
+  // Create admin user on first load (if needed)
   useEffect(() => {
     const createAdminUser = async () => {
       try {
@@ -141,6 +142,8 @@ const UserLogin: React.FC = () => {
           return;
         }
         
+        console.log('Creating admin user...');
+        
         // Create admin user
         const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
           email: 'quizadmin@example.com',
@@ -153,21 +156,31 @@ const UserLogin: React.FC = () => {
         }
         
         if (adminUser.user) {
+          console.log('Admin user created with ID:', adminUser.user.id);
+          
           // Update the admin's username
-          await supabase
+          const { error: profileError } = await supabase
             .from('profiles')
             .update({ username: 'quizadmin' })
             .eq('id', adminUser.user.id);
             
+          if (profileError) {
+            console.error('Error updating admin profile:', profileError);
+          }
+            
           // Assign admin role
-          await supabase
+          const { error: roleError } = await supabase
             .from('user_roles')
             .insert({
               user_id: adminUser.user.id,
               role: 'admin'
             });
             
-          console.log('Admin user created successfully');
+          if (roleError) {
+            console.error('Error assigning admin role:', roleError);
+          } else {
+            console.log('Admin user role assigned successfully');
+          }
         }
       } catch (error) {
         console.error('Error in admin user creation:', error);

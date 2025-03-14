@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -167,30 +168,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
-    // Supabase doesn't currently allow us to pass custom user metadata during signup
-    // So we'll sign up the user first and update their profile separately
+    // Create the user with Supabase Auth
     const response = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: userData.fullName,
+          phone: userData.phone,
+          upi_id: userData.upiId,
+        }
+      }
     });
 
     if (response.data.user && !response.error) {
       // Update profile data in the profiles table
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           username: userData.fullName || userData.username || email,
           updated_at: new Date().toISOString(),
+          points: 10 // Start with 10 points
         })
         .eq('id', response.data.user.id);
         
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+        
       // Set new users as 'player' role by default
-      await supabase
+      const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
           user_id: response.data.user.id,
           role: 'player'
         });
+        
+      if (roleError) {
+        console.error('Error setting user role:', roleError);
+      }
+      
+      console.log('User registered successfully:', response.data.user.id);
     }
 
     return response;

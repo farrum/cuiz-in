@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Key, Eye, EyeOff, Wallet } from 'lucide-react';
@@ -5,10 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { useAuth } from '@/hooks/useAuth';
 
 const UserRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp } = useAuth();
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -74,7 +78,7 @@ const UserRegistrationForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -83,65 +87,45 @@ const UserRegistrationForm: React.FC = () => {
     
     setIsSubmitting(true);
     
-    // In a real app, you would send this data to a server
-    // For this demo, we'll just store in localStorage
-    setTimeout(() => {
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
-      localStorage.setItem('quiz_app_user_email', formData.email);
-      localStorage.setItem('quiz_app_user_phone', formData.phone);
-      localStorage.setItem('quiz_app_user_upi', formData.upiId);
-      
-      // Initialize points if first time
-      if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
-        
-        // Fire event to update the points display
-        window.dispatchEvent(new Event('pointsUpdated'));
-      }
-      
-      // Save registration data for admin access
-      const existingRegistrations = JSON.parse(localStorage.getItem('quiz_app_registrations') || '[]');
-      existingRegistrations.push({
-        ...formData,
-        registrationDate: new Date().toISOString()
-      });
-      localStorage.setItem('quiz_app_registrations', JSON.stringify(existingRegistrations));
-      
-      // Add the new user to admin_users list
-      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
-      const newUser = {
-        id: Date.now().toString(),
-        name: formData.fullName,
-        email: formData.email,
-        mobile: formData.phone,
-        points: 10,
-        suspended: false,
-        joinDate: new Date().toISOString().split('T')[0]
+    try {
+      // Register the user with Supabase using the signUp function from useAuth
+      const userData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        upiId: formData.upiId,
+        username: formData.fullName
       };
       
-      // Check if user already exists
-      const userExists = adminUsers.some((u: any) => 
-        u.email.toLowerCase() === formData.email.toLowerCase()
-      );
+      const { error } = await signUp(formData.email, formData.password, userData);
       
-      if (!userExists) {
-        adminUsers.push(newUser);
-        localStorage.setItem('admin_users', JSON.stringify(adminUsers));
+      if (error) {
+        throw error;
       }
       
-      // Simulate sending welcome email
-      console.log(`Welcome email sent to ${formData.email} with login details`);
+      // Store some data in localStorage for easy access
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
+      localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
       
-      setIsSubmitting(false);
+      // Fire event to update the points display
+      window.dispatchEvent(new Event('pointsUpdated'));
       
       toast({
         title: "Registration Successful",
-        description: "Welcome to QuizPoints! You've been awarded 10 bonus points. Login details sent to your email.",
+        description: "Welcome to QuizPoints! You've been awarded 10 bonus points. Please check your email for confirmation.",
       });
       
-      // Navigate to quiz page after successful registration
-      navigate('/quiz');
-    }, 1500);
+      // Navigate to login page after successful registration
+      navigate('/login');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const togglePasswordVisibility = () => {
