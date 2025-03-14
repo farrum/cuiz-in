@@ -55,10 +55,13 @@ const UserLogin: React.FC = () => {
         }
         
         // Properly type and filter user data with type safety
-        type UserObject = { id: string, email?: string };
+        interface AuthUser {
+          id: string;
+          email?: string;
+        }
         
         // Type assertion to handle the users array
-        const adminUser = usersData?.users?.find((u): u is UserObject => {
+        const adminUser = usersData?.users?.find((u: any): u is AuthUser => {
           // Safe access the email property with type check
           return u !== null && 
                  typeof u === 'object' && 
@@ -132,7 +135,7 @@ const UserLogin: React.FC = () => {
         console.log('Checking for test user...');
         
         // Type assertion to handle the users array with the same type safety
-        const testUser = usersData?.users?.find((u): u is UserObject => {
+        const testUser = usersData?.users?.find((u: any): u is AuthUser => {
           // Safe access the email property with type check
           return u !== null && 
                  typeof u === 'object' && 

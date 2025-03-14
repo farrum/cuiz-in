@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -61,10 +60,13 @@ const AdminLogin: React.FC = () => {
         }
         
         // Define a proper type for user objects
-        type UserObject = { id: string, email?: string };
+        interface AuthUser {
+          id: string;
+          email?: string;
+        }
         
         // Type assertion to handle the users array with proper type checking
-        const adminUser = usersData?.users?.find((u): u is UserObject => {
+        const adminUser = usersData?.users?.find((u: any): u is AuthUser => {
           // Type-safe property check
           return u !== null && 
                  typeof u === 'object' && 
