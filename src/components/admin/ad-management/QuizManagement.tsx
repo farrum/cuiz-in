@@ -77,7 +77,8 @@ const QuizManagement: React.FC = () => {
           correctAnswer: q.correct_answer,
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
-          points: q.points || 10,
+          // Fix: Set a default points value since it's not in the database
+          points: 10,
           explanation: q.explanation || ''
         };
       });
@@ -159,6 +160,7 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
+          // Note: points is not stored in the database, it's only used client-side
         })
         .select();
         
@@ -214,6 +216,7 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
+          // Note: points is not stored in the database, it's only used client-side
         })
         .eq('id', question.id);
         
