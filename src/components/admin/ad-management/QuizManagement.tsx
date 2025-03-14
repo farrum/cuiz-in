@@ -39,8 +39,8 @@ const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<QuizQuestion[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -77,10 +77,8 @@ const QuizManagement: React.FC = () => {
           correctAnswer: q.correct_answer,
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
-          points: 10,
-          // Since explanation isn't in the type definition, we need to use a type assertion
-          // to safely access it or provide a default empty string
-          explanation: ((q as any).explanation) || ''
+          points: q.points || 10,
+          explanation: q.explanation || ''
         };
       });
       
@@ -122,12 +120,12 @@ const QuizManagement: React.FC = () => {
     }
     
     // Apply category filter
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(q => q.category === selectedCategory);
     }
     
     // Apply difficulty filter
-    if (selectedDifficulty) {
+    if (selectedDifficulty && selectedDifficulty !== 'all') {
       filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
     }
     
@@ -137,11 +135,26 @@ const QuizManagement: React.FC = () => {
   // Handle adding a new question
   const handleAddQuestion = async (question: Omit<QuizQuestion, 'id'>) => {
     try {
+      console.log("Adding question:", question);
+      
+      // Ensure options are properly formatted as an array of strings
+      const options = Array.isArray(question.options) 
+        ? question.options.filter(opt => opt.trim() !== '') 
+        : [];
+      
+      if (options.length < 2) {
+        throw new Error("At least 2 options are required");
+      }
+
+      if (!question.correctAnswer) {
+        throw new Error("Correct answer is required");
+      }
+      
       const { data, error } = await supabase
         .from('quiz_questions')
         .insert({
           question: question.question,
-          options: question.options,
+          options: options,
           correct_answer: question.correctAnswer,
           difficulty: question.difficulty,
           category: question.category,
@@ -150,6 +163,7 @@ const QuizManagement: React.FC = () => {
         .select();
         
       if (error) {
+        console.error("Supabase error:", error);
         throw error;
       }
       
@@ -158,13 +172,18 @@ const QuizManagement: React.FC = () => {
         description: "Question added successfully!",
       });
       
+      // Update the categories list if we have a new category
+      if (question.category && !categories.includes(question.category)) {
+        setCategories([...categories, question.category]);
+      }
+      
       fetchQuestions();
       setIsAddDialogOpen(false);
     } catch (error) {
       console.error('Error adding question:', error);
       toast({
         title: "Error",
-        description: "Failed to add question.",
+        description: "Failed to add question. " + (error instanceof Error ? error.message : ""),
         variant: "destructive"
       });
     }
@@ -173,11 +192,24 @@ const QuizManagement: React.FC = () => {
   // Handle updating a question
   const handleUpdateQuestion = async (question: QuizQuestion) => {
     try {
+      // Ensure options are properly formatted as an array of strings
+      const options = Array.isArray(question.options) 
+        ? question.options.filter(opt => opt.trim() !== '') 
+        : [];
+      
+      if (options.length < 2) {
+        throw new Error("At least 2 options are required");
+      }
+
+      if (!question.correctAnswer) {
+        throw new Error("Correct answer is required");
+      }
+      
       const { error } = await supabase
         .from('quiz_questions')
         .update({
           question: question.question,
-          options: question.options,
+          options: options,
           correct_answer: question.correctAnswer,
           difficulty: question.difficulty,
           category: question.category,
@@ -194,13 +226,18 @@ const QuizManagement: React.FC = () => {
         description: "Question updated successfully!",
       });
       
+      // Update the categories list if we have a new category
+      if (question.category && !categories.includes(question.category)) {
+        setCategories([...categories, question.category]);
+      }
+      
       fetchQuestions();
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error('Error updating question:', error);
       toast({
         title: "Error",
-        description: "Failed to update question.",
+        description: "Failed to update question. " + (error instanceof Error ? error.message : ""),
         variant: "destructive"
       });
     }

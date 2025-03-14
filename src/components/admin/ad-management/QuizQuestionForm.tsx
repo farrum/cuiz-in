@@ -38,6 +38,7 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
 }) => {
   const [newCategory, setNewCategory] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [localCategories, setLocalCategories] = useState<string[]>(categories);
   
   const defaultValues = initialData || {
     question: '',
@@ -56,6 +57,11 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
   const { watch, setValue, getValues } = form;
   const options = watch('options');
   const selectedCategory = watch('category');
+
+  // Update local categories when prop changes
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
 
   const handleAddOption = () => {
     setValue('options', [...options, '']);
@@ -82,7 +88,13 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
 
   const handleAddNewCategory = () => {
     if (newCategory.trim()) {
-      setValue('category', newCategory.trim());
+      // Add to local categories
+      const newCat = newCategory.trim();
+      if (!localCategories.includes(newCat)) {
+        setLocalCategories([...localCategories, newCat]);
+      }
+      // Set as selected
+      setValue('category', newCat);
       setNewCategory('');
       setShowNewCategoryInput(false);
     }
@@ -90,10 +102,34 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
 
   // Submit the form data
   const handleFormSubmit = form.handleSubmit((data) => {
+    // Ensure options array doesn't contain empty strings
+    const cleanedOptions = data.options.filter(option => option.trim() !== '');
+    
+    if (cleanedOptions.length < 2) {
+      form.setError('options', { 
+        type: 'manual', 
+        message: 'At least 2 non-empty options are required.' 
+      });
+      return;
+    }
+    
+    if (!data.correctAnswer) {
+      form.setError('correctAnswer', { 
+        type: 'manual', 
+        message: 'Please select the correct answer.' 
+      });
+      return;
+    }
+    
+    const formData = {
+      ...data,
+      options: cleanedOptions
+    };
+    
     if (initialData) {
-      onSubmit({ ...data, id: initialData.id });
+      onSubmit({ ...formData, id: initialData.id });
     } else {
-      onSubmit(data);
+      onSubmit(formData);
     }
   });
 
@@ -235,7 +271,7 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category, index) => (
+                      {localCategories.map((category, index) => (
                         <SelectItem key={index} value={category}>
                           {category}
                         </SelectItem>
