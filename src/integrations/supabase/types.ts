@@ -13,7 +13,6 @@ export type Database = {
         Row: {
           active: boolean | null
           code: string
-          created_at: string | null
           id: string
           last_updated: string | null
           name: string
@@ -22,7 +21,6 @@ export type Database = {
         Insert: {
           active?: boolean | null
           code: string
-          created_at?: string | null
           id?: string
           last_updated?: string | null
           name: string
@@ -31,32 +29,10 @@ export type Database = {
         Update: {
           active?: boolean | null
           code?: string
-          created_at?: string | null
           id?: string
           last_updated?: string | null
           name?: string
           position?: string
-        }
-        Relationships: []
-      }
-      daily_points: {
-        Row: {
-          date: string
-          id: string
-          points: number | null
-          user_id: string
-        }
-        Insert: {
-          date?: string
-          id?: string
-          points?: number | null
-          user_id: string
-        }
-        Update: {
-          date?: string
-          id?: string
-          points?: number | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -67,112 +43,105 @@ export type Database = {
           ip_address: string | null
           login_time: string | null
           user_id: string | null
-          username: string
-        }
-        Insert: {
-          device?: string | null
-          id?: string
-          ip_address?: string | null
-          login_time?: string | null
-          user_id?: string | null
-          username: string
-        }
-        Update: {
-          device?: string | null
-          id?: string
-          ip_address?: string | null
-          login_time?: string | null
-          user_id?: string | null
-          username?: string
-        }
-        Relationships: []
-      }
-      monthly_points: {
-        Row: {
-          id: string
-          points: number | null
-          user_id: string
-          year_month: string
-        }
-        Insert: {
-          id?: string
-          points?: number | null
-          user_id: string
-          year_month: string
-        }
-        Update: {
-          id?: string
-          points?: number | null
-          user_id?: string
-          year_month?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string | null
-          id: string
-          phone: string | null
-          points: number | null
-          suspended: boolean | null
-          updated_at: string | null
-          upi_id: string | null
           username: string | null
         }
         Insert: {
-          created_at?: string | null
-          id: string
-          phone?: string | null
-          points?: number | null
-          suspended?: boolean | null
-          updated_at?: string | null
-          upi_id?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          user_id?: string | null
           username?: string | null
+        }
+        Update: {
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          points_earned: number | null
+          question_id: string | null
+          selected_answer: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          phone?: string | null
-          points?: number | null
-          suspended?: boolean | null
-          updated_at?: string | null
-          upi_id?: string | null
-          username?: string | null
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_questions: {
         Row: {
-          active: boolean | null
-          category: string
+          category: string | null
           correct_answer: string
           created_at: string | null
           difficulty: string | null
-          explanation: string | null
           id: string
-          options: string[]
+          options: Json
           question: string
         }
         Insert: {
-          active?: boolean | null
-          category: string
+          category?: string | null
           correct_answer: string
           created_at?: string | null
           difficulty?: string | null
-          explanation?: string | null
           id?: string
-          options: string[]
+          options: Json
           question: string
         }
         Update: {
-          active?: boolean | null
-          category?: string
+          category?: string | null
           correct_answer?: string
           created_at?: string | null
           difficulty?: string | null
-          explanation?: string | null
           id?: string
-          options?: string[]
+          options?: Json
           question?: string
         }
         Relationships: []
@@ -181,41 +150,62 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          referee_id: string
-          referrer_id: string
+          referee_id: string | null
+          referrer_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          referee_id: string
-          referrer_id: string
+          referee_id?: string | null
+          referrer_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          referee_id?: string
-          referrer_id?: string
+          referee_id?: string | null
+          referrer_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      user_roles: {
+      users: {
         Row: {
           created_at: string | null
+          email: string
           id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          points: number | null
+          updated_at: string | null
+          username: string
         }
         Insert: {
           created_at?: string | null
+          email: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          points?: number | null
+          updated_at?: string | null
+          username: string
         }
         Update: {
           created_at?: string | null
+          email?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
+          points?: number | null
+          updated_at?: string | null
+          username?: string
         }
         Relationships: []
       }
@@ -227,7 +217,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "team_leader" | "player"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never

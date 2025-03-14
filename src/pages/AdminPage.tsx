@@ -9,41 +9,51 @@ import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import { QuizManagement } from '@/components/admin/ad-management';
-import UserRoleManagement from '@/components/admin/UserRoleManagement';
-import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen, UserCog } from 'lucide-react';
+import { STORAGE_KEYS, syncAllDataToSupabase } from '@/utils/quizData';
+import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+
+// Admin credentials
+const ADMIN_CREDENTIALS = {
+  username: 'quizadmin',
+  password: '!Quizzer123'
+};
+
+// Check if current user is admin based on stored credentials
+const checkIsAdmin = (): boolean => {
+  const storedUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
+  const storedAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
+  
+  // For backwards compatibility, also check the old admin check
+  const oldAdminCheck = localStorage.getItem(STORAGE_KEYS.USER_NAME) === 'admin';
+  
+  return (storedUsername === ADMIN_CREDENTIALS.username && 
+         storedAuth === btoa(ADMIN_CREDENTIALS.password)) || oldAdminCheck;
+};
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, userRole, refreshUserRole } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   
   useEffect(() => {
-    const checkAdminAccess = async () => {
-      // Refresh role to make sure we have the latest data
-      if (user) {
-        await refreshUserRole();
-      }
-      
-      if (!user || userRole !== 'admin') {
-        console.log('Access denied to admin page. User:', user?.id, 'Role:', userRole);
-        toast({
-          title: "Access Denied",
-          description: "You don't have permission to access the admin area.",
-          variant: "destructive"
-        });
-        navigate('/');
-      } else {
-        console.log('Admin access granted for user:', user.id);
-      }
-    };
+    const adminCheck = checkIsAdmin();
+    setIsAdmin(adminCheck);
     
-    checkAdminAccess();
-  }, [navigate, toast, user, userRole, refreshUserRole]);
+    if (!adminCheck) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin area.",
+        variant: "destructive"
+      });
+      navigate('/');
+    } else {
+      // If admin, trigger data sync
+      syncAllDataToSupabase();
+    }
+  }, [navigate, toast]);
 
-  if (!user || userRole !== 'admin') {
+  if (!isAdmin) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
@@ -71,14 +81,10 @@ const AdminPage: React.FC = () => {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-7 gap-2">
+          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-6 gap-2">
             <TabsTrigger value="users" className="flex items-center justify-center">
               <Users className="w-4 h-4 mr-2" />
               <span>Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="flex items-center justify-center">
-              <UserCog className="w-4 h-4 mr-2" />
-              <span>Roles</span>
             </TabsTrigger>
             <TabsTrigger value="referrals" className="flex items-center justify-center">
               <UserPlus className="w-4 h-4 mr-2" />
@@ -104,10 +110,6 @@ const AdminPage: React.FC = () => {
           
           <TabsContent value="users" className="space-y-6">
             <AdminUserManagement />
-          </TabsContent>
-          
-          <TabsContent value="roles" className="space-y-6">
-            <UserRoleManagement />
           </TabsContent>
           
           <TabsContent value="referrals" className="space-y-6">

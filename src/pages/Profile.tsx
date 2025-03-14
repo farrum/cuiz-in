@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/hooks/useAuth';
 
 interface Achievement {
   id: string;
@@ -24,7 +23,6 @@ interface Achievement {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [userName, setUserName] = useState('');
   const [userUpi, setUserUpi] = useState('');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -51,27 +49,17 @@ const Profile: React.FC = () => {
     setQuestionsAnswered(completedQuestions.length);
     
     // Get daily and monthly points
-    const loadPoints = async () => {
-      // Pass userId if available from auth context
-      const userId = user?.id;
-      const dailyPts = await getPointsForToday(userId);
-      const monthlyPts = await getPointsForMonth(userId);
-      setDailyPoints(dailyPts);
-      setMonthlyPoints(monthlyPts);
-    };
-    loadPoints();
+    setDailyPoints(getPointsForToday());
+    setMonthlyPoints(getPointsForMonth());
     
     // Get achievements
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     setAchievements(savedAchievements);
     
     // Set up listener for point updates
-    const handlePointsUpdate = async () => {
-      const userId = user?.id;
-      const dailyPts = await getPointsForToday(userId);
-      const monthlyPts = await getPointsForMonth(userId);
-      setDailyPoints(dailyPts);
-      setMonthlyPoints(monthlyPts);
+    const handlePointsUpdate = () => {
+      setDailyPoints(getPointsForToday());
+      setMonthlyPoints(getPointsForMonth());
       
       // Refresh achievements
       const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
@@ -80,7 +68,7 @@ const Profile: React.FC = () => {
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
     return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
-  }, [navigate, user]);
+  }, [navigate]);
   
   const handleLogout = () => {
     // Clear user-specific data
@@ -200,7 +188,7 @@ const Profile: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <PointsDisplay animateUpdate className="flex-1" />
+          <PointsDisplay animateUpdate />
           
           <div className="glass rounded-2xl p-4 col-span-2">
             <div className="flex items-center space-x-3 mb-2">

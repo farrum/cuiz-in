@@ -1,5 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
-
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -367,81 +365,15 @@ export const quizQuestions: QuizQuestion[] = [
   }
 ];
 
-export const getRandomQuestion = async (): Promise<QuizQuestion> => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .order('created_at')
-      .limit(1);
-      
-    if (error || !data || data.length === 0) {
-      const randomIndex = Math.floor(Math.random() * quizQuestions.length);
-      return quizQuestions[randomIndex];
-    }
-    
-    const question = data[0];
-    const options = Array.isArray(question.options) 
-      ? question.options.map(String) 
-      : typeof question.options === 'object' 
-        ? Object.values(question.options as Record<string, any>).map(String) 
-        : [];
-        
-    return {
-      id: question.id,
-      question: question.question,
-      options: options,
-      correctAnswer: question.correct_answer,
-      difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
-      category: question.category || 'General Knowledge',
-      points: 10,
-      explanation: question.explanation || ''
-    };
-  } catch (error) {
-    console.error('Error fetching random question:', error);
-    const randomIndex = Math.floor(Math.random() * quizQuestions.length);
-    return quizQuestions[randomIndex];
-  }
+export const getRandomQuestion = (): QuizQuestion => {
+  const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+  return quizQuestions[randomIndex];
 };
 
-export const getRandomQuestions = async (count: number): Promise<QuizQuestion[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .order('created_at')
-      .limit(count);
-      
-    if (error || !data || data.length === 0) {
-      const questions = [...quizQuestions];
-      const shuffled = questions.sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, count);
-    }
-    
-    return data.map(question => {
-      const options = Array.isArray(question.options) 
-        ? question.options.map(String) 
-        : typeof question.options === 'object' 
-          ? Object.values(question.options as Record<string, any>).map(String) 
-          : [];
-          
-      return {
-        id: question.id,
-        question: question.question,
-        options: options,
-        correctAnswer: question.correct_answer,
-        difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
-        category: question.category || 'General Knowledge',
-        points: 10,
-        explanation: question.explanation || ''
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching random questions:', error);
-    const questions = [...quizQuestions];
-    const shuffled = questions.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  }
+export const getRandomQuestions = (count: number): QuizQuestion[] => {
+  const questions = [...quizQuestions];
+  const shuffled = questions.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 };
 
 export const calculateCashAmount = (points: number): number => {
@@ -461,239 +393,72 @@ export const DAILY_TARGET = 400;
 export const MONTHLY_TARGET = 12000;
 export const MONTHLY_REWARD = 8000;
 
-const getUserId = (providedUserId?: string): string => {
-  if (providedUserId) return providedUserId;
-  const storedUserId = localStorage.getItem('supabase.auth.token')
-    ? JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user?.id
-    : null;
-  return storedUserId || 'anonymous';
+export const hasCompletedDailyTarget = (points: number): boolean => {
+  const todayPoints = getPointsForToday();
+  return todayPoints >= DAILY_TARGET;
 };
 
-export const hasCompletedDailyTarget = async (userId?: string): Promise<boolean> => {
-  const id = getUserId(userId);
-  if (id === 'anonymous') return false;
+export const hasCompletedMonthlyTarget = (points: number): boolean => {
+  const monthlyPoints = getPointsForMonth();
+  return monthlyPoints >= MONTHLY_TARGET;
+};
+
+export const getPointsForToday = (): number => {
+  const today = new Date().toISOString().split('T')[0];
+  const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
+  return dailyLog[today] || 0;
+};
+
+export const getPointsForMonth = (): number => {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
+  return monthlyLog[currentMonth] || 0;
+};
+
+export const logPointsForDay = (pointsEarned: number): void => {
+  const today = new Date().toISOString().split('T')[0];
+  const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
   
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase
-      .from('daily_points')
-      .select('points')
-      .eq('user_id', id)
-      .eq('date', today)
-      .single();
-      
-    return (data?.points || 0) >= DAILY_TARGET;
-  } catch (error) {
-    console.error('Error checking daily target:', error);
-    return false;
-  }
-};
-
-export const hasCompletedMonthlyTarget = async (userId?: string): Promise<boolean> => {
-  const id = getUserId(userId);
-  if (id === 'anonymous') return false;
-  
-  try {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const { data } = await supabase
-      .from('monthly_points')
-      .select('points')
-      .eq('user_id', id)
-      .eq('year_month', currentMonth)
-      .single();
-      
-    return (data?.points || 0) >= MONTHLY_TARGET;
-  } catch (error) {
-    console.error('Error checking monthly target:', error);
-    return false;
-  }
-};
-
-export const getPointsForToday = async (userId?: string): Promise<number> => {
-  const id = getUserId(userId);
-  if (id === 'anonymous') {
-    const dailyPoints = parseFloat(localStorage.getItem('quiz_app_daily_points') || '0');
-    return dailyPoints;
+  if (!dailyLog[today]) {
+    dailyLog[today] = 0;
   }
   
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase
-      .from('daily_points')
-      .select('points')
-      .eq('user_id', id)
-      .eq('date', today)
-      .single();
-    
-    const points = data?.points || 0;
-    
-    localStorage.setItem('quiz_app_daily_points', points.toString());
-    
-    return points;
-  } catch (error) {
-    console.error('Error getting daily points:', error);
-    const dailyPoints = parseFloat(localStorage.getItem('quiz_app_daily_points') || '0');
-    return dailyPoints;
-  }
+  dailyLog[today] += pointsEarned;
+  localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyLog));
 };
 
-export const getPointsForMonth = async (userId?: string): Promise<number> => {
-  const id = getUserId(userId);
-  if (id === 'anonymous') {
-    const monthlyPoints = parseFloat(localStorage.getItem('quiz_app_monthly_points') || '0');
-    return monthlyPoints;
+export const logPointsForMonth = (pointsEarned: number): void => {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
+  
+  if (!monthlyLog[currentMonth]) {
+    monthlyLog[currentMonth] = 0;
   }
   
-  try {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const { data } = await supabase
-      .from('monthly_points')
-      .select('points')
-      .eq('user_id', id)
-      .eq('year_month', currentMonth)
-      .single();
-    
-    const points = data?.points || 0;
-    
-    localStorage.setItem('quiz_app_monthly_points', points.toString());
-    
-    return points;
-  } catch (error) {
-    console.error('Error getting monthly points:', error);
-    const monthlyPoints = parseFloat(localStorage.getItem('quiz_app_monthly_points') || '0');
-    return monthlyPoints;
+  monthlyLog[currentMonth] += pointsEarned;
+  localStorage.setItem('quiz_app_monthly_points', JSON.stringify(monthlyLog));
+  
+  if (monthlyLog[currentMonth] >= MONTHLY_TARGET) {
+    handleMonthlyTargetAchievement(currentMonth);
   }
 };
 
-export const logPointsForDay = async (userId?: string, points: number = 0) => {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const effectiveUserId = userId || getUserIdFromLocalStorage();
+const handleMonthlyTargetAchievement = (month: string): void => {
+  const achievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
+  const alreadyRewarded = achievements.some((a: any) => a.month === month && a.type === 'monthly_target');
+  
+  if (!alreadyRewarded) {
+    achievements.push({
+      id: Date.now().toString(),
+      type: 'monthly_target',
+      month: month,
+      reward: MONTHLY_REWARD,
+      date: new Date().toISOString(),
+      claimed: false
+    });
     
-    if (!effectiveUserId) {
-      console.warn('No user ID available for logging daily points');
-      return;
-    }
-    
-    console.log(`Logging ${points} points for user ${effectiveUserId} on ${today}`);
-    
-    // First check if there's an existing record for today
-    const { data: existingRecord, error: fetchError } = await supabase
-      .from('daily_points')
-      .select('*')
-      .eq('user_id', effectiveUserId)
-      .eq('date', today)
-      .maybeSingle();
-      
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error checking daily points:', fetchError);
-      return;
-    }
-    
-    if (existingRecord) {
-      // Update existing record
-      const { error: updateError } = await supabase
-        .from('daily_points')
-        .update({ points: existingRecord.points + points })
-        .eq('id', existingRecord.id);
-        
-      if (updateError) {
-        console.error('Error updating daily points:', updateError);
-      } else {
-        console.log('Daily points updated successfully');
-      }
-    } else {
-      // Create new record
-      const { error: insertError } = await supabase
-        .from('daily_points')
-        .insert({
-          user_id: effectiveUserId,
-          date: today,
-          points: points
-        });
-        
-      if (insertError) {
-        console.error('Error inserting daily points:', insertError);
-      } else {
-        console.log('Daily points record created successfully');
-      }
-    }
-    
-    // Update localStorage for compatibility with existing code
-    const dailyPoints = parseFloat(localStorage.getItem('quiz_app_daily_points') || '0');
-    localStorage.setItem('quiz_app_daily_points', (dailyPoints + points).toString());
-    
-  } catch (error) {
-    console.error('Error in logPointsForDay:', error);
+    localStorage.setItem('quiz_app_achievements', JSON.stringify(achievements));
   }
-};
-
-export const logPointsForMonth = async (userId?: string, points: number = 0) => {
-  try {
-    const today = new Date();
-    const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    const effectiveUserId = userId || getUserIdFromLocalStorage();
-    
-    if (!effectiveUserId) {
-      console.warn('No user ID available for logging monthly points');
-      return;
-    }
-    
-    console.log(`Logging ${points} points for user ${effectiveUserId} for month ${yearMonth}`);
-    
-    // First check if there's an existing record for this month
-    const { data: existingRecord, error: fetchError } = await supabase
-      .from('monthly_points')
-      .select('*')
-      .eq('user_id', effectiveUserId)
-      .eq('year_month', yearMonth)
-      .maybeSingle();
-      
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error checking monthly points:', fetchError);
-      return;
-    }
-    
-    if (existingRecord) {
-      // Update existing record
-      const { error: updateError } = await supabase
-        .from('monthly_points')
-        .update({ points: existingRecord.points + points })
-        .eq('id', existingRecord.id);
-        
-      if (updateError) {
-        console.error('Error updating monthly points:', updateError);
-      } else {
-        console.log('Monthly points updated successfully');
-      }
-    } else {
-      // Create new record
-      const { error: insertError } = await supabase
-        .from('monthly_points')
-        .insert({
-          user_id: effectiveUserId,
-          year_month: yearMonth,
-          points: points
-        });
-        
-      if (insertError) {
-        console.error('Error inserting monthly points:', insertError);
-      } else {
-        console.log('Monthly points record created successfully');
-      }
-    }
-    
-    // Update localStorage for compatibility with existing code
-    const monthlyPoints = parseFloat(localStorage.getItem('quiz_app_monthly_points') || '0');
-    localStorage.setItem('quiz_app_monthly_points', (monthlyPoints + points).toString());
-    
-  } catch (error) {
-    console.error('Error in logPointsForMonth:', error);
-  }
-};
-
-const handleMonthlyTargetAchievement = async (userId: string, month: string): Promise<void> => {
-  console.log(`Monthly target achieved for user ${userId} in ${month}`);
 };
 
 export const STORAGE_KEYS = {
@@ -710,6 +475,7 @@ export const STORAGE_KEYS = {
 
 export const syncAdSlotsToLocal = async () => {
   try {
+    const { supabase } = await import('@/integrations/supabase/client');
     const { data, error } = await supabase
       .from('ad_slots')
       .select('*')
@@ -729,6 +495,8 @@ export const syncAdSlotsToLocal = async () => {
 
 export const syncQuizQuestionsToSupabase = async () => {
   try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
     const { data: existingQuestions, error: checkError } = await supabase
       .from('quiz_questions')
       .select('id')
@@ -775,24 +543,5 @@ export const syncAllDataToSupabase = async () => {
     await syncAdSlotsToLocal();
   } catch (error) {
     console.error('Error syncing all data:', error);
-  }
-};
-
-export const getUserIdFromLocalStorage = () => {
-  try {
-    // First try to get from localStorage
-    const userString = localStorage.getItem('supabase.auth.token');
-    if (userString) {
-      const userData = JSON.parse(userString);
-      if (userData?.currentSession?.user?.id) {
-        return userData.currentSession.user.id;
-      }
-    }
-    
-    // Otherwise check if there's any other user ID stored
-    return null;
-  } catch (error) {
-    console.error('Error getting user ID from localStorage:', error);
-    return null;
   }
 };

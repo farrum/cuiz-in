@@ -19,7 +19,6 @@ import {
 } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/hooks/useAuth';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -31,60 +30,63 @@ const QuizPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [adsSynced, setAdsSynced] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
   
+  // Initialize on first load
   useEffect(() => {
+    // Load user points
     const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
+    // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    const loadPoints = async () => {
-      const userId = user?.id;
-      const dailyPts = await getPointsForToday(userId);
-      const monthlyPts = await getPointsForMonth(userId);
-      setDailyPoints(dailyPts);
-      setMonthlyPoints(monthlyPts);
-    };
-    loadPoints();
+    // Load daily and monthly points
+    setDailyPoints(getPointsForToday());
+    setMonthlyPoints(getPointsForMonth());
     
+    // Sync ad slots from Supabase
     if (!adsSynced) {
       syncAdSlotsToLocal().then(() => {
         setAdsSynced(true);
       });
     }
     
+    // Get first question
     loadNewQuestion();
-  }, [user]);
+  }, []);
   
   const loadNewQuestion = () => {
     setIsLoading(true);
     
-    setTimeout(async () => {
-      const question = await getRandomQuestion();
+    // Simulate loading delay for smoother transitions
+    setTimeout(() => {
+      const question = getRandomQuestion();
       setCurrentQuestion(question);
       setIsLoading(false);
     }, 600);
   };
   
-  const handleQuestionComplete = async (isCorrect: boolean) => {
+  const handleQuestionComplete = (isCorrect: boolean) => {
+    // Calculate points using the new system
     const pointsEarned = calculatePoints(isCorrect);
     
+    // Update user points
     const newTotal = userPoints + pointsEarned;
     setUserPoints(newTotal);
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
     
-    const userId = user?.id;
-    // Convert pointsEarned to number when calling these functions
-    await logPointsForDay(userId, pointsEarned);
-    await logPointsForMonth(userId, pointsEarned);
+    // Update daily and monthly points
+    logPointsForDay(pointsEarned);
+    logPointsForMonth(pointsEarned);
     
-    const updatedDailyPoints = await getPointsForToday(userId);
-    const updatedMonthlyPoints = await getPointsForMonth(userId);
+    // Refresh daily and monthly points
+    const updatedDailyPoints = getPointsForToday();
+    const updatedMonthlyPoints = getPointsForMonth();
     setDailyPoints(updatedDailyPoints);
     setMonthlyPoints(updatedMonthlyPoints);
     
+    // Check for daily target completion
     if (updatedDailyPoints >= DAILY_TARGET && dailyPoints < DAILY_TARGET) {
       toast({
         title: "Daily Target Achieved!",
@@ -92,6 +94,7 @@ const QuizPage: React.FC = () => {
       });
     }
     
+    // Check for monthly target completion
     if (updatedMonthlyPoints >= MONTHLY_TARGET && monthlyPoints < MONTHLY_TARGET) {
       toast({
         title: "Monthly Target Achieved!",
@@ -101,21 +104,23 @@ const QuizPage: React.FC = () => {
     
     window.dispatchEvent(new Event('pointsUpdated'));
     
+    // Update questions answered
     setQuestionsAnswered(prev => prev + 1);
     
+    // Update streak
     if (isCorrect) {
       const newStreak = streak + 1;
       setStreak(newStreak);
       
+      // Bonus for streaks
       if (newStreak % 5 === 0) {
         const bonusPoints = 20;
         const bonusTotal = newTotal + bonusPoints;
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        // Convert bonusPoints to number when calling these functions
-        await logPointsForDay(userId, bonusPoints);
-        await logPointsForMonth(userId, bonusPoints);
+        logPointsForDay(bonusPoints);
+        logPointsForMonth(bonusPoints);
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({
@@ -126,8 +131,6 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
-    
-    loadNewQuestion();
   };
 
   return (
@@ -135,6 +138,7 @@ const QuizPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        {/* First Advertisement - Top */}
         <AdvertisementBanner position="top" />
         
         <div className="flex flex-col md:flex-row gap-6 mb-8">
@@ -154,6 +158,7 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Daily & Monthly Target Progress */}
         <div className="glass rounded-2xl p-4 mb-8">
           <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
           <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2 mb-4" />
@@ -166,6 +171,7 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Second Advertisement - After Stats */}
         <AdvertisementBanner position="middle" size="small" />
         
         <div className="mb-6 mt-6">
@@ -180,6 +186,7 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Third Advertisement - Before Question */}
         <AdvertisementBanner position="middle" />
         
         {isLoading ? (
@@ -200,6 +207,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
+        {/* Fourth Advertisement - Bottom */}
         <AdvertisementBanner position="bottom" />
       </main>
     </div>

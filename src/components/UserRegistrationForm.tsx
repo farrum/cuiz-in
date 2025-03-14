@@ -5,14 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
 const UserRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp } = useAuth();
-  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -78,7 +74,7 @@ const UserRegistrationForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -87,86 +83,65 @@ const UserRegistrationForm: React.FC = () => {
     
     setIsSubmitting(true);
     
-    try {
-      console.log('Starting registration process for:', formData.email);
-      
-      // Register the user with Supabase using the signUp function from useAuth
-      const userData = {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        upiId: formData.upiId,
-        username: formData.fullName
-      };
-      
-      const { error, data } = await signUp(formData.email, formData.password, userData);
-      
-      if (error) {
-        console.error('Registration error from signUp:', error);
-        throw error;
-      }
-      
-      console.log('Registration successful, user data:', data);
-      
-      // Verify the user was created correctly in Supabase
-      if (data?.user?.id) {
-        console.log('Verifying user data was stored correctly...');
-        
-        // Check if a role was assigned
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', data.user.id);
-        
-        if (roleError) {
-          console.error('Error checking user role:', roleError);
-        } else if (!roleData || roleData.length === 0) {
-          console.log('No role found, manually adding player role');
-          
-          // Manually add the role if it doesn't exist
-          const { error: insertRoleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: data.user.id,
-              role: 'player'
-            });
-          
-          if (insertRoleError) {
-            console.error('Error adding player role:', insertRoleError);
-          } else {
-            console.log('Player role added successfully');
-          }
-        } else {
-          console.log('User role verified:', roleData);
-        }
-      }
-      
-      // Store some data in localStorage for easy access
+    // In a real app, you would send this data to a server
+    // For this demo, we'll just store in localStorage
+    setTimeout(() => {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
       localStorage.setItem('quiz_app_user_email', formData.email);
       localStorage.setItem('quiz_app_user_phone', formData.phone);
       localStorage.setItem('quiz_app_user_upi', formData.upiId);
       
-      // Fire event to update the points display
-      window.dispatchEvent(new Event('pointsUpdated'));
+      // Initialize points if first time
+      if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
+        localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
+        
+        // Fire event to update the points display
+        window.dispatchEvent(new Event('pointsUpdated'));
+      }
+      
+      // Save registration data for admin access
+      const existingRegistrations = JSON.parse(localStorage.getItem('quiz_app_registrations') || '[]');
+      existingRegistrations.push({
+        ...formData,
+        registrationDate: new Date().toISOString()
+      });
+      localStorage.setItem('quiz_app_registrations', JSON.stringify(existingRegistrations));
+      
+      // Add the new user to admin_users list
+      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+      const newUser = {
+        id: Date.now().toString(),
+        name: formData.fullName,
+        email: formData.email,
+        mobile: formData.phone,
+        points: 10,
+        suspended: false,
+        joinDate: new Date().toISOString().split('T')[0]
+      };
+      
+      // Check if user already exists
+      const userExists = adminUsers.some((u: any) => 
+        u.email.toLowerCase() === formData.email.toLowerCase()
+      );
+      
+      if (!userExists) {
+        adminUsers.push(newUser);
+        localStorage.setItem('admin_users', JSON.stringify(adminUsers));
+      }
+      
+      // Simulate sending welcome email
+      console.log(`Welcome email sent to ${formData.email} with login details`);
+      
+      setIsSubmitting(false);
       
       toast({
         title: "Registration Successful",
-        description: "Welcome to QuizPoints! You've been awarded 10 bonus points. Please check your email for confirmation.",
+        description: "Welcome to QuizPoints! You've been awarded 10 bonus points. Login details sent to your email.",
       });
       
-      // Navigate to login page after successful registration
-      navigate('/login');
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      toast({
-        title: "Registration Failed",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      // Navigate to quiz page after successful registration
+      navigate('/quiz');
+    }, 1500);
   };
 
   const togglePasswordVisibility = () => {
