@@ -21,17 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { PlusCircle, Trash } from 'lucide-react';
-
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
-  points?: number;
-  explanation?: string;
-}
+import { QuizQuestion } from '@/utils/quizData';
 
 interface QuizQuestionFormProps {
   initialData?: QuizQuestion;

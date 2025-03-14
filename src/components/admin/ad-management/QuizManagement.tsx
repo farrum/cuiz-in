@@ -32,17 +32,8 @@ import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
 import * as XLSX from 'xlsx';
-
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
-  points?: number;
-  explanation?: string;
-}
+import { Json } from '@/integrations/supabase/types';
+import { QuizQuestion } from '@/utils/quizData';
 
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -74,9 +65,9 @@ const QuizManagement: React.FC = () => {
       const formattedQuestions = data.map(q => ({
         id: q.id,
         question: q.question,
-        options: Array.isArray(q.options) ? q.options : [],
+        options: Array.isArray(q.options) ? q.options.map(String) : typeof q.options === 'object' ? Object.values(q.options).map(String) : [],
         correctAnswer: q.correct_answer,
-        difficulty: q.difficulty || 'easy',
+        difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
         category: q.category || 'General Knowledge',
         points: 10,
         explanation: q.explanation || ''
