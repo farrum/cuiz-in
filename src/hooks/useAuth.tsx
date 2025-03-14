@@ -71,11 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Checking role for user ID:', user.id);
       
-      // First check for admin role - explicit check for quizmaster
-      if (user.email === 'quizmaster@quizpoints.com') {
-        console.log('User is quizmaster, ensuring admin role is set');
+      // First check for admin role - explicit check for quizadmin
+      if (user.email === 'quizadmin@quizpoints.com') {
+        console.log('User is quizadmin, ensuring admin role is set');
         
-        // Ensure the admin role is set for quizmaster
+        // Ensure the admin role is set for quizadmin
         const { data: existingRole, error: checkError } = await supabase
           .from('user_roles')
           .select('*')
@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
           
         if (!existingRole) {
-          console.log('Setting admin role for quizmaster');
+          console.log('Setting admin role for quizadmin');
           
           // Delete any existing roles first
           await supabase

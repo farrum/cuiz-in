@@ -11,7 +11,7 @@ const AdminLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, isAdmin, user, userRole, refreshUserRole } = useAuth();
-  const [username, setUsername] = useState('quizmaster');
+  const [username, setUsername] = useState('quizadmin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);

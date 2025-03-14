@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -141,11 +142,11 @@ const UserLogin: React.FC = () => {
         setIsCreatingAdmin(true);
         console.log('Checking for admin user...');
         
-        // Check if the specific quizmaster admin exists already
+        // Check if the specific admin user exists already
         const { data: existingAdmin, error: checkError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('username', 'quizmaster')
+          .eq('username', 'quizadmin')
           .limit(1);
           
         if (checkError) {
@@ -160,15 +161,39 @@ const UserLogin: React.FC = () => {
           return;
         }
         
-        console.log('No admin found, creating admin user...');
+        // Delete any existing admin users
+        console.log('Removing existing admin users...');
+        const { data: adminRoles, error: adminRolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+        
+        if (adminRolesError) {
+          console.error('Error fetching admin roles:', adminRolesError);
+        } else if (adminRoles && adminRoles.length > 0) {
+          for (const adminRole of adminRoles) {
+            // Delete the user's auth record
+            const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(
+              adminRole.user_id
+            );
+            
+            if (deleteAuthError) {
+              console.error('Error deleting admin auth user:', deleteAuthError);
+            } else {
+              console.log('Successfully deleted admin user:', adminRole.user_id);
+            }
+          }
+        }
+        
+        console.log('Creating new admin user...');
         
         // Create admin user with the specified credentials
         const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
-          email: 'quizmaster@quizpoints.com',
-          password: '1Quiz@1',
+          email: 'quizadmin@quizpoints.com',
+          password: '!Quizzer123',
           options: {
             data: {
-              full_name: 'Quiz Master',
+              full_name: 'Quiz Admin',
             }
           }
         });
@@ -186,7 +211,7 @@ const UserLogin: React.FC = () => {
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ 
-              username: 'quizmaster',
+              username: 'quizadmin',
               points: 999
             })
             .eq('id', adminUser.user.id);
