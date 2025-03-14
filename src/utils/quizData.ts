@@ -425,6 +425,11 @@ export const logPointsForDay = (pointsEarned: number): void => {
   
   dailyLog[today] += pointsEarned;
   localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyLog));
+  
+  // If daily target is reached, update streak
+  if (dailyLog[today] >= DAILY_TARGET) {
+    updateDailyStreak();
+  }
 };
 
 export const logPointsForMonth = (pointsEarned: number): void => {
@@ -458,6 +463,34 @@ const handleMonthlyTargetAchievement = (month: string): void => {
     });
     
     localStorage.setItem('quiz_app_achievements', JSON.stringify(achievements));
+  }
+};
+
+const updateDailyStreak = (): void => {
+  const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+  if (!currentUserName) return;
+  
+  // Generate user ID
+  const userId = currentUserName.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
+  
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayString = yesterday.toISOString().split('T')[0];
+  
+  const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
+  const streakData = JSON.parse(localStorage.getItem('quiz_app_daily_streaks') || '{}');
+  
+  const currentStreak = streakData[userId] || 0;
+  
+  // Check if user completed target yesterday or today is the first day of streak
+  if (dailyLog[yesterdayString] >= DAILY_TARGET || currentStreak === 0) {
+    streakData[userId] = currentStreak + 1;
+    localStorage.setItem('quiz_app_daily_streaks', JSON.stringify(streakData));
+  } else {
+    // If target wasn't hit yesterday, streak resets to 1
+    streakData[userId] = 1;
+    localStorage.setItem('quiz_app_daily_streaks', JSON.stringify(streakData));
   }
 };
 

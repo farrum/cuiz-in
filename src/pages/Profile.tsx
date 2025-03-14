@@ -1,10 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
 import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
+import LeaderboardSection from '@/components/LeaderboardSection';
+import BadgesSection from '@/components/BadgesSection';
 import { STORAGE_KEYS, getPointsForToday, getPointsForMonth, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
-import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar } from 'lucide-react';
+import { checkAndAwardBadges } from '@/utils/badgeData';
+import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +33,7 @@ const Profile: React.FC = () => {
   const [dailyPoints, setDailyPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [userId, setUserId] = useState('');
   
   useEffect(() => {
     // Load user data
@@ -39,6 +44,10 @@ const Profile: React.FC = () => {
     }
     
     setUserName(name);
+    
+    // Generate a consistent user ID from the username
+    const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
+    setUserId(generatedUserId);
     
     // Get UPI ID
     const upiId = localStorage.getItem('quiz_app_user_upi');
@@ -56,6 +65,9 @@ const Profile: React.FC = () => {
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     setAchievements(savedAchievements);
     
+    // Check and award badges if applicable
+    checkAndAwardBadges(generatedUserId);
+    
     // Set up listener for point updates
     const handlePointsUpdate = () => {
       setDailyPoints(getPointsForToday());
@@ -64,6 +76,9 @@ const Profile: React.FC = () => {
       // Refresh achievements
       const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
       setAchievements(updatedAchievements);
+      
+      // Check for new badges
+      checkAndAwardBadges(generatedUserId);
     };
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
@@ -225,6 +240,21 @@ const Profile: React.FC = () => {
           </div>
         </div>
         
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <LeaderboardSection />
+          
+          <div className="glass rounded-2xl p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Medal className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-medium">Your Badges</h3>
+            </div>
+            
+            <BadgesSection userId={userId} limit={4} />
+          </div>
+        </div>
+        
         {achievements.length > 0 && (
           <div className="glass rounded-2xl p-6 mb-8">
             <div className="flex items-center space-x-3 mb-4">
@@ -266,11 +296,18 @@ const Profile: React.FC = () => {
           </div>
         )}
         
-        <Tabs defaultValue="referrals" className="w-full animate-fade-in">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+        <Tabs defaultValue="badges" className="w-full animate-fade-in">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="badges">All Badges</TabsTrigger>
             <TabsTrigger value="referrals">Referrals & Earnings</TabsTrigger>
             <TabsTrigger value="withdraw">Withdraw Funds</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="badges" className="animate-fade-in">
+            <div className="glass rounded-2xl p-6">
+              <BadgesSection userId={userId} showProgress={true} />
+            </div>
+          </TabsContent>
           
           <TabsContent value="referrals" className="animate-fade-in">
             <ReferralSection />
