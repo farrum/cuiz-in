@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -70,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       console.log('Checking role for user ID:', user.id);
+      console.log('User email:', user.email);
       
       // First check for admin role - explicit check for quizadmin
       if (user.email === 'quizadmin@quizpoints.com') {
@@ -176,64 +176,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (identifier: string, password: string) => {
-    let response;
-    
     try {
-      // Check if identifier is an email
-      if (identifier.includes('@')) {
-        console.log('Signing in with email:', identifier);
-        response = await supabase.auth.signInWithPassword({
-          email: identifier,
-          password,
-        });
-      } else {
-        console.log('Signing in with username:', identifier);
-        // If not an email, find the user by username
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', identifier)
-          .single();
-          
-        if (profileError || !profileData) {
-          console.error('Profile lookup error:', profileError);
-          return { error: new Error('Invalid username or password'), data: null };
-        }
-        
-        // Find user with this profile ID
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('id', profileData.id)
-          .single();
-          
-        if (userError || !userData) {
-          console.log('User email lookup failed, trying direct authentication');
-          
-          // Try to sign in with email = username as fallback
-          const { data: authUser, error: authError } = await supabase.auth.signInWithPassword({
-            email: identifier, // Using identifier directly as email
-            password,
-          });
-          
-          if (authError) {
-            console.error('Auth error:', authError);
-            return { error: new Error('Invalid username or password'), data: null };
-          }
-          
-          response = { data: authUser, error: null };
-        } else {
-          // Sign in with the email
-          console.log('Found email, signing in with:', userData.email);
-          response = await supabase.auth.signInWithPassword({
-            email: userData.email,
-            password,
-          });
-        }
+      console.log('Signing in with identifier:', identifier);
+      
+      // Direct authentication attempt with the provided email/identifier
+      const response = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password,
+      });
+      
+      if (response.error) {
+        console.error('Auth error:', response.error);
+        return { error: response.error, data: null };
       }
       
       // Log login attempt
-      if (response?.data?.user) {
+      if (response.data?.user) {
         try {
           console.log('Logging successful login for user:', response.data.user.id);
           const { error: logError } = await supabase.from('login_logs').insert({
@@ -254,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('No user data available for login logging');
       }
       
-      return response || { error: new Error('Unknown error during login'), data: null };
+      return response;
     } catch (error) {
       console.error('Exception during sign in:', error);
       return { error: error as Error, data: null };
