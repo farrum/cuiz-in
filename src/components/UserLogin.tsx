@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,8 @@ const logLogin = async (username: string, successful: boolean) => {
         username: username,
         ip_address: '127.0.0.1', // In a real app, this would be the actual IP
         device: navigator.userAgent,
-        login_time: new Date().toISOString()
+        login_time: new Date().toISOString(),
+        successful: successful
       });
       
     if (error) {
@@ -149,6 +149,30 @@ const UserLogin: React.FC = () => {
       
       // Log the successful login
       await logLogin(user.name, true);
+      
+      // Sync user data with Supabase
+      try {
+        // Check if user exists in profiles table
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', user.name);
+          
+        if (!profiles || profiles.length === 0) {
+          // Add user to profiles if not exists
+          await supabase
+            .from('profiles')
+            .insert({
+              id: user.id || Math.random().toString(36).substring(2, 15),
+              username: user.name,
+              phone: user.mobile,
+              points: user.points,
+              suspended: user.suspended || false
+            });
+        }
+      } catch (err) {
+        console.error('Failed to sync user data with Supabase:', err);
+      }
       
       navigate('/');
       setIsLoggingIn(false);
@@ -322,3 +346,4 @@ const UserLogin: React.FC = () => {
 };
 
 export default UserLogin;
+

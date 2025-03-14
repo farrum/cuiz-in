@@ -30,7 +30,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             username: userName,
             ip_address: ipAddress,
             device: device,
-            login_time: new Date().toISOString()
+            login_time: new Date().toISOString(),
+            successful: true // Mark as successful login
           });
           
         if (error) {
@@ -66,6 +67,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const accessLog = JSON.parse(localStorage.getItem('quiz_app_access_log') || '[]');
     accessLog.push(accessAttempt);
     localStorage.setItem('quiz_app_access_log', JSON.stringify(accessLog));
+    
+    // Also log the failed login attempt to Supabase
+    (async () => {
+      try {
+        await supabase
+          .from('login_logs')
+          .insert({
+            username: 'anonymous',
+            ip_address: '127.0.0.1',
+            device: navigator.userAgent,
+            login_time: new Date().toISOString(),
+            successful: false
+          });
+      } catch (err) {
+        console.error('Failed to log failed access to Supabase:', err);
+      }
+    })();
     
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

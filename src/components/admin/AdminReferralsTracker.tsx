@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -9,10 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Award, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Award, TrendingUp, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReferralData {
+  id: string;
   referrerId: string;
   referrerName: string;
   referredId: string;
@@ -36,17 +40,96 @@ interface User {
 }
 
 const AdminReferralsTracker: React.FC = () => {
+  const { toast } = useToast();
   const [referrals, setReferrals] = useState<ReferralData[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const usersFromStorage = localStorage.getItem('admin_users');
-    const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
-    setUsers(loadedUsers);
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Get users first
+        const usersFromStorage = localStorage.getItem('admin_users');
+        const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
+        setUsers(loadedUsers);
+        
+        // Fetch referrals from Supabase
+        const { data: supabaseReferrals, error } = await supabase
+          .from('user_referrals')
+          .select('*')
+          .order('date', { ascending: false });
+          
+        if (error) {
+          console.error('Error fetching referrals:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load referrals from database",
+            variant: "destructive"
+          });
+          
+          // Fall back to localStorage
+          const referralsFromStorage = localStorage.getItem('admin_referrals');
+          if (referralsFromStorage) {
+            setReferrals(JSON.parse(referralsFromStorage));
+          } else {
+            // Generate mock data if no data exists
+            generateAndSaveMockReferrals(loadedUsers);
+          }
+        } else if (supabaseReferrals && supabaseReferrals.length > 0) {
+          // Transform Supabase data to match our interface
+          const transformedReferrals: ReferralData[] = supabaseReferrals.map(ref => ({
+            id: ref.id,
+            referrerId: ref.referrer_id,
+            referrerName: ref.referrer_name,
+            referredId: ref.referred_id,
+            referredName: ref.referred_name,
+            referredEmail: ref.referred_email || '',
+            date: ref.date,
+            status: ref.status as 'active' | 'inactive' | 'pending',
+            earnings: Number(ref.earnings),
+            activeThisMonth: ref.active_this_month,
+            lastActiveDate: ref.last_active_date
+          }));
+          
+          setReferrals(transformedReferrals);
+          
+          // Sync with localStorage for backward compatibility
+          localStorage.setItem('admin_referrals', JSON.stringify(transformedReferrals));
+        } else {
+          // No data in Supabase, check localStorage or generate mock data
+          const referralsFromStorage = localStorage.getItem('admin_referrals');
+          if (referralsFromStorage) {
+            const storedReferrals = JSON.parse(referralsFromStorage);
+            setReferrals(storedReferrals);
+            
+            // Sync localStorage data to Supabase
+            await syncReferralsToSupabase(storedReferrals);
+          } else {
+            // Generate mock data
+            generateAndSaveMockReferrals(loadedUsers);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch referrals data:', err);
+        toast({
+          title: "Error",
+          description: "An error occurred while loading referrals",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
+    fetchData();
+  }, [toast]);
+  
+  // Generate mock referrals and save to both localStorage and Supabase
+  const generateAndSaveMockReferrals = async (loadedUsers: User[]) => {
     const currentMonth = new Date().toISOString().substring(0, 7);
-    
     const mockReferrals: ReferralData[] = [];
     
     loadedUsers.forEach((user: User) => {
@@ -63,6 +146,7 @@ const AdminReferralsTracker: React.FC = () => {
           : false;
         
         mockReferrals.push({
+          id: Math.random().toString(36).substring(2, 15),
           referrerId: user.id,
           referrerName: user.name,
           referredId: referred.id,
@@ -77,38 +161,43 @@ const AdminReferralsTracker: React.FC = () => {
       });
     });
     
-    const referralsFromStorage = localStorage.getItem('admin_referrals');
-    if (referralsFromStorage) {
-      const storedReferrals = JSON.parse(referralsFromStorage);
-      
-      const updatedReferrals = storedReferrals.map((ref: any) => {
-        if (ref.hasOwnProperty('activeThisMonth')) {
-          return ref;
-        }
-        
-        const isActive = ref.status === 'active' && Math.random() > 0.3;
-        const lastActiveDate = isActive 
-          ? new Date(Date.now() - Math.floor(Math.random() * 25 * 24 * 60 * 60 * 1000)).toISOString()
-          : undefined;
-        
-        const activeThisMonth = lastActiveDate 
-          ? lastActiveDate.substring(0, 7) === currentMonth 
-          : false;
-        
-        return {
-          ...ref,
-          activeThisMonth,
-          lastActiveDate
-        };
-      });
-      
-      setReferrals(updatedReferrals);
-      localStorage.setItem('admin_referrals', JSON.stringify(updatedReferrals));
-    } else if (mockReferrals.length > 0) {
+    if (mockReferrals.length > 0) {
       setReferrals(mockReferrals);
       localStorage.setItem('admin_referrals', JSON.stringify(mockReferrals));
+      
+      // Sync to Supabase
+      await syncReferralsToSupabase(mockReferrals);
     }
-  }, []);
+  };
+  
+  // Sync referrals from localStorage to Supabase
+  const syncReferralsToSupabase = async (referrals: ReferralData[]) => {
+    try {
+      for (const ref of referrals) {
+        const { error } = await supabase
+          .from('user_referrals')
+          .upsert({
+            id: ref.id,
+            referrer_id: ref.referrerId,
+            referrer_name: ref.referrerName,
+            referred_id: ref.referredId,
+            referred_name: ref.referredName,
+            referred_email: ref.referredEmail,
+            date: ref.date,
+            status: ref.status,
+            earnings: ref.earnings,
+            active_this_month: ref.activeThisMonth,
+            last_active_date: ref.lastActiveDate
+          }, { onConflict: 'id' });
+          
+        if (error) {
+          console.error('Error syncing referral to Supabase:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync referrals to Supabase:', err);
+    }
+  };
   
   const filteredReferrals = referrals.filter(referral => 
     referral.referrerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -205,15 +294,22 @@ const AdminReferralsTracker: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredReferrals.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+                  Loading referrals...
+                </TableCell>
+              </TableRow>
+            ) : filteredReferrals.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No referrals found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredReferrals.map((referral, index) => (
-                <TableRow key={index}>
+              filteredReferrals.map((referral) => (
+                <TableRow key={referral.id}>
                   <TableCell>
                     <div className="font-medium">{referral.referrerName}</div>
                     <div className="text-xs text-muted-foreground">ID: {referral.referrerId}</div>

@@ -10,8 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Wallet, PiggyBank, CreditCard, Check, Clock, Download } from 'lucide-react';
+import { Search, Wallet, PiggyBank, CreditCard, Check, Clock, Download, Loader } from 'lucide-react';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentData {
   id: string;
@@ -32,20 +34,94 @@ interface User {
 }
 
 const AdminPaymentsOverview: React.FC = () => {
+  const { toast } = useToast();
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Load payments and users from localStorage
+  // Load payments and users from Supabase or localStorage
   useEffect(() => {
-    // In a real app, you'd fetch from a database
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Get users first
+        const usersFromStorage = localStorage.getItem('admin_users');
+        const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
+        setUsers(loadedUsers);
+        
+        // Fetch payments from Supabase
+        const { data: supabasePayments, error } = await supabase
+          .from('payments')
+          .select('*')
+          .order('date', { ascending: false });
+          
+        if (error) {
+          console.error('Error fetching payments:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load payments from database",
+            variant: "destructive"
+          });
+          
+          // Fall back to localStorage
+          const paymentsFromStorage = localStorage.getItem('admin_payments');
+          if (paymentsFromStorage) {
+            setPayments(JSON.parse(paymentsFromStorage));
+          } else {
+            // Generate and save mock data
+            generateAndSaveMockPayments(loadedUsers);
+          }
+        } else if (supabasePayments && supabasePayments.length > 0) {
+          // Transform Supabase data to match our interface
+          const transformedPayments: PaymentData[] = supabasePayments.map(payment => ({
+            id: payment.id,
+            userId: payment.user_id,
+            userName: payment.username,
+            amount: Number(payment.amount),
+            type: payment.type as 'quiz' | 'referral',
+            status: payment.status as 'paid' | 'pending',
+            date: payment.date,
+            method: payment.method,
+            transactionId: payment.transaction_id
+          }));
+          
+          setPayments(transformedPayments);
+          
+          // Sync with localStorage for backward compatibility
+          localStorage.setItem('admin_payments', JSON.stringify(transformedPayments));
+        } else {
+          // No data in Supabase, check localStorage or generate mock data
+          const paymentsFromStorage = localStorage.getItem('admin_payments');
+          if (paymentsFromStorage) {
+            const storedPayments = JSON.parse(paymentsFromStorage);
+            setPayments(storedPayments);
+            
+            // Sync localStorage data to Supabase
+            await syncPaymentsToSupabase(storedPayments);
+          } else {
+            // Generate mock data
+            generateAndSaveMockPayments(loadedUsers);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch payments data:', err);
+        toast({
+          title: "Error",
+          description: "An error occurred while loading payments",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    // Get users first
-    const usersFromStorage = localStorage.getItem('admin_users');
-    const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
-    setUsers(loadedUsers);
-    
-    // Generate mock payment data based on users
+    fetchData();
+  }, [toast]);
+  
+  // Generate mock payments and save to both localStorage and Supabase
+  const generateAndSaveMockPayments = async (loadedUsers: User[]) => {
     const mockPayments: PaymentData[] = [];
     
     loadedUsers.forEach((user: User) => {
@@ -83,14 +159,41 @@ const AdminPaymentsOverview: React.FC = () => {
       }
     });
     
-    const paymentsFromStorage = localStorage.getItem('admin_payments');
-    if (paymentsFromStorage) {
-      setPayments(JSON.parse(paymentsFromStorage));
-    } else if (mockPayments.length > 0) {
+    if (mockPayments.length > 0) {
       setPayments(mockPayments);
       localStorage.setItem('admin_payments', JSON.stringify(mockPayments));
+      
+      // Sync to Supabase
+      await syncPaymentsToSupabase(mockPayments);
     }
-  }, []);
+  };
+  
+  // Sync payments from localStorage to Supabase
+  const syncPaymentsToSupabase = async (payments: PaymentData[]) => {
+    try {
+      for (const payment of payments) {
+        const { error } = await supabase
+          .from('payments')
+          .upsert({
+            id: payment.id,
+            user_id: payment.userId,
+            username: payment.userName,
+            amount: payment.amount,
+            type: payment.type,
+            status: payment.status,
+            date: payment.date,
+            method: payment.method,
+            transaction_id: payment.transactionId
+          }, { onConflict: 'id' });
+          
+        if (error) {
+          console.error('Error syncing payment to Supabase:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync payments to Supabase:', err);
+    }
+  };
   
   // Filter payments based on search term
   const filteredPayments = payments.filter(payment => 
@@ -116,21 +219,89 @@ const AdminPaymentsOverview: React.FC = () => {
     .filter(p => p.type === 'referral')
     .reduce((sum, p) => sum + p.amount, 0);
   
-  // Mark payment as paid  
-  const markAsPaid = (paymentId: string) => {
-    const updatedPayments = payments.map(payment => {
-      if (payment.id === paymentId) {
-        return {
-          ...payment,
-          status: 'paid' as const,
-          transactionId: Math.random().toString(36).substring(7).toUpperCase()
-        };
+  // Mark payment as paid and update Supabase
+  const markAsPaid = async (paymentId: string) => {
+    try {
+      // Generate transaction ID
+      const transactionId = Math.random().toString(36).substring(7).toUpperCase();
+      
+      // Update payment in Supabase
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          status: 'paid',
+          transaction_id: transactionId
+        })
+        .eq('id', paymentId);
+        
+      if (error) {
+        console.error('Error updating payment status:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update payment status in database",
+          variant: "destructive"
+        });
+        return;
       }
-      return payment;
-    });
+      
+      // Update local state
+      const updatedPayments = payments.map(payment => {
+        if (payment.id === paymentId) {
+          return {
+            ...payment,
+            status: 'paid' as const,
+            transactionId
+          };
+        }
+        return payment;
+      });
+      
+      setPayments(updatedPayments);
+      
+      // Update localStorage for backward compatibility
+      localStorage.setItem('admin_payments', JSON.stringify(updatedPayments));
+      
+      toast({
+        title: "Success",
+        description: "Payment marked as paid",
+      });
+    } catch (err) {
+      console.error('Failed to mark payment as paid:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exportCSV = () => {
+    const headers = ['User ID', 'Username', 'Amount', 'Type', 'Status', 'Date', 'Method', 'Transaction ID'];
+    const csvData = filteredPayments.map(payment => [
+      payment.userId,
+      payment.userName,
+      payment.amount.toString(),
+      payment.type,
+      payment.status,
+      payment.date,
+      payment.method || '',
+      payment.transactionId || ''
+    ]);
     
-    setPayments(updatedPayments);
-    localStorage.setItem('admin_payments', JSON.stringify(updatedPayments));
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `payments-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -150,7 +321,7 @@ const AdminPaymentsOverview: React.FC = () => {
             />
           </div>
           
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportCSV}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
@@ -213,7 +384,14 @@ const AdminPaymentsOverview: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPayments.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+                  Loading payments...
+                </TableCell>
+              </TableRow>
+            ) : filteredPayments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No payments found
@@ -236,7 +414,7 @@ const AdminPaymentsOverview: React.FC = () => {
                       {payment.type === 'quiz' ? 'Quiz Reward' : 'Referral Bonus'}
                     </span>
                   </TableCell>
-                  <TableCell>{payment.date}</TableCell>
+                  <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
                   <TableCell className="font-medium">₹{payment.amount}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium

@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Clock, Search, Download, Filter, UserCheck, X } from 'lucide-react';
+import { Clock, Search, Download, Filter, UserCheck, X, Loader } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoginLog {
+  id: string;
   username: string;
   date: string;
   successful: boolean;
@@ -28,17 +31,67 @@ interface LoginLog {
 }
 
 const AdminLoginLogs: React.FC = () => {
+  const { toast } = useToast();
   const [loginLogs, setLoginLogs] = useState<LoginLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LoginLog[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load login logs from localStorage
-    const savedLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
-    setLoginLogs(savedLogs);
-    setFilteredLogs(savedLogs);
-  }, []);
+    // Load login logs from Supabase
+    const fetchLoginLogs = async () => {
+      setIsLoading(true);
+      try {
+        // Get login logs from Supabase
+        const { data, error } = await supabase
+          .from('login_logs')
+          .select('*')
+          .order('login_time', { ascending: false });
+          
+        if (error) {
+          console.error('Error fetching login logs:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load login logs from database",
+            variant: "destructive"
+          });
+          
+          // Fall back to localStorage if Supabase fails
+          const savedLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
+          setLoginLogs(savedLogs);
+          setFilteredLogs(savedLogs);
+        } else if (data) {
+          // Transform Supabase data to match our interface
+          const transformedLogs: LoginLog[] = data.map(log => ({
+            id: log.id,
+            username: log.username,
+            date: log.login_time,
+            successful: log.successful !== undefined ? log.successful : true,
+            ip: log.ip_address || '',
+            userAgent: log.device || ''
+          }));
+          
+          setLoginLogs(transformedLogs);
+          setFilteredLogs(transformedLogs);
+          
+          // Also sync with localStorage for backward compatibility
+          localStorage.setItem('quiz_app_login_log', JSON.stringify(transformedLogs));
+        }
+      } catch (err) {
+        console.error('Failed to fetch login logs:', err);
+        
+        // Fall back to localStorage if Supabase fails
+        const savedLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
+        setLoginLogs(savedLogs);
+        setFilteredLogs(savedLogs);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchLoginLogs();
+  }, [toast]);
 
   useEffect(() => {
     let filtered = loginLogs;
@@ -90,11 +143,41 @@ const AdminLoginLogs: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const clearLogs = () => {
+  const clearLogs = async () => {
     if (confirm('Are you sure you want to clear all login logs? This action cannot be undone.')) {
-      localStorage.setItem('quiz_app_login_log', '[]');
-      setLoginLogs([]);
-      setFilteredLogs([]);
+      try {
+        // Clear logs from Supabase
+        const { error } = await supabase
+          .from('login_logs')
+          .delete()
+          .not('id', 'is', null); // Delete all logs
+          
+        if (error) {
+          console.error('Error clearing login logs:', error);
+          toast({
+            title: "Error",
+            description: "Failed to clear login logs from database",
+            variant: "destructive"
+          });
+        } else {
+          // Clear local state and localStorage
+          setLoginLogs([]);
+          setFilteredLogs([]);
+          localStorage.setItem('quiz_app_login_log', '[]');
+          
+          toast({
+            title: "Success",
+            description: "Login logs have been cleared",
+          });
+        }
+      } catch (err) {
+        console.error('Failed to clear login logs:', err);
+        toast({
+          title: "Error",
+          description: "Failed to clear login logs",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -152,7 +235,14 @@ const AdminLoginLogs: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLogs.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+                  Loading login logs...
+                </TableCell>
+              </TableRow>
+            ) : filteredLogs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
@@ -161,7 +251,7 @@ const AdminLoginLogs: React.FC = () => {
               </TableRow>
             ) : (
               filteredLogs.map((log, index) => (
-                <TableRow key={index}>
+                <TableRow key={log.id || index}>
                   <TableCell className="font-medium">{log.username}</TableCell>
                   <TableCell>{formatDate(log.date)}</TableCell>
                   <TableCell>

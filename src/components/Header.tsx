@@ -5,6 +5,7 @@ import { Award, User, Home, UserPlus, Target, Shield } from 'lucide-react';
 import { cn } from "@/utils/animations";
 import { DAILY_TARGET, MONTHLY_TARGET, getPointsForToday, getPointsForMonth } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -30,18 +31,52 @@ const Header: React.FC = () => {
 
   // Get current points data and check login status
   useEffect(() => {
-    const updatePoints = () => {
-      setTodayPoints(getPointsForToday());
-      setMonthlyPoints(getPointsForMonth());
+    const checkAuth = async () => {
+      // Check localStorage for backward compatibility
+      const userData = localStorage.getItem('quiz_app_user_name');
+      setIsLoggedIn(!!userData);
+      setIsAdmin(userData === 'admin' || userData === 'quizadmin');
+      
+      // Also check Supabase session
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data && data.session) {
+          setIsLoggedIn(true);
+          
+          // Check if user has admin role
+          const { data: userRoles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', data.session.user.id);
+            
+          if (userRoles && userRoles.some(role => role.role === 'admin')) {
+            setIsAdmin(true);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check Supabase session:', err);
+      }
     };
+    
+    checkAuth();
+  }, []);
 
-    const userData = localStorage.getItem('quiz_app_user_name');
-    setIsLoggedIn(!!userData);
-    setIsAdmin(userData === 'admin' || userData === 'quizadmin');
+  // Get current points data
+  useEffect(() => {
+    const updatePoints = () => {
+      if (isLoggedIn) {
+        setTodayPoints(getPointsForToday());
+        setMonthlyPoints(getPointsForMonth());
+      }
+    };
     
     if (isLoggedIn) {
       updatePoints();
       window.addEventListener('pointsUpdated', updatePoints);
+    } else {
+      // Reset points if not logged in
+      setTodayPoints(0);
+      setMonthlyPoints(0);
     }
     
     return () => window.removeEventListener('pointsUpdated', updatePoints);

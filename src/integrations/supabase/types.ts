@@ -66,6 +66,7 @@ export type Database = {
           id: string
           ip_address: string | null
           login_time: string | null
+          successful: boolean | null
           user_id: string | null
           username: string
         }
@@ -74,6 +75,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           login_time?: string | null
+          successful?: boolean | null
           user_id?: string | null
           username: string
         }
@@ -82,6 +84,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           login_time?: string | null
+          successful?: boolean | null
           user_id?: string | null
           username?: string
         }
@@ -105,6 +108,42 @@ export type Database = {
           points?: number | null
           user_id?: string
           year_month?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          date: string | null
+          id: string
+          method: string | null
+          status: string
+          transaction_id: string | null
+          type: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          amount: number
+          date?: string | null
+          id?: string
+          method?: string | null
+          status: string
+          transaction_id?: string | null
+          type: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          amount?: number
+          date?: string | null
+          id?: string
+          method?: string | null
+          status?: string
+          transaction_id?: string | null
+          type?: string
+          user_id?: string
+          username?: string
         }
         Relationships: []
       }
@@ -140,6 +179,44 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      quiz_answers: {
+        Row: {
+          answered_at: string | null
+          id: string
+          is_correct: boolean
+          points_earned: number | null
+          question_id: string | null
+          user_answer: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          id?: string
+          is_correct: boolean
+          points_earned?: number | null
+          question_id?: string | null
+          user_answer: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          id?: string
+          is_correct?: boolean
+          points_earned?: number | null
+          question_id?: string | null
+          user_answer?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_questions: {
         Row: {
@@ -195,6 +272,48 @@ export type Database = {
           id?: string
           referee_id?: string
           referrer_id?: string
+        }
+        Relationships: []
+      }
+      user_referrals: {
+        Row: {
+          active_this_month: boolean | null
+          date: string | null
+          earnings: number | null
+          id: string
+          last_active_date: string | null
+          referred_email: string | null
+          referred_id: string
+          referred_name: string
+          referrer_id: string
+          referrer_name: string
+          status: string | null
+        }
+        Insert: {
+          active_this_month?: boolean | null
+          date?: string | null
+          earnings?: number | null
+          id?: string
+          last_active_date?: string | null
+          referred_email?: string | null
+          referred_id: string
+          referred_name: string
+          referrer_id: string
+          referrer_name: string
+          status?: string | null
+        }
+        Update: {
+          active_this_month?: boolean | null
+          date?: string | null
+          earnings?: number | null
+          id?: string
+          last_active_date?: string | null
+          referred_email?: string | null
+          referred_id?: string
+          referred_name?: string
+          referrer_id?: string
+          referrer_name?: string
+          status?: string | null
         }
         Relationships: []
       }
