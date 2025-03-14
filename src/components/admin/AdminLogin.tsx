@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
@@ -39,7 +40,60 @@ const AdminLogin: React.FC = () => {
     }
 
     try {
-      const { error } = await signIn(username, password);
+      console.log('Attempting admin login with username:', username);
+      
+      let email = username;
+      
+      // If the input doesn't look like an email, try to look up the email by username
+      if (!username.includes('@')) {
+        console.log('Looking up email for username:', username);
+        
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', username)
+          .single();
+          
+        if (profileError) {
+          console.error('Profile lookup error:', profileError);
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid username or password",
+            variant: "destructive"
+          });
+          setIsLoggingIn(false);
+          return;
+        }
+        
+        // Use the email directly for the admin user
+        if (username === 'quizadmin') {
+          email = 'quizadmin@quizpoints.com';
+          console.log('Using admin email:', email);
+        } else {
+          // For other users, get their email from users table
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('email')
+            .eq('id', profileData.id)
+            .single();
+            
+          if (userError || !userData) {
+            console.error('User email lookup failed:', userError);
+            toast({
+              title: "Authentication Failed",
+              description: "User email not found",
+              variant: "destructive"
+            });
+            setIsLoggingIn(false);
+            return;
+          }
+          
+          email = userData.email;
+        }
+      }
+      
+      console.log('Signing in with email:', email);
+      const { error } = await signIn(email, password);
       
       if (error) {
         throw error;
