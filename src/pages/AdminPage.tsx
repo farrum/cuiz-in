@@ -8,8 +8,9 @@ import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
-import { STORAGE_KEYS } from '@/utils/quizData';
-import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus } from 'lucide-react';
+import { QuizManagement } from '@/components/admin/ad-management';
+import { STORAGE_KEYS, syncAllDataToSupabase } from '@/utils/quizData';
+import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Admin credentials
@@ -46,6 +47,9 @@ const AdminPage: React.FC = () => {
         variant: "destructive"
       });
       navigate('/');
+    } else {
+      // If admin, trigger data sync
+      syncAllDataToSupabase();
     }
   }, [navigate, toast]);
 
@@ -77,7 +81,7 @@ const AdminPage: React.FC = () => {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-5 gap-2">
+          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-6 gap-2">
             <TabsTrigger value="users" className="flex items-center justify-center">
               <Users className="w-4 h-4 mr-2" />
               <span>Users</span>
@@ -97,6 +101,10 @@ const AdminPage: React.FC = () => {
             <TabsTrigger value="ad-management" className="flex items-center justify-center">
               <Layout className="w-4 h-4 mr-2" />
               <span>Ads</span>
+            </TabsTrigger>
+            <TabsTrigger value="quiz-management" className="flex items-center justify-center">
+              <BookOpen className="w-4 h-4 mr-2" />
+              <span>Quiz</span>
             </TabsTrigger>
           </TabsList>
           
@@ -118,6 +126,10 @@ const AdminPage: React.FC = () => {
           
           <TabsContent value="ad-management" className="space-y-6">
             <AdminAdManagement />
+          </TabsContent>
+          
+          <TabsContent value="quiz-management" className="space-y-6">
+            <QuizManagement />
           </TabsContent>
         </Tabs>
       </main>
