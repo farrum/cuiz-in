@@ -9,7 +9,8 @@ import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import { QuizManagement } from '@/components/admin/ad-management';
-import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
+import UserRoleManagement from '@/components/admin/UserRoleManagement';
+import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,10 +71,14 @@ const AdminPage: React.FC = () => {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-6 gap-2">
+          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-7 gap-2">
             <TabsTrigger value="users" className="flex items-center justify-center">
               <Users className="w-4 h-4 mr-2" />
               <span>Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="flex items-center justify-center">
+              <UserCog className="w-4 h-4 mr-2" />
+              <span>Roles</span>
             </TabsTrigger>
             <TabsTrigger value="referrals" className="flex items-center justify-center">
               <UserPlus className="w-4 h-4 mr-2" />
@@ -99,6 +104,10 @@ const AdminPage: React.FC = () => {
           
           <TabsContent value="users" className="space-y-6">
             <AdminUserManagement />
+          </TabsContent>
+          
+          <TabsContent value="roles" className="space-y-6">
+            <UserRoleManagement />
           </TabsContent>
           
           <TabsContent value="referrals" className="space-y-6">

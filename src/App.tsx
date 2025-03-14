@@ -17,6 +17,7 @@ import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TeamMembersList from "./pages/TeamMembersList";
+import TeamLeaderDashboard from "./pages/TeamLeaderDashboard";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,11 @@ const App = () => (
             <Route path="/team-members" element={
               <ProtectedRoute allowedRoles={['admin', 'team_leader']}>
                 <TeamMembersList />
+              </ProtectedRoute>
+            } />
+            <Route path="/team-leader" element={
+              <ProtectedRoute allowedRoles={['admin', 'team_leader']}>
+                <TeamLeaderDashboard />
               </ProtectedRoute>
             } />
             <Route path="/login" element={<LoginPage />} />
