@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,43 +46,7 @@ const AdminLogin: React.FC = () => {
         const adminEmail = 'quizadmin@quizpoints.com';
         console.log('Admin login attempt with email:', adminEmail);
         
-        // First, check if admin user exists by listing users and filtering
-        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-        
-        if (usersError) {
-          console.error('Error listing users:', usersError);
-          toast({
-            title: "Error",
-            description: "Failed to check for admin user",
-            variant: "destructive"
-          });
-          setIsLoggingIn(false);
-          return;
-        }
-        
-        // Define a proper type for user objects
-        interface AuthUser {
-          id: string;
-          email?: string;
-        }
-        
-        // Type assertion to handle the users array with proper type checking
-        const adminUser = usersData?.users?.find((u: any): u is AuthUser => {
-          // Type-safe property check
-          return u !== null && 
-                 typeof u === 'object' && 
-                 'email' in u && 
-                 typeof u.email === 'string' && 
-                 u.email === adminEmail;
-        });
-        
-        if (!adminUser) {
-          console.log('Admin user does not exist, creating it now');
-          // Create the admin user if not exists
-          await createAdminUser(password);
-        }
-        
-        // Try logging in with admin credentials
+        // Direct login attempt for admin user
         const { error, data } = await signIn(adminEmail, password);
         
         if (error) {
@@ -96,18 +61,8 @@ const AdminLogin: React.FC = () => {
         }
         
         console.log('Admin login successful, refreshing role');
-        // Ensure admin role is set
+        // Refresh role to ensure admin privileges
         await refreshUserRole();
-        await ensureAdminRole();
-        
-        if (userRole !== 'admin') {
-          toast({
-            title: "Role Assignment",
-            description: "Setting up admin privileges...",
-          });
-          // Force a refresh to ensure the admin role is applied
-          await refreshUserRole();
-        }
         
         navigate('/admin');
         setIsLoggingIn(false);
@@ -137,28 +92,20 @@ const AdminLogin: React.FC = () => {
           return;
         }
         
-        // Get user email from auth.users
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
+        // Try to sign in directly with the username/password
+        const { error } = await signIn(email, password);
         
-        if (userError || !userData) {
-          console.error('User email lookup failed:', userError);
-          toast({
-            title: "Authentication Failed",
-            description: "User email not found",
-            variant: "destructive"
-          });
-          setIsLoggingIn(false);
-          return;
+        if (error) {
+          throw error;
         }
+      } else {
+        // Email-based login
+        console.log('Signing in with email:', email);
+        const { error } = await signIn(email, password);
         
-        email = userData.user.email || '';
-      }
-      
-      console.log('Signing in with email:', email);
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
       }
       
       // Refresh the user role after login
@@ -185,117 +132,6 @@ const AdminLogin: React.FC = () => {
       });
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-  
-  // Helper function to create admin user
-  const createAdminUser = async (password: string) => {
-    try {
-      console.log('Creating admin user...');
-      
-      // Create admin user with specified credentials
-      const { data: adminUser, error: signUpError } = await supabase.auth.admin.createUser({
-        email: 'quizadmin@quizpoints.com',
-        password: password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: 'Quiz Admin',
-        }
-      });
-      
-      if (signUpError) {
-        console.error('Error creating admin user:', signUpError);
-        return false;
-      }
-      
-      if (adminUser?.user) {
-        console.log('Admin user created with ID:', adminUser.user.id);
-        
-        // Update the admin's username
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ 
-            username: 'quizadmin',
-            points: 999
-          })
-          .eq('id', adminUser.user.id);
-          
-        if (profileError) {
-          console.error('Error updating admin profile:', profileError);
-        } else {
-          console.log('Admin profile updated successfully');
-        }
-        
-        // Assign admin role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: adminUser.user.id,
-            role: 'admin'
-          });
-          
-        if (roleError) {
-          console.error('Error assigning admin role:', roleError);
-        } else {
-          console.log('Admin user role assigned successfully');
-        }
-        
-        return true;
-      }
-    } catch (error) {
-      console.error('Error in admin user creation:', error);
-      return false;
-    }
-    
-    return false;
-  };
-  
-  // Helper function to ensure admin role
-  const ensureAdminRole = async () => {
-    if (!user) return;
-    
-    try {
-      console.log('Ensuring admin role for user ID:', user.id);
-      
-      // Check if user already has admin role
-      const { data: existingRole, error: checkError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-        
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking admin role:', checkError);
-      }
-        
-      // If no admin role exists and the user email matches admin email, add it
-      if (!existingRole && user.email === 'quizadmin@quizpoints.com') {
-        console.log('Setting admin role for quizadmin');
-        
-        // Delete any existing roles first
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', user.id);
-          
-        // Set admin role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: 'admin'
-          });
-          
-        if (roleError) {
-          console.error('Error setting admin role:', roleError);
-        } else {
-          console.log('Admin role set successfully');
-          await refreshUserRole();
-        }
-      }
-    } catch (error) {
-      console.error('Error ensuring admin role:', error);
     }
   };
 

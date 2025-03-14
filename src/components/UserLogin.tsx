@@ -38,161 +38,7 @@ const UserLogin: React.FC = () => {
 
   // Initialize test users if needed
   useEffect(() => {
-    const initializeUsers = async () => {
-      if (isInitializing) return;
-      
-      try {
-        setIsInitializing(true);
-        
-        // Check if admin user exists by listing users and filtering
-        console.log('Checking for admin user...');
-        const adminEmail = 'quizadmin@quizpoints.com';
-        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-        
-        if (usersError) {
-          console.error('Error listing users:', usersError);
-          return;
-        }
-        
-        // Properly type and filter user data with type safety
-        interface AuthUser {
-          id: string;
-          email?: string;
-        }
-        
-        // Type assertion to handle the users array
-        const adminUser = usersData?.users?.find((u: any): u is AuthUser => {
-          // Safe access the email property with type check
-          return u !== null && 
-                 typeof u === 'object' && 
-                 'email' in u && 
-                 typeof u.email === 'string' && 
-                 u.email === adminEmail;
-        });
-        
-        if (!adminUser) {
-          console.log('Creating admin user...');
-          
-          // Create admin user
-          const { data: adminUser, error: adminError } = await supabase.auth.admin.createUser({
-            email: adminEmail,
-            password: '!Quizzer123',
-            email_confirm: true,
-            user_metadata: {
-              full_name: 'Quiz Admin'
-            }
-          });
-          
-          if (adminError) {
-            console.error('Error creating admin user:', adminError);
-          } else if (adminUser?.user) {
-            console.log('Admin user created with ID:', adminUser.user.id);
-            
-            // Update profile
-            await supabase
-              .from('profiles')
-              .update({ 
-                username: 'quizadmin',
-                points: 999
-              })
-              .eq('id', adminUser.user.id);
-              
-            // Assign admin role
-            await supabase
-              .from('user_roles')
-              .insert({
-                user_id: adminUser.user.id,
-                role: 'admin'
-              });
-              
-            console.log('Admin user setup complete');
-          }
-        } else {
-          console.log('Admin user already exists');
-          
-          // Ensure admin has the admin role
-          const { error: roleCheckError, data: existingRole } = await supabase
-            .from('user_roles')
-            .select('*')
-            .eq('user_id', adminUser.id)
-            .eq('role', 'admin')
-            .maybeSingle();
-            
-          if (!existingRole && (!roleCheckError || roleCheckError.code === 'PGRST116')) {
-            console.log('Setting admin role for existing admin user');
-            
-            await supabase
-              .from('user_roles')
-              .insert({
-                user_id: adminUser.id,
-                role: 'admin'
-              });
-          }
-        }
-        
-        // Check for a test user
-        const testEmail = 'testuser@example.com';
-        console.log('Checking for test user...');
-        
-        // Type assertion to handle the users array with the same type safety
-        const testUser = usersData?.users?.find((u: any): u is AuthUser => {
-          // Safe access the email property with type check
-          return u !== null && 
-                 typeof u === 'object' && 
-                 'email' in u && 
-                 typeof u.email === 'string' && 
-                 u.email === testEmail;
-        });
-        
-        if (!testUser) {
-          console.log('Creating test user...');
-          
-          // Create test user
-          const { data: testUser, error: testError } = await supabase.auth.admin.createUser({
-            email: testEmail,
-            password: 'Password123!',
-            email_confirm: true,
-            user_metadata: {
-              full_name: 'Test User'
-            }
-          });
-          
-          if (testError) {
-            console.error('Error creating test user:', testError);
-          } else if (testUser?.user) {
-            console.log('Test user created with ID:', testUser.user.id);
-            
-            // Update profile
-            await supabase
-              .from('profiles')
-              .update({ 
-                username: 'testuser',
-                points: 50
-              })
-              .eq('id', testUser.user.id);
-              
-            // Assign player role
-            await supabase
-              .from('user_roles')
-              .insert({
-                user_id: testUser.user.id,
-                role: 'player'
-              });
-              
-            console.log('Test user setup complete');
-          }
-        } else {
-          console.log('Test user already exists');
-        }
-        
-      } catch (error) {
-        console.error('Error initializing users:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    
-    initializeUsers();
+    // Skip initialization to avoid admin-level operations
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -253,16 +99,9 @@ const UserLogin: React.FC = () => {
         console.error('Profile lookup error:', profileError);
         throw new Error('Invalid username or password');
       }
-      
-      // Get user from auth.users
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
-      
-      if (userError || !userData?.user?.email) {
-        console.error('User lookup error:', userError);
-        throw new Error('User email not found');
-      }
-      
-      const { error } = await signIn(userData.user.email, password);
+
+      // Try to sign in directly with the identifier as username
+      const { error } = await signIn(identifier, password);
       
       if (error) {
         throw error;
@@ -395,12 +234,6 @@ const UserLogin: React.FC = () => {
               </Link>
             </p>
           </div>
-          
-          {isInitializing && (
-            <div className="text-center mt-2">
-              <p className="text-xs text-muted-foreground">Setting up demo accounts...</p>
-            </div>
-          )}
         </form>
       </div>
 
