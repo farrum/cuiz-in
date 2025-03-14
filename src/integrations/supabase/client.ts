@@ -9,4 +9,82 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create a singleton instance of the Supabase client
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  }
+);
+
+// Helper function to synchronize localStorage data with Supabase
+export const syncDataWithSupabase = async (
+  tableName: string, 
+  localStorageKey: string, 
+  transform?: (item: any) => any
+) => {
+  try {
+    // Get data from localStorage
+    const localData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+    if (!localData || localData.length === 0) return;
+    
+    console.log(`Syncing ${localData.length} items from ${localStorageKey} to ${tableName}...`);
+    
+    // For each item in localStorage, upsert to Supabase
+    for (const item of localData) {
+      const dataToInsert = transform ? transform(item) : item;
+      
+      const { error } = await supabase
+        .from(tableName)
+        .upsert(dataToInsert, { onConflict: 'id' });
+        
+      if (error) {
+        console.error(`Error syncing data to ${tableName}:`, error);
+      }
+    }
+    
+    console.log(`Data sync to ${tableName} completed`);
+  } catch (err) {
+    console.error(`Failed to sync ${localStorageKey} to Supabase:`, err);
+  }
+};
+
+// Helper function to get data from Supabase and update localStorage
+export const fetchDataFromSupabase = async (
+  tableName: string, 
+  localStorageKey: string,
+  transform?: (item: any) => any
+) => {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error(`Error fetching data from ${tableName}:`, error);
+      return;
+    }
+    
+    if (data && data.length > 0) {
+      const transformedData = transform ? data.map(transform) : data;
+      localStorage.setItem(localStorageKey, JSON.stringify(transformedData));
+      console.log(`Updated ${localStorageKey} with ${data.length} items from Supabase`);
+      return transformedData;
+    }
+  } catch (err) {
+    console.error(`Failed to fetch data from ${tableName}:`, err);
+  }
+  
+  return null;
+};

@@ -15,19 +15,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-// Check if username is admin
 const isAdmin = (username: string): boolean => {
   return username === 'quizadmin';
 };
 
-// Log login activity
 const logLogin = async (username: string, successful: boolean) => {
-  // Log to localStorage for backward compatibility
   const loginLog = {
     username,
     date: new Date().toISOString(),
     successful,
-    ip: '127.0.0.1', // In a real app, this would be the actual IP
+    ip: '127.0.0.1',
     userAgent: navigator.userAgent
   };
   
@@ -35,13 +32,12 @@ const logLogin = async (username: string, successful: boolean) => {
   logins.push(loginLog);
   localStorage.setItem('quiz_app_login_log', JSON.stringify(logins));
   
-  // Log to Supabase
   try {
     const { error } = await supabase
       .from('login_logs')
       .insert({
         username: username,
-        ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+        ip_address: '127.0.0.1',
         device: navigator.userAgent,
         login_time: new Date().toISOString(),
         successful: successful
@@ -70,7 +66,6 @@ const UserLogin: React.FC = () => {
     e.preventDefault();
     setIsLoggingIn(true);
 
-    // Simple validation
     if (!username || !password) {
       toast({
         title: "Error",
@@ -82,7 +77,6 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // Check if admin credentials
     if (isAdmin(username)) {
       toast({
         title: "Admin Login",
@@ -96,35 +90,62 @@ const UserLogin: React.FC = () => {
     }
 
     try {
-      // Try to authenticate with Supabase first
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: `${username}@example.com`, // Using username as email for this example
-        password: password
-      });
-      
-      if (error) {
-        console.log('Supabase auth error, falling back to local auth:', error);
-      } else if (data.user) {
-        // Successful Supabase authentication
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
-        
-        toast({
-          title: "Success",
-          description: "You have successfully logged in",
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (!profileError && profileData) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: `${username}@example.com`,
+          password: password
         });
         
-        await logLogin(username, true);
-        
-        navigate('/');
-        setIsLoggingIn(false);
-        return;
+        if (error) {
+          console.log('Supabase auth error, falling back to local auth:', error);
+          if (error.message.includes('Invalid login credentials')) {
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: `${username}@example.com`,
+              password: password,
+              options: {
+                data: {
+                  username: username
+                }
+              }
+            });
+            
+            if (!signUpError) {
+              localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+              toast({
+                title: "Success",
+                description: "Account created and logged in",
+              });
+              await logLogin(username, true);
+              navigate('/');
+              setIsLoggingIn(false);
+              return;
+            }
+          }
+        } else if (data.user) {
+          localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+          
+          toast({
+            title: "Success",
+            description: "You have successfully logged in",
+          });
+          
+          await logLogin(username, true);
+          
+          navigate('/');
+          setIsLoggingIn(false);
+          return;
+        }
       }
     } catch (err) {
       console.error('Supabase auth error:', err);
     }
 
-    // Fallback to local authentication
-    // Check if the user exists in the admin users list
     const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
     const user = adminUsers.find((u: any) => 
       u.name.toLowerCase() === username.toLowerCase() || 
@@ -132,12 +153,10 @@ const UserLogin: React.FC = () => {
     );
 
     if (user) {
-      // For this example, we're not checking passwords since they're not stored securely
       localStorage.setItem(STORAGE_KEYS.USER_NAME, user.name);
       localStorage.setItem('quiz_app_user_email', user.email);
       localStorage.setItem('quiz_app_user_phone', user.mobile || '');
       
-      // Initialize points if first time
       if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, user.points.toString() || '0');
       }
@@ -147,19 +166,15 @@ const UserLogin: React.FC = () => {
         description: "You have successfully logged in",
       });
       
-      // Log the successful login
       await logLogin(user.name, true);
       
-      // Sync user data with Supabase
       try {
-        // Check if user exists in profiles table
         const { data: profiles } = await supabase
           .from('profiles')
           .select('*')
           .eq('username', user.name);
           
         if (!profiles || profiles.length === 0) {
-          // Add user to profiles if not exists
           await supabase
             .from('profiles')
             .insert({
@@ -179,10 +194,8 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // For regular users not in admin list, just store their username
     localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
     
-    // Initialize points if first time
     if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, '0');
     }
@@ -192,14 +205,13 @@ const UserLogin: React.FC = () => {
       description: "You have successfully logged in",
     });
     
-    // Log the successful login
     await logLogin(username, true);
     
     navigate('/');
     setIsLoggingIn(false);
   };
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsResetting(true);
 
@@ -213,9 +225,22 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // In a real app, you would send a password reset email
-    // For this demo, we'll just display a success message
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      
+      if (error) {
+        console.error('Error sending reset password:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send password reset email. " + error.message,
+          variant: "destructive"
+        });
+        setIsResetting(false);
+        return;
+      }
+      
       toast({
         title: "Password Reset Email Sent",
         description: "Check your email for instructions to reset your password",
@@ -223,7 +248,15 @@ const UserLogin: React.FC = () => {
       setResetDialogOpen(false);
       setIsResetting(false);
       setResetEmail('');
-    }, 1500);
+    } catch (err) {
+      console.error('Error in password reset:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -299,7 +332,6 @@ const UserLogin: React.FC = () => {
         </form>
       </div>
 
-      {/* Password Reset Dialog */}
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -346,4 +378,3 @@ const UserLogin: React.FC = () => {
 };
 
 export default UserLogin;
-

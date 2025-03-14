@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,33 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+
+  // Check Supabase session
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error checking auth session:', error);
+        setIsAuthenticated(false);
+        return;
+      }
+      
+      if (data.session) {
+        setIsAuthenticated(true);
+      } else if (userName) {
+        // If no Supabase session but we have a userName in localStorage,
+        // we'll still consider the user authenticated for backward compatibility
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkSession();
+  }, [userName]);
 
   // Sync login data with Supabase
   useEffect(() => {
@@ -37,6 +63,30 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         if (error) {
           console.error('Error logging login data:', error);
         }
+        
+        // Also check if user exists in profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', userName)
+          .maybeSingle();
+          
+        if (profileError) {
+          console.error('Error checking user profile:', profileError);
+        } else if (!profileData) {
+          // Create profile if it doesn't exist
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: Math.random().toString(36).substring(2), // Generate a random ID
+              username: userName,
+              points: parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0')
+            });
+            
+          if (insertError) {
+            console.error('Error creating user profile:', insertError);
+          }
+        }
       } catch (err) {
         console.error('Failed to sync login data with Supabase:', err);
       }
@@ -46,16 +96,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }, [userName]);
 
   useEffect(() => {
-    if (!userName) {
+    if (isAuthenticated === false) {
       toast({
         title: "Access Denied",
         description: "Please log in to access this page",
         variant: "destructive"
       });
     }
-  }, [toast, userName]);
+  }, [toast, isAuthenticated]);
 
-  if (!userName) {
+  // Show loading state
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAuthenticated === false) {
     // Log the attempted access
     const accessAttempt = {
       date: new Date().toISOString(),
