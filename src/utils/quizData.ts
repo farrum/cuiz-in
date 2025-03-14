@@ -207,5 +207,7 @@ export const STORAGE_KEYS = {
   COMPLETED_QUIZZES: 'quiz_app_completed_quizzes',
   USER_QUIZ_HISTORY: 'quiz_app_user_quiz_history',
   ADMIN_USERNAME: 'quiz_app_admin_username',
-  ADMIN_AUTH: 'quiz_app_admin_auth'
+  ADMIN_AUTH: 'quiz_app_admin_auth',
+  COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
+  REFERRALS: 'quiz_app_referrals'
 };

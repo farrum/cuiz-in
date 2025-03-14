@@ -39,7 +39,7 @@ const Header: React.FC = () => {
     
     // Check if user is admin
     const userData = localStorage.getItem('quiz_app_user_name');
-    setIsAdmin(userData === 'admin');
+    setIsAdmin(userData === 'admin' || userData === 'quizadmin');
     
     return () => window.removeEventListener('pointsUpdated', updatePoints);
   }, []);
@@ -63,10 +63,11 @@ const Header: React.FC = () => {
             <span className="text-xl font-semibold">QuizPoints</span>
           </Link>
           
-          {/* Smaller progress bars for daily and monthly targets */}
-          <div className="hidden md:flex flex-col gap-1 w-40">
+          {/* Progress bars for daily and monthly targets with clearer labels */}
+          <div className="hidden md:flex flex-col gap-1 w-44">
             <div className="flex text-xs items-center gap-1">
               <Target className="w-3 h-3 text-muted-foreground" />
+              <span className="text-xs whitespace-nowrap">Daily:</span>
               <div className="flex-1">
                 <Progress value={dailyProgress} className="h-1.5" />
               </div>
@@ -74,6 +75,7 @@ const Header: React.FC = () => {
             </div>
             <div className="flex text-xs items-center gap-1">
               <Target className="w-3 h-3 text-muted-foreground" />
+              <span className="text-xs whitespace-nowrap">Monthly:</span>
               <div className="flex-1">
                 <Progress value={monthlyProgress} className="h-1.5" />
               </div>

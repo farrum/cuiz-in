@@ -11,6 +11,8 @@ import Profile from "./pages/Profile";
 import Registration from "./pages/Registration";
 import ReferralPage from "./pages/ReferralPage";
 import AdminPage from "./pages/AdminPage";
+import LoginPage from "./pages/LoginPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

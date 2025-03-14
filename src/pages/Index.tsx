@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Award, UserPlus, DollarSign, ArrowRight } from 'lucide-react';
+import { Award, UserPlus, DollarSign, ArrowRight, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -21,19 +20,15 @@ const Index: React.FC = () => {
       setHasStarted(true);
     }
     
-    // If a referral code is in the URL, award bonus points
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
     
     if (refCode && !localStorage.getItem(`ref_used_${refCode}`)) {
-      // Mark referral as used
       localStorage.setItem(`ref_used_${refCode}`, 'true');
       
-      // Add 10 bonus points for using a referral link
       const currentPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, (currentPoints + 10).toString());
       
-      // Show welcome toast with bonus
       setTimeout(() => {
         toast({
           title: "Welcome Bonus!",
@@ -47,7 +42,6 @@ const Index: React.FC = () => {
     if (userName) {
       navigate('/quiz');
     } else {
-      // Instead of showing name input, navigate to registration page
       navigate('/register');
     }
   };
@@ -57,7 +51,6 @@ const Index: React.FC = () => {
     if (userName.trim()) {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, userName);
       
-      // Initialize points if first time
       if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, '0');
       }
@@ -65,7 +58,6 @@ const Index: React.FC = () => {
       setHasStarted(true);
       setShowNameInput(false);
       
-      // Navigate to quiz after a brief delay
       setTimeout(() => {
         navigate('/quiz');
       }, 500);
@@ -77,7 +69,6 @@ const Index: React.FC = () => {
       <Header />
       
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
-        {/* Animated backgrounds */}
         <div className="animated-bg top-1/4 left-1/4 w-80 h-80 rounded-full bg-primary/20" />
         <div className="animated-bg bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/20" />
         
@@ -120,16 +111,39 @@ const Index: React.FC = () => {
             </form>
           ) : (
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12 animate-fade-in">
-              <Button 
-                size="lg" 
-                onClick={handleStartClick}
-                className="btn-shine text-lg group"
-              >
-                {hasStarted ? 'Continue Playing' : 'Start Playing'}
-                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-              
               {hasStarted ? (
+                <Button 
+                  size="lg" 
+                  onClick={handleStartClick}
+                  className="btn-shine text-lg group"
+                >
+                  Continue Playing
+                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    size="lg" 
+                    onClick={() => navigate('/register')}
+                    className="btn-shine text-lg group"
+                  >
+                    Register
+                    <UserPlus className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => navigate('/login')}
+                    className="text-lg group"
+                  >
+                    Login
+                    <LogIn className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </>
+              )}
+              
+              {hasStarted && (
                 <Button 
                   variant="outline" 
                   size="lg"
@@ -137,16 +151,6 @@ const Index: React.FC = () => {
                   className="text-lg"
                 >
                   View Profile
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => navigate('/register')}
-                  className="text-lg group"
-                >
-                  Register
-                  <UserPlus className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               )}
             </div>
