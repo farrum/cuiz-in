@@ -44,16 +44,24 @@ const UserLogin: React.FC = () => {
       try {
         setIsInitializing(true);
         
-        // Check if admin user exists
+        // Check if admin user exists by listing users and filtering
         console.log('Checking for admin user...');
-        const { data: adminCheck } = await supabase.auth.admin.getUserByEmail('quizadmin@quizpoints.com');
+        const adminEmail = 'quizadmin@quizpoints.com';
+        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
         
-        if (!adminCheck?.user) {
+        if (usersError) {
+          console.error('Error listing users:', usersError);
+          return;
+        }
+        
+        const adminUser = usersData?.users?.find(u => u.email === adminEmail);
+        
+        if (!adminUser) {
           console.log('Creating admin user...');
           
           // Create admin user
           const { data: adminUser, error: adminError } = await supabase.auth.admin.createUser({
-            email: 'quizadmin@quizpoints.com',
+            email: adminEmail,
             password: '!Quizzer123',
             email_confirm: true,
             user_metadata: {
@@ -92,7 +100,7 @@ const UserLogin: React.FC = () => {
           const { error: roleCheckError, data: existingRole } = await supabase
             .from('user_roles')
             .select('*')
-            .eq('user_id', adminCheck.user.id)
+            .eq('user_id', adminUser.id)
             .eq('role', 'admin')
             .maybeSingle();
             
@@ -102,7 +110,7 @@ const UserLogin: React.FC = () => {
             await supabase
               .from('user_roles')
               .insert({
-                user_id: adminCheck.user.id,
+                user_id: adminUser.id,
                 role: 'admin'
               });
           }
@@ -111,9 +119,10 @@ const UserLogin: React.FC = () => {
         // Check for a test user
         const testEmail = 'testuser@example.com';
         console.log('Checking for test user...');
-        const { data: testCheck } = await supabase.auth.admin.getUserByEmail(testEmail);
         
-        if (!testCheck?.user) {
+        const testUser = usersData?.users?.find(u => u.email === testEmail);
+        
+        if (!testUser) {
           console.log('Creating test user...');
           
           // Create test user
@@ -224,9 +233,10 @@ const UserLogin: React.FC = () => {
       }
       
       // Get user from auth.users
-      const { data: userData } = await supabase.auth.admin.getUserById(profileData.id);
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
       
-      if (!userData?.user?.email) {
+      if (userError || !userData?.user?.email) {
+        console.error('User lookup error:', userError);
         throw new Error('User email not found');
       }
       

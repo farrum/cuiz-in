@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,10 +45,23 @@ const AdminLogin: React.FC = () => {
         const adminEmail = 'quizadmin@quizpoints.com';
         console.log('Admin login attempt with email:', adminEmail);
         
-        // First, check if admin user exists
-        const { data: adminUserData } = await supabase.auth.admin.getUserByEmail(adminEmail);
+        // First, check if admin user exists by listing users and filtering
+        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
         
-        if (!adminUserData?.user) {
+        if (usersError) {
+          console.error('Error listing users:', usersError);
+          toast({
+            title: "Error",
+            description: "Failed to check for admin user",
+            variant: "destructive"
+          });
+          setIsLoggingIn(false);
+          return;
+        }
+        
+        const adminUser = usersData?.users?.find(u => u.email === adminEmail);
+        
+        if (!adminUser) {
           console.log('Admin user does not exist, creating it now');
           // Create the admin user if not exists
           await createAdminUser(password);
