@@ -12,22 +12,35 @@ import { QuizManagement } from '@/components/admin/ad-management';
 import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, userRole } = useAuth();
+  const { user, isAdmin, userRole, refreshUserRole } = useAuth();
   
   useEffect(() => {
-    if (!user || userRole !== 'admin') {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access the admin area.",
-        variant: "destructive"
-      });
-      navigate('/');
-    }
-  }, [navigate, toast, user, userRole]);
+    const checkAdminAccess = async () => {
+      // Refresh role to make sure we have the latest data
+      if (user) {
+        await refreshUserRole();
+      }
+      
+      if (!user || userRole !== 'admin') {
+        console.log('Access denied to admin page. User:', user?.id, 'Role:', userRole);
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access the admin area.",
+          variant: "destructive"
+        });
+        navigate('/');
+      } else {
+        console.log('Admin access granted for user:', user.id);
+      }
+    };
+    
+    checkAdminAccess();
+  }, [navigate, toast, user, userRole, refreshUserRole]);
 
   if (!user || userRole !== 'admin') {
     return (
