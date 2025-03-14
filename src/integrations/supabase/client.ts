@@ -9,6 +9,9 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Define a type that includes all valid table names
+type TableName = keyof Database['public']['Tables'];
+
 // Create a singleton instance of the Supabase client
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
@@ -45,7 +48,7 @@ export const syncDataWithSupabase = async (
       const dataToInsert = transform ? transform(item) : item;
       
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .upsert(dataToInsert, { onConflict: 'id' });
         
       if (error) {
@@ -67,7 +70,7 @@ export const fetchDataFromSupabase = async (
 ) => {
   try {
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as TableName)
       .select('*')
       .order('created_at', { ascending: false });
       
