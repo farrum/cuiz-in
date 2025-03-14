@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -365,15 +367,81 @@ export const quizQuestions: QuizQuestion[] = [
   }
 ];
 
-export const getRandomQuestion = (): QuizQuestion => {
-  const randomIndex = Math.floor(Math.random() * quizQuestions.length);
-  return quizQuestions[randomIndex];
+export const getRandomQuestion = async (): Promise<QuizQuestion> => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .order('created_at')
+      .limit(1);
+      
+    if (error || !data || data.length === 0) {
+      const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+      return quizQuestions[randomIndex];
+    }
+    
+    const question = data[0];
+    const options = Array.isArray(question.options) 
+      ? question.options.map(String) 
+      : typeof question.options === 'object' 
+        ? Object.values(question.options as Record<string, any>).map(String) 
+        : [];
+        
+    return {
+      id: question.id,
+      question: question.question,
+      options: options,
+      correctAnswer: question.correct_answer,
+      difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
+      category: question.category || 'General Knowledge',
+      points: 10,
+      explanation: question.explanation || ''
+    };
+  } catch (error) {
+    console.error('Error fetching random question:', error);
+    const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+    return quizQuestions[randomIndex];
+  }
 };
 
-export const getRandomQuestions = (count: number): QuizQuestion[] => {
-  const questions = [...quizQuestions];
-  const shuffled = questions.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+export const getRandomQuestions = async (count: number): Promise<QuizQuestion[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .order('created_at')
+      .limit(count);
+      
+    if (error || !data || data.length === 0) {
+      const questions = [...quizQuestions];
+      const shuffled = questions.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+    
+    return data.map(question => {
+      const options = Array.isArray(question.options) 
+        ? question.options.map(String) 
+        : typeof question.options === 'object' 
+          ? Object.values(question.options as Record<string, any>).map(String) 
+          : [];
+          
+      return {
+        id: question.id,
+        question: question.question,
+        options: options,
+        correctAnswer: question.correct_answer,
+        difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
+        category: question.category || 'General Knowledge',
+        points: 10,
+        explanation: question.explanation || ''
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching random questions:', error);
+    const questions = [...quizQuestions];
+    const shuffled = questions.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
 };
 
 export const calculateCashAmount = (points: number): number => {
@@ -393,72 +461,171 @@ export const DAILY_TARGET = 400;
 export const MONTHLY_TARGET = 12000;
 export const MONTHLY_REWARD = 8000;
 
-export const hasCompletedDailyTarget = (points: number): boolean => {
-  const todayPoints = getPointsForToday();
-  return todayPoints >= DAILY_TARGET;
-};
-
-export const hasCompletedMonthlyTarget = (points: number): boolean => {
-  const monthlyPoints = getPointsForMonth();
-  return monthlyPoints >= MONTHLY_TARGET;
-};
-
-export const getPointsForToday = (): number => {
-  const today = new Date().toISOString().split('T')[0];
-  const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
-  return dailyLog[today] || 0;
-};
-
-export const getPointsForMonth = (): number => {
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
-  return monthlyLog[currentMonth] || 0;
-};
-
-export const logPointsForDay = (pointsEarned: number): void => {
-  const today = new Date().toISOString().split('T')[0];
-  const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
+export const hasCompletedDailyTarget = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
   
-  if (!dailyLog[today]) {
-    dailyLog[today] = 0;
-  }
-  
-  dailyLog[today] += pointsEarned;
-  localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyLog));
-};
-
-export const logPointsForMonth = (pointsEarned: number): void => {
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
-  
-  if (!monthlyLog[currentMonth]) {
-    monthlyLog[currentMonth] = 0;
-  }
-  
-  monthlyLog[currentMonth] += pointsEarned;
-  localStorage.setItem('quiz_app_monthly_points', JSON.stringify(monthlyLog));
-  
-  if (monthlyLog[currentMonth] >= MONTHLY_TARGET) {
-    handleMonthlyTargetAchievement(currentMonth);
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase
+      .from('daily_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+      
+    return (data?.points || 0) >= DAILY_TARGET;
+  } catch (error) {
+    console.error('Error checking daily target:', error);
+    return false;
   }
 };
 
-const handleMonthlyTargetAchievement = (month: string): void => {
-  const achievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
-  const alreadyRewarded = achievements.some((a: any) => a.month === month && a.type === 'monthly_target');
+export const hasCompletedMonthlyTarget = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
   
-  if (!alreadyRewarded) {
-    achievements.push({
-      id: Date.now().toString(),
-      type: 'monthly_target',
-      month: month,
-      reward: MONTHLY_REWARD,
-      date: new Date().toISOString(),
-      claimed: false
-    });
+  try {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const { data } = await supabase
+      .from('monthly_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('year_month', currentMonth)
+      .single();
+      
+    return (data?.points || 0) >= MONTHLY_TARGET;
+  } catch (error) {
+    console.error('Error checking monthly target:', error);
+    return false;
+  }
+};
+
+export const getPointsForToday = async (userId: string): Promise<number> => {
+  if (!userId) return 0;
+  
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase
+      .from('daily_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+      
+    return data?.points || 0;
+  } catch (error) {
+    console.error('Error getting daily points:', error);
+    return 0;
+  }
+};
+
+export const getPointsForMonth = async (userId: string): Promise<number> => {
+  if (!userId) return 0;
+  
+  try {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const { data } = await supabase
+      .from('monthly_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('year_month', currentMonth)
+      .single();
+      
+    return data?.points || 0;
+  } catch (error) {
+    console.error('Error getting monthly points:', error);
+    return 0;
+  }
+};
+
+export const logPointsForDay = async (userId: string, pointsEarned: number): Promise<void> => {
+  if (!userId) return;
+  
+  try {
+    const today = new Date().toISOString().split('T')[0];
     
-    localStorage.setItem('quiz_app_achievements', JSON.stringify(achievements));
+    const { data: existingRecord } = await supabase
+      .from('daily_points')
+      .select('id, points')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+      
+    if (existingRecord) {
+      await supabase
+        .from('daily_points')
+        .update({ points: existingRecord.points + pointsEarned })
+        .eq('id', existingRecord.id);
+    } else {
+      await supabase
+        .from('daily_points')
+        .insert({
+          user_id: userId,
+          date: today,
+          points: pointsEarned
+        });
+    }
+    
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('points')
+      .eq('id', userId)
+      .single();
+      
+    if (userData) {
+      await supabase
+        .from('profiles')
+        .update({ points: userData.points + pointsEarned })
+        .eq('id', userId);
+    }
+    
+    window.dispatchEvent(new Event('pointsUpdated'));
+  } catch (error) {
+    console.error('Error logging daily points:', error);
   }
+};
+
+export const logPointsForMonth = async (userId: string, pointsEarned: number): Promise<void> => {
+  if (!userId) return;
+  
+  try {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    
+    const { data: existingRecord } = await supabase
+      .from('monthly_points')
+      .select('id, points')
+      .eq('user_id', userId)
+      .eq('year_month', currentMonth)
+      .single();
+      
+    if (existingRecord) {
+      await supabase
+        .from('monthly_points')
+        .update({ points: existingRecord.points + pointsEarned })
+        .eq('id', existingRecord.id);
+    } else {
+      await supabase
+        .from('monthly_points')
+        .insert({
+          user_id: userId,
+          year_month: currentMonth,
+          points: pointsEarned
+        });
+    }
+    
+    const updatedPoints = existingRecord 
+      ? existingRecord.points + pointsEarned
+      : pointsEarned;
+      
+    if (updatedPoints >= MONTHLY_TARGET) {
+      handleMonthlyTargetAchievement(userId, currentMonth);
+    }
+  } catch (error) {
+    console.error('Error logging monthly points:', error);
+  }
+};
+
+const handleMonthlyTargetAchievement = async (userId: string, month: string): Promise<void> => {
+  console.log(`Monthly target achieved for user ${userId} in ${month}`);
 };
 
 export const STORAGE_KEYS = {
@@ -475,7 +642,6 @@ export const STORAGE_KEYS = {
 
 export const syncAdSlotsToLocal = async () => {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
     const { data, error } = await supabase
       .from('ad_slots')
       .select('*')
@@ -495,8 +661,6 @@ export const syncAdSlotsToLocal = async () => {
 
 export const syncQuizQuestionsToSupabase = async () => {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    
     const { data: existingQuestions, error: checkError } = await supabase
       .from('quiz_questions')
       .select('id')

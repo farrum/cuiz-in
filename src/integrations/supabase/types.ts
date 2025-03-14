@@ -36,6 +36,35 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_points: {
+        Row: {
+          date: string
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          points?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_logs: {
         Row: {
           device: string | null
@@ -70,6 +99,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      monthly_points: {
+        Row: {
+          id: string
+          points: number
+          user_id: string
+          year_month: string
+        }
+        Insert: {
+          id?: string
+          points?: number
+          user_id: string
+          year_month: string
+        }
+        Update: {
+          id?: string
+          points?: number
+          user_id?: string
+          year_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          points: number | null
+          suspended: boolean | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          points?: number | null
+          suspended?: boolean | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number | null
+          suspended?: boolean | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
       }
       quiz_attempts: {
         Row: {
@@ -122,6 +207,7 @@ export type Database = {
           correct_answer: string
           created_at: string | null
           difficulty: string | null
+          explanation: string | null
           id: string
           options: Json
           question: string
@@ -131,6 +217,7 @@ export type Database = {
           correct_answer: string
           created_at?: string | null
           difficulty?: string | null
+          explanation?: string | null
           id?: string
           options: Json
           question: string
@@ -140,6 +227,7 @@ export type Database = {
           correct_answer?: string
           created_at?: string | null
           difficulty?: string | null
+          explanation?: string | null
           id?: string
           options?: Json
           question?: string
@@ -182,6 +270,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -214,10 +320,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never

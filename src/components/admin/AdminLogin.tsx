@@ -1,46 +1,71 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
-
-// Admin credentials - same as in AdminPage.tsx
-const ADMIN_CREDENTIALS = {
-  username: 'quizadmin',
-  password: '!Quizzer123'
-};
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const { signIn, isAdmin, user } = useAuth();
+  const [email, setEmail] = useState('quizadmin@example.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (user && isAdmin) {
+      navigate('/admin');
+    }
+  }, [user, isAdmin, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
 
     // Simple validation
-    if (!username || !password) {
+    if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please enter both username and password",
+        description: "Please enter both email and password",
         variant: "destructive"
       });
       setIsLoggingIn(false);
       return;
     }
 
-    // Check credentials
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      // Store admin auth in localStorage
-      localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, btoa(password));
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Check if user is admin
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id)
+        .eq('role', 'admin')
+        .single();
+        
+      if (roleError || !roleData) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges",
+          variant: "destructive"
+        });
+        
+        // Sign the user out since they're not an admin
+        await supabase.auth.signOut();
+        setIsLoggingIn(false);
+        return;
+      }
       
       toast({
         title: "Success",
@@ -48,15 +73,16 @@ const AdminLogin: React.FC = () => {
       });
       
       navigate('/admin');
-    } else {
+    } catch (error: any) {
+      console.error('Admin login error:', error);
       toast({
         title: "Authentication Failed",
-        description: "Invalid username or password",
+        description: error.message || "Invalid username or password",
         variant: "destructive"
       });
+    } finally {
+      setIsLoggingIn(false);
     }
-    
-    setIsLoggingIn(false);
   };
 
   return (
@@ -69,10 +95,11 @@ const AdminLogin: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Admin Username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Admin Email"
                 className="pl-10"
+                disabled // Using fixed admin email
               />
             </div>
           </div>

@@ -1,8 +1,9 @@
 
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,30 +12,43 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
-  const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!userName) {
+    if (!isLoading && !user) {
       toast({
         title: "Access Denied",
         description: "Please log in to access this page",
         variant: "destructive"
       });
     }
-  }, [toast, userName]);
+  }, [toast, user, isLoading]);
 
-  if (!userName) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
     // Log the attempted access
-    const accessAttempt = {
-      date: new Date().toISOString(),
-      path: location.pathname,
-      type: 'access_denied',
-      ip: '127.0.0.1' // In a real app, this would be the actual IP
+    const logAccess = async () => {
+      try {
+        await supabase.from('login_logs').insert({
+          username: 'anonymous',
+          login_time: new Date().toISOString(),
+          device: navigator.userAgent,
+          ip_address: '127.0.0.1', // This would be set by the server in a real app
+          user_id: null
+        });
+      } catch (error) {
+        console.error('Failed to log access attempt:', error);
+      }
     };
     
-    const accessLog = JSON.parse(localStorage.getItem('quiz_app_access_log') || '[]');
-    accessLog.push(accessAttempt);
-    localStorage.setItem('quiz_app_access_log', JSON.stringify(accessLog));
+    logAccess();
     
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

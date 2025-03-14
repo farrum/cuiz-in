@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { Key, User, EyeOff, Eye, KeyRound } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -15,30 +16,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-// Check if username is admin
-const isAdmin = (username: string): boolean => {
-  return username === 'quizadmin';
-};
-
-// Log login activity
-const logLogin = (username: string, successful: boolean) => {
-  const loginLog = {
-    username,
-    date: new Date().toISOString(),
-    successful,
-    ip: '127.0.0.1', // In a real app, this would be the actual IP
-    userAgent: navigator.userAgent
-  };
-  
-  const logins = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
-  logins.push(loginLog);
-  localStorage.setItem('quiz_app_login_log', JSON.stringify(logins));
-};
-
 const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const { signIn, user } = useAuth();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -46,51 +28,33 @@ const UserLogin: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
 
     // Simple validation
-    if (!username || !password) {
+    if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please enter both username and password",
+        description: "Please enter both email and password",
         variant: "destructive"
       });
       setIsLoggingIn(false);
-      logLogin(username, false);
       return;
     }
 
-    // Check if admin credentials
-    if (isAdmin(username)) {
-      toast({
-        title: "Admin Login",
-        description: "Please use the admin login page",
-        variant: "destructive"
-      });
-      navigate('/admin-login');
-      setIsLoggingIn(false);
-      logLogin(username, false);
-      return;
-    }
-
-    // Check if the user exists in the admin users list
-    const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
-    const user = adminUsers.find((u: any) => 
-      u.name.toLowerCase() === username.toLowerCase() || 
-      u.email.toLowerCase() === username.toLowerCase()
-    );
-
-    if (user) {
-      // For this example, we're not checking passwords since they're not stored securely
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, user.name);
-      localStorage.setItem('quiz_app_user_email', user.email);
-      localStorage.setItem('quiz_app_user_phone', user.mobile || '');
+    try {
+      const { error } = await signIn(email, password);
       
-      // Initialize points if first time
-      if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, user.points.toString() || '0');
+      if (error) {
+        throw error;
       }
       
       toast({
@@ -98,35 +62,20 @@ const UserLogin: React.FC = () => {
         description: "You have successfully logged in",
       });
       
-      // Log the successful login
-      logLogin(user.name, true);
-      
       navigate('/');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        title: "Authentication Failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoggingIn(false);
-      return;
     }
-
-    // For regular users not in admin list, just store their username
-    localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
-    
-    // Initialize points if first time
-    if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, '0');
-    }
-    
-    toast({
-      title: "Success",
-      description: "You have successfully logged in",
-    });
-    
-    // Log the successful login
-    logLogin(username, true);
-    
-    navigate('/');
-    setIsLoggingIn(false);
   };
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsResetting(true);
 
@@ -140,18 +89,90 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // In a real app, you would send a password reset email
-    // For this demo, we'll just display a success message
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
       toast({
         title: "Password Reset Email Sent",
         description: "Check your email for instructions to reset your password",
       });
+      
       setResetDialogOpen(false);
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reset password email",
+        variant: "destructive"
+      });
+    } finally {
       setIsResetting(false);
       setResetEmail('');
-    }, 1500);
+    }
   };
+
+  // Create admin user on first load
+  useEffect(() => {
+    const createAdminUser = async () => {
+      try {
+        // Check if admin user exists
+        const { data: existingAdmin, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', 'quizadmin')
+          .single();
+          
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking for admin user:', checkError);
+          return;
+        }
+        
+        if (existingAdmin) {
+          console.log('Admin user already exists');
+          return;
+        }
+        
+        // Create admin user
+        const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
+          email: 'quizadmin@example.com',
+          password: '!Quizzer123',
+        });
+        
+        if (signUpError) {
+          console.error('Error creating admin user:', signUpError);
+          return;
+        }
+        
+        if (adminUser.user) {
+          // Update the admin's username
+          await supabase
+            .from('profiles')
+            .update({ username: 'quizadmin' })
+            .eq('id', adminUser.user.id);
+            
+          // Assign admin role
+          await supabase
+            .from('user_roles')
+            .insert({
+              user_id: adminUser.user.id,
+              role: 'admin'
+            });
+            
+          console.log('Admin user created successfully');
+        }
+      } catch (error) {
+        console.error('Error in admin user creation:', error);
+      }
+    };
+    
+    createAdminUser();
+  }, []);
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -163,9 +184,10 @@ const UserLogin: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username or Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address"
+                type="email"
                 className="pl-10"
               />
             </div>
