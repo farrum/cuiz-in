@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: new Error('Invalid username or password'), data: null };
         }
         
-        // Next, find user with this profile ID
+        // Find user with this profile ID
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('email')
@@ -164,13 +164,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
           
         if (userError || !userData) {
-          // If we can't find it in the users table, try auth.users through the RPCADDRESS
-          // Typically need to look up email directly from profile data
-          console.log('User email lookup failed, using profile ID to login');
+          console.log('User email lookup failed, trying direct authentication');
           
-          // Try to sign in with the profile ID directly
+          // Try to sign in with email = username as fallback
           const { data: authUser, error: authError } = await supabase.auth.signInWithPassword({
-            email: identifier, // Using identifier as fallback
+            email: identifier, // Using identifier directly as email
             password,
           });
           

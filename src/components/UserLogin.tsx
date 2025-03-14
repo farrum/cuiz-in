@@ -27,6 +27,7 @@ const UserLogin: React.FC = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -138,24 +139,29 @@ const UserLogin: React.FC = () => {
   useEffect(() => {
     const createAdminUser = async () => {
       try {
+        setIsCreatingAdmin(true);
+        console.log('Checking for admin user...');
+        
         // Check if admin user exists
         const { data: existingAdmin, error: checkError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', 'quizadmin')
-          .single();
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin')
+          .limit(1);
           
-        if (checkError && checkError.code !== 'PGRST116') {
+        if (checkError) {
           console.error('Error checking for admin user:', checkError);
+          setIsCreatingAdmin(false);
           return;
         }
         
-        if (existingAdmin) {
-          console.log('Admin user already exists');
+        if (existingAdmin && existingAdmin.length > 0) {
+          console.log('Admin user already exists with ID:', existingAdmin[0].user_id);
+          setIsCreatingAdmin(false);
           return;
         }
         
-        console.log('Creating admin user...');
+        console.log('No admin found, creating admin user...');
         
         // Create admin user with a proper email
         const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
@@ -170,20 +176,26 @@ const UserLogin: React.FC = () => {
         
         if (signUpError) {
           console.error('Error creating admin user:', signUpError);
+          setIsCreatingAdmin(false);
           return;
         }
         
-        if (adminUser.user) {
+        if (adminUser?.user) {
           console.log('Admin user created with ID:', adminUser.user.id);
           
           // Update the admin's username
           const { error: profileError } = await supabase
             .from('profiles')
-            .update({ username: 'quizadmin' })
+            .update({ 
+              username: 'quizadmin',
+              points: 999
+            })
             .eq('id', adminUser.user.id);
             
           if (profileError) {
             console.error('Error updating admin profile:', profileError);
+          } else {
+            console.log('Admin profile updated successfully');
           }
             
           // Assign admin role
@@ -198,10 +210,32 @@ const UserLogin: React.FC = () => {
             console.error('Error assigning admin role:', roleError);
           } else {
             console.log('Admin user role assigned successfully');
+            
+            // Initialize daily and monthly points for admin
+            const today = new Date().toISOString().split('T')[0];
+            const yearMonth = today.substring(0, 7).replace('-', '_');
+            
+            await supabase.from('daily_points').insert({
+              user_id: adminUser.user.id,
+              date: today,
+              points: 0
+            });
+            
+            await supabase.from('monthly_points').insert({
+              user_id: adminUser.user.id,
+              year_month: yearMonth,
+              points: 0
+            });
+            
+            console.log('Admin user setup complete');
           }
+        } else {
+          console.log('Failed to create admin user - no user data returned');
         }
       } catch (error) {
         console.error('Error in admin user creation:', error);
+      } finally {
+        setIsCreatingAdmin(false);
       }
     };
     
@@ -259,7 +293,7 @@ const UserLogin: React.FC = () => {
           <Button
             type="submit"
             className="w-full btn-shine"
-            disabled={isLoggingIn}
+            disabled={isLoggingIn || isCreatingAdmin}
           >
             {isLoggingIn ? 'Logging in...' : 'Log In'}
           </Button>
@@ -278,6 +312,12 @@ const UserLogin: React.FC = () => {
               </Link>
             </p>
           </div>
+          
+          {isCreatingAdmin && (
+            <div className="text-center mt-2">
+              <p className="text-xs text-muted-foreground">Setting up admin account...</p>
+            </div>
+          )}
         </form>
       </div>
 

@@ -108,6 +108,39 @@ const UserRegistrationForm: React.FC = () => {
       
       console.log('Registration successful, user data:', data);
       
+      // Verify the user was created correctly in Supabase
+      if (data?.user?.id) {
+        console.log('Verifying user data was stored correctly...');
+        
+        // Check if a role was assigned
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', data.user.id);
+        
+        if (roleError) {
+          console.error('Error checking user role:', roleError);
+        } else if (!roleData || roleData.length === 0) {
+          console.log('No role found, manually adding player role');
+          
+          // Manually add the role if it doesn't exist
+          const { error: insertRoleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: 'player'
+            });
+          
+          if (insertRoleError) {
+            console.error('Error adding player role:', insertRoleError);
+          } else {
+            console.log('Player role added successfully');
+          }
+        } else {
+          console.log('User role verified:', roleData);
+        }
+      }
+      
       // Store some data in localStorage for easy access
       localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
