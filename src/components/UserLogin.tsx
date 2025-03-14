@@ -142,11 +142,11 @@ const UserLogin: React.FC = () => {
         setIsCreatingAdmin(true);
         console.log('Checking for admin user...');
         
-        // Check if admin user exists
+        // Check if the specific quizmaster admin exists already
         const { data: existingAdmin, error: checkError } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin')
+          .from('profiles')
+          .select('id')
+          .eq('username', 'quizmaster')
           .limit(1);
           
         if (checkError) {
@@ -156,20 +156,20 @@ const UserLogin: React.FC = () => {
         }
         
         if (existingAdmin && existingAdmin.length > 0) {
-          console.log('Admin user already exists with ID:', existingAdmin[0].user_id);
+          console.log('Admin user already exists with ID:', existingAdmin[0].id);
           setIsCreatingAdmin(false);
           return;
         }
         
         console.log('No admin found, creating admin user...');
         
-        // Create admin user with a proper email
+        // Create admin user with the specified credentials
         const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
-          email: 'admin@quizpoints.com', // Using a valid email format
-          password: '!Quizzer123',
+          email: 'quizmaster@quizpoints.com',
+          password: '1Quiz@1',
           options: {
             data: {
-              full_name: 'Quiz Admin',
+              full_name: 'Quiz Master',
             }
           }
         });
@@ -187,7 +187,7 @@ const UserLogin: React.FC = () => {
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ 
-              username: 'quizadmin',
+              username: 'quizmaster',
               points: 999
             })
             .eq('id', adminUser.user.id);

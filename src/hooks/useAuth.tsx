@@ -71,7 +71,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Checking role for user ID:', user.id);
       
-      // First check for admin role
+      // First check for admin role - explicit check for quizmaster
+      if (user.email === 'quizmaster@quizpoints.com') {
+        console.log('User is quizmaster, ensuring admin role is set');
+        
+        // Ensure the admin role is set for quizmaster
+        const { data: existingRole, error: checkError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .single();
+          
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking admin role:', checkError);
+        }
+          
+        if (!existingRole) {
+          console.log('Setting admin role for quizmaster');
+          
+          // Delete any existing roles first
+          await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', user.id);
+            
+          // Set admin role
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: 'admin'
+            });
+            
+          if (roleError) {
+            console.error('Error setting admin role:', roleError);
+          }
+        }
+        
+        setIsAdmin(true);
+        setUserRole('admin');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Standard role check for other users
       const { data: adminData, error: adminError } = await supabase
         .from('user_roles')
         .select('role')
