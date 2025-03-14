@@ -1,5 +1,6 @@
 
 import { Award, Star, Zap, BookOpen, Target, Trophy, Medal, Crown, Flag } from 'lucide-react';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 export interface BadgeType {
   id: string;
