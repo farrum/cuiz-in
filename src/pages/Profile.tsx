@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -49,17 +50,24 @@ const Profile: React.FC = () => {
     setQuestionsAnswered(completedQuestions.length);
     
     // Get daily and monthly points
-    setDailyPoints(getPointsForToday());
-    setMonthlyPoints(getPointsForMonth());
+    const loadPoints = async () => {
+      const dailyPts = await getPointsForToday();
+      const monthlyPts = await getPointsForMonth();
+      setDailyPoints(dailyPts);
+      setMonthlyPoints(monthlyPts);
+    };
+    loadPoints();
     
     // Get achievements
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     setAchievements(savedAchievements);
     
     // Set up listener for point updates
-    const handlePointsUpdate = () => {
-      setDailyPoints(getPointsForToday());
-      setMonthlyPoints(getPointsForMonth());
+    const handlePointsUpdate = async () => {
+      const dailyPts = await getPointsForToday();
+      const monthlyPts = await getPointsForMonth();
+      setDailyPoints(dailyPts);
+      setMonthlyPoints(monthlyPts);
       
       // Refresh achievements
       const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
@@ -188,7 +196,7 @@ const Profile: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <PointsDisplay animateUpdate />
+          <PointsDisplay animateUpdate className="flex-1" />
           
           <div className="glass rounded-2xl p-4 col-span-2">
             <div className="flex items-center space-x-3 mb-2">

@@ -42,8 +42,13 @@ const QuizPage: React.FC = () => {
     setQuestionsAnswered(completedQuestions.length);
     
     // Load daily and monthly points
-    setDailyPoints(getPointsForToday());
-    setMonthlyPoints(getPointsForMonth());
+    const loadPoints = async () => {
+      const dailyPts = await getPointsForToday();
+      const monthlyPts = await getPointsForMonth();
+      setDailyPoints(dailyPts);
+      setMonthlyPoints(monthlyPts);
+    };
+    loadPoints();
     
     // Sync ad slots from Supabase
     if (!adsSynced) {
@@ -60,14 +65,14 @@ const QuizPage: React.FC = () => {
     setIsLoading(true);
     
     // Simulate loading delay for smoother transitions
-    setTimeout(() => {
-      const question = getRandomQuestion();
+    setTimeout(async () => {
+      const question = await getRandomQuestion();
       setCurrentQuestion(question);
       setIsLoading(false);
     }, 600);
   };
   
-  const handleQuestionComplete = (isCorrect: boolean) => {
+  const handleQuestionComplete = async (isCorrect: boolean) => {
     // Calculate points using the new system
     const pointsEarned = calculatePoints(isCorrect);
     
@@ -77,12 +82,12 @@ const QuizPage: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
     
     // Update daily and monthly points
-    logPointsForDay(pointsEarned);
-    logPointsForMonth(pointsEarned);
+    await logPointsForDay(pointsEarned);
+    await logPointsForMonth(pointsEarned);
     
     // Refresh daily and monthly points
-    const updatedDailyPoints = getPointsForToday();
-    const updatedMonthlyPoints = getPointsForMonth();
+    const updatedDailyPoints = await getPointsForToday();
+    const updatedMonthlyPoints = await getPointsForMonth();
     setDailyPoints(updatedDailyPoints);
     setMonthlyPoints(updatedMonthlyPoints);
     
@@ -119,8 +124,8 @@ const QuizPage: React.FC = () => {
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        logPointsForDay(bonusPoints);
-        logPointsForMonth(bonusPoints);
+        await logPointsForDay(bonusPoints);
+        await logPointsForMonth(bonusPoints);
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({

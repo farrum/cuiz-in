@@ -102,7 +102,7 @@ const AdminUserManagement: React.FC = () => {
             points: profile.points || 0,
             suspended: profile.suspended || false,
             joinDate: new Date(profile.created_at).toISOString().split('T')[0],
-            role: userRole?.role || 'player'
+            role: (userRole?.role as 'admin' | 'team_leader' | 'player') || 'player'
           };
         });
         
