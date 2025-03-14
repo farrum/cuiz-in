@@ -14,6 +14,7 @@ import AdminPage from "./pages/AdminPage";
 import LoginPage from "./pages/LoginPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,11 +26,27 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/quiz" element={
+            <ProtectedRoute>
+              <QuizPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/answer/:questionId/:selectedOption" element={
+            <ProtectedRoute>
+              <AnswerPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
           <Route path="/register" element={<Registration />} />
-          <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/referral" element={
+            <ProtectedRoute>
+              <ReferralPage />
+            </ProtectedRoute>
+          } />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />

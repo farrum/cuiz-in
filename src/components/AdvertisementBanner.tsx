@@ -13,15 +13,39 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   size = 'medium',
 }) => {
   const [adLoaded, setAdLoaded] = useState(false);
+  const [adContent, setAdContent] = useState('');
+  const [adActive, setAdActive] = useState(true);
   
   useEffect(() => {
-    // Simulate ad loading
-    const timer = setTimeout(() => {
-      setAdLoaded(true);
-    }, 1000);
+    // Load ad slots from localStorage
+    const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
     
-    return () => clearTimeout(timer);
-  }, []);
+    // Find a matching ad for this position
+    const matchingAds = adSlots.filter((ad: any) => 
+      ad.position === position && ad.active
+    );
+    
+    if (matchingAds.length > 0) {
+      // If multiple ads match the position, choose one randomly
+      const randomIndex = Math.floor(Math.random() * matchingAds.length);
+      const selectedAd = matchingAds[randomIndex];
+      
+      // Simulate ad loading
+      setTimeout(() => {
+        setAdContent(selectedAd.code);
+        setAdLoaded(true);
+      }, 1000);
+      
+      setAdActive(true);
+    } else {
+      // No matching ads or all are inactive
+      setAdActive(false);
+    }
+  }, [position]);
+
+  if (!adActive) {
+    return null; // Don't render anything if no active ad for this position
+  }
 
   const getSizeClasses = () => {
     switch (size) {
@@ -57,27 +81,17 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       flex items-center justify-center ${getPositionClasses()} 
       transition-all duration-300 ${adLoaded ? 'opacity-100' : 'opacity-50'} ${className}`}
     >
-      <div className="text-center">
-        {!adLoaded ? (
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
-            <p className="text-sm text-muted-foreground">Loading advertisement...</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center">
-            <p className="text-xs text-muted-foreground mb-2">Advertisement</p>
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary/10 rounded-md flex items-center justify-center">
-                <span className="text-primary text-lg">Ad</span>
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-medium">Sponsored message</p>
-                <p className="text-xs text-muted-foreground">Learn more about our sponsors</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {!adLoaded ? (
+        <div className="flex items-center justify-center space-x-2">
+          <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
+          <p className="text-sm text-muted-foreground">Loading advertisement...</p>
+        </div>
+      ) : (
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
+          <div dangerouslySetInnerHTML={{ __html: adContent }} />
+        </div>
+      )}
     </div>
   );
 };

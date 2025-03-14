@@ -20,6 +20,21 @@ const isAdmin = (username: string): boolean => {
   return username === 'quizadmin';
 };
 
+// Log login activity
+const logLogin = (username: string, successful: boolean) => {
+  const loginLog = {
+    username,
+    date: new Date().toISOString(),
+    successful,
+    ip: '127.0.0.1', // In a real app, this would be the actual IP
+    userAgent: navigator.userAgent
+  };
+  
+  const logins = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
+  logins.push(loginLog);
+  localStorage.setItem('quiz_app_login_log', JSON.stringify(logins));
+};
+
 const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,6 +58,7 @@ const UserLogin: React.FC = () => {
         variant: "destructive"
       });
       setIsLoggingIn(false);
+      logLogin(username, false);
       return;
     }
 
@@ -55,6 +71,7 @@ const UserLogin: React.FC = () => {
       });
       navigate('/admin-login');
       setIsLoggingIn(false);
+      logLogin(username, false);
       return;
     }
 
@@ -81,6 +98,9 @@ const UserLogin: React.FC = () => {
         description: "You have successfully logged in",
       });
       
+      // Log the successful login
+      logLogin(user.name, true);
+      
       navigate('/');
       setIsLoggingIn(false);
       return;
@@ -98,6 +118,9 @@ const UserLogin: React.FC = () => {
       title: "Success",
       description: "You have successfully logged in",
     });
+    
+    // Log the successful login
+    logLogin(username, true);
     
     navigate('/');
     setIsLoggingIn(false);

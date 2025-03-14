@@ -6,8 +6,10 @@ import Header from '@/components/Header';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
+import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
+import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { Shield, AlertTriangle } from 'lucide-react';
+import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Admin credentials
@@ -75,10 +77,27 @@ const AdminPage: React.FC = () => {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="mb-8 w-full max-w-md">
-            <TabsTrigger value="users" className="flex-1">User Management</TabsTrigger>
-            <TabsTrigger value="referrals" className="flex-1">Referrals</TabsTrigger>
-            <TabsTrigger value="payments" className="flex-1">Payments</TabsTrigger>
+          <TabsList className="mb-8 grid grid-cols-2 md:grid-cols-5 gap-2">
+            <TabsTrigger value="users" className="flex items-center justify-center">
+              <Users className="w-4 h-4 mr-2" />
+              <span>Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="referrals" className="flex items-center justify-center">
+              <UserPlus className="w-4 h-4 mr-2" />
+              <span>Referrals</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center justify-center">
+              <BadgeDollarSign className="w-4 h-4 mr-2" />
+              <span>Payments</span>
+            </TabsTrigger>
+            <TabsTrigger value="login-logs" className="flex items-center justify-center">
+              <Clock className="w-4 h-4 mr-2" />
+              <span>Login Logs</span>
+            </TabsTrigger>
+            <TabsTrigger value="ad-management" className="flex items-center justify-center">
+              <Layout className="w-4 h-4 mr-2" />
+              <span>Ads</span>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="users" className="space-y-6">
@@ -91,6 +110,14 @@ const AdminPage: React.FC = () => {
           
           <TabsContent value="payments" className="space-y-6">
             <AdminPaymentsOverview />
+          </TabsContent>
+          
+          <TabsContent value="login-logs" className="space-y-6">
+            <AdminLoginLogs />
+          </TabsContent>
+          
+          <TabsContent value="ad-management" className="space-y-6">
+            <AdminAdManagement />
           </TabsContent>
         </Tabs>
       </main>
