@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Award, TrendingUp } from 'lucide-react';
+import { Search, Award, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface ReferralData {
@@ -21,6 +21,8 @@ interface ReferralData {
   date: string;
   status: 'active' | 'inactive' | 'pending';
   earnings: number;
+  activeThisMonth: boolean;
+  lastActiveDate?: string;
 }
 
 interface User {
@@ -43,12 +45,23 @@ const AdminReferralsTracker: React.FC = () => {
     const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
     setUsers(loadedUsers);
     
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    
     const mockReferrals: ReferralData[] = [];
     
     loadedUsers.forEach((user: User) => {
       const referredUsers = loadedUsers.filter((u: User) => u.referredBy === user.id);
       
       referredUsers.forEach((referred: User) => {
+        const isActive = !referred.suspended && Math.random() > 0.3;
+        const lastActiveDate = isActive 
+          ? new Date(Date.now() - Math.floor(Math.random() * 25 * 24 * 60 * 60 * 1000)).toISOString()
+          : undefined;
+        
+        const activeThisMonth = lastActiveDate 
+          ? lastActiveDate.substring(0, 7) === currentMonth 
+          : false;
+        
         mockReferrals.push({
           referrerId: user.id,
           referrerName: user.name,
@@ -57,14 +70,40 @@ const AdminReferralsTracker: React.FC = () => {
           referredEmail: referred.email,
           date: new Date(referred.joinDate).toISOString().slice(0, 10),
           status: referred.suspended ? 'inactive' : 'active',
-          earnings: Math.floor(Math.random() * 500)
+          earnings: Math.floor(Math.random() * 500),
+          activeThisMonth,
+          lastActiveDate
         });
       });
     });
     
     const referralsFromStorage = localStorage.getItem('admin_referrals');
     if (referralsFromStorage) {
-      setReferrals(JSON.parse(referralsFromStorage));
+      const storedReferrals = JSON.parse(referralsFromStorage);
+      
+      const updatedReferrals = storedReferrals.map((ref: any) => {
+        if (ref.hasOwnProperty('activeThisMonth')) {
+          return ref;
+        }
+        
+        const isActive = ref.status === 'active' && Math.random() > 0.3;
+        const lastActiveDate = isActive 
+          ? new Date(Date.now() - Math.floor(Math.random() * 25 * 24 * 60 * 60 * 1000)).toISOString()
+          : undefined;
+        
+        const activeThisMonth = lastActiveDate 
+          ? lastActiveDate.substring(0, 7) === currentMonth 
+          : false;
+        
+        return {
+          ...ref,
+          activeThisMonth,
+          lastActiveDate
+        };
+      });
+      
+      setReferrals(updatedReferrals);
+      localStorage.setItem('admin_referrals', JSON.stringify(updatedReferrals));
     } else if (mockReferrals.length > 0) {
       setReferrals(mockReferrals);
       localStorage.setItem('admin_referrals', JSON.stringify(mockReferrals));
@@ -79,6 +118,7 @@ const AdminReferralsTracker: React.FC = () => {
   
   const totalReferrals = referrals.length;
   const activeReferrals = referrals.filter(r => r.status === 'active').length;
+  const activeThisMonth = referrals.filter(r => r.activeThisMonth).length;
   const totalEarnings = referrals.reduce((sum, r) => sum + r.earnings, 0);
 
   return (
@@ -98,7 +138,7 @@ const AdminReferralsTracker: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
           <div className="flex justify-between items-center">
             <div>
@@ -127,6 +167,21 @@ const AdminReferralsTracker: React.FC = () => {
         <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
           <div className="flex justify-between items-center">
             <div>
+              <p className="text-sm font-medium text-muted-foreground">Active This Month</p>
+              <h3 className="text-2xl font-bold">{activeThisMonth}</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {activeReferrals > 0 
+                  ? `${Math.round((activeThisMonth / activeReferrals) * 100)}% monthly activity`
+                  : 'No active referrals'}
+              </p>
+            </div>
+            <CheckCircle className="h-10 w-10 text-blue-500 opacity-75" />
+          </div>
+        </div>
+        
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+          <div className="flex justify-between items-center">
+            <div>
               <p className="text-sm font-medium text-muted-foreground">Total Earnings Paid</p>
               <h3 className="text-2xl font-bold">₹{totalEarnings}</h3>
             </div>
@@ -145,13 +200,14 @@ const AdminReferralsTracker: React.FC = () => {
               <TableHead>Referred User</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Active This Month</TableHead>
               <TableHead className="text-right">Earnings</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredReferrals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No referrals found
                 </TableCell>
               </TableRow>
@@ -178,6 +234,24 @@ const AdminReferralsTracker: React.FC = () => {
                     >
                       {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {referral.activeThisMonth ? (
+                      <div className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                        <span className="text-sm">Yes</span>
+                        {referral.lastActiveDate && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {new Date(referral.lastActiveDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <XCircle className="h-4 w-4 text-red-500 mr-1" />
+                        <span className="text-sm">No</span>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right font-medium">₹{referral.earnings}</TableCell>
                 </TableRow>

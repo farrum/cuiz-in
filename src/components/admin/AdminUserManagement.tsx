@@ -26,7 +26,7 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form";
-import { Pencil, UserX, UserPlus, Search, Check, X } from 'lucide-react';
+import { Pencil, UserX, UserPlus, Search, Check, X, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ interface UserData {
   id: string;
   name: string;
   email: string;
+  mobile?: string;
   points: number;
   referredBy?: string;
   suspended: boolean;
@@ -55,12 +56,35 @@ const AdminUserManagement: React.FC = () => {
   
   // Load users from localStorage
   useEffect(() => {
+    // Get registered users
+    const registeredUsers: UserData[] = [];
+    
+    // Get username from localStorage
+    const username = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    const userEmail = localStorage.getItem('quiz_app_user_email');
+    const userPhone = localStorage.getItem('quiz_app_user_phone');
+    const userPoints = localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0';
+    
+    // If we have a registered user
+    if (username && userEmail) {
+      registeredUsers.push({
+        id: '101',
+        name: username,
+        email: userEmail,
+        mobile: userPhone || undefined,
+        points: parseInt(userPoints, 10),
+        suspended: false,
+        joinDate: new Date().toISOString().split('T')[0]
+      });
+    }
+    
     // This is a mock implementation - in a real app, you'd fetch from a database
     const mockUsers: UserData[] = [
       {
         id: '1',
         name: 'John Doe',
         email: 'john@example.com',
+        mobile: '9876543210',
         points: 450,
         suspended: false,
         joinDate: '2023-01-15'
@@ -69,6 +93,7 @@ const AdminUserManagement: React.FC = () => {
         id: '2',
         name: 'Jane Smith',
         email: 'jane@example.com',
+        mobile: '8765432109',
         points: 1200,
         referredBy: '1',
         suspended: false,
@@ -78,16 +103,40 @@ const AdminUserManagement: React.FC = () => {
         id: '3',
         name: 'Mike Johnson',
         email: 'mike@example.com',
+        mobile: '7654321098',
         points: 50,
         suspended: true,
         joinDate: '2023-03-05'
-      }
+      },
+      ...registeredUsers
     ];
     
     // In a real implementation, you'd load from your database instead
     const usersFromStorage = localStorage.getItem('admin_users');
     if (usersFromStorage) {
-      setUsers(JSON.parse(usersFromStorage));
+      const storedUsers = JSON.parse(usersFromStorage);
+      
+      // Check if registered user is already in stored users
+      const combinedUsers = [...storedUsers];
+      
+      // Add registered user if not already in the list
+      if (username && userEmail) {
+        const userExists = storedUsers.some((u: UserData) => u.email === userEmail);
+        if (!userExists) {
+          combinedUsers.push({
+            id: '101',
+            name: username,
+            email: userEmail,
+            mobile: userPhone || undefined,
+            points: parseInt(userPoints, 10),
+            suspended: false,
+            joinDate: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
+      
+      setUsers(combinedUsers);
+      localStorage.setItem('admin_users', JSON.stringify(combinedUsers));
     } else {
       setUsers(mockUsers);
       localStorage.setItem('admin_users', JSON.stringify(mockUsers));
@@ -112,13 +161,26 @@ const AdminUserManagement: React.FC = () => {
     setUsers(updatedUsers);
     localStorage.setItem('admin_users', JSON.stringify(updatedUsers));
     
+    // Send email notification (simulated)
+    sendEmailNotification(newUser);
+    
     toast({
       title: "Success",
-      description: `User ${newUser.name} has been created.`,
+      description: `User ${newUser.name} has been created. Login details sent.`,
     });
     
     setIsCreateDialogOpen(false);
     form.reset();
+  };
+  
+  // Simulate sending email notification
+  const sendEmailNotification = (user: UserData) => {
+    console.log(`Email sent to ${user.email} with login credentials`);
+    // In a real implementation, you would call an API to send an email
+    toast({
+      title: "Email Sent",
+      description: `Login details sent to ${user.email}`,
+    });
   };
   
   // Edit existing user
@@ -165,6 +227,14 @@ const AdminUserManagement: React.FC = () => {
     setIsEditDialogOpen(true);
   };
 
+  // Send login details to user
+  const sendLoginDetails = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      sendEmailNotification(user);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -194,6 +264,7 @@ const AdminUserManagement: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>Mobile</TableHead>
               <TableHead>Points</TableHead>
               <TableHead>Referred By</TableHead>
               <TableHead>Join Date</TableHead>
@@ -204,7 +275,7 @@ const AdminUserManagement: React.FC = () => {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -215,6 +286,7 @@ const AdminUserManagement: React.FC = () => {
                     <div className="font-medium">{user.name}</div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
                   </TableCell>
+                  <TableCell>{user.mobile || 'N/A'}</TableCell>
                   <TableCell>{user.points}</TableCell>
                   <TableCell>
                     {user.referredBy ? 
@@ -251,6 +323,13 @@ const AdminUserManagement: React.FC = () => {
                       onClick={() => toggleUserSuspension(user.id)}
                     >
                       <UserX className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendLoginDetails(user.id)}
+                    >
+                      <Mail className="w-4 h-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -294,6 +373,20 @@ const AdminUserManagement: React.FC = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="john@example.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="mobile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mobile Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="9876543210" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -414,6 +507,20 @@ const AdminUserManagement: React.FC = () => {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="mobile"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mobile Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

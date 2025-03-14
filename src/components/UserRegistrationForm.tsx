@@ -100,11 +100,14 @@ const UserRegistrationForm: React.FC = () => {
         window.dispatchEvent(new Event('pointsUpdated'));
       }
       
+      // Simulate sending welcome email
+      console.log(`Welcome email sent to ${formData.email} with login details`);
+      
       setIsSubmitting(false);
       
       toast({
         title: "Registration Successful",
-        description: "Welcome to QuizPoints! You've been awarded 10 bonus points.",
+        description: "Welcome to QuizPoints! You've been awarded 10 bonus points. Login details sent to your email.",
       });
       
       // Navigate to quiz page after successful registration
