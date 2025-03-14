@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -11,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Achievement {
   id: string;
@@ -24,6 +24,7 @@ interface Achievement {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [userName, setUserName] = useState('');
   const [userUpi, setUserUpi] = useState('');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -51,8 +52,10 @@ const Profile: React.FC = () => {
     
     // Get daily and monthly points
     const loadPoints = async () => {
-      const dailyPts = await getPointsForToday();
-      const monthlyPts = await getPointsForMonth();
+      // Pass userId if available from auth context
+      const userId = user?.id;
+      const dailyPts = await getPointsForToday(userId);
+      const monthlyPts = await getPointsForMonth(userId);
       setDailyPoints(dailyPts);
       setMonthlyPoints(monthlyPts);
     };
@@ -64,8 +67,9 @@ const Profile: React.FC = () => {
     
     // Set up listener for point updates
     const handlePointsUpdate = async () => {
-      const dailyPts = await getPointsForToday();
-      const monthlyPts = await getPointsForMonth();
+      const userId = user?.id;
+      const dailyPts = await getPointsForToday(userId);
+      const monthlyPts = await getPointsForMonth(userId);
       setDailyPoints(dailyPts);
       setMonthlyPoints(monthlyPts);
       
@@ -76,7 +80,7 @@ const Profile: React.FC = () => {
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
     return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
-  }, [navigate]);
+  }, [navigate, user]);
   
   const handleLogout = () => {
     // Clear user-specific data

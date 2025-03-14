@@ -19,6 +19,7 @@ import {
 } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/useAuth';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -30,6 +31,7 @@ const QuizPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [adsSynced, setAdsSynced] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Initialize on first load
   useEffect(() => {
@@ -43,8 +45,9 @@ const QuizPage: React.FC = () => {
     
     // Load daily and monthly points
     const loadPoints = async () => {
-      const dailyPts = await getPointsForToday();
-      const monthlyPts = await getPointsForMonth();
+      const userId = user?.id;
+      const dailyPts = await getPointsForToday(userId);
+      const monthlyPts = await getPointsForMonth(userId);
       setDailyPoints(dailyPts);
       setMonthlyPoints(monthlyPts);
     };
@@ -59,7 +62,7 @@ const QuizPage: React.FC = () => {
     
     // Get first question
     loadNewQuestion();
-  }, []);
+  }, [user]);
   
   const loadNewQuestion = () => {
     setIsLoading(true);
@@ -82,12 +85,13 @@ const QuizPage: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
     
     // Update daily and monthly points
-    await logPointsForDay(pointsEarned);
-    await logPointsForMonth(pointsEarned);
+    const userId = user?.id;
+    await logPointsForDay(pointsEarned, userId);
+    await logPointsForMonth(pointsEarned, userId);
     
     // Refresh daily and monthly points
-    const updatedDailyPoints = await getPointsForToday();
-    const updatedMonthlyPoints = await getPointsForMonth();
+    const updatedDailyPoints = await getPointsForToday(userId);
+    const updatedMonthlyPoints = await getPointsForMonth(userId);
     setDailyPoints(updatedDailyPoints);
     setMonthlyPoints(updatedMonthlyPoints);
     
@@ -124,8 +128,8 @@ const QuizPage: React.FC = () => {
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        await logPointsForDay(bonusPoints);
-        await logPointsForMonth(bonusPoints);
+        await logPointsForDay(bonusPoints, userId);
+        await logPointsForMonth(bonusPoints, userId);
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({
@@ -136,6 +140,9 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
+    
+    // Load new question
+    loadNewQuestion();
   };
 
   return (
