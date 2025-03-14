@@ -51,6 +51,8 @@ const LoginForm: React.FC = () => {
       // Redirect admins to admin dashboard, others to home
       if (userRole === 'admin') {
         navigate('/admin');
+      } else {
+        navigate('/');
       }
     } catch (error: any) {
       console.error('Login error:', error);
