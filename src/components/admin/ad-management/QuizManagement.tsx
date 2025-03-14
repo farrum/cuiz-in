@@ -62,16 +62,27 @@ const QuizManagement: React.FC = () => {
       }
       
       // Transform the data to match our QuizQuestion interface
-      const formattedQuestions = data.map(q => ({
-        id: q.id,
-        question: q.question,
-        options: Array.isArray(q.options) ? q.options.map(String) : typeof q.options === 'object' ? Object.values(q.options).map(String) : [],
-        correctAnswer: q.correct_answer,
-        difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
-        category: q.category || 'General Knowledge',
-        points: 10,
-        explanation: q.explanation || ''
-      }));
+      const formattedQuestions = data.map(q => {
+        // Create properly typed options array by converting all values to strings
+        const optionsArray: string[] = Array.isArray(q.options) 
+          ? q.options.map(String) 
+          : typeof q.options === 'object' 
+            ? Object.values(q.options).map(String) 
+            : [];
+        
+        return {
+          id: q.id,
+          question: q.question,
+          options: optionsArray,
+          correctAnswer: q.correct_answer,
+          difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
+          category: q.category || 'General Knowledge',
+          points: 10,
+          // Since explanation isn't in the type definition, we need to use a type assertion
+          // to safely access it or provide a default empty string
+          explanation: ((q as any).explanation) || ''
+        };
+      });
       
       setQuestions(formattedQuestions);
       setFilteredQuestions(formattedQuestions);
