@@ -2,14 +2,15 @@
 import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRole } from './AuthContext';
+import { UserRoleType } from './AuthContext';
+import { UserRole } from '@/types/supabase';
 
 export const useAuthRole = (
   user: User | null,
   setIsLoading: (loading: boolean) => void
 ) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>('player');
+  const [userRole, setUserRole] = useState<UserRoleType>('player');
 
   const refreshUserRole = async () => {
     if (!user) {

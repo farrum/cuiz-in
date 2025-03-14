@@ -6,8 +6,9 @@ import { useAuthSignIn } from './useAuthSignIn';
 import { useAuthSignUp } from './useAuthSignUp';
 import { useAuthRole } from './useAuthRole';
 import { useToast } from './use-toast';
+import { UserRole } from '@/types/supabase';
 
-export type UserRole = 'admin' | 'team_leader' | 'player';
+export type UserRoleType = 'admin' | 'team_leader' | 'player';
 
 export interface AuthContextType {
   session: Session | null;
@@ -17,7 +18,7 @@ export interface AuthContextType {
   signUp: ReturnType<typeof useAuthSignUp>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  userRole: UserRole;
+  userRole: UserRoleType;
   refreshUserRole: () => Promise<void>;
 }
 
