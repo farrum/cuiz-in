@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
@@ -17,30 +18,70 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const [adActive, setAdActive] = useState(true);
   
   useEffect(() => {
-    // Load ad slots from localStorage
-    const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
+    const fetchAds = async () => {
+      try {
+        // First try to get ads from Supabase
+        const { data: supabaseAds, error } = await supabase
+          .from('ad_slots')
+          .select('*')
+          .eq('position', position)
+          .eq('active', true);
+        
+        if (error) {
+          console.error('Error fetching ads from Supabase:', error);
+          fallbackToLocalStorage();
+          return;
+        }
+        
+        if (supabaseAds && supabaseAds.length > 0) {
+          // If Supabase has ads, use them
+          const randomIndex = Math.floor(Math.random() * supabaseAds.length);
+          const selectedAd = supabaseAds[randomIndex];
+          
+          setTimeout(() => {
+            setAdContent(selectedAd.code);
+            setAdLoaded(true);
+          }, 1000);
+          
+          setAdActive(true);
+        } else {
+          // If no ads from Supabase, fall back to localStorage
+          fallbackToLocalStorage();
+        }
+      } catch (err) {
+        console.error('Error in ad fetching:', err);
+        fallbackToLocalStorage();
+      }
+    };
     
-    // Find a matching ad for this position
-    const matchingAds = adSlots.filter((ad: any) => 
-      ad.position === position && ad.active
-    );
+    const fallbackToLocalStorage = () => {
+      // Load ad slots from localStorage as fallback
+      const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
+      
+      // Find a matching ad for this position
+      const matchingAds = adSlots.filter((ad: any) => 
+        ad.position === position && ad.active
+      );
+      
+      if (matchingAds.length > 0) {
+        // If multiple ads match the position, choose one randomly
+        const randomIndex = Math.floor(Math.random() * matchingAds.length);
+        const selectedAd = matchingAds[randomIndex];
+        
+        // Simulate ad loading
+        setTimeout(() => {
+          setAdContent(selectedAd.code);
+          setAdLoaded(true);
+        }, 1000);
+        
+        setAdActive(true);
+      } else {
+        // No matching ads or all are inactive
+        setAdActive(false);
+      }
+    };
     
-    if (matchingAds.length > 0) {
-      // If multiple ads match the position, choose one randomly
-      const randomIndex = Math.floor(Math.random() * matchingAds.length);
-      const selectedAd = matchingAds[randomIndex];
-      
-      // Simulate ad loading
-      setTimeout(() => {
-        setAdContent(selectedAd.code);
-        setAdLoaded(true);
-      }, 1000);
-      
-      setAdActive(true);
-    } else {
-      // No matching ads or all are inactive
-      setAdActive(false);
-    }
+    fetchAds();
   }, [position]);
 
   if (!adActive) {

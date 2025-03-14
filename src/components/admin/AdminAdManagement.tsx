@@ -19,8 +19,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Check, Edit, Layout, EyeOff, Eye, BadgeDollarSign } from 'lucide-react';
+import { Check, Edit, Layout, EyeOff, Eye, BadgeDollarSign, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdSlot {
   id: string;
@@ -28,76 +29,94 @@ interface AdSlot {
   position: 'top' | 'middle' | 'bottom' | 'sidebar';
   code: string;
   active: boolean;
-  lastUpdated: string;
+  last_updated: string;
 }
-
-const defaultAdSlots: AdSlot[] = [
-  { 
-    id: 'quiz-top', 
-    name: 'Quiz Page - Top Banner', 
-    position: 'top', 
-    code: '<div class="ad-banner">Your ad content here</div>', 
-    active: true,
-    lastUpdated: new Date().toISOString()
-  },
-  { 
-    id: 'quiz-middle-1', 
-    name: 'Quiz Page - Middle Banner 1', 
-    position: 'middle', 
-    code: '<div class="ad-banner">Your ad content here</div>', 
-    active: true,
-    lastUpdated: new Date().toISOString()
-  },
-  { 
-    id: 'quiz-middle-2', 
-    name: 'Quiz Page - Middle Banner 2', 
-    position: 'middle', 
-    code: '<div class="ad-banner">Your ad content here</div>', 
-    active: true,
-    lastUpdated: new Date().toISOString()
-  },
-  { 
-    id: 'quiz-bottom', 
-    name: 'Quiz Page - Bottom Banner', 
-    position: 'bottom', 
-    code: '<div class="ad-banner">Your ad content here</div>', 
-    active: true,
-    lastUpdated: new Date().toISOString()
-  }
-];
 
 const AdminAdManagement: React.FC = () => {
   const { toast } = useToast();
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
   const [editingSlot, setEditingSlot] = useState<AdSlot | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Initialize ad slots from localStorage or use defaults
-    const savedSlots = localStorage.getItem('quiz_app_ad_slots');
-    if (savedSlots) {
-      setAdSlots(JSON.parse(savedSlots));
-    } else {
-      setAdSlots(defaultAdSlots);
-      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(defaultAdSlots));
-    }
+    fetchAdSlots();
   }, []);
   
-  const handleToggleActive = (id: string) => {
-    const updatedSlots = adSlots.map(slot => {
-      if (slot.id === id) {
-        return { ...slot, active: !slot.active, lastUpdated: new Date().toISOString() };
+  const fetchAdSlots = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ad_slots')
+        .select('*')
+        .order('name');
+        
+      if (error) {
+        throw error;
       }
-      return slot;
-    });
+      
+      if (data) {
+        // Also save to localStorage as fallback
+        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
+        setAdSlots(data as AdSlot[]);
+      }
+    } catch (error) {
+      console.error('Error fetching ad slots:', error);
+      // Fallback to localStorage if Supabase fails
+      const savedSlots = localStorage.getItem('quiz_app_ad_slots');
+      if (savedSlots) {
+        setAdSlots(JSON.parse(savedSlots));
+      }
+      
+      toast({
+        title: "Error Loading Ad Slots",
+        description: "Could not load ad slots from the database. Using local data instead.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleToggleActive = async (id: string) => {
+    const slotToUpdate = adSlots.find(slot => slot.id === id);
+    if (!slotToUpdate) return;
     
-    setAdSlots(updatedSlots);
-    localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+    const newActiveState = !slotToUpdate.active;
     
-    toast({
-      title: "Ad Slot Updated",
-      description: `The ad slot has been ${updatedSlots.find(s => s.id === id)?.active ? 'activated' : 'deactivated'}.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('ad_slots')
+        .update({ 
+          active: newActiveState,
+          last_updated: new Date().toISOString()
+        })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      const updatedSlots = adSlots.map(slot => {
+        if (slot.id === id) {
+          return { ...slot, active: newActiveState, last_updated: new Date().toISOString() };
+        }
+        return slot;
+      });
+      
+      setAdSlots(updatedSlots);
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+      
+      toast({
+        title: "Ad Slot Updated",
+        description: `The ad slot has been ${newActiveState ? 'activated' : 'deactivated'}.`,
+      });
+    } catch (error) {
+      console.error('Error updating ad slot:', error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating the ad slot status.",
+        variant: "destructive"
+      });
+    }
   };
   
   const startEditing = (slot: AdSlot) => {
@@ -108,24 +127,49 @@ const AdminAdManagement: React.FC = () => {
     setEditingSlot(null);
   };
   
-  const saveAdSlot = () => {
+  const saveAdSlot = async () => {
     if (!editingSlot) return;
     
-    const updatedSlots = adSlots.map(slot => {
-      if (slot.id === editingSlot.id) {
-        return { ...editingSlot, lastUpdated: new Date().toISOString() };
-      }
-      return slot;
-    });
-    
-    setAdSlots(updatedSlots);
-    localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
-    setEditingSlot(null);
-    
-    toast({
-      title: "Ad Slot Updated",
-      description: "Your changes have been saved successfully.",
-    });
+    try {
+      const { error } = await supabase
+        .from('ad_slots')
+        .update({
+          name: editingSlot.name,
+          position: editingSlot.position,
+          code: editingSlot.code,
+          active: editingSlot.active,
+          last_updated: new Date().toISOString()
+        })
+        .eq('id', editingSlot.id);
+        
+      if (error) throw error;
+      
+      const updatedSlots = adSlots.map(slot => {
+        if (slot.id === editingSlot.id) {
+          return { 
+            ...editingSlot, 
+            last_updated: new Date().toISOString() 
+          };
+        }
+        return slot;
+      });
+      
+      setAdSlots(updatedSlots);
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+      setEditingSlot(null);
+      
+      toast({
+        title: "Ad Slot Updated",
+        description: "Your changes have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving ad slot:', error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your changes.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleInputChange = (key: keyof AdSlot, value: string | boolean) => {
@@ -140,6 +184,15 @@ const AdminAdManagement: React.FC = () => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading ad slots...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -215,7 +268,7 @@ const AdminAdManagement: React.FC = () => {
                       </div>
                     )}
                     <div className="text-xs text-muted-foreground mt-2">
-                      Last updated: {formatDate(slot.lastUpdated)}
+                      Last updated: {formatDate(slot.last_updated)}
                     </div>
                   </CardContent>
                   

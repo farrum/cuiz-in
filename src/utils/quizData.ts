@@ -1,3 +1,4 @@
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -210,4 +211,25 @@ export const STORAGE_KEYS = {
   ADMIN_AUTH: 'quiz_app_admin_auth',
   COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
   REFERRALS: 'quiz_app_referrals'
+};
+
+// Function to sync ad slots from Supabase to localStorage
+export const syncAdSlotsToLocal = async () => {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data, error } = await supabase
+      .from('ad_slots')
+      .select('*')
+      .eq('active', true);
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (data) {
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
+    }
+  } catch (error) {
+    console.error('Error syncing ad slots:', error);
+  }
 };

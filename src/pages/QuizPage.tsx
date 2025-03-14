@@ -14,7 +14,8 @@ import {
   DAILY_TARGET,
   getPointsForToday,
   getPointsForMonth,
-  MONTHLY_TARGET
+  MONTHLY_TARGET,
+  syncAdSlotsToLocal
 } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ const QuizPage: React.FC = () => {
   const [dailyPoints, setDailyPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [adsSynced, setAdsSynced] = useState(false);
   const { toast } = useToast();
   
   // Initialize on first load
@@ -42,6 +44,13 @@ const QuizPage: React.FC = () => {
     // Load daily and monthly points
     setDailyPoints(getPointsForToday());
     setMonthlyPoints(getPointsForMonth());
+    
+    // Sync ad slots from Supabase
+    if (!adsSynced) {
+      syncAdSlotsToLocal().then(() => {
+        setAdsSynced(true);
+      });
+    }
     
     // Get first question
     loadNewQuestion();

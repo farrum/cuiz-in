@@ -9,7 +9,206 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ad_slots: {
+        Row: {
+          active: boolean | null
+          code: string
+          id: string
+          last_updated: string | null
+          name: string
+          position: string
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          id?: string
+          last_updated?: string | null
+          name: string
+          position: string
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          id?: string
+          last_updated?: string | null
+          name?: string
+          position?: string
+        }
+        Relationships: []
+      }
+      login_logs: {
+        Row: {
+          device: string | null
+          id: string
+          ip_address: string | null
+          login_time: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          points_earned: number | null
+          question_id: string | null
+          selected_answer: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          category: string | null
+          correct_answer: string
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          options: Json
+          question: string
+        }
+        Insert: {
+          category?: string | null
+          correct_answer: string
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          options: Json
+          question: string
+        }
+        Update: {
+          category?: string | null
+          correct_answer?: string
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referee_id: string | null
+          referrer_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referrer_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referrer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          points: number | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          points?: number | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          points?: number | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
