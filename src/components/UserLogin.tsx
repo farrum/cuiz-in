@@ -54,10 +54,17 @@ const UserLogin: React.FC = () => {
           return;
         }
         
+        // Properly type and filter user data with type safety
+        type UserObject = { id: string, email?: string };
+        
         // Type assertion to handle the users array
-        const adminUser = usersData?.users?.find(u => {
-          // Safe access the email property with optional chaining
-          return u && typeof u === 'object' && 'email' in u && u.email === adminEmail;
+        const adminUser = usersData?.users?.find((u): u is UserObject => {
+          // Safe access the email property with type check
+          return u !== null && 
+                 typeof u === 'object' && 
+                 'email' in u && 
+                 typeof u.email === 'string' && 
+                 u.email === adminEmail;
         });
         
         if (!adminUser) {
@@ -124,10 +131,14 @@ const UserLogin: React.FC = () => {
         const testEmail = 'testuser@example.com';
         console.log('Checking for test user...');
         
-        // Type assertion to handle the users array
-        const testUser = usersData?.users?.find(u => {
-          // Safe access the email property with optional chaining
-          return u && typeof u === 'object' && 'email' in u && u.email === testEmail;
+        // Type assertion to handle the users array with the same type safety
+        const testUser = usersData?.users?.find((u): u is UserObject => {
+          // Safe access the email property with type check
+          return u !== null && 
+                 typeof u === 'object' && 
+                 'email' in u && 
+                 typeof u.email === 'string' && 
+                 u.email === testEmail;
         });
         
         if (!testUser) {

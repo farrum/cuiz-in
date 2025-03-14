@@ -60,10 +60,17 @@ const AdminLogin: React.FC = () => {
           return;
         }
         
-        // Type assertion to handle the users array
-        const adminUser = usersData?.users?.find(u => {
-          // Safe access the email property with optional chaining
-          return u && typeof u === 'object' && 'email' in u && u.email === adminEmail;
+        // Define a proper type for user objects
+        type UserObject = { id: string, email?: string };
+        
+        // Type assertion to handle the users array with proper type checking
+        const adminUser = usersData?.users?.find((u): u is UserObject => {
+          // Type-safe property check
+          return u !== null && 
+                 typeof u === 'object' && 
+                 'email' in u && 
+                 typeof u.email === 'string' && 
+                 u.email === adminEmail;
         });
         
         if (!adminUser) {
