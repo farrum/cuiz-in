@@ -22,3 +22,5 @@ export const useLoginRedirect = () => {
 
   return { isInitializing, setIsInitializing };
 };
+
+export default useLoginRedirect;

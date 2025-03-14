@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +10,8 @@ import PasswordResetDialog from './PasswordResetDialog';
 
 const LoginForm: React.FC = () => {
   const { toast } = useToast();
-  const { signIn, refreshUserRole } = useAuth();
+  const navigate = useNavigate();
+  const { signIn, refreshUserRole, userRole } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,30 +34,24 @@ const LoginForm: React.FC = () => {
     }
 
     try {
-      // Special case for quizadmin
-      if (email.toLowerCase() === 'quizadmin') {
-        const adminEmail = 'clouddriveback@gmail.com';
-        console.log('Logging in admin from user login with email:', adminEmail);
-        
-        const { error } = await signIn(adminEmail, password);
-        
-        if (error) {
-          throw error;
-        }
-        
-        await refreshUserRole();
-        return;
-      }
+      // Support both standard email login and admin login (clouddriveback@gmail.com)
+      const emailToUse = email.toLowerCase() === 'quizadmin' 
+        ? 'clouddriveback@gmail.com' 
+        : email;
       
-      // Standard email login
-      console.log('Logging in with email:', email);
-      const { error } = await signIn(email, password);
+      console.log('Logging in with email:', emailToUse);
+      const { error } = await signIn(emailToUse, password);
       
       if (error) {
         throw error;
       }
       
       await refreshUserRole();
+      
+      // Redirect admins to admin dashboard, others to home
+      if (userRole === 'admin') {
+        navigate('/admin');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
@@ -72,7 +67,7 @@ const LoginForm: React.FC = () => {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="glass rounded-2xl p-8">
-        <h2 className="text-2xl font-bold mb-6 text-center">User Login</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -130,12 +125,6 @@ const LoginForm: React.FC = () => {
               Don't have an account?{' '}
               <Link to="/register" className="text-primary hover:underline">
                 Register
-              </Link>
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Admin?{' '}
-              <Link to="/admin-login" className="text-primary hover:underline">
-                Admin Login
               </Link>
             </p>
           </div>
