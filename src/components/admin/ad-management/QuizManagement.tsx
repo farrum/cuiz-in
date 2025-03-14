@@ -32,9 +32,9 @@ import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
 import * as XLSX from 'xlsx';
-import { Json } from '@/integrations/supabase/types';
 import { QuizQuestion } from '@/utils/quizData';
 
+// Fix: Export the component as default
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<QuizQuestion[]>([]);
@@ -468,4 +468,5 @@ const QuizManagement: React.FC = () => {
   );
 };
 
+// Make sure we export as default
 export default QuizManagement;

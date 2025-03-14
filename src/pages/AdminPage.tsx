@@ -8,7 +8,7 @@ import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
-import { QuizManagement } from '@/components/admin/ad-management';
+import QuizManagement from '@/components/admin/ad-management/QuizManagement';
 import { STORAGE_KEYS, syncAllDataToSupabase } from '@/utils/quizData';
 import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
