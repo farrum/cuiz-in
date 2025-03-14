@@ -1,4 +1,3 @@
-
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -6,11 +5,10 @@ export interface QuizQuestion {
   correctAnswer: string;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
-  points?: number; // Added points as optional property
+  points?: number;
   explanation?: string;
 }
 
-// Sample questions for the quiz
 export const quizQuestions: QuizQuestion[] = [
   {
     id: '1',
@@ -106,69 +104,58 @@ export const quizQuestions: QuizQuestion[] = [
   }
 ];
 
-// Get a random question
 export const getRandomQuestion = (): QuizQuestion => {
   const randomIndex = Math.floor(Math.random() * quizQuestions.length);
   return quizQuestions[randomIndex];
 };
 
-// Get multiple random questions without repetition
 export const getRandomQuestions = (count: number): QuizQuestion[] => {
   const questions = [...quizQuestions];
   const shuffled = questions.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 };
 
-// Calculate how much money user can withdraw
 export const calculateCashAmount = (points: number): number => {
   const validPoints = Math.floor(points / 100) * 100;
-  return validPoints / 100; // ₹1 for every 100 points
+  return validPoints / 100;
 };
 
-// Check if answer is correct
 export const checkAnswer = (question: QuizQuestion, selectedOption: string): boolean => {
   return question.correctAnswer === selectedOption;
 };
 
-// Calculate points based on correct/incorrect answers
 export const calculatePoints = (isCorrect: boolean): number => {
   return isCorrect ? 2 : 0.5;
 };
 
-// Calculate daily and monthly targets
 export const DAILY_TARGET = 400;
 export const MONTHLY_TARGET = 12000;
 export const MONTHLY_REWARD = 8000;
 
-// Check if player has completed daily target
 export const hasCompletedDailyTarget = (points: number): boolean => {
   const todayPoints = getPointsForToday();
   return todayPoints >= DAILY_TARGET;
 };
 
-// Check if player has completed monthly target
 export const hasCompletedMonthlyTarget = (points: number): boolean => {
   const monthlyPoints = getPointsForMonth();
   return monthlyPoints >= MONTHLY_TARGET;
 };
 
-// Get points earned today
 export const getPointsForToday = (): number => {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
   const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
   return dailyLog[today] || 0;
 };
 
-// Get points earned this month
 export const getPointsForMonth = (): number => {
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const currentMonth = new Date().toISOString().slice(0, 7);
   const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
   return monthlyLog[currentMonth] || 0;
 };
 
-// Log points for today
 export const logPointsForDay = (pointsEarned: number): void => {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
   const dailyLog = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
   
   if (!dailyLog[today]) {
@@ -179,9 +166,8 @@ export const logPointsForDay = (pointsEarned: number): void => {
   localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyLog));
 };
 
-// Log points for this month
 export const logPointsForMonth = (pointsEarned: number): void => {
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const currentMonth = new Date().toISOString().slice(0, 7);
   const monthlyLog = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
   
   if (!monthlyLog[currentMonth]) {
@@ -191,19 +177,16 @@ export const logPointsForMonth = (pointsEarned: number): void => {
   monthlyLog[currentMonth] += pointsEarned;
   localStorage.setItem('quiz_app_monthly_points', JSON.stringify(monthlyLog));
   
-  // Check if monthly target is achieved
   if (monthlyLog[currentMonth] >= MONTHLY_TARGET) {
     handleMonthlyTargetAchievement(currentMonth);
   }
 };
 
-// Handle monthly target achievement
 const handleMonthlyTargetAchievement = (month: string): void => {
   const achievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
   const alreadyRewarded = achievements.some((a: any) => a.month === month && a.type === 'monthly_target');
   
   if (!alreadyRewarded) {
-    // Add achievement
     achievements.push({
       id: Date.now().toString(),
       type: 'monthly_target',
@@ -217,13 +200,12 @@ const handleMonthlyTargetAchievement = (month: string): void => {
   }
 };
 
-// Local storage keys
 export const STORAGE_KEYS = {
-  USER_POINTS: 'quiz_app_user_points',
   USER_NAME: 'quiz_app_user_name',
-  REFERRALS: 'quiz_app_referrals',
-  COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
-  DAILY_POINTS: 'quiz_app_daily_points',
-  MONTHLY_POINTS: 'quiz_app_monthly_points',
-  ACHIEVEMENTS: 'quiz_app_achievements',
+  USER_POINTS: 'quiz_app_user_points',
+  CURRENT_QUIZ: 'quiz_app_current_quiz',
+  COMPLETED_QUIZZES: 'quiz_app_completed_quizzes',
+  USER_QUIZ_HISTORY: 'quiz_app_user_quiz_history',
+  ADMIN_USERNAME: 'quiz_app_admin_username',
+  ADMIN_AUTH: 'quiz_app_admin_auth'
 };

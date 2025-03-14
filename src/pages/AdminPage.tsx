@@ -10,11 +10,22 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { Shield, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock admin check - in a real app, this would be handled by your auth system
+// Admin credentials
+const ADMIN_CREDENTIALS = {
+  username: 'quizadmin',
+  password: '!Quizzer123'
+};
+
+// Check if current user is admin based on stored credentials
 const checkIsAdmin = (): boolean => {
-  const userData = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-  // For demo purposes, consider "admin" as the admin username
-  return userData === 'admin';
+  const storedUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
+  const storedAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
+  
+  // For backwards compatibility, also check the old admin check
+  const oldAdminCheck = localStorage.getItem(STORAGE_KEYS.USER_NAME) === 'admin';
+  
+  return (storedUsername === ADMIN_CREDENTIALS.username && 
+         storedAuth === btoa(ADMIN_CREDENTIALS.password)) || oldAdminCheck;
 };
 
 const AdminPage: React.FC = () => {
