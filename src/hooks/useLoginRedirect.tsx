@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +11,8 @@ export const useLoginRedirect = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
+      console.log('Login redirect triggered for role:', userRole);
+      
       // If user is admin, redirect to admin page
       if (userRole === 'admin') {
         navigate('/admin');

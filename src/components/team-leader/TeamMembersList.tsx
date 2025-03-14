@@ -238,12 +238,12 @@ const TeamMembersList: React.FC = () => {
                       <TableCell className="font-medium">{member.username}</TableCell>
                       <TableCell>{format(new Date(member.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell>
-                        <Badge variant={member.daily_points > 0 ? "success" : "outline"}>
+                        <Badge variant={member.daily_points > 0 ? "default" : "outline"}>
                           {member.daily_points}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={member.monthly_points > 50 ? "success" : "outline"}>
+                        <Badge variant={member.monthly_points > 50 ? "default" : "outline"}>
                           {member.monthly_points}
                         </Badge>
                       </TableCell>

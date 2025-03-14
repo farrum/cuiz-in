@@ -16,12 +16,15 @@ interface UserWithRole extends Profile {
   role: string;
 }
 
+// Define the valid role types to match our UserRole type
+type ValidRoleType = 'admin' | 'team_leader' | 'player';
+
 const UserRoleManagement: React.FC = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserWithRole[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<ValidRoleType | ''>('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -111,7 +114,7 @@ const UserRoleManagement: React.FC = () => {
           // Update existing role
           const { error: updateError } = await supabase
             .from('user_roles')
-            .update({ role: selectedRole })
+            .update({ role: selectedRole as ValidRoleType })
             .eq('user_id', userId);
           
           if (updateError) throw updateError;
@@ -119,7 +122,10 @@ const UserRoleManagement: React.FC = () => {
           // Insert new role
           const { error: insertError } = await supabase
             .from('user_roles')
-            .insert({ user_id: userId, role: selectedRole });
+            .insert({ 
+              user_id: userId, 
+              role: selectedRole as ValidRoleType 
+            });
           
           if (insertError) throw insertError;
         }
@@ -190,7 +196,10 @@ const UserRoleManagement: React.FC = () => {
             </div>
             
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select 
+                value={selectedRole} 
+                onValueChange={(value: string) => setSelectedRole(value as ValidRoleType)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
