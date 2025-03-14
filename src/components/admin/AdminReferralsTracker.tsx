@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -30,6 +29,8 @@ interface User {
   email: string;
   points: number;
   suspended: boolean;
+  referredBy?: string;
+  joinDate: string;
 }
 
 const AdminReferralsTracker: React.FC = () => {
@@ -37,21 +38,14 @@ const AdminReferralsTracker: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Load referrals and users from localStorage
   useEffect(() => {
-    // In a real app, you'd fetch this data from a database
-    // For this demo, we're using localStorage
-    
-    // Get users first
     const usersFromStorage = localStorage.getItem('admin_users');
     const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
     setUsers(loadedUsers);
     
-    // Generate mock referral data based on users
     const mockReferrals: ReferralData[] = [];
     
     loadedUsers.forEach((user: User) => {
-      // Find users that might have been referred by this user
       const referredUsers = loadedUsers.filter((u: User) => u.referredBy === user.id);
       
       referredUsers.forEach((referred: User) => {
@@ -63,7 +57,7 @@ const AdminReferralsTracker: React.FC = () => {
           referredEmail: referred.email,
           date: new Date(referred.joinDate).toISOString().slice(0, 10),
           status: referred.suspended ? 'inactive' : 'active',
-          earnings: Math.floor(Math.random() * 500) // Random earnings between 0-500
+          earnings: Math.floor(Math.random() * 500)
         });
       });
     });
@@ -77,14 +71,12 @@ const AdminReferralsTracker: React.FC = () => {
     }
   }, []);
   
-  // Filter referrals based on search term
   const filteredReferrals = referrals.filter(referral => 
     referral.referrerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     referral.referredName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     referral.referredEmail.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Calculate stats
   const totalReferrals = referrals.length;
   const activeReferrals = referrals.filter(r => r.status === 'active').length;
   const totalEarnings = referrals.reduce((sum, r) => sum + r.earnings, 0);
