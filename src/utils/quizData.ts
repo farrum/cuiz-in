@@ -391,7 +391,7 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
       id: question.id,
       question: question.question,
       options: options,
-      correctAnswer: question.correct_answer,
+      correctAnswer: question.correctAnswer,
       difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
       category: question.category || 'General Knowledge',
       points: 10,
@@ -429,7 +429,7 @@ export const getRandomQuestions = async (count: number): Promise<QuizQuestion[]>
         id: question.id,
         question: question.question,
         options: options,
-        correctAnswer: question.correct_answer,
+        correctAnswer: question.correctAnswer,
         difficulty: (question.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
         category: question.category || 'General Knowledge',
         points: 10,
@@ -620,9 +620,8 @@ export const logPointsForDay = async (userId?: string, points: number = 0) => {
     }
     
     // Update localStorage for compatibility with existing code
-    const dailyPoints = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
-    dailyPoints[today] = (dailyPoints[today] || 0) + points;
-    localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyPoints));
+    const dailyPoints = parseFloat(localStorage.getItem('quiz_app_daily_points') || '0');
+    localStorage.setItem('quiz_app_daily_points', (dailyPoints + points).toString());
     
   } catch (error) {
     console.error('Error in logPointsForDay:', error);
@@ -632,7 +631,7 @@ export const logPointsForDay = async (userId?: string, points: number = 0) => {
 export const logPointsForMonth = async (userId?: string, points: number = 0) => {
   try {
     const today = new Date();
-    const yearMonth = `${today.getFullYear()}_${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     const effectiveUserId = userId || getUserIdFromLocalStorage();
     
     if (!effectiveUserId) {
@@ -685,9 +684,8 @@ export const logPointsForMonth = async (userId?: string, points: number = 0) => 
     }
     
     // Update localStorage for compatibility with existing code
-    const monthlyPoints = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
-    monthlyPoints[yearMonth] = (monthlyPoints[yearMonth] || 0) + points;
-    localStorage.setItem('quiz_app_monthly_points', JSON.stringify(monthlyPoints));
+    const monthlyPoints = parseFloat(localStorage.getItem('quiz_app_monthly_points') || '0');
+    localStorage.setItem('quiz_app_monthly_points', (monthlyPoints + points).toString());
     
   } catch (error) {
     console.error('Error in logPointsForMonth:', error);

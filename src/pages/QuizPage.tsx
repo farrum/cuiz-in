@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
@@ -75,8 +76,9 @@ const QuizPage: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
     
     const userId = user?.id;
-    await logPointsForDay(pointsEarned.toString(), userId);
-    await logPointsForMonth(pointsEarned.toString(), userId);
+    // Convert pointsEarned to number when calling these functions
+    await logPointsForDay(userId, pointsEarned);
+    await logPointsForMonth(userId, pointsEarned);
     
     const updatedDailyPoints = await getPointsForToday(userId);
     const updatedMonthlyPoints = await getPointsForMonth(userId);
@@ -111,8 +113,9 @@ const QuizPage: React.FC = () => {
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        await logPointsForDay(bonusPoints.toString(), userId);
-        await logPointsForMonth(bonusPoints.toString(), userId);
+        // Convert bonusPoints to number when calling these functions
+        await logPointsForDay(userId, bonusPoints);
+        await logPointsForMonth(userId, bonusPoints);
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({
