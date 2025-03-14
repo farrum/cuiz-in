@@ -6,33 +6,32 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signIn, isAdmin, user } = useAuth();
-  const [email, setEmail] = useState('quizadmin@example.com');
+  const { signIn, isAdmin, user, userRole, refreshUserRole } = useAuth();
+  const [username, setUsername] = useState('quizadmin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Redirect if already logged in as admin
   useEffect(() => {
-    if (user && isAdmin) {
+    if (user && userRole === 'admin') {
       navigate('/admin');
     }
-  }, [user, isAdmin, navigate]);
+  }, [user, userRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
 
     // Simple validation
-    if (!email || !password) {
+    if (!username || !password) {
       toast({
         title: "Error",
-        description: "Please enter both email and password",
+        description: "Please enter both username and password",
         variant: "destructive"
       });
       setIsLoggingIn(false);
@@ -40,29 +39,22 @@ const AdminLogin: React.FC = () => {
     }
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(username, password);
       
       if (error) {
         throw error;
       }
       
-      // Check if user is admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id)
-        .eq('role', 'admin')
-        .single();
-        
-      if (roleError || !roleData) {
+      // Refresh the user role after login
+      await refreshUserRole();
+      
+      if (userRole !== 'admin') {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges",
           variant: "destructive"
         });
-        
-        // Sign the user out since they're not an admin
-        await supabase.auth.signOut();
+        navigate('/login');
         setIsLoggingIn(false);
         return;
       }
@@ -95,11 +87,10 @@ const AdminLogin: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Admin Email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Admin Username"
                 className="pl-10"
-                disabled // Using fixed admin email
               />
             </div>
           </div>

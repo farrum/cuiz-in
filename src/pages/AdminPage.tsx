@@ -9,51 +9,27 @@ import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import { QuizManagement } from '@/components/admin/ad-management';
-import { STORAGE_KEYS, syncAllDataToSupabase } from '@/utils/quizData';
 import { Shield, AlertTriangle, Users, BadgeDollarSign, Clock, Layout, UserPlus, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Admin credentials
-const ADMIN_CREDENTIALS = {
-  username: 'quizadmin',
-  password: '!Quizzer123'
-};
-
-// Check if current user is admin based on stored credentials
-const checkIsAdmin = (): boolean => {
-  const storedUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
-  const storedAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
-  
-  // For backwards compatibility, also check the old admin check
-  const oldAdminCheck = localStorage.getItem(STORAGE_KEYS.USER_NAME) === 'admin';
-  
-  return (storedUsername === ADMIN_CREDENTIALS.username && 
-         storedAuth === btoa(ADMIN_CREDENTIALS.password)) || oldAdminCheck;
-};
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const { user, isAdmin, userRole } = useAuth();
   
   useEffect(() => {
-    const adminCheck = checkIsAdmin();
-    setIsAdmin(adminCheck);
-    
-    if (!adminCheck) {
+    if (!user || userRole !== 'admin') {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin area.",
         variant: "destructive"
       });
       navigate('/');
-    } else {
-      // If admin, trigger data sync
-      syncAllDataToSupabase();
     }
-  }, [navigate, toast]);
+  }, [navigate, toast, user, userRole]);
 
-  if (!isAdmin) {
+  if (!user || userRole !== 'admin') {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />

@@ -3,11 +3,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
+type UserRole = 'admin' | 'team_leader' | 'player';
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{
+  signIn: (identifier: string, password: string) => Promise<{
     error: Error | null;
     data: any;
   }>;
@@ -17,6 +19,8 @@ interface AuthContextType {
   }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  userRole: UserRole;
+  refreshUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,13 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('player');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user?.id);
-      setIsLoading(false);
+      if (session?.user) {
+        refreshUserRole();
+      } else {
+        setIsLoading(false);
+      }
     });
 
     const {
@@ -40,48 +48,113 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user?.id);
-      setIsLoading(false);
+      if (session?.user) {
+        refreshUserRole();
+      } else {
+        setIsAdmin(false);
+        setUserRole('player');
+        setIsLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkAdminStatus = async (userId: string | undefined) => {
-    if (!userId) {
+  const refreshUserRole = async () => {
+    if (!user) {
       setIsAdmin(false);
+      setUserRole('player');
+      setIsLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      // First check for admin role
+      const { data: adminData, error: adminError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .eq('role', 'admin')
         .single();
         
-      setIsAdmin(!!data);
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking admin status:', error);
+      if (adminData) {
+        setIsAdmin(true);
+        setUserRole('admin');
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Failed to check admin status:', error);
+      
+      // Then check for team_leader role
+      const { data: leaderData, error: leaderError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'team_leader')
+        .single();
+        
+      if (leaderData) {
+        setIsAdmin(false);
+        setUserRole('team_leader');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Default to player role
       setIsAdmin(false);
+      setUserRole('player');
+      setIsLoading(false);
+      
+    } catch (error) {
+      console.error('Failed to check user role:', error);
+      setIsAdmin(false);
+      setUserRole('player');
+      setIsLoading(false);
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    const response = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const signIn = async (identifier: string, password: string) => {
+    let response;
+    
+    // Check if identifier is an email
+    if (identifier.includes('@')) {
+      response = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password,
+      });
+    } else {
+      // If not an email, find the user by username
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', identifier)
+        .single();
+        
+      if (profileError || !profileData) {
+        return { error: new Error('Invalid username or password'), data: null };
+      }
+      
+      // Look up the email for this user
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', profileData.id)
+        .single();
+        
+      if (userError || !userData) {
+        return { error: new Error('User email not found'), data: null };
+      }
+      
+      // Sign in with the email
+      response = await supabase.auth.signInWithPassword({
+        email: userData.email,
+        password,
+      });
+    }
     
     // Log login attempt
     try {
       await supabase.from('login_logs').insert({
-        username: email,
+        username: identifier,
         login_time: new Date().toISOString(),
         device: navigator.userAgent,
         ip_address: '127.0.0.1', // This would be set by the server in a real app
@@ -111,6 +184,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updated_at: new Date().toISOString(),
         })
         .eq('id', response.data.user.id);
+        
+      // Set new users as 'player' role by default
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: response.data.user.id,
+          role: 'player'
+        });
     }
 
     return response;
@@ -128,6 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     isAdmin,
+    userRole,
+    refreshUserRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -19,8 +19,8 @@ import {
 const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signIn, user } = useAuth();
-  const [email, setEmail] = useState('');
+  const { signIn, user, refreshUserRole } = useAuth();
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -40,10 +40,10 @@ const UserLogin: React.FC = () => {
     setIsLoggingIn(true);
 
     // Simple validation
-    if (!email || !password) {
+    if (!identifier || !password) {
       toast({
         title: "Error",
-        description: "Please enter both email and password",
+        description: "Please enter both username/email and password",
         variant: "destructive"
       });
       setIsLoggingIn(false);
@@ -51,11 +51,14 @@ const UserLogin: React.FC = () => {
     }
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(identifier, password);
       
       if (error) {
         throw error;
       }
+      
+      // Refresh role information
+      await refreshUserRole();
       
       toast({
         title: "Success",
@@ -67,7 +70,7 @@ const UserLogin: React.FC = () => {
       console.error('Login error:', error);
       toast({
         title: "Authentication Failed",
-        description: error.message || "Invalid email or password",
+        description: error.message || "Invalid username/email or password",
         variant: "destructive"
       });
     } finally {
@@ -184,10 +187,9 @@ const UserLogin: React.FC = () => {
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
-                type="email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Username or Email"
                 className="pl-10"
               />
             </div>
