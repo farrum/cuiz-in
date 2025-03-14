@@ -27,7 +27,7 @@ const UserLogin: React.FC = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -35,6 +35,134 @@ const UserLogin: React.FC = () => {
       navigate('/');
     }
   }, [user, navigate]);
+
+  // Initialize test users if needed
+  useEffect(() => {
+    const initializeUsers = async () => {
+      if (isInitializing) return;
+      
+      try {
+        setIsInitializing(true);
+        
+        // Check if admin user exists
+        console.log('Checking for admin user...');
+        const { data: adminCheck } = await supabase.auth.admin.getUserByEmail('quizadmin@quizpoints.com');
+        
+        if (!adminCheck?.user) {
+          console.log('Creating admin user...');
+          
+          // Create admin user
+          const { data: adminUser, error: adminError } = await supabase.auth.admin.createUser({
+            email: 'quizadmin@quizpoints.com',
+            password: '!Quizzer123',
+            email_confirm: true,
+            user_metadata: {
+              full_name: 'Quiz Admin'
+            }
+          });
+          
+          if (adminError) {
+            console.error('Error creating admin user:', adminError);
+          } else if (adminUser?.user) {
+            console.log('Admin user created with ID:', adminUser.user.id);
+            
+            // Update profile
+            await supabase
+              .from('profiles')
+              .update({ 
+                username: 'quizadmin',
+                points: 999
+              })
+              .eq('id', adminUser.user.id);
+              
+            // Assign admin role
+            await supabase
+              .from('user_roles')
+              .insert({
+                user_id: adminUser.user.id,
+                role: 'admin'
+              });
+              
+            console.log('Admin user setup complete');
+          }
+        } else {
+          console.log('Admin user already exists');
+          
+          // Ensure admin has the admin role
+          const { error: roleCheckError, data: existingRole } = await supabase
+            .from('user_roles')
+            .select('*')
+            .eq('user_id', adminCheck.user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+            
+          if (!existingRole && (!roleCheckError || roleCheckError.code === 'PGRST116')) {
+            console.log('Setting admin role for existing admin user');
+            
+            await supabase
+              .from('user_roles')
+              .insert({
+                user_id: adminCheck.user.id,
+                role: 'admin'
+              });
+          }
+        }
+        
+        // Check for a test user
+        const testEmail = 'testuser@example.com';
+        console.log('Checking for test user...');
+        const { data: testCheck } = await supabase.auth.admin.getUserByEmail(testEmail);
+        
+        if (!testCheck?.user) {
+          console.log('Creating test user...');
+          
+          // Create test user
+          const { data: testUser, error: testError } = await supabase.auth.admin.createUser({
+            email: testEmail,
+            password: 'Password123!',
+            email_confirm: true,
+            user_metadata: {
+              full_name: 'Test User'
+            }
+          });
+          
+          if (testError) {
+            console.error('Error creating test user:', testError);
+          } else if (testUser?.user) {
+            console.log('Test user created with ID:', testUser.user.id);
+            
+            // Update profile
+            await supabase
+              .from('profiles')
+              .update({ 
+                username: 'testuser',
+                points: 50
+              })
+              .eq('id', testUser.user.id);
+              
+            // Assign player role
+            await supabase
+              .from('user_roles')
+              .insert({
+                user_id: testUser.user.id,
+                role: 'player'
+              });
+              
+            console.log('Test user setup complete');
+          }
+        } else {
+          console.log('Test user already exists');
+        }
+        
+      } catch (error) {
+        console.error('Error initializing users:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    
+    initializeUsers();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,22 +180,65 @@ const UserLogin: React.FC = () => {
     }
 
     try {
-      console.log('Attempting login with:', identifier);
-      const { error, data } = await signIn(identifier, password);
+      // Handle special case for admin
+      if (identifier.toLowerCase() === 'quizadmin') {
+        console.log('Logging in admin from user login');
+        const adminEmail = 'quizadmin@quizpoints.com';
+        const { error } = await signIn(adminEmail, password);
+        
+        if (error) {
+          throw error;
+        }
+        
+        await refreshUserRole();
+        navigate('/admin');
+        return;
+      }
+      
+      // For email login
+      if (identifier.includes('@')) {
+        console.log('Logging in with email:', identifier);
+        const { error } = await signIn(identifier, password);
+        
+        if (error) {
+          throw error;
+        }
+        
+        await refreshUserRole();
+        navigate('/');
+        return;
+      }
+      
+      // For username login
+      console.log('Looking up email for username:', identifier);
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', identifier)
+        .maybeSingle();
+        
+      if (profileError || !profileData) {
+        console.error('Profile lookup error:', profileError);
+        throw new Error('Invalid username or password');
+      }
+      
+      // Get user from auth.users
+      const { data: userData } = await supabase.auth.admin.getUserById(profileData.id);
+      
+      if (!userData?.user?.email) {
+        throw new Error('User email not found');
+      }
+      
+      const { error } = await signIn(userData.user.email, password);
       
       if (error) {
         throw error;
       }
       
-      // Refresh role information
       await refreshUserRole();
-      
-      toast({
-        title: "Success",
-        description: "You have successfully logged in",
-      });
-      
       navigate('/');
+      
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
@@ -75,19 +246,6 @@ const UserLogin: React.FC = () => {
         description: error.message || "Invalid username/email or password",
         variant: "destructive"
       });
-      
-      // Still log failed attempts to the database
-      try {
-        await supabase.from('login_logs').insert({
-          username: identifier,
-          login_time: new Date().toISOString(),
-          device: navigator.userAgent,
-          ip_address: '127.0.0.1', // This would be set by the server in a real app
-          user_id: null // No user ID for failed attempts
-        });
-      } catch (logError) {
-        console.error('Failed to log login attempt:', logError);
-      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -134,137 +292,6 @@ const UserLogin: React.FC = () => {
       setResetEmail('');
     }
   };
-
-  // Create admin user on first load (if needed)
-  useEffect(() => {
-    const createAdminUser = async () => {
-      try {
-        setIsCreatingAdmin(true);
-        console.log('Checking for admin user...');
-        
-        // Check if the specific admin user exists already
-        const { data: existingAdmin, error: checkError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', 'quizadmin')
-          .limit(1);
-          
-        if (checkError) {
-          console.error('Error checking for admin user:', checkError);
-          setIsCreatingAdmin(false);
-          return;
-        }
-        
-        if (existingAdmin && existingAdmin.length > 0) {
-          console.log('Admin user already exists with ID:', existingAdmin[0].id);
-          setIsCreatingAdmin(false);
-          return;
-        }
-        
-        // Delete any existing admin users
-        console.log('Removing existing admin users...');
-        const { data: adminRoles, error: adminRolesError } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
-        
-        if (adminRolesError) {
-          console.error('Error fetching admin roles:', adminRolesError);
-        } else if (adminRoles && adminRoles.length > 0) {
-          for (const adminRole of adminRoles) {
-            // Delete the user's auth record
-            const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(
-              adminRole.user_id
-            );
-            
-            if (deleteAuthError) {
-              console.error('Error deleting admin auth user:', deleteAuthError);
-            } else {
-              console.log('Successfully deleted admin user:', adminRole.user_id);
-            }
-          }
-        }
-        
-        console.log('Creating new admin user...');
-        
-        // Create admin user with the specified credentials
-        const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
-          email: 'quizadmin@quizpoints.com',
-          password: '!Quizzer123',
-          options: {
-            data: {
-              full_name: 'Quiz Admin',
-            }
-          }
-        });
-        
-        if (signUpError) {
-          console.error('Error creating admin user:', signUpError);
-          setIsCreatingAdmin(false);
-          return;
-        }
-        
-        if (adminUser?.user) {
-          console.log('Admin user created with ID:', adminUser.user.id);
-          
-          // Update the admin's username
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ 
-              username: 'quizadmin',
-              points: 999
-            })
-            .eq('id', adminUser.user.id);
-            
-          if (profileError) {
-            console.error('Error updating admin profile:', profileError);
-          } else {
-            console.log('Admin profile updated successfully');
-          }
-            
-          // Assign admin role
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: adminUser.user.id,
-              role: 'admin'
-            });
-            
-          if (roleError) {
-            console.error('Error assigning admin role:', roleError);
-          } else {
-            console.log('Admin user role assigned successfully');
-            
-            // Initialize daily and monthly points for admin
-            const today = new Date().toISOString().split('T')[0];
-            const yearMonth = today.substring(0, 7).replace('-', '_');
-            
-            await supabase.from('daily_points').insert({
-              user_id: adminUser.user.id,
-              date: today,
-              points: 0
-            });
-            
-            await supabase.from('monthly_points').insert({
-              user_id: adminUser.user.id,
-              year_month: yearMonth,
-              points: 0
-            });
-            
-            console.log('Admin user setup complete');
-          }
-        } else {
-          console.log('Failed to create admin user - no user data returned');
-        }
-      } catch (error) {
-        console.error('Error in admin user creation:', error);
-      } finally {
-        setIsCreatingAdmin(false);
-      }
-    };
-    
-    createAdminUser();
-  }, []);
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -317,9 +344,9 @@ const UserLogin: React.FC = () => {
           <Button
             type="submit"
             className="w-full btn-shine"
-            disabled={isLoggingIn || isCreatingAdmin}
+            disabled={isLoggingIn || isInitializing}
           >
-            {isLoggingIn ? 'Logging in...' : 'Log In'}
+            {isLoggingIn ? 'Logging in...' : isInitializing ? 'Initializing...' : 'Log In'}
           </Button>
 
           <div className="text-center mt-4">
@@ -337,9 +364,9 @@ const UserLogin: React.FC = () => {
             </p>
           </div>
           
-          {isCreatingAdmin && (
+          {isInitializing && (
             <div className="text-center mt-2">
-              <p className="text-xs text-muted-foreground">Setting up admin account...</p>
+              <p className="text-xs text-muted-foreground">Setting up demo accounts...</p>
             </div>
           )}
         </form>

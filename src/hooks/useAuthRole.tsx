@@ -33,7 +33,7 @@ export const useAuthRole = (
           .select('*')
           .eq('user_id', user.id)
           .eq('role', 'admin')
-          .single();
+          .maybeSingle();
           
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking admin role:', checkError);
@@ -73,7 +73,7 @@ export const useAuthRole = (
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'admin')
-        .single();
+        .maybeSingle();
       
       if (adminError) {
         console.log('Admin role check error:', adminError);
@@ -96,7 +96,7 @@ export const useAuthRole = (
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'team_leader')
-        .single();
+        .maybeSingle();
       
       if (leaderError) {
         console.log('Team leader role check error:', leaderError);
