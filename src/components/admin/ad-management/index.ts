@@ -1,7 +1,10 @@
 
-// Export QuizManagement directly
-export { default as QuizManagement } from './QuizManagement';
+// Export ad management components
+export { default as AdSlotCard } from './AdSlotCard';
+export { default as AdSlotGrid } from './AdSlotGrid';
+export { default as EditAdSlotDialog } from './EditAdSlotDialog'; 
 
-// Also export any other components that might be used
+// Export quiz management components
+export { default as QuizManagement } from './QuizManagement';
 export { default as QuizQuestionForm } from './QuizQuestionForm';
 export { default as ImportQuizQuestions } from './ImportQuizQuestions';
