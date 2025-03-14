@@ -565,106 +565,132 @@ export const getPointsForMonth = async (userId?: string): Promise<number> => {
   }
 };
 
-export const logPointsForDay = async (pointsEarned: number, userId?: string): Promise<void> => {
-  const id = getUserId(userId);
-  
-  const currentPoints = parseFloat(localStorage.getItem('quiz_app_daily_points') || '0');
-  localStorage.setItem('quiz_app_daily_points', (currentPoints + pointsEarned).toString());
-  
-  if (id === 'anonymous') {
-    window.dispatchEvent(new Event('pointsUpdated'));
-    return;
-  }
-  
+export const logPointsForDay = async (userId?: string, points: number = 0) => {
   try {
     const today = new Date().toISOString().split('T')[0];
+    const effectiveUserId = userId || getUserIdFromLocalStorage();
     
-    const { data: existingRecord } = await supabase
+    if (!effectiveUserId) {
+      console.warn('No user ID available for logging daily points');
+      return;
+    }
+    
+    console.log(`Logging ${points} points for user ${effectiveUserId} on ${today}`);
+    
+    // First check if there's an existing record for today
+    const { data: existingRecord, error: fetchError } = await supabase
       .from('daily_points')
-      .select('id, points')
-      .eq('user_id', id)
+      .select('*')
+      .eq('user_id', effectiveUserId)
       .eq('date', today)
-      .single();
+      .maybeSingle();
       
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error checking daily points:', fetchError);
+      return;
+    }
+    
     if (existingRecord) {
-      await supabase
+      // Update existing record
+      const { error: updateError } = await supabase
         .from('daily_points')
-        .update({ points: existingRecord.points + pointsEarned })
+        .update({ points: existingRecord.points + points })
         .eq('id', existingRecord.id);
+        
+      if (updateError) {
+        console.error('Error updating daily points:', updateError);
+      } else {
+        console.log('Daily points updated successfully');
+      }
     } else {
-      await supabase
+      // Create new record
+      const { error: insertError } = await supabase
         .from('daily_points')
         .insert({
-          user_id: id,
+          user_id: effectiveUserId,
           date: today,
-          points: pointsEarned
+          points: points
         });
+        
+      if (insertError) {
+        console.error('Error inserting daily points:', insertError);
+      } else {
+        console.log('Daily points record created successfully');
+      }
     }
     
-    const { data: userData } = await supabase
-      .from('profiles')
-      .select('points')
-      .eq('id', id)
-      .single();
-      
-    if (userData) {
-      await supabase
-        .from('profiles')
-        .update({ points: userData.points + pointsEarned })
-        .eq('id', id);
-    }
+    // Update localStorage for compatibility with existing code
+    const dailyPoints = JSON.parse(localStorage.getItem('quiz_app_daily_points') || '{}');
+    dailyPoints[today] = (dailyPoints[today] || 0) + points;
+    localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyPoints));
     
-    window.dispatchEvent(new Event('pointsUpdated'));
   } catch (error) {
-    console.error('Error logging daily points:', error);
-    window.dispatchEvent(new Event('pointsUpdated'));
+    console.error('Error in logPointsForDay:', error);
   }
 };
 
-export const logPointsForMonth = async (pointsEarned: number, userId?: string): Promise<void> => {
-  const id = getUserId(userId);
-  
-  const currentPoints = parseFloat(localStorage.getItem('quiz_app_monthly_points') || '0');
-  localStorage.setItem('quiz_app_monthly_points', (currentPoints + pointsEarned).toString());
-  
-  if (id === 'anonymous') {
-    return;
-  }
-  
+export const logPointsForMonth = async (userId?: string, points: number = 0) => {
   try {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const today = new Date();
+    const yearMonth = `${today.getFullYear()}_${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const effectiveUserId = userId || getUserIdFromLocalStorage();
     
-    const { data: existingRecord } = await supabase
+    if (!effectiveUserId) {
+      console.warn('No user ID available for logging monthly points');
+      return;
+    }
+    
+    console.log(`Logging ${points} points for user ${effectiveUserId} for month ${yearMonth}`);
+    
+    // First check if there's an existing record for this month
+    const { data: existingRecord, error: fetchError } = await supabase
       .from('monthly_points')
-      .select('id, points')
-      .eq('user_id', id)
-      .eq('year_month', currentMonth)
-      .single();
+      .select('*')
+      .eq('user_id', effectiveUserId)
+      .eq('year_month', yearMonth)
+      .maybeSingle();
       
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error checking monthly points:', fetchError);
+      return;
+    }
+    
     if (existingRecord) {
-      await supabase
+      // Update existing record
+      const { error: updateError } = await supabase
         .from('monthly_points')
-        .update({ points: existingRecord.points + pointsEarned })
+        .update({ points: existingRecord.points + points })
         .eq('id', existingRecord.id);
+        
+      if (updateError) {
+        console.error('Error updating monthly points:', updateError);
+      } else {
+        console.log('Monthly points updated successfully');
+      }
     } else {
-      await supabase
+      // Create new record
+      const { error: insertError } = await supabase
         .from('monthly_points')
         .insert({
-          user_id: id,
-          year_month: currentMonth,
-          points: pointsEarned
+          user_id: effectiveUserId,
+          year_month: yearMonth,
+          points: points
         });
+        
+      if (insertError) {
+        console.error('Error inserting monthly points:', insertError);
+      } else {
+        console.log('Monthly points record created successfully');
+      }
     }
     
-    const updatedPoints = existingRecord 
-      ? existingRecord.points + pointsEarned
-      : pointsEarned;
-      
-    if (updatedPoints >= MONTHLY_TARGET) {
-      handleMonthlyTargetAchievement(id, currentMonth);
-    }
+    // Update localStorage for compatibility with existing code
+    const monthlyPoints = JSON.parse(localStorage.getItem('quiz_app_monthly_points') || '{}');
+    monthlyPoints[yearMonth] = (monthlyPoints[yearMonth] || 0) + points;
+    localStorage.setItem('quiz_app_monthly_points', JSON.stringify(monthlyPoints));
+    
   } catch (error) {
-    console.error('Error logging monthly points:', error);
+    console.error('Error in logPointsForMonth:', error);
   }
 };
 
@@ -751,5 +777,24 @@ export const syncAllDataToSupabase = async () => {
     await syncAdSlotsToLocal();
   } catch (error) {
     console.error('Error syncing all data:', error);
+  }
+};
+
+export const getUserIdFromLocalStorage = () => {
+  try {
+    // First try to get from localStorage
+    const userString = localStorage.getItem('supabase.auth.token');
+    if (userString) {
+      const userData = JSON.parse(userString);
+      if (userData?.currentSession?.user?.id) {
+        return userData.currentSession.user.id;
+      }
+    }
+    
+    // Otherwise check if there's any other user ID stored
+    return null;
+  } catch (error) {
+    console.error('Error getting user ID from localStorage:', error);
+    return null;
   }
 };

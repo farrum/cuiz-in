@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +89,8 @@ const UserRegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      console.log('Starting registration process for:', formData.email);
+      
       // Register the user with Supabase using the signUp function from useAuth
       const userData = {
         fullName: formData.fullName,
@@ -96,15 +99,21 @@ const UserRegistrationForm: React.FC = () => {
         username: formData.fullName
       };
       
-      const { error } = await signUp(formData.email, formData.password, userData);
+      const { error, data } = await signUp(formData.email, formData.password, userData);
       
       if (error) {
+        console.error('Registration error from signUp:', error);
         throw error;
       }
+      
+      console.log('Registration successful, user data:', data);
       
       // Store some data in localStorage for easy access
       localStorage.setItem(STORAGE_KEYS.USER_NAME, formData.fullName);
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, '10');
+      localStorage.setItem('quiz_app_user_email', formData.email);
+      localStorage.setItem('quiz_app_user_phone', formData.phone);
+      localStorage.setItem('quiz_app_user_upi', formData.upiId);
       
       // Fire event to update the points display
       window.dispatchEvent(new Event('pointsUpdated'));

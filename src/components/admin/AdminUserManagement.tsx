@@ -41,7 +41,6 @@ import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-// User data structure
 interface UserData {
   id: string;
   name: string;
@@ -69,25 +68,35 @@ const AdminUserManagement: React.FC = () => {
   const editForm = useForm<UserData>();
   const roleForm = useForm<{ role: 'admin' | 'team_leader' | 'player' }>();
   
-  // Load users from database
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       
       try {
+        console.log('Fetching user profiles from Supabase');
         // Get all profiles
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*');
           
-        if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
+        
+        console.log(`Found ${profiles.length} profiles`);
         
         // Get all roles
         const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
           .select('*');
           
-        if (rolesError) throw rolesError;
+        if (rolesError) {
+          console.error('Error fetching roles:', rolesError);
+          throw rolesError;
+        }
+        
+        console.log(`Found ${roles.length} role assignments`);
         
         // Map profiles to our UserData format
         const mappedUsers: UserData[] = profiles.map(profile => {
@@ -105,6 +114,7 @@ const AdminUserManagement: React.FC = () => {
           };
         });
         
+        console.log('Mapped user data:', mappedUsers);
         setUsers(mappedUsers);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -121,13 +131,11 @@ const AdminUserManagement: React.FC = () => {
     fetchUsers();
   }, [toast]);
   
-  // Filter users based on search term
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  // Toggle user suspension status
   const toggleUserSuspension = async (userId: string) => {
     const userToUpdate = users.find(u => u.id === userId);
     if (!userToUpdate) return;
@@ -167,27 +175,23 @@ const AdminUserManagement: React.FC = () => {
     }
   };
   
-  // Open edit dialog with user data
   const openEditDialog = (user: UserData) => {
     setCurrentUser(user);
     editForm.reset(user);
     setIsEditDialogOpen(true);
   };
 
-  // Open reset password dialog
   const openResetPasswordDialog = (user: UserData) => {
     setCurrentUser(user);
     setIsResetPasswordDialogOpen(true);
   };
   
-  // Open change role dialog
   const openRoleDialog = (user: UserData) => {
     setCurrentUser(user);
     roleForm.reset({ role: user.role });
     setIsRoleDialogOpen(true);
   };
 
-  // Handle role change
   const handleRoleChange = async (data: { role: 'admin' | 'team_leader' | 'player' }) => {
     if (!currentUser) return;
     
@@ -249,7 +253,6 @@ const AdminUserManagement: React.FC = () => {
     }
   };
 
-  // Send login details to user
   const sendLoginDetails = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (user) {
@@ -261,7 +264,6 @@ const AdminUserManagement: React.FC = () => {
     }
   };
 
-  // Reset password for a user
   const handleResetPassword = () => {
     if (!currentUser) return;
     
@@ -402,7 +404,6 @@ const AdminUserManagement: React.FC = () => {
         </div>
       )}
       
-      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -533,7 +534,6 @@ const AdminUserManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Reset Password Dialog */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -568,7 +568,6 @@ const AdminUserManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Change Role Dialog */}
       <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
         <DialogContent>
           <DialogHeader>

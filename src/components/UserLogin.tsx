@@ -52,7 +52,7 @@ const UserLogin: React.FC = () => {
 
     try {
       console.log('Attempting login with:', identifier);
-      const { error } = await signIn(identifier, password);
+      const { error, data } = await signIn(identifier, password);
       
       if (error) {
         throw error;
@@ -74,6 +74,19 @@ const UserLogin: React.FC = () => {
         description: error.message || "Invalid username/email or password",
         variant: "destructive"
       });
+      
+      // Still log failed attempts to the database
+      try {
+        await supabase.from('login_logs').insert({
+          username: identifier,
+          login_time: new Date().toISOString(),
+          device: navigator.userAgent,
+          ip_address: '127.0.0.1', // This would be set by the server in a real app
+          user_id: null // No user ID for failed attempts
+        });
+      } catch (logError) {
+        console.error('Failed to log login attempt:', logError);
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -144,10 +157,15 @@ const UserLogin: React.FC = () => {
         
         console.log('Creating admin user...');
         
-        // Create admin user
+        // Create admin user with a proper email
         const { data: adminUser, error: signUpError } = await supabase.auth.signUp({
-          email: 'quizadmin@example.com',
+          email: 'admin@quizpoints.com', // Using a valid email format
           password: '!Quizzer123',
+          options: {
+            data: {
+              full_name: 'Quiz Admin',
+            }
+          }
         });
         
         if (signUpError) {
