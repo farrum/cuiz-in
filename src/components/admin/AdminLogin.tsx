@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Admin credentials - same as in AdminPage.tsx
 const ADMIN_CREDENTIALS = {
@@ -21,7 +22,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
 
@@ -36,7 +37,47 @@ const AdminLogin: React.FC = () => {
       return;
     }
 
-    // Check credentials
+    // Try Supabase authentication first
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: 'quizadmin@example.com', // Using the email we set in our SQL migration
+        password: password
+      });
+      
+      if (!error && data.user) {
+        // Store admin auth in localStorage
+        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, btoa(password));
+        
+        // Log the successful login
+        try {
+          await supabase
+            .from('login_logs')
+            .insert({
+              username: username,
+              ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+              device: navigator.userAgent,
+              login_time: new Date().toISOString()
+            });
+        } catch (logError) {
+          console.error('Failed to log admin login:', logError);
+        }
+        
+        toast({
+          title: "Success",
+          description: "You have successfully logged in as admin",
+        });
+        
+        navigate('/admin');
+        setIsLoggingIn(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Supabase auth error:', err);
+    }
+    
+    // Fallback to local authentication
+    // Check credentials against hardcoded values
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       // Store admin auth in localStorage
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);

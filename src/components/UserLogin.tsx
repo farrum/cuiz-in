@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { Key, User, EyeOff, Eye, KeyRound } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,8 @@ const isAdmin = (username: string): boolean => {
 };
 
 // Log login activity
-const logLogin = (username: string, successful: boolean) => {
+const logLogin = async (username: string, successful: boolean) => {
+  // Log to localStorage for backward compatibility
   const loginLog = {
     username,
     date: new Date().toISOString(),
@@ -33,6 +35,24 @@ const logLogin = (username: string, successful: boolean) => {
   const logins = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
   logins.push(loginLog);
   localStorage.setItem('quiz_app_login_log', JSON.stringify(logins));
+  
+  // Log to Supabase
+  try {
+    const { error } = await supabase
+      .from('login_logs')
+      .insert({
+        username: username,
+        ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+        device: navigator.userAgent,
+        login_time: new Date().toISOString()
+      });
+      
+    if (error) {
+      console.error('Error logging to Supabase:', error);
+    }
+  } catch (err) {
+    console.error('Failed to log login to Supabase:', err);
+  }
 };
 
 const UserLogin: React.FC = () => {
@@ -46,7 +66,7 @@ const UserLogin: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
 
@@ -75,6 +95,35 @@ const UserLogin: React.FC = () => {
       return;
     }
 
+    try {
+      // Try to authenticate with Supabase first
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: `${username}@example.com`, // Using username as email for this example
+        password: password
+      });
+      
+      if (error) {
+        console.log('Supabase auth error, falling back to local auth:', error);
+      } else if (data.user) {
+        // Successful Supabase authentication
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+        
+        toast({
+          title: "Success",
+          description: "You have successfully logged in",
+        });
+        
+        await logLogin(username, true);
+        
+        navigate('/');
+        setIsLoggingIn(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Supabase auth error:', err);
+    }
+
+    // Fallback to local authentication
     // Check if the user exists in the admin users list
     const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
     const user = adminUsers.find((u: any) => 
@@ -99,7 +148,7 @@ const UserLogin: React.FC = () => {
       });
       
       // Log the successful login
-      logLogin(user.name, true);
+      await logLogin(user.name, true);
       
       navigate('/');
       setIsLoggingIn(false);
@@ -120,7 +169,7 @@ const UserLogin: React.FC = () => {
     });
     
     // Log the successful login
-    logLogin(username, true);
+    await logLogin(username, true);
     
     navigate('/');
     setIsLoggingIn(false);

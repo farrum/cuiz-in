@@ -12,6 +12,7 @@ const Header: React.FC = () => {
   const [todayPoints, setTodayPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Handle scroll event to change header appearance
   useEffect(() => {
@@ -27,22 +28,24 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Get current points data
+  // Get current points data and check login status
   useEffect(() => {
     const updatePoints = () => {
       setTodayPoints(getPointsForToday());
       setMonthlyPoints(getPointsForMonth());
     };
 
-    updatePoints();
-    window.addEventListener('pointsUpdated', updatePoints);
-    
-    // Check if user is admin
     const userData = localStorage.getItem('quiz_app_user_name');
+    setIsLoggedIn(!!userData);
     setIsAdmin(userData === 'admin' || userData === 'quizadmin');
     
+    if (isLoggedIn) {
+      updatePoints();
+      window.addEventListener('pointsUpdated', updatePoints);
+    }
+    
     return () => window.removeEventListener('pointsUpdated', updatePoints);
-  }, []);
+  }, [isLoggedIn]);
 
   const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
   const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
@@ -63,25 +66,27 @@ const Header: React.FC = () => {
             <span className="text-xl font-semibold">QuizPoints</span>
           </Link>
           
-          {/* Progress bars for daily and monthly targets with clearer labels */}
-          <div className="hidden md:flex flex-col gap-1 w-44">
-            <div className="flex text-xs items-center gap-1">
-              <Target className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs whitespace-nowrap">Daily:</span>
-              <div className="flex-1">
-                <Progress value={dailyProgress} className="h-1.5" />
+          {/* Progress bars for daily and monthly targets with clearer labels - only show when logged in */}
+          {isLoggedIn && (
+            <div className="hidden md:flex flex-col gap-1 w-44">
+              <div className="flex text-xs items-center gap-1">
+                <Target className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs whitespace-nowrap">Daily:</span>
+                <div className="flex-1">
+                  <Progress value={dailyProgress} className="h-1.5" />
+                </div>
+                <span className="text-xs text-muted-foreground">{todayPoints}/{DAILY_TARGET}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{todayPoints}/{DAILY_TARGET}</span>
-            </div>
-            <div className="flex text-xs items-center gap-1">
-              <Target className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs whitespace-nowrap">Monthly:</span>
-              <div className="flex-1">
-                <Progress value={monthlyProgress} className="h-1.5" />
+              <div className="flex text-xs items-center gap-1">
+                <Target className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs whitespace-nowrap">Monthly:</span>
+                <div className="flex-1">
+                  <Progress value={monthlyProgress} className="h-1.5" />
+                </div>
+                <span className="text-xs text-muted-foreground">{monthlyPoints}/{MONTHLY_TARGET}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{monthlyPoints}/{MONTHLY_TARGET}</span>
             </div>
-          </div>
+          )}
         </div>
         
         <nav className="flex items-center space-x-1">
