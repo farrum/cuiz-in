@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,11 @@ const AdminLogin: React.FC = () => {
           return;
         }
         
-        const adminUser = usersData?.users?.find(u => u.email === adminEmail);
+        // Type assertion to handle the users array
+        const adminUser = usersData?.users?.find(u => {
+          // Safe access the email property with optional chaining
+          return u && typeof u === 'object' && 'email' in u && u.email === adminEmail;
+        });
         
         if (!adminUser) {
           console.log('Admin user does not exist, creating it now');
@@ -137,7 +142,7 @@ const AdminLogin: React.FC = () => {
           return;
         }
         
-        email = userData.user.email;
+        email = userData.user.email || '';
       }
       
       console.log('Signing in with email:', email);

@@ -54,7 +54,11 @@ const UserLogin: React.FC = () => {
           return;
         }
         
-        const adminUser = usersData?.users?.find(u => u.email === adminEmail);
+        // Type assertion to handle the users array
+        const adminUser = usersData?.users?.find(u => {
+          // Safe access the email property with optional chaining
+          return u && typeof u === 'object' && 'email' in u && u.email === adminEmail;
+        });
         
         if (!adminUser) {
           console.log('Creating admin user...');
@@ -120,7 +124,11 @@ const UserLogin: React.FC = () => {
         const testEmail = 'testuser@example.com';
         console.log('Checking for test user...');
         
-        const testUser = usersData?.users?.find(u => u.email === testEmail);
+        // Type assertion to handle the users array
+        const testUser = usersData?.users?.find(u => {
+          // Safe access the email property with optional chaining
+          return u && typeof u === 'object' && 'email' in u && u.email === testEmail;
+        });
         
         if (!testUser) {
           console.log('Creating test user...');
