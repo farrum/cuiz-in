@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
-import { Key, User, EyeOff, Eye } from 'lucide-react';
+import { Key, User, EyeOff, Eye, KeyRound } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // Check if username is admin
 const isAdmin = (username: string): boolean => {
@@ -19,6 +27,9 @@ const UserLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +58,35 @@ const UserLogin: React.FC = () => {
       return;
     }
 
-    // For regular users, just store their username
+    // Check if the user exists in the admin users list
+    const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+    const user = adminUsers.find((u: any) => 
+      u.name.toLowerCase() === username.toLowerCase() || 
+      u.email.toLowerCase() === username.toLowerCase()
+    );
+
+    if (user) {
+      // For this example, we're not checking passwords since they're not stored securely
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, user.name);
+      localStorage.setItem('quiz_app_user_email', user.email);
+      localStorage.setItem('quiz_app_user_phone', user.mobile || '');
+      
+      // Initialize points if first time
+      if (!localStorage.getItem(STORAGE_KEYS.USER_POINTS)) {
+        localStorage.setItem(STORAGE_KEYS.USER_POINTS, user.points.toString() || '0');
+      }
+      
+      toast({
+        title: "Success",
+        description: "You have successfully logged in",
+      });
+      
+      navigate('/');
+      setIsLoggingIn(false);
+      return;
+    }
+
+    // For regular users not in admin list, just store their username
     localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
     
     // Initialize points if first time
@@ -64,6 +103,33 @@ const UserLogin: React.FC = () => {
     setIsLoggingIn(false);
   };
 
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsResetting(true);
+
+    if (!resetEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      setIsResetting(false);
+      return;
+    }
+
+    // In a real app, you would send a password reset email
+    // For this demo, we'll just display a success message
+    setTimeout(() => {
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for instructions to reset your password",
+      });
+      setResetDialogOpen(false);
+      setIsResetting(false);
+      setResetEmail('');
+    }, 1500);
+  };
+
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="glass rounded-2xl p-8">
@@ -76,7 +142,7 @@ const UserLogin: React.FC = () => {
               <Input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
+                placeholder="Username or Email"
                 className="pl-10"
               />
             </div>
@@ -100,6 +166,16 @@ const UserLogin: React.FC = () => {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="text-sm text-primary hover:underline"
+              onClick={() => setResetDialogOpen(true)}
+            >
+              Forgot Password?
+            </button>
           </div>
           
           <Button
@@ -126,6 +202,49 @@ const UserLogin: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Your Password</DialogTitle>
+            <DialogDescription>
+              Enter your email address, and we'll send you instructions to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="Email Address"
+                className="pl-10"
+                required
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setResetDialogOpen(false)}
+                disabled={isResetting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={isResetting}
+              >
+                {isResetting ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

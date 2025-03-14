@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Key, Eye, EyeOff, Wallet } from 'lucide-react';
@@ -98,6 +97,36 @@ const UserRegistrationForm: React.FC = () => {
         
         // Fire event to update the points display
         window.dispatchEvent(new Event('pointsUpdated'));
+      }
+      
+      // Save registration data for admin access
+      const existingRegistrations = JSON.parse(localStorage.getItem('quiz_app_registrations') || '[]');
+      existingRegistrations.push({
+        ...formData,
+        registrationDate: new Date().toISOString()
+      });
+      localStorage.setItem('quiz_app_registrations', JSON.stringify(existingRegistrations));
+      
+      // Add the new user to admin_users list
+      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+      const newUser = {
+        id: Date.now().toString(),
+        name: formData.fullName,
+        email: formData.email,
+        mobile: formData.phone,
+        points: 10,
+        suspended: false,
+        joinDate: new Date().toISOString().split('T')[0]
+      };
+      
+      // Check if user already exists
+      const userExists = adminUsers.some((u: any) => 
+        u.email.toLowerCase() === formData.email.toLowerCase()
+      );
+      
+      if (!userExists) {
+        adminUsers.push(newUser);
+        localStorage.setItem('admin_users', JSON.stringify(adminUsers));
       }
       
       // Simulate sending welcome email

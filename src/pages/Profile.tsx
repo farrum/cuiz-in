@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -72,8 +71,14 @@ const Profile: React.FC = () => {
   }, [navigate]);
   
   const handleLogout = () => {
-    // In a real app, this would clear authentication
-    // For this demo, we'll just redirect to home
+    // Clear user-specific data
+    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem('quiz_app_user_email');
+    localStorage.removeItem('quiz_app_user_phone');
+    localStorage.removeItem('quiz_app_user_upi');
+    
+    // We keep points and completed questions data for later login
+    
     navigate('/');
     
     toast({
@@ -149,7 +154,6 @@ const Profile: React.FC = () => {
           </Button>
         </div>
         
-        {/* Daily & Monthly Targets */}
         <div className="glass rounded-2xl p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="bg-primary/10 p-2 rounded-full">
@@ -221,7 +225,6 @@ const Profile: React.FC = () => {
           </div>
         </div>
         
-        {/* Achievements Section */}
         {achievements.length > 0 && (
           <div className="glass rounded-2xl p-6 mb-8">
             <div className="flex items-center space-x-3 mb-4">

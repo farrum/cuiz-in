@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -26,7 +25,7 @@ import {
   FormControl,
   FormMessage
 } from "@/components/ui/form";
-import { Pencil, UserX, UserPlus, Search, Check, X, Mail } from 'lucide-react';
+import { Pencil, UserX, UserPlus, Search, Check, X, Mail, KeyRound } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +47,7 @@ const AdminUserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -59,17 +59,17 @@ const AdminUserManagement: React.FC = () => {
     // Get registered users
     const registeredUsers: UserData[] = [];
     
-    // Get username from localStorage
-    const username = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    // Get all users from localStorage who have registered from the frontend
+    const storedUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     const userEmail = localStorage.getItem('quiz_app_user_email');
     const userPhone = localStorage.getItem('quiz_app_user_phone');
     const userPoints = localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0';
     
-    // If we have a registered user
-    if (username && userEmail) {
+    // If we have a registered user not already in admin_users, add them
+    if (storedUserName && userEmail) {
       registeredUsers.push({
-        id: '101',
-        name: username,
+        id: Date.now().toString(),
+        name: storedUserName,
         email: userEmail,
         mobile: userPhone || undefined,
         points: parseInt(userPoints, 10),
@@ -107,8 +107,7 @@ const AdminUserManagement: React.FC = () => {
         points: 50,
         suspended: true,
         joinDate: '2023-03-05'
-      },
-      ...registeredUsers
+      }
     ];
     
     // In a real implementation, you'd load from your database instead
@@ -116,30 +115,58 @@ const AdminUserManagement: React.FC = () => {
     if (usersFromStorage) {
       const storedUsers = JSON.parse(usersFromStorage);
       
-      // Check if registered user is already in stored users
-      const combinedUsers = [...storedUsers];
+      // Add the currently logged in user if not already in the list
+      let combinedUsers = [...storedUsers];
       
-      // Add registered user if not already in the list
-      if (username && userEmail) {
-        const userExists = storedUsers.some((u: UserData) => u.email === userEmail);
+      if (storedUserName && userEmail) {
+        const userExists = storedUsers.some((u: UserData) => 
+          u.email.toLowerCase() === userEmail.toLowerCase() || 
+          u.name.toLowerCase() === storedUserName.toLowerCase()
+        );
+        
         if (!userExists) {
-          combinedUsers.push({
-            id: '101',
-            name: username,
+          const newUser = {
+            id: Date.now().toString(),
+            name: storedUserName,
             email: userEmail,
             mobile: userPhone || undefined,
             points: parseInt(userPoints, 10),
             suspended: false,
             joinDate: new Date().toISOString().split('T')[0]
-          });
+          };
+          combinedUsers.push(newUser);
         }
       }
+      
+      // Check for any newly registered users that aren't in admin_users yet
+      const registrations = JSON.parse(localStorage.getItem('quiz_app_registrations') || '[]');
+      
+      registrations.forEach((reg: any) => {
+        const userExists = combinedUsers.some((u: UserData) => 
+          u.email.toLowerCase() === reg.email.toLowerCase() || 
+          u.name.toLowerCase() === reg.fullName.toLowerCase()
+        );
+        
+        if (!userExists) {
+          combinedUsers.push({
+            id: Date.now().toString() + Math.random().toString().slice(2, 8),
+            name: reg.fullName,
+            email: reg.email,
+            mobile: reg.phone,
+            points: 10, // Default starting points
+            suspended: false,
+            joinDate: new Date().toISOString().split('T')[0]
+          });
+        }
+      });
       
       setUsers(combinedUsers);
       localStorage.setItem('admin_users', JSON.stringify(combinedUsers));
     } else {
-      setUsers(mockUsers);
-      localStorage.setItem('admin_users', JSON.stringify(mockUsers));
+      // First time loading - initialize with mock data and any registered user
+      const initialUsers = [...mockUsers, ...registeredUsers];
+      setUsers(initialUsers);
+      localStorage.setItem('admin_users', JSON.stringify(initialUsers));
     }
   }, []);
   
@@ -201,6 +228,22 @@ const AdminUserManagement: React.FC = () => {
     editForm.reset();
   };
   
+  // Reset password for a user
+  const handleResetPassword = () => {
+    if (!currentUser) return;
+    
+    // In a real app, you would generate a reset token and send an email
+    // For this demo, we'll just simulate a successful reset
+    console.log(`Password reset for ${currentUser.email}`);
+    
+    toast({
+      title: "Password Reset",
+      description: `Password reset link has been sent to ${currentUser.email}`,
+    });
+    
+    setIsResetPasswordDialogOpen(false);
+  };
+  
   // Toggle user suspension status
   const toggleUserSuspension = (userId: string) => {
     const updatedUsers = users.map(user => {
@@ -225,6 +268,12 @@ const AdminUserManagement: React.FC = () => {
     setCurrentUser(user);
     editForm.reset(user);
     setIsEditDialogOpen(true);
+  };
+
+  // Open reset password dialog
+  const openResetPasswordDialog = (user: UserData) => {
+    setCurrentUser(user);
+    setIsResetPasswordDialogOpen(true);
   };
 
   // Send login details to user
@@ -314,6 +363,7 @@ const AdminUserManagement: React.FC = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => openEditDialog(user)}
+                      title="Edit User"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -321,6 +371,7 @@ const AdminUserManagement: React.FC = () => {
                       variant={user.suspended ? "outline" : "destructive"}
                       size="sm"
                       onClick={() => toggleUserSuspension(user.id)}
+                      title={user.suspended ? "Activate User" : "Suspend User"}
                     >
                       <UserX className="w-4 h-4" />
                     </Button>
@@ -328,8 +379,17 @@ const AdminUserManagement: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => sendLoginDetails(user.id)}
+                      title="Send Login Details"
                     >
                       <Mail className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openResetPasswordDialog(user)}
+                      title="Reset Password"
+                    >
+                      <KeyRound className="w-4 h-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -606,6 +666,41 @@ const AdminUserManagement: React.FC = () => {
               </form>
             </Form>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Send a password reset link to {currentUser?.name}. The user will receive an email with instructions to set a new password.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm mb-2">User Details:</p>
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <p><strong>Name:</strong> {currentUser?.name}</p>
+              <p><strong>Email:</strong> {currentUser?.email}</p>
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsResetPasswordDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={handleResetPassword}
+            >
+              Send Reset Link
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
