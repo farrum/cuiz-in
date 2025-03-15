@@ -47,7 +47,7 @@ const AdminLogin: React.FC = () => {
       if (!error && data.user) {
         // Store admin auth in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, btoa(password));
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         
         // Log the successful login
         try {
@@ -81,7 +81,7 @@ const AdminLogin: React.FC = () => {
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       // Store admin auth in localStorage
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, btoa(password));
+      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
       
       toast({
         title: "Success",

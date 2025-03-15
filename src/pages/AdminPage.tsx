@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
@@ -17,13 +17,26 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("users");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   
-  // Check if admin is logged in
-  const isLoggedIn = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  // Check if admin is logged in using useEffect instead of during render
+  useEffect(() => {
+    const adminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH);
+    setIsLoggedIn(adminAuth === 'true');
+    
+    if (adminAuth !== 'true') {
+      navigate('/admin-login');
+    }
+  }, [navigate]);
   
+  // Show loading state while checking authentication
+  if (isLoggedIn === null) {
+    return <div className="flex justify-center items-center min-h-screen">Loading admin dashboard...</div>;
+  }
+  
+  // Only render the admin page if logged in
   if (!isLoggedIn) {
-    navigate('/admin/login');
-    return null;
+    return null; // This won't render but navigation will happen in useEffect
   }
   
   const handleLogout = () => {
@@ -35,7 +48,7 @@ const AdminPage: React.FC = () => {
       description: "You have been logged out of the admin area.",
     });
     
-    navigate('/admin/login');
+    navigate('/admin-login');
   };
   
   const adminTabs = [
