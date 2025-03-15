@@ -1,12 +1,13 @@
 
 import { fetchAllAppData, syncLocalStorageToSupabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
-// Configuration for sync intervals (in milliseconds)
+// Configuration constants for synchronization
 export const SYNC_CONFIG = {
-  fetchInterval: 5 * 60 * 1000, // Fetch from Supabase every 5 minutes
-  syncInterval: 10 * 60 * 1000,  // Sync to Supabase every 10 minutes
-  autoSync: true, // Whether auto-sync is enabled by default
+  autoSync: true,
+  fetchInterval: 5 * 60 * 1000, // 5 minutes
+  syncInterval: 15 * 60 * 1000, // 15 minutes
+  minSyncInterval: 60 * 1000, // 1 minute - minimum allowed interval
+  maxSyncInterval: 24 * 60 * 60 * 1000 // 24 hours - maximum allowed interval
 };
 
 class ScheduledSyncService {
@@ -15,28 +16,31 @@ class ScheduledSyncService {
   private isAutoSyncEnabled: boolean;
   private lastFetchTime: Date | null = null;
   private lastSyncTime: Date | null = null;
-  private toast;
 
   constructor() {
     this.isAutoSyncEnabled = SYNC_CONFIG.autoSync;
-    this.toast = useToast().toast;
   }
 
-  public start(): void {
+  // Start the scheduled sync service
+  start() {
     if (this.isAutoSyncEnabled) {
-      this.startScheduledFetch();
-      this.startScheduledSync();
-      console.log('Scheduled data sync service started');
+      this.startFetchInterval();
+      this.startSyncInterval();
+      console.log('Scheduled sync service started');
+    } else {
+      console.log('Scheduled sync service is disabled');
     }
   }
 
-  public stop(): void {
-    this.stopScheduledFetch();
-    this.stopScheduledSync();
-    console.log('Scheduled data sync service stopped');
+  // Stop the scheduled sync service
+  stop() {
+    this.stopFetchInterval();
+    this.stopSyncInterval();
+    console.log('Scheduled sync service stopped');
   }
 
-  public setAutoSync(enabled: boolean): void {
+  // Enable or disable auto sync
+  setAutoSync(enabled: boolean) {
     this.isAutoSyncEnabled = enabled;
     
     if (enabled) {
@@ -45,111 +49,109 @@ class ScheduledSyncService {
       this.stop();
     }
     
-    // Store user preference in localStorage
-    localStorage.setItem('quiz_app_auto_sync', JSON.stringify(enabled));
+    console.log(`Auto sync ${enabled ? 'enabled' : 'disabled'}`);
   }
 
-  public getStatus() {
+  // Get the current status of the sync service
+  getStatus() {
     return {
       isAutoSyncEnabled: this.isAutoSyncEnabled,
       lastFetchTime: this.lastFetchTime,
       lastSyncTime: this.lastSyncTime,
-      fetchIntervalMs: SYNC_CONFIG.fetchInterval,
-      syncIntervalMs: SYNC_CONFIG.syncInterval,
+      fetchInterval: SYNC_CONFIG.fetchInterval,
+      syncInterval: SYNC_CONFIG.syncInterval
     };
   }
 
-  private startScheduledFetch(): void {
-    if (this.fetchIntervalId === null) {
-      // Run initial fetch
-      this.performFetch();
-      
-      // Set interval for subsequent fetches
-      this.fetchIntervalId = window.setInterval(() => {
-        this.performFetch();
-      }, SYNC_CONFIG.fetchInterval);
-    }
+  // Start the fetch interval
+  private startFetchInterval() {
+    if (this.fetchIntervalId !== null) return;
+    
+    // Perform initial fetch
+    this.fetchData();
+    
+    // Set up regular interval
+    this.fetchIntervalId = window.setInterval(() => {
+      this.fetchData();
+    }, SYNC_CONFIG.fetchInterval);
+    
+    console.log(`Fetch interval started: ${SYNC_CONFIG.fetchInterval / 1000} seconds`);
   }
 
-  private startScheduledSync(): void {
-    if (this.syncIntervalId === null) {
-      // Set interval for syncs
-      this.syncIntervalId = window.setInterval(() => {
-        this.performSync();
-      }, SYNC_CONFIG.syncInterval);
-    }
-  }
-
-  private stopScheduledFetch(): void {
+  // Stop the fetch interval
+  private stopFetchInterval() {
     if (this.fetchIntervalId !== null) {
       window.clearInterval(this.fetchIntervalId);
       this.fetchIntervalId = null;
+      console.log('Fetch interval stopped');
     }
   }
 
-  private stopScheduledSync(): void {
+  // Start the sync interval
+  private startSyncInterval() {
+    if (this.syncIntervalId !== null) return;
+    
+    // Set up regular interval
+    this.syncIntervalId = window.setInterval(() => {
+      this.syncData();
+    }, SYNC_CONFIG.syncInterval);
+    
+    console.log(`Sync interval started: ${SYNC_CONFIG.syncInterval / 1000} seconds`);
+  }
+
+  // Stop the sync interval
+  private stopSyncInterval() {
     if (this.syncIntervalId !== null) {
       window.clearInterval(this.syncIntervalId);
       this.syncIntervalId = null;
+      console.log('Sync interval stopped');
     }
   }
 
-  private async performFetch(): Promise<void> {
+  // Fetch data from the backend
+  private async fetchData() {
     try {
-      console.log('Performing scheduled fetch from Supabase...');
+      console.log('Scheduled fetch: Fetching data from backend...');
       const success = await fetchAllAppData();
-      
       if (success) {
         this.lastFetchTime = new Date();
-        console.log('Scheduled fetch completed successfully at', this.lastFetchTime);
+        console.log(`Scheduled fetch completed at ${this.lastFetchTime.toLocaleTimeString()}`);
       } else {
         console.error('Scheduled fetch failed');
       }
     } catch (error) {
-      console.error('Error during scheduled fetch:', error);
+      console.error('Error in scheduled fetch:', error);
     }
   }
 
-  private async performSync(): Promise<void> {
+  // Sync data to the backend
+  private async syncData() {
     try {
-      console.log('Performing scheduled sync to Supabase...');
+      console.log('Scheduled sync: Syncing data to backend...');
       const success = await syncLocalStorageToSupabase();
-      
       if (success) {
         this.lastSyncTime = new Date();
-        console.log('Scheduled sync completed successfully at', this.lastSyncTime);
+        console.log(`Scheduled sync completed at ${this.lastSyncTime.toLocaleTimeString()}`);
       } else {
         console.error('Scheduled sync failed');
       }
     } catch (error) {
-      console.error('Error during scheduled sync:', error);
+      console.error('Error in scheduled sync:', error);
     }
+  }
+
+  // Force an immediate fetch
+  forceFetch() {
+    this.fetchData();
+  }
+
+  // Force an immediate sync
+  forceSync() {
+    this.syncData();
   }
 }
 
 // Create a singleton instance
-export const scheduledSyncService = new ScheduledSyncService();
-
-// Initialize from localStorage if available
-const initializeFromStorage = () => {
-  try {
-    const storedPref = localStorage.getItem('quiz_app_auto_sync');
-    if (storedPref !== null) {
-      const isEnabled = JSON.parse(storedPref);
-      scheduledSyncService.setAutoSync(isEnabled);
-    } else {
-      // Use default setting if no preference stored
-      scheduledSyncService.setAutoSync(SYNC_CONFIG.autoSync);
-    }
-  } catch (error) {
-    console.error('Error initializing sync service from localStorage:', error);
-    scheduledSyncService.setAutoSync(SYNC_CONFIG.autoSync);
-  }
-};
-
-// Start the service when the application loads
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', initializeFromStorage);
-}
+const scheduledSyncService = new ScheduledSyncService();
 
 export default scheduledSyncService;

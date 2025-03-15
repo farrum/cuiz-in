@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -27,9 +26,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     // Enable realtime for the table
     const enableRealtimeQuery = async () => {
       try {
-        // Cast parameters to any to bypass TypeScript checks since we know this RPC exists
-        const params = { table_name: tableName };
-        await supabase.rpc('enable_realtime', params as any);
+        // Type assertion for RPC call
+        await supabase.rpc('enable_realtime', { table_name: tableName } as any);
         console.log(`Realtime enabled for table: ${tableName}`);
       } catch (error) {
         console.error(`Error enabling realtime for ${tableName}:`, error);
