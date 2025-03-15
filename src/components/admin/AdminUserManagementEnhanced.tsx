@@ -44,9 +44,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { MoreHorizontal, Search, UserPlus, Calendar, Clock, Award } from 'lucide-react';
+import { MoreHorizontal, Search, UserPlus, Calendar, Clock, Award, Key, Mail } from 'lucide-react';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import AdminTopPerformers from './AdminTopPerformers';
+import MD5 from 'crypto-js/md5';
 
 interface User {
   id: string;
@@ -82,11 +83,19 @@ const AdminUserManagementEnhanced: React.FC = () => {
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('player');
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdateEmailDialogOpen, setIsUpdateEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
 
   const { isListening: isListeningProfiles } = useRealtimeUpdates('profiles');
   const { isListening: isListeningLoginLogs } = useRealtimeUpdates('login_logs');
   const { isListening: isListeningQuizAnswers } = useRealtimeUpdates('quiz_answers');
   const { isListening: isListeningUserRoles } = useRealtimeUpdates('user_roles');
+
+  const hashPassword = (password: string): string => {
+    return MD5(password).toString();
+  };
 
   const fetchUsers = async () => {
     try {
@@ -180,7 +189,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -355,6 +364,73 @@ const AdminUserManagementEnhanced: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword) {
+      toast({
+        title: "Error",
+        description: "User and new password are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const hashedPassword = hashPassword(newPassword);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ password_hash: hashedPassword })
+        .eq('id', selectedUser.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `Password reset for ${selectedUser.username}`,
+      });
+      
+      setIsResetPasswordDialogOpen(false);
+      setNewPassword('');
+      
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!selectedUser || !newEmail) {
+      toast({
+        title: "Error",
+        description: "User and new email are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Success",
+        description: `Email updated for ${selectedUser.username}`,
+      });
+      
+      setIsUpdateEmailDialogOpen(false);
+      setNewEmail('');
+      
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update email",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -487,6 +563,26 @@ const AdminUserManagementEnhanced: React.FC = () => {
                                 Change Role
                               </DropdownMenuItem>
                               <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewPassword('');
+                                  setIsResetPasswordDialogOpen(true);
+                                }}
+                              >
+                                <Key className="h-4 w-4 mr-2" />
+                                Reset Password
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewEmail('');
+                                  setIsUpdateEmailDialogOpen(true);
+                                }}
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                Update Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
                                 onClick={() => toggleUserSuspend(user.id, user.suspended)}
                                 className={user.suspended ? "text-green-600" : "text-red-600"}
                               >
@@ -606,6 +702,68 @@ const AdminUserManagementEnhanced: React.FC = () => {
             </Button>
             <Button onClick={handleChangeRole}>
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Set a new password for ${selectedUser.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword}>
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isUpdateEmailDialogOpen} onOpenChange={setIsUpdateEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update User Email</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Set a new email for ${selectedUser.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newEmail">New Email</Label>
+              <Input
+                id="newEmail"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email address"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateEmail}>
+              Update Email
             </Button>
           </DialogFooter>
         </DialogContent>
