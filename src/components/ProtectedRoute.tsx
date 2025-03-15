@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -12,9 +13,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
 
-  // Check Supabase session
+  // Check Supabase session and role
   useEffect(() => {
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -27,10 +29,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       
       if (data.session) {
         setIsAuthenticated(true);
+        
+        // Check user role
+        const userId = data.session.user.id;
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        if (!roleError && roleData) {
+          setUserRole(roleData.role);
+        } else {
+          console.log('No role found for user, assuming player role');
+          setUserRole('player');
+        }
       } else if (userName) {
         // If no Supabase session but we have a userName in localStorage,
         // we'll still consider the user authenticated for backward compatibility
         setIsAuthenticated(true);
+        setUserRole('player'); // Default role for localStorage users
       } else {
         setIsAuthenticated(false);
       }
@@ -38,6 +56,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     
     checkSession();
   }, [userName]);
+
+  // Check access to admin routes
+  useEffect(() => {
+    if (isAuthenticated && location.pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'team_leader') {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin area",
+        variant: "destructive"
+      });
+      
+      // Redirect non-admin users trying to access admin routes
+      window.location.href = '/';
+    }
+  }, [isAuthenticated, location.pathname, userRole, toast]);
 
   // Sync login data with Supabase
   useEffect(() => {

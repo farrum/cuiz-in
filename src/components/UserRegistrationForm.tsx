@@ -69,6 +69,16 @@ const UserRegistrationForm: React.FC = () => {
       
       if (profileError) throw profileError;
       
+      // Set user role as player by default
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user?.id,
+          role: 'player'
+        });
+        
+      if (roleError) throw roleError;
+      
       // If referral code exists, record the referral
       if (referralCode) {
         const { data: referrerData, error: referrerError } = await supabase
