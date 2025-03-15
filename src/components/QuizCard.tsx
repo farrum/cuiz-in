@@ -135,7 +135,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
             
         if (data) {
           const currentPoints = data.points || 0;
-          const newTotal = currentPoints + pointsEarned;
+          const newTotal = Number(currentPoints) + pointsEarned;
           await supabase
             .from('profiles')
             .update({ points: newTotal })

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
@@ -68,10 +69,12 @@ const QuizPage: React.FC = () => {
         .select('points')
         .eq('user_id', userId)
         .eq('date', today)
-        .single();
+        .maybeSingle();
         
       if (dailyData) {
         setDailyPoints(Number(dailyData.points));
+      } else {
+        setDailyPoints(0);
       }
       
       // Fetch monthly points
@@ -80,10 +83,24 @@ const QuizPage: React.FC = () => {
         .select('points')
         .eq('user_id', userId)
         .eq('month', currentMonth)
-        .single();
+        .maybeSingle();
         
       if (monthlyData) {
         setMonthlyPoints(Number(monthlyData.points));
+      } else {
+        setMonthlyPoints(0);
+      }
+      
+      // Also check total points
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('id', userId)
+        .single();
+        
+      if (profileData) {
+        setUserPoints(Number(profileData.points));
+        localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
       }
     } catch (error) {
       console.error('Error fetching points:', error);

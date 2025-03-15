@@ -106,8 +106,8 @@ const Header: React.FC = () => {
       
       window.addEventListener('pointsUpdated', handlePointsUpdate);
       
-      // Refresh points every 30 seconds
-      const intervalId = setInterval(updatePoints, 30000);
+      // Refresh points every 10 seconds
+      const intervalId = setInterval(updatePoints, 10000);
       
       return () => {
         window.removeEventListener('pointsUpdated', handlePointsUpdate);
