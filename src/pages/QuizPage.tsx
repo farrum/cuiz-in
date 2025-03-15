@@ -56,15 +56,21 @@ const QuizPage: React.FC = () => {
     loadNewQuestion();
   }, []);
   
-  const loadNewQuestion = () => {
+  const loadNewQuestion = async () => {
     setIsLoading(true);
     
-    // Simulate loading delay for smoother transitions
-    setTimeout(() => {
-      const question = getRandomQuestion();
+    try {
+      // Get a random question and then set it to state
+      const question = await getRandomQuestion();
       setCurrentQuestion(question);
-      setIsLoading(false);
-    }, 600);
+    } catch (error) {
+      console.error('Error loading question:', error);
+    } finally {
+      // Simulate loading delay for smoother transitions
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 600);
+    }
   };
   
   const handleQuestionComplete = (isCorrect: boolean) => {

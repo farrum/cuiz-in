@@ -1,3 +1,4 @@
+
 export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
@@ -5,6 +6,9 @@ export const STORAGE_KEYS = {
   COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
   QUIZ_QUESTIONS: 'quiz_app_quiz_questions',
   AD_SLOTS: 'quiz_app_ad_slots',
+  ADMIN_AUTH: 'quiz_app_admin_auth',
+  ADMIN_USERNAME: 'quiz_app_admin_username',
+  REFERRALS: 'quiz_app_referrals',
 };
 
 export const DAILY_TARGET = 400;
@@ -26,8 +30,38 @@ export const getUserId = (): string | null => {
   return localStorage.getItem(STORAGE_KEYS.USER_ID);
 };
 
+// Calculate cash amount from points
+export const calculateCashAmount = (points: number): number => {
+  // 100 points = ₹1
+  return points / 100;
+};
+
 // Import supabase client
 import { supabase } from '@/integrations/supabase/client';
+
+// Mock quiz questions for fallback
+export const quizQuestions: QuizQuestion[] = [
+  {
+    id: 'q1',
+    question: 'What is 2 + 2?',
+    options: ['3', '4', '5', '6'],
+    correctAnswer: '4',
+    difficulty: 'easy',
+    category: 'Math',
+    points: 10,
+    explanation: 'Basic addition'
+  },
+  {
+    id: 'q2',
+    question: 'What is the capital of France?',
+    options: ['London', 'Berlin', 'Paris', 'Madrid'],
+    correctAnswer: 'Paris',
+    difficulty: 'easy',
+    category: 'Geography',
+    points: 10,
+    explanation: 'Paris is the capital city of France'
+  }
+];
 
 // Fetch quiz questions from Supabase
 export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
@@ -72,7 +106,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
 // Get questions from localStorage
 const getQuestionsFromLocalStorage = (): QuizQuestion[] => {
   const storedQuestions = localStorage.getItem(STORAGE_KEYS.QUIZ_QUESTIONS);
-  return storedQuestions ? JSON.parse(storedQuestions) : [];
+  return storedQuestions ? JSON.parse(storedQuestions) : quizQuestions;
 };
 
 // Get a random question (with preference for unanswered questions)

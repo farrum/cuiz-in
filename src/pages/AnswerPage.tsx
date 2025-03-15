@@ -3,30 +3,37 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { quizQuestions, STORAGE_KEYS, calculatePoints } from '@/utils/quizData';
+import { STORAGE_KEYS, QuizQuestion, calculatePoints, fetchQuizQuestions } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [question, setQuestion] = useState<any>(null);
+  const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [isCorrect, setIsCorrect] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Find the question
-    const foundQuestion = quizQuestions.find(q => q.id === questionId);
+    const loadQuestion = async () => {
+      // Get all questions
+      const questions = await fetchQuizQuestions();
+      
+      // Find the specific question
+      const foundQuestion = questions.find(q => q.id === questionId);
+      
+      if (foundQuestion) {
+        setQuestion(foundQuestion);
+        setIsCorrect(foundQuestion.correctAnswer === selectedOption);
+      }
+      
+      // Simulate loading
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 600);
+    };
     
-    if (foundQuestion) {
-      setQuestion(foundQuestion);
-      setIsCorrect(foundQuestion.correctAnswer === selectedOption);
-    }
-    
-    // Simulate loading
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
+    loadQuestion();
   }, [questionId, selectedOption]);
 
   const handleNextQuestion = () => {
