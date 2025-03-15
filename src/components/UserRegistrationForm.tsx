@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,7 +45,7 @@ const UserRegistrationForm: React.FC = () => {
     try {
       // Create user in Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${username}@quizpoints.app`, // Using username as email since we don't collect email
+        email: email,
         password: password,
         options: {
           data: {
@@ -141,6 +142,18 @@ const UserRegistrationForm: React.FC = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter a username"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email address"
               required
             />
           </div>
