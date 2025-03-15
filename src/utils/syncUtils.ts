@@ -21,8 +21,11 @@ export const syncAllDataToSupabase = async () => {
     const { syncAllDataToSupabase } = await import('@/integrations/supabase/client');
     const result = await syncAllDataToSupabase();
     
-    // Set a default value for syncedItems if result is undefined or doesn't have totalSynced
-    const syncedItems = result ? (result.totalSynced ?? 0) : 0;
+    // Since the result might be void, we need to safely handle this
+    let syncedItems = 0;
+    if (result && typeof result === 'object' && 'totalSynced' in result) {
+      syncedItems = result.totalSynced ?? 0;
+    }
     
     syncStats.allData = { 
       ...syncStats.allData,
