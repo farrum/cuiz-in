@@ -14,12 +14,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
   const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
 
-  // Check Supabase session and role
+  // Check authentication status
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAuth = async () => {
       // First check if admin auth is present in localStorage
       if (isAdminAuth && location.pathname.startsWith('/admin')) {
         console.log('Admin authenticated via localStorage');
@@ -28,19 +29,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         return;
       }
       
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error checking auth session:', error);
-        setIsAuthenticated(false);
-        return;
-      }
-      
-      if (data.session) {
+      // Check if we have a userId (custom auth)
+      if (userId && userName) {
+        console.log('User authenticated via custom auth:', userName);
         setIsAuthenticated(true);
         
         // Check user role
-        const userId = data.session.user.id;
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
@@ -49,22 +43,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           
         if (!roleError && roleData) {
           setUserRole(roleData.role);
+          console.log('User role:', roleData.role);
         } else {
           console.log('No role found for user, assuming player role');
           setUserRole('player');
         }
-      } else if (userName) {
-        // If no Supabase session but we have a userName in localStorage,
-        // we'll still consider the user authenticated for backward compatibility
-        setIsAuthenticated(true);
-        setUserRole('player'); // Default role for localStorage users
       } else {
+        console.log('User not authenticated');
         setIsAuthenticated(false);
       }
     };
     
-    checkSession();
-  }, [userName, isAdminAuth, location.pathname]);
+    checkAuth();
+  }, [userId, userName, isAdminAuth, location.pathname]);
 
   // Check access to admin routes
   useEffect(() => {
@@ -83,88 +74,37 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
   }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
 
-  // Sync login data with Supabase
+  // Update login logs
   useEffect(() => {
-    const syncLoginData = async () => {
+    const logLoginActivity = async () => {
       if (!userName) return;
       
       try {
-        // Generate a consistent ID for the user based on their username
-        const userId = `user_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-        console.log(`Generated user ID: ${userId} for username: ${userName}`);
-        
-        // Store user ID in localStorage
-        localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-        
-        // Log the login attempt in Supabase
-        const ipAddress = '127.0.0.1'; // In a real app, you would get the actual IP
+        // Log the login activity in Supabase
         const device = navigator.userAgent;
         
-        const { error } = await supabase
+        await supabase
           .from('login_logs')
           .insert({
             username: userName,
-            ip_address: ipAddress,
+            ip_address: "client-side",
             device: device,
             login_time: new Date().toISOString(),
-            successful: true // Mark as successful login
+            successful: true
           });
           
-        if (error) {
-          console.error('Error logging login data:', error);
-        }
-        
-        // Also check if user exists in profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', userName)
-          .maybeSingle();
-          
-        if (profileError) {
-          console.error('Error checking user profile:', profileError);
-        } else if (!profileData) {
-          // Create profile if it doesn't exist
-          const points = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-          
-          // Use the generated userId for the profile ID
-          const { error: insertError, data: newProfile } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              username: userName,
-              points: points
-            })
-            .select();
-            
-          if (insertError) {
-            console.error('Error creating user profile:', insertError);
-          } else {
-            console.log('Created new profile for user:', userName, newProfile);
-          }
-        } else {
-          // Update the points in the profile with the localStorage value
-          const points = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-          
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ points: points })
-            .eq('username', userName);
-            
-          if (updateError) {
-            console.error('Error updating user points:', updateError);
-          } else {
-            console.log('Updated points for user:', userName, points);
-          }
-        }
+        console.log('Login activity logged for user:', userName);
       } catch (err) {
-        console.error('Failed to sync login data with Supabase:', err);
+        console.error('Failed to log login activity:', err);
       }
     };
     
-    syncLoginData();
-  }, [userName]);
+    if (isAuthenticated) {
+      logLoginActivity();
+    }
+  }, [userName, isAuthenticated]);
 
+  // Show access denied toast
   useEffect(() => {
     if (isAuthenticated === false && !location.pathname.includes('/login')) {
       toast({
@@ -180,13 +120,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <div>Loading...</div>;
   }
 
+  // Redirect to login if not authenticated
   if (isAuthenticated === false && !location.pathname.includes('/login')) {
     // Log the attempted access
     const accessAttempt = {
       date: new Date().toISOString(),
       path: location.pathname,
-      type: 'access_denied',
-      ip: '127.0.0.1' // In a real app, this would be the actual IP
+      type: 'access_denied'
     };
     
     const accessLog = JSON.parse(localStorage.getItem('quiz_app_access_log') || '[]');
@@ -200,7 +140,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           .from('login_logs')
           .insert({
             username: 'anonymous',
-            ip_address: '127.0.0.1',
+            ip_address: 'client-side',
             device: navigator.userAgent,
             login_time: new Date().toISOString(),
             successful: false
