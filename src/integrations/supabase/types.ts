@@ -39,6 +39,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_points: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       login_logs: {
         Row: {
           created_at: string | null
@@ -66,6 +90,30 @@ export type Database = {
           login_time?: string | null
           successful?: boolean | null
           username?: string
+        }
+        Relationships: []
+      }
+      monthly_points: {
+        Row: {
+          created_at: string | null
+          id: string
+          month: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          month: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          month?: string
+          points?: number
+          user_id?: string
         }
         Relationships: []
       }

@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Medal, Award, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import { getTopPerformers } from '@/utils/quizData';
 
 interface LeaderboardUser {
-  id: string;
-  name: string;
+  userId: string;
+  username: string;
   points: number;
-  position?: number;
+  rank: number;
   isCurrentUser?: boolean;
 }
 
@@ -36,48 +36,32 @@ const LeaderboardSection: React.FC = () => {
     setLoading(true);
 
     try {
-      // First try to fetch from Supabase
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, points')
-        .order('points', { ascending: false })
-        .limit(20);
-        
-      if (error) throw error;
-      
       // Get current user
       const currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       
-      // Map and prepare data
-      const topUsers = data.slice(0, 10).map((user, index) => ({
-        id: user.id,
-        name: user.username,
-        points: user.points || 0,
-        position: index + 1,
-        isCurrentUser: user.id === currentUserId
+      // Fetch top performers from the updated function
+      const topUsers = await getTopPerformers('monthly', 10);
+      
+      // Mark the current user
+      const processedUsers = topUsers.map(user => ({
+        ...user,
+        isCurrentUser: user.userId === currentUserId
       }));
       
-      setUsers(topUsers);
+      setUsers(processedUsers);
       
-      // Find current user's rank if they're not in top 10
-      const currentUserPos = topUsers.findIndex(user => user.isCurrentUser);
+      // Find current user's rank
+      const currentUserPos = processedUsers.findIndex(user => user.isCurrentUser);
       if (currentUserPos !== -1) {
         setCurrentUserRank(currentUserPos + 1);
-      } else if (currentUserId) {
-        // Find user's position in full list
-        const userPos = data.findIndex(user => user.id === currentUserId);
-        if (userPos !== -1) {
-          setCurrentUserRank(userPos + 1);
-        } else {
-          // Current user not found in top 20, might be further down
-          setCurrentUserRank(null);
-        }
+      } else {
+        // User not in top 10, might need additional fetching to find their rank
+        setCurrentUserRank(null);
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       
-      // Fall back to localStorage data
+      // Fall back to localStorage data if needed
       const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
       const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       
@@ -86,10 +70,10 @@ const LeaderboardSection: React.FC = () => {
         .sort((a, b) => b.points - a.points)
         .slice(0, 10) // Get top 10 users
         .map((user, index) => ({
-          id: user.id,
-          name: user.name || user.username,
+          userId: user.id,
+          username: user.name || user.username,
           points: user.points || 0,
-          position: index + 1,
+          rank: index + 1,
           isCurrentUser: (user.name || user.username) === currentUserName
         }));
       
@@ -173,16 +157,16 @@ const LeaderboardSection: React.FC = () => {
             <>
               {users.map((user) => (
                 <div 
-                  key={user.id}
-                  className={`flex items-center justify-between p-3 rounded-lg ${getPositionClass(user.position!, user.isCurrentUser)}`}
+                  key={user.userId}
+                  className={`flex items-center justify-between p-3 rounded-lg ${getPositionClass(user.rank, user.isCurrentUser)}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                      {getPositionIcon(user.position!)}
+                      {getPositionIcon(user.rank)}
                     </div>
                     <div>
                       <div className="font-medium">
-                        {user.name} 
+                        {user.username} 
                         {user.isCurrentUser && (
                           <span className="ml-2 text-xs text-primary">(You)</span>
                         )}
@@ -192,9 +176,9 @@ const LeaderboardSection: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{user.points}</span>
                     <span className="text-xs text-muted-foreground">pts</span>
-                    {user.position <= 3 && (
-                      <Badge variant={user.position === 1 ? "default" : "secondary"} className="ml-2">
-                        Top {user.position}
+                    {user.rank <= 3 && (
+                      <Badge variant={user.rank === 1 ? "default" : "secondary"} className="ml-2">
+                        Top {user.rank}
                       </Badge>
                     )}
                   </div>

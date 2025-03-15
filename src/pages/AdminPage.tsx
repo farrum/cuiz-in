@@ -18,7 +18,6 @@ import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
-import AdminTopPerformers from '@/components/admin/AdminTopPerformers';
 import { QuizManagement } from '@/components/admin/quiz-management';
 import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
 import { SyncSettings } from '@/components/admin/SyncSettings';
@@ -65,7 +64,6 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/referrals')) tab = 'referrals';
     else if (path.includes('/quiz')) tab = 'quiz';
     else if (path.includes('/badges')) tab = 'badges';
-    else if (path.includes('/top')) tab = 'top';
     else if (path.includes('/sync')) tab = 'sync';
     else if (path === '/admin') {
       // If just at /admin, redirect to /admin/users
@@ -170,7 +168,7 @@ const AdminPage: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-3 md:grid-cols-9 lg:w-[1000px]">
+          <TabsList className="grid grid-cols-3 md:grid-cols-8 lg:w-[900px]">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="logs">Login Logs</TabsTrigger>
             <TabsTrigger value="ads">Ad Slots</TabsTrigger>
@@ -178,7 +176,6 @@ const AdminPage: React.FC = () => {
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="badges">Badges</TabsTrigger>
             <TabsTrigger value="quiz">Quiz</TabsTrigger>
-            <TabsTrigger value="top">Top Players</TabsTrigger>
             <TabsTrigger value="sync">Sync</TabsTrigger>
           </TabsList>
           
@@ -191,7 +188,6 @@ const AdminPage: React.FC = () => {
           {activeTab === 'referrals' && <AdminReferralsTracker />}
           {activeTab === 'badges' && <AdminBadgeManagement />}
           {activeTab === 'quiz' && <QuizManagement />}
-          {activeTab === 'top' && <AdminTopPerformers />}
           {activeTab === 'sync' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SyncSettings />

@@ -246,11 +246,37 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
   dailyPoints += points;
   localStorage.setItem(key, dailyPoints.toString());
   
-  // If userId is provided, update the database using quiz_answers table
+  // If userId is provided, update the database
   if (userId) {
     try {
-      // We'll use quiz_answers to track daily points since we don't have a daily_points table
-      // This is a simple approach - aggregate quiz_answers entries for the user for today
+      // Check if there's already a record for today for this user
+      const { data, error } = await supabase
+        .from('daily_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
+      
+      if (error && error.code !== 'PGSQL_ERROR') {
+        console.error('Error checking daily points:', error);
+        return;
+      }
+      
+      if (data) {
+        // Update existing record
+        await supabase
+          .from('daily_points')
+          .update({ points: Number(data.points) + points })
+          .eq('user_id', userId)
+          .eq('date', today);
+      } else {
+        // Create new record
+        await supabase
+          .from('daily_points')
+          .insert({ user_id: userId, date: today, points });
+      }
+      
+      // Also log this in quiz_answers for detailed tracking (already done in QuizCard)
       console.log(`Logged ${points} points for user ${userId} on ${today}`);
     } catch (error) {
       console.error('Error updating daily points:', error);
@@ -269,10 +295,37 @@ export const logPointsForMonth = async (points: number, userId?: string | null) 
   monthlyPoints += points;
   localStorage.setItem(key, monthlyPoints.toString());
   
-  // If userId is provided, update the database using profiles table
+  // If userId is provided, update the database
   if (userId) {
     try {
-      // We'll update the user's points in profiles table since we don't have a monthly_points table
+      // Check if there's already a record for this month for this user
+      const { data, error } = await supabase
+        .from('monthly_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('month', monthKey)
+        .single();
+      
+      if (error && error.code !== 'PGSQL_ERROR') {
+        console.error('Error checking monthly points:', error);
+        return;
+      }
+      
+      if (data) {
+        // Update existing record
+        await supabase
+          .from('monthly_points')
+          .update({ points: Number(data.points) + points })
+          .eq('user_id', userId)
+          .eq('month', monthKey);
+      } else {
+        // Create new record
+        await supabase
+          .from('monthly_points')
+          .insert({ user_id: userId, month: monthKey, points });
+      }
+      
+      // Also update the user's total points in profiles (already handled in QuizCard)
       console.log(`Logged ${points} points for user ${userId} for month ${monthKey}`);
     } catch (error) {
       console.error('Error updating monthly points:', error);
@@ -323,62 +376,83 @@ export const syncAdSlotsToLocal = async (): Promise<boolean> => {
 // Function to get top performers from Supabase
 export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily', limit: number = 10) => {
   try {
-    const today = new Date();
-    let startDate: string;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     
+    // Different approaches based on timeframe
     if (timeframe === 'daily') {
-      // For daily, get today's data
-      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      // Get today's top performers from daily_points table
+      const { data, error } = await supabase
+        .from('daily_points')
+        .select('user_id, points')
+        .eq('date', today)
+        .order('points', { ascending: false })
+        .limit(limit);
+        
+      if (error) throw error;
+      
+      // Get usernames for these top performers
+      const userIds = data.map(item => item.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+        
+      if (profilesError) throw profilesError;
+      
+      // Map profile data to results
+      const profileMap = {};
+      profiles.forEach(profile => {
+        profileMap[profile.id] = profile.username;
+      });
+      
+      // Build result with rankings
+      return data.map((item, index) => ({
+        userId: item.user_id,
+        username: profileMap[item.user_id] || 'Unknown User',
+        points: Number(item.points),
+        rank: index + 1
+      }));
+      
     } else {
-      // For monthly, get this month's data
-      startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      // Get this month's top performers from monthly_points table
+      const { data, error } = await supabase
+        .from('monthly_points')
+        .select('user_id, points')
+        .eq('month', currentMonth)
+        .order('points', { ascending: false })
+        .limit(limit);
+        
+      if (error) throw error;
+      
+      // Get usernames for these top performers
+      const userIds = data.map(item => item.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+        
+      if (profilesError) throw profilesError;
+      
+      // Map profile data to results
+      const profileMap = {};
+      profiles.forEach(profile => {
+        profileMap[profile.id] = profile.username;
+      });
+      
+      // Build result with rankings
+      return data.map((item, index) => ({
+        userId: item.user_id,
+        username: profileMap[item.user_id] || 'Unknown User',
+        points: Number(item.points),
+        rank: index + 1
+      }));
     }
-    
-    // Fetch quiz answer data for the specified timeframe
-    const { data, error } = await supabase
-      .from('quiz_answers')
-      .select(`
-        user_id,
-        points_earned
-      `)
-      .gte('answered_at', startDate);
-      
-    if (error) throw error;
-    
-    // Process data to get total points per user
-    const userPoints: Record<string, number> = {};
-    data.forEach(item => {
-      if (!userPoints[item.user_id]) userPoints[item.user_id] = 0;
-      userPoints[item.user_id] += item.points_earned || 0;
-    });
-    
-    // Fetch user profiles for names
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, username');
-      
-    if (profilesError) throw profilesError;
-    
-    const profileMap: Record<string, string> = {};
-    profiles.forEach(profile => {
-      profileMap[profile.id] = profile.username;
-    });
-    
-    // Convert to array, sort, and add rank
-    const result = Object.entries(userPoints)
-      .map(([userId, points]) => ({
-        userId,
-        username: profileMap[userId] || 'Unknown User',
-        points,
-        rank: 0 // Will be set after sorting
-      }))
-      .sort((a, b) => b.points - a.points)
-      .map((user, index) => ({ ...user, rank: index + 1 }))
-      .slice(0, limit);
-      
-    return result;
   } catch (error) {
     console.error(`Error fetching ${timeframe} top performers:`, error);
+    
+    // Fall back to local storage or quiz_answers aggregation if needed
     return [];
   }
 };
