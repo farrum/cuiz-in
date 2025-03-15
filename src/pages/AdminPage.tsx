@@ -7,7 +7,8 @@ import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
-import { Users, DollarSign, MonitorSmartphone, Link2, KeyRound, Medal, RefreshCw } from 'lucide-react';
+import { QuizManagement } from '@/components/admin/quiz-management';
+import { Users, DollarSign, MonitorSmartphone, Link2, KeyRound, Medal, RefreshCw, FileQuestion } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +57,8 @@ const AdminPage: React.FC = () => {
   const adminTabs = [
     { id: "users", label: "Users", icon: <Users className="w-4 h-4 mr-2" /> },
     { id: "payments", label: "Payments", icon: <DollarSign className="w-4 h-4 mr-2" /> },
-    { id: "ads", label: "Quiz & Ads", icon: <MonitorSmartphone className="w-4 h-4 mr-2" /> },
+    { id: "ads", label: "Ads", icon: <MonitorSmartphone className="w-4 h-4 mr-2" /> },
+    { id: "quiz", label: "Quiz", icon: <FileQuestion className="w-4 h-4 mr-2" /> },
     { id: "referrals", label: "Referrals", icon: <Link2 className="w-4 h-4 mr-2" /> },
     { id: "badges", label: "Badges", icon: <Medal className="w-4 h-4 mr-2" /> },
     { id: "security", label: "Security", icon: <KeyRound className="w-4 h-4 mr-2" /> },
@@ -119,6 +121,10 @@ const AdminPage: React.FC = () => {
               
               <TabsContent value="ads">
                 <AdminAdManagement />
+              </TabsContent>
+              
+              <TabsContent value="quiz">
+                <QuizManagement />
               </TabsContent>
               
               <TabsContent value="referrals">
