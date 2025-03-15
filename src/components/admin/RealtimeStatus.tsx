@@ -67,6 +67,7 @@ const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => 
 };
 
 export function RealtimeStatus() {
+  // Define tables with proper typing
   type TableInfo = {
     name: 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals';
     displayName: string;
