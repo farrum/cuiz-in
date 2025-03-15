@@ -136,12 +136,14 @@ export const fetchDataFromSupabase = async (
     // Apply additional filters if provided
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        // Use type assertion to handle the query builder type
+        (query as any) = query.eq(key, value);
       });
     }
     
     // Order by created_at if available
-    query = query.order('created_at', { ascending: false });
+    // Use type assertion to handle the query builder type
+    (query as any) = query.order('created_at', { ascending: false });
     
     const { data, error } = await query;
       
@@ -249,3 +251,4 @@ export const syncPointsData = async (username: string) => {
     console.error('Failed to sync points data:', err);
   }
 };
+
