@@ -91,3 +91,22 @@ export const fetchDataFromSupabase = async (
   
   return null;
 };
+
+// Add the new central data fetching function
+export const fetchAllAppData = async () => {
+  console.log('Fetching all app data from Supabase...');
+  
+  const results = {
+    users: await fetchDataFromSupabase('profiles', 'admin_users'),
+    payments: await fetchDataFromSupabase('payments', 'admin_payments'),
+    quizQuestions: await fetchDataFromSupabase('quiz_questions', 'quiz_questions'),
+    quizAnswers: await fetchDataFromSupabase('quiz_answers', 'quiz_answers'),
+    adSlots: await fetchDataFromSupabase('ad_slots', 'ad_slots'),
+    referrals: await fetchDataFromSupabase('user_referrals', 'admin_referrals'),
+    loginLogs: await fetchDataFromSupabase('login_logs', 'admin_login_logs')
+  };
+  
+  console.log('All app data fetched successfully!');
+  return results;
+};
+

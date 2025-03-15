@@ -7,17 +7,19 @@ import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
-import { Users, DollarSign, MonitorSmartphone, Link2, KeyRound, Medal } from 'lucide-react';
+import { Users, DollarSign, MonitorSmartphone, Link2, KeyRound, Medal, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("users");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const { isLoading, lastFetched, fetchData } = useFetchSupabaseData(true);
   
   // Check if admin is logged in using useEffect instead of during render
   useEffect(() => {
@@ -69,6 +71,23 @@ const AdminPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchData}
+              disabled={isLoading}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh Data'}
+            </Button>
+            
+            {lastFetched && (
+              <span className="text-sm text-muted-foreground">
+                Last updated: {lastFetched.toLocaleTimeString()}
+              </span>
+            )}
+            
             <span className="text-sm text-muted-foreground">
               Logged in as <span className="font-semibold">{localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME)}</span>
             </span>

@@ -1,61 +1,63 @@
 
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import QuizPage from "./pages/QuizPage";
-import AnswerPage from "./pages/AnswerPage";
-import Profile from "./pages/Profile";
-import Registration from "./pages/Registration";
-import ReferralPage from "./pages/ReferralPage";
-import AdminPage from "./pages/AdminPage";
-import LoginPage from "./pages/LoginPage";
-import AdminLoginPage from "./pages/AdminLoginPage";
-import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import Index from "@/pages/Index";
+import QuizPage from "@/pages/QuizPage";
+import AnswerPage from "@/pages/AnswerPage";
+import ReferralPage from "@/pages/ReferralPage";
+import Profile from "@/pages/Profile";
+import LoginPage from "@/pages/LoginPage";
+import Registration from "@/pages/Registration";
+import AdminPage from "@/pages/AdminPage";
+import AdminLoginPage from '@/pages/AdminLoginPage';
+import NotFound from "@/pages/NotFound";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useEffect } from 'react';
+import { fetchAllAppData } from '@/integrations/supabase/client';
 
-const queryClient = new QueryClient();
+function App() {
+  // Fetch all app data when the app first loads
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        console.log('Fetching initial app data...');
+        await fetchAllAppData();
+        console.log('Initial data fetch complete');
+      } catch (error) {
+        console.error('Error fetching initial app data:', error);
+      }
+    };
+    
+    fetchInitialData();
+  }, []);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="quiz-app-theme">
+      <Router>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/quiz" element={
-            <ProtectedRoute>
-              <QuizPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/answer/:questionId/:selectedOption" element={
-            <ProtectedRoute>
-              <AnswerPage />
-            </ProtectedRoute>
-          } />
+          <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/answer" element={<AnswerPage />} />
+          <Route path="/refer" element={<ReferralPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<Registration />} />
+          <Route path="/admin-login" element={<AdminLoginPage />} />
+          
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
             </ProtectedRoute>
           } />
-          <Route path="/register" element={<Registration />} />
-          <Route path="/referral" element={
-            <ProtectedRoute>
-              <ReferralPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin-login" element={<AdminLoginPage />} />
+          
           <Route path="/admin" element={<AdminPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+      <Toaster />
+    </ThemeProvider>
+  );
+}
 
 export default App;
