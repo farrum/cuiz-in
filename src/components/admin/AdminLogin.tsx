@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -22,6 +22,17 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Check if already logged in as admin
+  useEffect(() => {
+    const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+    const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
+    
+    if (isAdminAuth && adminUsername) {
+      console.log('Admin already authenticated, redirecting to admin panel');
+      navigate('/admin');
+    }
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -37,6 +48,8 @@ const AdminLogin: React.FC = () => {
       return;
     }
 
+    console.log(`Attempting admin login with username: ${username}`);
+
     // Check credentials against hardcoded values first for simplicity
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       console.log("Local admin authentication successful");
@@ -44,6 +57,21 @@ const AdminLogin: React.FC = () => {
       // Store admin auth in localStorage
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      
+      // Log the successful login
+      try {
+        await supabase
+          .from('login_logs')
+          .insert({
+            username: username,
+            ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+            device: navigator.userAgent,
+            login_time: new Date().toISOString(),
+            successful: true
+          });
+      } catch (logError) {
+        console.error('Failed to log admin login:', logError);
+      }
       
       toast({
         title: "Success",
@@ -105,6 +133,21 @@ const AdminLogin: React.FC = () => {
       description: "Invalid username or password",
       variant: "destructive"
     });
+    
+    // Log the failed login attempt
+    try {
+      await supabase
+        .from('login_logs')
+        .insert({
+          username: username,
+          ip_address: '127.0.0.1',
+          device: navigator.userAgent,
+          login_time: new Date().toISOString(),
+          successful: false
+        });
+    } catch (logError) {
+      console.error('Failed to log failed login attempt:', logError);
+    }
     
     setIsLoggingIn(false);
   };

@@ -89,6 +89,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       if (!userName) return;
       
       try {
+        // Generate a consistent ID for the user based on their username
+        const userId = `user_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        console.log(`Generated user ID: ${userId} for username: ${userName}`);
+        
+        // Store user ID in localStorage
+        localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+        
         // Log the login attempt in Supabase
         const ipAddress = '127.0.0.1'; // In a real app, you would get the actual IP
         const device = navigator.userAgent;
@@ -118,16 +125,36 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           console.error('Error checking user profile:', profileError);
         } else if (!profileData) {
           // Create profile if it doesn't exist
-          const { error: insertError } = await supabase
+          const points = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+          
+          // Use the generated userId for the profile ID
+          const { error: insertError, data: newProfile } = await supabase
             .from('profiles')
             .insert({
-              id: Math.random().toString(36).substring(2), // Generate a random ID
+              id: userId,
               username: userName,
-              points: parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0')
-            });
+              points: points
+            })
+            .select();
             
           if (insertError) {
             console.error('Error creating user profile:', insertError);
+          } else {
+            console.log('Created new profile for user:', userName, newProfile);
+          }
+        } else {
+          // Update the points in the profile with the localStorage value
+          const points = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ points: points })
+            .eq('username', userName);
+            
+          if (updateError) {
+            console.error('Error updating user points:', updateError);
+          } else {
+            console.log('Updated points for user:', userName, points);
           }
         }
       } catch (err) {
