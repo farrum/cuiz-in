@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { toast } from "@/hooks/use-toast";
-import { STORAGE_KEYS } from '../utils/quizData';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Copy, Share2, UserCheck, X, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';

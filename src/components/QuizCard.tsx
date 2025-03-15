@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { QuizQuestion, STORAGE_KEYS } from '../utils/quizData';
+import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/utils/animations';
 
 interface QuizCardProps {

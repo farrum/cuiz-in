@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
+import { STORAGE_KEYS, calculateCashAmount } from '@/utils/quizData';
 import { IndianRupee } from 'lucide-react';
 
 interface PointsDisplayProps {

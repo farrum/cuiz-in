@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
+import { DAILY_TARGET, MONTHLY_TARGET } from '@/data/quizQuestions';
 
 interface TargetProgressProps {
   dailyPoints: number;
