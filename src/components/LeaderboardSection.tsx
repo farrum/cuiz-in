@@ -22,71 +22,42 @@ const LeaderboardSection: React.FC = () => {
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchLeaderboard();
-    
-    // Set up listener for point updates
-    window.addEventListener('pointsUpdated', fetchLeaderboard);
-    return () => {
-      window.removeEventListener('pointsUpdated', fetchLeaderboard);
-    };
-  }, []);
-
   const fetchLeaderboard = async () => {
     setLoading(true);
 
     try {
       // Get current user
       const currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      console.log('Current user ID for leaderboard:', currentUserId);
       
-      // Get current month for filtering
-      const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-      
-      // Fetch monthly top performers from Supabase
+      // Directly fetch top players from profiles table
       const { data: topUsers, error } = await supabase
-        .from('monthly_points')
-        .select('user_id, points')
-        .eq('month', currentMonth)
+        .from('profiles')
+        .select('id, username, points')
         .order('points', { ascending: false })
         .limit(10);
         
       if (error) {
-        console.error('Error fetching monthly top performers:', error);
+        console.error('Error fetching top performers:', error);
         throw error;
       }
       
       if (!topUsers || topUsers.length === 0) {
+        console.log('No top users found');
         setUsers([]);
         setLoading(false);
         return;
       }
       
-      // Get usernames for these users
-      const userIds = topUsers.map(user => user.user_id);
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .in('id', userIds);
-        
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
-      }
-      
-      // Create mapping of user IDs to usernames
-      const userMap: Record<string, string> = {};
-      profiles?.forEach(profile => {
-        userMap[profile.id] = profile.username;
-      });
+      console.log('Top users from profiles:', topUsers);
       
       // Process users with rankings
       const processedUsers = topUsers.map((user, index) => ({
-        userId: user.user_id,
-        username: userMap[user.user_id] || 'Unknown User',
-        points: Number(user.points),
+        userId: user.id,
+        username: user.username,
+        points: Number(user.points || 0),
         rank: index + 1,
-        isCurrentUser: user.user_id === currentUserId
+        isCurrentUser: user.id === currentUserId
       }));
       
       setUsers(processedUsers);
@@ -96,34 +67,21 @@ const LeaderboardSection: React.FC = () => {
       
       // If not, find their rank and add them separately
       if (!currentUserInTop10 && currentUserId) {
-        // Fetch current user's points
-        const { data: currentUserData, error: currentUserError } = await supabase
-          .from('monthly_points')
-          .select('points')
-          .eq('user_id', currentUserId)
-          .eq('month', currentMonth)
-          .single();
+        // Count how many users have more points
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .gt('points', parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0'));
           
-        if (currentUserError && currentUserError.code !== 'PGSQL_ERROR') {
-          console.error('Error fetching current user points:', currentUserError);
-        }
-        
-        if (currentUserData) {
-          // Count how many users have more points than current user
-          const { count, error: countError } = await supabase
-            .from('monthly_points')
-            .select('*', { count: 'exact', head: true })
-            .eq('month', currentMonth)
-            .gt('points', currentUserData.points);
-            
-          if (countError) {
-            console.error('Error counting higher ranked users:', countError);
-          } else if (count !== null) {
-            setCurrentUserRank(count + 1);
-          }
+        if (countError) {
+          console.error('Error counting higher ranked users:', countError);
+        } else if (count !== null) {
+          setCurrentUserRank(count + 1);
+          console.log('Current user rank:', count + 1);
         }
       } else if (currentUserInTop10) {
         setCurrentUserRank(currentUserInTop10.rank);
+        console.log('Current user is in top 10, rank:', currentUserInTop10.rank);
       }
     } catch (error) {
       console.error('Error in fetchLeaderboard:', error);
@@ -139,6 +97,16 @@ const LeaderboardSection: React.FC = () => {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    fetchLeaderboard();
+    
+    // Set up listener for point updates
+    window.addEventListener('pointsUpdated', fetchLeaderboard);
+    return () => {
+      window.removeEventListener('pointsUpdated', fetchLeaderboard);
+    };
+  }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);

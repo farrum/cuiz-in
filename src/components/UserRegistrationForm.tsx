@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -189,14 +190,13 @@ const UserRegistrationForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email (Optional)</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              required
             />
           </div>
           
@@ -265,4 +265,3 @@ const UserRegistrationForm: React.FC = () => {
 };
 
 export default UserRegistrationForm;
-

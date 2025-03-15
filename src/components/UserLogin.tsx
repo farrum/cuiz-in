@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,9 @@ const UserLogin: React.FC = () => {
         title: "Login successful!",
         description: `Welcome back, ${userData.username}!`,
       });
+      
+      // Trigger points updated event
+      window.dispatchEvent(new Event('pointsUpdated'));
       
       navigate('/quiz');
     } catch (error) {

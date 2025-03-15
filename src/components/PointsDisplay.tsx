@@ -17,14 +17,6 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const [cashAmount, setCashAmount] = useState(0);
   
-  useEffect(() => {
-    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-    setPoints(savedPoints);
-    setCashAmount(calculateCashAmount(savedPoints));
-    
-    fetchUserPoints();
-  }, []);
-  
   const fetchUserPoints = async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
@@ -36,7 +28,10 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         .eq('id', userId)
         .maybeSingle();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user points:', error);
+        return;
+      }
         
       if (data && data.points !== null) {
         const newPoints = parseFloat(data.points.toString());
@@ -57,13 +52,30 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
   };
   
   useEffect(() => {
+    // Load initial points from localStorage
+    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+    setPoints(savedPoints);
+    setCashAmount(calculateCashAmount(savedPoints));
+    
+    // Fetch user points from the database
+    fetchUserPoints();
+    
+    // Set up listener for point updates
     const handlePointsUpdate = () => {
+      console.log('Points update event received in PointsDisplay');
       fetchUserPoints();
     };
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
-    return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
-  }, [points, animateUpdate]);
+    
+    // Refresh points every 30 seconds
+    const intervalId = setInterval(fetchUserPoints, 30000);
+    
+    return () => {
+      window.removeEventListener('pointsUpdated', handlePointsUpdate);
+      clearInterval(intervalId);
+    };
+  }, [animateUpdate]);
 
   return (
     <div className={`glass rounded-2xl p-4 ${className}`}>

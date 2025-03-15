@@ -74,7 +74,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
   }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
 
-  // Update login logs
+  // Log login activity
   useEffect(() => {
     const logLoginActivity = async () => {
       if (!userName) return;
@@ -99,10 +99,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       }
     };
     
-    if (isAuthenticated) {
+    if (isAuthenticated === true && location.pathname !== '/login') {
       logLoginActivity();
     }
-  }, [userName, isAuthenticated]);
+  }, [userName, isAuthenticated, location.pathname]);
 
   // Show access denied toast
   useEffect(() => {

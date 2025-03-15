@@ -31,31 +31,13 @@ const Header: React.FC = () => {
 
   // Get current points data and check login status
   useEffect(() => {
-    const checkAuth = async () => {
-      // Check localStorage for backward compatibility
-      const userData = localStorage.getItem('quiz_app_user_name');
-      setIsLoggedIn(!!userData);
-      setIsAdmin(userData === 'admin' || userData === 'quizadmin');
+    const checkAuth = () => {
+      // Check localStorage for user data
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       
-      // Also check Supabase session
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data && data.session) {
-          setIsLoggedIn(true);
-          
-          // Check if user has admin role
-          const { data: userRoles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', data.session.user.id);
-            
-          if (userRoles && userRoles.some(role => role.role === 'admin')) {
-            setIsAdmin(true);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to check Supabase session:', err);
-      }
+      setIsLoggedIn(!!userName && !!userId);
+      setIsAdmin(userName === 'admin' || userName === 'quizadmin');
     };
     
     checkAuth();
@@ -64,54 +46,52 @@ const Header: React.FC = () => {
   // Get current points data
   useEffect(() => {
     const updatePoints = async () => {
-      if (isLoggedIn) {
-        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (userId) {
-          // Get today's date
-          const today = new Date().toISOString().split('T')[0];
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!userId) return;
+      
+      try {
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Get current month
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+        
+        console.log("Fetching points for:", today, currentMonth);
+        
+        // Fetch daily points
+        const { data: dailyData, error: dailyError } = await supabase
+          .from('daily_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .maybeSingle();
           
-          // Get current month
-          const now = new Date();
-          const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+        console.log("Daily points response:", { dailyData, dailyError });
           
-          console.log("Fetching points for:", today, currentMonth);
-          
-          // Fetch daily points
-          const { data: dailyData, error: dailyError } = await supabase
-            .from('daily_points')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('date', today)
-            .maybeSingle();
-            
-          console.log("Daily points response:", { dailyData, dailyError });
-            
-          if (dailyData) {
-            setTodayPoints(Number(dailyData.points));
-          } else {
-            setTodayPoints(0);
-          }
-          
-          // Fetch monthly points
-          const { data: monthlyData, error: monthlyError } = await supabase
-            .from('monthly_points')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('month', currentMonth)
-            .maybeSingle();
-            
-          console.log("Monthly points response:", { monthlyData, monthlyError });
-            
-          if (monthlyData) {
-            setMonthlyPoints(Number(monthlyData.points));
-          } else {
-            setMonthlyPoints(0);
-          }
+        if (dailyData) {
+          setTodayPoints(Number(dailyData.points));
+        } else {
+          setTodayPoints(0);
         }
-      } else {
-        // Reset points if not logged in
-        setTodayPoints(0);
-        setMonthlyPoints(0);
+        
+        // Fetch monthly points
+        const { data: monthlyData, error: monthlyError } = await supabase
+          .from('monthly_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('month', currentMonth)
+          .maybeSingle();
+          
+        console.log("Monthly points response:", { monthlyData, monthlyError });
+          
+        if (monthlyData) {
+          setMonthlyPoints(Number(monthlyData.points));
+        } else {
+          setMonthlyPoints(0);
+        }
+      } catch (error) {
+        console.error('Error fetching points data:', error);
       }
     };
     
@@ -126,8 +106,8 @@ const Header: React.FC = () => {
       
       window.addEventListener('pointsUpdated', handlePointsUpdate);
       
-      // Refresh points every minute
-      const intervalId = setInterval(updatePoints, 60000);
+      // Refresh points every 30 seconds
+      const intervalId = setInterval(updatePoints, 30000);
       
       return () => {
         window.removeEventListener('pointsUpdated', handlePointsUpdate);
