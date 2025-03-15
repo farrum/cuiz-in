@@ -43,15 +43,41 @@ const UserRegistrationForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Create user in Supabase auth
+      console.log('Registering with username:', username);
+      
+      // Check if username already exists
+      const { data: existingUser, error: userCheckError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+        
+      if (userCheckError) {
+        console.error('User check error:', userCheckError);
+      }
+      
+      if (existingUser) {
+        toast({
+          title: "Username already taken",
+          description: "Please choose a different username.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Create user in Supabase auth with username@quizpoints.app as email
+      const formattedEmail = email || `${username}@quizpoints.app`;
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
+        email: formattedEmail,
         password: password,
         options: {
           data: {
             username: username,
             phone: phone
-          }
+          },
+          emailRedirectTo: window.location.origin + '/login'
         }
       });
       

@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 
 const UserLogin: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -21,11 +21,27 @@ const UserLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      console.log(`Attempting to sign in with email: ${email}`);
+      console.log(`Attempting to sign in with username: ${username}`);
       
-      // Sign in with Supabase auth using email
+      // First, find the user's email from their username
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .single();
+        
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        throw new Error('User not found');
+      }
+
+      if (!profileData) {
+        throw new Error('User not found');
+      }
+
+      // Get the user's email from auth.users table indirectly
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: `${username}@quizpoints.app`, // Use username@quizpoints.app as email
         password: password
       });
       
@@ -38,23 +54,23 @@ const UserLogin: React.FC = () => {
         console.log('User authenticated successfully:', authData.user.id);
         
         // Get user profile
-        const { data: profileData, error: profileError } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', authData.user.id)
           .single();
         
-        if (profileError) {
-          console.error('Profile error:', profileError);
-          throw profileError;
+        if (userError) {
+          console.error('Profile error:', userError);
+          throw userError;
         }
         
-        console.log('Profile data retrieved:', profileData);
+        console.log('Profile data retrieved:', userData);
         
         // Store user information in localStorage
         localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
+        localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points.toString());
         
         // Record login in login_logs table
         const clientInfo = {
@@ -62,7 +78,7 @@ const UserLogin: React.FC = () => {
         };
         
         await supabase.from('login_logs').insert({
-          username: profileData.username,
+          username: userData.username,
           ip_address: "client-side", // We can't get IP on client side
           device: JSON.stringify(clientInfo),
           successful: true
@@ -70,7 +86,7 @@ const UserLogin: React.FC = () => {
         
         toast({
           title: "Login successful!",
-          description: `Welcome back, ${profileData.username}!`,
+          description: `Welcome back, ${userData.username}!`,
         });
         
         navigate('/quiz');
@@ -80,13 +96,13 @@ const UserLogin: React.FC = () => {
       
       // Record failed login attempt
       await supabase.from('login_logs').insert({
-        username: email,
+        username: username,
         successful: false
       });
       
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid email or password",
+        description: error instanceof Error ? error.message : "Invalid username or password",
         variant: "destructive"
       });
     } finally {
@@ -105,13 +121,13 @@ const UserLogin: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
             />
           </div>
