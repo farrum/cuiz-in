@@ -9,7 +9,275 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ad_slots: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string | null
+          id: string
+          last_updated: string | null
+          name: string
+          position: string
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          name: string
+          position: string
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          name?: string
+          position?: string
+        }
+        Relationships: []
+      }
+      login_logs: {
+        Row: {
+          created_at: string | null
+          device: string | null
+          id: string
+          ip_address: string | null
+          login_time: string | null
+          successful: boolean | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          successful?: boolean | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          login_time?: string | null
+          successful?: boolean | null
+          username?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string | null
+          id: string
+          method: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone: string | null
+          points: number | null
+          suspended: boolean | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          phone?: string | null
+          points?: number | null
+          suspended?: boolean | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone?: string | null
+          points?: number | null
+          suspended?: boolean | null
+          username?: string
+        }
+        Relationships: []
+      }
+      quiz_answers: {
+        Row: {
+          answered_at: string | null
+          correct: boolean
+          created_at: string | null
+          id: string
+          points_earned: number | null
+          question_id: string | null
+          selected_answer: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          correct: boolean
+          created_at?: string | null
+          id?: string
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          correct?: boolean
+          created_at?: string | null
+          id?: string
+          points_earned?: number | null
+          question_id?: string | null
+          selected_answer?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          category: string
+          correct_answer: string
+          created_at: string | null
+          difficulty: string | null
+          explanation: string | null
+          id: string
+          options: Json
+          points: number | null
+          question: string
+        }
+        Insert: {
+          category: string
+          correct_answer: string
+          created_at?: string | null
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options: Json
+          points?: number | null
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_answer?: string
+          created_at?: string | null
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json
+          points?: number | null
+          question?: string
+        }
+        Relationships: []
+      }
+      user_referrals: {
+        Row: {
+          active_this_month: boolean | null
+          created_at: string | null
+          date: string
+          earnings: number | null
+          id: string
+          last_active_date: string | null
+          referred_email: string | null
+          referred_id: string
+          referred_name: string
+          referrer_id: string
+          referrer_name: string
+          status: string | null
+        }
+        Insert: {
+          active_this_month?: boolean | null
+          created_at?: string | null
+          date: string
+          earnings?: number | null
+          id?: string
+          last_active_date?: string | null
+          referred_email?: string | null
+          referred_id: string
+          referred_name: string
+          referrer_id: string
+          referrer_name: string
+          status?: string | null
+        }
+        Update: {
+          active_this_month?: boolean | null
+          created_at?: string | null
+          date?: string
+          earnings?: number | null
+          id?: string
+          last_active_date?: string | null
+          referred_email?: string | null
+          referred_id?: string
+          referred_name?: string
+          referrer_id?: string
+          referrer_name?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

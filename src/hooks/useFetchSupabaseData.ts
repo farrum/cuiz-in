@@ -14,13 +14,18 @@ export const useFetchSupabaseData = (autoFetch = true) => {
     setError(null);
     
     try {
-      await fetchAllAppData();
-      setLastFetched(new Date());
+      const success = await fetchAllAppData();
       
-      toast({
-        title: "Data Refreshed",
-        description: "App data has been refreshed from the database.",
-      });
+      if (success) {
+        setLastFetched(new Date());
+        
+        toast({
+          title: "Data Refreshed",
+          description: "App data has been refreshed from the database.",
+        });
+      } else {
+        throw new Error("Failed to fetch some app data");
+      }
     } catch (err) {
       console.error('Failed to fetch app data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
