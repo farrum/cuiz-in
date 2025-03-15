@@ -9,7 +9,29 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  }
+);
+
+// Enable realtime for a specific table
+export const enableRealtimeForTable = async (tableName: string) => {
+  try {
+    await supabase.rpc('enable_realtime', { table_name: tableName });
+    console.log(`Realtime enabled for table: ${tableName}`);
+    return true;
+  } catch (error) {
+    console.error(`Error enabling realtime for ${tableName}:`, error);
+    return false;
+  }
+};
 
 // Function to fetch all application data from Supabase
 export const fetchAllAppData = async () => {
@@ -202,3 +224,27 @@ export const syncDataWithSupabase = async (tableName, data) => {
     return false;
   }
 };
+
+// Enable realtime for all tables when the app loads
+export const enableRealtimeForAllTables = async () => {
+  const tables = [
+    'profiles',
+    'login_logs',
+    'ad_slots',
+    'quiz_questions',
+    'quiz_answers',
+    'payments',
+    'user_referrals'
+  ];
+  
+  for (const table of tables) {
+    await enableRealtimeForTable(table);
+  }
+};
+
+// Call this when the app initializes
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    enableRealtimeForAllTables();
+  });
+}

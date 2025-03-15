@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -15,6 +14,7 @@ import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEffect } from 'react';
 import { fetchAllAppData } from '@/integrations/supabase/client';
+import scheduledSyncService from './services/scheduledSync';
 
 function App() {
   // Fetch all app data when the app first loads
@@ -31,6 +31,13 @@ function App() {
     
     fetchInitialData();
   }, []);
+
+  // Initialize the scheduled sync service when the app loads
+  if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+      scheduledSyncService.start();
+    });
+  }
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="quiz-app-theme">
