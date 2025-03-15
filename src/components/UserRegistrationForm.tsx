@@ -55,7 +55,28 @@ const UserRegistrationForm: React.FC = () => {
         }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast({
+          title: "Registration failed",
+          description: authError.message || "An error occurred during registration",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!authData.user) {
+        toast({
+          title: "Registration failed",
+          description: "No user data returned. Please try again.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('User created successfully:', authData);
       
       // Create profile in profiles table
       const { error: profileError } = await supabase
@@ -68,7 +89,16 @@ const UserRegistrationForm: React.FC = () => {
           suspended: false
         });
       
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        toast({
+          title: "Profile creation failed",
+          description: profileError.message || "Failed to create user profile",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
       
       // Set user role as player by default
       const { error: roleError } = await supabase
@@ -78,7 +108,15 @@ const UserRegistrationForm: React.FC = () => {
           role: 'player'
         });
         
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Role error:', roleError);
+        toast({
+          title: "Role assignment failed",
+          description: roleError.message || "Failed to assign user role",
+          variant: "destructive"
+        });
+        // Continue anyway as this is not critical
+      }
       
       // If referral code exists, record the referral
       if (referralCode) {
@@ -88,10 +126,13 @@ const UserRegistrationForm: React.FC = () => {
           .eq('username', referralCode)
           .single();
           
-        if (!referrerError && referrerData) {
+        if (referrerError) {
+          console.error('Referrer error:', referrerError);
+          // Don't stop registration for referral errors
+        } else if (referrerData) {
           const currentDate = new Date().toISOString().split('T')[0];
           
-          await supabase
+          const { error: referralError } = await supabase
             .from('user_referrals')
             .insert({
               referrer_id: referrerData.id,
@@ -102,6 +143,11 @@ const UserRegistrationForm: React.FC = () => {
               active_this_month: true,
               last_active_date: currentDate
             });
+            
+          if (referralError) {
+            console.error('Referral error:', referralError);
+            // Don't stop registration for referral errors
+          }
         }
       }
       
@@ -114,9 +160,11 @@ const UserRegistrationForm: React.FC = () => {
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      console.log('Error details:', errorMessage);
       toast({
         title: "Registration failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
