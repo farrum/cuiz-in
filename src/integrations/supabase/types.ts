@@ -63,6 +63,36 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reports: {
+        Row: {
+          ad_views: number | null
+          created_at: string | null
+          date: string
+          id: string
+          logins: number | null
+          plays: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_views?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          logins?: number | null
+          plays?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_views?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          logins?: number | null
+          plays?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       login_logs: {
         Row: {
           created_at: string | null

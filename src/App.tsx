@@ -166,6 +166,11 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/reports" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/sync" element={
             <ProtectedRoute>
               <AdminPage />
