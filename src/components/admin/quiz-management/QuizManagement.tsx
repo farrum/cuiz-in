@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -27,7 +26,8 @@ import {
   Trash, 
   Download, 
   FileQuestion,
-  RefreshCw
+  RefreshCw,
+  Upload
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
@@ -49,9 +49,8 @@ const QuizManagement: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { fetchData: refreshAllData } = useFetchSupabaseData(false);
+  const { fetchData: refreshAllData, syncToSupabase, isSyncing } = useFetchSupabaseData(false);
 
-  // Fetch all quiz questions from Supabase
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
@@ -64,9 +63,7 @@ const QuizManagement: React.FC = () => {
         throw error;
       }
       
-      // Transform the data to match our QuizQuestion interface
       const formattedQuestions = data.map(q => {
-        // Create properly typed options array by converting all values to strings
         const optionsArray: string[] = Array.isArray(q.options) 
           ? q.options.map(String) 
           : typeof q.options === 'object' 
@@ -80,7 +77,6 @@ const QuizManagement: React.FC = () => {
           correctAnswer: q.correct_answer,
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
-          // Fix: Set a default points value since it's not in the database
           points: 10,
           explanation: q.explanation || ''
         };
@@ -89,7 +85,6 @@ const QuizManagement: React.FC = () => {
       setQuestions(formattedQuestions);
       setFilteredQuestions(formattedQuestions);
       
-      // Extract unique categories
       const uniqueCategories = Array.from(
         new Set(formattedQuestions.map(q => q.category))
       );
@@ -111,16 +106,13 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Initialize data
   useEffect(() => {
     fetchQuestions();
   }, []);
 
-  // Filter questions based on search, category, and difficulty
   useEffect(() => {
     let filtered = [...questions];
     
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(q => 
         q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -128,12 +120,10 @@ const QuizManagement: React.FC = () => {
       );
     }
     
-    // Apply category filter
     if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(q => q.category === selectedCategory);
     }
     
-    // Apply difficulty filter
     if (selectedDifficulty && selectedDifficulty !== 'all') {
       filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
     }
@@ -141,12 +131,10 @@ const QuizManagement: React.FC = () => {
     setFilteredQuestions(filtered);
   }, [searchQuery, selectedCategory, selectedDifficulty, questions]);
 
-  // Handle adding a new question
   const handleAddQuestion = async (question: Omit<QuizQuestion, 'id'>) => {
     try {
       console.log("Adding question:", question);
       
-      // Ensure options are properly formatted as an array of strings
       const options = Array.isArray(question.options) 
         ? question.options.filter(opt => opt.trim() !== '') 
         : [];
@@ -168,7 +156,6 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
-          // Note: points is not stored in the database, it's only used client-side
         })
         .select();
         
@@ -182,7 +169,6 @@ const QuizManagement: React.FC = () => {
         description: "Question added successfully!",
       });
       
-      // Update the categories list if we have a new category
       if (question.category && !categories.includes(question.category)) {
         setCategories([...categories, question.category]);
       }
@@ -199,10 +185,8 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Handle updating a question
   const handleUpdateQuestion = async (question: QuizQuestion) => {
     try {
-      // Ensure options are properly formatted as an array of strings
       const options = Array.isArray(question.options) 
         ? question.options.filter(opt => opt.trim() !== '') 
         : [];
@@ -224,7 +208,6 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
-          // Note: points is not stored in the database, it's only used client-side
         })
         .eq('id', question.id);
         
@@ -237,7 +220,6 @@ const QuizManagement: React.FC = () => {
         description: "Question updated successfully!",
       });
       
-      // Update the categories list if we have a new category
       if (question.category && !categories.includes(question.category)) {
         setCategories([...categories, question.category]);
       }
@@ -254,7 +236,6 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Handle deleting a question
   const handleDeleteQuestion = async (id: string) => {
     if (confirm('Are you sure you want to delete this question?')) {
       try {
@@ -284,7 +265,6 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Export questions to Excel
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       questions.map(q => ({
@@ -307,7 +287,6 @@ const QuizManagement: React.FC = () => {
     });
   };
 
-  // Refresh all data (incl. questions)
   const handleRefreshData = async () => {
     try {
       await refreshAllData();
@@ -327,6 +306,24 @@ const QuizManagement: React.FC = () => {
     }
   };
 
+  const handleSyncToSupabase = async () => {
+    try {
+      await syncToSupabase();
+      
+      toast({
+        title: "Data Synced",
+        description: "Local data has been synced to the Supabase database.",
+      });
+    } catch (error) {
+      console.error('Error syncing data:', error);
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync local data to Supabase. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -340,6 +337,16 @@ const QuizManagement: React.FC = () => {
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
+          </Button>
+          <Button 
+            onClick={handleSyncToSupabase}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            disabled={isSyncing}
+          >
+            <Upload className="h-4 w-4" />
+            {isSyncing ? 'Syncing...' : 'Sync to DB'}
           </Button>
           <Button 
             onClick={() => setIsAddDialogOpen(true)}
@@ -485,7 +492,6 @@ const QuizManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Add Question Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -502,7 +508,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Question Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -522,7 +527,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Import Questions Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

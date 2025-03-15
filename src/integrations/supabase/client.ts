@@ -96,9 +96,96 @@ export const fetchAllAppData = async () => {
   }
 };
 
+// Function to sync localStorage data to Supabase
+export const syncLocalStorageToSupabase = async () => {
+  console.log('Syncing localStorage data to Supabase...');
+  
+  const syncOperations = [];
+  let successCount = 0;
+  let failureCount = 0;
+
+  try {
+    // Sync profiles data
+    const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+    if (adminUsers.length > 0) {
+      const profiles = adminUsers.map(user => ({
+        id: user.id,
+        username: user.name || user.username,
+        phone: user.mobile || user.phone,
+        points: user.points || 0,
+        suspended: user.suspended || false
+      }));
+      
+      syncOperations.push(syncDataWithSupabase('profiles', profiles));
+    }
+
+    // Sync login logs
+    const loginLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
+    if (loginLogs.length > 0) {
+      syncOperations.push(syncDataWithSupabase('login_logs', loginLogs));
+    }
+
+    // Sync ad slots
+    const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
+    if (adSlots.length > 0) {
+      syncOperations.push(syncDataWithSupabase('ad_slots', adSlots));
+    }
+
+    // Sync quiz questions
+    const quizQuestions = JSON.parse(localStorage.getItem('quiz_questions') || '[]');
+    if (quizQuestions.length > 0) {
+      syncOperations.push(syncDataWithSupabase('quiz_questions', quizQuestions));
+    }
+
+    // Sync quiz answers
+    const quizAnswers = JSON.parse(localStorage.getItem('quiz_answers') || '[]');
+    if (quizAnswers.length > 0) {
+      syncOperations.push(syncDataWithSupabase('quiz_answers', quizAnswers));
+    }
+
+    // Sync payments
+    const payments = JSON.parse(localStorage.getItem('admin_payments') || '[]');
+    if (payments.length > 0) {
+      syncOperations.push(syncDataWithSupabase('payments', payments));
+    }
+
+    // Sync referrals
+    const referrals = JSON.parse(localStorage.getItem('admin_referrals') || '[]');
+    if (referrals.length > 0) {
+      syncOperations.push(syncDataWithSupabase('user_referrals', referrals));
+    }
+
+    // Process all sync operations
+    const results = await Promise.allSettled(syncOperations);
+    
+    // Count successes and failures
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value) {
+        successCount++;
+      } else {
+        failureCount++;
+      }
+    });
+
+    console.log(`Sync completed: ${successCount} successful, ${failureCount} failed`);
+    return successCount > 0;
+  } catch (error) {
+    console.error('Error syncing localStorage data to Supabase:', error);
+    return false;
+  }
+};
+
 // Helper function to update fetchSupabaseData hook
 export const syncDataWithSupabase = async (tableName, data) => {
   try {
+    // Skip if data is empty
+    if (!data || data.length === 0) {
+      console.log(`No data to sync for ${tableName}`);
+      return true;
+    }
+    
+    console.log(`Syncing ${data.length} records to ${tableName}...`);
+    
     const { error } = await supabase
       .from(tableName)
       .upsert(data, { onConflict: 'id' });
@@ -108,6 +195,7 @@ export const syncDataWithSupabase = async (tableName, data) => {
       return false;
     }
     
+    console.log(`Successfully synced data to ${tableName}`);
     return true;
   } catch (error) {
     console.error(`Error syncing data to ${tableName}:`, error);
