@@ -45,7 +45,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/answer" element={<AnswerPage />} />
+          <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
           <Route path="/refer" element={<ReferralPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<Registration />} />
