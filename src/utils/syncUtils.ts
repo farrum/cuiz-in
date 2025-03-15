@@ -26,9 +26,9 @@ export const syncAllDataToSupabase = async () => {
       // Handle the result safely regardless of its type
       let syncedItems = 0;
       
-      // Only try to access totalSynced if result exists and is an object
-      if (result && typeof result === 'object') {
-        // Use optional chaining to safely access totalSynced if it exists
+      // Instead of checking truthiness directly, check the type
+      if (result !== undefined && result !== null && typeof result === 'object') {
+        // Type assertion to access properties safely
         syncedItems = (result as any).totalSynced ?? 0;
       }
       
