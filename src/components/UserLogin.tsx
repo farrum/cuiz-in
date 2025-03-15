@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 
 const UserLogin: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -21,15 +21,22 @@ const UserLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Sign in with Supabase auth
+      console.log(`Attempting to sign in with email: ${email}`);
+      
+      // Sign in with Supabase auth using email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${username}@quizpoints.app`, // Using username as email since we don't collect email
+        email: email,
         password: password
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Login error:', authError);
+        throw authError;
+      }
       
       if (authData.user) {
+        console.log('User authenticated successfully:', authData.user.id);
+        
         // Get user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -37,7 +44,12 @@ const UserLogin: React.FC = () => {
           .eq('id', authData.user.id)
           .single();
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          throw profileError;
+        }
+        
+        console.log('Profile data retrieved:', profileData);
         
         // Store user information in localStorage
         localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
@@ -68,13 +80,13 @@ const UserLogin: React.FC = () => {
       
       // Record failed login attempt
       await supabase.from('login_logs').insert({
-        username: username,
+        username: email,
         successful: false
       });
       
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid username or password",
+        description: error instanceof Error ? error.message : "Invalid email or password",
         variant: "destructive"
       });
     } finally {
@@ -93,13 +105,13 @@ const UserLogin: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email address"
               required
             />
           </div>
