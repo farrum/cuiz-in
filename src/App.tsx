@@ -1,6 +1,14 @@
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchAllAppData } from '@/integrations/supabase/client';
+import scheduledSyncService from './services/scheduledSync';
+import { STORAGE_KEYS } from '@/utils/quizData';
+
+// Pages
 import Index from "@/pages/Index";
 import QuizPage from "@/pages/QuizPage";
 import AnswerPage from "@/pages/AnswerPage";
@@ -12,32 +20,92 @@ import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from '@/pages/AdminLoginPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useEffect } from 'react';
-import { fetchAllAppData } from '@/integrations/supabase/client';
-import scheduledSyncService from './services/scheduledSync';
 
 function App() {
-  // Fetch all app data when the app first loads
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize the app
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const initializeApp = async () => {
       try {
-        console.log('Fetching initial app data...');
+        console.log('Initializing app...');
+        
+        // Check for existing session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        // If user is logged in, fetch their profile
+        if (sessionData?.session?.user) {
+          const userId = sessionData.session.user.id;
+          
+          // Get user profile from Supabase
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+          if (profileData) {
+            // Store user data in localStorage
+            localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+            localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
+            localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+          }
+        }
+        
+        // Fetch all app data
         await fetchAllAppData();
         console.log('Initial data fetch complete');
+        
+        setIsInitialized(true);
       } catch (error) {
-        console.error('Error fetching initial app data:', error);
+        console.error('Error initializing app:', error);
+        setIsInitialized(true); // Set to true anyway to allow app to render
       }
     };
     
-    fetchInitialData();
+    initializeApp();
   }, []);
 
   // Initialize the scheduled sync service when the app loads
-  if (typeof window !== 'undefined') {
-    window.addEventListener('load', () => {
+  useEffect(() => {
+    if (isInitialized) {
       scheduledSyncService.start();
-    });
-  }
+    }
+  }, [isInitialized]);
+
+  // Set up auth state listener
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          // User signed in, update local storage
+          const userId = session.user.id;
+          
+          // Get user profile
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+          if (profileData) {
+            localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+            localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
+            localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out, clear local storage
+          localStorage.removeItem(STORAGE_KEYS.USER_ID);
+          localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+          localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="quiz-app-theme">
