@@ -28,7 +28,8 @@ type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' 
 export const enableRealtimeForTable = async (tableName: string) => {
   try {
     // Use type casting to bypass TypeScript limitations
-    await supabase.rpc('enable_realtime', { table_name: tableName } as any);
+    const params = { table_name: tableName };
+    await supabase.rpc('enable_realtime', params as any);
     console.log(`Realtime enabled for table: ${tableName}`);
     return true;
   } catch (error) {
