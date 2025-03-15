@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Layout, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Layout, Loader2, Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { AdSlotCard, AdSlotGrid, EditAdSlotDialog } from './ad-management';
@@ -28,6 +28,7 @@ const AdminAdManagement: React.FC = () => {
   const { toast } = useToast();
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
   const [editingSlot, setEditingSlot] = useState<AdSlot | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -114,49 +115,102 @@ const AdminAdManagement: React.FC = () => {
   };
   
   const startEditing = (slot: AdSlot) => {
+    setIsCreatingNew(false);
     setEditingSlot({ ...slot });
     form.reset(slot);
   };
   
+  const startCreatingNew = () => {
+    setIsCreatingNew(true);
+    setEditingSlot({
+      id: '',
+      name: '',
+      position: 'top',
+      code: '',
+      active: true,
+      last_updated: new Date().toISOString()
+    });
+    form.reset({
+      id: '',
+      name: '',
+      position: 'top',
+      code: '',
+      active: true,
+      last_updated: new Date().toISOString()
+    });
+  };
+  
   const cancelEditing = () => {
     setEditingSlot(null);
+    setIsCreatingNew(false);
     form.reset();
   };
   
   const saveAdSlot = async () => {
     try {
       const values = form.getValues();
-      const { error } = await supabase
-        .from('ad_slots')
-        .update({
-          name: values.name,
-          position: values.position,
-          code: values.code,
-          active: values.active,
-          last_updated: new Date().toISOString()
-        })
-        .eq('id', values.id);
+      
+      if (isCreatingNew) {
+        // Creating a new ad slot
+        const { data, error } = await supabase
+          .from('ad_slots')
+          .insert({
+            name: values.name,
+            position: values.position,
+            code: values.code,
+            active: values.active,
+            last_updated: new Date().toISOString()
+          })
+          .select();
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      const updatedSlots = adSlots.map(slot => {
-        if (slot.id === values.id) {
-          return { 
-            ...values, 
-            last_updated: new Date().toISOString() 
-          };
+        if (data && data.length > 0) {
+          setAdSlots([...adSlots, data[0] as AdSlot]);
+          localStorage.setItem('quiz_app_ad_slots', JSON.stringify([...adSlots, data[0]]));
+          
+          toast({
+            title: "Ad Slot Created",
+            description: "New ad slot has been created successfully.",
+          });
         }
-        return slot;
-      });
+      } else {
+        // Updating existing ad slot
+        const { error } = await supabase
+          .from('ad_slots')
+          .update({
+            name: values.name,
+            position: values.position,
+            code: values.code,
+            active: values.active,
+            last_updated: new Date().toISOString()
+          })
+          .eq('id', values.id);
+          
+        if (error) throw error;
+        
+        const updatedSlots = adSlots.map(slot => {
+          if (slot.id === values.id) {
+            return { 
+              ...values, 
+              last_updated: new Date().toISOString() 
+            };
+          }
+          return slot;
+        });
+        
+        setAdSlots(updatedSlots);
+        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+        
+        toast({
+          title: "Ad Slot Updated",
+          description: "Your changes have been saved successfully.",
+        });
+      }
       
-      setAdSlots(updatedSlots);
-      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
       setEditingSlot(null);
+      setIsCreatingNew(false);
       
-      toast({
-        title: "Ad Slot Updated",
-        description: "Your changes have been saved successfully.",
-      });
     } catch (error) {
       console.error('Error saving ad slot:', error);
       toast({
@@ -187,25 +241,34 @@ const AdminAdManagement: React.FC = () => {
           <h2 className="text-2xl font-bold">Ad Management</h2>
           <p className="text-muted-foreground">Manage advertisement slots throughout the app</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={previewMode}
-            onCheckedChange={setPreviewMode}
-            id="preview-mode"
-          />
-          <Label htmlFor="preview-mode">
-            {previewMode ? (
-              <div className="flex items-center">
-                <Eye className="w-4 h-4 mr-1" />
-                Preview Mode
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <EyeOff className="w-4 h-4 mr-1" />
-                Code Mode
-              </div>
-            )}
-          </Label>
+        <div className="flex items-center space-x-4">
+          <Button 
+            onClick={startCreatingNew}
+            className="mr-4"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            New Ad Slot
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={previewMode}
+              onCheckedChange={setPreviewMode}
+              id="preview-mode"
+            />
+            <Label htmlFor="preview-mode">
+              {previewMode ? (
+                <div className="flex items-center">
+                  <Eye className="w-4 h-4 mr-1" />
+                  Preview Mode
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <EyeOff className="w-4 h-4 mr-1" />
+                  Code Mode
+                </div>
+              )}
+            </Label>
+          </div>
         </div>
       </div>
       
@@ -250,6 +313,7 @@ const AdminAdManagement: React.FC = () => {
         form={form}
         onCancel={cancelEditing}
         onSave={saveAdSlot}
+        isCreatingNew={isCreatingNew}
       />
     </div>
   );

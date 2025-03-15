@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Check } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 
 interface AdSlot {
@@ -40,6 +40,7 @@ interface EditAdSlotDialogProps {
   form: UseFormReturn<AdSlot>;
   onCancel: () => void;
   onSave: () => void;
+  isCreatingNew?: boolean;
 }
 
 const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
@@ -48,17 +49,22 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
   editingSlot,
   form,
   onCancel,
-  onSave
+  onSave,
+  isCreatingNew = false
 }) => {
   if (!editingSlot) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Edit Ad Slot: {editingSlot.name}</DialogTitle>
+          <DialogTitle>
+            {isCreatingNew ? 'Create New Ad Slot' : `Edit Ad Slot: ${editingSlot.name}`}
+          </DialogTitle>
           <DialogDescription>
-            Update the details and ad code for this advertisement slot.
+            {isCreatingNew 
+              ? 'Create a new advertisement slot for your application.' 
+              : 'Update the details and ad code for this advertisement slot.'}
           </DialogDescription>
         </DialogHeader>
         
@@ -73,6 +79,7 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                   <FormControl>
                     <Input
                       id="ad-name"
+                      placeholder="Enter ad slot name"
                       {...field}
                     />
                   </FormControl>
@@ -114,6 +121,7 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                   <FormControl>
                     <Textarea
                       id="ad-code"
+                      placeholder="Enter HTML/JavaScript ad code here"
                       {...field}
                       rows={10}
                       className="font-mono text-sm"
@@ -152,8 +160,17 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                 Cancel
               </Button>
               <Button type="submit">
-                <Check className="w-4 h-4 mr-2" />
-                Save Changes
+                {isCreatingNew ? (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Ad Slot
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>
