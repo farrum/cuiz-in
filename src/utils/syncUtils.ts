@@ -19,23 +19,32 @@ export const syncAllDataToSupabase = async () => {
     };
 
     const { syncAllDataToSupabase } = await import('@/integrations/supabase/client');
-    const result = await syncAllDataToSupabase();
     
-    // Since the result might be void, we need to safely handle this
-    let syncedItems = 0;
-    if (result && typeof result === 'object' && 'totalSynced' in result) {
-      syncedItems = result.totalSynced ?? 0;
+    try {
+      const result = await syncAllDataToSupabase();
+      
+      // Handle the result safely regardless of its type
+      let syncedItems = 0;
+      
+      // Only try to access totalSynced if result exists and is an object
+      if (result && typeof result === 'object') {
+        // Use optional chaining to safely access totalSynced if it exists
+        syncedItems = (result as any).totalSynced ?? 0;
+      }
+      
+      syncStats.allData = { 
+        ...syncStats.allData,
+        status: 'completed', 
+        endTime: new Date(),
+        syncedItems: syncedItems,
+        lastSyncTime: new Date()
+      };
+      
+      return result;
+    } catch (innerError) {
+      console.error('Error in syncAllDataToSupabase function:', innerError);
+      throw innerError;
     }
-    
-    syncStats.allData = { 
-      ...syncStats.allData,
-      status: 'completed', 
-      endTime: new Date(),
-      syncedItems: syncedItems,
-      lastSyncTime: new Date()
-    };
-    
-    return result;
   } catch (error) {
     console.error('Error syncing all data:', error);
     syncStats.allData = { 
