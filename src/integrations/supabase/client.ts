@@ -355,6 +355,128 @@ export const fetchQuizAnswersFromSupabase = async (username: string) => {
   }
 };
 
+// New: Helper function to sync quiz questions between Supabase and local storage
+export const syncQuizQuestionsToSupabase = async () => {
+  try {
+    console.log('Starting two-way sync of quiz questions');
+    
+    const { data: existingQuestions, error: fetchError } = await supabase
+      .from('quiz_questions')
+      .select('id, question, options, correct_answer, difficulty, category, explanation, active, created_at');
+      
+    if (fetchError) {
+      throw fetchError;
+    }
+    
+    // Import quiz questions from utils
+    const { quizQuestions } = await import('@/utils/quizData');
+    
+    const supabaseQuestionsMap = new Map();
+    if (existingQuestions && existingQuestions.length > 0) {
+      existingQuestions.forEach(q => {
+        supabaseQuestionsMap.set(q.id, q);
+      });
+    }
+    
+    const localQuestions = [...quizQuestions];
+    const localQuestionsMap = new Map();
+    localQuestions.forEach(q => {
+      localQuestionsMap.set(q.id, q);
+    });
+    
+    const questionsToInsert = [];
+    for (const localQ of localQuestions) {
+      if (!supabaseQuestionsMap.has(localQ.id)) {
+        questionsToInsert.push({
+          id: localQ.id,
+          question: localQ.question,
+          options: localQ.options,
+          correct_answer: localQ.correctAnswer,
+          difficulty: localQ.difficulty,
+          category: localQ.category,
+          explanation: localQ.explanation || ''
+        });
+      }
+    }
+    
+    if (questionsToInsert.length > 0) {
+      console.log(`Inserting ${questionsToInsert.length} new questions to Supabase`);
+      
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < questionsToInsert.length; i += BATCH_SIZE) {
+        const batch = questionsToInsert.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('quiz_questions')
+          .insert(batch);
+          
+        if (error) {
+          console.error('Error syncing batch:', error);
+        }
+      }
+    } else {
+      console.log('No new local questions to add to Supabase');
+    }
+    
+    const newLocalQuestions = [];
+    if (existingQuestions) {
+      for (const supabaseQ of existingQuestions) {
+        if (!localQuestionsMap.has(supabaseQ.id) && supabaseQ.active !== false) {
+          newLocalQuestions.push({
+            id: supabaseQ.id,
+            question: supabaseQ.question,
+            options: Array.isArray(supabaseQ.options) ? supabaseQ.options : [],
+            correctAnswer: supabaseQ.correct_answer,
+            difficulty: (supabaseQ.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
+            category: supabaseQ.category || 'General Knowledge',
+            explanation: supabaseQ.explanation || ''
+          });
+        }
+      }
+      
+      if (newLocalQuestions.length > 0) {
+        console.log(`Adding ${newLocalQuestions.length} new questions from Supabase to local`);
+        const allQuestions = [...quizQuestions, ...newLocalQuestions];
+        localStorage.setItem('quiz_app_questions_cache', JSON.stringify(allQuestions));
+        
+        console.log('Updated local questions cache. Reload the app to see new questions.');
+      } else {
+        console.log('No new questions from Supabase to add locally');
+      }
+    }
+    
+    console.log('Quiz questions sync completed');
+    return {
+      supabaseCount: existingQuestions?.length || 0,
+      localCount: localQuestions.length,
+      addedToSupabase: questionsToInsert.length,
+      addedToLocal: newLocalQuestions.length
+    };
+  } catch (error) {
+    console.error('Error syncing quiz questions:', error);
+    throw error;
+  }
+};
+
+// New: Helper function to sync ad slots from Supabase to localStorage
+export const syncAdSlotsToLocal = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('ad_slots')
+      .select('*')
+      .eq('active', true);
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (data) {
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
+    }
+  } catch (error) {
+    console.error('Error syncing ad slots:', error);
+  }
+};
+
 // Extended function to sync all types of data
 export const syncAllDataToSupabase = async () => {
   try {
