@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield } from 'lucide-react';
@@ -60,7 +61,7 @@ const Header: React.FC = () => {
     checkAuth();
   }, []);
 
-  // Get current points data directly from Supabase
+  // Get current points data
   useEffect(() => {
     const updatePoints = async () => {
       if (isLoggedIn) {
@@ -73,28 +74,38 @@ const Header: React.FC = () => {
           const now = new Date();
           const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
           
+          console.log("Fetching points for:", today, currentMonth);
+          
           // Fetch daily points
-          const { data: dailyData } = await supabase
+          const { data: dailyData, error: dailyError } = await supabase
             .from('daily_points')
             .select('points')
             .eq('user_id', userId)
             .eq('date', today)
-            .single();
+            .maybeSingle();
+            
+          console.log("Daily points response:", { dailyData, dailyError });
             
           if (dailyData) {
             setTodayPoints(Number(dailyData.points));
+          } else {
+            setTodayPoints(0);
           }
           
           // Fetch monthly points
-          const { data: monthlyData } = await supabase
+          const { data: monthlyData, error: monthlyError } = await supabase
             .from('monthly_points')
             .select('points')
             .eq('user_id', userId)
             .eq('month', currentMonth)
-            .single();
+            .maybeSingle();
+            
+          console.log("Monthly points response:", { monthlyData, monthlyError });
             
           if (monthlyData) {
             setMonthlyPoints(Number(monthlyData.points));
+          } else {
+            setMonthlyPoints(0);
           }
         }
       } else {
@@ -108,13 +119,18 @@ const Header: React.FC = () => {
       updatePoints();
       
       // Set up a listener for point updates
-      window.addEventListener('pointsUpdated', updatePoints);
+      const handlePointsUpdate = () => {
+        console.log("Points updated event received in Header");
+        updatePoints();
+      };
+      
+      window.addEventListener('pointsUpdated', handlePointsUpdate);
       
       // Refresh points every minute
       const intervalId = setInterval(updatePoints, 60000);
       
       return () => {
-        window.removeEventListener('pointsUpdated', updatePoints);
+        window.removeEventListener('pointsUpdated', handlePointsUpdate);
         clearInterval(intervalId);
       };
     }

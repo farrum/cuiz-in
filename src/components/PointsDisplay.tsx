@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { IndianRupee } from 'lucide-react';
@@ -29,11 +30,13 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
     if (!userId) return;
     
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('points')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+        
+      if (error) throw error;
         
       if (data && data.points !== null) {
         const newPoints = parseFloat(data.points.toString());

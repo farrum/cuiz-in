@@ -41,7 +41,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
       
       // Record answer in Supabase if user is logged in
       if (userId) {
-        // Calculate points based on difficulty - UPDATED POINTS CALCULATION
+        // Calculate points based on difficulty
         let pointsEarned = 0;
         if (isCorrect) {
           switch (question.difficulty) {
@@ -70,30 +70,33 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
           answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
         });
         
+        console.log(`Answer saved with ${pointsEarned} points`);
+        
         // Update daily points
         const { data: dailyData, error: dailyError } = await supabase
           .from('daily_points')
           .select('points')
           .eq('user_id', userId)
           .eq('date', today)
-          .single();
+          .maybeSingle();
           
-        if (dailyError && dailyError.code !== 'PGSQL_ERROR') {
-          console.error('Error checking daily points:', dailyError);
-        }
+        console.log('Daily points check:', { dailyData, dailyError });
         
         if (dailyData) {
           // Update existing record
+          const updatedPoints = Number(dailyData.points) + pointsEarned;
           await supabase
             .from('daily_points')
-            .update({ points: Number(dailyData.points) + pointsEarned })
+            .update({ points: updatedPoints })
             .eq('user_id', userId)
             .eq('date', today);
+          console.log(`Updated daily points to ${updatedPoints}`);
         } else {
           // Create new record
           await supabase
             .from('daily_points')
             .insert({ user_id: userId, date: today, points: pointsEarned });
+          console.log(`Created new daily points record with ${pointsEarned} points`);
         }
         
         // Update monthly points
@@ -102,27 +105,28 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
           .select('points')
           .eq('user_id', userId)
           .eq('month', currentMonth)
-          .single();
+          .maybeSingle();
           
-        if (monthlyError && monthlyError.code !== 'PGSQL_ERROR') {
-          console.error('Error checking monthly points:', monthlyError);
-        }
+        console.log('Monthly points check:', { monthlyData, monthlyError });
         
         if (monthlyData) {
           // Update existing record
+          const updatedPoints = Number(monthlyData.points) + pointsEarned;
           await supabase
             .from('monthly_points')
-            .update({ points: Number(monthlyData.points) + pointsEarned })
+            .update({ points: updatedPoints })
             .eq('user_id', userId)
             .eq('month', currentMonth);
+          console.log(`Updated monthly points to ${updatedPoints}`);
         } else {
           // Create new record
           await supabase
             .from('monthly_points')
             .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
+          console.log(`Created new monthly points record with ${pointsEarned} points`);
         }
         
-        // If correct, update user's points in the profiles table
+        // Update user's points in the profiles table
         const { data } = await supabase
           .from('profiles')
           .select('points')
@@ -131,14 +135,20 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
             
         if (data) {
           const currentPoints = data.points || 0;
+          const newTotal = currentPoints + pointsEarned;
           await supabase
             .from('profiles')
-            .update({ points: currentPoints + pointsEarned })
+            .update({ points: newTotal })
             .eq('id', userId);
             
+          console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
+          
           // Update local storage with new total points
-          localStorage.setItem(STORAGE_KEYS.USER_POINTS, (currentPoints + pointsEarned).toString());
+          localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
         }
+        
+        // Dispatch point update event
+        window.dispatchEvent(new Event('pointsUpdated'));
       }
       
       // Call the onComplete callback

@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trophy, Medal, RefreshCw, Calendar } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { getTopPerformers } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TopPerformer {
@@ -29,12 +28,15 @@ const AdminTopPerformers: React.FC = () => {
 
   const fetchTopPerformers = async () => {
     setLoading(true);
+    console.log("Fetching top performers...");
 
     try {
       // Get current date info
       const now = new Date();
       const today = now.toISOString().split('T')[0];
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+      
+      console.log("Today:", today, "Current month:", currentMonth);
       
       // Fetch daily top performers
       const { data: dailyData, error: dailyError } = await supabase
@@ -49,6 +51,8 @@ const AdminTopPerformers: React.FC = () => {
         throw dailyError;
       }
       
+      console.log("Daily data:", dailyData);
+      
       // Fetch monthly top performers
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('monthly_points')
@@ -62,11 +66,30 @@ const AdminTopPerformers: React.FC = () => {
         throw monthlyError;
       }
       
+      console.log("Monthly data:", monthlyData);
+      
+      // If both are empty, no need to query usernames
+      if ((!dailyData || dailyData.length === 0) && (!monthlyData || monthlyData.length === 0)) {
+        setDailyTopUsers([]);
+        setMonthlyTopUsers([]);
+        setLoading(false);
+        return;
+      }
+      
       // Get all unique user IDs
       const allUserIds = [...new Set([
         ...(dailyData?.map(item => item.user_id) || []),
         ...(monthlyData?.map(item => item.user_id) || [])
       ])];
+      
+      console.log("All user IDs:", allUserIds);
+      
+      if (allUserIds.length === 0) {
+        setDailyTopUsers([]);
+        setMonthlyTopUsers([]);
+        setLoading(false);
+        return;
+      }
       
       // Fetch all usernames in one query
       const { data: profiles, error: profilesError } = await supabase
@@ -78,6 +101,8 @@ const AdminTopPerformers: React.FC = () => {
         console.error('Error fetching profile data:', profilesError);
         throw profilesError;
       }
+      
+      console.log("Profiles data:", profiles);
       
       // Create a map of user IDs to usernames
       const usernameMap: Record<string, string> = {};
@@ -101,10 +126,13 @@ const AdminTopPerformers: React.FC = () => {
         rank: index + 1
       })) || [];
       
+      console.log("Transformed daily data:", transformedDailyData);
+      console.log("Transformed monthly data:", transformedMonthlyData);
+      
       setDailyTopUsers(transformedDailyData);
       setMonthlyTopUsers(transformedMonthlyData);
     } catch (error) {
-      console.error('Error fetching top performers:', error);
+      console.error('Error in fetchTopPerformers:', error);
       toast({
         title: "Error",
         description: "Failed to fetch top performers data",
