@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -84,30 +83,25 @@ const AdminUserManagementEnhanced: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('player');
 
-  // Setup realtime updates
   const { isListening: isListeningProfiles } = useRealtimeUpdates('profiles');
   const { isListening: isListeningLoginLogs } = useRealtimeUpdates('login_logs');
   const { isListening: isListeningQuizAnswers } = useRealtimeUpdates('quiz_answers');
   const { isListening: isListeningUserRoles } = useRealtimeUpdates('user_roles');
 
-  // Fetch all users data
   const fetchUsers = async () => {
     try {
       setLoading(true);
       
-      // Get current date for calculating daily/monthly logins
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       
-      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
       
       if (profilesError) throw profilesError;
       
-      // Fetch login logs
       const { data: loginLogs, error: loginLogsError } = await supabase
         .from('login_logs')
         .select('*')
@@ -115,21 +109,17 @@ const AdminUserManagementEnhanced: React.FC = () => {
       
       if (loginLogsError) throw loginLogsError;
       
-      // Fetch user roles
       const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
         .select('*');
       
       if (userRolesError) throw userRolesError;
       
-      // Process and combine data
       const usersWithMetadata: User[] = profiles.map((profile: any) => {
-        // Get login information
         const userLogins = loginLogs.filter((log: any) => log.username === profile.username);
         const lastLogin = userLogins.length > 0 ? userLogins[0].login_time : null;
         const loginCount = userLogins.length;
         
-        // Calculate daily and monthly logins
         const dailyLogins = loginLogs.filter(
           (log: any) => log.username === profile.username && log.login_time >= startOfDay
         ).length;
@@ -138,7 +128,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
           (log: any) => log.username === profile.username && log.login_time >= startOfMonth
         ).length;
         
-        // Get user role
         const userRole = userRoles.find((role: any) => role.user_id === profile.id);
         const role = userRole ? userRole.role : 'player';
         
@@ -169,20 +158,17 @@ const AdminUserManagementEnhanced: React.FC = () => {
       setLoading(false);
     }
   };
-  
-  // Fetch data initially and when realtime updates occur
+
   useEffect(() => {
     fetchUsers();
   }, [isListeningProfiles, isListeningLoginLogs, isListeningQuizAnswers, isListeningUserRoles]);
-  
-  // Filter users based on search term
+
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.phone && user.phone.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
-  // Handle adding a new user
+
   const handleAddUser = async () => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -193,7 +179,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
       if (error) throw error;
       
       if (data.user) {
-        // Create profile record
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -205,7 +190,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
           
         if (profileError) throw profileError;
         
-        // Create user role record
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
@@ -220,11 +204,9 @@ const AdminUserManagementEnhanced: React.FC = () => {
           description: "User added successfully",
         });
         
-        // Reset form and close dialog
         setNewUser({ username: '', email: '', phone: '', password: '', points: 0 });
         setIsAddUserDialogOpen(false);
         
-        // Refresh user list
         fetchUsers();
       }
     } catch (error: any) {
@@ -236,8 +218,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       });
     }
   };
-  
-  // Handle toggling user suspend status
+
   const toggleUserSuspend = async (userId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
@@ -247,7 +228,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
       setUsers(users.map(user => 
         user.id === userId ? { ...user, suspended: !currentStatus } : user
       ));
@@ -265,13 +245,11 @@ const AdminUserManagementEnhanced: React.FC = () => {
       });
     }
   };
-  
-  // Handle changing user role
+
   const handleChangeRole = async () => {
     if (!selectedUser) return;
     
     try {
-      // Check if user already has a role
       const { data, error: checkError } = await supabase
         .from('user_roles')
         .select('*')
@@ -282,7 +260,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
       let roleError;
       
       if (data && data.length > 0) {
-        // Update existing role
         const { error } = await supabase
           .from('user_roles')
           .update({ role: selectedRole })
@@ -290,7 +267,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
           
         roleError = error;
       } else {
-        // Insert new role
         const { error } = await supabase
           .from('user_roles')
           .insert({
@@ -308,12 +284,10 @@ const AdminUserManagementEnhanced: React.FC = () => {
         description: `User role updated to ${selectedRole}`,
       });
       
-      // Update local state
       setUsers(users.map(user => 
         user.id === selectedUser.id ? { ...user, role: selectedRole } : user
       ));
       
-      // Close dialog
       setIsEditRoleDialogOpen(false);
     } catch (error: any) {
       console.error('Error changing user role:', error);
@@ -324,7 +298,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       });
     }
   };
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -424,7 +398,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
                           {user.suspended ? (
                             <Badge variant="destructive">Suspended</Badge>
                           ) : (
-                            <Badge variant="success">Active</Badge>
+                            <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
                           )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
@@ -475,10 +449,8 @@ const AdminUserManagementEnhanced: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Top Performers Card */}
       <AdminTopPerformers />
       
-      {/* Add User Dialog */}
       <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -558,7 +530,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Edit Role Dialog */}
       <Dialog open={isEditRoleDialogOpen} onOpenChange={setIsEditRoleDialogOpen}>
         <DialogContent>
           <DialogHeader>
