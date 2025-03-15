@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import crypto from 'crypto';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -17,6 +19,11 @@ const UserRegistrationForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Function to hash password with MD5
+  const hashPassword = (password: string): string => {
+    return crypto.createHash('md5').update(password).digest('hex');
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,56 +72,23 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
-      // Always create a consistent email format for authentication
-      const formattedEmail = email || `${username}@quizpoints.app`;
-      console.log(`Using email for auth: ${formattedEmail}`);
+      // Hash the password
+      const hashedPassword = hashPassword(password);
+      console.log('Password hashed for storage');
       
-      // Create user in Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formattedEmail,
-        password: password,
-        options: {
-          data: {
-            username: username,
-            phone: phone
-          },
-          // Do not require email verification during development
-          emailRedirectTo: window.location.origin + '/login'
-        }
-      });
+      // Generate a UUID for the user
+      const userId = crypto.randomUUID();
       
-      if (authError) {
-        console.error('Auth error:', authError);
-        toast({
-          title: "Registration failed",
-          description: authError.message || "An error occurred during registration",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      if (!authData.user) {
-        toast({
-          title: "Registration failed",
-          description: "No user data returned. Please try again.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log('User created successfully:', authData);
-      
-      // Create profile in profiles table
+      // Create profile directly in profiles table with hashed password
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: authData.user?.id,
+          id: userId,
           username: username,
           phone: phone,
           points: 0,
-          suspended: false
+          suspended: false,
+          password_hash: hashedPassword
         });
       
       if (profileError) {
@@ -132,7 +106,7 @@ const UserRegistrationForm: React.FC = () => {
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: authData.user?.id,
+          user_id: userId,
           role: 'player'
         });
         
@@ -158,7 +132,7 @@ const UserRegistrationForm: React.FC = () => {
               .insert({
                 referrer_id: referrerData.id,
                 referrer_name: referrerData.username,
-                referred_id: authData.user?.id,
+                referred_id: userId,
                 referred_name: username,
                 date: currentDate,
                 active_this_month: true,

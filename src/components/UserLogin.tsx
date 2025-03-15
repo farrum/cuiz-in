@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import crypto from 'crypto';
 
 const UserLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -16,6 +17,11 @@ const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // Function to hash password with MD5
+  const hashPassword = (password: string): string => {
+    return crypto.createHash('md5').update(password).digest('hex');
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -23,62 +29,53 @@ const UserLogin: React.FC = () => {
     try {
       console.log(`Attempting to sign in with username: ${username}`);
       
-      // Create the email format that was used during registration
-      const email = `${username}@quizpoints.app`;
-      console.log(`Constructed email for auth: ${email}`);
+      // Hash the password
+      const hashedPassword = hashPassword(password);
+      console.log('Password hashed for authentication');
       
-      // Sign in with the constructed email and password
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+      // Query the profiles table to find the user with matching username and password
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .eq('password_hash', hashedPassword)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('Login error:', userError);
+        throw new Error('Authentication failed');
+      }
+      
+      if (!userData) {
+        console.error('Invalid credentials');
+        throw new Error('Invalid username or password');
+      }
+      
+      console.log('User authenticated successfully:', userData.id);
+      
+      // Store user information in localStorage
+      localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
+      localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points ? userData.points.toString() : '0');
+      
+      // Record login in login_logs table
+      const clientInfo = {
+        device: navigator.userAgent
+      };
+      
+      await supabase.from('login_logs').insert({
+        username: userData.username,
+        ip_address: "client-side", // We can't get IP on client side
+        device: JSON.stringify(clientInfo),
+        successful: true
       });
       
-      if (authError) {
-        console.error('Login error:', authError);
-        throw authError;
-      }
+      toast({
+        title: "Login successful!",
+        description: `Welcome back, ${userData.username}!`,
+      });
       
-      if (authData.user) {
-        console.log('User authenticated successfully:', authData.user.id);
-        
-        // Get user profile
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-        
-        if (userError) {
-          console.error('Profile error:', userError);
-          throw userError;
-        }
-        
-        console.log('Profile data retrieved:', userData);
-        
-        // Store user information in localStorage
-        localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points.toString());
-        
-        // Record login in login_logs table
-        const clientInfo = {
-          device: navigator.userAgent
-        };
-        
-        await supabase.from('login_logs').insert({
-          username: userData.username,
-          ip_address: "client-side", // We can't get IP on client side
-          device: JSON.stringify(clientInfo),
-          successful: true
-        });
-        
-        toast({
-          title: "Login successful!",
-          description: `Welcome back, ${userData.username}!`,
-        });
-        
-        navigate('/quiz');
-      }
+      navigate('/quiz');
     } catch (error) {
       console.error('Login error:', error);
       
