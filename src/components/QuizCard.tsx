@@ -45,13 +45,18 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
         let pointsEarned = 0;
         if (isCorrect) {
           switch (question.difficulty) {
-            case 'easy': pointsEarned = 10; break;
-            case 'medium': pointsEarned = 15; break;
-            case 'hard': pointsEarned = 25; break;
+            case "easy": pointsEarned = 10; break;
+            case "medium": pointsEarned = 15; break;
+            case "hard": pointsEarned = 25; break;
             default: pointsEarned = 10;
           }
         }
         
+        // Get current date for tracking daily/monthly stats
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+
         // Save answer to Supabase
         await supabase.from('quiz_answers').insert({
           user_id: userId,
@@ -75,6 +80,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
               .from('profiles')
               .update({ points: currentPoints + pointsEarned })
               .eq('id', userId);
+              
+            // Update local storage with new total points
+            localStorage.setItem(STORAGE_KEYS.USER_POINTS, (currentPoints + pointsEarned).toString());
           }
         }
       }

@@ -74,17 +74,22 @@ const QuizPage: React.FC = () => {
   };
   
   const handleQuestionComplete = (isCorrect: boolean) => {
-    // Calculate points using the new system
-    const pointsEarned = calculatePoints(isCorrect);
+    if (!currentQuestion) return;
+    
+    // Calculate points using the difficulty-based system
+    const pointsEarned = calculatePoints(isCorrect, currentQuestion.difficulty);
     
     // Update user points
     const newTotal = userPoints + pointsEarned;
     setUserPoints(newTotal);
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
     
+    // Get user ID for database updates
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    
     // Update daily and monthly points
-    logPointsForDay(pointsEarned);
-    logPointsForMonth(pointsEarned);
+    logPointsForDay(pointsEarned, userId);
+    logPointsForMonth(pointsEarned, userId);
     
     // Refresh daily and monthly points
     const updatedDailyPoints = getPointsForToday();
@@ -108,6 +113,7 @@ const QuizPage: React.FC = () => {
       });
     }
     
+    // Dispatch event to notify other components about point updates
     window.dispatchEvent(new Event('pointsUpdated'));
     
     // Update questions answered
@@ -125,8 +131,12 @@ const QuizPage: React.FC = () => {
         
         setUserPoints(bonusTotal);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        logPointsForDay(bonusPoints);
-        logPointsForMonth(bonusPoints);
+        
+        // Log bonus points too
+        logPointsForDay(bonusPoints, userId);
+        logPointsForMonth(bonusPoints, userId);
+        
+        // Notify other components
         window.dispatchEvent(new Event('pointsUpdated'));
         
         toast({
@@ -137,6 +147,9 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
+    
+    // Load the next question
+    loadNewQuestion();
   };
 
   return (

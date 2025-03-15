@@ -1,4 +1,3 @@
-
 export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
@@ -222,34 +221,110 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
   return availableQuestions[randomIndex];
 };
 
-export const calculatePoints = (isCorrect: boolean): number => {
-  // Base points
+export const calculatePoints = (isCorrect: boolean, difficulty: string = 'easy'): number => {
+  // Base points for attempting a question
   let points = 5;
   
-  // Increase points if correct
+  // Increase points if correct based on difficulty
   if (isCorrect) {
-    points += 5;
+    switch (difficulty) {
+      case 'easy': points += 5; break;
+      case 'medium': points += 10; break;
+      case 'hard': points += 20; break;
+      default: points += 5;
+    }
   }
   
   return points;
 };
 
-export const logPointsForDay = (points: number) => {
+export const logPointsForDay = async (points: number, userId?: string | null) => {
+  // Store in localStorage for client-side tracking
   const today = new Date().toISOString().split('T')[0];
   const key = `daily_points_${today}`;
   let dailyPoints = parseFloat(localStorage.getItem(key) || '0');
   dailyPoints += points;
   localStorage.setItem(key, dailyPoints.toString());
+  
+  // If userId is provided, update the database
+  if (userId) {
+    try {
+      // Check if there's already a record for today for this user
+      const { data, error } = await supabase
+        .from('daily_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
+      
+      if (error && error.code !== 'PGSQL_ERROR') {
+        console.error('Error checking daily points:', error);
+        return;
+      }
+      
+      if (data) {
+        // Update existing record
+        await supabase
+          .from('daily_points')
+          .update({ points: data.points + points })
+          .eq('user_id', userId)
+          .eq('date', today);
+      } else {
+        // Create new record
+        await supabase
+          .from('daily_points')
+          .insert({ user_id: userId, date: today, points });
+      }
+    } catch (error) {
+      console.error('Error updating daily points in database:', error);
+    }
+  }
 };
 
-export const logPointsForMonth = (points: number) => {
+export const logPointsForMonth = async (points: number, userId?: string | null) => {
+  // Store in localStorage for client-side tracking
   const today = new Date();
   const month = today.getMonth();
   const year = today.getFullYear();
+  const monthKey = `${year}-${(month + 1).toString().padStart(2, '0')}`;
   const key = `monthly_points_${year}_${month}`;
   let monthlyPoints = parseFloat(localStorage.getItem(key) || '0');
   monthlyPoints += points;
   localStorage.setItem(key, monthlyPoints.toString());
+  
+  // If userId is provided, update the database
+  if (userId) {
+    try {
+      // Check if there's already a record for this month for this user
+      const { data, error } = await supabase
+        .from('monthly_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('month', monthKey)
+        .single();
+      
+      if (error && error.code !== 'PGSQL_ERROR') {
+        console.error('Error checking monthly points:', error);
+        return;
+      }
+      
+      if (data) {
+        // Update existing record
+        await supabase
+          .from('monthly_points')
+          .update({ points: data.points + points })
+          .eq('user_id', userId)
+          .eq('month', monthKey);
+      } else {
+        // Create new record
+        await supabase
+          .from('monthly_points')
+          .insert({ user_id: userId, month: monthKey, points });
+      }
+    } catch (error) {
+      console.error('Error updating monthly points in database:', error);
+    }
+  }
 };
 
 export const getPointsForToday = (): number => {
@@ -289,5 +364,62 @@ export const syncAdSlotsToLocal = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Error in syncAdSlotsToLocal:', error);
     return false;
+  }
+};
+
+// Function to get top performers from Supabase
+export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily', limit: number = 10) => {
+  try {
+    const today = new Date();
+    const startDate = timeframe === 'daily' 
+      ? new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString() 
+      : new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+    
+    // Fetch quiz answer data for the specified timeframe
+    const { data, error } = await supabase
+      .from('quiz_answers')
+      .select(`
+        user_id,
+        points_earned
+      `)
+      .gte('answered_at', startDate);
+      
+    if (error) throw error;
+    
+    // Process data to get total points per user
+    const userPoints: Record<string, number> = {};
+    data.forEach(item => {
+      if (!userPoints[item.user_id]) userPoints[item.user_id] = 0;
+      userPoints[item.user_id] += item.points_earned || 0;
+    });
+    
+    // Fetch user profiles for names
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username');
+      
+    if (profilesError) throw profilesError;
+    
+    const profileMap: Record<string, string> = {};
+    profiles.forEach(profile => {
+      profileMap[profile.id] = profile.username;
+    });
+    
+    // Convert to array, sort, and add rank
+    const result = Object.entries(userPoints)
+      .map(([userId, points]) => ({
+        userId,
+        username: profileMap[userId] || 'Unknown User',
+        points,
+        rank: 0 // Will be set after sorting
+      }))
+      .sort((a, b) => b.points - a.points)
+      .map((user, index) => ({ ...user, rank: index + 1 }))
+      .slice(0, limit);
+      
+    return result;
+  } catch (error) {
+    console.error(`Error fetching ${timeframe} top performers:`, error);
+    return [];
   }
 };

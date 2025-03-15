@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Trophy, Medal, Award, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { useToast } from '@/hooks/use-toast';
 
 interface LeaderboardUser {
   id: string;
@@ -16,56 +18,97 @@ interface LeaderboardUser {
 const LeaderboardSection: React.FC = () => {
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchLeaderboard();
+    
+    // Set up listener for point updates
+    window.addEventListener('pointsUpdated', fetchLeaderboard);
+    return () => {
+      window.removeEventListener('pointsUpdated', fetchLeaderboard);
+    };
   }, []);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
 
     try {
-      // For now we'll use localStorage to simulate a database
-      // In a real app, we'd use Supabase to fetch this data
-      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+      // First try to fetch from Supabase
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, points')
+        .order('points', { ascending: false })
+        .limit(20);
+        
+      if (error) throw error;
       
       // Get current user
+      const currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       
-      // Sort users by points in descending order
+      // Map and prepare data
+      const topUsers = data.slice(0, 10).map((user, index) => ({
+        id: user.id,
+        name: user.username,
+        points: user.points || 0,
+        position: index + 1,
+        isCurrentUser: user.id === currentUserId
+      }));
+      
+      setUsers(topUsers);
+      
+      // Find current user's rank if they're not in top 10
+      const currentUserPos = topUsers.findIndex(user => user.isCurrentUser);
+      if (currentUserPos !== -1) {
+        setCurrentUserRank(currentUserPos + 1);
+      } else if (currentUserId) {
+        // Find user's position in full list
+        const userPos = data.findIndex(user => user.id === currentUserId);
+        if (userPos !== -1) {
+          setCurrentUserRank(userPos + 1);
+        } else {
+          // Current user not found in top 20, might be further down
+          setCurrentUserRank(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      
+      // Fall back to localStorage data
+      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+      const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      
+      // Sort users by points
       const sortedUsers = [...adminUsers]
         .sort((a, b) => b.points - a.points)
         .slice(0, 10) // Get top 10 users
         .map((user, index) => ({
           id: user.id,
-          name: user.name,
+          name: user.name || user.username,
           points: user.points || 0,
           position: index + 1,
-          isCurrentUser: user.name === currentUserName
+          isCurrentUser: (user.name || user.username) === currentUserName
         }));
       
-      // Find current user's rank if they're not in top 10
+      setUsers(sortedUsers);
+      
+      // Find current user's rank
       const currentUserPos = sortedUsers.findIndex(user => user.isCurrentUser);
       if (currentUserPos !== -1) {
         setCurrentUserRank(currentUserPos + 1);
-      } else {
-        // Find user's position in full list
-        const allUsers = [...adminUsers]
-          .sort((a, b) => b.points - a.points);
-        
-        const userPos = allUsers.findIndex(user => user.name === currentUserName);
-        if (userPos !== -1) {
-          setCurrentUserRank(userPos + 1);
-        }
       }
-      
-      setUsers(sortedUsers);
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchLeaderboard();
   };
 
   const getPositionIcon = (position: number) => {
@@ -98,11 +141,23 @@ const LeaderboardSection: React.FC = () => {
 
   return (
     <div className="glass rounded-xl p-5 animate-fade-in">
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="bg-primary/10 p-2 rounded-full">
-          <Trophy className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="bg-primary/10 p-2 rounded-full">
+            <Trophy className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="font-medium">Top Quiz Players</h3>
         </div>
-        <h3 className="font-medium">Top Quiz Players</h3>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleRefresh} 
+          disabled={refreshing || loading}
+          className="h-8 px-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </Button>
       </div>
 
       {loading ? (
