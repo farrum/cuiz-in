@@ -23,25 +23,13 @@ const UserLogin: React.FC = () => {
     try {
       console.log(`Attempting to sign in with username: ${username}`);
       
-      // First, find the user's email from their username
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .single();
-        
-      if (profileError) {
-        console.error('Profile lookup error:', profileError);
-        throw new Error('User not found');
-      }
-
-      if (!profileData) {
-        throw new Error('User not found');
-      }
-
-      // Get the user's email from auth.users table indirectly
+      // Create the email format that was used during registration
+      const email = `${username}@quizpoints.app`;
+      console.log(`Constructed email for auth: ${email}`);
+      
+      // Sign in with the constructed email and password
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${username}@quizpoints.app`, // Use username@quizpoints.app as email
+        email: email,
         password: password
       });
       

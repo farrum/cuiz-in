@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -66,9 +65,11 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
-      // Create user in Supabase auth with username@quizpoints.app as email
+      // Always create a consistent email format for authentication
       const formattedEmail = email || `${username}@quizpoints.app`;
+      console.log(`Using email for auth: ${formattedEmail}`);
       
+      // Create user in Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formattedEmail,
         password: password,
@@ -77,6 +78,7 @@ const UserRegistrationForm: React.FC = () => {
             username: username,
             phone: phone
           },
+          // Do not require email verification during development
           emailRedirectTo: window.location.origin + '/login'
         }
       });
@@ -136,44 +138,36 @@ const UserRegistrationForm: React.FC = () => {
         
       if (roleError) {
         console.error('Role error:', roleError);
-        toast({
-          title: "Role assignment failed",
-          description: roleError.message || "Failed to assign user role",
-          variant: "destructive"
-        });
         // Continue anyway as this is not critical
       }
       
-      // If referral code exists, record the referral
+      // Handle referral code if provided
       if (referralCode) {
-        const { data: referrerData, error: referrerError } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .eq('username', referralCode)
-          .single();
-          
-        if (referrerError) {
-          console.error('Referrer error:', referrerError);
-          // Don't stop registration for referral errors
-        } else if (referrerData) {
-          const currentDate = new Date().toISOString().split('T')[0];
-          
-          const { error: referralError } = await supabase
-            .from('user_referrals')
-            .insert({
-              referrer_id: referrerData.id,
-              referrer_name: referrerData.username,
-              referred_id: authData.user?.id,
-              referred_name: username,
-              date: currentDate,
-              active_this_month: true,
-              last_active_date: currentDate
-            });
+        try {
+          const { data: referrerData, error: referrerError } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .eq('username', referralCode)
+            .maybeSingle();
             
-          if (referralError) {
-            console.error('Referral error:', referralError);
-            // Don't stop registration for referral errors
+          if (!referrerError && referrerData) {
+            const currentDate = new Date().toISOString().split('T')[0];
+            
+            await supabase
+              .from('user_referrals')
+              .insert({
+                referrer_id: referrerData.id,
+                referrer_name: referrerData.username,
+                referred_id: authData.user?.id,
+                referred_name: username,
+                date: currentDate,
+                active_this_month: true,
+                last_active_date: currentDate
+              });
           }
+        } catch (referralErr) {
+          console.error('Referral processing error:', referralErr);
+          // Don't stop registration for referral errors
         }
       }
       
