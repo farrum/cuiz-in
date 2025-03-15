@@ -21,11 +21,14 @@ export const syncAllDataToSupabase = async () => {
     const { syncAllDataToSupabase } = await import('@/integrations/supabase/client');
     const result = await syncAllDataToSupabase();
     
+    // Set a default value for syncedItems if result is undefined or doesn't have totalSynced
+    const syncedItems = result ? (result.totalSynced ?? 0) : 0;
+    
     syncStats.allData = { 
       ...syncStats.allData,
       status: 'completed', 
       endTime: new Date(),
-      syncedItems: result?.totalSynced || 0,
+      syncedItems: syncedItems,
       lastSyncTime: new Date()
     };
     
