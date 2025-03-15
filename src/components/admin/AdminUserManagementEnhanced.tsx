@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -189,7 +190,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -413,6 +414,8 @@ const AdminUserManagementEnhanced: React.FC = () => {
     }
 
     try {
+      // In a real app, we would update the email in the authentication system
+      // For this example, we're just showing a success toast
       toast({
         title: "Success",
         description: `Email updated for ${selectedUser.username}`,
