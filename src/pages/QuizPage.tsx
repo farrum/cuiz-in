@@ -19,6 +19,7 @@ import {
 } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
+import { syncQuizAnswersToSupabase, syncUserPoints, syncPointsData } from '@/integrations/supabase/client';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -67,7 +68,7 @@ const QuizPage: React.FC = () => {
     }, 600);
   };
   
-  const handleQuestionComplete = (isCorrect: boolean) => {
+  const handleQuestionComplete = async (isCorrect: boolean) => {
     // Calculate points using the new system
     const pointsEarned = calculatePoints(isCorrect);
     
@@ -85,6 +86,41 @@ const QuizPage: React.FC = () => {
     const updatedMonthlyPoints = getPointsForMonth();
     setDailyPoints(updatedDailyPoints);
     setMonthlyPoints(updatedMonthlyPoints);
+    
+    // Save question answer to history
+    if (currentQuestion) {
+      const username = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      const userAnswer = {
+        id: crypto.randomUUID(),
+        questionId: currentQuestion.id,
+        question: currentQuestion.question,
+        options: currentQuestion.options,
+        selectedOption: isCorrect ? currentQuestion.correctAnswer : "incorrect answer",
+        correctAnswer: currentQuestion.correctAnswer,
+        isCorrect: isCorrect,
+        pointsEarned: pointsEarned,
+        category: currentQuestion.category,
+        difficulty: currentQuestion.difficulty,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Update local history
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_QUIZ_HISTORY) || '[]');
+      history.push(userAnswer);
+      localStorage.setItem(STORAGE_KEYS.USER_QUIZ_HISTORY, JSON.stringify(history));
+      
+      // Sync to Supabase if user is logged in
+      if (username) {
+        try {
+          // Sync points and quiz answer to Supabase
+          await syncUserPoints(username, newTotal);
+          await syncPointsData(username);
+          await syncQuizAnswersToSupabase(username);
+        } catch (error) {
+          console.error('Error syncing quiz data:', error);
+        }
+      }
+    }
     
     // Check for daily target completion
     if (updatedDailyPoints >= DAILY_TARGET && dailyPoints < DAILY_TARGET) {
@@ -131,6 +167,9 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
+    
+    // Load next question
+    loadNewQuestion();
   };
 
   return (

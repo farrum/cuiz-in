@@ -249,3 +249,162 @@ export const syncPointsData = async (username: string) => {
     console.error('Failed to sync points data:', err);
   }
 };
+
+// New: Function to sync quiz answers to Supabase database
+export const syncQuizAnswersToSupabase = async (username: string) => {
+  try {
+    if (!username) return;
+    
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+      
+    if (!profile) {
+      console.log('No profile found for', username);
+      return;
+    }
+    
+    // Get completed questions from localStorage
+    const completedQuestions = JSON.parse(localStorage.getItem('quiz_app_user_quiz_history') || '[]');
+    
+    if (completedQuestions.length === 0) {
+      console.log('No quiz answers to sync');
+      return;
+    }
+    
+    console.log(`Syncing ${completedQuestions.length} quiz answers for ${username}`);
+    
+    // For each answered question, create a record in Supabase
+    for (const answer of completedQuestions) {
+      const { error } = await supabase
+        .from('quiz_answers')
+        .upsert({
+          id: answer.id || crypto.randomUUID(),
+          user_id: profile.id,
+          question_id: answer.questionId,
+          user_answer: answer.selectedOption,
+          is_correct: answer.isCorrect,
+          points_earned: answer.pointsEarned || 0,
+          answered_at: answer.timestamp || new Date().toISOString()
+        }, { onConflict: 'id' });
+        
+      if (error) {
+        console.error('Error syncing quiz answer:', error);
+      }
+    }
+    
+    console.log('Quiz answers sync completed');
+  } catch (err) {
+    console.error('Failed to sync quiz answers:', err);
+  }
+};
+
+// New: Function to fetch quiz answers from Supabase to localStorage
+export const fetchQuizAnswersFromSupabase = async (username: string) => {
+  try {
+    if (!username) return;
+    
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+      
+    if (!profile) {
+      console.log('No profile found for', username);
+      return;
+    }
+    
+    // Get quiz answers from Supabase
+    const { data, error } = await supabase
+      .from('quiz_answers')
+      .select('*, quiz_questions(id, question, options, correct_answer, category, difficulty)')
+      .eq('user_id', profile.id)
+      .order('answered_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching quiz answers:', error);
+      return;
+    }
+    
+    if (data && data.length > 0) {
+      // Transform data to match localStorage structure
+      const transformedData = data.map(item => ({
+        id: item.id,
+        questionId: item.question_id,
+        selectedOption: item.user_answer,
+        isCorrect: item.is_correct,
+        pointsEarned: item.points_earned || 0,
+        timestamp: item.answered_at,
+        question: item.quiz_questions?.question || '',
+        options: item.quiz_questions?.options || [],
+        correctAnswer: item.quiz_questions?.correct_answer || '',
+        category: item.quiz_questions?.category || '',
+        difficulty: item.quiz_questions?.difficulty || 'easy'
+      }));
+      
+      localStorage.setItem('quiz_app_user_quiz_history', JSON.stringify(transformedData));
+      console.log(`Updated quiz history with ${data.length} answers from Supabase`);
+    }
+  } catch (err) {
+    console.error('Failed to fetch quiz answers:', err);
+  }
+};
+
+// Extended function to sync all types of data
+export const syncAllDataToSupabase = async () => {
+  try {
+    // Get current user
+    const username = localStorage.getItem('user_name');
+    if (!username) {
+      console.log('No user logged in, skipping sync');
+      return;
+    }
+    
+    // Ensure questions are synced first
+    await syncQuizQuestionsToSupabase();
+    
+    // Sync user points
+    const points = parseInt(localStorage.getItem('user_points') || '0');
+    await syncUserPoints(username, points);
+    
+    // Sync daily and monthly points
+    await syncPointsData(username);
+    
+    // Sync quiz answers
+    await syncQuizAnswersToSupabase(username);
+    
+    // Fetch ad slots to local
+    await syncAdSlotsToLocal();
+    
+    console.log('All data synced successfully');
+  } catch (error) {
+    console.error('Error syncing all data:', error);
+  }
+};
+
+// Helper function to sync from Supabase to localStorage
+export const fetchAllDataFromSupabase = async () => {
+  try {
+    // Get current user
+    const username = localStorage.getItem('user_name');
+    if (!username) {
+      console.log('No user logged in, skipping fetch');
+      return;
+    }
+    
+    // Fetch ad slots
+    await syncAdSlotsToLocal();
+    
+    // Fetch quiz answers
+    await fetchQuizAnswersFromSupabase(username);
+    
+    console.log('All data fetched successfully');
+  } catch (error) {
+    console.error('Error fetching all data:', error);
+  }
+};

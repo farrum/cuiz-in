@@ -426,7 +426,6 @@ export const logPointsForDay = (pointsEarned: number): void => {
   dailyLog[today] += pointsEarned;
   localStorage.setItem('quiz_app_daily_points', JSON.stringify(dailyLog));
   
-  // If daily target is reached, update streak
   if (dailyLog[today] >= DAILY_TARGET) {
     updateDailyStreak();
   }
@@ -470,7 +469,6 @@ const updateDailyStreak = (): void => {
   const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
   if (!currentUserName) return;
   
-  // Generate user ID
   const userId = currentUserName.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
   
   const today = new Date().toISOString().split('T')[0];
@@ -483,12 +481,10 @@ const updateDailyStreak = (): void => {
   
   const currentStreak = streakData[userId] || 0;
   
-  // Check if user completed target yesterday or today is the first day of streak
   if (dailyLog[yesterdayString] >= DAILY_TARGET || currentStreak === 0) {
     streakData[userId] = currentStreak + 1;
     localStorage.setItem('quiz_app_daily_streaks', JSON.stringify(streakData));
   } else {
-    // If target wasn't hit yesterday, streak resets to 1
     streakData[userId] = 1;
     localStorage.setItem('quiz_app_daily_streaks', JSON.stringify(streakData));
   }
@@ -530,24 +526,46 @@ export const syncQuizQuestionsToSupabase = async () => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
     
-    const { data: existingQuestions, error: checkError } = await supabase
+    console.log('Starting two-way sync of quiz questions');
+    
+    const { data: existingQuestions, error: fetchError } = await supabase
       .from('quiz_questions')
-      .select('id')
-      .limit(1);
+      .select('id, question, options, correct_answer, difficulty, category, explanation, active, created_at');
       
-    if (checkError) {
-      throw checkError;
+    if (fetchError) {
+      throw fetchError;
     }
     
-    if (!existingQuestions || existingQuestions.length === 0) {
-      const questionsToInsert = quizQuestions.map(q => ({
-        question: q.question,
-        options: q.options,
-        correct_answer: q.correctAnswer,
-        difficulty: q.difficulty,
-        category: q.category,
-        explanation: q.explanation || ''
-      }));
+    const supabaseQuestionsMap = new Map();
+    if (existingQuestions && existingQuestions.length > 0) {
+      existingQuestions.forEach(q => {
+        supabaseQuestionsMap.set(q.id, q);
+      });
+    }
+    
+    const localQuestions = [...quizQuestions];
+    const localQuestionsMap = new Map();
+    localQuestions.forEach(q => {
+      localQuestionsMap.set(q.id, q);
+    });
+    
+    const questionsToInsert = [];
+    for (const localQ of localQuestions) {
+      if (!supabaseQuestionsMap.has(localQ.id)) {
+        questionsToInsert.push({
+          id: localQ.id,
+          question: localQ.question,
+          options: localQ.options,
+          correct_answer: localQ.correctAnswer,
+          difficulty: localQ.difficulty,
+          category: localQ.category,
+          explanation: localQ.explanation || ''
+        });
+      }
+    }
+    
+    if (questionsToInsert.length > 0) {
+      console.log(`Inserting ${questionsToInsert.length} new questions to Supabase`);
       
       const BATCH_SIZE = 50;
       for (let i = 0; i < questionsToInsert.length; i += BATCH_SIZE) {
@@ -560,20 +578,72 @@ export const syncQuizQuestionsToSupabase = async () => {
           console.error('Error syncing batch:', error);
         }
       }
-      
-      console.log('Quiz questions synced to Supabase');
     } else {
-      console.log('Quiz questions already exist in Supabase');
+      console.log('No new local questions to add to Supabase');
     }
+    
+    const newLocalQuestions = [];
+    if (existingQuestions) {
+      for (const supabaseQ of existingQuestions) {
+        if (!localQuestionsMap.has(supabaseQ.id) && supabaseQ.active !== false) {
+          newLocalQuestions.push({
+            id: supabaseQ.id,
+            question: supabaseQ.question,
+            options: Array.isArray(supabaseQ.options) ? supabaseQ.options : [],
+            correctAnswer: supabaseQ.correct_answer,
+            difficulty: (supabaseQ.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
+            category: supabaseQ.category || 'General Knowledge',
+            explanation: supabaseQ.explanation || ''
+          });
+        }
+      }
+      
+      if (newLocalQuestions.length > 0) {
+        console.log(`Adding ${newLocalQuestions.length} new questions from Supabase to local`);
+        const allQuestions = [...quizQuestions, ...newLocalQuestions];
+        localStorage.setItem('quiz_app_questions_cache', JSON.stringify(allQuestions));
+        
+        console.log('Updated local questions cache. Reload the app to see new questions.');
+      } else {
+        console.log('No new questions from Supabase to add locally');
+      }
+    }
+    
+    console.log('Quiz questions sync completed');
+    return {
+      supabaseCount: existingQuestions?.length || 0,
+      localCount: localQuestions.length,
+      addedToSupabase: questionsToInsert.length,
+      addedToLocal: newLocalQuestions.length
+    };
   } catch (error) {
     console.error('Error syncing quiz questions:', error);
+    throw error;
   }
+};
+
+export const initQuizQuestionsFromCache = () => {
+  try {
+    const cachedQuestions = localStorage.getItem('quiz_app_questions_cache');
+    if (cachedQuestions) {
+      const parsed = JSON.parse(cachedQuestions);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading cached questions:', error);
+  }
+  return quizQuestions;
 };
 
 export const syncAllDataToSupabase = async () => {
   try {
-    await syncQuizQuestionsToSupabase();
-    await syncAdSlotsToLocal();
+    const { 
+      syncAllDataToSupabase: syncAllData
+    } = await import('@/integrations/supabase/client');
+    
+    await syncAllData();
   } catch (error) {
     console.error('Error syncing all data:', error);
   }
