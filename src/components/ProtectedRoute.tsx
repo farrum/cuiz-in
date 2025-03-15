@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
-import { supabase, ensureUserExists, syncUserPoints, syncPointsData } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isDataSynced, setIsDataSynced] = useState(false);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
 
   // Check Supabase session
@@ -33,13 +31,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         // If no Supabase session but we have a userName in localStorage,
         // we'll still consider the user authenticated for backward compatibility
         setIsAuthenticated(true);
-        
-        // Since we're using localStorage auth, make sure we have a profile in Supabase
-        try {
-          await ensureUserExists(userName);
-        } catch (err) {
-          console.error('Error ensuring user exists:', err);
-        }
       } else {
         setIsAuthenticated(false);
       }
@@ -51,7 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Sync login data with Supabase
   useEffect(() => {
     const syncLoginData = async () => {
-      if (!userName || isDataSynced) return;
+      if (!userName) return;
       
       try {
         // Log the login attempt in Supabase
@@ -72,22 +63,36 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           console.error('Error logging login data:', error);
         }
         
-        // Sync user points
-        const userPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-        await syncUserPoints(userName, userPoints);
-        
-        // Sync daily and monthly points
-        await syncPointsData(userName);
-        
-        setIsDataSynced(true);
-        console.log('Data synced with Supabase');
+        // Also check if user exists in profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', userName)
+          .maybeSingle();
+          
+        if (profileError) {
+          console.error('Error checking user profile:', profileError);
+        } else if (!profileData) {
+          // Create profile if it doesn't exist
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: Math.random().toString(36).substring(2), // Generate a random ID
+              username: userName,
+              points: parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0')
+            });
+            
+          if (insertError) {
+            console.error('Error creating user profile:', insertError);
+          }
+        }
       } catch (err) {
-        console.error('Failed to sync data with Supabase:', err);
+        console.error('Failed to sync login data with Supabase:', err);
       }
     };
     
     syncLoginData();
-  }, [userName, isDataSynced]);
+  }, [userName]);
 
   useEffect(() => {
     if (isAuthenticated === false) {
@@ -98,22 +103,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       });
     }
   }, [toast, isAuthenticated]);
-
-  // Listen for points updates and sync them
-  useEffect(() => {
-    const handlePointsUpdate = async () => {
-      if (!userName) return;
-      
-      const userPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-      await syncUserPoints(userName, userPoints);
-    };
-    
-    window.addEventListener('pointsUpdated', handlePointsUpdate);
-    
-    return () => {
-      window.removeEventListener('pointsUpdated', handlePointsUpdate);
-    };
-  }, [userName]);
 
   // Show loading state
   if (isAuthenticated === null) {
