@@ -44,15 +44,31 @@ export const syncDataWithSupabase = async (
     console.log(`Syncing ${localData.length} items from ${localStorageKey} to ${tableName}...`);
     
     // For each item in localStorage, upsert to Supabase
-    for (const item of localData) {
-      const dataToInsert = transform ? transform(item) : item;
+    // Process in batches to avoid deadlocks and overloading the server
+    const batchSize = 25;
+    const batches = Math.ceil(localData.length / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+      const batchItems = localData.slice(batchIndex * batchSize, (batchIndex + 1) * batchSize);
       
+      // Transform items if a transform function is provided
+      const itemsToInsert = transform ? batchItems.map(transform) : batchItems;
+      
+      // Use upsert to avoid duplicate entries
       const { error } = await supabase
         .from(tableName as TableName)
-        .upsert(dataToInsert, { onConflict: 'id' });
+        .upsert(itemsToInsert, { onConflict: 'id' });
         
       if (error) {
-        console.error(`Error syncing data to ${tableName}:`, error);
+        // Log error but continue with other batches
+        console.error(`Error syncing batch ${batchIndex + 1}/${batches} to ${tableName}:`, error);
+      } else {
+        console.log(`Synced batch ${batchIndex + 1}/${batches} to ${tableName}`);
+      }
+      
+      // Small delay between batches to reduce load
+      if (batches > 1 && batchIndex < batches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
@@ -66,17 +82,24 @@ export const syncDataWithSupabase = async (
 export const fetchDataFromSupabase = async (
   tableName: string, 
   localStorageKey: string,
-  transform?: (item: any) => any
+  transform?: (item: any) => any,
+  retries = 3
 ) => {
   try {
+    console.log(`Fetching data from ${tableName}...`);
     const { data, error } = await supabase
       .from(tableName as TableName)
       .select('*')
       .order('created_at', { ascending: false });
       
     if (error) {
-      console.error(`Error fetching data from ${tableName}:`, error);
-      return;
+      if (retries > 0) {
+        console.warn(`Error fetching data from ${tableName}, retrying (${retries} attempts left):`, error);
+        // Wait before retrying to avoid potential rate limits or deadlocks
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchDataFromSupabase(tableName, localStorageKey, transform, retries - 1);
+      }
+      throw error;
     }
     
     if (data && data.length > 0) {
@@ -84,6 +107,8 @@ export const fetchDataFromSupabase = async (
       localStorage.setItem(localStorageKey, JSON.stringify(transformedData));
       console.log(`Updated ${localStorageKey} with ${data.length} items from Supabase`);
       return transformedData;
+    } else {
+      console.log(`No data found in ${tableName}`);
     }
   } catch (err) {
     console.error(`Failed to fetch data from ${tableName}:`, err);
@@ -92,21 +117,31 @@ export const fetchDataFromSupabase = async (
   return null;
 };
 
-// Add the new central data fetching function
+// Add the new central data fetching function with improved error handling
 export const fetchAllAppData = async () => {
   console.log('Fetching all app data from Supabase...');
   
-  const results = {
-    users: await fetchDataFromSupabase('profiles', 'admin_users'),
-    payments: await fetchDataFromSupabase('payments', 'admin_payments'),
-    quizQuestions: await fetchDataFromSupabase('quiz_questions', 'quiz_questions'),
-    quizAnswers: await fetchDataFromSupabase('quiz_answers', 'quiz_answers'),
-    adSlots: await fetchDataFromSupabase('ad_slots', 'ad_slots'),
-    referrals: await fetchDataFromSupabase('user_referrals', 'admin_referrals'),
-    loginLogs: await fetchDataFromSupabase('login_logs', 'admin_login_logs')
-  };
+  // Use Promise.allSettled to continue even if some requests fail
+  const results = await Promise.allSettled([
+    fetchDataFromSupabase('profiles', 'admin_users'),
+    fetchDataFromSupabase('payments', 'admin_payments'),
+    fetchDataFromSupabase('quiz_questions', 'quiz_questions'),
+    fetchDataFromSupabase('quiz_answers', 'quiz_answers'),
+    fetchDataFromSupabase('ad_slots', 'ad_slots'),
+    fetchDataFromSupabase('user_referrals', 'admin_referrals'),
+    fetchDataFromSupabase('login_logs', 'admin_login_logs')
+  ]);
   
-  console.log('All app data fetched successfully!');
+  // Log results
+  results.forEach((result, index) => {
+    const tables = ['profiles', 'payments', 'quiz_questions', 'quiz_answers', 'ad_slots', 'user_referrals', 'login_logs'];
+    if (result.status === 'fulfilled') {
+      console.log(`Successfully fetched data from ${tables[index]}`);
+    } else {
+      console.error(`Failed to fetch data from ${tables[index]}:`, result.reason);
+    }
+  });
+  
+  console.log('App data fetching completed');
   return results;
 };
-

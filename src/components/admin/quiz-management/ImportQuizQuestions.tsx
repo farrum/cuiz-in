@@ -1,317 +1,238 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { FileUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
+import { Loader2, AlertCircle, FileSpreadsheet } from 'lucide-react';
 
 interface ImportQuizQuestionsProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const ImportQuizQuestions: React.FC<ImportQuizQuestionsProps> = ({ onSuccess, onCancel }) => {
-  const [file, setFile] = useState<File | null>(null);
+const ImportQuizQuestions: React.FC<ImportQuizQuestionsProps> = ({
+  onSuccess,
+  onCancel
+}) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [processedRows, setProcessedRows] = useState(0);
+  const [totalRows, setTotalRows] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setValidationErrors([]);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setError(null);
     }
-  };
-
-  const validateQuestionData = (data: any[]): { valid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-    const requiredFields = ['Question', 'Options', 'CorrectAnswer', 'Category', 'Difficulty'];
-    
-    if (data.length === 0) {
-      errors.push('The Excel file is empty. Please add some questions.');
-      return { valid: false, errors };
-    }
-    
-    // Check if all required fields are present
-    const firstRow = data[0];
-    for (const field of requiredFields) {
-      if (!(field in firstRow)) {
-        errors.push(`Missing column: ${field}`);
-      }
-    }
-    
-    if (errors.length > 0) {
-      return { valid: false, errors };
-    }
-    
-    // Validate each row
-    data.forEach((row, index) => {
-      const rowNum = index + 2; // +2 because of 0-indexing and header row
-      
-      if (!row.Question) {
-        errors.push(`Row ${rowNum}: Question is missing`);
-      }
-      
-      if (!row.Options) {
-        errors.push(`Row ${rowNum}: Options are missing`);
-      } else {
-        const options = row.Options.split('|');
-        if (options.length < 2) {
-          errors.push(`Row ${rowNum}: At least 2 options are required (separate with |)`);
-        }
-        
-        if (!options.includes(row.CorrectAnswer)) {
-          errors.push(`Row ${rowNum}: Correct answer must be one of the options`);
-        }
-      }
-      
-      if (!row.CorrectAnswer) {
-        errors.push(`Row ${rowNum}: Correct answer is missing`);
-      }
-      
-      if (!row.Category) {
-        errors.push(`Row ${rowNum}: Category is missing`);
-      }
-      
-      if (!row.Difficulty) {
-        errors.push(`Row ${rowNum}: Difficulty is missing`);
-      } else if (!['easy', 'medium', 'hard'].includes(row.Difficulty.toLowerCase())) {
-        errors.push(`Row ${rowNum}: Difficulty must be easy, medium, or hard`);
-      }
-    });
-    
-    return { valid: errors.length === 0, errors };
   };
 
   const handleUpload = async () => {
-    if (!file) return;
-    
+    if (!selectedFile) {
+      setError("Please select a file first");
+      return;
+    }
+
     setIsUploading(true);
-    setUploadProgress(10);
+    setError(null);
+    setProcessedRows(0);
     
     try {
-      // Read the Excel file
+      const data = await readExcelFile(selectedFile);
+      if (!data || data.length === 0) {
+        throw new Error("No data found in the file");
+      }
+      
+      setTotalRows(data.length);
+      
+      // Process in batches to avoid overloading the server
+      const batchSize = 10;
+      const batches = Math.ceil(data.length / batchSize);
+      
+      for (let i = 0; i < batches; i++) {
+        const batchData = data.slice(i * batchSize, (i + 1) * batchSize);
+        await uploadBatch(batchData);
+        setProcessedRows((i + 1) * batchSize > data.length ? data.length : (i + 1) * batchSize);
+      }
+      
+      toast({
+        title: "Success",
+        description: `Successfully imported ${data.length} questions.`,
+      });
+      
+      onSuccess();
+    } catch (err) {
+      console.error("Import error:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      
+      toast({
+        title: "Import Failed",
+        description: err instanceof Error ? err.message : "Failed to import questions",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const readExcelFile = (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
-      reader.onload = async (e) => {
+      reader.onload = (event) => {
         try {
-          const data = e.target?.result;
+          const data = event.target?.result;
           const workbook = XLSX.read(data, { type: 'binary' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
           
-          setUploadProgress(30);
-          
-          // Validate the data
-          const validation = validateQuestionData(jsonData);
-          
-          if (!validation.valid) {
-            setValidationErrors(validation.errors);
-            setIsUploading(false);
-            setUploadProgress(0);
-            return;
-          }
-          
-          setUploadProgress(50);
-          
-          // Transform the data
-          const questionsToInsert = jsonData.map((row: any) => {
+          // Validate and transform the data
+          const transformedData = jsonData.map((row: any, index) => {
+            // Ensure required fields are present
+            if (!row.Question || !row.Options || !row.CorrectAnswer || !row.Category) {
+              throw new Error(`Row ${index + 1}: Missing required fields (Question, Options, CorrectAnswer, or Category)`);
+            }
+            
+            // Parse options
+            let options: string[] = [];
+            if (typeof row.Options === 'string') {
+              options = row.Options.split('|').map((opt: string) => opt.trim()).filter(Boolean);
+            } else if (Array.isArray(row.Options)) {
+              options = row.Options;
+            }
+            
+            if (options.length < 2) {
+              throw new Error(`Row ${index + 1}: At least 2 options are required`);
+            }
+            
+            // Validate correct answer is in options
+            if (!options.includes(row.CorrectAnswer)) {
+              throw new Error(`Row ${index + 1}: Correct answer "${row.CorrectAnswer}" is not in the options`);
+            }
+            
+            // Default to medium difficulty if not specified
+            const difficulty = row.Difficulty ? row.Difficulty.toLowerCase() : 'medium';
+            if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+              throw new Error(`Row ${index + 1}: Difficulty must be 'easy', 'medium', or 'hard'`);
+            }
+            
             return {
               question: row.Question,
-              options: row.Options.split('|'),
+              options: options,
               correct_answer: row.CorrectAnswer,
               category: row.Category,
-              difficulty: row.Difficulty.toLowerCase(),
+              difficulty: difficulty,
               explanation: row.Explanation || ''
             };
           });
           
-          setUploadProgress(70);
-          
-          // Insert data in batches of 50 to avoid timeout
-          const BATCH_SIZE = 50;
-          const batches = [];
-          
-          for (let i = 0; i < questionsToInsert.length; i += BATCH_SIZE) {
-            batches.push(questionsToInsert.slice(i, i + BATCH_SIZE));
-          }
-          
-          for (let i = 0; i < batches.length; i++) {
-            const { error } = await supabase
-              .from('quiz_questions')
-              .insert(batches[i]);
-              
-            if (error) throw error;
-            
-            // Update progress
-            setUploadProgress(70 + Math.floor(30 * ((i + 1) / batches.length)));
-          }
-          
-          toast({
-            title: "Success",
-            description: `Imported ${questionsToInsert.length} questions successfully!`,
-          });
-          
-          onSuccess();
+          resolve(transformedData);
         } catch (error) {
-          console.error('Error processing file:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process the Excel file. Please check the format.",
-            variant: "destructive"
-          });
-          setIsUploading(false);
-          setUploadProgress(0);
+          reject(error);
         }
       };
       
       reader.onerror = () => {
-        toast({
-          title: "Error",
-          description: "Failed to read the Excel file.",
-          variant: "destructive"
-        });
-        setIsUploading(false);
-        setUploadProgress(0);
+        reject(new Error("Failed to read the file"));
       };
       
       reader.readAsBinaryString(file);
+    });
+  };
+
+  const uploadBatch = async (batch: any[]) => {
+    const { error } = await supabase
+      .from('quiz_questions')
+      .insert(batch);
       
-    } catch (error) {
-      console.error('Error uploading questions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload questions.",
-        variant: "destructive"
-      });
-      setIsUploading(false);
-      setUploadProgress(0);
+    if (error) {
+      throw new Error(`Failed to upload questions: ${error.message}`);
     }
   };
 
-  const downloadTemplate = () => {
-    const template = [
-      {
-        Question: "What is the capital of France?",
-        Options: "London|Berlin|Paris|Madrid",
-        CorrectAnswer: "Paris",
-        Category: "Geography",
-        Difficulty: "easy",
-        Explanation: "Paris is the capital and most populous city of France."
-      },
-      {
-        Question: "Which planet is known as the Red Planet?",
-        Options: "Earth|Mars|Jupiter|Venus",
-        CorrectAnswer: "Mars",
-        Category: "Astronomy",
-        Difficulty: "easy",
-        Explanation: "Mars appears reddish because of iron oxide (rust) on its surface."
-      }
-    ];
-    
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    XLSX.writeFile(workbook, 'quiz_questions_template.xlsx');
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="border-2 border-dashed rounded-md p-6 text-center space-y-4">
-        <div className="flex justify-center">
-          <FileUp className="h-10 w-10 text-muted-foreground" />
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground pb-2">
-            Upload an Excel file with quiz questions
-          </p>
-          <input
-            id="file-upload"
-            type="file"
-            accept=".xlsx,.xls"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-          <label htmlFor="file-upload">
-            <Button 
-              variant="outline" 
-              className="mr-2" 
-              disabled={isUploading}
-              onClick={() => document.getElementById('file-upload')?.click()}
-            >
-              Choose File
-            </Button>
-          </label>
-          <Button 
-            variant="outline" 
-            onClick={downloadTemplate}
-            disabled={isUploading}
-          >
-            Download Template
-          </Button>
-        </div>
-        {file && (
-          <p className="text-sm">
-            Selected file: <span className="font-medium">{file.name}</span>
-          </p>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".xlsx,.xls"
+          className="file:mr-4 file:px-4 file:py-2 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+        />
+        {selectedFile && (
+          <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <FileSpreadsheet className="h-4 w-4" />
+            {selectedFile.name}
+          </div>
         )}
       </div>
-
-      {validationErrors.length > 0 && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
-          <div className="flex gap-2 items-start">
-            <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-destructive">Validation Errors</h4>
-              <ul className="list-disc pl-5 pt-2 space-y-1">
-                {validationErrors.slice(0, 5).map((error, index) => (
-                  <li key={index} className="text-sm">{error}</li>
-                ))}
-                {validationErrors.length > 5 && (
-                  <li className="text-sm">And {validationErrors.length - 5} more errors...</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
-
+      
       {isUploading && (
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">
-            Uploading... {uploadProgress}%
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              Uploading... {processedRows}/{totalRows} questions
+            </span>
           </div>
-          <div className="w-full bg-secondary rounded-full h-2">
+          <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
             <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+              className="h-full bg-primary transition-all" 
+              style={{ 
+                width: totalRows ? `${(processedRows / totalRows) * 100}%` : '0%' 
+              }}
+            />
           </div>
         </div>
       )}
-
-      <DialogFooter>
+      
+      <div className="flex justify-end gap-2 pt-2">
         <Button 
-          type="button" 
-          variant="outline" 
+          variant="outline"
           onClick={onCancel}
           disabled={isUploading}
         >
           Cancel
         </Button>
         <Button 
-          type="button" 
           onClick={handleUpload}
-          disabled={!file || isUploading}
+          disabled={!selectedFile || isUploading}
         >
-          Upload
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading
+            </>
+          ) : 'Upload Questions'}
         </Button>
-      </DialogFooter>
+      </div>
+      
+      <div className="text-sm text-muted-foreground mt-4">
+        <p className="font-medium">File format requirements:</p>
+        <ul className="list-disc pl-5 space-y-1 mt-2">
+          <li>Excel file (.xlsx or .xls)</li>
+          <li>Required columns: Question, Options, CorrectAnswer, Category</li>
+          <li>Optional columns: Difficulty, Explanation</li>
+          <li>Options should be separated by a pipe character (|)</li>
+          <li>CorrectAnswer must be one of the options</li>
+          <li>Difficulty must be one of: easy, medium, hard</li>
+        </ul>
+      </div>
     </div>
   );
 };
