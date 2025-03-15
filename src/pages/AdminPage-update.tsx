@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,6 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
@@ -24,6 +22,7 @@ import { SyncSettings } from '@/components/admin/SyncSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Settings, User, Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AdminUserManagementEnhanced from '@/components/admin/AdminUserManagementEnhanced';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -181,7 +180,7 @@ const AdminPage: React.FC = () => {
           
           <Separator className="my-6" />
 
-          {activeTab === 'users' && <AdminUserManagement />}
+          {activeTab === 'users' && <AdminUserManagementEnhanced />}
           {activeTab === 'logs' && <AdminLoginLogs />}
           {activeTab === 'ads' && <AdminAdManagement />}
           {activeTab === 'payments' && <AdminPaymentsOverview />}

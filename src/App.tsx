@@ -126,14 +126,51 @@ function App() {
           } />
           
           {/* Admin routes - make all admin paths go to the AdminPage */}
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/users" element={<AdminPage />} />
-          <Route path="/admin/logs" element={<AdminPage />} />
-          <Route path="/admin/ads" element={<AdminPage />} />
-          <Route path="/admin/payments" element={<AdminPage />} />
-          <Route path="/admin/referrals" element={<AdminPage />} />
-          <Route path="/admin/quiz" element={<AdminPage />} />
-          <Route path="/admin/sync" element={<AdminPage />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/logs" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/ads" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/payments" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/referrals" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/quiz" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/badges" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/sync" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
