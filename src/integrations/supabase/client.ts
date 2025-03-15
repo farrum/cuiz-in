@@ -27,9 +27,9 @@ type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' 
 // Enable realtime for a specific table
 export const enableRealtimeForTable = async (tableName: string) => {
   try {
-    // Create a properly typed parameters object and use type assertion
-    const params = { table_name: tableName };
-    await supabase.rpc('enable_realtime', params as any);
+    // Properly type the RPC parameters and use explicit type assertion
+    const params: Record<string, unknown> = { table_name: tableName };
+    await (supabase.rpc as any)('enable_realtime', params);
     console.log(`Realtime enabled for table: ${tableName}`);
     return true;
   } catch (error) {
