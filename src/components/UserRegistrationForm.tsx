@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import crypto from 'crypto';
+import MD5 from 'crypto-js/md5';
+import { v4 as uuidv4 } from 'uuid';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -22,7 +22,7 @@ const UserRegistrationForm: React.FC = () => {
   
   // Function to hash password with MD5
   const hashPassword = (password: string): string => {
-    return crypto.createHash('md5').update(password).digest('hex');
+    return MD5(password).toString();
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +77,7 @@ const UserRegistrationForm: React.FC = () => {
       console.log('Password hashed for storage');
       
       // Generate a UUID for the user
-      const userId = crypto.randomUUID();
+      const userId = uuidv4();
       
       // Create profile directly in profiles table with hashed password
       const { error: profileError } = await supabase
@@ -265,3 +265,4 @@ const UserRegistrationForm: React.FC = () => {
 };
 
 export default UserRegistrationForm;
+

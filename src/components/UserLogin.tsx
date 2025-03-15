@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
-import crypto from 'crypto';
+import MD5 from 'crypto-js/md5';
 
 const UserLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -19,7 +18,7 @@ const UserLogin: React.FC = () => {
   
   // Function to hash password with MD5
   const hashPassword = (password: string): string => {
-    return crypto.createHash('md5').update(password).digest('hex');
+    return MD5(password).toString();
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
