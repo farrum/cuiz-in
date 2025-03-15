@@ -53,13 +53,13 @@ export const fetchAllAppData = async () => {
       paymentsResponse,
       referralsResponse
     ] = await Promise.all([
-      supabase.from('profiles').select('*'),
-      supabase.from('login_logs').select('*'),
-      supabase.from('ad_slots').select('*'),
-      supabase.from('quiz_questions').select('*'),
-      supabase.from('quiz_answers').select('*'),
-      supabase.from('payments').select('*'),
-      supabase.from('user_referrals').select('*')
+      supabase.from('profiles' as ValidTableName).select('*'),
+      supabase.from('login_logs' as ValidTableName).select('*'),
+      supabase.from('ad_slots' as ValidTableName).select('*'),
+      supabase.from('quiz_questions' as ValidTableName).select('*'),
+      supabase.from('quiz_answers' as ValidTableName).select('*'),
+      supabase.from('payments' as ValidTableName).select('*'),
+      supabase.from('user_referrals' as ValidTableName).select('*')
     ]);
     
     // Save responses to localStorage for offline access

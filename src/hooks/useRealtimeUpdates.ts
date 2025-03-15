@@ -28,7 +28,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     const enableRealtimeQuery = async () => {
       try {
         // Cast parameters to any to bypass TypeScript checks since we know this RPC exists
-        await supabase.rpc('enable_realtime', { table_name: tableName } as any);
+        const params = { table_name: tableName };
+        await supabase.rpc('enable_realtime', params as any);
         console.log(`Realtime enabled for table: ${tableName}`);
       } catch (error) {
         console.error(`Error enabling realtime for ${tableName}:`, error);
