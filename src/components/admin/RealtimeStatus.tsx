@@ -67,7 +67,12 @@ const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => 
 };
 
 export function RealtimeStatus() {
-  const tables = [
+  type TableInfo = {
+    name: 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals';
+    displayName: string;
+  };
+
+  const tables: TableInfo[] = [
     { name: 'profiles', displayName: 'User Profiles' },
     { name: 'login_logs', displayName: 'Login Logs' },
     { name: 'ad_slots', displayName: 'Ad Slots' },
@@ -78,7 +83,6 @@ export function RealtimeStatus() {
   ];
   
   const activeListeners = tables.map(table => {
-    // @ts-ignore - type mismatch is expected and handled in the hook
     const { isListening, lastUpdate } = useRealtimeUpdates(table.name);
     return { ...table, isListening, lastUpdate };
   });

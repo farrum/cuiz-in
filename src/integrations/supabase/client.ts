@@ -130,7 +130,7 @@ export const syncLocalStorageToSupabase = async () => {
     // Sync profiles data
     const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
     if (adminUsers.length > 0) {
-      const profiles = adminUsers.map(user => ({
+      const profiles = adminUsers.map((user: any) => ({
         id: user.id,
         username: user.name || user.username,
         phone: user.mobile || user.phone,
@@ -198,7 +198,7 @@ export const syncLocalStorageToSupabase = async () => {
 };
 
 // Helper function to update fetchSupabaseData hook
-export const syncDataWithSupabase = async (tableName, data) => {
+export const syncDataWithSupabase = async (tableName: string, data: any[]) => {
   try {
     // Skip if data is empty
     if (!data || data.length === 0) {
