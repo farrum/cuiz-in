@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import ReferralSection from '@/components/ReferralSection';
-import { STORAGE_KEYS } from '@/utils/quizData';
+import ReferralSection from '@/components/referrals/ReferralSection';
+import { STORAGE_KEYS } from '@/types/quiz';
 import { UserCheck, Clock, X, User } from 'lucide-react';
+import { ReferralEntry } from '@/types/referral';
 import { 
   Table, 
   TableBody, 
@@ -12,17 +13,6 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-
-interface ReferralEntry {
-  id: string;
-  email: string;
-  name: string;
-  date: string;
-  status: 'pending' | 'active' | 'inactive';
-  lastActive: string;
-  monthsActive: number;
-  totalEarned: number;
-}
 
 const ReferralPage = () => {
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
