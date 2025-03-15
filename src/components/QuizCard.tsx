@@ -63,7 +63,8 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          points_earned: isCorrect ? pointsEarned : 0
+          points_earned: isCorrect ? pointsEarned : 0,
+          answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
         });
         
         // If correct, update user's points in the profiles table
