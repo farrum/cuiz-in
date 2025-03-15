@@ -37,14 +37,35 @@ const AdminLogin: React.FC = () => {
       return;
     }
 
-    // Try Supabase authentication first
+    // Check credentials against hardcoded values first for simplicity
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      console.log("Local admin authentication successful");
+      
+      // Store admin auth in localStorage
+      localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      
+      toast({
+        title: "Success",
+        description: "You have successfully logged in as admin",
+      });
+      
+      navigate('/admin');
+      setIsLoggingIn(false);
+      return;
+    }
+    
+    // Try Supabase authentication as fallback
     try {
+      console.log("Attempting Supabase authentication");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: 'quizadmin@example.com', // Using the email we set in our SQL migration
         password: password
       });
       
       if (!error && data.user) {
+        console.log("Supabase authentication successful");
+        
         // Store admin auth in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
@@ -71,31 +92,19 @@ const AdminLogin: React.FC = () => {
         navigate('/admin');
         setIsLoggingIn(false);
         return;
+      } else {
+        console.error('Supabase auth error:', error);
       }
     } catch (err) {
       console.error('Supabase auth error:', err);
     }
     
-    // Fallback to local authentication
-    // Check credentials against hardcoded values
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      // Store admin auth in localStorage
-      localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-      
-      toast({
-        title: "Success",
-        description: "You have successfully logged in as admin",
-      });
-      
-      navigate('/admin');
-    } else {
-      toast({
-        title: "Authentication Failed",
-        description: "Invalid username or password",
-        variant: "destructive"
-      });
-    }
+    // If we reach here, authentication failed
+    toast({
+      title: "Authentication Failed",
+      description: "Invalid username or password",
+      variant: "destructive"
+    });
     
     setIsLoggingIn(false);
   };

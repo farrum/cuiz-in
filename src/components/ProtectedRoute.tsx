@@ -15,10 +15,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+  const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
 
   // Check Supabase session and role
   useEffect(() => {
     const checkSession = async () => {
+      // First check if admin auth is present in localStorage
+      if (isAdminAuth && location.pathname.startsWith('/admin')) {
+        console.log('Admin authenticated via localStorage');
+        setIsAuthenticated(true);
+        setUserRole('admin');
+        return;
+      }
+      
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -55,21 +64,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     };
     
     checkSession();
-  }, [userName]);
+  }, [userName, isAdminAuth, location.pathname]);
 
   // Check access to admin routes
   useEffect(() => {
-    if (isAuthenticated && location.pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'team_leader') {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access the admin area",
-        variant: "destructive"
-      });
-      
-      // Redirect non-admin users trying to access admin routes
-      window.location.href = '/';
+    if (isAuthenticated && location.pathname.startsWith('/admin')) {
+      // Allow access if user has admin auth in localStorage or has admin/team_leader role
+      if (!isAdminAuth && userRole !== 'admin' && userRole !== 'team_leader') {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access the admin area",
+          variant: "destructive"
+        });
+        
+        // Redirect non-admin users trying to access admin routes
+        window.location.href = '/';
+      }
     }
-  }, [isAuthenticated, location.pathname, userRole, toast]);
+  }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
 
   // Sync login data with Supabase
   useEffect(() => {
@@ -127,21 +139,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }, [userName]);
 
   useEffect(() => {
-    if (isAuthenticated === false) {
+    if (isAuthenticated === false && !location.pathname.includes('/login')) {
       toast({
         title: "Access Denied",
         description: "Please log in to access this page",
         variant: "destructive"
       });
     }
-  }, [toast, isAuthenticated]);
+  }, [toast, isAuthenticated, location.pathname]);
 
   // Show loading state
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
   }
 
-  if (isAuthenticated === false) {
+  if (isAuthenticated === false && !location.pathname.includes('/login')) {
     // Log the attempted access
     const accessAttempt = {
       date: new Date().toISOString(),
