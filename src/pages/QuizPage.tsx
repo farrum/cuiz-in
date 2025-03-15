@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
@@ -7,18 +6,14 @@ import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { 
   STORAGE_KEYS, 
   QuizQuestion, 
-  getRandomQuestion, 
-  calculatePoints,
-  logPointsForDay,
-  logPointsForMonth,
+  getRandomQuestion,
   DAILY_TARGET,
-  getPointsForToday,
-  getPointsForMonth,
   MONTHLY_TARGET,
   syncAdSlotsToLocal
 } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -34,16 +29,12 @@ const QuizPage: React.FC = () => {
   // Initialize on first load
   useEffect(() => {
     // Load user points
-    const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
     // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
-    
-    // Load daily and monthly points
-    setDailyPoints(getPointsForToday());
-    setMonthlyPoints(getPointsForMonth());
     
     // Sync ad slots from Supabase
     if (!adsSynced) {
@@ -54,7 +45,50 @@ const QuizPage: React.FC = () => {
     
     // Get first question
     loadNewQuestion();
+    
+    // Fetch daily and monthly points
+    fetchPoints();
   }, []);
+  
+  const fetchPoints = async () => {
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!userId) return;
+    
+    // Get today's date
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get current month
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    
+    // Fetch daily points
+    try {
+      const { data: dailyData } = await supabase
+        .from('daily_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
+        
+      if (dailyData) {
+        setDailyPoints(Number(dailyData.points));
+      }
+      
+      // Fetch monthly points
+      const { data: monthlyData } = await supabase
+        .from('monthly_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('month', currentMonth)
+        .single();
+        
+      if (monthlyData) {
+        setMonthlyPoints(Number(monthlyData.points));
+      }
+    } catch (error) {
+      console.error('Error fetching points:', error);
+    }
+  };
   
   const loadNewQuestion = async () => {
     setIsLoading(true);
@@ -76,46 +110,6 @@ const QuizPage: React.FC = () => {
   const handleQuestionComplete = (isCorrect: boolean) => {
     if (!currentQuestion) return;
     
-    // Calculate points using the difficulty-based system
-    const pointsEarned = calculatePoints(isCorrect, currentQuestion.difficulty);
-    
-    // Update user points
-    const newTotal = userPoints + pointsEarned;
-    setUserPoints(newTotal);
-    localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
-    
-    // Get user ID for database updates
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    
-    // Update daily and monthly points
-    logPointsForDay(pointsEarned, userId);
-    logPointsForMonth(pointsEarned, userId);
-    
-    // Refresh daily and monthly points
-    const updatedDailyPoints = getPointsForToday();
-    const updatedMonthlyPoints = getPointsForMonth();
-    setDailyPoints(updatedDailyPoints);
-    setMonthlyPoints(updatedMonthlyPoints);
-    
-    // Check for daily target completion
-    if (updatedDailyPoints >= DAILY_TARGET && dailyPoints < DAILY_TARGET) {
-      toast({
-        title: "Daily Target Achieved!",
-        description: "Congratulations! You've reached your daily target of 400 points.",
-      });
-    }
-    
-    // Check for monthly target completion
-    if (updatedMonthlyPoints >= MONTHLY_TARGET && monthlyPoints < MONTHLY_TARGET) {
-      toast({
-        title: "Monthly Target Achieved!",
-        description: "Amazing! You've reached your monthly target of 12,000 points. ₹8,000 reward is available for withdrawal!",
-      });
-    }
-    
-    // Dispatch event to notify other components about point updates
-    window.dispatchEvent(new Event('pointsUpdated'));
-    
     // Update questions answered
     setQuestionsAnswered(prev => prev + 1);
     
@@ -126,19 +120,7 @@ const QuizPage: React.FC = () => {
       
       // Bonus for streaks
       if (newStreak % 5 === 0) {
-        const bonusPoints = 20;
-        const bonusTotal = newTotal + bonusPoints;
-        
-        setUserPoints(bonusTotal);
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, bonusTotal.toString());
-        
-        // Log bonus points too
-        logPointsForDay(bonusPoints, userId);
-        logPointsForMonth(bonusPoints, userId);
-        
-        // Notify other components
-        window.dispatchEvent(new Event('pointsUpdated'));
-        
+        const bonusPoints = 5;
         toast({
           title: `${newStreak} Question Streak!`,
           description: `Bonus ${bonusPoints} points awarded!`,
@@ -147,6 +129,14 @@ const QuizPage: React.FC = () => {
     } else {
       setStreak(0);
     }
+    
+    // Wait a bit then fetch updated points data from Supabase
+    setTimeout(() => {
+      fetchPoints();
+      
+      // Dispatch event to notify other components about point updates
+      window.dispatchEvent(new Event('pointsUpdated'));
+    }, 1000);
     
     // Load the next question
     loadNewQuestion();

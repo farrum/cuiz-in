@@ -222,20 +222,18 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
 };
 
 export const calculatePoints = (isCorrect: boolean, difficulty: string = 'easy'): number => {
-  // Base points for attempting a question
-  let points = 5;
-  
-  // Increase points if correct based on difficulty
   if (isCorrect) {
+    // Updated points calculation
     switch (difficulty) {
-      case 'easy': points += 5; break;
-      case 'medium': points += 10; break;
-      case 'hard': points += 20; break;
-      default: points += 5;
+      case 'easy': return 2;
+      case 'medium': return 3;
+      case 'hard': return 4;
+      default: return 2;
     }
   }
   
-  return points;
+  // Wrong answer always gives 0.5 points
+  return 0.5;
 };
 
 export const logPointsForDay = async (points: number, userId?: string | null) => {
@@ -390,7 +388,14 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
         .order('points', { ascending: false })
         .limit(limit);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching daily top performers:', error);
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
       
       // Get usernames for these top performers
       const userIds = data.map(item => item.user_id);
@@ -399,11 +404,14 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
         .select('id, username')
         .in('id', userIds);
         
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profile data:', profilesError);
+        return [];
+      }
       
       // Map profile data to results
-      const profileMap = {};
-      profiles.forEach(profile => {
+      const profileMap: Record<string, string> = {};
+      profiles?.forEach(profile => {
         profileMap[profile.id] = profile.username;
       });
       
@@ -424,7 +432,14 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
         .order('points', { ascending: false })
         .limit(limit);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching monthly top performers:', error);
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
       
       // Get usernames for these top performers
       const userIds = data.map(item => item.user_id);
@@ -433,11 +448,14 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
         .select('id, username')
         .in('id', userIds);
         
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profile data:', profilesError);
+        return [];
+      }
       
       // Map profile data to results
-      const profileMap = {};
-      profiles.forEach(profile => {
+      const profileMap: Record<string, string> = {};
+      profiles?.forEach(profile => {
         profileMap[profile.id] = profile.username;
       });
       
@@ -451,8 +469,6 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
     }
   } catch (error) {
     console.error(`Error fetching ${timeframe} top performers:`, error);
-    
-    // Fall back to local storage or quiz_answers aggregation if needed
     return [];
   }
 };

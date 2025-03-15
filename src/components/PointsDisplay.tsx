@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { IndianRupee } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PointsDisplayProps {
   animateUpdate?: boolean;
@@ -17,23 +17,45 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
   const [cashAmount, setCashAmount] = useState(0);
   
   useEffect(() => {
-    const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setPoints(savedPoints);
     setCashAmount(calculateCashAmount(savedPoints));
+    
+    fetchUserPoints();
   }, []);
   
-  // Listen for points updates
+  const fetchUserPoints = async () => {
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!userId) return;
+    
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('id', userId)
+        .single();
+        
+      if (data && data.points !== null) {
+        const newPoints = parseFloat(data.points.toString());
+        
+        if (animateUpdate && newPoints !== points) {
+          setIsAnimating(true);
+          setTimeout(() => setIsAnimating(false), 1500);
+        }
+        
+        setPoints(newPoints);
+        setCashAmount(calculateCashAmount(newPoints));
+        
+        localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
+      }
+    } catch (error) {
+      console.error('Error fetching user points:', error);
+    }
+  };
+  
   useEffect(() => {
     const handlePointsUpdate = () => {
-      const newPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-      
-      if (animateUpdate && newPoints !== points) {
-        setIsAnimating(true);
-        setTimeout(() => setIsAnimating(false), 1500);
-      }
-      
-      setPoints(newPoints);
-      setCashAmount(calculateCashAmount(newPoints));
+      fetchUserPoints();
     };
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
@@ -48,7 +70,7 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         <div className={`text-3xl font-bold flex items-center transition-all duration-300 ${
           isAnimating ? 'scale-110 text-primary' : ''
         }`}>
-          <span>{points}</span>
+          <span>{points.toFixed(1)}</span>
           <span className="ml-1 text-sm text-muted-foreground">pts</span>
         </div>
         

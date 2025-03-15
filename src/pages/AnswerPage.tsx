@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { STORAGE_KEYS, QuizQuestion, calculatePoints, fetchQuizQuestions } from '@/utils/quizData';
+import { STORAGE_KEYS, QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle } from 'lucide-react';
 
@@ -38,6 +38,19 @@ const AnswerPage: React.FC = () => {
 
   const handleNextQuestion = () => {
     navigate('/quiz');
+  };
+  
+  // Calculate the points earned based on the difficulty and correctness
+  const getPointsEarned = (isCorrect: boolean, difficulty?: string): number => {
+    if (isCorrect) {
+      switch (difficulty) {
+        case 'easy': return 2;
+        case 'medium': return 3;
+        case 'hard': return 4;
+        default: return 2;
+      }
+    }
+    return 0.5; // Wrong answer always gives 0.5 points
   };
 
   return (
@@ -76,7 +89,7 @@ const AnswerPage: React.FC = () => {
                     </h4>
                     <p className="text-muted-foreground">
                       {isCorrect 
-                        ? `You earned 2 points!` 
+                        ? `You earned ${getPointsEarned(true, question.difficulty)} points!` 
                         : `You earned 0.5 points. The correct answer was: ${question.correctAnswer}`}
                     </p>
                   </div>

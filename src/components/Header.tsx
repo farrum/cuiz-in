@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield } from 'lucide-react';
 import { cn } from "@/utils/animations";
-import { DAILY_TARGET, MONTHLY_TARGET, getPointsForToday, getPointsForMonth } from '@/utils/quizData';
+import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -61,25 +60,64 @@ const Header: React.FC = () => {
     checkAuth();
   }, []);
 
-  // Get current points data
+  // Get current points data directly from Supabase
   useEffect(() => {
-    const updatePoints = () => {
+    const updatePoints = async () => {
       if (isLoggedIn) {
-        setTodayPoints(getPointsForToday());
-        setMonthlyPoints(getPointsForMonth());
+        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (userId) {
+          // Get today's date
+          const today = new Date().toISOString().split('T')[0];
+          
+          // Get current month
+          const now = new Date();
+          const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+          
+          // Fetch daily points
+          const { data: dailyData } = await supabase
+            .from('daily_points')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .single();
+            
+          if (dailyData) {
+            setTodayPoints(Number(dailyData.points));
+          }
+          
+          // Fetch monthly points
+          const { data: monthlyData } = await supabase
+            .from('monthly_points')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('month', currentMonth)
+            .single();
+            
+          if (monthlyData) {
+            setMonthlyPoints(Number(monthlyData.points));
+          }
+        }
+      } else {
+        // Reset points if not logged in
+        setTodayPoints(0);
+        setMonthlyPoints(0);
       }
     };
     
     if (isLoggedIn) {
       updatePoints();
+      
+      // Set up a listener for point updates
       window.addEventListener('pointsUpdated', updatePoints);
-    } else {
-      // Reset points if not logged in
-      setTodayPoints(0);
-      setMonthlyPoints(0);
+      
+      // Refresh points every minute
+      const intervalId = setInterval(updatePoints, 60000);
+      
+      return () => {
+        window.removeEventListener('pointsUpdated', updatePoints);
+        clearInterval(intervalId);
+      };
     }
-    
-    return () => window.removeEventListener('pointsUpdated', updatePoints);
   }, [isLoggedIn]);
 
   const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
@@ -110,7 +148,7 @@ const Header: React.FC = () => {
                 <div className="flex-1">
                   <Progress value={dailyProgress} className="h-1.5" />
                 </div>
-                <span className="text-xs text-muted-foreground">{todayPoints}/{DAILY_TARGET}</span>
+                <span className="text-xs text-muted-foreground">{todayPoints.toFixed(1)}/{DAILY_TARGET}</span>
               </div>
               <div className="flex text-xs items-center gap-1">
                 <Target className="w-3 h-3 text-muted-foreground" />
@@ -118,7 +156,7 @@ const Header: React.FC = () => {
                 <div className="flex-1">
                   <Progress value={monthlyProgress} className="h-1.5" />
                 </div>
-                <span className="text-xs text-muted-foreground">{monthlyPoints}/{MONTHLY_TARGET}</span>
+                <span className="text-xs text-muted-foreground">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
               </div>
             </div>
           )}

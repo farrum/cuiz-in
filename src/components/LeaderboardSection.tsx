@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
-import { getTopPerformers } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LeaderboardUser {
   userId: string;
@@ -39,51 +39,101 @@ const LeaderboardSection: React.FC = () => {
       // Get current user
       const currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       
-      // Fetch top performers from the updated function
-      const topUsers = await getTopPerformers('monthly', 10);
+      // Get current month for filtering
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
-      // Mark the current user
-      const processedUsers = topUsers.map(user => ({
-        ...user,
-        isCurrentUser: user.userId === currentUserId
+      // Fetch monthly top performers from Supabase
+      const { data: topUsers, error } = await supabase
+        .from('monthly_points')
+        .select('user_id, points')
+        .eq('month', currentMonth)
+        .order('points', { ascending: false })
+        .limit(10);
+        
+      if (error) {
+        console.error('Error fetching monthly top performers:', error);
+        throw error;
+      }
+      
+      if (!topUsers || topUsers.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Get usernames for these users
+      const userIds = topUsers.map(user => user.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+        
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+      
+      // Create mapping of user IDs to usernames
+      const userMap: Record<string, string> = {};
+      profiles?.forEach(profile => {
+        userMap[profile.id] = profile.username;
+      });
+      
+      // Process users with rankings
+      const processedUsers = topUsers.map((user, index) => ({
+        userId: user.user_id,
+        username: userMap[user.user_id] || 'Unknown User',
+        points: Number(user.points),
+        rank: index + 1,
+        isCurrentUser: user.user_id === currentUserId
       }));
       
       setUsers(processedUsers);
       
-      // Find current user's rank
-      const currentUserPos = processedUsers.findIndex(user => user.isCurrentUser);
-      if (currentUserPos !== -1) {
-        setCurrentUserRank(currentUserPos + 1);
-      } else {
-        // User not in top 10, might need additional fetching to find their rank
-        setCurrentUserRank(null);
+      // Check if current user is in top 10
+      const currentUserInTop10 = processedUsers.find(user => user.isCurrentUser);
+      
+      // If not, find their rank and add them separately
+      if (!currentUserInTop10 && currentUserId) {
+        // Fetch current user's points
+        const { data: currentUserData, error: currentUserError } = await supabase
+          .from('monthly_points')
+          .select('points')
+          .eq('user_id', currentUserId)
+          .eq('month', currentMonth)
+          .single();
+          
+        if (currentUserError && currentUserError.code !== 'PGSQL_ERROR') {
+          console.error('Error fetching current user points:', currentUserError);
+        }
+        
+        if (currentUserData) {
+          // Count how many users have more points than current user
+          const { count, error: countError } = await supabase
+            .from('monthly_points')
+            .select('*', { count: 'exact', head: true })
+            .eq('month', currentMonth)
+            .gt('points', currentUserData.points);
+            
+          if (countError) {
+            console.error('Error counting higher ranked users:', countError);
+          } else if (count !== null) {
+            setCurrentUserRank(count + 1);
+          }
+        }
+      } else if (currentUserInTop10) {
+        setCurrentUserRank(currentUserInTop10.rank);
       }
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      console.error('Error in fetchLeaderboard:', error);
       
-      // Fall back to localStorage data if needed
-      const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
-      const currentUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-      
-      // Sort users by points
-      const sortedUsers = [...adminUsers]
-        .sort((a, b) => b.points - a.points)
-        .slice(0, 10) // Get top 10 users
-        .map((user, index) => ({
-          userId: user.id,
-          username: user.name || user.username,
-          points: user.points || 0,
-          rank: index + 1,
-          isCurrentUser: (user.name || user.username) === currentUserName
-        }));
-      
-      setUsers(sortedUsers);
-      
-      // Find current user's rank
-      const currentUserPos = sortedUsers.findIndex(user => user.isCurrentUser);
-      if (currentUserPos !== -1) {
-        setCurrentUserRank(currentUserPos + 1);
-      }
+      // Fallback to in-memory data if needed
+      toast({
+        title: "Connection issue",
+        description: "Using cached leaderboard data",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -174,7 +224,7 @@ const LeaderboardSection: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">{user.points}</span>
+                    <span className="font-semibold">{user.points.toFixed(1)}</span>
                     <span className="text-xs text-muted-foreground">pts</span>
                     {user.rank <= 3 && (
                       <Badge variant={user.rank === 1 ? "default" : "secondary"} className="ml-2">
@@ -210,7 +260,7 @@ const LeaderboardSection: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">
-                        {Number(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || 0)}
+                        {parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0').toFixed(1)}
                       </span>
                       <span className="text-xs text-muted-foreground">pts</span>
                     </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Medal, RefreshCw, Calendar } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getTopPerformers } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TopPerformer {
   userId: string;
@@ -30,13 +31,78 @@ const AdminTopPerformers: React.FC = () => {
     setLoading(true);
 
     try {
+      // Get current date info
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+      
       // Fetch daily top performers
-      const dailyData = await getTopPerformers('daily', 10);
-      setDailyTopUsers(dailyData);
-
+      const { data: dailyData, error: dailyError } = await supabase
+        .from('daily_points')
+        .select('user_id, points')
+        .eq('date', today)
+        .order('points', { ascending: false })
+        .limit(10);
+        
+      if (dailyError) {
+        console.error('Error fetching daily top performers:', dailyError);
+        throw dailyError;
+      }
+      
       // Fetch monthly top performers
-      const monthlyData = await getTopPerformers('monthly', 10);
-      setMonthlyTopUsers(monthlyData);
+      const { data: monthlyData, error: monthlyError } = await supabase
+        .from('monthly_points')
+        .select('user_id, points')
+        .eq('month', currentMonth)
+        .order('points', { ascending: false })
+        .limit(10);
+        
+      if (monthlyError) {
+        console.error('Error fetching monthly top performers:', monthlyError);
+        throw monthlyError;
+      }
+      
+      // Get all unique user IDs
+      const allUserIds = [...new Set([
+        ...(dailyData?.map(item => item.user_id) || []),
+        ...(monthlyData?.map(item => item.user_id) || [])
+      ])];
+      
+      // Fetch all usernames in one query
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', allUserIds);
+        
+      if (profilesError) {
+        console.error('Error fetching profile data:', profilesError);
+        throw profilesError;
+      }
+      
+      // Create a map of user IDs to usernames
+      const usernameMap: Record<string, string> = {};
+      profiles?.forEach(profile => {
+        usernameMap[profile.id] = profile.username;
+      });
+      
+      // Transform daily data
+      const transformedDailyData = dailyData?.map((item, index) => ({
+        userId: item.user_id,
+        username: usernameMap[item.user_id] || 'Unknown User',
+        points: Number(item.points),
+        rank: index + 1
+      })) || [];
+      
+      // Transform monthly data
+      const transformedMonthlyData = monthlyData?.map((item, index) => ({
+        userId: item.user_id,
+        username: usernameMap[item.user_id] || 'Unknown User',
+        points: Number(item.points),
+        rank: index + 1
+      })) || [];
+      
+      setDailyTopUsers(transformedDailyData);
+      setMonthlyTopUsers(transformedMonthlyData);
     } catch (error) {
       console.error('Error fetching top performers:', error);
       toast({
@@ -144,7 +210,7 @@ const AdminTopPerformers: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={user.rank <= 3 ? "default" : "secondary"}>
-                          {user.points} pts
+                          {user.points.toFixed(1)} pts
                         </Badge>
                       </div>
                     </div>
@@ -186,7 +252,7 @@ const AdminTopPerformers: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={user.rank <= 3 ? "default" : "secondary"}>
-                          {user.points} pts
+                          {user.points.toFixed(1)} pts
                         </Badge>
                       </div>
                     </div>

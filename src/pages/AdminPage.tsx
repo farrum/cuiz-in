@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -168,7 +167,7 @@ const AdminPage: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-3 md:grid-cols-8 lg:w-[900px]">
+          <TabsList className="grid grid-cols-3 md:grid-cols-7 lg:w-[800px]">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="logs">Login Logs</TabsTrigger>
             <TabsTrigger value="ads">Ad Slots</TabsTrigger>

@@ -41,15 +41,18 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
       
       // Record answer in Supabase if user is logged in
       if (userId) {
-        // Calculate points based on difficulty
+        // Calculate points based on difficulty - UPDATED POINTS CALCULATION
         let pointsEarned = 0;
         if (isCorrect) {
           switch (question.difficulty) {
-            case "easy": pointsEarned = 10; break;
-            case "medium": pointsEarned = 15; break;
-            case "hard": pointsEarned = 25; break;
-            default: pointsEarned = 10;
+            case "easy": pointsEarned = 2; break;
+            case "medium": pointsEarned = 3; break;
+            case "hard": pointsEarned = 4; break;
+            default: pointsEarned = 2;
           }
+        } else {
+          // Wrong answer always gives 0.5 points
+          pointsEarned = 0.5;
         }
         
         // Get current date for tracking daily/monthly stats
@@ -63,28 +66,78 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          points_earned: isCorrect ? pointsEarned : 0,
+          points_earned: pointsEarned,
           answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
         });
         
+        // Update daily points
+        const { data: dailyData, error: dailyError } = await supabase
+          .from('daily_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .single();
+          
+        if (dailyError && dailyError.code !== 'PGSQL_ERROR') {
+          console.error('Error checking daily points:', dailyError);
+        }
+        
+        if (dailyData) {
+          // Update existing record
+          await supabase
+            .from('daily_points')
+            .update({ points: Number(dailyData.points) + pointsEarned })
+            .eq('user_id', userId)
+            .eq('date', today);
+        } else {
+          // Create new record
+          await supabase
+            .from('daily_points')
+            .insert({ user_id: userId, date: today, points: pointsEarned });
+        }
+        
+        // Update monthly points
+        const { data: monthlyData, error: monthlyError } = await supabase
+          .from('monthly_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('month', currentMonth)
+          .single();
+          
+        if (monthlyError && monthlyError.code !== 'PGSQL_ERROR') {
+          console.error('Error checking monthly points:', monthlyError);
+        }
+        
+        if (monthlyData) {
+          // Update existing record
+          await supabase
+            .from('monthly_points')
+            .update({ points: Number(monthlyData.points) + pointsEarned })
+            .eq('user_id', userId)
+            .eq('month', currentMonth);
+        } else {
+          // Create new record
+          await supabase
+            .from('monthly_points')
+            .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
+        }
+        
         // If correct, update user's points in the profiles table
-        if (isCorrect) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('points')
-            .eq('id', userId)
-            .single();
+        const { data } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', userId)
+          .single();
             
-          if (data) {
-            const currentPoints = data.points || 0;
-            await supabase
-              .from('profiles')
-              .update({ points: currentPoints + pointsEarned })
-              .eq('id', userId);
-              
-            // Update local storage with new total points
-            localStorage.setItem(STORAGE_KEYS.USER_POINTS, (currentPoints + pointsEarned).toString());
-          }
+        if (data) {
+          const currentPoints = data.points || 0;
+          await supabase
+            .from('profiles')
+            .update({ points: currentPoints + pointsEarned })
+            .eq('id', userId);
+            
+          // Update local storage with new total points
+          localStorage.setItem(STORAGE_KEYS.USER_POINTS, (currentPoints + pointsEarned).toString());
         }
       }
       
