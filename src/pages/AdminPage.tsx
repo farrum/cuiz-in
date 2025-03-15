@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
@@ -14,18 +14,35 @@ import { SyncSettings } from '@/components/admin/SyncSettings';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<string>(getTabFromPath(location.pathname));
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>('users');
 
-  function getTabFromPath(path: string): string {
-    if (path.includes('/users')) return 'users';
-    if (path.includes('/logs')) return 'logs';
-    if (path.includes('/ads')) return 'ads';
-    if (path.includes('/payments')) return 'payments';
-    if (path.includes('/referrals')) return 'referrals';
-    if (path.includes('/quiz')) return 'quiz';
-    if (path.includes('/sync')) return 'sync';
-    return 'users';
-  }
+  // Set the active tab based on the URL when component mounts or URL changes
+  useEffect(() => {
+    const path = location.pathname;
+    let tab = 'users'; // default tab
+    
+    if (path.includes('/users')) tab = 'users';
+    else if (path.includes('/logs')) tab = 'logs';
+    else if (path.includes('/ads')) tab = 'ads';
+    else if (path.includes('/payments')) tab = 'payments';
+    else if (path.includes('/referrals')) tab = 'referrals';
+    else if (path.includes('/quiz')) tab = 'quiz';
+    else if (path.includes('/sync')) tab = 'sync';
+    else if (path === '/admin') {
+      // If just at /admin, redirect to /admin/users
+      navigate('/admin/users', { replace: true });
+      tab = 'users';
+    }
+    
+    setActiveTab(tab);
+  }, [location.pathname, navigate]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/admin/${value}`);
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -34,29 +51,15 @@ const AdminPage: React.FC = () => {
         <p className="text-muted-foreground">Manage your quiz application data and settings</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-3 md:grid-cols-7 lg:w-[800px]">
-          <TabsTrigger value="users" asChild>
-            <Link to="/admin/users">Users</Link>
-          </TabsTrigger>
-          <TabsTrigger value="logs" asChild>
-            <Link to="/admin/logs">Login Logs</Link>
-          </TabsTrigger>
-          <TabsTrigger value="ads" asChild>
-            <Link to="/admin/ads">Ad Slots</Link>
-          </TabsTrigger>
-          <TabsTrigger value="payments" asChild>
-            <Link to="/admin/payments">Payments</Link>
-          </TabsTrigger>
-          <TabsTrigger value="referrals" asChild>
-            <Link to="/admin/referrals">Referrals</Link>
-          </TabsTrigger>
-          <TabsTrigger value="quiz" asChild>
-            <Link to="/admin/quiz">Quiz</Link>
-          </TabsTrigger>
-          <TabsTrigger value="sync" asChild>
-            <Link to="/admin/sync">Sync</Link>
-          </TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="logs">Login Logs</TabsTrigger>
+          <TabsTrigger value="ads">Ad Slots</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="referrals">Referrals</TabsTrigger>
+          <TabsTrigger value="quiz">Quiz</TabsTrigger>
+          <TabsTrigger value="sync">Sync</TabsTrigger>
         </TabsList>
         
         <Separator className="my-6" />
