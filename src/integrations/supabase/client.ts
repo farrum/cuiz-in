@@ -24,7 +24,7 @@ export const supabase = createClient<Database>(
 // Enable realtime for a specific table
 export const enableRealtimeForTable = async (tableName: string) => {
   try {
-    await supabase.rpc('enable_realtime', { table_name: tableName });
+    await supabase.rpc('enable_realtime', { table_name: tableName as any });
     console.log(`Realtime enabled for table: ${tableName}`);
     return true;
   } catch (error) {
@@ -208,8 +208,13 @@ export const syncDataWithSupabase = async (tableName: string, data: any[]) => {
     
     console.log(`Syncing ${data.length} records to ${tableName}...`);
     
+    type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'user_roles';
+    
+    // Type assertion to ensure TypeScript understands this is a valid table name
+    const validatedTableName = tableName as ValidTableName;
+    
     const { error } = await supabase
-      .from(tableName)
+      .from(validatedTableName)
       .upsert(data, { onConflict: 'id' });
       
     if (error) {

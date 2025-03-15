@@ -18,7 +18,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     const enableRealtimeQuery = async () => {
       try {
         // Enable realtime on the table if not already enabled
-        await supabase.rpc('enable_realtime', { table_name: tableName });
+        // Use type assertion to ensure TypeScript understands this is a valid call
+        await supabase.rpc('enable_realtime', { table_name: tableName as string });
         console.log(`Realtime enabled for table: ${tableName}`);
       } catch (error) {
         console.error(`Error enabling realtime for ${tableName}:`, error);
@@ -31,7 +32,7 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     const channel = supabase
       .channel('table-db-changes')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: eventType,
           schema: 'public',
