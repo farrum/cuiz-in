@@ -8,8 +8,18 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 type TableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'user_roles';
 type EventType = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
+// Define the type for the payload structure we receive from Supabase realtime
+interface RealtimePayload {
+  commit_timestamp: string;
+  eventType: string;
+  schema: string;
+  table: string;
+  new: any;
+  old: any;
+}
+
 export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = '*') => {
-  const [lastUpdate, setLastUpdate] = useState<any | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<RealtimePayload | null>(null);
   const [isListening, setIsListening] = useState(false);
   const { toast } = useToast();
 
@@ -17,9 +27,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     // Enable realtime for the table
     const enableRealtimeQuery = async () => {
       try {
-        // Enable realtime on the table if not already enabled
-        // Use type assertion to ensure TypeScript understands this is a valid call
-        await supabase.rpc('enable_realtime', { table_name: tableName as string });
+        // Cast parameters to any to bypass TypeScript checks since we know this RPC exists
+        await supabase.rpc('enable_realtime', { table_name: tableName } as any);
         console.log(`Realtime enabled for table: ${tableName}`);
       } catch (error) {
         console.error(`Error enabling realtime for ${tableName}:`, error);
@@ -38,20 +47,22 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
           schema: 'public',
           table: tableName,
         },
-        (payload) => {
+        (payload: any) => {
           console.log(`Realtime update for ${tableName}:`, payload);
-          setLastUpdate(payload);
+          // Cast payload to our expected structure
+          const realTimePayload = payload as unknown as RealtimePayload;
+          setLastUpdate(realTimePayload);
           
           toast({
             title: `${tableName} Updated`,
-            description: `${payload.eventType} operation detected. Data has been updated.`,
+            description: `${realTimePayload.eventType} operation detected. Data has been updated.`,
           });
           
           // Update localStorage with the new data
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            updateLocalStorage(tableName, payload);
-          } else if (payload.eventType === 'DELETE') {
-            removeFromLocalStorage(tableName, payload);
+          if (realTimePayload.eventType === 'INSERT' || realTimePayload.eventType === 'UPDATE') {
+            updateLocalStorage(tableName, realTimePayload);
+          } else if (realTimePayload.eventType === 'DELETE') {
+            removeFromLocalStorage(tableName, realTimePayload);
           }
         }
       )
@@ -68,7 +79,7 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     };
   }, [tableName, eventType, toast]);
 
-  const updateLocalStorage = (table: string, payload: any) => {
+  const updateLocalStorage = (table: string, payload: RealtimePayload) => {
     try {
       const localStorageKey = getLocalStorageKey(table);
       const existingData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
@@ -92,7 +103,7 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     }
   };
 
-  const removeFromLocalStorage = (table: string, payload: any) => {
+  const removeFromLocalStorage = (table: string, payload: RealtimePayload) => {
     try {
       const localStorageKey = getLocalStorageKey(table);
       const existingData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
