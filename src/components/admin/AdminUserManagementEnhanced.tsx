@@ -171,33 +171,87 @@ const AdminUserManagementEnhanced: React.FC = () => {
 
   const handleAddUser = async () => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: newUser.email,
+      if (!newUser.username || !newUser.password) {
+        toast({
+          title: "Error",
+          description: "Username and password are required",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: email,
         password: newUser.password,
+        email_confirm: true,
+        user_metadata: {
+          username: newUser.username,
+          phone: newUser.phone
+        }
       });
       
-      if (error) throw error;
+      if (error) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email,
+          password: newUser.password,
+          options: {
+            data: {
+              username: newUser.username,
+              phone: newUser.phone
+            }
+          }
+        });
+        
+        if (signUpError) throw signUpError;
+        
+        if (!signUpData.user) {
+          throw new Error("Failed to create user account");
+        }
+        
+        data.user = signUpData.user;
+      }
       
       if (data.user) {
+        const userId = data.user.id;
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            id: data.user.id,
+            id: userId,
             username: newUser.username,
             phone: newUser.phone,
-            points: newUser.points
-          });
+            points: newUser.points || 0
+          })
+          .select()
+          .single();
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              username: newUser.username,
+              phone: newUser.phone,
+              points: newUser.points || 0
+            })
+            .eq('id', userId);
+            
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+          }
+        }
         
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
-            user_id: data.user.id,
+            user_id: userId,
             role: 'player'
           });
           
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Error setting user role:', roleError);
+        }
         
         toast({
           title: "Success",
@@ -208,6 +262,8 @@ const AdminUserManagementEnhanced: React.FC = () => {
         setIsAddUserDialogOpen(false);
         
         fetchUsers();
+      } else {
+        throw new Error("No user data returned");
       }
     } catch (error: any) {
       console.error('Error adding user:', error);
@@ -468,18 +524,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
                 id="username"
                 value={newUser.username}
                 onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                 className="col-span-3"
               />
             </div>
