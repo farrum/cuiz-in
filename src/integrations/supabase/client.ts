@@ -30,6 +30,59 @@ export const supabase = createClient<Database>(
   }
 );
 
+// Check if there's a valid Supabase session
+export const hasValidSession = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error checking session:', error);
+      return false;
+    }
+    return !!data.session;
+  } catch (err) {
+    console.error('Failed to check session status:', err);
+    return false;
+  }
+};
+
+// Create or get a user in Supabase auth
+export const ensureUserExists = async (username: string, email?: string, password?: string) => {
+  try {
+    // First check if user exists in profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+      
+    if (profile) {
+      console.log('User already exists in profiles:', profile);
+      return { success: true, profile };
+    }
+    
+    // If no existing profile, create one with a random ID since we don't have auth
+    const userId = crypto.randomUUID();
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        username: username,
+        points: parseInt(localStorage.getItem('user_points') || '0'),
+      });
+      
+    if (insertError) {
+      console.error('Error creating profile:', insertError);
+      return { success: false, error: insertError };
+    }
+    
+    console.log('Created new profile for:', username);
+    return { success: true, profile: { id: userId, username } };
+  } catch (err) {
+    console.error('Failed to ensure user exists:', err);
+    return { success: false, error: err };
+  }
+};
+
 // Helper function to synchronize localStorage data with Supabase
 export const syncDataWithSupabase = async (
   tableName: string, 
@@ -40,6 +93,12 @@ export const syncDataWithSupabase = async (
     // Get data from localStorage
     const localData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
     if (!localData || localData.length === 0) return;
+    
+    // First ensure user exists if we're dealing with user-related data
+    const username = localStorage.getItem('user_name');
+    if (username && ['daily_points', 'monthly_points', 'quiz_answers'].includes(tableName)) {
+      await ensureUserExists(username);
+    }
     
     console.log(`Syncing ${localData.length} items from ${localStorageKey} to ${tableName}...`);
     
@@ -66,17 +125,29 @@ export const syncDataWithSupabase = async (
 export const fetchDataFromSupabase = async (
   tableName: string, 
   localStorageKey: string,
-  transform?: (item: any) => any
+  transform?: (item: any) => any,
+  filters?: Record<string, any>
 ) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from(tableName as TableName)
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+    
+    // Apply additional filters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        query = query.eq(key, value);
+      });
+    }
+    
+    // Order by created_at if available
+    query = query.order('created_at', { ascending: false });
+    
+    const { data, error } = await query;
       
     if (error) {
       console.error(`Error fetching data from ${tableName}:`, error);
-      return;
+      return null;
     }
     
     if (data && data.length > 0) {
@@ -90,4 +161,91 @@ export const fetchDataFromSupabase = async (
   }
   
   return null;
+};
+
+// Function to sync user points between localStorage and Supabase
+export const syncUserPoints = async (username: string, points: number) => {
+  try {
+    if (!username) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+      
+    if (profile) {
+      // Update the points in the profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ points, updated_at: new Date().toISOString() })
+        .eq('id', profile.id);
+        
+      if (error) {
+        console.error('Error updating user points:', error);
+      } else {
+        console.log(`Updated points for ${username} to ${points}`);
+      }
+    } else {
+      // Create profile if it doesn't exist
+      await ensureUserExists(username);
+    }
+  } catch (err) {
+    console.error('Failed to sync user points:', err);
+  }
+};
+
+// Helper function to sync daily and monthly points
+export const syncPointsData = async (username: string) => {
+  try {
+    if (!username) return;
+    
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+      
+    if (!profile) {
+      console.log('No profile found for', username);
+      return;
+    }
+    
+    // Sync daily points
+    const dailyPoints = JSON.parse(localStorage.getItem('daily_points') || '{}');
+    for (const [date, points] of Object.entries(dailyPoints)) {
+      const { error } = await supabase
+        .from('daily_points')
+        .upsert({
+          user_id: profile.id,
+          date: date,
+          points: points as number
+        }, { onConflict: 'user_id,date' });
+        
+      if (error) {
+        console.error(`Error syncing daily points for ${date}:`, error);
+      }
+    }
+    
+    // Sync monthly points
+    const monthlyPoints = JSON.parse(localStorage.getItem('monthly_points') || '{}');
+    for (const [yearMonth, points] of Object.entries(monthlyPoints)) {
+      const { error } = await supabase
+        .from('monthly_points')
+        .upsert({
+          user_id: profile.id,
+          year_month: yearMonth,
+          points: points as number
+        }, { onConflict: 'user_id,year_month' });
+        
+      if (error) {
+        console.error(`Error syncing monthly points for ${yearMonth}:`, error);
+      }
+    }
+    
+    console.log('Synced points data for', username);
+  } catch (err) {
+    console.error('Failed to sync points data:', err);
+  }
 };
