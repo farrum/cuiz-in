@@ -11,14 +11,10 @@ import {
   DAILY_TARGET,
   getPointsForToday,
   getPointsForMonth,
-  MONTHLY_TARGET
+  MONTHLY_TARGET,
+  syncAdSlotsToLocal
 } from '@/utils/quizData';
-import { 
-  syncQuizAnswersToSupabase, 
-  syncUserPoints, 
-  syncPointsData 
-} from '@/integrations/supabase/client';
-import { syncAdSlotsToLocal, getSyncStatus } from '@/utils/syncUtils';
+import { syncQuizAnswersToSupabase, syncUserPoints, syncPointsData } from '@/integrations/supabase/client';
 
 export const useQuiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -29,7 +25,6 @@ export const useQuiz = () => {
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [adsSynced, setAdsSynced] = useState(false);
-  const [syncingData, setSyncingData] = useState(false);
   const { toast } = useToast();
   
   // Initialize on first load
@@ -50,10 +45,6 @@ export const useQuiz = () => {
     if (!adsSynced) {
       syncAdSlotsToLocal().then(() => {
         setAdsSynced(true);
-        const adSlotsStatus = getSyncStatus('adSlots');
-        if (adSlotsStatus.status === 'completed') {
-          console.log('Ad slots synced successfully');
-        }
       });
     }
     
@@ -116,15 +107,12 @@ export const useQuiz = () => {
       // Sync to Supabase if user is logged in
       if (username) {
         try {
-          setSyncingData(true);
           // Sync points and quiz answer to Supabase
           await syncUserPoints(username, newTotal);
           await syncPointsData(username);
           await syncQuizAnswersToSupabase(username);
-          setSyncingData(false);
         } catch (error) {
           console.error('Error syncing quiz data:', error);
-          setSyncingData(false);
         }
       }
     }
@@ -187,7 +175,6 @@ export const useQuiz = () => {
     userPoints,
     dailyPoints,
     monthlyPoints,
-    syncingData,
     handleQuestionComplete
   };
 };
