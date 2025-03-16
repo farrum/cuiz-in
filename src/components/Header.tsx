@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Award, User, Home, UserPlus, Target, Shield } from 'lucide-react';
+import { Award, User, Home, UserPlus, Target, Shield, LogIn } from 'lucide-react';
 import { cn } from "@/utils/animations";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -159,29 +159,55 @@ const Header: React.FC = () => {
         </div>
         
         <nav className="flex items-center space-x-1">
-          {[
-            { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
-            { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
-            { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
-            { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
-            ...(isAdmin ? [{ path: '/admin', label: 'Admin', icon: <Shield className="w-5 h-5" /> }] : []),
-          ].map((item, index) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
-                location.pathname === item.path
-                  ? "text-primary-foreground bg-primary shadow-md"
-                  : "text-foreground hover:bg-secondary",
-                `animate-slide-up delay-[${index * 100}ms]`
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              {item.icon}
-              <span className="hidden sm:inline">{item.label}</span>
-            </Link>
-          ))}
+          {isLoggedIn ? (
+            // Navigation for logged-in users
+            [
+              { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
+              { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
+              { path: '/referral', label: 'Referrals', icon: <UserPlus className="w-5 h-5" /> },
+              { path: '/profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+              ...(isAdmin ? [{ path: '/admin', label: 'Admin', icon: <Shield className="w-5 h-5" /> }] : []),
+            ].map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
+                  location.pathname === item.path
+                    ? "text-primary-foreground bg-primary shadow-md"
+                    : "text-foreground hover:bg-secondary",
+                  `animate-slide-up delay-[${index * 100}ms]`
+                )}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {item.icon}
+                <span className="hidden sm:inline">{item.label}</span>
+              </Link>
+            ))
+          ) : (
+            // Navigation for non-logged-in users
+            [
+              { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
+              { path: '/login', label: 'Login', icon: <LogIn className="w-5 h-5" /> },
+              { path: '/register', label: 'Register', icon: <User className="w-5 h-5" /> },
+            ].map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300",
+                  location.pathname === item.path
+                    ? "text-primary-foreground bg-primary shadow-md"
+                    : "text-foreground hover:bg-secondary",
+                  `animate-slide-up delay-[${index * 100}ms]`
+                )}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {item.icon}
+                <span className="hidden sm:inline">{item.label}</span>
+              </Link>
+            ))
+          )}
         </nav>
       </div>
     </header>

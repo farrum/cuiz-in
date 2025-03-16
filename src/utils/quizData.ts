@@ -1,3 +1,4 @@
+
 export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
@@ -237,6 +238,9 @@ export const calculatePoints = (isCorrect: boolean, difficulty: string = 'easy')
 };
 
 export const logPointsForDay = async (points: number, userId?: string | null) => {
+  // Check if the daily points should be reset
+  await checkDailyPointsReset(userId);
+
   // Store in localStorage for client-side tracking
   const today = new Date().toISOString().split('T')[0];
   const key = `daily_points_${today}`;
@@ -283,6 +287,9 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
 };
 
 export const logPointsForMonth = async (points: number, userId?: string | null) => {
+  // Check if the monthly points should be reset
+  await checkMonthlyPointsReset(userId);
+
   // Store in localStorage for client-side tracking
   const today = new Date();
   const month = today.getMonth();
@@ -327,6 +334,95 @@ export const logPointsForMonth = async (points: number, userId?: string | null) 
       console.log(`Logged ${points} points for user ${userId} for month ${monthKey}`);
     } catch (error) {
       console.error('Error updating monthly points:', error);
+    }
+  }
+};
+
+// Function to check and reset daily points if necessary
+const checkDailyPointsReset = async (userId?: string | null) => {
+  if (!userId) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Check the last reset date from localStorage
+  const lastDailyResetKey = `last_daily_reset_${userId}`;
+  const lastReset = localStorage.getItem(lastDailyResetKey);
+  
+  // If no reset has happened yet or it's a different day, reset the points
+  if (!lastReset || lastReset !== today) {
+    try {
+      // Get the current date at midnight
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+      
+      // Reset in database - update today's record to zero or create a new one
+      const { data, error } = await supabase
+        .from('daily_points')
+        .upsert({ 
+          user_id: userId, 
+          date: today, 
+          points: 0 
+        })
+        .eq('user_id', userId)
+        .eq('date', today);
+      
+      if (error) {
+        console.error('Error resetting daily points:', error);
+      } else {
+        console.log('Daily points have been reset for', userId);
+        
+        // Also reset in localStorage
+        localStorage.setItem(`daily_points_${today}`, '0');
+        localStorage.setItem(lastDailyResetKey, today);
+      }
+    } catch (error) {
+      console.error('Error in daily points reset:', error);
+    }
+  }
+};
+
+// Function to check and reset monthly points if necessary
+const checkMonthlyPointsReset = async (userId?: string | null) => {
+  if (!userId) return;
+  
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+  
+  // Check the last reset month from localStorage
+  const lastMonthlyResetKey = `last_monthly_reset_${userId}`;
+  const lastReset = localStorage.getItem(lastMonthlyResetKey);
+  
+  // If no reset has happened yet or it's a different month, reset the points
+  if (!lastReset || lastReset !== currentMonth) {
+    try {
+      // Get the current month's first day
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // If the last reset date is more than 30 days ago, reset the monthly points
+      if (!lastReset || new Date(lastReset).getTime() < new Date(firstDayOfMonth).getTime()) {
+        // Reset in database - update this month's record to zero or create a new one
+        const { data, error } = await supabase
+          .from('monthly_points')
+          .upsert({
+            user_id: userId,
+            month: currentMonth,
+            points: 0
+          })
+          .eq('user_id', userId)
+          .eq('month', currentMonth);
+        
+        if (error) {
+          console.error('Error resetting monthly points:', error);
+        } else {
+          console.log('Monthly points have been reset for', userId);
+          
+          // Also reset in localStorage
+          localStorage.setItem(`monthly_points_${now.getFullYear()}_${now.getMonth()}`, '0');
+          localStorage.setItem(lastMonthlyResetKey, currentMonth);
+        }
+      }
+    } catch (error) {
+      console.error('Error in monthly points reset:', error);
     }
   }
 };
