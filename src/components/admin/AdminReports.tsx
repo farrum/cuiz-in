@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,8 @@ import {
   Calendar,
   PlayCircle, 
   LogIn,
-  Trophy
+  Trophy,
+  Loader2
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -26,7 +28,7 @@ import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Loader2 } from "@/components/ui/loader";
+import { generateExcelFile, prepareAdTrackingDataForExport } from "@/utils/excelUtils";
 
 // Function to export data to CSV
 const downloadCSV = (data: any[], filename: string) => {
