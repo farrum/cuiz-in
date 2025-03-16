@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import MD5 from 'crypto-js/md5';
 import { v4 as uuidv4 } from 'uuid';
+import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -17,9 +18,92 @@ const UserRegistrationForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [referrerName, setReferrerName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Extract referral code from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get('ref');
+    
+    if (refCode) {
+      setReferralCode(refCode);
+      // Check if referrer exists in the system
+      checkReferrer(refCode);
+    }
+  }, [location]);
+  
+  // Function to check if referrer exists
+  const checkReferrer = async (referrerUsername: string) => {
+    try {
+      const { data: referrerData, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', referrerUsername)
+        .single();
+        
+      if (error) {
+        console.error("Error checking referrer:", error);
+        return;
+      }
+      
+      if (referrerData) {
+        setReferrerName(referrerData.username);
+        toast({
+          title: "Referral Applied",
+          description: `You were referred by ${referrerData.username}`,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to check referrer:", err);
+    }
+  };
+  
+  // Check username availability with debounce
+  useEffect(() => {
+    if (!username) return;
+    
+    const timer = setTimeout(async () => {
+      checkUsernameAvailability(username);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [username]);
+  
+  const checkUsernameAvailability = async (username: string) => {
+    if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      return;
+    }
+    
+    setIsCheckingUsername(true);
+    setUsernameError('');
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking username:', error);
+      }
+      
+      if (data) {
+        setUsernameError('Username already taken');
+      }
+    } catch (err) {
+      console.error('Failed to check username availability:', err);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
   
   // Function to hash password with MD5
   const hashPassword = (password: string): string => {
@@ -28,6 +112,15 @@ const UserRegistrationForm: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (usernameError) {
+      toast({
+        title: "Username Error",
+        description: usernameError,
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -135,10 +228,14 @@ const UserRegistrationForm: React.FC = () => {
                 referrer_name: referrerData.username,
                 referred_id: userId,
                 referred_name: username,
+                referred_email: email || undefined,
                 date: currentDate,
                 active_this_month: true,
-                last_active_date: currentDate
+                last_active_date: currentDate,
+                status: 'active'
               });
+              
+            console.log('Referral recorded successfully');
           }
         } catch (referralErr) {
           console.error('Referral processing error:', referralErr);
@@ -174,19 +271,35 @@ const UserRegistrationForm: React.FC = () => {
         <CardDescription>
           Start earning points by answering quiz questions
         </CardDescription>
+        {referrerName && (
+          <div className="mt-2 p-2 bg-primary/10 rounded-md text-sm">
+            You were referred by <strong>{referrerName}</strong>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter a username"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter a username"
+                className={usernameError ? "border-red-500" : ""}
+                required
+              />
+              {isCheckingUsername && (
+                <div className="absolute right-2 top-2">
+                  <Loader className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            {usernameError && (
+              <p className="text-sm text-red-500">{usernameError}</p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -247,7 +360,7 @@ const UserRegistrationForm: React.FC = () => {
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || !!usernameError}>
             {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </form>

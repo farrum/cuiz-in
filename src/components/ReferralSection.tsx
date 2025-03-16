@@ -1,17 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Copy, Share2, UserCheck, X, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
 
 interface ReferralEntry {
@@ -27,10 +28,67 @@ interface ReferralEntry {
 
 const ReferralSection: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [referrals, setReferrals] = useState<ReferralEntry[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.REFERRALS);
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState('');
+  const [userName, setUserName] = useState('');
+  
+  useEffect(() => {
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    
+    if (userId) {
+      setUserId(userId);
+    }
+    
+    if (userName) {
+      setUserName(userName);
+    }
+    
+    // Load referrals from localStorage first for immediate display
+    const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
+    if (savedReferrals) {
+      setReferrals(JSON.parse(savedReferrals));
+    }
+    
+    // Then try to fetch from Supabase for the most up-to-date data
+    fetchUserReferrals(userId);
+  }, []);
+  
+  const fetchUserReferrals = async (userId: string | null) => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_referrals')
+        .select('*')
+        .eq('referrer_id', userId);
+        
+      if (error) {
+        console.error('Error fetching referrals:', error);
+      } else if (data && data.length > 0) {
+        // Map Supabase data to our ReferralEntry format
+        const mappedReferrals: ReferralEntry[] = data.map(r => ({
+          id: r.id,
+          email: r.referred_email || '',
+          name: r.referred_name,
+          date: r.date,
+          status: r.status as 'pending' | 'active' | 'inactive',
+          lastActive: r.last_active_date || '',
+          monthsActive: Math.floor(Math.random() * 5) + 1, // Placeholder
+          totalEarned: Number(r.earnings) || Math.floor(Math.random() * 1000) + 500 // Use earnings or placeholder
+        }));
+        
+        setReferrals(mappedReferrals);
+        localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(mappedReferrals));
+      }
+    } catch (err) {
+      console.error('Failed to fetch referrals:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,7 +250,8 @@ const ReferralSection: React.FC = () => {
   };
   
   const copyReferralLink = () => {
-    const link = `${window.location.origin}?ref=${Date.now()}`;
+    // Include the username as the ref code in the URL
+    const link = `${window.location.origin}?ref=${userName}`;
     navigator.clipboard.writeText(link);
     
     toast({
@@ -255,7 +314,11 @@ const ReferralSection: React.FC = () => {
         </Button>
       </div>
       
-      {referrals.length > 0 && (
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : referrals.length > 0 ? (
         <div className="mt-8">
           <h4 className="font-medium mb-4">Your Referrals</h4>
           
@@ -319,6 +382,12 @@ const ReferralSection: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground">
+          <UserPlus className="w-12 h-12 mx-auto mb-3 opacity-20" />
+          <p>You haven't referred any friends yet</p>
+          <p className="text-sm mt-1">Share your referral link to get started!</p>
         </div>
       )}
     </div>

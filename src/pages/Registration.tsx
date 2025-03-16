@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import UserRegistrationForm from '@/components/UserRegistrationForm';
 
 const Registration: React.FC = () => {
+  const location = useLocation();
+  
   return (
     <main className="min-h-screen flex flex-col">
       <Header />
