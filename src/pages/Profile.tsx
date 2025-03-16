@@ -55,6 +55,8 @@ const Profile: React.FC = () => {
     
     setUserName(name);
     
+    let finalUserId = userIdFromStorage || '';
+    
     if (userIdFromStorage) {
       setUserId(userIdFromStorage);
       // Fetch referrer information if available
@@ -63,6 +65,7 @@ const Profile: React.FC = () => {
       // Generate a consistent user ID from the username
       const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
       setUserId(generatedUserId);
+      finalUserId = generatedUserId;
     }
     
     // Get UPI ID
@@ -82,7 +85,7 @@ const Profile: React.FC = () => {
     setAchievements(savedAchievements);
     
     // Check and award badges if applicable
-    checkAndAwardBadges(userId || generatedUserId);
+    checkAndAwardBadges(finalUserId);
     
     // Set up listener for point updates
     const handlePointsUpdate = () => {
@@ -94,7 +97,7 @@ const Profile: React.FC = () => {
       setAchievements(updatedAchievements);
       
       // Check for new badges
-      checkAndAwardBadges(userId || generatedUserId);
+      checkAndAwardBadges(finalUserId);
     };
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
