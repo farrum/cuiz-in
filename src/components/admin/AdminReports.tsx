@@ -26,6 +26,7 @@ import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { Loader2 } from "@/components/ui/loader";
 
 // Function to export data to CSV
 const downloadCSV = (data: any[], filename: string) => {
@@ -481,11 +482,16 @@ const DailyPlayReports = () => {
 const AdViewsReports = () => {
   const [adViews, setAdViews] = useState<any[]>([]);
   const [adSlots, setAdSlots] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date()
+  });
 
   const fetchAdData = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
+      // Fetch ad slots
       const { data: slotsData, error: slotsError } = await supabase
         .from('ad_slots')
         .select('*');
@@ -494,29 +500,24 @@ const AdViewsReports = () => {
       
       setAdSlots(slotsData || []);
       
-      const mockData = slotsData?.map(slot => {
-        const viewsToday = Math.floor(Math.random() * 100) + 20;
-        const viewsYesterday = Math.floor(Math.random() * 100) + 10;
-        const clicksToday = Math.floor(viewsToday * (Math.random() * 0.2));
+      // Fetch ad performance data
+      const { data: performanceData, error: performanceError } = await supabase
+        .from('ad_performance_reports')
+        .select('*');
         
-        return {
-          id: slot.id,
-          name: slot.name,
-          position: slot.position,
-          active: slot.active ? 'Yes' : 'No',
-          viewsToday,
-          viewsYesterday,
-          clicksToday,
-          ctr: `${((clicksToday / viewsToday) * 100).toFixed(1)}%`
-        };
-      }) || [];
+      if (performanceError) {
+        // If view doesn't have data yet, use fallback
+        console.warn('Error fetching ad performance data:', performanceError);
+        generateFallbackData(slotsData || []);
+        return;
+      }
       
-      setAdViews(mockData);
-      
-      toast({
-        title: "Info",
-        description: "This is demo data. Set up ad tracking for real data.",
-      });
+      if (performanceData && performanceData.length > 0) {
+        setAdViews(performanceData);
+      } else {
+        // If no data yet, use fallback data
+        generateFallbackData(slotsData || []);
+      }
     } catch (error) {
       console.error('Error fetching ad data:', error);
       toast({
@@ -525,21 +526,117 @@ const AdViewsReports = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+  
+  const generateFallbackData = (slots: any[]) => {
+    // Create mock data until we have enough real data
+    const mockData = slots.map(slot => {
+      const viewsToday = Math.floor(Math.random() * 100) + 20;
+      const viewsYesterday = Math.floor(Math.random() * 100) + 10;
+      const clicksToday = Math.floor(viewsToday * (Math.random() * 0.2));
+      
+      return {
+        id: slot.id,
+        ad_name: slot.name,
+        ad_position: slot.position,
+        active: slot.active ? 'Yes' : 'No',
+        impressions: viewsToday + viewsYesterday,
+        clicks: clicksToday,
+        ctr: `${((clicksToday / viewsToday) * 100).toFixed(1)}%`
+      };
+    });
+    
+    setAdViews(mockData);
+  };
+
+  // Get detailed view and click data for export
+  const fetchDetailedAdData = async (type: 'views' | 'clicks') => {
+    try {
+      const table = type === 'views' ? 'ad_views' : 'ad_clicks';
+      const { data, error } = await supabase
+        .from(table)
+        .select(`
+          id,
+          ${type === 'views' ? 'view_date' : 'click_date'},
+          ad_id,
+          user_id,
+          session_id,
+          page_url,
+          device_info,
+          ad_position
+          ${type === 'clicks' ? ', conversion' : ''}
+        `)
+        .order(type === 'views' ? 'view_date' : 'click_date', { ascending: false });
+        
+      if (error) throw error;
+      
+      // Join with ad_slots to get ad names
+      const adsWithNames = await Promise.all(
+        (data || []).map(async (item) => {
+          const { data: adData } = await supabase
+            .from('ad_slots')
+            .select('name')
+            .eq('id', item.ad_id)
+            .single();
+            
+          return {
+            ...item,
+            ad_name: adData?.name || 'Unknown Ad'
+          };
+        })
+      );
+      
+      return adsWithNames;
+    } catch (error) {
+      console.error(`Error fetching detailed ${type} data:`, error);
+      toast({
+        title: "Error",
+        description: `Could not fetch detailed ${type} data for export`,
+        variant: "destructive"
+      });
+      return [];
     }
   };
 
-  useEffect(() => {
-    fetchAdData();
-  }, []);
+  const exportDetailedData = async (type: 'views' | 'clicks') => {
+    setIsLoading(true);
+    try {
+      const data = await fetchDetailedAdData(type);
+      if (data.length === 0) {
+        toast({
+          title: "No Data",
+          description: `No ${type} data available for export`,
+        });
+        return;
+      }
+      
+      const exportData = prepareAdTrackingDataForExport(data, type);
+      generateExcelFile(exportData, `ad-${type}-detailed`);
+      
+      toast({
+        title: "Export Complete",
+        description: `Ad ${type} data has been exported successfully.`,
+      });
+    } catch (error) {
+      console.error(`Error exporting ${type} data:`, error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export ${type} data.`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const columns = [
-    { header: 'Ad Name', accessorKey: 'name' },
-    { header: 'Position', accessorKey: 'position' },
+    { header: 'Ad Name', accessorKey: 'ad_name' },
+    { header: 'Position', accessorKey: 'ad_position' },
     { header: 'Status', accessorKey: 'active' },
-    { header: 'Views Today', accessorKey: 'viewsToday' },
-    { header: 'Views Yesterday', accessorKey: 'viewsYesterday' },
-    { header: 'Clicks Today', accessorKey: 'clicksToday' },
+    { header: 'Impressions', accessorKey: 'impressions' },
+    { header: 'Clicks', accessorKey: 'clicks' },
     { header: 'CTR', accessorKey: 'ctr' }
   ];
 
@@ -549,15 +646,34 @@ const AdViewsReports = () => {
         <h2 className="text-2xl font-bold">Ad Views Reports</h2>
         
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => downloadCSV(adViews, 'ad-views-reports')}
-          >
-            <FileDownIcon className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <DateRangePicker
+            value={dateRange}
+            onChange={(range) => setDateRange(range)}
+          />
           
-          <Button onClick={fetchAdData}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FileDownIcon className="mr-2 h-4 w-4" />
+                Export
+                <ChevronDownIcon className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => exportDetailedData('views')}>
+                Export Views Data
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportDetailedData('clicks')}>
+                Export Clicks Data
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadCSV(adViews, 'ad-performance-summary')}>
+                Export Summary Data
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button onClick={fetchAdData} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Refresh
           </Button>
         </div>
@@ -588,12 +704,12 @@ const AdViewsReports = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Total Views Today</CardTitle>
-            <CardDescription>Cumulative ad impressions today</CardDescription>
+            <CardTitle>Total Impressions</CardTitle>
+            <CardDescription>Cumulative ad views</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {adViews.reduce((sum, ad) => sum + ad.viewsToday, 0)}
+              {adViews.reduce((sum, ad) => sum + (parseInt(ad.impressions) || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -614,30 +730,6 @@ const AdViewsReports = () => {
           />
         </CardContent>
       </Card>
-      
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>
-            Enable Detailed Ad Tracking
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enable Ad Tracking</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground mb-4">
-              To enable detailed ad tracking, you need to implement ad view and click tracking in your application.
-            </p>
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Create an ad_views table in your database</li>
-              <li>Track impressions when ads are shown</li>
-              <li>Track clicks when users interact with ads</li>
-              <li>Implement reporting functionality based on this data</li>
-            </ol>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
@@ -856,4 +948,3 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
-

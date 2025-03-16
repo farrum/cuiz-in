@@ -1,6 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+
+// Get or create a session ID for tracking
+const getSessionId = (): string => {
+  let sessionId = localStorage.getItem('ad_tracking_session_id');
+  if (!sessionId) {
+    sessionId = uuidv4();
+    localStorage.setItem('ad_tracking_session_id', sessionId);
+  }
+  return sessionId;
+};
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
@@ -16,6 +27,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const [adLoaded, setAdLoaded] = useState(false);
   const [adContent, setAdContent] = useState('');
   const [adActive, setAdActive] = useState(true);
+  const [adId, setAdId] = useState<string | null>(null);
+  const sessionId = getSessionId();
   
   useEffect(() => {
     const fetchAds = async () => {
@@ -40,7 +53,11 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           
           setTimeout(() => {
             setAdContent(selectedAd.code);
+            setAdId(selectedAd.id);
             setAdLoaded(true);
+            
+            // Track the ad impression
+            trackAdImpression(selectedAd.id);
           }, 1000);
           
           setAdActive(true);
@@ -71,7 +88,11 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         // Simulate ad loading
         setTimeout(() => {
           setAdContent(selectedAd.code);
+          setAdId(selectedAd.id);
           setAdLoaded(true);
+          
+          // Track the ad impression
+          trackAdImpression(selectedAd.id);
         }, 1000);
         
         setAdActive(true);
@@ -83,6 +104,56 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     fetchAds();
   }, [position]);
+
+  // Track ad impression when it's displayed
+  const trackAdImpression = async (adSlotId: string) => {
+    if (!adSlotId) return;
+    
+    try {
+      const userId = localStorage.getItem('user_id') || null;
+      const pageUrl = window.location.href;
+      const deviceInfo = navigator.userAgent;
+      
+      // Record impression in database
+      await supabase.from('ad_views').insert({
+        ad_id: adSlotId,
+        user_id: userId,
+        session_id: sessionId,
+        page_url: pageUrl,
+        device_info: deviceInfo,
+        ad_position: position
+      });
+      
+      console.log(`Ad impression tracked: ${adSlotId}`);
+    } catch (error) {
+      console.error('Error tracking ad impression:', error);
+    }
+  };
+
+  // Track ad click when user interacts with the ad
+  const handleAdClick = async () => {
+    if (!adId) return;
+    
+    try {
+      const userId = localStorage.getItem('user_id') || null;
+      const pageUrl = window.location.href;
+      const deviceInfo = navigator.userAgent;
+      
+      // Record click in database
+      await supabase.from('ad_clicks').insert({
+        ad_id: adId,
+        user_id: userId,
+        session_id: sessionId,
+        page_url: pageUrl,
+        device_info: deviceInfo,
+        ad_position: position
+      });
+      
+      console.log(`Ad click tracked: ${adId}`);
+    } catch (error) {
+      console.error('Error tracking ad click:', error);
+    }
+  };
 
   if (!adActive) {
     return null; // Don't render anything if no active ad for this position
@@ -121,6 +192,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       className={`w-full ${getSizeClasses()} bg-secondary/30 border border-secondary rounded-lg 
       flex items-center justify-center ${getPositionClasses()} 
       transition-all duration-300 ${adLoaded ? 'opacity-100' : 'opacity-50'} ${className}`}
+      onClick={handleAdClick}
     >
       {!adLoaded ? (
         <div className="flex items-center justify-center space-x-2">

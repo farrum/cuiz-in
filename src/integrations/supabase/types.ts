@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ad_clicks: {
+        Row: {
+          ad_id: string
+          ad_position: string
+          click_date: string
+          conversion: boolean | null
+          device_info: string | null
+          id: string
+          page_url: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          ad_id: string
+          ad_position: string
+          click_date?: string
+          conversion?: boolean | null
+          device_info?: string | null
+          id?: string
+          page_url?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          ad_id?: string
+          ad_position?: string
+          click_date?: string
+          conversion?: boolean | null
+          device_info?: string | null
+          id?: string
+          page_url?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_clicks_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_slots: {
         Row: {
           active: boolean | null
@@ -38,6 +82,47 @@ export type Database = {
           position?: string
         }
         Relationships: []
+      }
+      ad_views: {
+        Row: {
+          ad_id: string
+          ad_position: string
+          device_info: string | null
+          id: string
+          page_url: string | null
+          session_id: string
+          user_id: string | null
+          view_date: string
+        }
+        Insert: {
+          ad_id: string
+          ad_position: string
+          device_info?: string | null
+          id?: string
+          page_url?: string | null
+          session_id: string
+          user_id?: string | null
+          view_date?: string
+        }
+        Update: {
+          ad_id?: string
+          ad_position?: string
+          device_info?: string | null
+          id?: string
+          page_url?: string | null
+          session_id?: string
+          user_id?: string | null
+          view_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_points: {
         Row: {
@@ -361,7 +446,43 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ad_performance_reports: {
+        Row: {
+          ad_id: string | null
+          ad_name: string | null
+          ad_position: string | null
+          clicks: number | null
+          ctr: number | null
+          impressions: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_ad_reports: {
+        Row: {
+          ad_id: string | null
+          ad_position: string | null
+          impressions: number | null
+          report_date: string | null
+          unique_views: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
@@ -27,42 +26,40 @@ const QuizPage: React.FC = () => {
   const [adsSynced, setAdsSynced] = useState(false);
   const { toast } = useToast();
   
-  // Initialize on first load
   useEffect(() => {
-    // Load user points
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
-    // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    // Sync ad slots from Supabase
     if (!adsSynced) {
       syncAdSlotsToLocal().then(() => {
         setAdsSynced(true);
       });
     }
     
-    // Get first question
     loadNewQuestion();
     
-    // Fetch daily and monthly points
     fetchPoints();
+  }, []);
+  
+  useEffect(() => {
+    if (!localStorage.getItem('ad_tracking_session_id')) {
+      const sessionId = crypto.randomUUID ? crypto.randomUUID() : 
+        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('ad_tracking_session_id', sessionId);
+    }
   }, []);
   
   const fetchPoints = async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
     
-    // Get today's date
     const today = new Date().toISOString().split('T')[0];
-    
-    // Get current month
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     
-    // Fetch daily points
     try {
       const { data: dailyData } = await supabase
         .from('daily_points')
@@ -77,7 +74,6 @@ const QuizPage: React.FC = () => {
         setDailyPoints(0);
       }
       
-      // Fetch monthly points
       const { data: monthlyData } = await supabase
         .from('monthly_points')
         .select('points')
@@ -91,7 +87,6 @@ const QuizPage: React.FC = () => {
         setMonthlyPoints(0);
       }
       
-      // Also check total points
       const { data: profileData } = await supabase
         .from('profiles')
         .select('points')
@@ -111,13 +106,11 @@ const QuizPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Get a random question and then set it to state
       const question = await getRandomQuestion();
       setCurrentQuestion(question);
     } catch (error) {
       console.error('Error loading question:', error);
     } finally {
-      // Simulate loading delay for smoother transitions
       setTimeout(() => {
         setIsLoading(false);
       }, 600);
@@ -127,15 +120,12 @@ const QuizPage: React.FC = () => {
   const handleQuestionComplete = (isCorrect: boolean) => {
     if (!currentQuestion) return;
     
-    // Update questions answered
     setQuestionsAnswered(prev => prev + 1);
     
-    // Update streak
     if (isCorrect) {
       const newStreak = streak + 1;
       setStreak(newStreak);
       
-      // Bonus for streaks
       if (newStreak % 5 === 0) {
         const bonusPoints = 5;
         toast({
@@ -147,15 +137,11 @@ const QuizPage: React.FC = () => {
       setStreak(0);
     }
     
-    // Wait a bit then fetch updated points data from Supabase
     setTimeout(() => {
       fetchPoints();
-      
-      // Dispatch event to notify other components about point updates
       window.dispatchEvent(new Event('pointsUpdated'));
     }, 1000);
     
-    // Load the next question
     loadNewQuestion();
   };
 
@@ -164,7 +150,6 @@ const QuizPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
-        {/* First Advertisement - Top */}
         <AdvertisementBanner position="top" />
         
         <div className="flex flex-col md:flex-row gap-6 mb-8">
@@ -184,7 +169,6 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Daily & Monthly Target Progress */}
         <div className="glass rounded-2xl p-4 mb-8">
           <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
           <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2 mb-4" />
@@ -197,7 +181,6 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Second Advertisement - After Stats */}
         <AdvertisementBanner position="middle" size="small" />
         
         <div className="mb-6 mt-6">
@@ -212,7 +195,6 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Third Advertisement - Before Question */}
         <AdvertisementBanner position="middle" />
         
         {isLoading ? (
@@ -233,7 +215,6 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        {/* Fourth Advertisement - Bottom */}
         <AdvertisementBanner position="bottom" />
       </main>
     </div>
