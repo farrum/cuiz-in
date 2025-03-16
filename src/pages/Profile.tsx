@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -6,7 +5,7 @@ import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
 import BadgesSection from '@/components/BadgesSection';
-import { STORAGE_KEYS, getPointsForToday, getPointsForMonth, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
+import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
 import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -76,25 +75,25 @@ const Profile: React.FC = () => {
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    // Get daily and monthly points
-    setDailyPoints(getPointsForToday());
-    setMonthlyPoints(getPointsForMonth());
-    
-    // Get achievements
+    // Get achievements - we'll limit this to current month + last 3 months
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
-    setAchievements(savedAchievements);
+    const filteredAchievements = getRecentAchievements(savedAchievements);
+    setAchievements(filteredAchievements);
     
     // Check and award badges if applicable
     checkAndAwardBadges(finalUserId);
     
+    // Fetch progress data from database
+    fetchProgressData(finalUserId);
+    
     // Set up listener for point updates
     const handlePointsUpdate = () => {
-      setDailyPoints(getPointsForToday());
-      setMonthlyPoints(getPointsForMonth());
+      fetchProgressData(finalUserId);
       
       // Refresh achievements
       const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
-      setAchievements(updatedAchievements);
+      const filteredUpdatedAchievements = getRecentAchievements(updatedAchievements);
+      setAchievements(filteredUpdatedAchievements);
       
       // Check for new badges
       checkAndAwardBadges(finalUserId);
@@ -104,7 +103,66 @@ const Profile: React.FC = () => {
     setIsLoading(false);
     
     return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
-  }, [navigate, userId]);
+  }, [navigate]);
+  
+  const getRecentAchievements = (allAchievements: Achievement[]) => {
+    // Get current month
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // Filter to keep only current month + last 3 months
+    return allAchievements.filter(achievement => {
+      const [year, month] = achievement.month.split('-').map(n => parseInt(n));
+      
+      // Calculate months difference
+      const monthsDiff = (currentYear - year) * 12 + (currentMonth - (month - 1));
+      
+      // Keep if it's within current month or 3 months prior
+      return monthsDiff >= 0 && monthsDiff <= 3;
+    });
+  };
+  
+  const fetchProgressData = async (userId: string) => {
+    try {
+      // Get today's date
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get current month
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+      
+      // Fetch daily points
+      const { data: dailyData } = await supabase
+        .from('daily_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle();
+        
+      if (dailyData) {
+        setDailyPoints(Number(dailyData.points));
+      } else {
+        setDailyPoints(0);
+      }
+      
+      // Fetch monthly points
+      const { data: monthlyData } = await supabase
+        .from('monthly_points')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('month', currentMonth)
+        .maybeSingle();
+        
+      if (monthlyData) {
+        setMonthlyPoints(Number(monthlyData.points));
+      } else {
+        setMonthlyPoints(0);
+      }
+    } catch (error) {
+      console.error('Error fetching progress data:', error);
+    }
+  };
   
   const fetchReferrerInfo = async (userId: string) => {
     try {
@@ -326,7 +384,7 @@ const Profile: React.FC = () => {
                   <div className="bg-primary/10 p-2 rounded-full">
                     <Award className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-medium">Achievements</h3>
+                  <h3 className="font-medium">Recent Achievements</h3>
                 </div>
                 
                 <div className="space-y-4">

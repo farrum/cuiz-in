@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { IndianRupee, ArrowUpCircle, Award } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WithdrawalRequest {
   id: string;
@@ -33,10 +34,18 @@ const WithdrawalSection: React.FC = () => {
   });
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const { toast } = useToast();
+  const [userId, setUserId] = useState('');
+  const [userName, setUserName] = useState('');
   
   useEffect(() => {
     const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setCashAvailable(calculateCashAmount(savedPoints));
+    
+    // Set user ID and username
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || '';
+    const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
+    setUserId(userId);
+    setUserName(userName);
     
     // Load achievements
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
@@ -47,9 +56,59 @@ const WithdrawalSection: React.FC = () => {
     if (upiId) {
       setPaymentMethod(upiId);
     }
+    
+    // Fetch payment status updates from Supabase
+    if (userId) {
+      fetchPaymentUpdates(userId);
+    }
+    
+    // Set up interval to check payment status
+    const intervalId = setInterval(() => {
+      if (userId) {
+        fetchPaymentUpdates(userId);
+      }
+    }, 10000);
+    
+    return () => clearInterval(intervalId);
   }, []);
   
-  const handleWithdrawalRequest = (e: React.FormEvent) => {
+  const fetchPaymentUpdates = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error fetching payment updates:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Update local withdrawals with status from database
+        const localWithdrawals = JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]');
+        
+        // Map the withdrawals to include status updates from the database
+        const updatedWithdrawals = localWithdrawals.map((withdrawal: WithdrawalRequest) => {
+          const matchingPayment = data.find(p => p.transaction_id === withdrawal.id);
+          if (matchingPayment) {
+            return {
+              ...withdrawal,
+              status: matchingPayment.status as 'pending' | 'completed' | 'rejected'
+            };
+          }
+          return withdrawal;
+        });
+        
+        setWithdrawals(updatedWithdrawals);
+        localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
+      }
+    } catch (err) {
+      console.error('Error checking payment updates:', err);
+    }
+  };
+  
+  const handleWithdrawalRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const amount = parseFloat(withdrawalAmount);
@@ -81,9 +140,11 @@ const WithdrawalSection: React.FC = () => {
       return;
     }
     
+    const transactionId = Date.now().toString();
+    
     // Create withdrawal request
     const newWithdrawal: WithdrawalRequest = {
-      id: Date.now().toString(),
+      id: transactionId,
       amount,
       date: new Date().toISOString(),
       status: 'pending',
@@ -93,6 +154,28 @@ const WithdrawalSection: React.FC = () => {
     const updatedWithdrawals = [...withdrawals, newWithdrawal];
     setWithdrawals(updatedWithdrawals);
     localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
+    
+    // Add withdrawal to Supabase payments table
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .insert({
+          user_id: userId,
+          username: userName,
+          amount: amount,
+          method: paymentMethod,
+          type: 'withdrawal',
+          status: 'pending',
+          transaction_id: transactionId,
+          date: new Date().toISOString().split('T')[0]
+        });
+        
+      if (error) {
+        console.error('Error creating payment record:', error);
+      }
+    } catch (err) {
+      console.error('Error creating payment record:', err);
+    }
     
     // Subtract points (only when withdrawal is confirmed in a real app)
     const pointsToDeduct = amount * 100;
@@ -111,19 +194,16 @@ const WithdrawalSection: React.FC = () => {
     
     toast({
       title: "Withdrawal Requested",
-      description: `Your withdrawal request for ₹${amount.toFixed(2)} has been submitted`,
+      description: `Your withdrawal request for ₹${amount.toFixed(2)} has been submitted for approval`,
     });
-    
-    // Simulate processing in a real app
-    setTimeout(() => {
-      simulateWithdrawalProcessing(newWithdrawal.id);
-    }, 5000);
   };
   
-  const handleClaimAchievement = (achievement: Achievement) => {
+  const handleClaimAchievement = async (achievement: Achievement) => {
+    const transactionId = Date.now().toString();
+    
     // Create a withdrawal request for the achievement reward
     const newWithdrawal: WithdrawalRequest = {
-      id: Date.now().toString(),
+      id: transactionId,
       amount: achievement.reward,
       date: new Date().toISOString(),
       status: 'pending',
@@ -133,6 +213,28 @@ const WithdrawalSection: React.FC = () => {
     const updatedWithdrawals = [...withdrawals, newWithdrawal];
     setWithdrawals(updatedWithdrawals);
     localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
+    
+    // Add withdrawal to Supabase payments table
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .insert({
+          user_id: userId,
+          username: userName,
+          amount: achievement.reward,
+          method: paymentMethod || 'Monthly Reward',
+          type: 'achievement',
+          status: 'pending',
+          transaction_id: transactionId,
+          date: new Date().toISOString().split('T')[0]
+        });
+        
+      if (error) {
+        console.error('Error creating payment record:', error);
+      }
+    } catch (err) {
+      console.error('Error creating payment record:', err);
+    }
     
     // Mark achievement as claimed
     const updatedAchievements = achievements.map(a => 
@@ -144,24 +246,6 @@ const WithdrawalSection: React.FC = () => {
     toast({
       title: "Reward Claimed",
       description: `Your reward of ₹${achievement.reward.toFixed(2)} has been requested for withdrawal`,
-    });
-    
-    // Simulate processing
-    setTimeout(() => {
-      simulateWithdrawalProcessing(newWithdrawal.id);
-    }, 5000);
-  };
-  
-  const simulateWithdrawalProcessing = (id: string) => {
-    const updated = withdrawals.map(w => 
-      w.id === id ? { ...w, status: 'completed' as const } : w
-    );
-    setWithdrawals(updated);
-    localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updated));
-    
-    toast({
-      title: "Withdrawal Completed",
-      description: "Your withdrawal has been processed successfully",
     });
   };
   
@@ -306,7 +390,7 @@ const WithdrawalSection: React.FC = () => {
                     </span>
                   ) : (
                     <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-                      Processing
+                      Awaiting Approval
                     </span>
                   )}
                 </div>
