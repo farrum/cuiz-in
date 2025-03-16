@@ -3,17 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Copy, Share2, UserCheck, X, Clock } from 'lucide-react';
+import { UserPlus, Copy, ArrowUp, Award, Shield, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Progress } from '@/components/ui/progress';
+import { Separator } from "@/components/ui/separator";
 
 interface ReferralEntry {
   id: string;
@@ -32,6 +26,7 @@ const ReferralSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
+  const [isTeamLeader, setIsTeamLeader] = useState(false);
   
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -48,7 +43,12 @@ const ReferralSection: React.FC = () => {
     // Load referrals from localStorage first for immediate display
     const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
     if (savedReferrals) {
-      setReferrals(JSON.parse(savedReferrals));
+      const parsedReferrals = JSON.parse(savedReferrals);
+      setReferrals(parsedReferrals);
+      
+      // Check if user is a team leader (10+ active referrals)
+      const activeReferrals = parsedReferrals.filter(r => r.status === 'active').length;
+      setIsTeamLeader(activeReferrals >= 10);
     }
     
     // Then try to fetch from Supabase for the most up-to-date data
@@ -82,6 +82,10 @@ const ReferralSection: React.FC = () => {
         
         setReferrals(mappedReferrals);
         localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(mappedReferrals));
+        
+        // Check if user is a team leader (10+ active referrals)
+        const activeReferrals = mappedReferrals.filter(r => r.status === 'active').length;
+        setIsTeamLeader(activeReferrals >= 10);
       }
     } catch (err) {
       console.error('Failed to fetch referrals:', err);
@@ -173,8 +177,8 @@ const ReferralSection: React.FC = () => {
     window.dispatchEvent(new Event('pointsUpdated'));
     
     toast({
-      title: "Referral Bonus!",
-      description: "Your friend signed up and played! You earned ₹500!",
+      title: "Referral Success!",
+      description: "Your friend signed up! You'll earn ₹500 after they play for one day.",
     });
   };
   
@@ -195,60 +199,6 @@ const ReferralSection: React.FC = () => {
     localStorage.setItem('quiz_app_achievements', JSON.stringify(achievements));
   };
   
-  const simulateMonthlyActivity = (id: string, isActive: boolean) => {
-    // Update referral status for the new month
-    const updated = referrals.map(ref => {
-      if (ref.id === id) {
-        if (isActive && ref.status === 'active') {
-          // Another month active - add ₹500 more
-          return { 
-            ...ref, 
-            lastActive: new Date().toISOString(),
-            monthsActive: ref.monthsActive + 1,
-            totalEarned: ref.totalEarned + 500
-          };
-        } else if (!isActive && ref.status === 'active') {
-          // Friend stopped playing
-          return { 
-            ...ref, 
-            status: 'inactive' as const,
-          };
-        } else if (isActive && ref.status === 'inactive') {
-          // Friend resumed playing
-          return { 
-            ...ref, 
-            status: 'active' as const,
-            lastActive: new Date().toISOString(),
-          };
-        }
-      }
-      return ref;
-    });
-    
-    setReferrals(updated);
-    localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(updated));
-    
-    // If active, add another ₹500
-    if (isActive) {
-      // Add the money to the user's balance
-      addReferralReward(500);
-      
-      toast({
-        title: "Monthly Referral Bonus!",
-        description: "Your friend is still active! You earned another ₹500!",
-      });
-    } else {
-      toast({
-        title: "Referral Status Update",
-        description: "Your friend is no longer active this month.",
-        variant: "destructive",
-      });
-    }
-    
-    // Dispatch event to notify other components
-    window.dispatchEvent(new Event('pointsUpdated'));
-  };
-  
   const copyReferralLink = () => {
     // Include the username as the ref code in the URL
     const link = `${window.location.origin}?ref=${userName}`;
@@ -260,136 +210,132 @@ const ReferralSection: React.FC = () => {
     });
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <UserCheck className="w-4 h-4 text-green-500" />;
-      case 'inactive':
-        return <X className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-amber-500" />;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
+  const activeReferrals = referrals.filter(r => r.status === 'active').length;
+  const remainingForLeader = Math.max(0, 10 - activeReferrals);
+  const leaderProgressPercentage = Math.min(100, (activeReferrals / 10) * 100);
 
   return (
-    <div className="quiz-card">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-medium">Refer Friends</h3>
-        <div className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm">
-          ₹500 per month
-        </div>
-      </div>
-      
-      <p className="text-muted-foreground mb-6">
-        Invite your friends to play QuizPoints and earn ₹500 for each friend who joins and plays actively! 
-        You'll continue to earn ₹500 every month your friend remains active.
-      </p>
-      
-      <form onSubmit={handleInvite} className="mb-6">
-        <div className="flex gap-2">
-          <Input
-            type="email"
-            placeholder="friend@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit">
-            <UserPlus className="w-4 h-4 mr-2" />
-            <span>Invite</span>
-          </Button>
-        </div>
-      </form>
-      
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm text-muted-foreground">Or share your referral link</span>
-        <Button variant="outline" size="sm" onClick={copyReferralLink}>
-          <Copy className="w-4 h-4 mr-2" />
-          <span>Copy Link</span>
-        </Button>
-      </div>
-      
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : referrals.length > 0 ? (
-        <div className="mt-8">
-          <h4 className="font-medium mb-4">Your Referrals</h4>
-          
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Friend</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="text-right">Earned</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {referrals.map((ref) => (
-                  <TableRow key={ref.id}>
-                    <TableCell>
-                      <div className="font-medium">{ref.name}</div>
-                      <div className="text-xs text-muted-foreground">{ref.email}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(ref.status)}
-                        <span className="capitalize">{ref.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDate(ref.lastActive)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="font-medium">₹{ref.totalEarned}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {ref.monthsActive} month{ref.monthsActive !== 1 ? 's' : ''}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+    <div className="space-y-8">
+      {/* First card: Referral Program Details */}
+      <div className="quiz-card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-medium">Refer Friends</h3>
+          <div className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm">
+            {isTeamLeader ? "Team Leader" : "Regular Member"}
           </div>
-          
-          {/* Demo buttons - For testing only */}
-          <div className="mt-4 border-t border-dashed pt-4">
-            <div className="text-xs text-muted-foreground mb-2">Demo Controls:</div>
-            <div className="flex flex-wrap gap-2">
-              {referrals.length > 0 && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => simulateMonthlyActivity(referrals[0].id, true)}
-                  >
-                    Simulate Monthly Activity
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => simulateMonthlyActivity(referrals[0].id, false)}
-                  >
-                    Simulate Inactivity
-                  </Button>
-                </>
-              )}
+        </div>
+        
+        <div className="space-y-6">
+          <div className="bg-secondary/30 p-4 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 bg-primary/10 p-2 rounded-full">
+                {isTeamLeader ? <Shield className="h-5 w-5 text-primary" /> : <Award className="h-5 w-5 text-primary" />}
+              </div>
+              <div>
+                <h4 className="font-medium text-lg">{isTeamLeader ? "Team Leader Benefits" : "Regular Referral Bonus"}</h4>
+                {isTeamLeader ? (
+                  <p className="text-muted-foreground mt-1">
+                    As a Team Leader, you earn ₹500 per month for each active referred player!
+                    Your members must remain active for the full month for you to receive the bonus.
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground mt-1">
+                    Invite your friends to play QuizPoints and earn ₹500 for each friend who joins and plays actively for one day.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
+
+          {!isTeamLeader && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-blue-100 dark:bg-blue-800/30 p-2 rounded-full">
+                  <ArrowUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-lg">Become a Team Leader</h4>
+                  <p className="text-muted-foreground mt-1">
+                    Refer 10 active friends to unlock Team Leader status and earn ₹500 monthly from each active referred player!
+                  </p>
+                  
+                  <div className="mt-4">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Progress: {activeReferrals} / 10 active referrals</span>
+                      <span>{remainingForLeader} more needed</span>
+                    </div>
+                    <Progress value={leaderProgressPercentage} className="h-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          <UserPlus className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p>You haven't referred any friends yet</p>
-          <p className="text-sm mt-1">Share your referral link to get started!</p>
+        
+        <Separator className="my-6" />
+        
+        <form onSubmit={handleInvite} className="mb-6">
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="friend@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit">
+              <UserPlus className="w-4 h-4 mr-2" />
+              <span>Invite</span>
+            </Button>
+          </div>
+        </form>
+        
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Or share your referral link</span>
+          <Button variant="outline" size="sm" onClick={copyReferralLink}>
+            <Copy className="w-4 h-4 mr-2" />
+            <span>Copy Link</span>
+          </Button>
         </div>
-      )}
+      </div>
+
+      {/* Statistics Card */}
+      <div className="quiz-card">
+        <h3 className="text-xl font-medium mb-6">Your Referral Stats</h3>
+        
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-secondary p-4 rounded-lg">
+              <div className="text-sm text-muted-foreground">Total Invited</div>
+              <div className="text-2xl font-bold">{referrals.length}</div>
+            </div>
+            
+            <div className="bg-secondary p-4 rounded-lg">
+              <div className="text-sm text-muted-foreground">Active Friends</div>
+              <div className="text-2xl font-bold">{activeReferrals}</div>
+            </div>
+            
+            <div className="bg-secondary p-4 rounded-lg">
+              <div className="text-sm text-muted-foreground">Total Earned</div>
+              <div className="text-2xl font-bold">
+                ₹{referrals.reduce((sum, r) => sum + (r.status === 'active' ? 500 : 0), 0)}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {referrals.length === 0 && !isLoading && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p>You haven't referred any friends yet</p>
+            <p className="text-sm mt-1">Share your referral link to get started!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
