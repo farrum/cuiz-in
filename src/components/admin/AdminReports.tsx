@@ -575,10 +575,12 @@ const AdViewsReports = () => {
               return null;
             }
             
-            if (!adItem.ad_id) {
-              console.warn('Missing ad_id in item:', adItem);
+            const typedAdItem = adItem as Record<string, any>;
+            
+            if (!typedAdItem.ad_id) {
+              console.warn('Missing ad_id in item:', typedAdItem);
               return {
-                ...adItem as Record<string, any>,
+                ...typedAdItem,
                 ad_name: 'Unknown Ad'
               };
             }
@@ -586,11 +588,11 @@ const AdViewsReports = () => {
             const { data: adData } = await supabase
               .from('ad_slots')
               .select('name')
-              .eq('id', adItem.ad_id)
+              .eq('id', typedAdItem.ad_id)
               .single();
               
             return {
-              ...adItem as Record<string, any>,
+              ...typedAdItem,
               ad_name: adData?.name || 'Unknown Ad'
             };
           } catch (err) {
@@ -599,8 +601,10 @@ const AdViewsReports = () => {
               return null;
             }
             
+            const typedAdItem = adItem as Record<string, any>;
+            
             return {
-              ...adItem as Record<string, any>,
+              ...typedAdItem,
               ad_name: 'Unknown Ad'
             };
           }
