@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,8 @@ import {
   Users, 
   Calendar,
   PlayCircle, 
-  LogIn 
+  LogIn,
+  Trophy
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -25,16 +25,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 
 // Function to export data to CSV
 const downloadCSV = (data: any[], filename: string) => {
-  // Create CSV content
   const csvContent = data.reduce((csv, row) => {
     const rowContent = Object.values(row).join(',');
     return `${csv}${rowContent}\n`;
   }, Object.keys(data[0]).join(',') + '\n');
   
-  // Create a blob and download it
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -50,7 +49,7 @@ const downloadCSV = (data: any[], filename: string) => {
 const DailyLoginReports = () => {
   const [logins, setLogins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
   });
@@ -65,7 +64,6 @@ const DailyLoginReports = () => {
         
       if (error) throw error;
       
-      // Process the data
       const loginData = data?.map(log => ({
         id: log.id,
         username: log.username,
@@ -96,8 +94,8 @@ const DailyLoginReports = () => {
   const filteredLogins = logins.filter(login => {
     const loginDate = new Date(login.date);
     return (
-      (!dateRange.from || loginDate >= dateRange.from) &&
-      (!dateRange.to || loginDate <= dateRange.to)
+      (!dateRange?.from || loginDate >= dateRange.from) &&
+      (!dateRange?.to || loginDate <= dateRange.to)
     );
   });
 
@@ -142,7 +140,7 @@ const DailyLoginReports = () => {
         <div className="flex items-center gap-4">
           <DateRangePicker
             value={dateRange}
-            onChange={setDateRange}
+            onChange={(range) => setDateRange(range)}
           />
           
           <DropdownMenu>
@@ -259,7 +257,7 @@ const DailyLoginReports = () => {
 const DailyPlayReports = () => {
   const [plays, setPlays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
   });
@@ -274,7 +272,6 @@ const DailyPlayReports = () => {
         
       if (error) throw error;
       
-      // Process the data
       const playData = data?.map(play => ({
         id: play.id,
         username: play.user_id,
@@ -306,8 +303,8 @@ const DailyPlayReports = () => {
   const filteredPlays = plays.filter(play => {
     const playDate = new Date(play.date);
     return (
-      (!dateRange.from || playDate >= dateRange.from) &&
-      (!dateRange.to || playDate <= dateRange.to)
+      (!dateRange?.from || playDate >= dateRange.from) &&
+      (!dateRange?.to || playDate <= dateRange.to)
     );
   });
 
@@ -365,7 +362,7 @@ const DailyPlayReports = () => {
         <div className="flex items-center gap-4">
           <DateRangePicker
             value={dateRange}
-            onChange={setDateRange}
+            onChange={(range) => setDateRange(range)}
           />
           
           <DropdownMenu>
@@ -489,7 +486,6 @@ const AdViewsReports = () => {
   const fetchAdData = async () => {
     setLoading(true);
     try {
-      // Fetch ad slots data
       const { data: slotsData, error: slotsError } = await supabase
         .from('ad_slots')
         .select('*');
@@ -498,9 +494,7 @@ const AdViewsReports = () => {
       
       setAdSlots(slotsData || []);
       
-      // Generate placeholder ad view data since we don't have a dedicated table yet
       const mockData = slotsData?.map(slot => {
-        // Generate random view data for demo purposes
         const viewsToday = Math.floor(Math.random() * 100) + 20;
         const viewsYesterday = Math.floor(Math.random() * 100) + 10;
         const clicksToday = Math.floor(viewsToday * (Math.random() * 0.2));
@@ -657,14 +651,11 @@ const TopPerformersReport = () => {
   const fetchPerformersData = async () => {
     setLoading(true);
     try {
-      // Today's date for daily performers
       const today = new Date().toISOString().split('T')[0];
       
-      // Current month for monthly performers
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
-      // Fetch daily top performers
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_points')
         .select('user_id, points')
@@ -674,7 +665,6 @@ const TopPerformersReport = () => {
         
       if (dailyError) throw dailyError;
       
-      // Fetch monthly top performers
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('monthly_points')
         .select('user_id, points')
@@ -684,7 +674,6 @@ const TopPerformersReport = () => {
         
       if (monthlyError) throw monthlyError;
       
-      // Get usernames for these top performers
       const userIds = [...new Set([
         ...(dailyData?.map(item => item.user_id) || []),
         ...(monthlyData?.map(item => item.user_id) || [])
@@ -697,13 +686,11 @@ const TopPerformersReport = () => {
         
       if (profilesError) throw profilesError;
       
-      // Map profile data to results
       const profileMap: Record<string, string> = {};
       profiles?.forEach(profile => {
         profileMap[profile.id] = profile.username;
       });
       
-      // Build daily performers with rankings
       const dailyPerformersWithRank = dailyData?.map((item, index) => ({
         rank: index + 1,
         userId: item.user_id,
@@ -712,7 +699,6 @@ const TopPerformersReport = () => {
         type: 'daily'
       })) || [];
       
-      // Build monthly performers with rankings
       const monthlyPerformersWithRank = monthlyData?.map((item, index) => ({
         rank: index + 1,
         userId: item.user_id,
@@ -870,3 +856,4 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
+
