@@ -577,20 +577,44 @@ const AdViewsReports = () => {
       // Join with ad_slots to get ad names
       const adsWithNames = await Promise.all(
         (data || []).map(async (item) => {
-          const { data: adData } = await supabase
-            .from('ad_slots')
-            .select('name')
-            .eq('id', item.ad_id)
-            .single();
-            
-          return {
-            ...item,
-            ad_name: adData?.name || 'Unknown Ad'
-          };
+          // Ensure item is a valid object before proceeding
+          if (!item || typeof item !== 'object') {
+            console.error('Invalid item in ad data:', item);
+            return null;
+          }
+
+          try {
+            // Check if ad_id exists and is valid
+            if (!item.ad_id) {
+              console.warn('Missing ad_id in item:', item);
+              return {
+                ...item,
+                ad_name: 'Unknown Ad'
+              };
+            }
+
+            const { data: adData } = await supabase
+              .from('ad_slots')
+              .select('name')
+              .eq('id', item.ad_id)
+              .single();
+              
+            return {
+              ...item,
+              ad_name: adData?.name || 'Unknown Ad'
+            };
+          } catch (err) {
+            console.error('Error processing ad item:', err);
+            return {
+              ...item,
+              ad_name: 'Unknown Ad'
+            };
+          }
         })
       );
       
-      return adsWithNames;
+      // Filter out any null values and return valid data
+      return adsWithNames.filter(item => item !== null) as any[];
     } catch (error) {
       console.error(`Error fetching detailed ${type} data:`, error);
       toast({
@@ -950,3 +974,4 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
+
