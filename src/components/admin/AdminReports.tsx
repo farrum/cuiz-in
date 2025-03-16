@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,7 +29,6 @@ import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { generateExcelFile, prepareAdTrackingDataForExport } from "@/utils/excelUtils";
 
-// Function to export data to CSV
 const downloadCSV = (data: any[], filename: string) => {
   const csvContent = data.reduce((csv, row) => {
     const rowContent = Object.values(row).join(',');
@@ -48,7 +46,6 @@ const downloadCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-// Daily Login Reports Tab
 const DailyLoginReports = () => {
   const [logins, setLogins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +253,6 @@ const DailyLoginReports = () => {
   );
 };
 
-// Daily Play Reports Tab
 const DailyPlayReports = () => {
   const [plays, setPlays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -480,7 +476,6 @@ const DailyPlayReports = () => {
   );
 };
 
-// Ad Views Reports Tab
 const AdViewsReports = () => {
   const [adViews, setAdViews] = useState<any[]>([]);
   const [adSlots, setAdSlots] = useState<any[]>([]);
@@ -493,7 +488,6 @@ const AdViewsReports = () => {
   const fetchAdData = async () => {
     setIsLoading(true);
     try {
-      // Fetch ad slots
       const { data: slotsData, error: slotsError } = await supabase
         .from('ad_slots')
         .select('*');
@@ -502,13 +496,11 @@ const AdViewsReports = () => {
       
       setAdSlots(slotsData || []);
       
-      // Fetch ad performance data
       const { data: performanceData, error: performanceError } = await supabase
         .from('ad_performance_reports')
         .select('*');
         
       if (performanceError) {
-        // If view doesn't have data yet, use fallback
         console.warn('Error fetching ad performance data:', performanceError);
         generateFallbackData(slotsData || []);
         return;
@@ -517,7 +509,6 @@ const AdViewsReports = () => {
       if (performanceData && performanceData.length > 0) {
         setAdViews(performanceData);
       } else {
-        // If no data yet, use fallback data
         generateFallbackData(slotsData || []);
       }
     } catch (error) {
@@ -533,7 +524,6 @@ const AdViewsReports = () => {
   };
   
   const generateFallbackData = (slots: any[]) => {
-    // Create mock data until we have enough real data
     const mockData = slots.map(slot => {
       const viewsToday = Math.floor(Math.random() * 100) + 20;
       const viewsYesterday = Math.floor(Math.random() * 100) + 10;
@@ -553,7 +543,6 @@ const AdViewsReports = () => {
     setAdViews(mockData);
   };
 
-  // Get detailed view and click data for export
   const fetchDetailedAdData = async (type: 'views' | 'clicks') => {
     try {
       const table = type === 'views' ? 'ad_views' : 'ad_clicks';
@@ -574,21 +563,18 @@ const AdViewsReports = () => {
         
       if (error) throw error;
       
-      // Join with ad_slots to get ad names
       const adsWithNames = await Promise.all(
-        (data || []).map(async (item) => {
-          // Ensure item is a valid object before proceeding
-          if (!item || typeof item !== 'object') {
-            console.error('Invalid item in ad data:', item);
+        (data || []).map(async (adItem) => {
+          if (!adItem || typeof adItem !== 'object') {
+            console.error('Invalid item in ad data:', adItem);
             return null;
           }
 
           try {
-            // Check if ad_id exists and is valid
-            if (!item.ad_id) {
-              console.warn('Missing ad_id in item:', item);
+            if (!adItem.ad_id) {
+              console.warn('Missing ad_id in item:', adItem);
               return {
-                ...item,
+                ...adItem as Record<string, any>,
                 ad_name: 'Unknown Ad'
               };
             }
@@ -596,25 +582,24 @@ const AdViewsReports = () => {
             const { data: adData } = await supabase
               .from('ad_slots')
               .select('name')
-              .eq('id', item.ad_id)
+              .eq('id', adItem.ad_id)
               .single();
               
             return {
-              ...item,
+              ...adItem as Record<string, any>,
               ad_name: adData?.name || 'Unknown Ad'
             };
           } catch (err) {
             console.error('Error processing ad item:', err);
             return {
-              ...item,
+              ...adItem as Record<string, any>,
               ad_name: 'Unknown Ad'
             };
           }
         })
       );
       
-      // Filter out any null values and return valid data
-      return adsWithNames.filter(item => item !== null) as any[];
+      return adsWithNames.filter(Boolean) as any[];
     } catch (error) {
       console.error(`Error fetching detailed ${type} data:`, error);
       toast({
@@ -760,7 +745,6 @@ const AdViewsReports = () => {
   );
 };
 
-// Top Performers Report
 const TopPerformersReport = () => {
   const [dailyPerformers, setDailyPerformers] = useState<any[]>([]);
   const [monthlyPerformers, setMonthlyPerformers] = useState<any[]>([]);
@@ -922,7 +906,6 @@ const TopPerformersReport = () => {
   );
 };
 
-// Main Reports Component
 const AdminReports = () => {
   return (
     <Tabs defaultValue="top-performers">
@@ -974,4 +957,3 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
-
