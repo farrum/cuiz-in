@@ -571,6 +571,10 @@ const AdViewsReports = () => {
           }
 
           try {
+            if (!adItem) {
+              return null;
+            }
+            
             if (!adItem.ad_id) {
               console.warn('Missing ad_id in item:', adItem);
               return {
@@ -591,6 +595,10 @@ const AdViewsReports = () => {
             };
           } catch (err) {
             console.error('Error processing ad item:', err);
+            if (!adItem) {
+              return null;
+            }
+            
             return {
               ...adItem as Record<string, any>,
               ad_name: 'Unknown Ad'
