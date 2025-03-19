@@ -1,11 +1,64 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import AdminLogin from '@/components/admin/AdminLogin';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const AdminLoginPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+  
+  const checkAdminStatus = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Check if user is admin
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error checking admin status:', error);
+        } else if (data?.is_admin) {
+          setIsAdmin(true);
+          toast({
+            title: 'Welcome back, Admin!',
+            description: 'You are already logged in as an administrator.',
+          });
+          
+          // Redirect to admin page
+          setTimeout(() => {
+            navigate('/admin');
+          }, 1500);
+          return;
+        }
+      }
+      
+      setIsAdmin(false);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen flex flex-col">
       <Header />
@@ -21,7 +74,19 @@ const AdminLoginPage: React.FC = () => {
               Back to Home
             </Link>
             
-            <AdminLogin />
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Checking admin status...</p>
+              </div>
+            ) : isAdmin ? (
+              <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
+                <p className="text-xl font-medium">You are already logged in as admin</p>
+                <p className="mt-2 text-muted-foreground">Redirecting to admin dashboard...</p>
+              </div>
+            ) : (
+              <AdminLogin />
+            )}
           </div>
         </div>
       </div>

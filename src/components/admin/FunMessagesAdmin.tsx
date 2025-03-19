@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, Trash2, Plus, Sparkles, Frown, Trophy, MessageCircleHeart } from 'lucide-react';
+import { MessageSquare, Trash2, Plus, Sparkles, Frown, Trophy, MessageCircleHeart, AlertCircle } from 'lucide-react';
 import { FunMessage, MessageType, getDefaultMessages } from '@/utils/funMessages';
 
 const FunMessagesAdmin: React.FC = () => {
@@ -25,11 +25,43 @@ const FunMessagesAdmin: React.FC = () => {
   const [messageType, setMessageType] = useState<MessageType>('success');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
+    checkAdminStatus();
     fetchMessages();
   }, []);
+  
+  const checkAdminStatus = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+      
+      // Check if user is admin
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        return;
+      }
+      
+      setIsAdmin(data?.is_admin || false);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
   
   const fetchMessages = async () => {
     setIsLoading(true);
@@ -66,6 +98,15 @@ const FunMessagesAdmin: React.FC = () => {
   const addMessage = async () => {
     if (!newMessage.trim()) return;
     
+    if (!isAdmin) {
+      toast({
+        title: 'Permission Denied',
+        description: 'Only admins can add messages',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsSaving(true);
     
     try {
@@ -76,14 +117,19 @@ const FunMessagesAdmin: React.FC = () => {
         is_active: true
       };
       
+      console.log('Adding message:', newFunMessage);
+      
       const { data, error } = await supabase
         .from('fun_messages')
         .insert([newFunMessage])
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error adding message:', error);
+        throw error;
+      }
       
-      if (data) {
+      if (data && data.length > 0) {
         const formattedMessage = {
           id: data[0].id,
           type: data[0].type as MessageType,
@@ -94,22 +140,20 @@ const FunMessagesAdmin: React.FC = () => {
         };
         
         setMessages([formattedMessage, ...messages]);
+        setNewMessage('');
+        setNewEmoji('');
+        
+        toast({
+          title: 'Success',
+          description: 'Fun message added successfully!',
+          variant: 'default',
+        });
       }
-      
-      setNewMessage('');
-      setNewEmoji('');
-      
-      toast({
-        title: 'Success',
-        description: 'Fun message added successfully!',
-        variant: 'default',
-      });
-      
     } catch (error) {
       console.error('Error adding message:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add fun message',
+        description: 'Failed to add fun message. Make sure you have admin privileges.',
         variant: 'destructive',
       });
     } finally {
@@ -118,6 +162,15 @@ const FunMessagesAdmin: React.FC = () => {
   };
   
   const deleteMessage = async (id: string) => {
+    if (!isAdmin) {
+      toast({
+        title: 'Permission Denied',
+        description: 'Only admins can delete messages',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('fun_messages')
@@ -138,13 +191,22 @@ const FunMessagesAdmin: React.FC = () => {
       console.error('Error deleting message:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete message',
+        description: 'Failed to delete message. Make sure you have admin privileges.',
         variant: 'destructive',
       });
     }
   };
   
   const resetToDefaultMessages = async () => {
+    if (!isAdmin) {
+      toast({
+        title: 'Permission Denied',
+        description: 'Only admins can reset messages',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       // Get default messages for all types
       const allDefaultMessages = [
@@ -190,7 +252,7 @@ const FunMessagesAdmin: React.FC = () => {
       console.error('Error resetting messages:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reset messages',
+        description: 'Failed to reset messages. Make sure you have admin privileges.',
         variant: 'destructive',
       });
     }
@@ -206,6 +268,28 @@ const FunMessagesAdmin: React.FC = () => {
       default: return <MessageSquare className="h-5 w-5" />;
     }
   };
+  
+  if (!isAdmin) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            Admin Access Required
+          </CardTitle>
+          <CardDescription>
+            You need administrator privileges to manage fun messages
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 border rounded-lg">
+            <AlertCircle className="h-8 w-8 mx-auto text-red-500" />
+            <p className="mt-2 text-muted-foreground">Please contact an administrator for access</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card className="shadow-md">

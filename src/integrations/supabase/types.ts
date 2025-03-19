@@ -302,6 +302,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_admin: boolean | null
           password_hash: string | null
           phone: string | null
           points: number | null
@@ -311,6 +312,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_admin?: boolean | null
           password_hash?: string | null
           phone?: string | null
           points?: number | null
@@ -320,6 +322,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_admin?: boolean | null
           password_hash?: string | null
           phone?: string | null
           points?: number | null
