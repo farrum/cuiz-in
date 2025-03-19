@@ -212,7 +212,13 @@ const Profile: React.FC = () => {
           </div>
         ) : (
           <>
-            <AdvertisementBanner position="top" size="medium" className="mb-6" />
+            <AdvertisementBanner 
+              position="top" 
+              size="medium" 
+              className="mb-6" 
+              slotId="profile-top-ad"
+              pageSection="profile-header"
+            />
             
             <div className="glass p-6 rounded-2xl mb-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
               <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
@@ -343,7 +349,13 @@ const Profile: React.FC = () => {
               </div>
             </div>
             
-            <AdvertisementBanner position="middle" size="large" className="mb-8" />
+            <AdvertisementBanner 
+              position="middle" 
+              size="large" 
+              className="mb-8" 
+              slotId="profile-middle-ad"
+              pageSection="profile-content"
+            />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <LeaderboardSection />

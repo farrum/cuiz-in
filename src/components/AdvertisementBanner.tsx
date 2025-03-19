@@ -17,12 +17,16 @@ interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
   className?: string;
   size?: 'small' | 'medium' | 'large';
+  slotId?: string;
+  pageSection?: string;
 }
 
 const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({ 
   position = 'top',
   className = '',
   size = 'medium',
+  slotId,
+  pageSection
 }) => {
   const [adLoaded, setAdLoaded] = useState(false);
   const [adContent, setAdContent] = useState('');
@@ -121,10 +125,12 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         session_id: sessionId,
         page_url: pageUrl,
         device_info: deviceInfo,
-        ad_position: position
+        ad_position: position,
+        slot_id: slotId || position,
+        page_section: pageSection || position
       });
       
-      console.log(`Ad impression tracked: ${adSlotId}`);
+      console.log(`Ad impression tracked: ${adSlotId} in ${slotId || position}`);
     } catch (error) {
       console.error('Error tracking ad impression:', error);
     }
@@ -146,10 +152,12 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         session_id: sessionId,
         page_url: pageUrl,
         device_info: deviceInfo,
-        ad_position: position
+        ad_position: position,
+        slot_id: slotId || position,
+        page_section: pageSection || position
       });
       
-      console.log(`Ad click tracked: ${adId}`);
+      console.log(`Ad click tracked: ${adId} in ${slotId || position}`);
     } catch (error) {
       console.error('Error tracking ad click:', error);
     }
@@ -193,6 +201,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       flex items-center justify-center ${getPositionClasses()} 
       transition-all duration-300 ${adLoaded ? 'opacity-100' : 'opacity-50'} ${className}`}
       onClick={handleAdClick}
+      data-ad-slot={slotId || position}
+      data-ad-section={pageSection || position}
     >
       {!adLoaded ? (
         <div className="flex items-center justify-center space-x-2">

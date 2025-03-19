@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -9,11 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Layout, Loader2, Plus } from 'lucide-react';
+import { Eye, EyeOff, Layout, Loader2, Plus, BarChart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { AdSlotCard, AdSlotGrid, EditAdSlotDialog } from './ad-management';
 import { useForm } from 'react-hook-form';
+import { DataTable } from '@/components/ui/data-table';
 
 interface AdSlot {
   id: string;
@@ -24,6 +24,17 @@ interface AdSlot {
   last_updated: string;
 }
 
+interface AdPerformance {
+  ad_id: string;
+  ad_name: string;
+  ad_position: string;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  slot_id?: string;
+  page_section?: string;
+}
+
 const AdminAdManagement: React.FC = () => {
   const { toast } = useToast();
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
@@ -31,6 +42,9 @@ const AdminAdManagement: React.FC = () => {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showReports, setShowReports] = useState(false);
+  const [adPerformance, setAdPerformance] = useState<AdPerformance[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   
   const form = useForm<AdSlot>();
   
@@ -51,13 +65,11 @@ const AdminAdManagement: React.FC = () => {
       }
       
       if (data) {
-        // Also save to localStorage as fallback
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
         setAdSlots(data as AdSlot[]);
       }
     } catch (error) {
       console.error('Error fetching ad slots:', error);
-      // Fallback to localStorage if Supabase fails
       const savedSlots = localStorage.getItem('quiz_app_ad_slots');
       if (savedSlots) {
         setAdSlots(JSON.parse(savedSlots));
@@ -70,6 +82,91 @@ const AdminAdManagement: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const fetchAdPerformance = async () => {
+    setIsLoadingReports(true);
+    try {
+      const { data: viewCheck, error: viewCheckError } = await supabase
+        .from('ad_performance_reports')
+        .select('*')
+        .limit(1);
+        
+      if (viewCheckError) {
+        const { data: impressions, error: impressionsError } = await supabase
+          .from('ad_views')
+          .select('ad_id, ad_position, slot_id, page_section, count(*)', { count: 'exact' })
+          .group('ad_id, ad_position, slot_id, page_section');
+          
+        if (impressionsError) {
+          throw impressionsError;
+        }
+        
+        const { data: clicks, error: clicksError } = await supabase
+          .from('ad_clicks')
+          .select('ad_id, ad_position, slot_id, page_section, count(*)', { count: 'exact' })
+          .group('ad_id, ad_position, slot_id, page_section');
+          
+        if (clicksError) {
+          throw clicksError;
+        }
+        
+        const { data: slotsData } = await supabase
+          .from('ad_slots')
+          .select('id, name');
+          
+        const slotsMap = new Map(slotsData?.map(slot => [slot.id, slot.name]) || []);
+        
+        const combinedData: AdPerformance[] = [];
+        
+        impressions?.forEach((imp: any) => {
+          const clickData = clicks?.find((click: any) => 
+            click.ad_id === imp.ad_id && 
+            click.ad_position === imp.ad_position &&
+            click.slot_id === imp.slot_id &&
+            click.page_section === imp.page_section
+          );
+          
+          const clickCount = clickData ? parseInt(clickData.count) : 0;
+          const impressionCount = parseInt(imp.count);
+          const ctr = impressionCount > 0 ? (clickCount / impressionCount) * 100 : 0;
+          
+          combinedData.push({
+            ad_id: imp.ad_id,
+            ad_name: slotsMap.get(imp.ad_id) || 'Unknown Ad',
+            ad_position: imp.ad_position,
+            impressions: impressionCount,
+            clicks: clickCount,
+            ctr: parseFloat(ctr.toFixed(2)),
+            slot_id: imp.slot_id,
+            page_section: imp.page_section
+          });
+        });
+        
+        setAdPerformance(combinedData);
+      } else {
+        const { data, error } = await supabase
+          .from('ad_performance_reports')
+          .select('*');
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setAdPerformance(data as AdPerformance[]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching ad performance:', error);
+      toast({
+        title: "Error Loading Ad Reports",
+        description: "Could not load ad performance data.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingReports(false);
     }
   };
   
@@ -151,7 +248,6 @@ const AdminAdManagement: React.FC = () => {
       const values = form.getValues();
       
       if (isCreatingNew) {
-        // Creating a new ad slot
         const { data, error } = await supabase
           .from('ad_slots')
           .insert({
@@ -175,7 +271,6 @@ const AdminAdManagement: React.FC = () => {
           });
         }
       } else {
-        // Updating existing ad slot
         const { error } = await supabase
           .from('ad_slots')
           .update({
@@ -243,12 +338,28 @@ const AdminAdManagement: React.FC = () => {
         </div>
         <div className="flex items-center space-x-4">
           <Button 
+            onClick={() => {
+              if (showReports) {
+                setShowReports(false);
+              } else {
+                setShowReports(true);
+                fetchAdPerformance();
+              }
+            }}
+            variant="outline"
+          >
+            <BarChart className="w-4 h-4 mr-1" />
+            {showReports ? "Hide Reports" : "Show Reports"}
+          </Button>
+          
+          <Button 
             onClick={startCreatingNew}
             className="mr-4"
           >
             <Plus className="w-4 h-4 mr-1" />
             New Ad Slot
           </Button>
+          
           <div className="flex items-center space-x-2">
             <Switch
               checked={previewMode}
@@ -271,6 +382,50 @@ const AdminAdManagement: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {showReports && (
+        <div className="glass rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-medium mb-4">Ad Performance Reports</h3>
+          
+          <DataTable
+            columns={[
+              { header: 'Ad Name', accessorKey: 'ad_name' },
+              { header: 'Position', accessorKey: 'ad_position' },
+              { 
+                header: 'Slot/Location', 
+                accessorKey: 'slot_id',
+                cell: (row) => row.slot_id || row.ad_position
+              },
+              {
+                header: 'Page Section',
+                accessorKey: 'page_section',
+                cell: (row) => row.page_section || '-'
+              },
+              { 
+                header: 'Impressions', 
+                accessorKey: 'impressions',
+                cell: (row) => row.impressions.toLocaleString()
+              },
+              { 
+                header: 'Clicks', 
+                accessorKey: 'clicks',
+                cell: (row) => row.clicks.toLocaleString()
+              },
+              { 
+                header: 'CTR', 
+                accessorKey: 'ctr',
+                cell: (row) => `${row.ctr.toFixed(2)}%`
+              }
+            ]}
+            data={adPerformance}
+            isLoading={isLoadingReports}
+          />
+          
+          <div className="text-sm text-muted-foreground mt-4">
+            Last updated: {new Date().toLocaleString()}
+          </div>
+        </div>
+      )}
       
       <Tabs defaultValue="top" className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
