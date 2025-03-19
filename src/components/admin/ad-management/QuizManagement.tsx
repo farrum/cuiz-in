@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -26,15 +25,16 @@ import {
   Edit, 
   Trash, 
   Download, 
-  FileQuestion 
+  FileQuestion,
+  BookOpen
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
+import TriviaImporter from './TriviaImporter';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
 
-// Fix: Export the component as default
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<QuizQuestion[]>([]);
@@ -44,12 +44,12 @@ const QuizManagement: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch all quiz questions from Supabase
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
@@ -61,9 +61,7 @@ const QuizManagement: React.FC = () => {
         throw error;
       }
       
-      // Transform the data to match our QuizQuestion interface
       const formattedQuestions = data.map(q => {
-        // Create properly typed options array by converting all values to strings
         const optionsArray: string[] = Array.isArray(q.options) 
           ? q.options.map(String) 
           : typeof q.options === 'object' 
@@ -77,7 +75,6 @@ const QuizManagement: React.FC = () => {
           correctAnswer: q.correct_answer,
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
-          // Fix: Set a default points value since it's not in the database
           points: 10,
           explanation: q.explanation || ''
         };
@@ -86,7 +83,6 @@ const QuizManagement: React.FC = () => {
       setQuestions(formattedQuestions);
       setFilteredQuestions(formattedQuestions);
       
-      // Extract unique categories
       const uniqueCategories = Array.from(
         new Set(formattedQuestions.map(q => q.category))
       );
@@ -103,16 +99,13 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Initialize data
   useEffect(() => {
     fetchQuestions();
   }, []);
 
-  // Filter questions based on search, category, and difficulty
   useEffect(() => {
     let filtered = [...questions];
     
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(q => 
         q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -120,12 +113,10 @@ const QuizManagement: React.FC = () => {
       );
     }
     
-    // Apply category filter
     if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(q => q.category === selectedCategory);
     }
     
-    // Apply difficulty filter
     if (selectedDifficulty && selectedDifficulty !== 'all') {
       filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
     }
@@ -133,12 +124,10 @@ const QuizManagement: React.FC = () => {
     setFilteredQuestions(filtered);
   }, [searchQuery, selectedCategory, selectedDifficulty, questions]);
 
-  // Handle adding a new question
   const handleAddQuestion = async (question: Omit<QuizQuestion, 'id'>) => {
     try {
       console.log("Adding question:", question);
       
-      // Ensure options are properly formatted as an array of strings
       const options = Array.isArray(question.options) 
         ? question.options.filter(opt => opt.trim() !== '') 
         : [];
@@ -160,7 +149,6 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
-          // Note: points is not stored in the database, it's only used client-side
         })
         .select();
         
@@ -174,7 +162,6 @@ const QuizManagement: React.FC = () => {
         description: "Question added successfully!",
       });
       
-      // Update the categories list if we have a new category
       if (question.category && !categories.includes(question.category)) {
         setCategories([...categories, question.category]);
       }
@@ -191,10 +178,8 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Handle updating a question
   const handleUpdateQuestion = async (question: QuizQuestion) => {
     try {
-      // Ensure options are properly formatted as an array of strings
       const options = Array.isArray(question.options) 
         ? question.options.filter(opt => opt.trim() !== '') 
         : [];
@@ -216,7 +201,6 @@ const QuizManagement: React.FC = () => {
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation || ''
-          // Note: points is not stored in the database, it's only used client-side
         })
         .eq('id', question.id);
         
@@ -229,7 +213,6 @@ const QuizManagement: React.FC = () => {
         description: "Question updated successfully!",
       });
       
-      // Update the categories list if we have a new category
       if (question.category && !categories.includes(question.category)) {
         setCategories([...categories, question.category]);
       }
@@ -246,7 +229,6 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Handle deleting a question
   const handleDeleteQuestion = async (id: string) => {
     if (confirm('Are you sure you want to delete this question?')) {
       try {
@@ -276,7 +258,6 @@ const QuizManagement: React.FC = () => {
     }
   };
 
-  // Export questions to Excel
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       questions.map(q => ({
@@ -381,14 +362,24 @@ const QuizManagement: React.FC = () => {
               ? "Try adjusting your filters to see more results."
               : "Get started by adding some quiz questions."}
           </p>
-          <Button 
-            onClick={() => setIsAddDialogOpen(true)}
-            variant="outline"
-            className="flex items-center gap-1"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Add New Question
-          </Button>
+          <div className="space-x-2">
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add New Question
+            </Button>
+            <Button 
+              onClick={() => setIsTriviaBatchDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <BookOpen className="h-4 w-4" />
+              Import Trivia Pack
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="border rounded-md">
@@ -448,7 +439,6 @@ const QuizManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Add Question Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -465,7 +455,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Question Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -485,7 +474,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Import Questions Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -504,9 +492,29 @@ const QuizManagement: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isTriviaBatchDialogOpen} onOpenChange={setIsTriviaBatchDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Trivia Question Pack</DialogTitle>
+            <DialogDescription>
+              Import a pre-defined set of 30 trivia questions across various categories.
+            </DialogDescription>
+          </DialogHeader>
+          <TriviaImporter 
+            onSuccess={() => {
+              fetchQuestions();
+              setIsTriviaBatchDialogOpen(false);
+              toast({
+                title: "Trivia Pack Imported",
+                description: "30 trivia questions have been added to your quiz database.",
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// Make sure we export as default
 export default QuizManagement;
