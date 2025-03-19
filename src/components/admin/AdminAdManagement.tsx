@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -142,11 +141,34 @@ const AdminAdManagement: React.FC = () => {
           throw impressionsWithSlotError;
         }
         
-        // Merge the impression datasets
-        const allImpressions = [
-          ...(impressionsData || []) as ImpressionData[],
-          ...(impressionsWithSlotData || []) as ImpressionData[]
-        ];
+        // Safely cast and merge the impression datasets
+        const allImpressions: ImpressionData[] = [];
+        
+        // Add impressions without slot data
+        if (impressionsData) {
+          impressionsData.forEach((item: any) => {
+            allImpressions.push({
+              ad_id: item.ad_id,
+              ad_position: item.ad_position,
+              slot_id: item.slot_id,
+              page_section: item.page_section,
+              count: item.count
+            });
+          });
+        }
+        
+        // Add impressions with slot data
+        if (impressionsWithSlotData) {
+          impressionsWithSlotData.forEach((item: any) => {
+            allImpressions.push({
+              ad_id: item.ad_id,
+              ad_position: item.ad_position,
+              slot_id: item.slot_id,
+              page_section: item.page_section,
+              count: item.count
+            });
+          });
+        }
         
         // Then get clicks data
         const { data: clicksData, error: clicksError } = await supabase
@@ -172,20 +194,47 @@ const AdminAdManagement: React.FC = () => {
           throw clicksWithSlotError;
         }
         
-        // Merge the clicks datasets
-        const allClicks = [
-          ...(clicksData || []) as ClickData[],
-          ...(clicksWithSlotData || []) as ClickData[]
-        ];
+        // Safely cast and merge the clicks datasets
+        const allClicks: ClickData[] = [];
+        
+        // Add clicks without slot data
+        if (clicksData) {
+          clicksData.forEach((item: any) => {
+            allClicks.push({
+              ad_id: item.ad_id,
+              ad_position: item.ad_position,
+              slot_id: item.slot_id,
+              page_section: item.page_section,
+              count: item.count
+            });
+          });
+        }
+        
+        // Add clicks with slot data
+        if (clicksWithSlotData) {
+          clicksWithSlotData.forEach((item: any) => {
+            allClicks.push({
+              ad_id: item.ad_id,
+              ad_position: item.ad_position,
+              slot_id: item.slot_id,
+              page_section: item.page_section,
+              count: item.count
+            });
+          });
+        }
         
         // Get ad slots data for names
         const { data: slotsData } = await supabase
           .from('ad_slots')
           .select('id, name');
-          
-        const slotsMap = new Map(
-          (slotsData as SlotData[] || []).map(slot => [slot.id, slot.name])
-        );
+        
+        // Safely create a map of slot IDs to names
+        const slotsMap = new Map<string, string>();
+        if (slotsData) {
+          (slotsData as SlotData[]).forEach(slot => {
+            slotsMap.set(slot.id, slot.name);
+          });
+        }
         
         // Process and combine the data
         const combinedData: AdPerformance[] = [];
