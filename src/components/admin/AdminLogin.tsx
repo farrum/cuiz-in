@@ -54,6 +54,30 @@ const AdminLogin: React.FC = () => {
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       console.log("Local admin authentication successful");
       
+      try {
+        // First, sign in with Supabase auth
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: 'quizadmin@example.com', // Using the email we set in our SQL migration
+          password: password
+        });
+        
+        if (authError) throw authError;
+        
+        if (authData.user) {
+          // Update the profiles table to set this user as an admin
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ is_admin: true })
+            .eq('id', authData.user.id);
+            
+          if (updateError) {
+            console.error('Failed to update admin status:', updateError);
+          }
+        }
+      } catch (err) {
+        console.log('Error updating Supabase admin status, using local auth instead');
+      }
+      
       // Store admin auth in localStorage
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
@@ -93,6 +117,16 @@ const AdminLogin: React.FC = () => {
       
       if (!error && data.user) {
         console.log("Supabase authentication successful");
+        
+        // Update the profiles table to set this user as an admin
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_admin: true })
+          .eq('id', data.user.id);
+          
+        if (updateError) {
+          console.error('Failed to update admin status:', updateError);
+        }
         
         // Store admin auth in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);

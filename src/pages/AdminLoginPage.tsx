@@ -7,6 +7,7 @@ import AdminLogin from '@/components/admin/AdminLogin';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const AdminLoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,35 +23,64 @@ const AdminLoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        // Check if user is admin
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
+      // First check localStorage for admin auth
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      if (isAdminAuth) {
+        console.log('Admin authenticated via localStorage');
+        setIsAdmin(true);
+        toast({
+          title: 'Welcome back, Admin!',
+          description: 'You are already logged in as an administrator.',
+        });
         
-        if (error) {
-          console.error('Error checking admin status:', error);
-        } else if (data?.is_admin) {
-          setIsAdmin(true);
-          toast({
-            title: 'Welcome back, Admin!',
-            description: 'You are already logged in as an administrator.',
-          });
-          
-          // Redirect to admin page
-          setTimeout(() => {
-            navigate('/admin');
-          }, 1500);
-          return;
-        }
+        // Redirect to admin page
+        setTimeout(() => {
+          navigate('/admin');
+        }, 1500);
+        return;
       }
       
-      setIsAdmin(false);
+      // Get current user from Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('No user found in Supabase auth');
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('Checking admin status for user:', user.id);
+      
+      // Check if user is admin in profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } else if (data?.is_admin) {
+        console.log('User is confirmed as admin in database');
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        setIsAdmin(true);
+        
+        toast({
+          title: 'Welcome back, Admin!',
+          description: 'You are already logged in as an administrator.',
+        });
+        
+        // Redirect to admin page
+        setTimeout(() => {
+          navigate('/admin');
+        }, 1500);
+        return;
+      } else {
+        console.log('User is not an admin in database');
+        setIsAdmin(false);
+      }
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);

@@ -15,8 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, Trash2, Plus, Sparkles, Frown, Trophy, MessageCircleHeart, AlertCircle } from 'lucide-react';
+import { MessageSquare, Trash2, Plus, Sparkles, Frown, Trophy, MessageCircleHeart, AlertCircle, Loader2 } from 'lucide-react';
 import { FunMessage, MessageType, getDefaultMessages } from '@/utils/funMessages';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const FunMessagesAdmin: React.FC = () => {
   const [messages, setMessages] = useState<FunMessage[]>([]);
@@ -26,24 +27,47 @@ const FunMessagesAdmin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
     checkAdminStatus();
-    fetchMessages();
   }, []);
+  
+  useEffect(() => {
+    if (isAdmin) {
+      fetchMessages();
+    }
+  }, [isAdmin]);
   
   const checkAdminStatus = async () => {
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoading(true);
       
-      if (!user) {
-        setIsAdmin(false);
+      // First check localStorage for admin auth
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      if (isAdminAuth) {
+        console.log('Admin authenticated via localStorage');
+        setIsAdmin(true);
+        setAdminCheckComplete(true);
+        setIsLoading(false);
         return;
       }
       
-      // Check if user is admin
+      // Get current user from Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('No user found in Supabase auth');
+        setIsAdmin(false);
+        setAdminCheckComplete(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('Checking admin status for user:', user.id);
+      
+      // Check if user is admin in profiles table
       const { data, error } = await supabase
         .from('profiles')
         .select('is_admin')
@@ -53,25 +77,38 @@ const FunMessagesAdmin: React.FC = () => {
       if (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
-        return;
+      } else {
+        console.log('Admin check result:', data);
+        if (data?.is_admin) {
+          console.log('User is confirmed as admin in database');
+          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+          setIsAdmin(true);
+        } else {
+          console.log('User is not an admin in database');
+          setIsAdmin(false);
+        }
       }
-      
-      setIsAdmin(data?.is_admin || false);
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Error in admin check:', error);
       setIsAdmin(false);
+    } finally {
+      setAdminCheckComplete(true);
+      setIsLoading(false);
     }
   };
   
   const fetchMessages = async () => {
-    setIsLoading(true);
     try {
+      console.log('Fetching fun messages');
       const { data, error } = await supabase
         .from('fun_messages')
         .select('*')
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
       
       const formattedMessages = data?.map((item) => ({
         id: item.id,
@@ -82,6 +119,7 @@ const FunMessagesAdmin: React.FC = () => {
         isActive: item.is_active
       })) || [];
       
+      console.log(`Fetched ${formattedMessages.length} messages`);
       setMessages(formattedMessages);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -90,8 +128,6 @@ const FunMessagesAdmin: React.FC = () => {
         description: 'Failed to load fun messages',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -269,7 +305,29 @@ const FunMessagesAdmin: React.FC = () => {
     }
   };
   
-  if (!isAdmin) {
+  if (isLoading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Fun Messages Management
+          </CardTitle>
+          <CardDescription>
+            Loading admin status...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Checking admin privileges...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!isAdmin && adminCheckComplete) {
     return (
       <Card className="shadow-md">
         <CardHeader>
