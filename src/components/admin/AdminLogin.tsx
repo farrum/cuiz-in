@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Admin credentials - same as in AdminPage.tsx
+// Admin credentials
 const ADMIN_CREDENTIALS = {
   username: 'quizadmin',
   password: '!Quizzer123'
@@ -37,78 +36,84 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setIsLoggingIn(true);
 
-    // Simple validation
-    if (!username || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter both username and password",
-        variant: "destructive"
-      });
-      setIsLoggingIn(false);
-      return;
-    }
+    try {
+      // Simple validation
+      if (!username || !password) {
+        toast({
+          title: "Error",
+          description: "Please enter both username and password",
+          variant: "destructive"
+        });
+        setIsLoggingIn(false);
+        return;
+      }
 
-    console.log(`Attempting admin login with username: ${username}`);
+      console.log(`Attempting admin login with username: ${username}`);
 
-    // Check credentials against hardcoded values first for simplicity
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      console.log("Local admin authentication successful");
-      
-      try {
-        // First, sign in with Supabase auth
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: 'quizadmin@example.com', // Using the email we set in our SQL migration
-          password: password
+      // Check credentials against hardcoded values first for simplicity
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        console.log("Local admin authentication successful");
+        
+        try {
+          // First, sign in with Supabase auth
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: 'quizadmin@example.com', // Using the email we set in our SQL migration
+            password: password
+          });
+          
+          if (authError) {
+            console.error('Supabase auth error:', authError);
+            // Continue with local auth if Supabase auth fails
+          } else if (authData.user) {
+            console.log('Supabase auth successful, user ID:', authData.user.id);
+            
+            // Update the profiles table to set this user as an admin
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ is_admin: true })
+              .eq('id', authData.user.id);
+              
+            if (updateError) {
+              console.error('Failed to update admin status:', updateError);
+            } else {
+              console.log('Updated admin status in profiles table');
+            }
+          }
+        } catch (err) {
+          console.error('Error updating Supabase admin status:', err);
+          // Continue with local auth
+        }
+        
+        // Store admin auth in localStorage
+        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        
+        // Log the successful login
+        try {
+          await supabase
+            .from('login_logs')
+            .insert({
+              username: username,
+              ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+              device: navigator.userAgent,
+              login_time: new Date().toISOString(),
+              successful: true
+            });
+        } catch (logError) {
+          console.error('Failed to log admin login:', logError);
+        }
+        
+        toast({
+          title: "Success",
+          description: "You have successfully logged in as admin",
         });
         
-        if (authError) throw authError;
-        
-        if (authData.user) {
-          // Update the profiles table to set this user as an admin
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ is_admin: true })
-            .eq('id', authData.user.id);
-            
-          if (updateError) {
-            console.error('Failed to update admin status:', updateError);
-          }
-        }
-      } catch (err) {
-        console.log('Error updating Supabase admin status, using local auth instead');
+        navigate('/admin');
+        setIsLoggingIn(false);
+        return;
       }
       
-      // Store admin auth in localStorage
-      localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-      
-      // Log the successful login
-      try {
-        await supabase
-          .from('login_logs')
-          .insert({
-            username: username,
-            ip_address: '127.0.0.1', // In a real app, this would be the actual IP
-            device: navigator.userAgent,
-            login_time: new Date().toISOString(),
-            successful: true
-          });
-      } catch (logError) {
-        console.error('Failed to log admin login:', logError);
-      }
-      
-      toast({
-        title: "Success",
-        description: "You have successfully logged in as admin",
-      });
-      
-      navigate('/admin');
-      setIsLoggingIn(false);
-      return;
-    }
-    
-    // Try Supabase authentication as fallback
-    try {
+      // Try Supabase authentication as fallback
       console.log("Attempting Supabase authentication");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: 'quizadmin@example.com', // Using the email we set in our SQL migration
@@ -126,6 +131,8 @@ const AdminLogin: React.FC = () => {
           
         if (updateError) {
           console.error('Failed to update admin status:', updateError);
+        } else {
+          console.log('Updated user as admin in profiles table');
         }
         
         // Store admin auth in localStorage
@@ -140,7 +147,8 @@ const AdminLogin: React.FC = () => {
               username: username,
               ip_address: '127.0.0.1', // In a real app, this would be the actual IP
               device: navigator.userAgent,
-              login_time: new Date().toISOString()
+              login_time: new Date().toISOString(),
+              successful: true
             });
         } catch (logError) {
           console.error('Failed to log admin login:', logError);
@@ -157,33 +165,38 @@ const AdminLogin: React.FC = () => {
       } else {
         console.error('Supabase auth error:', error);
       }
-    } catch (err) {
-      console.error('Supabase auth error:', err);
+
+      // If we reach here, authentication failed
+      toast({
+        title: "Authentication Failed",
+        description: "Invalid username or password",
+        variant: "destructive"
+      });
+      
+      // Log the failed login attempt
+      try {
+        await supabase
+          .from('login_logs')
+          .insert({
+            username: username,
+            ip_address: '127.0.0.1',
+            device: navigator.userAgent,
+            login_time: new Date().toISOString(),
+            successful: false
+          });
+      } catch (logError) {
+        console.error('Failed to log failed login attempt:', logError);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred during login",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoggingIn(false);
     }
-    
-    // If we reach here, authentication failed
-    toast({
-      title: "Authentication Failed",
-      description: "Invalid username or password",
-      variant: "destructive"
-    });
-    
-    // Log the failed login attempt
-    try {
-      await supabase
-        .from('login_logs')
-        .insert({
-          username: username,
-          ip_address: '127.0.0.1',
-          device: navigator.userAgent,
-          login_time: new Date().toISOString(),
-          successful: false
-        });
-    } catch (logError) {
-      console.error('Failed to log failed login attempt:', logError);
-    }
-    
-    setIsLoggingIn(false);
   };
 
   return (

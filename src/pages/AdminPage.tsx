@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +24,7 @@ import { SyncSettings } from '@/components/admin/SyncSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Settings, User, Bell, BarChart, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -85,19 +85,36 @@ const AdminPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
+    try {
+      // First clear local storage admin values
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_USERNAME);
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast({
+          title: "Logout failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of the admin panel"
+        });
+        navigate('/admin-login');
+      }
+    } catch (err) {
+      console.error("Error during logout:", err);
       toast({
-        title: "Logout failed",
-        description: error.message,
+        title: "Logout error",
+        description: "An unexpected error occurred during logout",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of the admin panel"
-      });
+      // Force navigation to login page as fallback
       navigate('/admin-login');
     }
   };

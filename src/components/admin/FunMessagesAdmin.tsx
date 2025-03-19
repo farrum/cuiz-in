@@ -155,6 +155,12 @@ const FunMessagesAdmin: React.FC = () => {
       
       console.log('Adding message:', newFunMessage);
       
+      // Use the current user's session for the request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found');
+      }
+
       const { data, error } = await supabase
         .from('fun_messages')
         .insert([newFunMessage])
