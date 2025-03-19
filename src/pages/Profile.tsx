@@ -5,6 +5,7 @@ import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
 import BadgesSection from '@/components/BadgesSection';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
 import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck } from 'lucide-react';
@@ -44,7 +45,6 @@ const Profile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Load user data
     const userIdFromStorage = localStorage.getItem(STORAGE_KEYS.USER_ID);
     const name = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     if (!name) {
@@ -58,44 +58,34 @@ const Profile: React.FC = () => {
     
     if (userIdFromStorage) {
       setUserId(userIdFromStorage);
-      // Fetch referrer information if available
       fetchReferrerInfo(userIdFromStorage);
     } else {
-      // Generate a consistent user ID from the username
       const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
       setUserId(generatedUserId);
       finalUserId = generatedUserId;
     }
     
-    // Get UPI ID
     const upiId = localStorage.getItem('quiz_app_user_upi');
     setUserUpi(upiId || '');
     
-    // Get completed questions
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    // Get achievements - we'll limit this to current month + last 3 months
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     const filteredAchievements = getRecentAchievements(savedAchievements);
     setAchievements(filteredAchievements);
     
-    // Check and award badges if applicable
     checkAndAwardBadges(finalUserId);
     
-    // Fetch progress data from database
     fetchProgressData(finalUserId);
     
-    // Set up listener for point updates
     const handlePointsUpdate = () => {
       fetchProgressData(finalUserId);
       
-      // Refresh achievements
       const updatedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
       const filteredUpdatedAchievements = getRecentAchievements(updatedAchievements);
       setAchievements(filteredUpdatedAchievements);
       
-      // Check for new badges
       checkAndAwardBadges(finalUserId);
     };
     
@@ -106,33 +96,26 @@ const Profile: React.FC = () => {
   }, [navigate]);
   
   const getRecentAchievements = (allAchievements: Achievement[]) => {
-    // Get current month
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     
-    // Filter to keep only current month + last 3 months
     return allAchievements.filter(achievement => {
       const [year, month] = achievement.month.split('-').map(n => parseInt(n));
       
-      // Calculate months difference
       const monthsDiff = (currentYear - year) * 12 + (currentMonth - (month - 1));
       
-      // Keep if it's within current month or 3 months prior
       return monthsDiff >= 0 && monthsDiff <= 3;
     });
   };
   
   const fetchProgressData = async (userId: string) => {
     try {
-      // Get today's date
       const today = new Date().toISOString().split('T')[0];
       
-      // Get current month
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
-      // Fetch daily points
       const { data: dailyData } = await supabase
         .from('daily_points')
         .select('points')
@@ -146,7 +129,6 @@ const Profile: React.FC = () => {
         setDailyPoints(0);
       }
       
-      // Fetch monthly points
       const { data: monthlyData } = await supabase
         .from('monthly_points')
         .select('points')
@@ -166,7 +148,6 @@ const Profile: React.FC = () => {
   
   const fetchReferrerInfo = async (userId: string) => {
     try {
-      // Check if this user was referred by someone
       const { data, error } = await supabase
         .from('user_referrals')
         .select('referrer_id, referrer_name, date')
@@ -191,13 +172,10 @@ const Profile: React.FC = () => {
   };
   
   const handleLogout = () => {
-    // Clear user-specific data
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
     localStorage.removeItem('quiz_app_user_email');
     localStorage.removeItem('quiz_app_user_phone');
     localStorage.removeItem('quiz_app_user_upi');
-    
-    // We keep points and completed questions data for later login
     
     navigate('/');
     
@@ -234,6 +212,8 @@ const Profile: React.FC = () => {
           </div>
         ) : (
           <>
+            <AdvertisementBanner position="top" size="medium" className="mb-6" />
+            
             <div className="glass p-6 rounded-2xl mb-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
               <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
                 {userName.substring(0, 1).toUpperCase()}
@@ -362,6 +342,8 @@ const Profile: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            <AdvertisementBanner position="middle" size="large" className="mb-8" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <LeaderboardSection />
