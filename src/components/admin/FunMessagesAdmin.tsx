@@ -37,11 +37,20 @@ const FunMessagesAdmin: React.FC = () => {
       const { data, error } = await supabase
         .from('fun_messages')
         .select('*')
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      setMessages(data || []);
+      const formattedMessages = data?.map((item) => ({
+        id: item.id,
+        type: item.type as MessageType,
+        text: item.text,
+        emoji: item.emoji,
+        createdAt: item.created_at,
+        isActive: item.is_active
+      })) || [];
+      
+      setMessages(formattedMessages);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -60,12 +69,11 @@ const FunMessagesAdmin: React.FC = () => {
     setIsSaving(true);
     
     try {
-      const newFunMessage: Omit<FunMessage, 'id'> = {
+      const newFunMessage = {
         type: messageType,
         text: newMessage.trim(),
-        emoji: newEmoji.trim() || undefined,
-        createdAt: new Date().toISOString(),
-        isActive: true,
+        emoji: newEmoji.trim() || null,
+        is_active: true
       };
       
       const { data, error } = await supabase
@@ -75,7 +83,19 @@ const FunMessagesAdmin: React.FC = () => {
         
       if (error) throw error;
       
-      setMessages([...(data || []), ...messages]);
+      if (data) {
+        const formattedMessage = {
+          id: data[0].id,
+          type: data[0].type as MessageType,
+          text: data[0].text,
+          emoji: data[0].emoji,
+          createdAt: data[0].created_at,
+          isActive: data[0].is_active
+        };
+        
+        setMessages([formattedMessage, ...messages]);
+      }
+      
       setNewMessage('');
       setNewEmoji('');
       
@@ -84,8 +104,6 @@ const FunMessagesAdmin: React.FC = () => {
         description: 'Fun message added successfully!',
         variant: 'default',
       });
-      
-      fetchMessages();
       
     } catch (error) {
       console.error('Error adding message:', error);
@@ -145,16 +163,18 @@ const FunMessagesAdmin: React.FC = () => {
         
       if (deleteError) throw deleteError;
       
+      // Format default messages for insertion
+      const messagesToInsert = allDefaultMessages.map(msg => ({
+        type: msg.type,
+        text: msg.text,
+        emoji: msg.emoji,
+        is_active: true
+      }));
+      
       // Insert all default messages
       const { error: insertError } = await supabase
         .from('fun_messages')
-        .insert(allDefaultMessages.map(msg => ({
-          type: msg.type,
-          text: msg.text,
-          emoji: msg.emoji,
-          createdAt: new Date().toISOString(),
-          isActive: true
-        })));
+        .insert(messagesToInsert);
         
       if (insertError) throw insertError;
       

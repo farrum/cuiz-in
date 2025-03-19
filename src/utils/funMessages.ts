@@ -80,11 +80,21 @@ export async function getCustomMessages(supabase: any, type: MessageType): Promi
       .from('fun_messages')
       .select('*')
       .eq('type', type)
-      .eq('isActive', true);
+      .eq('is_active', true);
       
     if (error) throw error;
     
-    return data.length > 0 ? data : getDefaultMessages(type);
+    // Map from database format to FunMessage format
+    const messages = data.map((item: any) => ({
+      id: item.id,
+      type: item.type as MessageType,
+      text: item.text,
+      emoji: item.emoji,
+      createdAt: item.created_at,
+      isActive: item.is_active
+    }));
+    
+    return messages.length > 0 ? messages : getDefaultMessages(type);
   } catch (error) {
     console.error('Error fetching custom messages:', error);
     return getDefaultMessages(type);

@@ -18,11 +18,12 @@ import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
 import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
 import AdminReports from '@/components/admin/AdminReports';
+import FunMessagesAdmin from '@/components/admin/FunMessagesAdmin';
 import { QuizManagement } from '@/components/admin/quiz-management';
 import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
 import { SyncSettings } from '@/components/admin/SyncSettings';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Settings, User, Bell, BarChart } from 'lucide-react';
+import { LogOut, Settings, User, Bell, BarChart, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminPage: React.FC = () => {
@@ -65,6 +66,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/quiz')) tab = 'quiz';
     else if (path.includes('/badges')) tab = 'badges';
     else if (path.includes('/reports')) tab = 'reports';
+    else if (path.includes('/messages')) tab = 'messages';
     else if (path.includes('/sync')) tab = 'sync';
     else if (path === '/admin') {
       // If just at /admin, redirect to /admin/users
@@ -169,7 +171,7 @@ const AdminPage: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid grid-cols-3 md:grid-cols-9 lg:w-[1000px]">
+          <TabsList className="grid grid-cols-2 md:grid-cols-10 lg:w-[1100px]">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="logs">Login Logs</TabsTrigger>
             <TabsTrigger value="ads">Ad Slots</TabsTrigger>
@@ -180,6 +182,10 @@ const AdminPage: React.FC = () => {
             <TabsTrigger value="reports">
               <BarChart className="w-4 h-4 mr-1" />
               Reports
+            </TabsTrigger>
+            <TabsTrigger value="messages">
+              <MessageSquare className="w-4 h-4 mr-1" />
+              Messages
             </TabsTrigger>
             <TabsTrigger value="sync">Sync</TabsTrigger>
           </TabsList>
@@ -194,6 +200,7 @@ const AdminPage: React.FC = () => {
           {activeTab === 'badges' && <AdminBadgeManagement />}
           {activeTab === 'quiz' && <QuizManagement />}
           {activeTab === 'reports' && <AdminReports />}
+          {activeTab === 'messages' && <FunMessagesAdmin />}
           {activeTab === 'sync' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SyncSettings />

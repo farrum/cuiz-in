@@ -178,6 +178,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fun_messages: {
+        Row: {
+          created_at: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          text: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          text: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          text?: string
+          type?: string
+        }
+        Relationships: []
+      }
       login_logs: {
         Row: {
           created_at: string | null
