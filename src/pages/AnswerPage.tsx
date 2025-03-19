@@ -5,14 +5,19 @@ import Header from '@/components/Header';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { STORAGE_KEYS, QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Star, Award, PartyPopper, Frown } from 'lucide-react';
+import { getRandomMessage } from '@/utils/funMessages';
+import { useToast } from '@/hooks/use-toast';
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [funMessage, setFunMessage] = useState('');
+  const [funEmoji, setFunEmoji] = useState('');
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadQuestion = async () => {
@@ -24,7 +29,23 @@ const AnswerPage: React.FC = () => {
       
       if (foundQuestion) {
         setQuestion(foundQuestion);
-        setIsCorrect(foundQuestion.correctAnswer === selectedOption);
+        const correct = foundQuestion.correctAnswer === selectedOption;
+        setIsCorrect(correct);
+        
+        // Set fun message based on correctness
+        const messageType = correct ? 'success' : 'failure';
+        const randomMessage = getRandomMessage(messageType);
+        setFunMessage(randomMessage.text);
+        setFunEmoji(randomMessage.emoji || '');
+        
+        // Show toast with fun message
+        setTimeout(() => {
+          toast({
+            title: correct ? "Great job! 🎉" : "Keep trying! 💪",
+            description: randomMessage.text,
+            variant: correct ? "default" : "destructive",
+          });
+        }, 500);
       }
       
       // Simulate loading
@@ -34,7 +55,7 @@ const AnswerPage: React.FC = () => {
     };
     
     loadQuestion();
-  }, [questionId, selectedOption]);
+  }, [questionId, selectedOption, toast]);
 
   const handleNextQuestion = () => {
     navigate('/quiz');
@@ -69,30 +90,45 @@ const AnswerPage: React.FC = () => {
             </div>
           </div>
         ) : question ? (
-          <div className="quiz-card p-6 rounded-xl glass">
-            <h3 className="text-2xl font-medium mb-8">{question.question}</h3>
+          <div className={`quiz-card p-6 rounded-xl glass ${isCorrect ? 'fun-card bounce-in' : 'fun-card shake'}`}>
+            <h3 className="text-2xl font-medium mb-6">{question.question}</h3>
             
             {/* Second Advertisement */}
             <AdvertisementBanner position="middle" size="small" />
             
             <div className="mb-8 mt-8">
-              <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-500/20 border border-green-500' : 'bg-red-500/20 border border-red-500'}`}>
-                <div className="flex items-center">
+              <div className={`p-6 rounded-lg ${
+                isCorrect 
+                  ? 'bg-green-500/20 border border-green-500 celebration' 
+                  : 'bg-red-500/20 border border-red-500'
+              }`}>
+                <div className="flex flex-col items-center text-center">
                   {isCorrect ? (
-                    <CheckCircle className="w-8 h-8 text-green-500 mr-4" />
+                    <>
+                      <PartyPopper className="w-12 h-12 text-green-500 mb-4" />
+                      <div className="confetti-bg w-full h-full absolute top-0 left-0 opacity-30 z-0" />
+                    </>
                   ) : (
-                    <XCircle className="w-8 h-8 text-red-500 mr-4" />
+                    <Frown className="w-12 h-12 text-red-500 mb-4" />
                   )}
-                  <div>
-                    <h4 className="text-xl font-medium">
-                      {isCorrect ? 'Correct Answer!' : 'Incorrect Answer'}
-                    </h4>
-                    <p className="text-muted-foreground">
-                      {isCorrect 
-                        ? `You earned ${getPointsEarned(true, question.difficulty)} points!` 
-                        : `You earned 0.5 points. The correct answer was: ${question.correctAnswer}`}
-                    </p>
-                  </div>
+                  <h4 className={`text-2xl font-bold mb-2 ${isCorrect ? 'glow-text' : ''}`}>
+                    {isCorrect ? 'Awesome! Correct Answer! 🎉' : 'Not Quite Right 🤔'}
+                  </h4>
+                  <p className="text-lg mb-4">
+                    {funMessage}
+                  </p>
+                  <p className="text-lg font-medium">
+                    {isCorrect 
+                      ? `You earned ${getPointsEarned(true, question.difficulty)} points! ${funEmoji}` 
+                      : `You earned 0.5 points. The correct answer was: ${question.correctAnswer} ${funEmoji}`}
+                  </p>
+                  {isCorrect && (
+                    <div className="flex mt-4">
+                      {[...Array(getPointsEarned(true, question.difficulty))].map((_, i) => (
+                        <Star key={i} className="w-6 h-6 text-yellow-400 mx-1" fill="#FACC15" />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -108,8 +144,8 @@ const AnswerPage: React.FC = () => {
             )}
             
             <div className="mt-6 flex justify-end">
-              <Button onClick={handleNextQuestion} className="btn-shine">
-                Next Question
+              <Button onClick={handleNextQuestion} className="fun-button">
+                Next Question <Award className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target } from 'lucide-react';
+import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -103,6 +103,9 @@ const MobileNav: React.FC = () => {
   const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
   const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
   
+  // Background gradient styles
+  const menuGradient = "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950";
+  
   return (
     <div className="md:hidden">
       <Button 
@@ -112,17 +115,23 @@ const MobileNav: React.FC = () => {
         className="z-50 relative"
         aria-label="Toggle menu"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={24} className="text-primary" /> : <Menu size={24} />}
       </Button>
       
       {/* Slide-in menu */}
       <div 
-        className={`fixed inset-0 bg-background z-40 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-0 ${menuGradient} z-40 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } shadow-xl`}
       >
         <div className="flex flex-col h-full pt-16 px-6">
           <div className="space-y-1 flex-1">
+            <div className="mb-6 text-center">
+              <PartyPopper className="h-12 w-12 mx-auto text-primary mb-2" />
+              <h2 className="text-xl font-bold text-primary">QuizPoints</h2>
+              <p className="text-sm text-muted-foreground">Play, Learn & Earn!</p>
+            </div>
+            
             <Link 
               to="/" 
               className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
@@ -143,8 +152,9 @@ const MobileNav: React.FC = () => {
                   }`}
                   onClick={closeMenu}
                 >
-                  <Award className="mr-3 h-5 w-5" />
+                  <Brain className="mr-3 h-5 w-5" />
                   Quiz
+                  <Sparkles className="ml-2 h-4 w-4 text-yellow-500" />
                 </Link>
                 
                 <Link 
@@ -183,26 +193,40 @@ const MobileNav: React.FC = () => {
                 )}
                 
                 {/* Progress bars for mobile */}
-                <div className="mt-4 space-y-3 p-3 bg-secondary/30 rounded-lg">
+                <div className="mt-6 space-y-4 p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl shadow-sm backdrop-blur-sm">
                   <h3 className="flex items-center text-sm font-medium mb-2">
-                    <Target className="w-4 h-4 mr-2" />
+                    <Target className="w-4 h-4 mr-2 text-primary" />
                     Progress Targets
                   </h3>
                   
                   <div className="space-y-1">
                     <div className="flex text-xs items-center justify-between mb-1">
-                      <span>Daily Target:</span>
-                      <span>{todayPoints.toFixed(1)}/{DAILY_TARGET}</span>
+                      <span className="font-medium">Daily Target:</span>
+                      <span className="font-bold">{todayPoints.toFixed(1)}/{DAILY_TARGET}</span>
                     </div>
-                    <Progress value={dailyProgress} className="h-2" />
+                    <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                      <Progress value={dailyProgress} className="h-full" />
+                      {dailyProgress > 15 && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {dailyProgress.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-1">
                     <div className="flex text-xs items-center justify-between mb-1">
-                      <span>Monthly Target:</span>
-                      <span>{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
+                      <span className="font-medium">Monthly Target:</span>
+                      <span className="font-bold">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
                     </div>
-                    <Progress value={monthlyProgress} className="h-2" />
+                    <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                      <Progress value={monthlyProgress} className="h-full" />
+                      {monthlyProgress > 15 && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {monthlyProgress.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -236,12 +260,13 @@ const MobileNav: React.FC = () => {
                 >
                   <User className="mr-3 h-5 w-5" />
                   Register
+                  <Sparkles className="ml-2 h-4 w-4 text-yellow-500" />
                 </Link>
               </>
             )}
           </div>
           
-          <div className="py-4 border-t">
+          <div className="py-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-center text-muted-foreground">© 2023 Quiz Points</p>
           </div>
         </div>

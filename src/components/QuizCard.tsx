@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getRandomMessage } from '@/utils/funMessages';
+import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -15,11 +17,14 @@ interface QuizCardProps {
 const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 300);
   };
   
   const handleSubmitAnswer = async () => {
@@ -38,6 +43,14 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
       const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
       completedQuestions.push(question.id);
       localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
+      
+      // Show a fun welcome message
+      const welcomeMessage = getRandomMessage('welcome');
+      toast({
+        title: "Quiz Time! 🧠",
+        description: welcomeMessage.text,
+        variant: "default",
+      });
       
       // Record answer in Supabase if user is logged in
       if (userId) {
@@ -169,41 +182,60 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
     }
   };
   
+  const getDifficultyIcon = () => {
+    switch (question.difficulty) {
+      case 'easy': return <Brain size={18} />;
+      case 'medium': return <ZapIcon size={18} />;
+      case 'hard': return <Flame size={18} />;
+      default: return <Brain size={18} />;
+    }
+  };
+  
   return (
-    <Card className="quiz-card">
+    <Card className="quiz-card fun-card">
       <CardHeader>
         <div className="flex justify-between items-center mb-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          <span className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 ${
             question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
             question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
             'bg-red-100 text-red-800'
           }`}>
+            {getDifficultyIcon()}
             {question.difficulty}
           </span>
-          <span className="text-xs text-muted-foreground">{question.category}</span>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Award size={14} />
+            {question.category}
+          </span>
         </div>
-        <CardTitle className="text-xl">{question.question}</CardTitle>
-        <CardDescription>Select the correct answer below</CardDescription>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Sparkles className="text-primary h-5 w-5" />
+          {question.question}
+        </CardTitle>
+        <CardDescription className="text-sm mt-2 flex items-center justify-center gap-1">
+          <Timer className="h-4 w-4" />
+          Select the correct answer below
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {question.options.map((option, index) => (
             <div
               key={index}
-              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+              className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
                 selectedOption === option
-                  ? 'border-primary bg-primary/10'
-                  : 'hover:bg-accent'
-              }`}
+                  ? 'border-primary bg-primary/10 transform scale-105'
+                  : 'hover:bg-accent hover:border-accent hover:shadow-md'
+              } ${isAnimating && selectedOption === option ? 'bounce-in' : ''}`}
               onClick={() => handleSelectOption(option)}
             >
               <div className="flex items-center gap-3">
-                <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium border ${
+                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
                   selectedOption === option ? 'border-primary bg-primary text-white' : 'border-muted-foreground'
                 }`}>
                   {String.fromCharCode(65 + index)}
                 </div>
-                <div>{option}</div>
+                <div className="flex-1">{option}</div>
               </div>
             </div>
           ))}
@@ -211,11 +243,12 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
       </CardContent>
       <CardFooter>
         <Button 
-          className="w-full" 
+          className={`w-full ${selectedOption ? 'fun-button' : ''}`}
           disabled={!selectedOption || isSubmitting}
           onClick={handleSubmitAnswer}
         >
           {isSubmitting ? "Submitting..." : "Submit Answer"}
+          {selectedOption && <Sparkles className="ml-2 h-4 w-4" />}
         </Button>
       </CardFooter>
     </Card>

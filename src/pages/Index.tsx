@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Award, UserPlus, DollarSign, ArrowRight, LogIn } from 'lucide-react';
+import { Award, UserPlus, DollarSign, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -32,7 +32,7 @@ const Index: React.FC = () => {
       
       setTimeout(() => {
         toast({
-          title: "Welcome Bonus!",
+          title: "Welcome Bonus! 🎁",
           description: "You received 10 points for using a referral link!",
         });
       }, 1000);
@@ -66,17 +66,21 @@ const Index: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
       <Header />
       
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
-        <div className="animated-bg top-1/4 left-1/4 w-80 h-80 rounded-full bg-primary/20" />
-        <div className="animated-bg bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/20" />
+        <div className="animated-bg top-1/4 left-1/4 w-80 h-80 rounded-full bg-blue-400/20 dark:bg-blue-500/20" />
+        <div className="animated-bg bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-purple-400/20 dark:bg-purple-500/20" />
         
         <div className="max-w-3xl w-full mx-auto text-center z-10">
           <div className="mb-8 animate-fade-in">
-            <Award className="w-20 h-20 mx-auto mb-6 text-primary animate-float" />
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+            <div className="relative w-32 h-32 mx-auto mb-6">
+              <Trophy className="w-32 h-32 mx-auto text-yellow-500 animate-float" />
+              <Sparkles className="absolute top-0 right-0 w-8 h-8 text-yellow-400" />
+              <Sparkles className="absolute bottom-5 left-0 w-6 h-6 text-yellow-400" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
               QuizPoints Rewards
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -104,7 +108,7 @@ const Index: React.FC = () => {
               />
               <Button 
                 type="submit" 
-                className="w-full btn-shine" 
+                className="w-full fun-button" 
                 disabled={!userName.trim()}
               >
                 Start Playing
@@ -116,17 +120,17 @@ const Index: React.FC = () => {
                 <Button 
                   size="lg" 
                   onClick={handleStartClick}
-                  className="btn-shine text-lg group"
+                  className="fun-button text-lg group relative overflow-hidden"
                 >
                   Continue Playing
-                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  <Rocket className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               ) : (
                 <>
                   <Button 
                     size="lg" 
                     onClick={() => navigate('/register')}
-                    className="btn-shine text-lg group"
+                    className="fun-button text-lg group relative overflow-hidden"
                   >
                     Register
                     <UserPlus className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -136,7 +140,7 @@ const Index: React.FC = () => {
                     variant="outline" 
                     size="lg"
                     onClick={() => navigate('/login')}
-                    className="text-lg group"
+                    className="text-lg group hover:shadow-md transition-all"
                   >
                     Login
                     <LogIn className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -149,7 +153,7 @@ const Index: React.FC = () => {
                   variant="outline" 
                   size="lg"
                   onClick={() => navigate('/profile')}
-                  className="text-lg"
+                  className="text-lg hover:shadow-md transition-all"
                 >
                   View Profile
                 </Button>
@@ -160,30 +164,30 @@ const Index: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             {[
               {
-                icon: <Award className="w-10 h-10 text-primary" />,
+                icon: <Award className="w-12 h-12 text-blue-500" />,
                 title: "Play & Earn",
                 description: "Answer quiz questions correctly to earn points. The more you play, the more you earn."
               },
               {
-                icon: <UserPlus className="w-10 h-10 text-primary" />,
+                icon: <PartyPopper className="w-12 h-12 text-purple-500" />,
                 title: "Refer Friends",
                 description: "Invite friends to join and earn bonus points for each successful referral."
               },
               {
-                icon: <DollarSign className="w-10 h-10 text-primary" />,
+                icon: <DollarSign className="w-12 h-12 text-green-500" />,
                 title: "Cash Out",
                 description: "Convert your points to real money. Every 100 points equals $1.00 ready for withdrawal."
               }
             ].map((feature, index) => (
               <div 
                 key={feature.title}
-                className="glass p-6 rounded-2xl"
+                className="fun-card p-6 rounded-2xl"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="bg-primary/10 w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-gray-800 w-20 h-20 mx-auto rounded-xl flex items-center justify-center mb-4 shadow-md">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-medium mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
               </div>
             ))}
@@ -191,11 +195,14 @@ const Index: React.FC = () => {
         </div>
       </div>
       
-      <footer className="py-6 border-t border-border mt-auto">
+      <footer className="py-6 border-t border-border mt-auto backdrop-blur-sm bg-white/50 dark:bg-gray-900/50">
         <div className="container">
-          <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} QuizPoints. All rights reserved.
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Zap className="w-4 h-4 text-primary" />
+            <p className="text-center text-sm text-muted-foreground">
+              © {new Date().getFullYear()} QuizPoints. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </main>
