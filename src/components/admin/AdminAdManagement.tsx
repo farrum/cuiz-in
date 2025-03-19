@@ -36,6 +36,28 @@ interface AdPerformance {
   page_section?: string;
 }
 
+// Define types for Supabase query responses
+interface ImpressionData {
+  ad_id: string;
+  ad_position: string;
+  slot_id: string | null;
+  page_section: string | null;
+  count: string;
+}
+
+interface ClickData {
+  ad_id: string;
+  ad_position: string;
+  slot_id: string | null;
+  page_section: string | null;
+  count: string;
+}
+
+interface SlotData {
+  id: string;
+  name: string;
+}
+
 const AdminAdManagement: React.FC = () => {
   const { toast } = useToast();
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
@@ -103,7 +125,7 @@ const AdminAdManagement: React.FC = () => {
           .is('slot_id', null)
           .not('slot_id', 'eq', '')
           .is('page_section', null)
-          .not('page_section', 'eq', '')
+          .not('page_section', 'eq', '');
           
         if (impressionsError) {
           throw impressionsError;
@@ -122,8 +144,8 @@ const AdminAdManagement: React.FC = () => {
         
         // Merge the impression datasets
         const allImpressions = [
-          ...(impressionsData || []),
-          ...(impressionsWithSlotData || [])
+          ...(impressionsData || []) as ImpressionData[],
+          ...(impressionsWithSlotData || []) as ImpressionData[]
         ];
         
         // Then get clicks data
@@ -152,8 +174,8 @@ const AdminAdManagement: React.FC = () => {
         
         // Merge the clicks datasets
         const allClicks = [
-          ...(clicksData || []),
-          ...(clicksWithSlotData || [])
+          ...(clicksData || []) as ClickData[],
+          ...(clicksWithSlotData || []) as ClickData[]
         ];
         
         // Get ad slots data for names
@@ -161,7 +183,9 @@ const AdminAdManagement: React.FC = () => {
           .from('ad_slots')
           .select('id, name');
           
-        const slotsMap = new Map(slotsData?.map(slot => [slot.id, slot.name]) || []);
+        const slotsMap = new Map(
+          (slotsData as SlotData[] || []).map(slot => [slot.id, slot.name])
+        );
         
         // Process and combine the data
         const combinedData: AdPerformance[] = [];
