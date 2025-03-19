@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift } from 'lucide-react';
@@ -78,7 +79,7 @@ const HowToPlay: React.FC = () => {
             <div>
               <h3 className="font-medium text-lg">When do I get paid?</h3>
               <p className="text-muted-foreground">
-                You can request a withdrawal anytime after reaching the minimum threshold of ₹100. Payments are processed within 3-5 business days.
+                You can request a withdrawal anytime after reaching the minimum threshold of ₹8000. Payments are processed within 3-5 business days.
               </p>
             </div>
             
@@ -115,7 +116,7 @@ const HowToPlay: React.FC = () => {
             <div>
               <h3 className="font-medium text-lg">Is there a minimum withdrawal amount?</h3>
               <p className="text-muted-foreground">
-                Yes, the minimum withdrawal amount is ₹100 (equivalent to 10,000 points).
+                Yes, the minimum withdrawal amount is ₹8000 (equivalent to 800,000 points).
               </p>
             </div>
             
