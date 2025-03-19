@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Award, UserPlus, DollarSign, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap } from 'lucide-react';
+import { Award, UserPlus, IndianRupee, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap, HelpCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -81,12 +81,19 @@ const Index: React.FC = () => {
               <Sparkles className="absolute bottom-5 left-0 w-6 h-6 text-yellow-400" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-              QuizPoints Rewards
+              CuizIN Rewards
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Play quizzes, earn points, and convert them to real money. 
               Invite friends to earn even more!
             </p>
+            
+            <div className="mt-6 inline-block bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium border border-green-200 dark:border-green-800">
+              <span className="flex items-center">
+                <Check className="w-4 h-4 mr-2" />
+                No Deposits Required to Play the Quiz
+              </span>
+            </div>
           </div>
           
           {showNameInput ? (
@@ -171,12 +178,12 @@ const Index: React.FC = () => {
               {
                 icon: <PartyPopper className="w-12 h-12 text-purple-500" />,
                 title: "Refer Friends",
-                description: "Invite friends to join and earn bonus points for each successful referral."
+                description: "Invite friends to join and earn bonus cash for each successful referral."
               },
               {
-                icon: <DollarSign className="w-12 h-12 text-green-500" />,
+                icon: <IndianRupee className="w-12 h-12 text-green-500" />,
                 title: "Cash Out",
-                description: "Convert your points to real money. Every 100 points equals $1.00 ready for withdrawal."
+                description: "Earn fixed revenue + bonuses every month. Every 100 points equals ₹1.00 ready for withdrawal."
               }
             ].map((feature, index) => (
               <div 
@@ -192,6 +199,20 @@ const Index: React.FC = () => {
               </div>
             ))}
           </div>
+          
+          <div className="mt-12">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              asChild
+              className="text-lg hover:shadow-md transition-all"
+            >
+              <Link to="/how-to-play">
+                <HelpCircle className="mr-2 w-5 h-5" />
+                How to Play
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
       
@@ -200,7 +221,7 @@ const Index: React.FC = () => {
           <div className="flex items-center justify-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
             <p className="text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} QuizPoints. All rights reserved.
+              © {new Date().getFullYear()} CuizIN. All rights reserved.
             </p>
           </div>
         </div>

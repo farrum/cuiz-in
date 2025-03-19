@@ -18,6 +18,7 @@ import LoginPage from "@/pages/LoginPage";
 import Registration from "@/pages/Registration";
 import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from '@/pages/AdminLoginPage';
+import HowToPlay from '@/pages/HowToPlay';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -122,6 +123,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
+          <Route path="/how-to-play" element={<HowToPlay />} />
           
           <Route path="/profile" element={
             <ProtectedRoute>
