@@ -14,6 +14,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
+import MotivationalCharacter from '@/components/MotivationalCharacter';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -24,6 +25,8 @@ const QuizPage: React.FC = () => {
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [adsSynced, setAdsSynced] = useState(false);
+  const [showMotivation, setShowMotivation] = useState(false);
+  const [motivationMessage, setMotivationMessage] = useState('');
   const { toast } = useToast();
   
   useEffect(() => {
@@ -145,6 +148,27 @@ const QuizPage: React.FC = () => {
     loadNewQuestion();
   };
 
+  useEffect(() => {
+    if (questionsAnswered > 0 && questionsAnswered % 3 === 0) {
+      setShowMotivation(true);
+      
+      const motivationalMessages = [
+        "You're doing great! Keep going!",
+        "Your brain is getting stronger with every question!",
+        "You're on a roll! Can you answer a few more?",
+        "Learning is an adventure, and you're acing it!",
+        "Keep up this momentum! You're amazing!"
+      ];
+      
+      const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      setMotivationMessage(randomMessage);
+      
+      setTimeout(() => {
+        setShowMotivation(false);
+      }, 5000);
+    }
+  }, [questionsAnswered]);
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -195,6 +219,16 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
+        {showMotivation && (
+          <div className="flex justify-center my-4">
+            <MotivationalCharacter 
+              mood="happy" 
+              message={motivationMessage}
+              showMessage={true}
+            />
+          </div>
+        )}
+        
         <AdvertisementBanner position="middle" />
         
         {isLoading ? (
@@ -205,10 +239,18 @@ const QuizPage: React.FC = () => {
             </div>
           </div>
         ) : currentQuestion ? (
-          <QuizCard
-            question={currentQuestion}
-            onComplete={handleQuestionComplete}
-          />
+          <div className="relative">
+            <div className="absolute -top-16 -right-10 z-10 transform scale-75">
+              <MotivationalCharacter 
+                mood="neutral"
+                showMessage={false}
+              />
+            </div>
+            <QuizCard
+              question={currentQuestion}
+              onComplete={handleQuestionComplete}
+            />
+          </div>
         ) : (
           <div className="quiz-card text-center">
             <p>No questions available. Please try again later.</p>

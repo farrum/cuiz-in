@@ -6,41 +6,7 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+/* ... keep existing code (logo, animations, and card styles) */
 
 /* Fun Theme Additions */
 .fun-bg {
@@ -179,4 +145,107 @@
 @keyframes character-bounce {
   0%, 100% { transform: translateY(0) rotate(0); }
   50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* New styles for character and speech bubbles */
+.character-container {
+  position: relative;
+  display: inline-block;
+  margin: 20px;
+  z-index: 10;
+}
+
+.character-animation {
+  transition: all 0.3s ease;
+}
+
+.speech-bubble {
+  position: absolute;
+  top: -60px;
+  right: -80px;
+  background: white;
+  border-radius: 12px;
+  padding: 10px 15px;
+  max-width: 200px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  animation: bubble-in 0.5s ease-out;
+}
+
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 20px;
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: white transparent;
+}
+
+.speech-icon {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 24px;
+  height: 24px;
+  color: #ff9a9e;
+}
+
+@keyframes bubble-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* New background patterns */
+.pattern-dots {
+  background-image: radial-gradient(#9370DB 2px, transparent 2px);
+  background-size: 30px 30px;
+}
+
+.pattern-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(147, 112, 219, 0.1),
+    rgba(147, 112, 219, 0.1) 10px,
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.05) 20px
+  );
+}
+
+/* Predefined colorful backgrounds - nicer than the previous weird ones */
+.bg-correct-1 {
+  background: linear-gradient(90deg, hsla(139, 70%, 75%, 1) 0%, hsla(63, 90%, 76%, 1) 100%);
+}
+
+.bg-correct-2 {
+  background: linear-gradient(90deg, hsla(46, 73%, 75%, 1) 0%, hsla(176, 73%, 88%, 1) 100%);
+}
+
+.bg-correct-3 {
+  background: linear-gradient(to top, #accbee 0%, #e7f0fd 100%);
+}
+
+.bg-correct-4 {
+  background: linear-gradient(184.1deg, rgba(249,255,182,1) 44.7%, rgba(226,255,172,1) 67.2%);
+}
+
+.bg-incorrect-1 {
+  background: linear-gradient(90deg, hsla(24, 100%, 83%, 1) 0%, hsla(341, 91%, 68%, 1) 100%);
+}
+
+.bg-incorrect-2 {
+  background: linear-gradient(111.4deg, rgba(238,113,113,1) 1%, rgba(246,215,148,1) 58%);
+}
+
+.bg-incorrect-3 {
+  background: linear-gradient(90deg, rgb(245,152,168) 0%, rgb(246,237,178) 100%);
+}
+
+.bg-incorrect-4 {
+  background: linear-gradient(180deg, rgb(254,100,121) 0%, rgb(251,221,186) 100%);
 }

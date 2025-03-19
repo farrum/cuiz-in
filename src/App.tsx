@@ -180,6 +180,11 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/messages" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

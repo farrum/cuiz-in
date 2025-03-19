@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Star, Award, PartyPopper, Frown } from 'lucide-react';
 import { getRandomMessage } from '@/utils/funMessages';
 import { useToast } from '@/hooks/use-toast';
+import MotivationalCharacter from '@/components/MotivationalCharacter';
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
@@ -16,23 +17,23 @@ const AnswerPage: React.FC = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [funMessage, setFunMessage] = useState('');
   const [funEmoji, setFunEmoji] = useState('');
-  const [backgroundImage, setBackgroundImage] = useState('');
+  const [backgroundClass, setBackgroundClass] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Random background patterns for correct and incorrect answers
+  // Predefined background classes
   const correctBackgrounds = [
-    'linear-gradient(90deg, hsla(139, 70%, 75%, 1) 0%, hsla(63, 90%, 76%, 1) 100%)',
-    'linear-gradient(90deg, hsla(46, 73%, 75%, 1) 0%, hsla(176, 73%, 88%, 1) 100%)',
-    'linear-gradient(to top, #accbee 0%, #e7f0fd 100%)',
-    'linear-gradient(184.1deg, rgba(249,255,182,1) 44.7%, rgba(226,255,172,1) 67.2%)'
+    'bg-correct-1',
+    'bg-correct-2',
+    'bg-correct-3',
+    'bg-correct-4'
   ];
   
   const incorrectBackgrounds = [
-    'linear-gradient(90deg, hsla(24, 100%, 83%, 1) 0%, hsla(341, 91%, 68%, 1) 100%)',
-    'linear-gradient(111.4deg, rgba(238,113,113,1) 1%, rgba(246,215,148,1) 58%)',
-    'linear-gradient(90deg, rgb(245,152,168) 0%, rgb(246,237,178) 100%)',
-    'linear-gradient(180deg, rgb(254,100,121) 0%, rgb(251,221,186) 100%)'
+    'bg-incorrect-1',
+    'bg-incorrect-2',
+    'bg-incorrect-3',
+    'bg-incorrect-4'
   ];
 
   useEffect(() => {
@@ -57,10 +58,10 @@ const AnswerPage: React.FC = () => {
         // Set random background based on correctness
         if (correct) {
           const randomBg = correctBackgrounds[Math.floor(Math.random() * correctBackgrounds.length)];
-          setBackgroundImage(randomBg);
+          setBackgroundClass(randomBg);
         } else {
           const randomBg = incorrectBackgrounds[Math.floor(Math.random() * incorrectBackgrounds.length)];
-          setBackgroundImage(randomBg);
+          setBackgroundClass(randomBg);
         }
         
         // Show toast with fun message
@@ -83,7 +84,7 @@ const AnswerPage: React.FC = () => {
   }, [questionId, selectedOption, toast]);
 
   const handleNextQuestion = () => {
-    // Fix for the Next Question button - navigate to quiz route
+    // Navigate to quiz route
     navigate('/quiz');
   };
   
@@ -99,19 +100,6 @@ const AnswerPage: React.FC = () => {
     }
     return 0.5; // Wrong answer always gives 0.5 points
   };
-
-  // Random cartoon characters
-  const cartoonCharacters = [
-    'url(/placeholder.svg)',
-    'url(https://images.unsplash.com/photo-1472396961693-142e6e269027)',
-    'url(https://images.unsplash.com/photo-1535268647677-300dbf3d78d1)',
-    'url(https://images.unsplash.com/photo-1441057206919-63d19fac2369)',
-    'url(https://images.unsplash.com/photo-1501286353178-1ec881214838)',
-    'url(https://images.unsplash.com/photo-1469041797191-50ace28483c3)'
-  ];
-
-  // Generate random cartoon character
-  const randomCartoonCharacter = cartoonCharacters[Math.floor(Math.random() * cartoonCharacters.length)];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -130,24 +118,23 @@ const AnswerPage: React.FC = () => {
           </div>
         ) : question ? (
           <div 
-            className={`quiz-card p-6 rounded-xl glass ${isCorrect ? 'fun-card bounce-in' : 'fun-card shake'}`}
+            className={`quiz-card p-6 rounded-xl fun-card ${backgroundClass} ${isCorrect ? 'bounce-in' : 'shake'}`}
             style={{ 
-              backgroundImage: backgroundImage,
-              backgroundSize: 'cover',
               position: 'relative',
               overflow: 'hidden'
             }}
           >
-            {/* Cartoon character decoration */}
-            <div 
-              className="absolute -bottom-10 -right-10 w-32 h-32 opacity-30 z-0 transform rotate-12"
-              style={{ 
-                backgroundImage: randomCartoonCharacter,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center'
-              }}
-            />
+            {/* Add pattern overlay for texture */}
+            <div className="absolute inset-0 pattern-dots opacity-30 mix-blend-overlay"></div>
+            
+            {/* Motivational character */}
+            <div className="absolute top-4 right-4">
+              <MotivationalCharacter 
+                mood={isCorrect ? 'happy' : 'sad'} 
+                message={funMessage}
+                showMessage={true}
+              />
+            </div>
             
             <h3 className="text-2xl font-medium mb-6 relative z-10">{question.question}</h3>
             
