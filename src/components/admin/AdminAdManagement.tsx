@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -94,34 +95,79 @@ const AdminAdManagement: React.FC = () => {
         .limit(1);
         
       if (viewCheckError) {
-        const { data: impressions, error: impressionsError } = await supabase
+        // If the view doesn't exist, we'll calculate the metrics ourselves
+        // First get impressions data
+        const { data: impressionsData, error: impressionsError } = await supabase
           .from('ad_views')
-          .select('ad_id, ad_position, slot_id, page_section, count(*)', { count: 'exact' })
-          .group('ad_id, ad_position, slot_id, page_section');
+          .select('ad_id, ad_position, slot_id, page_section, count(*)')
+          .is('slot_id', null)
+          .not('slot_id', 'eq', '')
+          .is('page_section', null)
+          .not('page_section', 'eq', '')
           
         if (impressionsError) {
           throw impressionsError;
         }
         
-        const { data: clicks, error: clicksError } = await supabase
+        // Get impressions with specific slot_id and page_section
+        const { data: impressionsWithSlotData, error: impressionsWithSlotError } = await supabase
+          .from('ad_views')
+          .select('ad_id, ad_position, slot_id, page_section, count(*)')
+          .not('slot_id', 'is', null)
+          .not('page_section', 'is', null);
+          
+        if (impressionsWithSlotError) {
+          throw impressionsWithSlotError;
+        }
+        
+        // Merge the impression datasets
+        const allImpressions = [
+          ...(impressionsData || []),
+          ...(impressionsWithSlotData || [])
+        ];
+        
+        // Then get clicks data
+        const { data: clicksData, error: clicksError } = await supabase
           .from('ad_clicks')
-          .select('ad_id, ad_position, slot_id, page_section, count(*)', { count: 'exact' })
-          .group('ad_id, ad_position, slot_id, page_section');
+          .select('ad_id, ad_position, slot_id, page_section, count(*)')
+          .is('slot_id', null)
+          .not('slot_id', 'eq', '')
+          .is('page_section', null)
+          .not('page_section', 'eq', '');
           
         if (clicksError) {
           throw clicksError;
         }
         
+        // Get clicks with specific slot_id and page_section
+        const { data: clicksWithSlotData, error: clicksWithSlotError } = await supabase
+          .from('ad_clicks')
+          .select('ad_id, ad_position, slot_id, page_section, count(*)')
+          .not('slot_id', 'is', null)
+          .not('page_section', 'is', null);
+          
+        if (clicksWithSlotError) {
+          throw clicksWithSlotError;
+        }
+        
+        // Merge the clicks datasets
+        const allClicks = [
+          ...(clicksData || []),
+          ...(clicksWithSlotData || [])
+        ];
+        
+        // Get ad slots data for names
         const { data: slotsData } = await supabase
           .from('ad_slots')
           .select('id, name');
           
         const slotsMap = new Map(slotsData?.map(slot => [slot.id, slot.name]) || []);
         
+        // Process and combine the data
         const combinedData: AdPerformance[] = [];
         
-        impressions?.forEach((imp: any) => {
-          const clickData = clicks?.find((click: any) => 
+        for (const imp of allImpressions) {
+          const clickData = allClicks.find(click => 
             click.ad_id === imp.ad_id && 
             click.ad_position === imp.ad_position &&
             click.slot_id === imp.slot_id &&
@@ -139,13 +185,14 @@ const AdminAdManagement: React.FC = () => {
             impressions: impressionCount,
             clicks: clickCount,
             ctr: parseFloat(ctr.toFixed(2)),
-            slot_id: imp.slot_id,
-            page_section: imp.page_section
+            slot_id: imp.slot_id || imp.ad_position,
+            page_section: imp.page_section || imp.ad_position
           });
-        });
+        }
         
         setAdPerformance(combinedData);
       } else {
+        // If the view exists, just use it
         const { data, error } = await supabase
           .from('ad_performance_reports')
           .select('*');
@@ -428,14 +475,15 @@ const AdminAdManagement: React.FC = () => {
       )}
       
       <Tabs defaultValue="top" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-6">
+        <TabsList className="grid grid-cols-5 mb-6">
           <TabsTrigger value="top">Top</TabsTrigger>
           <TabsTrigger value="middle">Middle</TabsTrigger>
           <TabsTrigger value="bottom">Bottom</TabsTrigger>
+          <TabsTrigger value="sidebar">Sidebar</TabsTrigger>
           <TabsTrigger value="all">All Slots</TabsTrigger>
         </TabsList>
         
-        {['top', 'middle', 'bottom'].map(position => (
+        {['top', 'middle', 'bottom', 'sidebar'].map(position => (
           <TabsContent key={position} value={position} className="space-y-4">
             {adSlots
               .filter(slot => slot.position === position)
@@ -449,6 +497,14 @@ const AdminAdManagement: React.FC = () => {
                   formatDate={formatDate}
                 />
               ))}
+              {adSlots.filter(slot => slot.position === position).length === 0 && (
+                <div className="text-center p-6 text-muted-foreground">
+                  No ad slots found for this position. 
+                  <Button variant="link" onClick={startCreatingNew} className="ml-2">
+                    Create one now
+                  </Button>
+                </div>
+              )}
           </TabsContent>
         ))}
         
