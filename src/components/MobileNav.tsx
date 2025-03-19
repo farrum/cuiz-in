@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain } from 'lucide-react';
@@ -32,21 +31,17 @@ const MobileNav: React.FC = () => {
     window.location.href = '/';
   };
   
-  // Get current points data
   useEffect(() => {
     const updatePoints = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
       
       try {
-        // Get today's date
         const today = new Date().toISOString().split('T')[0];
         
-        // Get current month
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
-        // Fetch daily points
         const { data: dailyData } = await supabase
           .from('daily_points')
           .select('points')
@@ -60,7 +55,6 @@ const MobileNav: React.FC = () => {
           setTodayPoints(0);
         }
         
-        // Fetch monthly points
         const { data: monthlyData } = await supabase
           .from('monthly_points')
           .select('points')
@@ -81,14 +75,12 @@ const MobileNav: React.FC = () => {
     if (isAuthenticated) {
       updatePoints();
       
-      // Set up a listener for point updates
       const handlePointsUpdate = () => {
         updatePoints();
       };
       
       window.addEventListener('pointsUpdated', handlePointsUpdate);
       
-      // Refresh points every 10 seconds
       const intervalId = setInterval(updatePoints, 10000);
       
       return () => {
@@ -103,7 +95,6 @@ const MobileNav: React.FC = () => {
   const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
   const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
   
-  // Background gradient styles
   const menuGradient = "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950";
   
   return (
@@ -118,7 +109,6 @@ const MobileNav: React.FC = () => {
         {isOpen ? <X size={24} className="text-primary" /> : <Menu size={24} />}
       </Button>
       
-      {/* Slide-in menu */}
       <div 
         className={`fixed inset-0 ${menuGradient} z-40 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -128,7 +118,9 @@ const MobileNav: React.FC = () => {
           <div className="space-y-1 flex-1">
             <div className="mb-6 text-center">
               <PartyPopper className="h-12 w-12 mx-auto text-primary mb-2" />
-              <h2 className="text-xl font-bold text-primary">QuizPoints</h2>
+              <h2 className="text-xl font-bold text-primary">
+                Cuiz<span className="text-green-500">IN</span>
+              </h2>
               <p className="text-sm text-muted-foreground">Play, Learn & Earn!</p>
             </div>
             
@@ -192,7 +184,6 @@ const MobileNav: React.FC = () => {
                   </Link>
                 )}
                 
-                {/* Progress bars for mobile */}
                 <div className="mt-6 space-y-4 p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl shadow-sm backdrop-blur-sm">
                   <h3 className="flex items-center text-sm font-medium mb-2">
                     <Target className="w-4 h-4 mr-2 text-primary" />
@@ -267,7 +258,7 @@ const MobileNav: React.FC = () => {
           </div>
           
           <div className="py-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-center text-muted-foreground">© 2023 Quiz Points</p>
+            <p className="text-xs text-center text-muted-foreground">© 2023 Cuiz<span className="text-green-500">IN</span></p>
           </div>
         </div>
       </div>

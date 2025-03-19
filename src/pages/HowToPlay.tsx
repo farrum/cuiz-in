@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift } from 'lucide-react';
@@ -14,7 +13,7 @@ const HowToPlay: React.FC = () => {
       <div className="container max-w-4xl mx-auto px-4 py-12 flex-1">
         <div className="mb-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-            How to Play CuizIN
+            How to Play Cuiz<span className="text-green-500">IN</span>
           </h1>
           <p className="text-lg text-muted-foreground">
             Easy steps to start earning rewards by playing quizzes
@@ -143,7 +142,7 @@ const HowToPlay: React.FC = () => {
         <div className="container">
           <div className="flex items-center justify-center gap-2">
             <p className="text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} CuizIN. All rights reserved.
+              © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
             </p>
           </div>
         </div>

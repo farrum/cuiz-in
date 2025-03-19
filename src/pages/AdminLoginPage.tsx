@@ -29,7 +29,7 @@ const AdminLoginPage: React.FC = () => {
       <footer className="py-6 border-t border-border mt-auto">
         <div className="container">
           <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} QuizPoints. All rights reserved.
+            © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
           </p>
         </div>
       </footer>

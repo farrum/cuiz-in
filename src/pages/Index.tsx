@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Award, UserPlus, IndianRupee, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap, HelpCircle, Check } from 'lucide-react';
@@ -81,7 +80,7 @@ const Index: React.FC = () => {
               <Sparkles className="absolute bottom-5 left-0 w-6 h-6 text-yellow-400" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-              CuizIN Rewards
+              Cuiz<span className="text-green-500">IN</span> Rewards
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Play quizzes, earn points, and convert them to real money. 
@@ -221,7 +220,7 @@ const Index: React.FC = () => {
           <div className="flex items-center justify-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
             <p className="text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} CuizIN. All rights reserved.
+              © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
             </p>
           </div>
         </div>

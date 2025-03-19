@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield, LogIn } from 'lucide-react';
@@ -15,7 +14,6 @@ const Header: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // Handle scroll event to change header appearance
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -29,10 +27,8 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Get current points data and check login status
   useEffect(() => {
     const checkAuth = () => {
-      // Check localStorage for user data
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       
@@ -43,23 +39,18 @@ const Header: React.FC = () => {
     checkAuth();
   }, []);
 
-  // Get current points data
   useEffect(() => {
     const updatePoints = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
       
       try {
-        // Get today's date
         const today = new Date().toISOString().split('T')[0];
-        
-        // Get current month
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
         console.log("Fetching points for:", today, currentMonth);
         
-        // Fetch daily points
         const { data: dailyData, error: dailyError } = await supabase
           .from('daily_points')
           .select('points')
@@ -75,7 +66,6 @@ const Header: React.FC = () => {
           setTodayPoints(0);
         }
         
-        // Fetch monthly points
         const { data: monthlyData, error: monthlyError } = await supabase
           .from('monthly_points')
           .select('points')
@@ -98,7 +88,6 @@ const Header: React.FC = () => {
     if (isLoggedIn) {
       updatePoints();
       
-      // Set up a listener for point updates
       const handlePointsUpdate = () => {
         console.log("Points updated event received in Header");
         updatePoints();
@@ -106,7 +95,6 @@ const Header: React.FC = () => {
       
       window.addEventListener('pointsUpdated', handlePointsUpdate);
       
-      // Refresh points every 10 seconds
       const intervalId = setInterval(updatePoints, 10000);
       
       return () => {
@@ -132,10 +120,11 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center space-x-2 animate-fade-in">
             <Award className="w-8 h-8 text-primary" />
-            <span className="text-xl font-semibold">QuizPoints</span>
+            <span className="text-xl font-semibold">
+              Cuiz<span className="text-green-500">IN</span>
+            </span>
           </Link>
           
-          {/* Progress bars for daily and monthly targets with clearer labels - only show when logged in */}
           {isLoggedIn && (
             <div className="hidden md:flex flex-col gap-1 w-44">
               <div className="flex text-xs items-center gap-1">
@@ -160,7 +149,6 @@ const Header: React.FC = () => {
         
         <nav className="flex items-center space-x-1">
           {isLoggedIn ? (
-            // Navigation for logged-in users
             [
               { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
               { path: '/quiz', label: 'Play Quiz', icon: <Award className="w-5 h-5" /> },
@@ -185,7 +173,6 @@ const Header: React.FC = () => {
               </Link>
             ))
           ) : (
-            // Navigation for non-logged-in users
             [
               { path: '/', label: 'Home', icon: <Home className="w-5 h-5" /> },
               { path: '/login', label: 'Login', icon: <LogIn className="w-5 h-5" /> },
