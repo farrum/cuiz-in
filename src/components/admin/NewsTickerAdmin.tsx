@@ -29,11 +29,14 @@ const NewsTickerAdmin = () => {
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
-      // Using raw query to avoid TypeScript errors since the table is new
+      // Using type assertion to handle the news_ticker table that's not yet in the TypeScript types
       const { data, error } = await supabase
         .from('news_ticker')
         .select('*')
-        .order('created_at', { ascending: false }) as any;
+        .order('created_at', { ascending: false }) as unknown as { 
+          data: NewsTickerMessage[] | null, 
+          error: Error | null 
+        };
 
       if (error) {
         console.error('Error fetching news ticker messages:', error);
@@ -52,10 +55,12 @@ const NewsTickerAdmin = () => {
     if (!newMessage.trim()) return;
 
     try {
-      // Using raw query to avoid TypeScript errors
+      // Using type assertion for the insert operation
       const { error } = await supabase
         .from('news_ticker')
-        .insert([{ text: newMessage.trim(), is_active: true }]) as any;
+        .insert([{ text: newMessage.trim(), is_active: true }]) as unknown as {
+          error: Error | null;
+        };
 
       if (error) {
         console.error('Error adding message:', error);
@@ -86,11 +91,13 @@ const NewsTickerAdmin = () => {
 
   const deleteMessage = async (id: string) => {
     try {
-      // Using raw query to avoid TypeScript errors
+      // Using type assertion for the delete operation
       const { error } = await supabase
         .from('news_ticker')
         .delete()
-        .eq('id', id) as any;
+        .eq('id', id) as unknown as {
+          error: Error | null;
+        };
 
       if (error) {
         console.error('Error deleting message:', error);
@@ -132,11 +139,13 @@ const NewsTickerAdmin = () => {
     if (!editingId || !editText.trim()) return;
 
     try {
-      // Using raw query to avoid TypeScript errors
+      // Using type assertion for the update operation
       const { error } = await supabase
         .from('news_ticker')
         .update({ text: editText.trim() })
-        .eq('id', editingId) as any;
+        .eq('id', editingId) as unknown as {
+          error: Error | null;
+        };
 
       if (error) {
         console.error('Error updating message:', error);
@@ -168,11 +177,13 @@ const NewsTickerAdmin = () => {
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      // Using raw query to avoid TypeScript errors
+      // Using type assertion for the update operation
       const { error } = await supabase
         .from('news_ticker')
         .update({ is_active: !currentStatus })
-        .eq('id', id) as any;
+        .eq('id', id) as unknown as {
+          error: Error | null;
+        };
 
       if (error) {
         console.error('Error toggling message status:', error);
@@ -200,7 +211,7 @@ const NewsTickerAdmin = () => {
     }
   };
 
-  // Define column types compatible with PaginatedDataTable
+  // Updated column definitions that match the PaginatedDataTable requirements
   const columns = [
     {
       header: 'Message',
@@ -246,7 +257,7 @@ const NewsTickerAdmin = () => {
     },
     {
       header: 'Actions',
-      id: 'actions',
+      accessorKey: 'id',
       cell: ({ row }: any) => {
         const message = row.original;
         return (
@@ -271,7 +282,7 @@ const NewsTickerAdmin = () => {
         );
       },
     }
-  ] as any; // Using type assertion to avoid complex column typing
+  ];
 
   return (
     <div className="space-y-6">

@@ -21,12 +21,15 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        // Using raw query to avoid TypeScript errors since the table is new
+        // Using type assertion to handle the news_ticker table that's not yet in the TypeScript types
         const { data, error } = await supabase
           .from('news_ticker')
           .select('*')
           .eq('is_active', true)
-          .order('created_at', { ascending: false }) as any;
+          .order('created_at', { ascending: false }) as unknown as { 
+            data: NewsMessage[] | null, 
+            error: Error | null 
+          };
         
         if (error) {
           console.error('Error fetching news ticker messages:', error);
@@ -34,7 +37,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         }
         
         if (data && data.length > 0) {
-          setMessages(data as NewsMessage[]);
+          setMessages(data);
         }
       } catch (err) {
         console.error('Failed to fetch news ticker messages:', err);
