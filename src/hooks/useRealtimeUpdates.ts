@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,14 +25,19 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
   useEffect(() => {
     console.log(`Setting up realtime listener for ${tableName}`);
     
-    // Fixed Supabase Realtime API subscription syntax
-    const channel = supabase
-      .channel(`table-${tableName}-changes`)
-      .on('postgres_changes', { 
+    // Create a channel for this specific table
+    const channel = supabase.channel(`table-${tableName}-changes`);
+    
+    // Subscribe to postgres changes on the channel
+    channel
+      .on(
+        'postgres_changes', 
+        { 
           event: eventType, 
           schema: 'public', 
           table: tableName 
-        }, (payload: any) => {
+        }, 
+        (payload: any) => {
           console.log(`Realtime update for ${tableName}:`, payload);
           // Cast payload to our expected structure
           const realTimePayload = payload as unknown as RealtimePayload;
@@ -48,8 +54,9 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
           } else if (realTimePayload.eventType === 'DELETE') {
             removeFromLocalStorage(tableName, realTimePayload);
           }
-        })
-      .subscribe((status) => {
+        }
+      )
+      .subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           setIsListening(true);
           console.log(`Listening for changes on ${tableName} table`);
