@@ -187,6 +187,11 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/ticker" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
