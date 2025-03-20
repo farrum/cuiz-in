@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -28,41 +27,40 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     // Create a channel for this specific table
     const channel = supabase.channel(`table-${tableName}-changes`);
     
-    // First we need to set up the event listener for postgres changes correctly
-    channel.on(
-      'postgres_changes', 
-      { 
-        event: eventType, 
-        schema: 'public', 
-        table: tableName 
-      }, 
-      (payload) => {
-        console.log(`Realtime update for ${tableName}:`, payload);
-        // Cast payload to our expected structure
-        const realTimePayload = payload as unknown as RealtimePayload;
-        setLastUpdate(realTimePayload);
-        
-        toast({
-          title: `${tableName} Updated`,
-          description: `${realTimePayload.eventType} operation detected. Data has been updated.`,
-        });
-        
-        // Update localStorage with the new data
-        if (realTimePayload.eventType === 'INSERT' || realTimePayload.eventType === 'UPDATE') {
-          updateLocalStorage(tableName, realTimePayload);
-        } else if (realTimePayload.eventType === 'DELETE') {
-          removeFromLocalStorage(tableName, realTimePayload);
+    // Configure the channel with postgres_changes filter
+    channel
+      .on(
+        'postgres_changes', 
+        { 
+          event: eventType, 
+          schema: 'public', 
+          table: tableName 
+        }, 
+        (payload) => {
+          console.log(`Realtime update for ${tableName}:`, payload);
+          // Cast payload to our expected structure
+          const realTimePayload = payload as unknown as RealtimePayload;
+          setLastUpdate(realTimePayload);
+          
+          toast({
+            title: `${tableName} Updated`,
+            description: `${realTimePayload.eventType} operation detected. Data has been updated.`,
+          });
+          
+          // Update localStorage with the new data
+          if (realTimePayload.eventType === 'INSERT' || realTimePayload.eventType === 'UPDATE') {
+            updateLocalStorage(tableName, realTimePayload);
+          } else if (realTimePayload.eventType === 'DELETE') {
+            removeFromLocalStorage(tableName, realTimePayload);
+          }
         }
-      }
-    );
-
-    // Then we subscribe to the channel with all the event handlers configured
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        setIsListening(true);
-        console.log(`Listening for changes on ${tableName} table`);
-      }
-    });
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsListening(true);
+          console.log(`Listening for changes on ${tableName} table`);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
