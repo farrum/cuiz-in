@@ -15,7 +15,7 @@ import { RealtimeStatus } from './RealtimeStatus';
 import FunMessagesAdmin from './FunMessagesAdmin';
 import NewsTickerAdmin from './NewsTickerAdmin';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
