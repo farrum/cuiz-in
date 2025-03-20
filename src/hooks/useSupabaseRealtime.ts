@@ -54,37 +54,40 @@ export function useSupabaseRealtime(
     // Create a unique channel name
     const channelName = `realtime_${table}_${Date.now()}`;
     
-    // Create and subscribe to the channel - using the correct syntax for Supabase JS v2
-    // @ts-ignore - Ignoring TypeScript error for now to make this work
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: mergedOptions.event,
-          schema: mergedOptions.schema,
-          table: table
-        },
-        (payload: any) => {
-          console.log(`Realtime update received for ${table}:`, payload);
-          setLastUpdate(payload);
-          
-          if (mergedOptions.showToasts) {
-            toast({
-              title: `${table} Updated`,
-              description: `${payload.eventType} operation detected.`,
-            });
-          }
-          
-          if (mergedOptions.updateLocalStorage) {
-            handleLocalStorageUpdate(table, payload);
-          }
+    // Fix: Create and subscribe to the channel with the correct API signature
+    // https://supabase.com/docs/reference/javascript/subscribe
+    const channel = supabase.channel(channelName);
+    
+    // Configure the channel to listen for postgres changes
+    channel.on(
+      'postgres_changes',
+      {
+        event: mergedOptions.event,
+        schema: mergedOptions.schema,
+        table: table
+      },
+      (payload: any) => {
+        console.log(`Realtime update received for ${table}:`, payload);
+        setLastUpdate(payload);
+        
+        if (mergedOptions.showToasts) {
+          toast({
+            title: `${table} Updated`,
+            description: `${payload.eventType} operation detected.`,
+          });
         }
-      )
-      .subscribe((status) => {
-        console.log(`Subscription status for ${table}:`, status);
-        setIsConnected(status === 'SUBSCRIBED');
-      });
+        
+        if (mergedOptions.updateLocalStorage) {
+          handleLocalStorageUpdate(table, payload);
+        }
+      }
+    );
+    
+    // Subscribe to the channel
+    channel.subscribe((status: string) => {
+      console.log(`Subscription status for ${table}:`, status);
+      setIsConnected(status === 'SUBSCRIBED');
+    });
 
     // Cleanup function
     return () => {
