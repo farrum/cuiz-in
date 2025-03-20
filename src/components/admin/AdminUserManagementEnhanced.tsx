@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -41,7 +40,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +47,7 @@ import { MoreHorizontal, Search, UserPlus, Calendar, Clock, Award, Key, Mail } f
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import AdminTopPerformers from './AdminTopPerformers';
 import MD5 from 'crypto-js/md5';
+import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 
 interface User {
   id: string;
@@ -190,7 +189,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -414,8 +413,6 @@ const AdminUserManagementEnhanced: React.FC = () => {
     }
 
     try {
-      // In a real app, we would update the email in the authentication system
-      // For this example, we're just showing a success toast
       toast({
         title: "Success",
         description: `Email updated for ${selectedUser.username}`,
@@ -433,6 +430,133 @@ const AdminUserManagementEnhanced: React.FC = () => {
       });
     }
   };
+
+  const columns = [
+    {
+      header: "User",
+      accessorKey: "username",
+      cell: (row: User) => (
+        <div>
+          <div className="font-medium">{row.username}</div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            Joined: {formatDate(row.created_at)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Contact",
+      accessorKey: "phone",
+      cell: (row: User) => (
+        <div>
+          <div>{row.phone || "-"}</div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            Last login: {row.last_login ? formatDate(row.last_login) : "Never"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Points",
+      accessorKey: "points",
+      cell: (row: User) => <Badge variant="secondary">{row.points}</Badge>,
+    },
+    {
+      header: "Logins (D/M)",
+      accessorKey: "login_count",
+      cell: (row: User) => (
+        <div className="flex gap-1 items-center">
+          <Badge variant="outline" className="bg-blue-50">
+            <Calendar className="mr-1 h-3 w-3 text-blue-500" />
+            {row.daily_logins || 0}
+          </Badge>
+          <Badge variant="outline" className="bg-indigo-50">
+            <Calendar className="mr-1 h-3 w-3 text-indigo-500" />
+            {row.monthly_logins || 0}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      accessorKey: "suspended",
+      cell: (row: User) => (
+        row.suspended ? (
+          <Badge variant="destructive">Suspended</Badge>
+        ) : (
+          <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
+        )
+      ),
+    },
+    {
+      header: "Role",
+      accessorKey: "role",
+      cell: (row: User) => (
+        row.role === 'admin' ? (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-200">Admin</Badge>
+        ) : row.role === 'team_leader' ? (
+          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Team Leader</Badge>
+        ) : (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Player</Badge>
+        )
+      ),
+    },
+    {
+      header: "Actions",
+      accessorKey: "actions",
+      cell: (row: User) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setSelectedRole(row.role || 'player');
+                  setIsEditRoleDialogOpen(true);
+                }}
+              >
+                Change Role
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setNewPassword('');
+                  setIsResetPasswordDialogOpen(true);
+                }}
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Reset Password
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setNewEmail('');
+                  setIsUpdateEmailDialogOpen(true);
+                }}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Update Email
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => toggleUserSuspend(row.id, row.suspended)}
+                className={row.suspended ? "text-green-600" : "text-red-600"}
+              >
+                {row.suspended ? "Unsuspend User" : "Suspend User"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -470,135 +594,12 @@ const AdminUserManagementEnhanced: React.FC = () => {
             </div>
           ) : (
             <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      <div className="flex items-center">
-                        <Award className="mr-1 h-4 w-4" />
-                        Points
-                      </div>
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      <div className="flex items-center">
-                        <Clock className="mr-1 h-4 w-4" />
-                        Logins (D/M)
-                      </div>
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Role</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                        No users found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="font-medium">{user.username}</div>
-                          <div className="text-xs text-muted-foreground hidden md:block">
-                            Joined: {formatDate(user.created_at)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>{user.phone || "-"}</div>
-                          <div className="text-xs text-muted-foreground hidden md:block">
-                            Last login: {user.last_login ? formatDate(user.last_login) : "Never"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant="secondary">{user.points}</Badge>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex gap-1 items-center">
-                            <Badge variant="outline" className="bg-blue-50">
-                              <Calendar className="mr-1 h-3 w-3 text-blue-500" />
-                              {user.daily_logins || 0}
-                            </Badge>
-                            <Badge variant="outline" className="bg-indigo-50">
-                              <Calendar className="mr-1 h-3 w-3 text-indigo-500" />
-                              {user.monthly_logins || 0}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {user.suspended ? (
-                            <Badge variant="destructive">Suspended</Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {user.role === 'admin' ? (
-                            <Badge className="bg-red-100 text-red-700 hover:bg-red-200">Admin</Badge>
-                          ) : user.role === 'team_leader' ? (
-                            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Team Leader</Badge>
-                          ) : (
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Player</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setSelectedRole(user.role || 'player');
-                                  setIsEditRoleDialogOpen(true);
-                                }}
-                              >
-                                Change Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setNewPassword('');
-                                  setIsResetPasswordDialogOpen(true);
-                                }}
-                              >
-                                <Key className="h-4 w-4 mr-2" />
-                                Reset Password
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setNewEmail('');
-                                  setIsUpdateEmailDialogOpen(true);
-                                }}
-                              >
-                                <Mail className="h-4 w-4 mr-2" />
-                                Update Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => toggleUserSuspend(user.id, user.suspended)}
-                                className={user.suspended ? "text-green-600" : "text-red-600"}
-                              >
-                                {user.suspended ? "Unsuspend User" : "Suspend User"}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <PaginatedDataTable
+                columns={columns}
+                data={filteredUsers}
+                isLoading={loading}
+                pageSize={10}
+              />
             </div>
           )}
         </CardContent>

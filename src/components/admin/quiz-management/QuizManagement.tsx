@@ -6,7 +6,6 @@ import {
   TabsTrigger 
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -35,6 +34,7 @@ import ImportQuizQuestions from './ImportQuizQuestions';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
 import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
+import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -324,6 +324,60 @@ const QuizManagement: React.FC = () => {
     }
   };
 
+  const columns = [
+    {
+      header: "Question",
+      accessorKey: "question",
+      cell: (row: QuizQuestion) => <span className="font-medium">{row.question}</span>
+    },
+    {
+      header: "Category",
+      accessorKey: "category"
+    },
+    {
+      header: "Difficulty",
+      accessorKey: "difficulty",
+      cell: (row: QuizQuestion) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          row.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+          row.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-red-100 text-red-800'
+        }`}>
+          {row.difficulty}
+        </span>
+      )
+    },
+    {
+      header: "Answer",
+      accessorKey: "correctAnswer"
+    },
+    {
+      header: "Actions",
+      accessorKey: "actions",
+      cell: (row: QuizQuestion) => (
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setCurrentQuestion(row);
+              setIsEditDialogOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteQuestion(row.id)}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -436,59 +490,12 @@ const QuizManagement: React.FC = () => {
         </div>
       ) : (
         <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40%]">Question</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Answer</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredQuestions.slice(0, 100).map((question) => (
-                <TableRow key={question.id}>
-                  <TableCell className="font-medium">{question.question}</TableCell>
-                  <TableCell>{question.category}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                      question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {question.difficulty}
-                    </span>
-                  </TableCell>
-                  <TableCell>{question.correctAnswer}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setCurrentQuestion(question);
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteQuestion(question.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredQuestions.length > 100 && (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Showing first 100 of {filteredQuestions.length} questions. Please refine your search to see more specific results.
-            </div>
-          )}
+          <PaginatedDataTable
+            columns={columns}
+            data={filteredQuestions}
+            isLoading={isLoading}
+            pageSize={10}
+          />
         </div>
       )}
 
