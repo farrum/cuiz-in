@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -26,17 +25,15 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     console.log(`Setting up realtime listener for ${tableName}`);
     
     // Create a channel for this specific table
-    const channel = supabase.channel(`table-${tableName}-changes`);
+    const channel = supabase.channel(`table:${tableName}:changes`);
     
-    // Configure the channel with postgres_changes filter
-    const subscription = channel.on(
-      'postgres_changes',
-      {
+    // Set up the subscription
+    channel
+      .on('postgres_changes', { 
         event: eventType,
         schema: 'public',
-        table: tableName
-      },
-      (payload) => {
+        table: tableName 
+      }, (payload) => {
         console.log(`Realtime update for ${tableName}:`, payload);
         // Cast payload to our expected structure
         const realTimePayload = payload as unknown as RealtimePayload;
@@ -53,18 +50,17 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
         } else if (realTimePayload.eventType === 'DELETE') {
           removeFromLocalStorage(tableName, realTimePayload);
         }
-      }
-    );
-    
-    // Subscribe to the channel after it's configured
-    subscription.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        setIsListening(true);
-        console.log(`Listening for changes on ${tableName} table`);
-      }
-    });
+      })
+      .subscribe((status) => {
+        console.log(`Subscription status for ${tableName}:`, status);
+        if (status === 'SUBSCRIBED') {
+          setIsListening(true);
+          console.log(`Listening for changes on ${tableName} table`);
+        }
+      });
 
     return () => {
+      console.log(`Cleaning up realtime listener for ${tableName}`);
       supabase.removeChannel(channel);
       setIsListening(false);
     };
