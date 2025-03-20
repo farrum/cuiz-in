@@ -26,10 +26,11 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     console.log(`Setting up realtime listener for ${tableName}`);
     
     // Subscribe to changes - the correct way to use Supabase Realtime API
+    // The issue was with how we're setting up the channel subscription
     const channel = supabase
       .channel(`table-${tableName}-changes`)
       .on(
-        'postgres_changes', // This is the channel event name
+        'postgres_changes', // This is the channel event type
         {
           event: eventType, // This is the database event type
           schema: 'public',

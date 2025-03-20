@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Megaphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,8 +20,10 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   
-  const { isListening } = useRealtimeUpdates('news_ticker');
+  // Use our fixed useRealtimeUpdates hook
+  const { lastUpdate } = useRealtimeUpdates('news_ticker');
   
+  // Fetch messages when component mounts or lastUpdate changes
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -53,23 +56,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
     };
     
     fetchMessages();
-    
-    const channel = supabase
-      .channel('news-ticker-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public', 
-        table: 'news_ticker'
-      }, () => {
-        console.log('News ticker data changed, refreshing...');
-        fetchMessages();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  }, [lastUpdate]); // Re-fetch when lastUpdate changes
   
   useEffect(() => {
     if (messages.length <= 1) return;
