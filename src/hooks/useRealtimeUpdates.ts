@@ -28,8 +28,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     // Create a channel for this specific table
     const channel = supabase.channel(`table-${tableName}-changes`);
     
-    // Subscribe to postgres changes on the channel using the correct API structure
-    const subscription = channel.on(
+    // First we need to set up the event listener for postgres changes correctly
+    channel.on(
       'postgres_changes', 
       { 
         event: eventType, 
@@ -56,8 +56,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
       }
     );
 
-    // Now subscribe to the channel after setting up the event
-    subscription.subscribe((status: string) => {
+    // Then we subscribe to the channel with all the event handlers configured
+    channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         setIsListening(true);
         console.log(`Listening for changes on ${tableName} table`);
