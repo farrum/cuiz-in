@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { 
   NavigationMenu,
@@ -216,22 +216,42 @@ const AdminPage: React.FC = () => {
           
           <Separator className="my-6" />
 
-          {activeTab === 'users' && <AdminUserManagementEnhanced />}
-          {activeTab === 'logs' && <AdminLoginLogs />}
-          {activeTab === 'ads' && <AdminAdManagement />}
-          {activeTab === 'payments' && <AdminPaymentsOverview />}
-          {activeTab === 'referrals' && <AdminReferralsTracker />}
-          {activeTab === 'badges' && <AdminBadgeManagement />}
-          {activeTab === 'quiz' && <QuizManagement />}
-          {activeTab === 'reports' && <AdminReports />}
-          {activeTab === 'messages' && <FunMessagesAdmin />}
-          {activeTab === 'ticker' && <NewsTickerAdmin />}
-          {activeTab === 'sync' && (
+          <TabsContent value="users">
+            <AdminUserManagementEnhanced />
+          </TabsContent>
+          <TabsContent value="logs">
+            <AdminLoginLogs />
+          </TabsContent>
+          <TabsContent value="ads">
+            <AdminAdManagement />
+          </TabsContent>
+          <TabsContent value="payments">
+            <AdminPaymentsOverview />
+          </TabsContent>
+          <TabsContent value="referrals">
+            <AdminReferralsTracker />
+          </TabsContent>
+          <TabsContent value="badges">
+            <AdminBadgeManagement />
+          </TabsContent>
+          <TabsContent value="quiz">
+            <QuizManagement />
+          </TabsContent>
+          <TabsContent value="reports">
+            <AdminReports />
+          </TabsContent>
+          <TabsContent value="messages">
+            <FunMessagesAdmin />
+          </TabsContent>
+          <TabsContent value="ticker">
+            <NewsTickerAdmin />
+          </TabsContent>
+          <TabsContent value="sync">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SyncSettings />
               <RealtimeStatus />
             </div>
-          )}
+          </TabsContent>
         </Tabs>
       </div>
     </div>
