@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Megaphone, Plus, Trash2, Edit2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,6 @@ const NewsTickerAdmin: React.FC = () => {
   const [editText, setEditText] = useState('');
   const { toast } = useToast();
 
-  // Load messages
   const fetchMessages = async () => {
     try {
       setIsLoading(true);
@@ -59,7 +58,6 @@ const NewsTickerAdmin: React.FC = () => {
   useEffect(() => {
     fetchMessages();
     
-    // Set up realtime subscription
     const channel = supabase
       .channel('news_ticker_changes')
       .on('postgres_changes', {
@@ -76,7 +74,6 @@ const NewsTickerAdmin: React.FC = () => {
     };
   }, []);
 
-  // Add a new message
   const handleAddMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -119,7 +116,6 @@ const NewsTickerAdmin: React.FC = () => {
     }
   };
 
-  // Toggle message active status
   const toggleMessageStatus = async (id: string, currentStatus: boolean) => {
     try {
       setIsLoading(true);
@@ -131,7 +127,6 @@ const NewsTickerAdmin: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
       setMessages(messages.map(message => 
         message.id === id ? { ...message, is_active: !currentStatus } : message
       ));
@@ -152,7 +147,6 @@ const NewsTickerAdmin: React.FC = () => {
     }
   };
 
-  // Delete a message
   const deleteMessage = async (id: string) => {
     if (!confirm('Are you sure you want to delete this message?')) return;
     
@@ -166,7 +160,6 @@ const NewsTickerAdmin: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
       setMessages(messages.filter(message => message.id !== id));
       
       toast({
@@ -185,13 +178,11 @@ const NewsTickerAdmin: React.FC = () => {
     }
   };
 
-  // Start editing a message
   const startEdit = (message: NewsMessage) => {
     setIsEditing(message.id);
     setEditText(message.text);
   };
 
-  // Save edited message
   const saveEdit = async () => {
     if (!isEditing) return;
     
@@ -214,7 +205,6 @@ const NewsTickerAdmin: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
       setMessages(messages.map(message => 
         message.id === isEditing ? { ...message, text: editText } : message
       ));
@@ -238,7 +228,6 @@ const NewsTickerAdmin: React.FC = () => {
     }
   };
 
-  // Cancel editing
   const cancelEdit = () => {
     setIsEditing(null);
     setEditText('');

@@ -25,13 +25,13 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
   useEffect(() => {
     console.log(`Setting up realtime listener for ${tableName}`);
     
-    // Subscribe to changes
+    // Subscribe to changes - fix the API usage here
     const channel = supabase
       .channel(`table-${tableName}-changes`)
       .on(
-        'postgres_changes',
+        'postgres_changes', // This is the event source, not the event type
         {
-          event: eventType,
+          event: eventType, // The event type goes inside the options object
           schema: 'public',
           table: tableName,
         },
