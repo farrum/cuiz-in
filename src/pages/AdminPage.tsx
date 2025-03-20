@@ -187,7 +187,7 @@ const AdminPage: React.FC = () => {
       <div className="container mx-auto py-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage your quiz application data and settings</p>
+          <p className="text-muted-foreground mb-4">Manage your quiz application data and settings</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
