@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 interface NewsTickerProps {
   className?: string;
@@ -20,8 +20,10 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Use our fixed useRealtimeUpdates hook
-  const { lastUpdate } = useRealtimeUpdates('news_ticker');
+  // Use our new hook for realtime updates
+  const { lastUpdate } = useSupabaseRealtime('news_ticker', {
+    showToasts: false
+  });
   
   // Fetch messages when component mounts or lastUpdate changes
   useEffect(() => {
@@ -32,10 +34,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
           .from('news_ticker')
           .select('*')
           .eq('is_active', true)
-          .order('created_at', { ascending: false }) as unknown as { 
-            data: NewsMessage[] | null, 
-            error: Error | null 
-          };
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching news ticker messages:', error);
@@ -44,7 +43,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         
         if (data && data.length > 0) {
           console.log('News ticker messages loaded:', data.length);
-          setMessages(data);
+          setMessages(data as NewsMessage[]);
         } else {
           console.log('No active news ticker messages found');
         }

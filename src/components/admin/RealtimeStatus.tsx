@@ -3,15 +3,16 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseRealtime, RealtimeTable } from '@/hooks/useSupabaseRealtime';
 
 type StatusItemProps = {
   tableName: string;
-  isListening: boolean;
+  displayName: string;
+  isConnected: boolean;
   lastUpdate: any | null;
 };
 
-const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => {
+const StatusItem = ({ tableName, displayName, isConnected, lastUpdate }: StatusItemProps) => {
   const [timeAgo, setTimeAgo] = useState<string>('Never');
   
   useEffect(() => {
@@ -39,13 +40,13 @@ const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => 
   return (
     <div className="flex items-center justify-between py-2 border-b last:border-0">
       <div className="flex flex-col">
-        <span className="font-medium">{tableName}</span>
+        <span className="font-medium">{displayName}</span>
         <span className="text-xs text-muted-foreground">
           {lastUpdate ? `Last update: ${timeAgo}` : 'No updates received'}
         </span>
       </div>
       <div className="flex items-center gap-2">
-        {isListening ? (
+        {isConnected ? (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex gap-1 items-center">
             <CheckCircle className="h-3 w-3" />
             Connected
@@ -66,71 +67,53 @@ const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => 
   );
 };
 
-type TableStatus = {
-  name: string;
+interface TableStatus {
+  table: RealtimeTable;
   displayName: string;
-  isListening: boolean;
+  isConnected: boolean;
   lastUpdate: any | null;
-};
+}
 
 export function RealtimeStatus() {
-  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>([
-    { name: 'profiles', displayName: 'User Profiles', isListening: false, lastUpdate: null },
-    { name: 'login_logs', displayName: 'Login Logs', isListening: false, lastUpdate: null },
-    { name: 'ad_slots', displayName: 'Ad Slots', isListening: false, lastUpdate: null },
-    { name: 'quiz_questions', displayName: 'Quiz Questions', isListening: false, lastUpdate: null },
-    { name: 'quiz_answers', displayName: 'Quiz Answers', isListening: false, lastUpdate: null },
-    { name: 'payments', displayName: 'Payments', isListening: false, lastUpdate: null },
-    { name: 'user_referrals', displayName: 'Referrals', isListening: false, lastUpdate: null }
-  ]);
+  const tablesToMonitor: {table: RealtimeTable, displayName: string}[] = [
+    { table: 'profiles', displayName: 'User Profiles' },
+    { table: 'login_logs', displayName: 'Login Logs' },
+    { table: 'ad_slots', displayName: 'Ad Slots' },
+    { table: 'quiz_questions', displayName: 'Quiz Questions' },
+    { table: 'quiz_answers', displayName: 'Quiz Answers' },
+    { table: 'payments', displayName: 'Payments' },
+    { table: 'user_referrals', displayName: 'Referrals' },
+    { table: 'news_ticker', displayName: 'News Ticker' }
+  ];
+  
+  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(
+    tablesToMonitor.map(item => ({
+      table: item.table,
+      displayName: item.displayName,
+      isConnected: false,
+      lastUpdate: null
+    }))
+  );
 
-  useEffect(() => {
-    // Create a channel for each table
-    const channels = tableStatuses.map(table => {
-      const channel = supabase
-        .channel(`table-changes-${table.name}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: table.name,
-          },
-          (payload) => {
-            // Update the table status with the new payload
-            setTableStatuses(prev => 
-              prev.map(t => 
-                t.name === table.name 
-                  ? { ...t, lastUpdate: payload } 
-                  : t
-              )
-            );
-          }
-        )
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') {
-            // Update the listening status
-            setTableStatuses(prev => 
-              prev.map(t => 
-                t.name === table.name 
-                  ? { ...t, isListening: true } 
-                  : t
-              )
-            );
-            console.log(`Listening for changes on ${table.name} table`);
-          }
-        });
-
-      return channel;
-    });
-
-    // Cleanup function
-    return () => {
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
+  // Set up realtime monitoring for each table
+  tablesToMonitor.forEach((tableInfo, index) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { isConnected, lastUpdate } = useSupabaseRealtime(tableInfo.table);
+    
+    // Update table status when connection state or data changes
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      setTableStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[index] = {
+          ...newStatuses[index],
+          isConnected,
+          lastUpdate
+        };
+        return newStatuses;
       });
-    };
-  }, []);
+    }, [isConnected, lastUpdate]);
+  });
   
   return (
     <Card>
@@ -149,9 +132,10 @@ export function RealtimeStatus() {
         <div className="space-y-1">
           {tableStatuses.map((item) => (
             <StatusItem 
-              key={item.name}
-              tableName={item.displayName}
-              isListening={item.isListening}
+              key={item.table}
+              tableName={item.table}
+              displayName={item.displayName}
+              isConnected={item.isConnected}
               lastUpdate={item.lastUpdate}
             />
           ))}

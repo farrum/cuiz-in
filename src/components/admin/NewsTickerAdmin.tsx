@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -10,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Megaphone, Plus, Trash2, Edit2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 interface NewsMessage {
   id: string;
@@ -25,6 +24,8 @@ const NewsTickerAdmin: React.FC = () => {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const { toast } = useToast();
+  
+  const { lastUpdate } = useSupabaseRealtime('news_ticker');
 
   const fetchMessages = async () => {
     try {
@@ -32,17 +33,14 @@ const NewsTickerAdmin: React.FC = () => {
       const { data, error } = await supabase
         .from('news_ticker')
         .select('*')
-        .order('created_at', { ascending: false }) as unknown as { 
-          data: NewsMessage[] | null, 
-          error: Error | null 
-        };
+        .order('created_at', { ascending: false });
       
       if (error) {
         throw error;
       }
       
       if (data) {
-        setMessages(data);
+        setMessages(data as NewsMessage[]);
       }
     } catch (error) {
       console.error('Error fetching news ticker messages:', error);
@@ -58,22 +56,7 @@ const NewsTickerAdmin: React.FC = () => {
 
   useEffect(() => {
     fetchMessages();
-    
-    const channel = supabase
-      .channel('news_ticker_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public', 
-        table: 'news_ticker'
-      }, () => {
-        fetchMessages();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  }, [lastUpdate]);
 
   const handleAddMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -381,6 +364,6 @@ const NewsTickerAdmin: React.FC = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default NewsTickerAdmin;
