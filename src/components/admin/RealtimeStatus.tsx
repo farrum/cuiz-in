@@ -88,7 +88,7 @@ export function RealtimeStatus() {
     // Create a channel for each table
     const channels = tableStatuses.map(table => {
       const channel = supabase
-        .channel(`table:${table.name}:changes`)
+        .channel(`table-changes-${table.name}`)
         .on(
           'postgres_changes',
           {
