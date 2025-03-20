@@ -1,0 +1,228 @@
+
+import { supabase } from './client';
+
+// Define valid table names as a type
+type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'ad_views' | 'ad_clicks';
+
+// Function to fetch all application data from Supabase
+export const fetchAllAppData = async () => {
+  console.log('Fetching all app data from Supabase...');
+  
+  try {
+    // Create an array of promises to fetch data from all tables
+    const [
+      profilesResponse,
+      loginLogsResponse,
+      adSlotsResponse,
+      quizQuestionsResponse,
+      quizAnswersResponse,
+      paymentsResponse,
+      referralsResponse,
+      adViewsResponse,
+      adClicksResponse
+    ] = await Promise.all([
+      supabase.from('profiles' as ValidTableName).select('*'),
+      supabase.from('login_logs' as ValidTableName).select('*'),
+      supabase.from('ad_slots' as ValidTableName).select('*'),
+      supabase.from('quiz_questions' as ValidTableName).select('*'),
+      supabase.from('quiz_answers' as ValidTableName).select('*'),
+      supabase.from('payments' as ValidTableName).select('*'),
+      supabase.from('user_referrals' as ValidTableName).select('*'),
+      supabase.from('ad_views' as ValidTableName).select('*').limit(500),
+      supabase.from('ad_clicks' as ValidTableName).select('*').limit(500)
+    ]);
+    
+    // Save responses to localStorage for offline access
+    if (profilesResponse.data) {
+      localStorage.setItem('admin_users', JSON.stringify(profilesResponse.data));
+      console.log(`Stored ${profilesResponse.data.length} profiles in localStorage`);
+    }
+    
+    if (loginLogsResponse.data) {
+      localStorage.setItem('quiz_app_login_log', JSON.stringify(loginLogsResponse.data));
+      console.log(`Stored ${loginLogsResponse.data.length} login logs in localStorage`);
+    }
+    
+    if (adSlotsResponse.data) {
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlotsResponse.data));
+      console.log(`Stored ${adSlotsResponse.data.length} ad slots in localStorage`);
+    }
+    
+    if (quizQuestionsResponse.data) {
+      localStorage.setItem('quiz_questions', JSON.stringify(quizQuestionsResponse.data));
+      console.log(`Stored ${quizQuestionsResponse.data.length} quiz questions in localStorage`);
+    }
+    
+    if (quizAnswersResponse.data) {
+      localStorage.setItem('quiz_answers', JSON.stringify(quizAnswersResponse.data));
+      console.log(`Stored ${quizAnswersResponse.data.length} quiz answers in localStorage`);
+    }
+    
+    if (paymentsResponse.data) {
+      localStorage.setItem('admin_payments', JSON.stringify(paymentsResponse.data));
+      console.log(`Stored ${paymentsResponse.data.length} payments in localStorage`);
+    }
+    
+    if (referralsResponse.data) {
+      localStorage.setItem('admin_referrals', JSON.stringify(referralsResponse.data));
+      console.log(`Stored ${referralsResponse.data.length} referrals in localStorage`);
+    }
+    
+    if (adViewsResponse.data) {
+      localStorage.setItem('quiz_app_ad_views', JSON.stringify(adViewsResponse.data));
+      console.log(`Stored ${adViewsResponse.data.length} ad views in localStorage`);
+    }
+    
+    if (adClicksResponse.data) {
+      localStorage.setItem('quiz_app_ad_clicks', JSON.stringify(adClicksResponse.data));
+      console.log(`Stored ${adClicksResponse.data.length} ad clicks in localStorage`);
+    }
+    
+    // Check for errors and log them
+    const responses = [
+      { name: 'profiles', response: profilesResponse },
+      { name: 'login_logs', response: loginLogsResponse },
+      { name: 'ad_slots', response: adSlotsResponse },
+      { name: 'quiz_questions', response: quizQuestionsResponse },
+      { name: 'quiz_answers', response: quizAnswersResponse },
+      { name: 'payments', response: paymentsResponse },
+      { name: 'user_referrals', response: referralsResponse },
+      { name: 'ad_views', response: adViewsResponse },
+      { name: 'ad_clicks', response: adClicksResponse }
+    ];
+    
+    for (const { name, response } of responses) {
+      if (response.error) {
+        console.error(`Error fetching ${name}:`, response.error);
+      }
+    }
+    
+    console.log('App data fetching completed');
+    return true;
+  } catch (error) {
+    console.error('Error fetching app data:', error);
+    return false;
+  }
+};
+
+// Function to sync localStorage data to Supabase
+export const syncLocalStorageToSupabase = async () => {
+  console.log('Syncing localStorage data to Supabase...');
+  
+  const syncOperations = [];
+  let successCount = 0;
+  let failureCount = 0;
+
+  try {
+    // Sync profiles data
+    const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+    if (adminUsers.length > 0) {
+      const profiles = adminUsers.map((user: any) => ({
+        id: user.id,
+        username: user.name || user.username,
+        phone: user.mobile || user.phone,
+        points: user.points || 0,
+        suspended: user.suspended || false
+      }));
+      
+      syncOperations.push(syncDataWithSupabase('profiles', profiles));
+    }
+
+    // Sync login logs
+    const loginLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
+    if (loginLogs.length > 0) {
+      syncOperations.push(syncDataWithSupabase('login_logs', loginLogs));
+    }
+
+    // Sync ad slots
+    const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
+    if (adSlots.length > 0) {
+      syncOperations.push(syncDataWithSupabase('ad_slots', adSlots));
+    }
+
+    // Sync quiz questions
+    const quizQuestions = JSON.parse(localStorage.getItem('quiz_questions') || '[]');
+    if (quizQuestions.length > 0) {
+      syncOperations.push(syncDataWithSupabase('quiz_questions', quizQuestions));
+    }
+
+    // Sync quiz answers
+    const quizAnswers = JSON.parse(localStorage.getItem('quiz_answers') || '[]');
+    if (quizAnswers.length > 0) {
+      syncOperations.push(syncDataWithSupabase('quiz_answers', quizAnswers));
+    }
+
+    // Sync payments
+    const payments = JSON.parse(localStorage.getItem('admin_payments') || '[]');
+    if (payments.length > 0) {
+      syncOperations.push(syncDataWithSupabase('payments', payments));
+    }
+
+    // Sync referrals
+    const referrals = JSON.parse(localStorage.getItem('admin_referrals') || '[]');
+    if (referrals.length > 0) {
+      syncOperations.push(syncDataWithSupabase('user_referrals', referrals));
+    }
+
+    // Sync ad views
+    const adViews = JSON.parse(localStorage.getItem('quiz_app_ad_views') || '[]');
+    if (adViews.length > 0) {
+      syncOperations.push(syncDataWithSupabase('ad_views', adViews));
+    }
+
+    // Sync ad clicks
+    const adClicks = JSON.parse(localStorage.getItem('quiz_app_ad_clicks') || '[]');
+    if (adClicks.length > 0) {
+      syncOperations.push(syncDataWithSupabase('ad_clicks', adClicks));
+    }
+
+    // Process all sync operations
+    const results = await Promise.allSettled(syncOperations);
+    
+    // Count successes and failures
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value) {
+        successCount++;
+      } else {
+        failureCount++;
+      }
+    });
+
+    console.log(`Sync completed: ${successCount} successful, ${failureCount} failed`);
+    return successCount > 0;
+  } catch (error) {
+    console.error('Error syncing localStorage data to Supabase:', error);
+    return false;
+  }
+};
+
+// Helper function to update fetchSupabaseData hook
+export const syncDataWithSupabase = async (tableName: string, data: any[]) => {
+  try {
+    // Skip if data is empty
+    if (!data || data.length === 0) {
+      console.log(`No data to sync for ${tableName}`);
+      return true;
+    }
+    
+    console.log(`Syncing ${data.length} records to ${tableName}...`);
+    
+    // Type assertion to ensure TypeScript understands this is a valid table name
+    const validatedTableName = tableName as ValidTableName;
+    
+    const { error } = await supabase
+      .from(validatedTableName)
+      .upsert(data, { onConflict: 'id' });
+      
+    if (error) {
+      console.error(`Error syncing data to ${tableName}:`, error);
+      return false;
+    }
+    
+    console.log(`Successfully synced data to ${tableName}`);
+    return true;
+  } catch (error) {
+    console.error(`Error syncing data to ${tableName}:`, error);
+    return false;
+  }
+};
