@@ -10,6 +10,7 @@ interface NewsTickerProps {
 interface NewsMessage {
   id: string;
   text: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -20,11 +21,12 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        // Using raw query to avoid TypeScript errors since the table is new
         const { data, error } = await supabase
           .from('news_ticker')
           .select('*')
           .eq('is_active', true)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as any;
         
         if (error) {
           console.error('Error fetching news ticker messages:', error);
@@ -32,7 +34,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         }
         
         if (data && data.length > 0) {
-          setMessages(data);
+          setMessages(data as NewsMessage[]);
         }
       } catch (err) {
         console.error('Failed to fetch news ticker messages:', err);

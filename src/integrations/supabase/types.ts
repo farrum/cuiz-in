@@ -259,6 +259,27 @@ export type Database = {
         }
         Relationships: []
       }
+      news_ticker: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          text?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
