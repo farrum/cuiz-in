@@ -54,13 +54,13 @@ export function useSupabaseRealtime(
     // Create a unique channel name
     const channelName = `realtime_${table}_${Date.now()}`;
     
-    // Fix: Create and subscribe to the channel with the correct API signature
-    // https://supabase.com/docs/reference/javascript/subscribe
+    // Create the channel
     const channel = supabase.channel(channelName);
     
     // Configure the channel to listen for postgres changes
+    // The type definition issue is with how we use the .on() method
     channel.on(
-      'postgres_changes',
+      'postgres_changes' as any, // Use type assertion to work around the type issue
       {
         event: mergedOptions.event,
         schema: mergedOptions.schema,
