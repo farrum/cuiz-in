@@ -182,7 +182,7 @@ const Index: React.FC = () => {
               {
                 icon: <IndianRupee className="w-12 h-12 text-green-500" />,
                 title: "Cash Out",
-                description: "Earn fixed revenue + bonuses every month. Every 100 points equals ₹1.00 ready for withdrawal."
+                description: "Earn more than ₹10000 per month fix income."
               }
             ].map((feature, index) => (
               <div 
