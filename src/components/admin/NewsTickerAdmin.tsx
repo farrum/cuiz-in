@@ -43,7 +43,7 @@ const NewsTickerAdmin = () => {
         return;
       }
 
-      setMessages(data as NewsTickerMessage[] || []);
+      setMessages(data || []);
     } catch (err) {
       console.error('Failed to fetch news ticker messages:', err);
     } finally {
@@ -211,7 +211,6 @@ const NewsTickerAdmin = () => {
     }
   };
 
-  // Updated column definitions that match the PaginatedDataTable requirements
   const columns = [
     {
       header: 'Message',
@@ -310,7 +309,6 @@ const NewsTickerAdmin = () => {
         columns={columns}
         data={messages}
         pageSize={5}
-        searchPlaceholder="Search messages..."
         isLoading={isLoading}
       />
     </div>
