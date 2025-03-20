@@ -1,13 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Select,
   SelectContent,
@@ -15,11 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Clock, Search, Download, Filter, UserCheck, X, Loader } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 
 interface LoginLog {
   id: string;
@@ -181,6 +174,51 @@ const AdminLoginLogs: React.FC = () => {
     }
   };
 
+  // Define table columns for the paginated data table
+  const columns = [
+    {
+      header: "Username",
+      accessorKey: "username",
+    },
+    {
+      header: "Date & Time",
+      accessorKey: "date",
+      cell: (row: LoginLog) => formatDate(row.date)
+    },
+    {
+      header: "Status",
+      accessorKey: "successful",
+      cell: (row: LoginLog) => (
+        <div className="flex items-center">
+          {row.successful ? (
+            <>
+              <UserCheck className="w-4 h-4 text-green-500 mr-1" />
+              <span className="text-green-600">Successful</span>
+            </>
+          ) : (
+            <>
+              <X className="w-4 h-4 text-red-500 mr-1" />
+              <span className="text-red-600">Failed</span>
+            </>
+          )}
+        </div>
+      )
+    },
+    {
+      header: "IP Address",
+      accessorKey: "ip",
+    },
+    {
+      header: "User Agent",
+      accessorKey: "userAgent",
+      cell: (row: LoginLog) => (
+        <div className="text-xs text-muted-foreground truncate max-w-xs">
+          {row.userAgent}
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -223,62 +261,23 @@ const AdminLoginLogs: React.FC = () => {
         </div>
       </div>
       
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Username</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>IP Address</TableHead>
-              <TableHead className="hidden md:table-cell">User Agent</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
-                  Loading login logs...
-                </TableCell>
-              </TableRow>
-            ) : filteredLogs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
-                  No login logs found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredLogs.map((log, index) => (
-                <TableRow key={log.id || index}>
-                  <TableCell className="font-medium">{log.username}</TableCell>
-                  <TableCell>{formatDate(log.date)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      {log.successful ? (
-                        <>
-                          <UserCheck className="w-4 h-4 text-green-500 mr-1" />
-                          <span className="text-green-600">Successful</span>
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-4 h-4 text-red-500 mr-1" />
-                          <span className="text-red-600">Failed</span>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{log.ip}</TableCell>
-                  <TableCell className="truncate hidden md:table-cell max-w-xs">
-                    <div className="text-xs text-muted-foreground truncate">{log.userAgent}</div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <div className="text-center py-8 border rounded-lg">
+          <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+          <p className="text-muted-foreground">Loading login logs...</p>
+        </div>
+      ) : filteredLogs.length === 0 ? (
+        <div className="text-center py-8 border rounded-lg">
+          <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+          <p className="text-muted-foreground">No login logs found</p>
+        </div>
+      ) : (
+        <PaginatedDataTable
+          columns={columns}
+          data={filteredLogs}
+          pageSize={10}
+        />
+      )}
       
       <div className="text-xs text-muted-foreground">
         Showing {filteredLogs.length} of {loginLogs.length} logs

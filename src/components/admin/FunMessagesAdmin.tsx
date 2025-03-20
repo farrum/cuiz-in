@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, Trash2, Plus, Sparkles, Frown, Trophy, MessageCircleHeart, AlertCircle, Loader2 } from 'lucide-react';
 import { FunMessage, MessageType, getDefaultMessages } from '@/utils/funMessages';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 
 const FunMessagesAdmin: React.FC = () => {
   const [messages, setMessages] = useState<FunMessage[]>([]);
@@ -310,6 +311,40 @@ const FunMessagesAdmin: React.FC = () => {
       default: return <MessageSquare className="h-5 w-5" />;
     }
   };
+
+  // Define table columns for the paginated data table
+  const columns = [
+    {
+      header: "Message",
+      accessorKey: "text",
+      cell: (msg: FunMessage) => (
+        <div className="flex items-start gap-3">
+          <div className="mt-1">{getTypeIcon(msg.type)}</div>
+          <div>
+            <div className="font-medium">{msg.text}</div>
+            <div className="text-sm text-muted-foreground">
+              {msg.emoji && <span className="mr-2">{msg.emoji}</span>}
+              Type: {msg.type}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: "Actions",
+      accessorKey: "id",
+      cell: (msg: FunMessage) => (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => deleteMessage(msg.id)}
+          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )
+    }
+  ];
   
   if (isLoading) {
     return (
@@ -432,44 +467,17 @@ const FunMessagesAdmin: React.FC = () => {
               </Button>
             </div>
             
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary animate-spin rounded-full mx-auto" />
-                <p className="mt-2 text-sm text-muted-foreground">Loading messages...</p>
-              </div>
-            ) : messages.length === 0 ? (
+            {messages.length === 0 ? (
               <div className="text-center py-8 border rounded-lg">
                 <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground" />
                 <p className="mt-2 text-muted-foreground">No messages added yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {messages.map((msg) => (
-                  <div 
-                    key={msg.id} 
-                    className="flex items-start justify-between p-3 border rounded-lg"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1">{getTypeIcon(msg.type)}</div>
-                      <div>
-                        <div className="font-medium">{msg.text}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {msg.emoji && <span className="mr-2">{msg.emoji}</span>}
-                          Type: {msg.type}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => deleteMessage(msg.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <PaginatedDataTable
+                columns={columns}
+                data={messages}
+                pageSize={5}
+              />
             )}
           </div>
         </div>
