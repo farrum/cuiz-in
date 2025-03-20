@@ -30,9 +30,9 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
     const channel = supabase
       .channel(`table-${tableName}-changes`)
       .on(
-        'postgres_changes', // This is the channel event type
+        'postgres_changes', 
         {
-          event: eventType, // This is the database event type
+          event: eventType,
           schema: 'public',
           table: tableName,
         },
