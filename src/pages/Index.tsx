@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Award, UserPlus, IndianRupee, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap, HelpCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
+import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,6 +68,7 @@ const Index: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
       <Header />
+      <NewsTicker className="mt-16" />
       
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
         <div className="animated-bg top-1/4 left-1/4 w-80 h-80 rounded-full bg-blue-400/20 dark:bg-blue-500/20" />

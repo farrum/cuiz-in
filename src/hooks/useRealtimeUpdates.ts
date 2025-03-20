@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 // Define valid table names as a type
-type TableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'user_roles';
+type TableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'user_roles' | 'news_ticker';
 type EventType = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
 // Define the type for the payload structure we receive from Supabase realtime
@@ -25,13 +25,13 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
   useEffect(() => {
     console.log(`Setting up realtime listener for ${tableName}`);
     
-    // Subscribe to changes - fix the API usage here
+    // Subscribe to changes - the correct way to use Supabase Realtime API
     const channel = supabase
       .channel(`table-${tableName}-changes`)
       .on(
-        'postgres_changes', // This is the event source, not the event type
+        'postgres_changes', // This is the channel event name
         {
-          event: eventType, // The event type goes inside the options object
+          event: eventType, // This is the database event type
           schema: 'public',
           table: tableName,
         },
@@ -54,7 +54,7 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
           }
         }
       )
-      .subscribe(status => {
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setIsListening(true);
           console.log(`Listening for changes on ${tableName} table`);
@@ -125,6 +125,8 @@ export const useRealtimeUpdates = (tableName: TableName, eventType: EventType = 
         return 'admin_referrals';
       case 'user_roles':
         return 'admin_user_roles';
+      case 'news_ticker':
+        return 'news_ticker';
       default:
         return table;
     }

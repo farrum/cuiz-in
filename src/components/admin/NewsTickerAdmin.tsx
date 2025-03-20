@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -364,7 +365,7 @@ const NewsTickerAdmin: React.FC = () => {
                           Created: {new Date(message.created_at).toLocaleString()}
                         </span>
                         <Badge 
-                          variant={message.is_active ? "success" : "secondary"}
+                          variant={message.is_active ? "secondary" : "outline"}
                           className={message.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
                         >
                           {message.is_active ? 'Active' : 'Inactive'}

@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Megaphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface NewsTickerProps {
   className?: string;
@@ -19,11 +19,12 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   
+  const { isListening } = useRealtimeUpdates('news_ticker');
+  
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
-        // Using type assertion to handle the news_ticker table that's not yet in the TypeScript types
         const { data, error } = await supabase
           .from('news_ticker')
           .select('*')
@@ -39,7 +40,10 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         }
         
         if (data && data.length > 0) {
+          console.log('News ticker messages loaded:', data.length);
           setMessages(data);
+        } else {
+          console.log('No active news ticker messages found');
         }
       } catch (err) {
         console.error('Failed to fetch news ticker messages:', err);
@@ -50,7 +54,6 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
     
     fetchMessages();
     
-    // Set up subscription for real-time updates
     const channel = supabase
       .channel('news-ticker-changes')
       .on('postgres_changes', {
@@ -58,6 +61,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         schema: 'public', 
         table: 'news_ticker'
       }, () => {
+        console.log('News ticker data changed, refreshing...');
         fetchMessages();
       })
       .subscribe();
