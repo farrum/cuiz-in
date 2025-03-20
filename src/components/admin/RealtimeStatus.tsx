@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, CheckCircle, XCircle } from "lucide-react";
-import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { supabase } from '@/integrations/supabase/client';
 
 type StatusItemProps = {
   tableName: string;
@@ -66,27 +66,71 @@ const StatusItem = ({ tableName, isListening, lastUpdate }: StatusItemProps) => 
   );
 };
 
-export function RealtimeStatus() {
-  // Define tables with proper typing
-  type TableInfo = {
-    name: 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals';
-    displayName: string;
-  };
+type TableStatus = {
+  name: string;
+  displayName: string;
+  isListening: boolean;
+  lastUpdate: any | null;
+};
 
-  const tables: TableInfo[] = [
-    { name: 'profiles', displayName: 'User Profiles' },
-    { name: 'login_logs', displayName: 'Login Logs' },
-    { name: 'ad_slots', displayName: 'Ad Slots' },
-    { name: 'quiz_questions', displayName: 'Quiz Questions' },
-    { name: 'quiz_answers', displayName: 'Quiz Answers' },
-    { name: 'payments', displayName: 'Payments' },
-    { name: 'user_referrals', displayName: 'Referrals' }
-  ];
-  
-  const activeListeners = tables.map(table => {
-    const { isListening, lastUpdate } = useRealtimeUpdates(table.name);
-    return { ...table, isListening, lastUpdate };
-  });
+export function RealtimeStatus() {
+  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>([
+    { name: 'profiles', displayName: 'User Profiles', isListening: false, lastUpdate: null },
+    { name: 'login_logs', displayName: 'Login Logs', isListening: false, lastUpdate: null },
+    { name: 'ad_slots', displayName: 'Ad Slots', isListening: false, lastUpdate: null },
+    { name: 'quiz_questions', displayName: 'Quiz Questions', isListening: false, lastUpdate: null },
+    { name: 'quiz_answers', displayName: 'Quiz Answers', isListening: false, lastUpdate: null },
+    { name: 'payments', displayName: 'Payments', isListening: false, lastUpdate: null },
+    { name: 'user_referrals', displayName: 'Referrals', isListening: false, lastUpdate: null }
+  ]);
+
+  useEffect(() => {
+    // Create a channel for each table
+    const channels = tableStatuses.map(table => {
+      const channel = supabase
+        .channel(`table-${table.name}-changes`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: table.name,
+          },
+          (payload) => {
+            // Update the table status with the new payload
+            setTableStatuses(prev => 
+              prev.map(t => 
+                t.name === table.name 
+                  ? { ...t, lastUpdate: payload } 
+                  : t
+              )
+            );
+          }
+        )
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            // Update the listening status
+            setTableStatuses(prev => 
+              prev.map(t => 
+                t.name === table.name 
+                  ? { ...t, isListening: true } 
+                  : t
+              )
+            );
+            console.log(`Listening for changes on ${table.name} table`);
+          }
+        });
+
+      return channel;
+    });
+
+    // Cleanup function
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, []);
   
   return (
     <Card>
@@ -103,7 +147,7 @@ export function RealtimeStatus() {
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
-          {activeListeners.map((item) => (
+          {tableStatuses.map((item) => (
             <StatusItem 
               key={item.name}
               tableName={item.displayName}

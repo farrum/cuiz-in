@@ -17,10 +17,12 @@ interface NewsMessage {
 const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   const [messages, setMessages] = useState<NewsMessage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        setIsLoading(true);
         // Using type assertion to handle the news_ticker table that's not yet in the TypeScript types
         const { data, error } = await supabase
           .from('news_ticker')
@@ -41,14 +43,16 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
         }
       } catch (err) {
         console.error('Failed to fetch news ticker messages:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchMessages();
     
     // Set up subscription for real-time updates
-    const subscription = supabase
-      .channel('news_ticker_changes')
+    const channel = supabase
+      .channel('news-ticker-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public', 
@@ -59,7 +63,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
       .subscribe();
       
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
   
@@ -73,6 +77,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
     return () => clearInterval(interval);
   }, [messages]);
   
+  if (isLoading) return null;
   if (messages.length === 0) return null;
   
   return (
