@@ -22,6 +22,7 @@ interface PaginatedDataTableProps {
   isLoading?: boolean;
   pageSize?: number;
   showPagination?: boolean;
+  searchPlaceholder?: string; // Added this prop
 }
 
 export const PaginatedDataTable: React.FC<PaginatedDataTableProps> = ({
@@ -30,6 +31,7 @@ export const PaginatedDataTable: React.FC<PaginatedDataTableProps> = ({
   isLoading = false,
   pageSize = 10,
   showPagination = true,
+  searchPlaceholder, // Add it to the destructured props
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   
