@@ -20,7 +20,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({ className }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Use our new hook for realtime updates
+  // Use our hook for realtime updates
   const { lastUpdate } = useSupabaseRealtime('news_ticker', {
     showToasts: false
   });

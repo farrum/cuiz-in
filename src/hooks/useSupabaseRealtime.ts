@@ -54,8 +54,8 @@ export function useSupabaseRealtime(
     // Create a unique channel name
     const channelName = `realtime_${table}_${Date.now()}`;
     
-    // Create and subscribe to the channel
-    const subscription = supabase
+    // Create and subscribe to the channel - using the correct syntax for Supabase JS v2
+    const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
@@ -88,7 +88,7 @@ export function useSupabaseRealtime(
     // Cleanup function
     return () => {
       console.log(`Cleaning up realtime listener for ${table}`);
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(channel);
     };
   }, [table, mergedOptions, toast]);
 
