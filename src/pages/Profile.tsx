@@ -6,6 +6,7 @@ import WithdrawalSection from '@/components/WithdrawalSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
 import BadgesSection from '@/components/BadgesSection';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
+import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
 import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck } from 'lucide-react';
@@ -204,8 +205,9 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
+      <NewsTicker className="mt-16" />
       
-      <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+      <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

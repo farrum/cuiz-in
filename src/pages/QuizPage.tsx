@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
 import PointsDisplay from '@/components/PointsDisplay';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
+import NewsTicker from '@/components/NewsTicker';
 import { 
   STORAGE_KEYS, 
   QuizQuestion, 
@@ -15,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
+import { getAllBadges } from '@/utils/badgeData';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -27,6 +29,7 @@ const QuizPage: React.FC = () => {
   const [adsSynced, setAdsSynced] = useState(false);
   const [showMotivation, setShowMotivation] = useState(false);
   const [motivationMessage, setMotivationMessage] = useState('');
+  const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -43,10 +46,35 @@ const QuizPage: React.FC = () => {
     }
     
     loadNewQuestion();
-    
     fetchPoints();
+    updateNextBadgeThreshold(completedQuestions.length);
   }, []);
   
+  const updateNextBadgeThreshold = (currentAnsweredCount: number) => {
+    const allBadges = getAllBadges();
+    
+    // Filter to question-based badges
+    const questionBadges = allBadges.filter(
+      badge => badge.criteria.type === 'questions_answered'
+    ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
+    
+    // Find the next badge threshold
+    for (const badge of questionBadges) {
+      if (badge.criteria.threshold > currentAnsweredCount) {
+        setNextBadgeThreshold(badge.criteria.threshold);
+        return;
+      }
+    }
+    
+    // If all badges are earned, use the highest threshold + 10
+    if (questionBadges.length > 0) {
+      const highestThreshold = Math.max(
+        ...questionBadges.map(badge => badge.criteria.threshold)
+      );
+      setNextBadgeThreshold(highestThreshold + 10);
+    }
+  };
+
   useEffect(() => {
     if (!localStorage.getItem('ad_tracking_session_id')) {
       const sessionId = crypto.randomUUID ? crypto.randomUUID() : 
@@ -123,7 +151,9 @@ const QuizPage: React.FC = () => {
   const handleQuestionComplete = (isCorrect: boolean) => {
     if (!currentQuestion) return;
     
-    setQuestionsAnswered(prev => prev + 1);
+    const newQuestionsAnswered = questionsAnswered + 1;
+    setQuestionsAnswered(newQuestionsAnswered);
+    updateNextBadgeThreshold(newQuestionsAnswered);
     
     if (isCorrect) {
       const newStreak = streak + 1;
@@ -172,8 +202,9 @@ const QuizPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
+      <NewsTicker className="mt-16" />
       
-      <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+      <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
         <AdvertisementBanner position="top" />
         
         <div className="flex flex-col md:flex-row gap-6 mb-8">
@@ -211,11 +242,11 @@ const QuizPage: React.FC = () => {
           <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
             <div 
               className="absolute inset-y-0 left-0 bg-primary transition-all duration-1000"
-              style={{ width: `${Math.min((questionsAnswered % 10) * 10, 100)}%` }}
+              style={{ width: `${Math.min(((questionsAnswered % nextBadgeThreshold) / nextBadgeThreshold) * 100, 100)}%` }}
             />
           </div>
           <div className="text-xs text-muted-foreground text-right">
-            {10 - (questionsAnswered % 10)} more questions until next milestone
+            {nextBadgeThreshold - (questionsAnswered % nextBadgeThreshold)} more questions until next milestone
           </div>
         </div>
         
