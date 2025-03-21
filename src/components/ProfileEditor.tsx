@@ -82,7 +82,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         .update({
           username: data.displayName,
           profile_picture: selectedAvatar,
-          // Keep other fields untouched
+          // Include upi_id in the update
+          upi_id: data.upiId || null
         })
         .eq('id', userId)
         .select();

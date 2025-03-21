@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, UserRound, Ban, UserCheck, Edit, Trash, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface UserData {
   id: string;
@@ -21,6 +22,7 @@ interface UserData {
   suspended: boolean;
   profile_picture?: string;
   created_at: string;
+  upi_id?: string;
 }
 
 const AdminUserManagementWithAvatars: React.FC = () => {
@@ -34,7 +36,11 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   const [editPhone, setEditPhone] = useState('');
   const [editPoints, setEditPoints] = useState(0);
   const [editSuspended, setEditSuspended] = useState(false);
+  const [editUpiId, setEditUpiId] = useState('');
   const { toast } = useToast();
+  
+  // Listen for realtime updates
+  const { isListening } = useRealtimeUpdates('profiles');
 
   const loadUsers = async () => {
     try {
@@ -64,6 +70,13 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   useEffect(() => {
     loadUsers();
   }, []);
+  
+  // Refresh data when realtime updates occur
+  useEffect(() => {
+    if (isListening) {
+      loadUsers();
+    }
+  }, [isListening]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -80,6 +93,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
     setEditPhone(user.phone || '');
     setEditPoints(user.points);
     setEditSuspended(user.suspended);
+    setEditUpiId(user.upi_id || '');
     setIsEditDialogOpen(true);
   };
 
@@ -98,7 +112,8 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           username: editName,
           phone: editPhone || null,
           points: editPoints,
-          suspended: editSuspended
+          suspended: editSuspended,
+          upi_id: editUpiId || null
         })
         .eq('id', selectedUser.id);
         
@@ -259,6 +274,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               <TableHead>User</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Points</TableHead>
+              <TableHead>UPI ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -266,7 +282,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center p-4">
+                <TableCell colSpan={6} className="text-center p-4">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                   </div>
@@ -283,6 +299,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   </TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>{user.points}</TableCell>
+                  <TableCell>{user.upi_id || '-'}</TableCell>
                   <TableCell>
                     {user.suspended ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -311,7 +328,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center p-4">
+                <TableCell colSpan={6} className="text-center p-4">
                   No users found
                 </TableCell>
               </TableRow>
@@ -319,7 +336,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={5} className="text-right">
+              <TableCell colSpan={6} className="text-right">
                 Total Users: {filteredUsers.length}
               </TableCell>
             </TableRow>
@@ -354,6 +371,18 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="upiId" className="text-right">
+                UPI ID
+              </Label>
+              <Input
+                id="upiId"
+                value={editUpiId}
+                onChange={(e) => setEditUpiId(e.target.value)}
+                className="col-span-3"
+                placeholder="Optional UPI ID for withdrawals"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

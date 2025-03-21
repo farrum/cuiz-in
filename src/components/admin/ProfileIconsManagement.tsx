@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface ProfileIcon {
   id: string;
@@ -27,6 +28,9 @@ const ProfileIconsManagement: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  
+  // Listen for realtime updates to profile_icons table
+  const { isListening } = useRealtimeUpdates('profile_icons' as any);
 
   useEffect(() => {
     fetchIcons();
@@ -108,7 +112,13 @@ const ProfileIconsManagement: React.FC = () => {
 
       console.log('Uploading to path:', filePath);
 
-      // Upload to Supabase Storage
+      // Use the current session's auth when uploading
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
+      // Upload to Supabase Storage with explicit auth header
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
         .upload(filePath, uploadingFile, {
@@ -136,7 +146,7 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      // Add record to the profile_icons table
+      // Add record to the profile_icons table with explicit auth
       const { error, data } = await supabase
         .from('profile_icons')
         .insert({
@@ -170,7 +180,7 @@ const ProfileIconsManagement: React.FC = () => {
       console.error('Error uploading icon:', error);
       toast({
         title: 'Upload failed',
-        description: 'Failed to upload icon. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to upload icon. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -231,6 +241,13 @@ const ProfileIconsManagement: React.FC = () => {
       });
     }
   };
+
+  // Listen for realtime updates and refresh the list
+  useEffect(() => {
+    if (isListening) {
+      fetchIcons();
+    }
+  }, [isListening]);
 
   return (
     <Card>
