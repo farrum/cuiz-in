@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -117,7 +116,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       // Update local storage
       if (data.displayName !== userName) {
-        localStorage.setItem('quiz_app_user_name', data.displayName);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, data.displayName);
       }
       
       if (data.upiId !== userUpi) {
@@ -133,7 +132,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       const { error } = await supabase
         .from('profiles')
         .update({
-          display_name: data.displayName, // Update the new display_name field
+          display_name: data.displayName, // Update the display_name field
           profile_picture: selectedAvatar,
           upi_id: data.upiId || null
         })
@@ -222,7 +221,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
               )}
             />
             
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <Button 
                 type="button" 
                 variant="outline" 
@@ -235,7 +234,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                 <Save className="h-4 w-4 mr-2" />
                 Save Changes
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

@@ -390,6 +390,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          display_name: string | null
           id: string
           is_admin: boolean | null
           password_hash: string | null
@@ -402,6 +403,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          display_name?: string | null
           id?: string
           is_admin?: boolean | null
           password_hash?: string | null
@@ -414,6 +416,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          display_name?: string | null
           id?: string
           is_admin?: boolean | null
           password_hash?: string | null
