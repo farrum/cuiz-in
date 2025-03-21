@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -192,6 +191,7 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/icons" element={<AdminPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
