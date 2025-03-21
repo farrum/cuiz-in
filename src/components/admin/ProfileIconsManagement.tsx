@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface ProfileIcon {
   id: string;
@@ -27,7 +28,6 @@ const ProfileIconsManagement: React.FC = () => {
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const { toast } = useToast();
@@ -35,27 +35,58 @@ const ProfileIconsManagement: React.FC = () => {
   // Use a ref to prevent multiple realtime subscriptions
   const realtimeInitialized = React.useRef(false);
 
-  // Check session first
+  // Check admin authentication first - simplified and more robust approach
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAdminAuth = async () => {
       setIsSessionLoading(true);
       try {
+        // First check localStorage for admin auth - this is faster and more reliable
+        const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+        const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
+        
+        if (isAdminAuth && adminUsername) {
+          console.log("Admin authenticated via localStorage");
+          setIsAuthenticated(true);
+          setIsSessionLoading(false);
+          return;
+        }
+        
+        // Fallback to Supabase session check
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (!session) {
-          console.error("No active session found");
+        if (session?.user) {
+          console.log("Session found, checking if user is admin");
+          
+          // Check if user is admin in profiles table
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profileData?.is_admin) {
+            console.log("User confirmed as admin in database");
+            setIsAuthenticated(true);
+          } else {
+            console.log("User is not an admin in database");
+            setIsAuthenticated(false);
+            toast({
+              title: 'Authentication Error',
+              description: 'You need to be logged in as an administrator to access this section',
+              variant: 'destructive',
+            });
+          }
+        } else {
+          console.log("No active session found");
           setIsAuthenticated(false);
           toast({
             title: 'Authentication Error',
-            description: 'Please log in again to manage profile icons',
+            description: 'Please log in to manage profile icons',
             variant: 'destructive',
           });
-        } else {
-          console.log("Session found, user authenticated:", session.user.id);
-          setIsAuthenticated(true);
         }
       } catch (error) {
-        console.error("Error checking authentication session:", error);
+        console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
         toast({
           title: 'Authentication Error',
@@ -63,61 +94,60 @@ const ProfileIconsManagement: React.FC = () => {
           variant: 'destructive',
         });
       } finally {
-        setSessionChecked(true);
         setIsSessionLoading(false);
       }
     };
     
-    checkSession();
+    checkAdminAuth();
   }, [toast]);
   
-  // Only fetch icons after session check confirms authentication
+  // Only fetch icons after authentication is confirmed
   useEffect(() => {
-    if (sessionChecked && isAuthenticated) {
+    if (isAuthenticated) {
       fetchIcons();
-    }
-  }, [sessionChecked, isAuthenticated]);
-
-  // Set up realtime updates only once and only if authenticated
-  useEffect(() => {
-    if (sessionChecked && isAuthenticated && !realtimeInitialized.current) {
-      const setupRealtime = async () => {
-        try {
-          // Set up realtime channel with proper cleanup
-          const channel = supabase
-            .channel('profile_icons_changes')
-            .on('postgres_changes', { 
-              event: '*', 
-              schema: 'public', 
-              table: 'profile_icons' 
-            }, () => {
-              console.log("Realtime update detected for profile_icons table");
-              fetchIcons();
-            })
-            .subscribe((status) => {
-              console.log("Realtime subscription status:", status);
-            });
-            
-          realtimeInitialized.current = true;
-          console.log("Realtime updates initialized for profile icons");
-          
-          // Cleanup function
-          return () => {
-            console.log("Cleaning up realtime subscription");
-            supabase.removeChannel(channel);
-          };
-        } catch (error) {
-          console.error("Error setting up realtime updates:", error);
-          return () => {}; // Return empty cleanup if setup failed
-        }
-      };
       
-      const cleanup = setupRealtime();
-      return () => {
-        cleanup.then(cleanupFn => cleanupFn && cleanupFn());
-      };
+      // Set up realtime updates only once and only if authenticated
+      if (!realtimeInitialized.current) {
+        const setupRealtime = async () => {
+          try {
+            // Set up realtime channel with proper cleanup
+            const channel = supabase
+              .channel('profile_icons_changes')
+              .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'profile_icons' 
+              }, () => {
+                console.log("Realtime update detected for profile_icons table");
+                fetchIcons();
+              })
+              .subscribe((status) => {
+                console.log("Realtime subscription status:", status);
+              });
+              
+            realtimeInitialized.current = true;
+            console.log("Realtime updates initialized for profile icons");
+            
+            // Return cleanup function
+            return () => {
+              console.log("Cleaning up realtime subscription");
+              supabase.removeChannel(channel);
+            };
+          } catch (error) {
+            console.error("Error setting up realtime updates:", error);
+            return () => {}; // Return empty cleanup if setup failed
+          }
+        };
+        
+        const cleanup = setupRealtime();
+        return () => {
+          if (cleanup) {
+            cleanup.then(cleanupFn => cleanupFn && cleanupFn());
+          }
+        };
+      }
     }
-  }, [sessionChecked, isAuthenticated]);
+  }, [isAuthenticated]);
 
   const fetchIcons = async () => {
     try {
@@ -189,10 +219,26 @@ const ProfileIconsManagement: React.FC = () => {
       setIsUploading(true);
       setUploadProgress(10);
 
-      // Check for active session before upload
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session found. Please log in again.');
+      // Verify authentication before upload
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      
+      if (!isAdminAuth) {
+        // Double-check Supabase session as fallback
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active session found. Please log in again.');
+        }
+        
+        // Verify admin status
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (!profileData?.is_admin) {
+          throw new Error('Admin privileges required. Please login with an admin account.');
+        }
       }
 
       // Generate a unique filename
@@ -204,7 +250,7 @@ const ProfileIconsManagement: React.FC = () => {
 
       console.log('Uploading to path:', filePath);
 
-      // Upload to Supabase Storage with explicit auth token
+      // Upload to Supabase Storage
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
         .upload(filePath, uploadingFile, {
@@ -279,6 +325,17 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
+      // Check authentication before delete
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      
+      if (!isAdminAuth) {
+        // Double-check Supabase session as fallback
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active session found. Please log in again.');
+        }
+      }
+      
       // First get the icon to find the file path
       const { data: iconData, error: fetchError } = await supabase
         .from('profile_icons')
