@@ -246,11 +246,14 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      const { data, error } = await supabase.rpc('admin_insert_profile_icon', {
-        icon_name: newIconName,
-        icon_url: urlData.publicUrl,
-        is_active: true
-      });
+      const { data, error } = await supabase.rpc(
+        'admin_insert_profile_icon', 
+        {
+          icon_name: newIconName,
+          icon_url: urlData.publicUrl,
+          is_active: true
+        } as any
+      );
 
       if (error) {
         console.error('Database insert error:', error);
@@ -287,9 +290,12 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
-      const { data, error } = await supabase.rpc('admin_delete_profile_icon', {
-        p_icon_id: iconId
-      });
+      const { data, error } = await supabase.rpc(
+        'admin_delete_profile_icon', 
+        {
+          p_icon_id: iconId
+        } as any
+      );
       
       if (error) throw error;
       
