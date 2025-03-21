@@ -287,7 +287,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         
         toast({
           title: "Success",
-          description: "User added successfully",
+          description: "User added successfully"
         });
         
         setNewUser({ username: '', email: '', phone: '', password: '', points: 0 });
@@ -322,7 +322,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       
       toast({
         title: "Success",
-        description: `User ${!currentStatus ? 'suspended' : 'unsuspended'} successfully`,
+        description: `User ${!currentStatus ? 'suspended' : 'unsuspended'} successfully`
       });
     } catch (error: any) {
       console.error('Error toggling user suspend status:', error);
@@ -369,7 +369,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       
       toast({
         title: "Success",
-        description: `User role updated to ${selectedRole}`,
+        description: `User role updated to ${selectedRole}`
       });
       
       setUsers(users.map(user => 
@@ -409,7 +409,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       
       toast({
         title: "Success",
-        description: `Password reset for ${selectedUser.username}`,
+        description: `Password reset for ${selectedUser.username}`
       });
       
       setIsResetPasswordDialogOpen(false);
@@ -438,7 +438,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
     try {
       toast({
         title: "Success",
-        description: `Email updated for ${selectedUser.username}`,
+        description: `Email updated for ${selectedUser.username}`
       });
       
       setIsUpdateEmailDialogOpen(false);
