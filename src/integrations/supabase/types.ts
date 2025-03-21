@@ -363,6 +363,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_icons: {
+        Row: {
+          created_at: string | null
+          icon_url: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          icon_url: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          icon_url?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -371,6 +395,7 @@ export type Database = {
           password_hash: string | null
           phone: string | null
           points: number | null
+          profile_picture: string | null
           suspended: boolean | null
           username: string
         }
@@ -381,6 +406,7 @@ export type Database = {
           password_hash?: string | null
           phone?: string | null
           points?: number | null
+          profile_picture?: string | null
           suspended?: boolean | null
           username: string
         }
@@ -391,6 +417,7 @@ export type Database = {
           password_hash?: string | null
           phone?: string | null
           points?: number | null
+          profile_picture?: string | null
           suspended?: boolean | null
           username?: string
         }

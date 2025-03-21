@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserRound, Upload, Check, RefreshCw, PlusCircle } from 'lucide-react';
+import { UserRound, Upload, Check, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -53,7 +53,7 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
         }
         
         if (data) {
-          setCustomIcons(data);
+          setCustomIcons(data as CustomIcon[]);
         }
       } catch (error) {
         console.error('Failed to fetch custom icons:', error);

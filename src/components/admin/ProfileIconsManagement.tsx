@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlusCircle, Trash2, Upload, RefreshCw, X } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface ProfileIcon {
   id: string;
@@ -20,30 +19,33 @@ interface ProfileIcon {
 }
 
 const ProfileIconsManagement: React.FC = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [icons, setIcons] = useState<ProfileIcon[]>([]);
-  const [iconName, setIconName] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [iconToDelete, setIconToDelete] = useState<ProfileIcon | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [newIconName, setNewIconName] = useState('');
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    fetchIcons();
+  }, []);
 
   const fetchIcons = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('profile_icons')
         .select('*')
         .order('created_at', { ascending: false });
-        
+
       if (error) {
         throw error;
       }
-      
+
       if (data) {
-        setIcons(data);
+        setIcons(data as ProfileIcon[]);
       }
     } catch (error) {
       console.error('Error fetching profile icons:', error);
@@ -52,47 +54,43 @@ const ProfileIconsManagement: React.FC = () => {
         description: 'Failed to load profile icons',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchIcons();
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Validate file size (500KB limit)
-      if (file.size > 512000) {
-        toast({
-          title: 'File too large',
-          description: 'Please select an image smaller than 500KB',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Invalid file type',
-          description: 'Please select an image file',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      setSelectedFile(file);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // File validation
+    if (file.size > 512000) { // 500KB limit
+      toast({
+        title: 'File too large',
+        description: 'Please select an image smaller than 500KB',
+        variant: 'destructive'
+      });
+      return;
     }
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select an image file',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploadingFile(file);
   };
 
-  const uploadIcon = async () => {
-    if (!selectedFile || !iconName.trim()) {
+  const handleIconUpload = async () => {
+    if (!uploadingFile || !newIconName.trim()) {
       toast({
         title: 'Missing information',
-        description: 'Please provide both an icon name and image',
-        variant: 'destructive',
+        description: 'Please provide an icon name and select a file',
+        variant: 'destructive'
       });
       return;
     }
@@ -101,39 +99,43 @@ const ProfileIconsManagement: React.FC = () => {
       setIsUploading(true);
       setUploadProgress(10);
 
-      // Generate a unique file name
-      const fileExt = selectedFile.name.split('.').pop();
+      // Generate a unique filename
+      const fileExt = uploadingFile.name.split('.').pop();
       const fileName = `icon_${Date.now()}.${fileExt}`;
-      const filePath = `profile_icons/${fileName}`;
+      const filePath = `icons/${fileName}`;
 
       setTimeout(() => setUploadProgress(30), 300);
 
-      // Upload the file to storage
-      const { error: uploadError } = await supabase.storage
+      // Upload to Supabase Storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
-        .upload(filePath, selectedFile);
+        .upload(filePath, uploadingFile);
 
       if (uploadError) throw uploadError;
 
-      setTimeout(() => setUploadProgress(60), 600);
+      setTimeout(() => setUploadProgress(60), 500);
 
       // Get the public URL
       const { data: urlData } = supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
 
-      const iconUrl = urlData.publicUrl;
+      if (!urlData || !urlData.publicUrl) {
+        throw new Error('Failed to get public URL');
+      }
 
-      // Insert record in the profile_icons table
-      const { error: insertError } = await supabase
+      setTimeout(() => setUploadProgress(80), 700);
+
+      // Add record to the profile_icons table
+      const { error } = await supabase
         .from('profile_icons')
         .insert({
-          name: iconName.trim(),
-          icon_url: iconUrl,
-          is_active: true,
+          name: newIconName,
+          icon_url: urlData.publicUrl,
+          is_active: true
         });
 
-      if (insertError) throw insertError;
+      if (error) throw error;
 
       setTimeout(() => setUploadProgress(100), 800);
 
@@ -142,18 +144,19 @@ const ProfileIconsManagement: React.FC = () => {
         description: 'Profile icon uploaded successfully',
       });
 
-      // Reset form and refresh the icons list
-      setIconName('');
-      setSelectedFile(null);
-      setIsAddDialogOpen(false);
-      fetchIcons();
+      // Reset form and close dialog
+      setNewIconName('');
+      setUploadingFile(null);
+      setIsUploadDialogOpen(false);
       
+      // Refresh icons list
+      fetchIcons();
     } catch (error) {
-      console.error('Error uploading profile icon:', error);
+      console.error('Error uploading icon:', error);
       toast({
         title: 'Upload failed',
-        description: 'Failed to upload profile icon. Please try again.',
-        variant: 'destructive',
+        description: 'Failed to upload icon. Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setTimeout(() => {
@@ -163,203 +166,170 @@ const ProfileIconsManagement: React.FC = () => {
     }
   };
 
-  const confirmDeleteIcon = (icon: ProfileIcon) => {
-    setIconToDelete(icon);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const deleteIcon = async () => {
-    if (!iconToDelete) return;
-    
+  const handleDeleteIcon = async (iconId: string) => {
     try {
-      // First mark as inactive rather than deleting
       const { error } = await supabase
         .from('profile_icons')
-        .update({ is_active: false })
-        .eq('id', iconToDelete.id);
-        
+        .delete()
+        .eq('id', iconId);
+
       if (error) throw error;
-      
+
       toast({
-        title: 'Success',
-        description: 'Profile icon removed successfully',
+        title: 'Icon deleted',
+        description: 'The profile icon has been removed',
       });
-      
-      setIsDeleteDialogOpen(false);
+
+      // Refresh icons list
       fetchIcons();
-      
     } catch (error) {
-      console.error('Error deleting profile icon:', error);
+      console.error('Error deleting icon:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete profile icon',
-        variant: 'destructive',
+        description: 'Failed to delete the icon',
+        variant: 'destructive'
       });
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Profile Icons</h2>
-        
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add New Icon
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Profile Icon</DialogTitle>
-              <DialogDescription>
-                Upload a new profile icon for users to select. Images should be square for best results.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="icon-name">Icon Name</Label>
-                <Input
-                  id="icon-name"
-                  placeholder="e.g., Blue Avatar"
-                  value={iconName}
-                  onChange={(e) => setIconName(e.target.value)}
-                />
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Profile Icons</CardTitle>
+            <CardDescription>Manage custom profile icons for users</CardDescription>
+          </div>
+          <Button onClick={() => setIsUploadDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Icon
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+          </div>
+        ) : icons.length === 0 ? (
+          <div className="text-center p-4 border rounded-md">
+            <p className="text-muted-foreground">No custom icons added yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {icons.map((icon) => (
+              <div key={icon.id} className="relative border rounded-md p-3 flex flex-col items-center">
+                <Avatar className="h-16 w-16 mb-2">
+                  <AvatarImage src={icon.icon_url} alt={icon.name} />
+                  <AvatarFallback>{icon.name.substring(0, 1).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <p className="text-sm font-medium text-center truncate w-full">{icon.name}</p>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-0 right-0 text-red-500 h-8 w-8"
+                  onClick={() => handleDeleteIcon(icon.id)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="icon-file">Upload Image</Label>
-                <div className="flex items-center gap-2">
-                  {selectedFile ? (
-                    <div className="flex items-center gap-2 w-full">
-                      <div className="flex-1 p-2 border rounded truncate">
-                        {selectedFile.name}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedFile(null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="w-full">
-                      <Button variant="outline" className="w-full" type="button">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Select Image
-                      </Button>
-                      <input
-                        id="icon-file"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  )}
-                </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Profile Icon</DialogTitle>
+            <DialogDescription>
+              Upload a new icon that users can select for their profiles.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="icon-name">Icon Name</Label>
+              <Input
+                id="icon-name"
+                value={newIconName}
+                onChange={(e) => setNewIconName(e.target.value)}
+                placeholder="Enter a name for this icon"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Icon Image</Label>
+              <div className="flex flex-col items-center gap-4 border rounded-md p-4">
+                {uploadingFile ? (
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage 
+                      src={URL.createObjectURL(uploadingFile)} 
+                      alt="Icon preview" 
+                    />
+                    <AvatarFallback>
+                      {newIconName ? newIconName.substring(0, 1).toUpperCase() : 'I'}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <Label 
+                  htmlFor="icon-upload" 
+                  className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                >
+                  {uploadingFile ? 'Change Image' : 'Upload Image'}
+                </Label>
+                <Input 
+                  id="icon-upload" 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
                 <p className="text-xs text-muted-foreground">
-                  JPG, PNG or GIF. Max 500KB. Square images work best.
+                  JPG, PNG or GIF. Max 500KB.
                 </p>
               </div>
             </div>
-            
             {uploadProgress > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-1 mb-4">
+              <div className="w-full bg-gray-200 rounded-full h-1">
                 <div 
                   className="bg-primary h-1 rounded-full transition-all duration-300" 
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
               </div>
             )}
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={uploadIcon} disabled={isUploading || !selectedFile || !iconName.trim()}>
-                {isUploading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Icon
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {icons.filter(icon => icon.is_active).map((icon) => (
-          <Card key={icon.id}>
-            <CardHeader className="p-4 pb-0">
-              <CardTitle className="text-sm font-medium truncate">{icon.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 flex justify-center">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={icon.icon_url} alt={icon.name} />
-                <AvatarFallback>{icon.name.substring(0, 1).toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => confirmDeleteIcon(icon)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remove
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        {icons.filter(icon => icon.is_active).length === 0 && (
-          <div className="col-span-full p-8 text-center text-muted-foreground">
-            No custom profile icons found. Add some icons for your users to select from!
           </div>
-        )}
-      </div>
-      
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Profile Icon</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this profile icon? Users who have selected this icon will still see it, but it will no longer be available for new selections.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {iconToDelete && (
-            <div className="py-4 flex items-center justify-center">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={iconToDelete.icon_url} alt={iconToDelete.name} />
-                <AvatarFallback>{iconToDelete.name.substring(0, 1).toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsUploadDialogOpen(false)}
+              disabled={isUploading}
+            >
+              <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button variant="destructive" onClick={deleteIcon}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remove Icon
+            <Button 
+              onClick={handleIconUpload}
+              disabled={isUploading || !uploadingFile || !newIconName.trim()}
+            >
+              {isUploading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Save Icon
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 };
 

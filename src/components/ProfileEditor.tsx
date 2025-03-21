@@ -72,15 +72,16 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Update the profile data in Supabase to sync with admin view
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: userId,
+        .update({
           username: data.displayName,
           profile_picture: selectedAvatar,
           // Keep other fields untouched
-        }, { onConflict: 'id' });
+        })
+        .eq('id', userId);
       
       if (error) {
         console.error('Error updating profile in Supabase:', error);
+        throw error;
       }
       
       // Call the callback to update parent state
