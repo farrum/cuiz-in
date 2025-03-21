@@ -28,56 +28,88 @@ const ProfileIconsManagement: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
   const { toast } = useToast();
   
   // Use a ref to prevent multiple realtime subscriptions
   const realtimeInitialized = React.useRef(false);
 
+  // Check session first
   useEffect(() => {
-    // Check for active session first
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error("No active session found");
+      setIsSessionLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.error("No active session found");
+          setIsAuthenticated(false);
+          toast({
+            title: 'Authentication Error',
+            description: 'Please log in again to manage profile icons',
+            variant: 'destructive',
+          });
+        } else {
+          console.log("Session found, user authenticated:", session.user.id);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error checking authentication session:", error);
+        setIsAuthenticated(false);
         toast({
           title: 'Authentication Error',
-          description: 'Please log in again to upload icons',
+          description: 'Failed to verify your session. Please log in again.',
           variant: 'destructive',
         });
+      } finally {
+        setSessionChecked(true);
+        setIsSessionLoading(false);
       }
-      setSessionChecked(true);
     };
     
     checkSession();
-    
-    // Only fetch icons after session check
-    if (sessionChecked) {
+  }, [toast]);
+  
+  // Only fetch icons after session check confirms authentication
+  useEffect(() => {
+    if (sessionChecked && isAuthenticated) {
       fetchIcons();
     }
-  }, [sessionChecked]);
+  }, [sessionChecked, isAuthenticated]);
 
-  // Set up realtime updates only once
+  // Set up realtime updates only once and only if authenticated
   useEffect(() => {
-    if (sessionChecked && !realtimeInitialized.current) {
+    if (sessionChecked && isAuthenticated && !realtimeInitialized.current) {
       const setupRealtime = async () => {
-        // Set up realtime channel with proper cleanup
-        const channel = supabase
-          .channel('profile_icons_changes')
-          .on('postgres_changes', { 
-            event: '*', 
-            schema: 'public', 
-            table: 'profile_icons' 
-          }, () => {
-            fetchIcons();
-          })
-          .subscribe();
+        try {
+          // Set up realtime channel with proper cleanup
+          const channel = supabase
+            .channel('profile_icons_changes')
+            .on('postgres_changes', { 
+              event: '*', 
+              schema: 'public', 
+              table: 'profile_icons' 
+            }, () => {
+              console.log("Realtime update detected for profile_icons table");
+              fetchIcons();
+            })
+            .subscribe((status) => {
+              console.log("Realtime subscription status:", status);
+            });
+            
+          realtimeInitialized.current = true;
+          console.log("Realtime updates initialized for profile icons");
           
-        realtimeInitialized.current = true;
-        
-        // Cleanup function
-        return () => {
-          supabase.removeChannel(channel);
-        };
+          // Cleanup function
+          return () => {
+            console.log("Cleaning up realtime subscription");
+            supabase.removeChannel(channel);
+          };
+        } catch (error) {
+          console.error("Error setting up realtime updates:", error);
+          return () => {}; // Return empty cleanup if setup failed
+        }
       };
       
       const cleanup = setupRealtime();
@@ -85,11 +117,13 @@ const ProfileIconsManagement: React.FC = () => {
         cleanup.then(cleanupFn => cleanupFn && cleanupFn());
       };
     }
-  }, [sessionChecked]);
+  }, [sessionChecked, isAuthenticated]);
 
   const fetchIcons = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching profile icons...");
+      
       const { data, error } = await supabase
         .from('profile_icons')
         .select('*')
@@ -100,6 +134,7 @@ const ProfileIconsManagement: React.FC = () => {
       }
 
       if (data) {
+        console.log(`Fetched ${data.length} profile icons`);
         setIcons(data as ProfileIcon[]);
       }
     } catch (error) {
@@ -292,6 +327,41 @@ const ProfileIconsManagement: React.FC = () => {
       });
     }
   };
+
+  // Show loading state while checking session
+  if (isSessionLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Icons</CardTitle>
+          <CardDescription>Loading authentication status...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center p-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show auth error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Required</CardTitle>
+          <CardDescription>Please log in to manage profile icons</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md">
+            <p className="text-red-700 dark:text-red-400">
+              You need to be logged in as an administrator to access this section.
+              Please log in again if you were logged out.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
