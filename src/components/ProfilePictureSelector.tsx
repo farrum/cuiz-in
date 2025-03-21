@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserRound, Upload, Check, RefreshCw } from 'lucide-react';
+import { UserRound, Upload, Check, RefreshCw, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +15,13 @@ const DEFAULT_AVATARS = [
   { name: 'Robot', icon: 'robot' },
   { name: 'Graduate', icon: 'graduation-cap' },
   { name: 'Award', icon: 'award' },
-]
+];
+
+interface CustomIcon {
+  id: string;
+  name: string;
+  icon_url: string;
+}
 
 interface ProfilePictureSelectorProps {
   currentAvatar?: string;
@@ -29,7 +35,33 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
   const [selectedAvatar, setSelectedAvatar] = useState<string>(currentAvatar || '');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [customIcons, setCustomIcons] = useState<CustomIcon[]>([]);
   const { toast } = useToast();
+
+  // Fetch custom icons from Supabase
+  useEffect(() => {
+    const fetchCustomIcons = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profile_icons')
+          .select('*')
+          .eq('is_active', true);
+          
+        if (error) {
+          console.error('Error fetching custom icons:', error);
+          return;
+        }
+        
+        if (data) {
+          setCustomIcons(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch custom icons:', error);
+      }
+    };
+
+    fetchCustomIcons();
+  }, []);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -164,6 +196,21 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
                   onClick={() => handleAvatarSelection(avatar.icon)}
                 >
                   {renderAvatarIcon(avatar.icon)}
+                </div>
+              ))}
+              
+              {customIcons.map((icon) => (
+                <div 
+                  key={icon.id} 
+                  className={`cursor-pointer rounded-md border p-2 flex items-center justify-center h-16 ${
+                    selectedAvatar === icon.icon_url ? 'border-primary ring-2 ring-primary' : 'border-border'
+                  }`}
+                  onClick={() => handleAvatarSelection(icon.icon_url)}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={icon.icon_url} alt={icon.name} />
+                    <AvatarFallback>{icon.name.substring(0, 1).toUpperCase()}</AvatarFallback>
+                  </Avatar>
                 </div>
               ))}
             </div>

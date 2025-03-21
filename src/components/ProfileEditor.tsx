@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
@@ -71,6 +69,20 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         localStorage.setItem('quiz_app_user_avatar', selectedAvatar);
       }
       
+      // Update the profile data in Supabase to sync with admin view
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          username: data.displayName,
+          profile_picture: selectedAvatar,
+          // Keep other fields untouched
+        }, { onConflict: 'id' });
+      
+      if (error) {
+        console.error('Error updating profile in Supabase:', error);
+      }
+      
       // Call the callback to update parent state
       onProfileUpdate({
         displayName: data.displayName,
@@ -99,7 +111,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="ml-2 h-8">
+        <Button variant="ghost" size="sm" className="h-8">
           <Edit2 className="h-4 w-4 mr-2" />
           Edit
         </Button>
