@@ -106,7 +106,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         const bonus = await checkAndUpdateLoginStreak(userId);
         
         // If bonus points were awarded (first login of the day)
-        if (bonus !== null && bonus > 0) {
+        if (bonus !== null && bonus > 0 && !location.pathname.includes('/login')) {
           console.log(`User earned ${bonus} bonus points for logging in today`);
           setBonusPoints(bonus);
           setStreakDays(Math.min(bonus, 30)); // Streak days = bonus points (capped at 30)
@@ -117,7 +117,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       }
     };
     
-    if (isAuthenticated === true && location.pathname !== '/login') {
+    if (isAuthenticated === true) {
       logLoginActivity();
     }
   }, [userName, userId, isAuthenticated, location.pathname]);
@@ -171,6 +171,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Handle popup close
+  const handleBonusPopupClose = () => {
+    setShowBonusPopup(false);
+    
+    toast({
+      title: "Login Bonus!",
+      description: `You earned ${bonusPoints} bonus points for your ${streakDays}-day streak!`,
+    });
+  };
+
   return (
     <>
       {children}
@@ -178,7 +188,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       {/* Login Bonus Popup */}
       <LoginBonusPopup
         isOpen={showBonusPopup}
-        onClose={() => setShowBonusPopup(false)}
+        onClose={handleBonusPopupClose}
         bonusPoints={bonusPoints}
         streakDays={streakDays}
       />

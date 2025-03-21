@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserLoginStreak } from '@/services/loginStreakService';
+import { Flame, Calendar } from 'lucide-react';
 
 interface Achievement {
   id: string;
@@ -44,6 +46,7 @@ const Profile: React.FC = () => {
   const [userId, setUserId] = useState('');
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loginStreak, setLoginStreak] = useState<{current: number, highest: number} | null>(null);
   
   useEffect(() => {
     const userIdFromStorage = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -60,6 +63,7 @@ const Profile: React.FC = () => {
     if (userIdFromStorage) {
       setUserId(userIdFromStorage);
       fetchReferrerInfo(userIdFromStorage);
+      fetchLoginStreak(userIdFromStorage);
     } else {
       const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
       setUserId(generatedUserId);
@@ -88,6 +92,10 @@ const Profile: React.FC = () => {
       setAchievements(filteredUpdatedAchievements);
       
       checkAndAwardBadges(finalUserId);
+      
+      if (finalUserId) {
+        fetchLoginStreak(finalUserId);
+      }
     };
     
     window.addEventListener('pointsUpdated', handlePointsUpdate);
@@ -169,6 +177,20 @@ const Profile: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch referrer info:', err);
+    }
+  };
+  
+  const fetchLoginStreak = async (userId: string) => {
+    try {
+      const streakData = await getUserLoginStreak(userId);
+      if (streakData) {
+        setLoginStreak({
+          current: streakData.current_streak,
+          highest: streakData.highest_streak
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching login streak:', error);
     }
   };
   
@@ -310,6 +332,39 @@ const Profile: React.FC = () => {
                     Complete the monthly target to earn ₹8,000 reward!
                   </p>
                 </div>
+                
+                {loginStreak && (
+                  <div className="bg-secondary/30 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-full">
+                          <Flame className="w-4 h-4 text-orange-500" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium">Login Streak</h4>
+                          <p className="text-xs text-muted-foreground">Keep logging in daily for bonus points!</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="text-center">
+                          <div className="text-lg font-bold">{loginStreak.current}</div>
+                          <div className="text-xs text-muted-foreground">Current</div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="text-lg font-bold">{loginStreak.highest}</div>
+                          <div className="text-xs text-muted-foreground">Highest</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Next login: +{Math.min(loginStreak.current + 1, 30)} points</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
