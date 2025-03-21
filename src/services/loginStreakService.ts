@@ -25,6 +25,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split('T')[0];
     
+    console.log('Checking login streak for user:', userId, 'today:', todayStr);
+    
     // Check if the user already has a streak record
     const { data: streakData, error: streakError } = await supabase
       .from('login_streaks')
@@ -39,6 +41,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     // If this is the user's first login ever, create a new streak
     if (!streakData) {
+      console.log('First login for user, creating new streak record');
       const bonusPoints = 1; // First day gives 1 point
       
       const { data: newStreak, error: createError } = await supabase
@@ -77,6 +80,9 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     
+    console.log('Last login date:', lastLoginDate.toISOString().split('T')[0]);
+    console.log('Yesterday:', yesterday.toISOString().split('T')[0]);
+    
     let newStreak: number;
     let bonusPoints: number;
     
@@ -84,20 +90,31 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       // Consecutive login - increase streak
       newStreak = streakData.current_streak + 1;
       bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+      console.log('Consecutive login, new streak:', newStreak);
     } else if (lastLoginDate.getTime() === today.getTime()) {
       // Already logged in today but hasn't claimed bonus
       newStreak = streakData.current_streak;
       bonusPoints = Math.min(newStreak, 30);
+      console.log('Already logged in today, keeping streak:', newStreak);
     } else {
       // Streak broken - reset to 1
       newStreak = 1;
       bonusPoints = 1;
+      console.log('Streak broken, resetting to 1');
     }
     
     // Update the streak record
     const highestStreak = Math.max(newStreak, streakData.highest_streak);
     
-    await supabase
+    console.log('Updating streak record:', {
+      current_streak: newStreak,
+      highest_streak: highestStreak,
+      last_login_date: todayStr,
+      bonus_points_today: bonusPoints,
+      bonus_claimed_today: true
+    });
+    
+    const { error: updateError } = await supabase
       .from('login_streaks')
       .update({
         current_streak: newStreak,
@@ -108,6 +125,11 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         updated_at: new Date().toISOString()
       })
       .eq('id', streakData.id);
+      
+    if (updateError) {
+      console.error('Error updating login streak:', updateError);
+      return null;
+    }
     
     // Award the bonus points
     await awardBonusPoints(userId, bonusPoints);
@@ -166,6 +188,7 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
   if (!userId) return null;
   
   try {
+    console.log('Getting login streak for user:', userId);
     const { data, error } = await supabase
       .from('login_streaks')
       .select('*')
@@ -177,6 +200,7 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
       return null;
     }
     
+    console.log('Found login streak:', data);
     return data as LoginStreak;
   } catch (error) {
     console.error('Error in getUserLoginStreak:', error);

@@ -17,7 +17,7 @@ import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 interface UserData {
   id: string;
   username: string;
-  display_name?: string; // Added display_name field
+  display_name?: string;
   phone?: string;
   points: number;
   suspended: boolean;
@@ -111,7 +111,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          display_name: editDisplayName, // Update display_name, not username
+          display_name: editDisplayName,
           phone: editPhone || null,
           points: editPoints,
           suspended: editSuspended,
@@ -280,6 +280,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>Display Name</TableHead>
               <TableHead>Username</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Points</TableHead>
@@ -291,7 +292,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center p-4">
+                <TableCell colSpan={8} className="text-center p-4">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                   </div>
@@ -303,9 +304,9 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {renderUserAvatar(user)}
-                      {user.display_name || user.username}
                     </div>
                   </TableCell>
+                  <TableCell>{user.display_name || '-'}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{user.username}</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>{user.points}</TableCell>
@@ -338,7 +339,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center p-4">
+                <TableCell colSpan={8} className="text-center p-4">
                   No users found
                 </TableCell>
               </TableRow>
@@ -346,7 +347,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={7} className="text-right">
+              <TableCell colSpan={8} className="text-right">
                 Total Users: {filteredUsers.length}
               </TableCell>
             </TableRow>

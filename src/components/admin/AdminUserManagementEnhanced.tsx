@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -64,6 +63,7 @@ interface User {
   daily_logins?: number;
   monthly_logins?: number;
   login_streak?: number;
+  display_name?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -161,6 +161,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return {
           id: profile.id,
           username: profile.username,
+          display_name: profile.display_name,
           phone: profile.phone,
           points: profile.points || 0,
           suspended: profile.suspended || false,
@@ -208,7 +209,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -456,12 +457,17 @@ const AdminUserManagementEnhanced: React.FC = () => {
       accessorKey: "username",
       cell: (row: User) => (
         <div>
-          <div className="font-medium">{row.username}</div>
+          <div className="font-medium">{row.display_name || row.username}</div>
           <div className="text-xs text-muted-foreground hidden md:block">
             Joined: {formatDate(row.created_at)}
           </div>
         </div>
       ),
+    },
+    {
+      header: "Username",
+      accessorKey: "username_display",
+      cell: (row: User) => <span className="text-sm text-muted-foreground">@{row.username}</span>,
     },
     {
       header: "Contact",
