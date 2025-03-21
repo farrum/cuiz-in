@@ -235,6 +235,50 @@ export type Database = {
         }
         Relationships: []
       }
+      login_streaks: {
+        Row: {
+          bonus_claimed_today: boolean
+          bonus_points_today: number
+          created_at: string | null
+          current_streak: number
+          highest_streak: number
+          id: string
+          last_login_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bonus_claimed_today?: boolean
+          bonus_points_today?: number
+          created_at?: string | null
+          current_streak?: number
+          highest_streak?: number
+          id?: string
+          last_login_date?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bonus_claimed_today?: boolean
+          bonus_points_today?: number
+          created_at?: string | null
+          current_streak?: number
+          highest_streak?: number
+          id?: string
+          last_login_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_points: {
         Row: {
           created_at: string | null

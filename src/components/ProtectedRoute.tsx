@@ -4,6 +4,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+import LoginBonusPopup from '@/components/LoginBonusPopup';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,6 +19,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
   const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  
+  // Login bonus state
+  const [showBonusPopup, setShowBonusPopup] = useState(false);
+  const [bonusPoints, setBonusPoints] = useState(0);
+  const [streakDays, setStreakDays] = useState(1);
 
   // Check authentication status
   useEffect(() => {
@@ -74,10 +81,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
   }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
 
-  // Log login activity
+  // Log login activity and check streak
   useEffect(() => {
     const logLoginActivity = async () => {
-      if (!userName) return;
+      if (!userName || !userId) return;
       
       try {
         // Log the login activity in Supabase
@@ -94,6 +101,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           });
           
         console.log('Login activity logged for user:', userName);
+        
+        // Check and update login streak
+        const bonus = await checkAndUpdateLoginStreak(userId);
+        
+        // If bonus points were awarded (first login of the day)
+        if (bonus !== null && bonus > 0) {
+          console.log(`User earned ${bonus} bonus points for logging in today`);
+          setBonusPoints(bonus);
+          setStreakDays(Math.min(bonus, 30)); // Streak days = bonus points (capped at 30)
+          setShowBonusPopup(true);
+        }
       } catch (err) {
         console.error('Failed to log login activity:', err);
       }
@@ -102,7 +120,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (isAuthenticated === true && location.pathname !== '/login') {
       logLoginActivity();
     }
-  }, [userName, isAuthenticated, location.pathname]);
+  }, [userName, userId, isAuthenticated, location.pathname]);
 
   // Show access denied toast
   useEffect(() => {
@@ -153,7 +171,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      
+      {/* Login Bonus Popup */}
+      <LoginBonusPopup
+        isOpen={showBonusPopup}
+        onClose={() => setShowBonusPopup(false)}
+        bonusPoints={bonusPoints}
+        streakDays={streakDays}
+      />
+    </>
+  );
 };
 
 export default ProtectedRoute;

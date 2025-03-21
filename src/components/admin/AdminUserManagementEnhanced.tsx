@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -63,6 +62,7 @@ interface User {
   login_count?: number;
   daily_logins?: number;
   monthly_logins?: number;
+  login_streak?: number;
 }
 
 const formatDate = (dateString: string): string => {
@@ -93,6 +93,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
   const { isListening: isListeningLoginLogs } = useRealtimeUpdates('login_logs');
   const { isListening: isListeningQuizAnswers } = useRealtimeUpdates('quiz_answers');
   const { isListening: isListeningUserRoles } = useRealtimeUpdates('user_roles');
+  const { isListening: isListeningLoginStreaks } = useRealtimeUpdates('login_streaks');
 
   const hashPassword = (password: string): string => {
     return MD5(password).toString();
@@ -125,6 +126,19 @@ const AdminUserManagementEnhanced: React.FC = () => {
       
       if (userRolesError) throw userRolesError;
       
+      const { data: loginStreaks, error: loginStreaksError } = await supabase
+        .from('login_streaks')
+        .select('*');
+        
+      if (loginStreaksError) throw loginStreaksError;
+      
+      const streaksMap = {};
+      if (loginStreaks) {
+        loginStreaks.forEach(streak => {
+          streaksMap[streak.user_id] = streak.current_streak;
+        });
+      }
+      
       const usersWithMetadata: User[] = profiles.map((profile: any) => {
         const userLogins = loginLogs.filter((log: any) => log.username === profile.username);
         const lastLogin = userLogins.length > 0 ? userLogins[0].login_time : null;
@@ -141,6 +155,8 @@ const AdminUserManagementEnhanced: React.FC = () => {
         const userRole = userRoles.find((role: any) => role.user_id === profile.id);
         const role = userRole ? userRole.role : 'player';
         
+        const loginStreak = streaksMap[profile.id] || 0;
+        
         return {
           id: profile.id,
           username: profile.username,
@@ -152,7 +168,8 @@ const AdminUserManagementEnhanced: React.FC = () => {
           login_count: loginCount,
           daily_logins: dailyLogins,
           monthly_logins: monthlyLogins,
-          role
+          role,
+          login_streak: loginStreak
         };
       });
       
@@ -171,7 +188,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [isListeningProfiles, isListeningLoginLogs, isListeningQuizAnswers, isListeningUserRoles]);
+  }, [isListeningProfiles, isListeningLoginLogs, isListeningQuizAnswers, isListeningUserRoles, isListeningLoginStreaks]);
 
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -190,7 +207,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -476,6 +493,16 @@ const AdminUserManagementEnhanced: React.FC = () => {
             {row.monthly_logins || 0}
           </Badge>
         </div>
+      ),
+    },
+    {
+      header: "Login Streak",
+      accessorKey: "login_streak",
+      cell: (row: User) => (
+        <Badge variant={row.login_streak > 0 ? "outline" : "secondary"} 
+               className={row.login_streak > 0 ? "bg-green-50 text-green-700" : "bg-gray-100"}>
+          {row.login_streak > 0 ? `${row.login_streak} days` : 'Inactive'}
+        </Badge>
       ),
     },
     {
