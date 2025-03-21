@@ -18,7 +18,10 @@ interface LoginStreak {
  * Returns the bonus points earned if this is their first login of the day
  */
 export const checkAndUpdateLoginStreak = async (userId: string): Promise<number | null> => {
-  if (!userId) return null;
+  if (!userId) {
+    console.log('No userId provided to checkAndUpdateLoginStreak');
+    return null;
+  }
   
   try {
     const today = new Date();
@@ -34,7 +37,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       .eq('user_id', userId)
       .maybeSingle();
     
-    if (streakError && streakError.code !== 'PGSQL_ERROR') {
+    if (streakError) {
       console.error('Error checking login streak:', streakError);
       return null;
     }
@@ -67,6 +70,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       return bonusPoints;
     }
     
+    console.log('Existing streak data:', streakData);
+    
     // If streak exists, check if user has already claimed bonus today
     if (streakData.last_login_date === todayStr && streakData.bonus_claimed_today) {
       console.log('User already claimed bonus today');
@@ -82,6 +87,9 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     console.log('Last login date:', lastLoginDate.toISOString().split('T')[0]);
     console.log('Yesterday:', yesterday.toISOString().split('T')[0]);
+    console.log('Last login timestamp:', lastLoginDate.getTime());
+    console.log('Yesterday timestamp:', yesterday.getTime());
+    console.log('Are dates equal?', lastLoginDate.getTime() === yesterday.getTime());
     
     let newStreak: number;
     let bonusPoints: number;
@@ -100,7 +108,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       // Streak broken - reset to 1
       newStreak = 1;
       bonusPoints = 1;
-      console.log('Streak broken, resetting to 1');
+      console.log('Streak broken, resetting to 1. Last login:', lastLoginDate.toDateString(), 'Today:', today.toDateString());
     }
     
     // Update the streak record
@@ -185,7 +193,10 @@ const awardBonusPoints = async (userId: string, bonusPoints: number): Promise<vo
  * Gets the current login streak for a user
  */
 export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | null> => {
-  if (!userId) return null;
+  if (!userId) {
+    console.log('No userId provided to getUserLoginStreak');
+    return null;
+  }
   
   try {
     console.log('Getting login streak for user:', userId);
