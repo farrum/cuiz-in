@@ -30,6 +30,17 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     console.log('Checking login streak for user:', userId, 'today:', todayStr);
     
+    // Fetch login logs to determine consecutive days
+    const { data: loginLogs, error: logsError } = await supabase
+      .from('login_logs')
+      .select('login_time')
+      .eq('username', localStorage.getItem(STORAGE_KEYS.USER_NAME))
+      .order('login_time', { ascending: false });
+    
+    if (logsError) {
+      console.error('Error fetching login logs:', logsError);
+    }
+    
     // Check if the user already has a streak record
     const { data: streakData, error: streakError } = await supabase
       .from('login_streaks')
@@ -42,6 +53,51 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       return null;
     }
     
+    // Process login logs to determine consecutive days
+    let consecutiveDays = 1;
+    let lastLoginDate = todayStr;
+    
+    if (loginLogs && loginLogs.length > 0) {
+      // Convert login timestamps to days, removing duplicates
+      const uniqueDates = new Set();
+      
+      loginLogs.forEach(log => {
+        const date = new Date(log.login_time);
+        const dateStr = date.toISOString().split('T')[0];
+        uniqueDates.add(dateStr);
+      });
+      
+      // Sort dates in descending order
+      const sortedDates = Array.from(uniqueDates).sort().reverse();
+      console.log('Sorted login dates:', sortedDates);
+      
+      // Calculate consecutive days starting from the latest date
+      if (sortedDates.length > 0) {
+        lastLoginDate = sortedDates[0];
+        
+        // Start with 1 day (today)
+        consecutiveDays = 1;
+        
+        // Check for consecutive days
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+          const currentDate = new Date(sortedDates[i]);
+          const prevDate = new Date(sortedDates[i + 1]);
+          
+          // Calculate the difference in days
+          const diffTime = currentDate.getTime() - prevDate.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            consecutiveDays++;
+          } else {
+            break;
+          }
+        }
+      }
+      
+      console.log('Calculated consecutive login days:', consecutiveDays);
+    }
+    
     // If this is the user's first login ever, create a new streak
     if (!streakData) {
       console.log('First login for user, creating new streak record');
@@ -51,8 +107,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         .from('login_streaks')
         .insert({
           user_id: userId,
-          current_streak: 1,
-          highest_streak: 1,
+          current_streak: consecutiveDays,
+          highest_streak: consecutiveDays,
           last_login_date: todayStr,
           bonus_points_today: bonusPoints,
           bonus_claimed_today: true
@@ -62,7 +118,16 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       
       if (createError) {
         console.error('Error creating login streak:', createError);
-        return null;
+        // Save locally if Supabase fails
+        localStorage.setItem('quiz_app_login_streak', JSON.stringify({
+          current_streak: consecutiveDays,
+          highest_streak: consecutiveDays,
+          last_login_date: todayStr
+        }));
+        
+        // Award the bonus points locally
+        await awardBonusPoints(userId, bonusPoints);
+        return bonusPoints;
       }
       
       // Award the bonus points
@@ -78,45 +143,13 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       return null;
     }
     
-    // Check if user logged in yesterday
-    const lastLoginDate = new Date(streakData.last_login_date);
-    lastLoginDate.setHours(0, 0, 0, 0);
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    console.log('Last login date:', lastLoginDate.toISOString().split('T')[0]);
-    console.log('Yesterday:', yesterday.toISOString().split('T')[0]);
-    console.log('Last login timestamp:', lastLoginDate.getTime());
-    console.log('Yesterday timestamp:', yesterday.getTime());
-    console.log('Are dates equal?', lastLoginDate.getTime() === yesterday.getTime());
-    
-    let newStreak: number;
-    let bonusPoints: number;
-    
-    if (lastLoginDate.getTime() === yesterday.getTime()) {
-      // Consecutive login - increase streak
-      newStreak = streakData.current_streak + 1;
-      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
-      console.log('Consecutive login, new streak:', newStreak);
-    } else if (lastLoginDate.getTime() === today.getTime()) {
-      // Already logged in today but hasn't claimed bonus
-      newStreak = streakData.current_streak;
-      bonusPoints = Math.min(newStreak, 30);
-      console.log('Already logged in today, keeping streak:', newStreak);
-    } else {
-      // Streak broken - reset to 1
-      newStreak = 1;
-      bonusPoints = 1;
-      console.log('Streak broken, resetting to 1. Last login:', lastLoginDate.toDateString(), 'Today:', today.toDateString());
-    }
-    
-    // Update the streak record
-    const highestStreak = Math.max(newStreak, streakData.highest_streak);
+    // Update streak with calculated consecutive days
+    let newStreak = Math.max(consecutiveDays, streakData.current_streak);
+    let bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
     
     console.log('Updating streak record:', {
       current_streak: newStreak,
-      highest_streak: highestStreak,
+      highest_streak: Math.max(newStreak, streakData.highest_streak),
       last_login_date: todayStr,
       bonus_points_today: bonusPoints,
       bonus_claimed_today: true
@@ -126,7 +159,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       .from('login_streaks')
       .update({
         current_streak: newStreak,
-        highest_streak: highestStreak,
+        highest_streak: Math.max(newStreak, streakData.highest_streak),
         last_login_date: todayStr,
         bonus_points_today: bonusPoints,
         bonus_claimed_today: true,
@@ -136,7 +169,12 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       
     if (updateError) {
       console.error('Error updating login streak:', updateError);
-      return null;
+      // Save locally if Supabase fails
+      localStorage.setItem('quiz_app_login_streak', JSON.stringify({
+        current_streak: newStreak,
+        highest_streak: Math.max(newStreak, streakData.highest_streak),
+        last_login_date: todayStr
+      }));
     }
     
     // Award the bonus points
