@@ -9,7 +9,7 @@ import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
-import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck } from 'lucide-react';
+import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserLoginStreak } from '@/services/loginStreakService';
-import { Flame } from 'lucide-react';
 
 interface Achievement {
   id: string;
