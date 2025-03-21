@@ -11,6 +11,7 @@ import { Edit2, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ProfilePictureSelector from './ProfilePictureSelector';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const profileSchema = z.object({
   displayName: z.string().min(3, 'Display name must be at least 3 characters'),
@@ -40,7 +41,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(profilePicture || '');
-  const [isSessionValid, setIsSessionValid] = useState(true);
+  const [isSessionValid, setIsSessionValid] = useState(false);
   const { toast } = useToast();
   
   const form = useForm<ProfileFormValues>({
@@ -51,14 +52,30 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     },
   });
 
-  // Check for a valid session when the component mounts
+  // Check for a valid session or localStorage auth when the component mounts
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAuth = async () => {
+      // First check localStorage authentication
+      const isLocalAuth = localStorage.getItem(STORAGE_KEYS.USER_AUTH) === 'true';
+      
+      if (isLocalAuth) {
+        console.log("User authenticated via localStorage");
+        setIsSessionValid(true);
+        return;
+      }
+      
+      // Then check Supabase session
       const { data: { session } } = await supabase.auth.getSession();
-      setIsSessionValid(!!session);
+      if (session) {
+        console.log("User authenticated via Supabase session");
+        setIsSessionValid(true);
+      } else {
+        console.log("No valid authentication found");
+        setIsSessionValid(false);
+      }
     };
     
-    checkSession();
+    checkAuth();
   }, []);
 
   // Update form values when props change
@@ -76,10 +93,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
-      // Check for active session before attempting the update
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session found. Please log in again.');
+      // Only check for Supabase session if localStorage auth is not present
+      if (localStorage.getItem(STORAGE_KEYS.USER_AUTH) !== 'true') {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active session found. Please log in again.');
+        }
       }
       
       console.log('Updating profile with data:', {
