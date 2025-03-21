@@ -54,47 +54,52 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     }
     
     // Process login logs to determine consecutive days
-    let consecutiveDays = 1;
-    let lastLoginDate = todayStr;
+    let consecutiveDays = 0; // Start with 0 and add today if needed
+    const uniqueDates = new Set<string>();
     
     if (loginLogs && loginLogs.length > 0) {
       // Convert login timestamps to days, removing duplicates
-      const uniqueDates = new Set<string>();
-      
       loginLogs.forEach(log => {
-        if (log && log.login_time) {
-          const date = new Date(log.login_time as string);
+        if (log && log.login_time && typeof log.login_time === 'string') {
+          const date = new Date(log.login_time);
           const dateStr = date.toISOString().split('T')[0];
           uniqueDates.add(dateStr);
         }
       });
       
-      // Sort dates in descending order
+      // Add today if user has logged in
+      uniqueDates.add(todayStr);
+      
+      // Sort dates in descending order (newest first)
       const sortedDates = Array.from(uniqueDates).sort().reverse();
       console.log('Sorted login dates:', sortedDates);
       
-      // Calculate consecutive days starting from the latest date
-      if (sortedDates.length > 0) {
-        lastLoginDate = sortedDates[0];
+      // Calculate consecutive days starting from today
+      if (sortedDates.includes(todayStr)) {
+        consecutiveDays = 1; // Start with today
         
-        // Start with 1 day (today)
-        consecutiveDays = 1;
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
         
-        // Check for consecutive days
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-          const currentDate = new Date(sortedDates[i]);
-          const prevDate = new Date(sortedDates[i + 1]);
-          
-          // Calculate the difference in days
-          const diffTime = currentDate.getTime() - prevDate.getTime();
-          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays === 1) {
+        // Check if there are previous consecutive days
+        let currentDate = yesterdayStr;
+        
+        for (let i = 1; i < sortedDates.length; i++) {
+          if (sortedDates.includes(currentDate)) {
             consecutiveDays++;
+            // Move to the previous day
+            const tempDate = new Date(currentDate);
+            tempDate.setDate(tempDate.getDate() - 1);
+            currentDate = tempDate.toISOString().split('T')[0];
           } else {
+            // Break the streak if a day is missed
             break;
           }
         }
+      } else {
+        // If the user hasn't logged in today, streak is 0
+        consecutiveDays = 0;
       }
       
       console.log('Calculated consecutive login days:', consecutiveDays);
@@ -103,7 +108,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     // If this is the user's first login ever, create a new streak
     if (!streakData) {
       console.log('First login for user, creating new streak record');
-      const bonusPoints = 1; // First day gives 1 point
+      const bonusPoints = consecutiveDays > 0 ? consecutiveDays : 0; // Points based on streak
       
       const { data: newStreak, error: createError } = await supabase
         .from('login_streaks')
@@ -113,7 +118,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
           highest_streak: consecutiveDays,
           last_login_date: todayStr,
           bonus_points_today: bonusPoints,
-          bonus_claimed_today: true
+          bonus_claimed_today: bonusPoints > 0
         })
         .select()
         .single();
@@ -127,14 +132,18 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
           last_login_date: todayStr
         }));
         
-        // Award the bonus points locally
-        await awardBonusPoints(userId, bonusPoints);
-        return bonusPoints;
+        // Award the bonus points locally if applicable
+        if (bonusPoints > 0) {
+          await awardBonusPoints(userId, bonusPoints);
+        }
+        return bonusPoints > 0 ? bonusPoints : null;
       }
       
-      // Award the bonus points
-      await awardBonusPoints(userId, bonusPoints);
-      return bonusPoints;
+      // Award the bonus points if applicable
+      if (bonusPoints > 0) {
+        await awardBonusPoints(userId, bonusPoints);
+      }
+      return bonusPoints > 0 ? bonusPoints : null;
     }
     
     console.log('Existing streak data:', streakData);
@@ -145,9 +154,39 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       return null;
     }
     
-    // Update streak with calculated consecutive days
-    let newStreak = Math.max(consecutiveDays, streakData.current_streak);
-    let bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+    // Get the date from last_login_date
+    const lastLoginDate = new Date(streakData.last_login_date);
+    lastLoginDate.setHours(0, 0, 0, 0);
+    
+    // Calculate difference in days between last login and today
+    const diffTime = today.getTime() - lastLoginDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    console.log('Days since last login:', diffDays);
+    
+    let newStreak: number;
+    let bonusPoints: number;
+    
+    if (diffDays === 0) {
+      // Already logged in today, but haven't claimed bonus
+      newStreak = streakData.current_streak;
+      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+    } else if (diffDays === 1) {
+      // Consecutive day login
+      newStreak = streakData.current_streak + 1;
+      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+    } else {
+      // Streak broken (more than 1 day since last login)
+      newStreak = 1; // Reset streak to 1 (today)
+      bonusPoints = 1; // First day gives 1 point
+    }
+    
+    // Use the calculated consecutiveDays if it's valid and different
+    if (consecutiveDays > 0 && consecutiveDays !== newStreak) {
+      console.log('Using login logs consecutive days:', consecutiveDays, 'instead of calculated:', newStreak);
+      newStreak = consecutiveDays;
+      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+    }
     
     console.log('Updating streak record:', {
       current_streak: newStreak,
@@ -240,6 +279,8 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
   
   try {
     console.log('Getting login streak for user:', userId);
+    
+    // Fetch the user's login streak record
     const { data, error } = await supabase
       .from('login_streaks')
       .select('*')
@@ -249,6 +290,49 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
     if (error) {
       console.error('Error fetching login streak:', error);
       return null;
+    }
+    
+    if (!data) {
+      console.log('No login streak found for user:', userId);
+      return null;
+    }
+    
+    // Check if the streak is still active by comparing last_login_date with today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const lastLoginDate = new Date(data.last_login_date);
+    lastLoginDate.setHours(0, 0, 0, 0);
+    
+    // Calculate difference in days
+    const diffTime = today.getTime() - lastLoginDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    console.log('Days since last login:', diffDays, 'for streak record:', data);
+    
+    // If the user hasn't logged in today or yesterday, mark the streak as inactive (0)
+    if (diffDays > 1) {
+      console.log('Streak is inactive due to missed login days:', diffDays);
+      
+      // Update the streak to 0 in the database
+      const { error: updateError } = await supabase
+        .from('login_streaks')
+        .update({
+          current_streak: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.id);
+        
+      if (updateError) {
+        console.error('Error updating inactive streak:', updateError);
+      }
+      
+      // Return the updated data with current_streak set to 0
+      return {
+        ...data,
+        current_streak: 0
+      };
     }
     
     console.log('Found login streak:', data);
