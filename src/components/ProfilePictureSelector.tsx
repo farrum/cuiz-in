@@ -99,6 +99,12 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
       setUploading(true);
       setUploadProgress(10);
 
+      // Check for active session before proceeding
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in to upload a profile picture.');
+      }
+
       // Generate a unique file name using user id and timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
@@ -134,7 +140,7 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
       console.error('Error uploading file:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload profile picture. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload profile picture. Please try again.",
         variant: "destructive"
       });
     } finally {
