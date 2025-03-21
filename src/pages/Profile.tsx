@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -10,7 +9,7 @@ import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
-import { UserCog, LogOut, Wallet, Copy, Target, Award, Calendar, Trophy, Medal, UserCheck, Flame } from 'lucide-react';
+import { UserCog, LogOut, Wallet, Copy, Target, Award, Trophy, Medal, UserCheck, Flame, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -76,7 +75,6 @@ const Profile: React.FC = () => {
     const upiId = localStorage.getItem('quiz_app_user_upi');
     setUserUpi(upiId || '');
     
-    // Get profile picture if available
     const avatar = localStorage.getItem('quiz_app_user_avatar');
     setProfilePicture(avatar || '');
     
@@ -252,7 +250,6 @@ const Profile: React.FC = () => {
   const renderProfileAvatar = () => {
     if (profilePicture) {
       if (profilePicture.startsWith('http')) {
-        // It's a URL to an uploaded image
         return (
           <Avatar className="w-20 h-20 flex-shrink-0">
             <AvatarImage src={profilePicture} alt={userName} />
@@ -262,7 +259,6 @@ const Profile: React.FC = () => {
           </Avatar>
         );
       } else {
-        // It's an icon name
         switch (profilePicture) {
           case 'user-round':
             return (
@@ -304,7 +300,6 @@ const Profile: React.FC = () => {
       }
     }
     
-    // Default avatar (initials)
     return (
       <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
         {userName.substring(0, 1).toUpperCase()}
@@ -336,7 +331,16 @@ const Profile: React.FC = () => {
               {renderProfileAvatar()}
               
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl font-bold mb-1">{userName}</h1>
+                <div className="flex items-center justify-center sm:justify-start">
+                  <h1 className="text-2xl font-bold mb-1">{userName}</h1>
+                  <ProfileEditor
+                    userName={userName}
+                    userUpi={userUpi}
+                    userId={userId}
+                    profilePicture={profilePicture}
+                    onProfileUpdate={handleProfileUpdate}
+                  />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   Joined {new Date().toLocaleDateString()}
                 </p>
@@ -376,14 +380,6 @@ const Profile: React.FC = () => {
                   </div>
                 )}
               </div>
-              
-              <ProfileEditor
-                userName={userName}
-                userUpi={userUpi}
-                userId={userId}
-                profilePicture={profilePicture}
-                onProfileUpdate={handleProfileUpdate}
-              />
               
               <Button 
                 variant="outline" 
@@ -454,7 +450,7 @@ const Profile: React.FC = () => {
                     </div>
                     
                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <CalendarIcon className="h-3 w-3" />
                       <span>Next login: +{Math.min(loginStreak.current + 1, 30)} points</span>
                     </div>
                   </div>
@@ -466,7 +462,7 @@ const Profile: React.FC = () => {
               <PointsDisplay animateUpdate />
               
               <div className="glass rounded-2xl p-4 col-span-2">
-                <div className="flex items-center space-x-3 mb-2">
+                <div className="flex items-center space-x-3 mb-4">
                   <div className="bg-secondary p-2 rounded-full">
                     <UserCog className="w-4 h-4" />
                   </div>
@@ -538,7 +534,7 @@ const Profile: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div className="mr-4 p-2 bg-primary/10 rounded-full">
-                            <Calendar className="w-5 h-5 text-primary" />
+                            <CalendarIcon className="w-5 h-5 text-primary" />
                           </div>
                           <div>
                             <h4 className="font-medium">Monthly Target Completed</h4>

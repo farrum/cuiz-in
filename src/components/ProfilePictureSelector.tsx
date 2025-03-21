@@ -8,6 +8,7 @@ import { UserRound, Upload, Check, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// These are the default avatars, more can be added via the Admin interface
 const DEFAULT_AVATARS = [
   { name: 'Person', icon: 'user-round' },
   { name: 'Smile', icon: 'smile' },
@@ -166,6 +167,9 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
                 </div>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              More avatar options can be added by administrators in the admin panel.
+            </p>
           </TabsContent>
           
           <TabsContent value="upload" className="pt-4">

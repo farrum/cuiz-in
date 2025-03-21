@@ -99,7 +99,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="absolute top-4 right-4">
+        <Button variant="ghost" size="sm" className="ml-2 h-8">
           <Edit2 className="h-4 w-4 mr-2" />
           Edit
         </Button>
