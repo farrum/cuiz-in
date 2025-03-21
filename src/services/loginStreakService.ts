@@ -59,12 +59,14 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     if (loginLogs && loginLogs.length > 0) {
       // Convert login timestamps to days, removing duplicates
-      const uniqueDates = new Set();
+      const uniqueDates = new Set<string>();
       
       loginLogs.forEach(log => {
-        const date = new Date(log.login_time);
-        const dateStr = date.toISOString().split('T')[0];
-        uniqueDates.add(dateStr);
+        if (log && log.login_time) {
+          const date = new Date(log.login_time as string);
+          const dateStr = date.toISOString().split('T')[0];
+          uniqueDates.add(dateStr);
+        }
       });
       
       // Sort dates in descending order
