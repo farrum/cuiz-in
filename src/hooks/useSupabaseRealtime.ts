@@ -12,7 +12,8 @@ export type RealtimeTable =
   | 'payments' 
   | 'user_referrals' 
   | 'user_roles' 
-  | 'news_ticker';
+  | 'news_ticker'
+  | 'login_streaks';
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
@@ -136,7 +137,8 @@ export function useSupabaseRealtime(
       payments: 'admin_payments',
       user_referrals: 'admin_referrals',
       user_roles: 'admin_user_roles',
-      news_ticker: 'news_ticker'
+      news_ticker: 'news_ticker',
+      login_streaks: 'login_streaks'
     };
     
     return mapping[tableName] || tableName;
