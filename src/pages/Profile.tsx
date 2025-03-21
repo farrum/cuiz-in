@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import PointsDisplay from '@/components/PointsDisplay';
@@ -17,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserLoginStreak } from '@/services/loginStreakService';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ProfileEditor from '@/components/ProfileEditor';
 
 interface Achievement {
   id: string;
@@ -38,6 +41,7 @@ const Profile: React.FC = () => {
   const { toast } = useToast();
   const [userName, setUserName] = useState('');
   const [userUpi, setUserUpi] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [dailyPoints, setDailyPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
@@ -71,6 +75,10 @@ const Profile: React.FC = () => {
     
     const upiId = localStorage.getItem('quiz_app_user_upi');
     setUserUpi(upiId || '');
+    
+    // Get profile picture if available
+    const avatar = localStorage.getItem('quiz_app_user_avatar');
+    setProfilePicture(avatar || '');
     
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
@@ -223,6 +231,87 @@ const Profile: React.FC = () => {
     return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   };
   
+  const handleProfileUpdate = (data: {
+    displayName?: string;
+    upiId?: string;
+    profilePicture?: string;
+  }) => {
+    if (data.displayName) {
+      setUserName(data.displayName);
+    }
+    
+    if (data.upiId !== undefined) {
+      setUserUpi(data.upiId);
+    }
+    
+    if (data.profilePicture) {
+      setProfilePicture(data.profilePicture);
+    }
+  };
+  
+  const renderProfileAvatar = () => {
+    if (profilePicture) {
+      if (profilePicture.startsWith('http')) {
+        // It's a URL to an uploaded image
+        return (
+          <Avatar className="w-20 h-20 flex-shrink-0">
+            <AvatarImage src={profilePicture} alt={userName} />
+            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+              {userName.substring(0, 1).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        );
+      } else {
+        // It's an icon name
+        switch (profilePicture) {
+          case 'user-round':
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <UserCog className="w-10 h-10 text-primary" />
+              </div>
+            );
+          case 'smile':
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-semibold">
+                😊
+              </div>
+            );
+          case 'robot':
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-semibold">
+                🤖
+              </div>
+            );
+          case 'graduation-cap':
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-semibold">
+                🎓
+              </div>
+            );
+          case 'award':
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-semibold">
+                🏆
+              </div>
+            );
+          default:
+            return (
+              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
+                {userName.substring(0, 1).toUpperCase()}
+              </div>
+            );
+        }
+      }
+    }
+    
+    // Default avatar (initials)
+    return (
+      <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
+        {userName.substring(0, 1).toUpperCase()}
+      </div>
+    );
+  };
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -243,10 +332,8 @@ const Profile: React.FC = () => {
               pageSection="profile-header"
             />
             
-            <div className="glass p-6 rounded-2xl mb-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-semibold">
-                {userName.substring(0, 1).toUpperCase()}
-              </div>
+            <div className="glass p-6 rounded-2xl mb-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start relative">
+              {renderProfileAvatar()}
               
               <div className="flex-1 text-center sm:text-left">
                 <h1 className="text-2xl font-bold mb-1">{userName}</h1>
@@ -289,6 +376,14 @@ const Profile: React.FC = () => {
                   </div>
                 )}
               </div>
+              
+              <ProfileEditor
+                userName={userName}
+                userUpi={userUpi}
+                userId={userId}
+                profilePicture={profilePicture}
+                onProfileUpdate={handleProfileUpdate}
+              />
               
               <Button 
                 variant="outline" 
