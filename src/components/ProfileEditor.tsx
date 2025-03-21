@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -40,6 +40,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(profilePicture || '');
+  const [isSessionValid, setIsSessionValid] = useState(true);
   const { toast } = useToast();
   
   const form = useForm<ProfileFormValues>({
@@ -50,12 +51,28 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     },
   });
 
+  // Check for a valid session when the component mounts
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsSessionValid(!!session);
+    };
+    
+    checkSession();
+  }, []);
+
   const handleAvatarChange = (avatar: string) => {
     setSelectedAvatar(avatar);
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      // Check for active session before attempting the update
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+      
       console.log('Updating profile with data:', {
         displayName: data.displayName,
         upiId: data.upiId,
@@ -82,7 +99,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         .update({
           username: data.displayName,
           profile_picture: selectedAvatar,
-          // Include upi_id in the update
           upi_id: data.upiId || null
         })
         .eq('id', userId)
@@ -114,11 +130,22 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       console.error('Error updating profile:', error);
       toast({
         title: "Update Failed",
-        description: "Failed to update your profile. Please try again.",
+        description: error instanceof Error 
+          ? error.message 
+          : "Failed to update your profile. Please try again.",
         variant: "destructive"
       });
     }
   };
+
+  if (!isSessionValid) {
+    return (
+      <Button variant="ghost" size="sm" className="h-8" disabled>
+        <Edit2 className="h-4 w-4 mr-2" />
+        Edit
+      </Button>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

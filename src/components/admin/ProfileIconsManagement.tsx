@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 interface ProfileIcon {
@@ -27,14 +27,65 @@ const ProfileIconsManagement: React.FC = () => {
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const { toast } = useToast();
   
-  // Listen for realtime updates to profile_icons table
-  const { isListening } = useRealtimeUpdates('profile_icons' as any);
+  // Use a ref to prevent multiple realtime subscriptions
+  const realtimeInitialized = React.useRef(false);
 
   useEffect(() => {
-    fetchIcons();
-  }, []);
+    // Check for active session first
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("No active session found");
+        toast({
+          title: 'Authentication Error',
+          description: 'Please log in again to upload icons',
+          variant: 'destructive',
+        });
+      }
+      setSessionChecked(true);
+    };
+    
+    checkSession();
+    
+    // Only fetch icons after session check
+    if (sessionChecked) {
+      fetchIcons();
+    }
+  }, [sessionChecked]);
+
+  // Set up realtime updates only once
+  useEffect(() => {
+    if (sessionChecked && !realtimeInitialized.current) {
+      const setupRealtime = async () => {
+        // Set up realtime channel with proper cleanup
+        const channel = supabase
+          .channel('profile_icons_changes')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'profile_icons' 
+          }, () => {
+            fetchIcons();
+          })
+          .subscribe();
+          
+        realtimeInitialized.current = true;
+        
+        // Cleanup function
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      };
+      
+      const cleanup = setupRealtime();
+      return () => {
+        cleanup.then(cleanupFn => cleanupFn && cleanupFn());
+      };
+    }
+  }, [sessionChecked]);
 
   const fetchIcons = async () => {
     try {
@@ -103,6 +154,12 @@ const ProfileIconsManagement: React.FC = () => {
       setIsUploading(true);
       setUploadProgress(10);
 
+      // Check for active session before upload
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
       // Generate a unique filename
       const fileExt = uploadingFile.name.split('.').pop();
       const fileName = `icon_${Date.now()}.${fileExt}`;
@@ -112,13 +169,7 @@ const ProfileIconsManagement: React.FC = () => {
 
       console.log('Uploading to path:', filePath);
 
-      // Use the current session's auth when uploading
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session found. Please log in again.');
-      }
-
-      // Upload to Supabase Storage with explicit auth header
+      // Upload to Supabase Storage with explicit auth token
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
         .upload(filePath, uploadingFile, {
@@ -146,7 +197,7 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      // Add record to the profile_icons table with explicit auth
+      // Add record to the profile_icons table
       const { error, data } = await supabase
         .from('profile_icons')
         .insert({
@@ -241,13 +292,6 @@ const ProfileIconsManagement: React.FC = () => {
       });
     }
   };
-
-  // Listen for realtime updates and refresh the list
-  useEffect(() => {
-    if (isListening) {
-      fetchIcons();
-    }
-  }, [isListening]);
 
   return (
     <Card>
