@@ -237,13 +237,14 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
                 )}
               </Avatar>
               
-              <label className="w-full">
+              <label className="w-full cursor-pointer">
                 <div className="flex flex-col items-center gap-2">
                   <Button 
                     type="button" 
                     variant="outline" 
                     className="w-full"
                     disabled={uploading}
+                    onClick={() => document.getElementById('profile-upload-input')?.click()}
                   >
                     {uploading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                     {uploading ? "Uploading..." : "Upload Image"}
@@ -259,6 +260,7 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
                   <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max 500KB.</p>
                 </div>
                 <input 
+                  id="profile-upload-input"
                   type="file" 
                   accept="image/*" 
                   className="hidden" 

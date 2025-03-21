@@ -61,6 +61,15 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     checkSession();
   }, []);
 
+  // Update form values when props change
+  useEffect(() => {
+    form.reset({
+      displayName: userName,
+      upiId: userUpi,
+    });
+    setSelectedAvatar(profilePicture || '');
+  }, [userName, userUpi, profilePicture, form]);
+
   const handleAvatarChange = (avatar: string) => {
     setSelectedAvatar(avatar);
   };
@@ -94,22 +103,19 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       }
       
       // Update the profile data in Supabase to sync with admin view
-      const { error, data: updatedProfile } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           username: data.displayName,
           profile_picture: selectedAvatar,
           upi_id: data.upiId || null
         })
-        .eq('id', userId)
-        .select();
+        .eq('id', userId);
       
       if (error) {
         console.error('Error updating profile in Supabase:', error);
         throw error;
       }
-      
-      console.log('Profile updated successfully in Supabase:', updatedProfile);
       
       // Call the callback to update parent state
       onProfileUpdate({

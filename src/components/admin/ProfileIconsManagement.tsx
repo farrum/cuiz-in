@@ -31,15 +31,12 @@ const ProfileIconsManagement: React.FC = () => {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const { toast } = useToast();
   
-  // Use a ref to prevent multiple realtime subscriptions
   const realtimeInitialized = React.useRef(false);
 
-  // Check admin authentication first - improved approach
   useEffect(() => {
     const checkAdminAuth = async () => {
       setIsSessionLoading(true);
       try {
-        // First check localStorage for admin auth - this is faster and more reliable
         const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
         const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
         
@@ -50,13 +47,11 @@ const ProfileIconsManagement: React.FC = () => {
           return;
         }
         
-        // Fallback to Supabase session check
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
           console.log("Session found, checking if user is admin");
           
-          // Check if user is admin in profiles table
           const { data: profileData } = await supabase
             .from('profiles')
             .select('is_admin')
@@ -100,16 +95,13 @@ const ProfileIconsManagement: React.FC = () => {
     checkAdminAuth();
   }, [toast]);
   
-  // Only fetch icons after authentication is confirmed
   useEffect(() => {
     if (isAuthenticated) {
       fetchIcons();
       
-      // Set up realtime updates only once and only if authenticated
       if (!realtimeInitialized.current) {
         const setupRealtime = async () => {
           try {
-            // Set up realtime channel with proper cleanup
             const channel = supabase
               .channel('profile_icons_changes')
               .on('postgres_changes', { 
@@ -127,14 +119,13 @@ const ProfileIconsManagement: React.FC = () => {
             realtimeInitialized.current = true;
             console.log("Realtime updates initialized for profile icons");
             
-            // Return cleanup function
             return () => {
               console.log("Cleaning up realtime subscription");
               supabase.removeChannel(channel);
             };
           } catch (error) {
             console.error("Error setting up realtime updates:", error);
-            return () => {}; // Return empty cleanup if setup failed
+            return () => {};
           }
         };
         
@@ -153,7 +144,6 @@ const ProfileIconsManagement: React.FC = () => {
       setIsLoading(true);
       console.log("Fetching profile icons...");
       
-      // Add RLS bypass to fetch icons as admin
       const { data, error } = await supabase
         .from('profile_icons')
         .select('*')
@@ -183,8 +173,7 @@ const ProfileIconsManagement: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // File validation
-    if (file.size > 512000) { // 500KB limit
+    if (file.size > 512000) {
       toast({
         title: 'File too large',
         description: 'Please select an image smaller than 500KB',
@@ -219,10 +208,11 @@ const ProfileIconsManagement: React.FC = () => {
       setIsUploading(true);
       setUploadProgress(10);
       
-      // Create service_role client for bypassing RLS during admin operations
-      const serviceClient = supabase.auth.admin;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in to upload an icon.');
+      }
       
-      // Generate a unique filename
       const fileExt = uploadingFile.name.split('.').pop();
       const fileName = `icon_${Date.now()}.${fileExt}`;
       const filePath = `icons/${fileName}`;
@@ -231,7 +221,6 @@ const ProfileIconsManagement: React.FC = () => {
 
       console.log('Uploading to path:', filePath);
 
-      // Upload to Supabase Storage
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
         .upload(filePath, uploadingFile, {
@@ -247,7 +236,6 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Upload successful:', uploadData);
       setTimeout(() => setUploadProgress(60), 500);
 
-      // Get the public URL
       const { data: urlData } = await supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
@@ -259,15 +247,11 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      // Add record to the profile_icons table - using standard client but with admin flag
-      const { error, data } = await supabase
-        .from('profile_icons')
-        .insert({
-          name: newIconName,
-          icon_url: urlData.publicUrl,
-          is_active: true
-        })
-        .select();
+      const { error, data } = await supabase.rpc('admin_insert_profile_icon', {
+        icon_name: newIconName,
+        icon_url: urlData.publicUrl,
+        is_active: true
+      });
 
       if (error) {
         console.error('Database insert error:', error);
@@ -282,12 +266,10 @@ const ProfileIconsManagement: React.FC = () => {
         description: 'Profile icon uploaded successfully',
       });
 
-      // Reset form and close dialog
       setNewIconName('');
       setUploadingFile(null);
       setIsUploadDialogOpen(false);
       
-      // Refresh icons list
       fetchIcons();
     } catch (error) {
       console.error('Error uploading icon:', error);
@@ -306,44 +288,17 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
-      // First get the icon to find the file path
-      const { data: iconData, error: fetchError } = await supabase
-        .from('profile_icons')
-        .select('*')
-        .eq('id', iconId)
-        .single();
+      const { error } = await supabase.rpc('admin_delete_profile_icon', {
+        p_icon_id: iconId
+      });
       
-      if (fetchError) throw fetchError;
-      
-      // Delete the record from the database
-      const { error } = await supabase
-        .from('profile_icons')
-        .delete()
-        .eq('id', iconId);
-
       if (error) throw error;
       
-      // Try to delete the file from storage if it's a custom uploaded icon
-      // Extract the path from the URL if it's a Supabase storage URL
-      if (iconData?.icon_url && iconData.icon_url.includes('/storage/v1/object/public/profiles/')) {
-        try {
-          const filePathMatch = iconData.icon_url.match(/\/storage\/v1\/object\/public\/profiles\/(.+)/);
-          if (filePathMatch && filePathMatch[1]) {
-            const filePath = filePathMatch[1];
-            await supabase.storage.from('profiles').remove([filePath]);
-          }
-        } catch (storageError) {
-          // Log but don't fail the operation if storage removal fails
-          console.error('Error removing file from storage:', storageError);
-        }
-      }
-
       toast({
         title: 'Icon deleted',
         description: 'The profile icon has been removed',
       });
 
-      // Refresh icons list
       fetchIcons();
     } catch (error) {
       console.error('Error deleting icon:', error);
@@ -355,7 +310,6 @@ const ProfileIconsManagement: React.FC = () => {
     }
   };
 
-  // Show loading state while checking session
   if (isSessionLoading) {
     return (
       <Card>
@@ -370,7 +324,6 @@ const ProfileIconsManagement: React.FC = () => {
     );
   }
 
-  // Show auth error if not authenticated
   if (!isAuthenticated) {
     return (
       <Card>
