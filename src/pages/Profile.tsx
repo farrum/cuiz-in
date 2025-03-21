@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserLoginStreak } from '@/services/loginStreakService';
-import { Flame, Calendar } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 interface Achievement {
   id: string;
