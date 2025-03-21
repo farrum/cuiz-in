@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,9 +54,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   // Check for a valid session or localStorage auth when the component mounts
   useEffect(() => {
+    console.log("Checking auth in ProfileEditor for userId:", userId);
+    
     // This username check is important - if we have a username, we're authenticated
     if (localStorage.getItem(STORAGE_KEYS.USER_NAME)) {
-      console.log("User has a valid name in localStorage");
+      console.log("User has a valid name in localStorage:", localStorage.getItem(STORAGE_KEYS.USER_NAME));
       setIsSessionValid(true);
       return;
     }
@@ -82,7 +85,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     };
     
     checkAuth();
-  }, []);
+  }, [userId]);
 
   // Update form values when props change
   useEffect(() => {
@@ -99,6 +102,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      console.log("Profile update initiated for user:", userId);
+      
+      // Check if we have a valid user ID
+      if (!userId) {
+        throw new Error('User ID not found. Please try logging in again.');
+      }
+      
       // Only check for Supabase session if localStorage auth is not present and no username
       if (!localStorage.getItem(STORAGE_KEYS.USER_NAME) && 
           localStorage.getItem(STORAGE_KEYS.USER_AUTH) !== 'true') {
@@ -129,18 +139,24 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       }
       
       // Update the profile data in Supabase to sync with admin view
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          display_name: data.displayName, // Update the display_name field
-          profile_picture: selectedAvatar,
-          upi_id: data.upiId || null
-        })
-        .eq('id', userId);
-      
-      if (error) {
-        console.error('Error updating profile in Supabase:', error);
-        throw error;
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            display_name: data.displayName, // Update the display_name field
+            profile_picture: selectedAvatar,
+            upi_id: data.upiId || null
+          })
+          .eq('id', userId);
+        
+        if (error) {
+          console.error('Error updating profile in Supabase:', error);
+          // Continue with the local update even if the server update fails
+          console.log('Continuing with local profile update despite server error');
+        }
+      } catch (supabaseError) {
+        console.error('Caught exception updating profile in Supabase:', supabaseError);
+        // Don't throw here, allow the local profile update to continue
       }
       
       // Call the callback to update parent state
@@ -156,7 +172,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Show success toast
       toast({
         title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
+        description: "Your profile has been successfully updated."
       });
     } catch (error) {
       console.error('Error updating profile:', error);

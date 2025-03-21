@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserRound, Upload, Check, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 // These are the default avatars, more can be added via the Admin interface
 const DEFAULT_AVATARS = [
@@ -99,10 +100,21 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
       setUploading(true);
       setUploadProgress(10);
 
-      // Check for active session before proceeding
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session found. Please log in to upload a profile picture.');
+      // Check if we have a valid user ID before proceeding
+      if (!userId) {
+        throw new Error('User ID not found. Please try logging in again.');
+      }
+
+      // Check for authentication either through localStorage or Supabase session
+      const isLocalAuth = localStorage.getItem(STORAGE_KEYS.USER_AUTH) === 'true' || 
+                          !!localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      
+      if (!isLocalAuth) {
+        // Only check Supabase session if local auth is not present
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active session found. Please log in to upload a profile picture.');
+        }
       }
 
       // Generate a unique file name using user id and timestamp
@@ -134,7 +146,7 @@ const ProfilePictureSelector = ({ currentAvatar, userId, onAvatarChange }: Profi
       
       toast({
         title: "Upload successful",
-        description: "Your profile picture has been uploaded",
+        description: "Your profile picture has been uploaded"
       });
     } catch (error) {
       console.error('Error uploading file:', error);

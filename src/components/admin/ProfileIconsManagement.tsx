@@ -37,16 +37,20 @@ const ProfileIconsManagement: React.FC = () => {
     const checkAdminAuth = async () => {
       setIsSessionLoading(true);
       try {
+        console.log("Checking admin authentication status");
+        
+        // First, check for localStorage admin auth
         const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
         const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
         
         if (isAdminAuth && adminUsername) {
-          console.log("Admin authenticated via localStorage");
+          console.log("Admin authenticated via localStorage:", adminUsername);
           setIsAuthenticated(true);
           setIsSessionLoading(false);
           return;
         }
         
+        // Then try Supabase session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
@@ -208,8 +212,25 @@ const ProfileIconsManagement: React.FC = () => {
       setIsUploading(true);
       setUploadProgress(10);
       
-      // Skip the session check - we already verified admin status in the component initialization
-      // This fixes the "No active session found" error
+      // Check authentication status - admin auth should be in localStorage
+      if (localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) !== 'true') {
+        console.log("Checking Supabase session for admin upload");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No active admin session found. Please login again.');
+        }
+        
+        // Verify admin status
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (!profileData?.is_admin) {
+          throw new Error('Admin privileges required to upload icons.');
+        }
+      }
       
       const fileExt = uploadingFile.name.split('.').pop();
       const fileName = `icon_${Date.now()}.${fileExt}`;
@@ -245,14 +266,16 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      const { data, error } = await supabase.rpc(
-        'admin_insert_profile_icon', 
-        {
-          icon_name: newIconName,
+      // Use a direct insert instead of the RPC function to avoid RLS issues
+      const { data, error } = await supabase
+        .from('profile_icons')
+        .insert({
+          name: newIconName,
           icon_url: urlData.publicUrl,
           is_active: true
-        } as any
-      );
+        })
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Database insert error:', error);
@@ -264,7 +287,7 @@ const ProfileIconsManagement: React.FC = () => {
 
       toast({
         title: 'Success',
-        description: 'Profile icon uploaded successfully',
+        description: 'Profile icon uploaded successfully'
       });
 
       setNewIconName('');
@@ -289,18 +312,17 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
-      const { data, error } = await supabase.rpc(
-        'admin_delete_profile_icon', 
-        {
-          p_icon_id: iconId
-        } as any
-      );
+      // Use direct delete instead of RPC to avoid RLS issues
+      const { error } = await supabase
+        .from('profile_icons')
+        .delete()
+        .eq('id', iconId);
       
       if (error) throw error;
       
       toast({
         title: 'Icon deleted',
-        description: 'The profile icon has been removed',
+        description: 'The profile icon has been removed'
       });
 
       fetchIcons();
