@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      console.log('Updating profile with data:', {
+        displayName: data.displayName,
+        upiId: data.upiId,
+        profilePicture: selectedAvatar
+      });
+      
       // Update local storage
       if (data.displayName !== userName) {
         localStorage.setItem('quiz_app_user_name', data.displayName);
@@ -70,19 +77,22 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       }
       
       // Update the profile data in Supabase to sync with admin view
-      const { error } = await supabase
+      const { error, data: updatedProfile } = await supabase
         .from('profiles')
         .update({
           username: data.displayName,
           profile_picture: selectedAvatar,
           // Keep other fields untouched
         })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select();
       
       if (error) {
         console.error('Error updating profile in Supabase:', error);
         throw error;
       }
+      
+      console.log('Profile updated successfully in Supabase:', updatedProfile);
       
       // Call the callback to update parent state
       onProfileUpdate({

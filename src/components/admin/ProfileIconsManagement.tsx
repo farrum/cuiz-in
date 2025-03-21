@@ -106,17 +106,26 @@ const ProfileIconsManagement: React.FC = () => {
 
       setTimeout(() => setUploadProgress(30), 300);
 
+      console.log('Uploading to path:', filePath);
+
       // Upload to Supabase Storage
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('profiles')
-        .upload(filePath, uploadingFile);
+        .upload(filePath, uploadingFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
 
+      console.log('Upload successful:', uploadData);
       setTimeout(() => setUploadProgress(60), 500);
 
       // Get the public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = await supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
 
@@ -124,19 +133,25 @@ const ProfileIconsManagement: React.FC = () => {
         throw new Error('Failed to get public URL');
       }
 
+      console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
       // Add record to the profile_icons table
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('profile_icons')
         .insert({
           name: newIconName,
           icon_url: urlData.publicUrl,
           is_active: true
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw new Error(`Database insert failed: ${error.message}`);
+      }
 
+      console.log('Icon record created:', data);
       setTimeout(() => setUploadProgress(100), 800);
 
       toast({
@@ -168,12 +183,37 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
+      // First get the icon to find the file path
+      const { data: iconData, error: fetchError } = await supabase
+        .from('profile_icons')
+        .select('*')
+        .eq('id', iconId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Delete the record from the database
       const { error } = await supabase
         .from('profile_icons')
         .delete()
         .eq('id', iconId);
 
       if (error) throw error;
+      
+      // Try to delete the file from storage if it's a custom uploaded icon
+      // Extract the path from the URL if it's a Supabase storage URL
+      if (iconData?.icon_url && iconData.icon_url.includes('/storage/v1/object/public/profiles/')) {
+        try {
+          const filePathMatch = iconData.icon_url.match(/\/storage\/v1\/object\/public\/profiles\/(.+)/);
+          if (filePathMatch && filePathMatch[1]) {
+            const filePath = filePathMatch[1];
+            await supabase.storage.from('profiles').remove([filePath]);
+          }
+        } catch (storageError) {
+          // Log but don't fail the operation if storage removal fails
+          console.error('Error removing file from storage:', storageError);
+        }
+      }
 
       toast({
         title: 'Icon deleted',
