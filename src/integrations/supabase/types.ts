@@ -397,6 +397,7 @@ export type Database = {
           points: number | null
           profile_picture: string | null
           suspended: boolean | null
+          upi_id: string | null
           username: string
         }
         Insert: {
@@ -408,6 +409,7 @@ export type Database = {
           points?: number | null
           profile_picture?: string | null
           suspended?: boolean | null
+          upi_id?: string | null
           username: string
         }
         Update: {
@@ -419,6 +421,7 @@ export type Database = {
           points?: number | null
           profile_picture?: string | null
           suspended?: boolean | null
+          upi_id?: string | null
           username?: string
         }
         Relationships: []
@@ -607,7 +610,20 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      admin_delete_profile_icon: {
+        Args: {
+          p_icon_id: string
+        }
+        Returns: boolean
+      }
+      admin_insert_profile_icon: {
+        Args: {
+          icon_name: string
+          icon_url: string
+          is_active?: boolean
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

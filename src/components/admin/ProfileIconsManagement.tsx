@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface ProfileIcon {
@@ -247,7 +246,7 @@ const ProfileIconsManagement: React.FC = () => {
       console.log('Public URL:', urlData.publicUrl);
       setTimeout(() => setUploadProgress(80), 700);
 
-      const { error, data } = await supabase.rpc('admin_insert_profile_icon', {
+      const { data, error } = await supabase.rpc('admin_insert_profile_icon', {
         icon_name: newIconName,
         icon_url: urlData.publicUrl,
         is_active: true
@@ -288,7 +287,7 @@ const ProfileIconsManagement: React.FC = () => {
 
   const handleDeleteIcon = async (iconId: string) => {
     try {
-      const { error } = await supabase.rpc('admin_delete_profile_icon', {
+      const { data, error } = await supabase.rpc('admin_delete_profile_icon', {
         p_icon_id: iconId
       });
       
