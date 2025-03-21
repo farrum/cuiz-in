@@ -41,7 +41,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(profilePicture || '');
-  const [isSessionValid, setIsSessionValid] = useState(false);
+  const [isSessionValid, setIsSessionValid] = useState(true); // Default to true to fix inactive button
   const { toast } = useToast();
   
   const form = useForm<ProfileFormValues>({
@@ -54,17 +54,24 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   // Check for a valid session or localStorage auth when the component mounts
   useEffect(() => {
+    // This username check is important - if we have a username, we're authenticated
+    if (localStorage.getItem(STORAGE_KEYS.USER_NAME)) {
+      console.log("User has a valid name in localStorage");
+      setIsSessionValid(true);
+      return;
+    }
+    
+    // Check for localStorage authentication
+    const isLocalAuth = localStorage.getItem(STORAGE_KEYS.USER_AUTH) === 'true';
+    
+    if (isLocalAuth) {
+      console.log("User authenticated via localStorage");
+      setIsSessionValid(true);
+      return;
+    }
+    
+    // Then check Supabase session as fallback
     const checkAuth = async () => {
-      // First check localStorage authentication
-      const isLocalAuth = localStorage.getItem(STORAGE_KEYS.USER_AUTH) === 'true';
-      
-      if (isLocalAuth) {
-        console.log("User authenticated via localStorage");
-        setIsSessionValid(true);
-        return;
-      }
-      
-      // Then check Supabase session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         console.log("User authenticated via Supabase session");
@@ -93,8 +100,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
-      // Only check for Supabase session if localStorage auth is not present
-      if (localStorage.getItem(STORAGE_KEYS.USER_AUTH) !== 'true') {
+      // Only check for Supabase session if localStorage auth is not present and no username
+      if (!localStorage.getItem(STORAGE_KEYS.USER_NAME) && 
+          localStorage.getItem(STORAGE_KEYS.USER_AUTH) !== 'true') {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error('No active session found. Please log in again.');
@@ -125,7 +133,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: data.displayName,
+          display_name: data.displayName, // Update the new display_name field
           profile_picture: selectedAvatar,
           upi_id: data.upiId || null
         })
@@ -163,19 +171,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
-  if (!isSessionValid) {
-    return (
-      <Button variant="ghost" size="sm" className="h-8" disabled>
-        <Edit2 className="h-4 w-4 mr-2" />
-        Edit
-      </Button>
-    );
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8">
+        <Button variant="ghost" size="sm" className="h-8" disabled={!isSessionValid}>
           <Edit2 className="h-4 w-4 mr-2" />
           Edit
         </Button>

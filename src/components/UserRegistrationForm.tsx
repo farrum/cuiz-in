@@ -13,6 +13,7 @@ import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -63,6 +64,13 @@ const UserRegistrationForm: React.FC = () => {
       console.error("Failed to check referrer:", err);
     }
   };
+  
+  // Auto-fill display name based on username
+  useEffect(() => {
+    if (username && !displayName) {
+      setDisplayName(username);
+    }
+  }, [username, displayName]);
   
   // Check username availability with debounce
   useEffect(() => {
@@ -179,6 +187,7 @@ const UserRegistrationForm: React.FC = () => {
         .insert({
           id: userId,
           username: username,
+          display_name: displayName || username, // Use the display name, default to username if empty
           phone: phone,
           points: 0,
           suspended: false,
@@ -243,9 +252,14 @@ const UserRegistrationForm: React.FC = () => {
         }
       }
       
+      // Store user auth status in localStorage
+      localStorage.setItem('quiz_app_user_auth', 'true');
+      localStorage.setItem('quiz_app_user_id', userId);
+      localStorage.setItem('quiz_app_user_name', displayName || username);
+      
       toast({
         title: "Registration successful!",
-        description: "Your account has been created. You can now log in.",
+        description: "Your account has been created. You will be redirected to login.",
       });
       
       // Redirect to login page after successful registration
@@ -280,7 +294,7 @@ const UserRegistrationForm: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Username (Cannot be changed later)</Label>
             <div className="relative">
               <Input
                 id="username"
@@ -300,6 +314,24 @@ const UserRegistrationForm: React.FC = () => {
             {usernameError && (
               <p className="text-sm text-red-500">{usernameError}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+              This is your unique identifier and cannot be changed later.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="displayName">Display Name</Label>
+            <Input
+              id="displayName"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Enter your display name"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              This is the name shown to others. You can change it later.
+            </p>
           </div>
           
           <div className="space-y-2">

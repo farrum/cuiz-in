@@ -66,6 +66,8 @@ const Profile: React.FC = () => {
       setUserId(userIdFromStorage);
       fetchReferrerInfo(userIdFromStorage);
       fetchLoginStreak(userIdFromStorage);
+      
+      fetchUserProfile(userIdFromStorage);
     } else {
       const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
       setUserId(generatedUserId);
@@ -108,6 +110,28 @@ const Profile: React.FC = () => {
     
     return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
   }, [navigate]);
+  
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+      
+      if (data && data.display_name) {
+        setUserName(data.display_name);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, data.display_name);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+    }
+  };
   
   const getRecentAchievements = (allAchievements: Achievement[]) => {
     const now = new Date();
@@ -201,6 +225,7 @@ const Profile: React.FC = () => {
   
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.USER_AUTH);
     localStorage.removeItem('quiz_app_user_email');
     localStorage.removeItem('quiz_app_user_phone');
     localStorage.removeItem('quiz_app_user_upi');
@@ -236,6 +261,7 @@ const Profile: React.FC = () => {
   }) => {
     if (data.displayName) {
       setUserName(data.displayName);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, data.displayName);
     }
     
     if (data.upiId !== undefined) {

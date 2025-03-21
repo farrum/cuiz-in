@@ -17,6 +17,7 @@ import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 interface UserData {
   id: string;
   username: string;
+  display_name?: string; // Added display_name field
   phone?: string;
   points: number;
   suspended: boolean;
@@ -32,7 +33,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editName, setEditName] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editPoints, setEditPoints] = useState(0);
   const [editSuspended, setEditSuspended] = useState(false);
@@ -83,13 +84,14 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   };
 
   const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.display_name && user.display_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.phone && user.phone.includes(searchTerm))
   );
 
   const openEditDialog = (user: UserData) => {
     setSelectedUser(user);
-    setEditName(user.username);
+    setEditDisplayName(user.display_name || user.username || '');
     setEditPhone(user.phone || '');
     setEditPoints(user.points);
     setEditSuspended(user.suspended);
@@ -109,7 +111,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: editName,
+          display_name: editDisplayName, // Update display_name, not username
           phone: editPhone || null,
           points: editPoints,
           suspended: editSuspended,
@@ -197,8 +199,10 @@ const AdminUserManagementWithAvatars: React.FC = () => {
       if (user.profile_picture.startsWith('http')) {
         return (
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.profile_picture} alt={user.username} />
-            <AvatarFallback>{user.username.substring(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={user.profile_picture} alt={user.display_name || user.username} />
+            <AvatarFallback>
+              {(user.display_name || user.username || '?').substring(0, 1).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
         );
       } else {
@@ -237,7 +241,9 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           default:
             return (
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{user.username.substring(0, 1).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {(user.display_name || user.username || '?').substring(0, 1).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
             );
         }
@@ -246,7 +252,9 @@ const AdminUserManagementWithAvatars: React.FC = () => {
     
     return (
       <Avatar className="h-8 w-8">
-        <AvatarFallback>{user.username.substring(0, 1).toUpperCase()}</AvatarFallback>
+        <AvatarFallback>
+          {(user.display_name || user.username || '?').substring(0, 1).toUpperCase()}
+        </AvatarFallback>
       </Avatar>
     );
   };
@@ -272,6 +280,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
+              <TableHead>Username</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Points</TableHead>
               <TableHead>UPI ID</TableHead>
@@ -282,7 +291,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center p-4">
+                <TableCell colSpan={7} className="text-center p-4">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                   </div>
@@ -294,9 +303,10 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {renderUserAvatar(user)}
-                      {user.username}
+                      {user.display_name || user.username}
                     </div>
                   </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{user.username}</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>{user.points}</TableCell>
                   <TableCell>{user.upi_id || '-'}</TableCell>
@@ -328,7 +338,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center p-4">
+                <TableCell colSpan={7} className="text-center p-4">
                   No users found
                 </TableCell>
               </TableRow>
@@ -336,7 +346,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={6} className="text-right">
+              <TableCell colSpan={7} className="text-right">
                 Total Users: {filteredUsers.length}
               </TableCell>
             </TableRow>
@@ -349,16 +359,21 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
+            {selectedUser && (
+              <DialogDescription>
+                Editing profile for username: <strong>{selectedUser.username}</strong>
+              </DialogDescription>
+            )}
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
+              <Label htmlFor="displayName" className="text-right">
+                Display Name
               </Label>
               <Input
-                id="name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                id="displayName"
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
                 className="col-span-3"
               />
             </div>
@@ -431,8 +446,10 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               <div className="flex items-center gap-2 p-2 border rounded">
                 {renderUserAvatar(selectedUser)}
                 <div>
-                  <div className="font-medium">{selectedUser.username}</div>
-                  <div className="text-sm text-muted-foreground">{selectedUser.phone || 'No phone number'}</div>
+                  <div className="font-medium">{selectedUser.display_name || selectedUser.username}</div>
+                  <div className="text-sm text-muted-foreground">
+                    @{selectedUser.username} • {selectedUser.phone || 'No phone number'}
+                  </div>
                 </div>
               </div>
             )}
