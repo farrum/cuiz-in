@@ -139,6 +139,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         return bonusPoints > 0 ? bonusPoints : null;
       }
       
+      console.log('Created new streak record:', newStreak);
+      
       // Award the bonus points if applicable
       if (bonusPoints > 0) {
         await awardBonusPoints(userId, bonusPoints);
@@ -196,6 +198,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       bonus_claimed_today: true
     });
     
+    // Make sure we update the login_streaks table properly
     const { error: updateError } = await supabase
       .from('login_streaks')
       .update({
@@ -206,7 +209,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         bonus_claimed_today: true,
         updated_at: new Date().toISOString()
       })
-      .eq('id', streakData.id);
+      .eq('user_id', userId);  // Changed from streakData.id to userId for better reliability
       
     if (updateError) {
       console.error('Error updating login streak:', updateError);
@@ -216,6 +219,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         highest_streak: Math.max(newStreak, streakData.highest_streak),
         last_login_date: todayStr
       }));
+    } else {
+      console.log('Successfully updated login streak in database');
     }
     
     // Award the bonus points
@@ -247,10 +252,15 @@ const awardBonusPoints = async (userId: string, bonusPoints: number): Promise<vo
     const currentPoints = profileData.points || 0;
     const newPoints = currentPoints + bonusPoints;
     
-    await supabase
+    const { error: updateError } = await supabase
       .from('profiles')
       .update({ points: newPoints })
       .eq('id', userId);
+      
+    if (updateError) {
+      console.error('Error updating user points:', updateError);
+      return;
+    }
     
     // Update local storage
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
@@ -326,6 +336,8 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
         
       if (updateError) {
         console.error('Error updating inactive streak:', updateError);
+      } else {
+        console.log('Updated streak to inactive (0) in database');
       }
       
       // Return the updated data with current_streak set to 0

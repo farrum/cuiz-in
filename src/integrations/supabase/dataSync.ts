@@ -1,8 +1,7 @@
-
 import { supabase } from './client';
 
 // Define valid table names as a type
-type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'ad_views' | 'ad_clicks';
+type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'ad_views' | 'ad_clicks' | 'login_streaks';
 
 // Function to fetch all application data from Supabase
 export const fetchAllAppData = async () => {
@@ -19,7 +18,8 @@ export const fetchAllAppData = async () => {
       paymentsResponse,
       referralsResponse,
       adViewsResponse,
-      adClicksResponse
+      adClicksResponse,
+      loginStreaksResponse
     ] = await Promise.all([
       supabase.from('profiles' as ValidTableName).select('*'),
       supabase.from('login_logs' as ValidTableName).select('*'),
@@ -29,7 +29,8 @@ export const fetchAllAppData = async () => {
       supabase.from('payments' as ValidTableName).select('*'),
       supabase.from('user_referrals' as ValidTableName).select('*'),
       supabase.from('ad_views' as ValidTableName).select('*').limit(500),
-      supabase.from('ad_clicks' as ValidTableName).select('*').limit(500)
+      supabase.from('ad_clicks' as ValidTableName).select('*').limit(500),
+      supabase.from('login_streaks' as ValidTableName).select('*')
     ]);
     
     // Save responses to localStorage for offline access
@@ -78,6 +79,11 @@ export const fetchAllAppData = async () => {
       console.log(`Stored ${adClicksResponse.data.length} ad clicks in localStorage`);
     }
     
+    if (loginStreaksResponse.data) {
+      localStorage.setItem('quiz_app_login_streaks', JSON.stringify(loginStreaksResponse.data));
+      console.log(`Stored ${loginStreaksResponse.data.length} login streaks in localStorage`);
+    }
+    
     // Check for errors and log them
     const responses = [
       { name: 'profiles', response: profilesResponse },
@@ -88,7 +94,8 @@ export const fetchAllAppData = async () => {
       { name: 'payments', response: paymentsResponse },
       { name: 'user_referrals', response: referralsResponse },
       { name: 'ad_views', response: adViewsResponse },
-      { name: 'ad_clicks', response: adClicksResponse }
+      { name: 'ad_clicks', response: adClicksResponse },
+      { name: 'login_streaks', response: loginStreaksResponse }
     ];
     
     for (const { name, response } of responses) {
@@ -174,6 +181,12 @@ export const syncLocalStorageToSupabase = async () => {
     const adClicks = JSON.parse(localStorage.getItem('quiz_app_ad_clicks') || '[]');
     if (adClicks.length > 0) {
       syncOperations.push(syncDataWithSupabase('ad_clicks', adClicks));
+    }
+
+    // Sync login streaks
+    const loginStreaks = JSON.parse(localStorage.getItem('quiz_app_login_streaks') || '[]');
+    if (loginStreaks.length > 0) {
+      syncOperations.push(syncDataWithSupabase('login_streaks', loginStreaks));
     }
 
     // Process all sync operations

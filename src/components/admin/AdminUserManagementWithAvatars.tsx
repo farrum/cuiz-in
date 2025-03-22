@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +55,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        const userStreaks = new Map<string, number>();
+        const enhancedUserData: UserData[] = [];
         
         const { data: streakData, error: streakError } = await supabase
           .from('login_streaks')
@@ -64,7 +63,10 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           
         if (streakError) {
           console.error('Error fetching login streaks:', streakError);
-        } else if (streakData) {
+        }
+        
+        const userStreaks = new Map();
+        if (streakData) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
@@ -75,18 +77,17 @@ const AdminUserManagementWithAvatars: React.FC = () => {
             const diffTime = today.getTime() - lastLoginDate.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             
-            if (diffDays <= 1) {
-              userStreaks.set(streak.user_id, streak.current_streak);
-            } else {
-              userStreaks.set(streak.user_id, 0);
-            }
+            const currentStreak = diffDays <= 1 ? streak.current_streak : 0;
+            userStreaks.set(streak.user_id, currentStreak);
           });
         }
         
-        const enhancedUserData = data.map((user: UserData) => ({
-          ...user,
-          login_streak: userStreaks.get(user.id) || 0
-        }));
+        for (const user of data) {
+          enhancedUserData.push({
+            ...user,
+            login_streak: userStreaks.get(user.id) || 0
+          });
+        }
         
         setUsers(enhancedUserData);
       }
@@ -510,3 +511,4 @@ const AdminUserManagementWithAvatars: React.FC = () => {
 };
 
 export default AdminUserManagementWithAvatars;
+

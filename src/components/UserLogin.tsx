@@ -77,7 +77,8 @@ const UserLogin: React.FC = () => {
         successful: true
       });
       
-      // Check and update login streak
+      // Check and update login streak - ensure this is awaited properly
+      console.log('Checking login streak for user ID:', userData.id);
       const bonus = await checkAndUpdateLoginStreak(userData.id);
       console.log('Login streak check returned bonus:', bonus);
       
@@ -103,10 +104,14 @@ const UserLogin: React.FC = () => {
       console.error('Login error:', error);
       
       // Record failed login attempt
-      await supabase.from('login_logs').insert({
-        username: username,
-        successful: false
-      });
+      try {
+        await supabase.from('login_logs').insert({
+          username: username,
+          successful: false
+        });
+      } catch (logError) {
+        console.error('Failed to log failed login attempt:', logError);
+      }
       
       toast({
         title: "Login failed",
