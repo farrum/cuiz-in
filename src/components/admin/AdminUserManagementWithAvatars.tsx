@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ interface UserData {
   profile_picture?: string;
   created_at: string;
   upi_id?: string;
+  login_streak?: number; // Added login_streak property
 }
 
 const AdminUserManagementWithAvatars: React.FC = () => {
