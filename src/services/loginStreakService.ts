@@ -172,7 +172,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       newStreak = streakData.current_streak;
       bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
     } else if (diffDays === 1) {
-      // Consecutive day login
+      // Consecutive day login - increment the streak
       newStreak = streakData.current_streak + 1;
       bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
     } else {

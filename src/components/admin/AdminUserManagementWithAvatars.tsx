@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +8,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Search, UserRound, Ban, UserCheck, Edit, Trash, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { getUserLoginStreak } from '@/services/loginStreakService';
 
 interface UserData {
   id: string;
@@ -40,7 +41,6 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   const [editUpiId, setEditUpiId] = useState('');
   const { toast } = useToast();
   
-  // Listen for realtime updates
   const { isListening } = useRealtimeUpdates('profiles');
 
   const loadUsers = async () => {
@@ -54,7 +54,39 @@ const AdminUserManagementWithAvatars: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        setUsers(data as UserData[]);
+        const userStreaks = new Map<string, number>();
+        
+        const { data: streakData, error: streakError } = await supabase
+          .from('login_streaks')
+          .select('*');
+          
+        if (streakError) {
+          console.error('Error fetching login streaks:', streakError);
+        } else if (streakData) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          streakData.forEach(streak => {
+            const lastLoginDate = new Date(streak.last_login_date);
+            lastLoginDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = today.getTime() - lastLoginDate.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 1) {
+              userStreaks.set(streak.user_id, streak.current_streak);
+            } else {
+              userStreaks.set(streak.user_id, 0);
+            }
+          });
+        }
+        
+        const enhancedUserData = data.map((user: UserData) => ({
+          ...user,
+          login_streak: userStreaks.get(user.id) || 0
+        }));
+        
+        setUsers(enhancedUserData);
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -72,7 +104,6 @@ const AdminUserManagementWithAvatars: React.FC = () => {
     loadUsers();
   }, []);
   
-  // Refresh data when realtime updates occur
   useEffect(() => {
     if (isListening) {
       loadUsers();
@@ -206,7 +237,6 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           </Avatar>
         );
       } else {
-        // Handle built-in icons
         switch (user.profile_picture) {
           case 'user-round':
             return (
@@ -285,6 +315,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               <TableHead>Phone</TableHead>
               <TableHead>Points</TableHead>
               <TableHead>UPI ID</TableHead>
+              <TableHead>Login Streak</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -292,7 +323,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center p-4">
+                <TableCell colSpan={9} className="text-center p-4">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                   </div>
@@ -311,6 +342,15 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>{user.points}</TableCell>
                   <TableCell>{user.upi_id || '-'}</TableCell>
+                  <TableCell>
+                    {user.login_streak > 0 ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                        {user.login_streak} days
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactive</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {user.suspended ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -339,7 +379,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center p-4">
+                <TableCell colSpan={9} className="text-center p-4">
                   No users found
                 </TableCell>
               </TableRow>
@@ -347,7 +387,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
           </TableBody>
           <TableFooter>
             <TableRow>
-              <TableCell colSpan={8} className="text-right">
+              <TableCell colSpan={9} className="text-right">
                 Total Users: {filteredUsers.length}
               </TableCell>
             </TableRow>
@@ -355,7 +395,6 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         </Table>
       </div>
       
-      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -433,7 +472,6 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete User Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

@@ -79,12 +79,13 @@ const UserLogin: React.FC = () => {
       
       // Check and update login streak
       const bonus = await checkAndUpdateLoginStreak(userData.id);
+      console.log('Login streak check returned bonus:', bonus);
       
       // If bonus points were awarded (first login of the day)
       if (bonus !== null && bonus > 0) {
         console.log(`User earned ${bonus} bonus points for logging in today`);
         setBonusPoints(bonus);
-        setStreakDays(Math.min(bonus, 30)); // Streak days = bonus points (capped at 30)
+        setStreakDays(bonus); // Use actual bonus points as streak days
         setShowBonusPopup(true);
       } else {
         // If no bonus (already claimed today), proceed to quiz page

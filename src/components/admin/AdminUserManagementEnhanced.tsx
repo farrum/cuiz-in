@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -49,6 +48,7 @@ import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import AdminTopPerformers from './AdminTopPerformers';
 import MD5 from 'crypto-js/md5';
 import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
+import { getUserLoginStreak } from '@/services/loginStreakService';
 
 interface User {
   id: string;
@@ -134,12 +134,28 @@ const AdminUserManagementEnhanced: React.FC = () => {
         
       if (loginStreaksError) throw loginStreaksError;
       
-      const streaksMap = {};
+      const streaksMap: Record<string, number> = {};
+      
       if (loginStreaks) {
-        loginStreaks.forEach(streak => {
-          streaksMap[streak.user_id] = streak.current_streak;
-        });
+        for (const streak of loginStreaks) {
+          const lastLoginDate = new Date(streak.last_login_date);
+          lastLoginDate.setHours(0, 0, 0, 0);
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          const diffTime = today.getTime() - lastLoginDate.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays <= 1) {
+            streaksMap[streak.user_id] = streak.current_streak;
+          } else {
+            streaksMap[streak.user_id] = 0;
+          }
+        }
       }
+      
+      console.log('Processed login streaks:', streaksMap);
       
       const usersWithMetadata: User[] = profiles.map((profile: any) => {
         const userLogins = loginLogs.filter((log: any) => log.username === profile.username);
@@ -815,3 +831,4 @@ const AdminUserManagementEnhanced: React.FC = () => {
 };
 
 export default AdminUserManagementEnhanced;
+
