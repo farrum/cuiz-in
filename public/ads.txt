@@ -1,0 +1,11 @@
+
+# ads.txt file for cuiz.in
+# Managed via AdsTxtManager (https://srv.adstxtmanager.com/19390/cuiz.in)
+# Last updated: 2023-10-04
+
+# Google AdSense
+google.com, pub-2831295465597549, DIRECT, f08c47fec0942fa0
+
+# Content from AdsTxtManager
+# Add additional entries from https://srv.adstxtmanager.com/19390/cuiz.in below
+# You should replace this comment with the actual content from AdsTxtManager
