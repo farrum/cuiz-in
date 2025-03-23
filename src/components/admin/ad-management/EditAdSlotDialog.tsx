@@ -21,8 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Check, Plus } from 'lucide-react';
+import { Check, Plus, HelpCircle } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AdSlot {
   id: string;
@@ -54,9 +55,29 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
 }) => {
   if (!editingSlot) return null;
 
+  const adCodeExamples = {
+    google: `<!-- Google AdSense Example -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+     data-ad-slot="XXXXXXXXXX"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>`,
+    custom: `<!-- Custom Ad Example -->
+<div id="custom-ad-container">
+  <a href="https://example.com" target="_blank" rel="noopener noreferrer">
+    <img src="https://example.com/ad-image.jpg" alt="Advertisement" style="width:100%;height:auto;" />
+  </a>
+</div>`
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
           <DialogTitle>
             {isCreatingNew ? 'Create New Ad Slot' : `Edit Ad Slot: ${editingSlot.name}`}
@@ -117,7 +138,46 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ad Code</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Ad Code</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="sm" type="button" className="h-7 px-3">
+                            <HelpCircle className="h-3.5 w-3.5 mr-1" />
+                            Examples
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" align="start" className="w-80 p-0">
+                          <div className="flex flex-col">
+                            <div className="border-b border-border p-2">
+                              <p className="font-semibold text-sm">Ad Code Examples</p>
+                            </div>
+                            <div className="p-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start"
+                                onClick={() => field.onChange(adCodeExamples.google)}
+                                type="button"
+                              >
+                                Google AdSense
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start"
+                                onClick={() => field.onChange(adCodeExamples.custom)}
+                                type="button"
+                              >
+                                Custom Ad
+                              </Button>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <FormControl>
                     <Textarea
                       id="ad-code"
@@ -127,9 +187,14 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                       className="font-mono text-sm"
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Enter the HTML/JavaScript code for this advertisement.
-                  </p>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                    <p>Enter the HTML/JavaScript code for this advertisement.</p>
+                    <ul className="list-disc pl-5">
+                      <li>Include complete script tags with all necessary attributes</li>
+                      <li>Avoid using document.write() in your ad code</li>
+                      <li>For AdSense, include both the initialization and display code</li>
+                    </ul>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, Plus } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Plus, AlertTriangle } from 'lucide-react';
 import {
   useAdSlots,
   useAdPerformance,
@@ -12,6 +12,7 @@ import {
   AdSlotTabs,
   EditAdSlotDialog
 } from './ad-management';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminAdManagement: React.FC = () => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -103,6 +104,20 @@ const AdminAdManagement: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Alert variant="warning">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Important Instructions for Ad Scripts</AlertTitle>
+        <AlertDescription>
+          <p>For ad scripts to work properly:</p>
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>Use standard script tags with proper loading attributes (async, defer) when needed</li>
+            <li>Avoid document.write() as it may not execute properly in dynamic content</li>
+            <li>Include both the initialization and display code for your ad networks</li>
+            <li>Test your ad slots in various browsers and devices</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
       
       {/* Ad Slots Tabs */}
       <AdSlotTabs

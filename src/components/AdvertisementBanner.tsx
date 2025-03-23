@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { useScriptExecution } from '@/hooks/useScriptExecution';
 
 // Get or create a session ID for tracking
 const getSessionId = (): string => {
@@ -33,6 +34,10 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const [adActive, setAdActive] = useState(true);
   const [adId, setAdId] = useState<string | null>(null);
   const sessionId = getSessionId();
+  const containerId = useId().replace(/:/g, '-') + '-ad-container';
+  
+  // Use our custom hook to execute scripts in the ad content
+  useScriptExecution(adContent, containerId);
   
   useEffect(() => {
     const fetchAds = async () => {
@@ -212,7 +217,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       ) : (
         <div className="w-full">
           <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-          <div dangerouslySetInnerHTML={{ __html: adContent }} />
+          <div id={containerId}></div>
         </div>
       )}
     </div>
