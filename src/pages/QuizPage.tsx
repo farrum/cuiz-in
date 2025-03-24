@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import QuizCard from '@/components/QuizCard';
 import PointsDisplay from '@/components/PointsDisplay';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
@@ -290,6 +291,8 @@ const QuizPage: React.FC = () => {
         
         <AdvertisementBanner position="bottom" />
       </main>
+      
+      <Footer />
     </div>
   );
 };

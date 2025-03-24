@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ReferralSection from '@/components/ReferralSection';
 
 const ReferralPage = () => {
@@ -14,6 +15,8 @@ const ReferralPage = () => {
         {/* Single full-width referral section */}
         <ReferralSection />
       </main>
+      
+      <Footer />
     </div>
   );
 };

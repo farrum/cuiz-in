@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import UserRegistrationForm from '@/components/UserRegistrationForm';
 
 const Registration: React.FC = () => {
@@ -29,13 +30,7 @@ const Registration: React.FC = () => {
         </div>
       </div>
       
-      <footer className="py-6 border-t border-border mt-auto">
-        <div className="container">
-          <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} QuizPoints. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 };
