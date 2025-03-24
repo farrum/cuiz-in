@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { STORAGE_KEYS, QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Star, Award, PartyPopper, Frown } from 'lucide-react';
+import { CheckCircle, XCircle, Star, Award, PartyPopper, Frown, Clock } from 'lucide-react';
 import { getRandomMessage } from '@/utils/funMessages';
 import { useToast } from '@/hooks/use-toast';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
@@ -18,6 +18,7 @@ const AnswerPage: React.FC = () => {
   const [funMessage, setFunMessage] = useState('');
   const [funEmoji, setFunEmoji] = useState('');
   const [backgroundClass, setBackgroundClass] = useState('');
+  const [countdown, setCountdown] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,6 +36,20 @@ const AnswerPage: React.FC = () => {
     'bg-incorrect-3',
     'bg-incorrect-4'
   ];
+
+  // Effect for countdown timer
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      // When countdown reaches zero, navigate to quiz page
+      navigate('/quiz');
+    }
+  }, [countdown, navigate]);
 
   useEffect(() => {
     const loadQuestion = async () => {
@@ -84,8 +99,8 @@ const AnswerPage: React.FC = () => {
   }, [questionId, selectedOption, toast]);
 
   const handleNextQuestion = () => {
-    // Navigate to quiz route
-    navigate('/quiz');
+    // Start countdown from 5 seconds before navigating
+    setCountdown(5);
   };
   
   // Calculate the points earned based on the difficulty and correctness
@@ -189,8 +204,19 @@ const AnswerPage: React.FC = () => {
             )}
             
             <div className="mt-6 flex justify-end relative z-10">
-              <Button onClick={handleNextQuestion} className="fun-button">
-                Next Question <Award className="ml-2 h-5 w-5" />
+              <Button 
+                onClick={handleNextQuestion} 
+                className="fun-button"
+                disabled={countdown !== null}
+              >
+                {countdown !== null ? (
+                  <span className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 animate-pulse" />
+                    Next Question in {countdown}s
+                  </span>
+                ) : (
+                  <>Next Question <Award className="ml-2 h-5 w-5" /></>
+                )}
               </Button>
             </div>
           </div>
