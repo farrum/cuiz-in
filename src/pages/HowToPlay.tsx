@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 
 const HowToPlay: React.FC = () => {
@@ -139,15 +139,7 @@ const HowToPlay: React.FC = () => {
         </div>
       </div>
       
-      <footer className="py-6 border-t border-border backdrop-blur-sm bg-white/50 dark:bg-gray-900/50">
-        <div className="container">
-          <div className="flex items-center justify-center gap-2">
-            <p className="text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 };

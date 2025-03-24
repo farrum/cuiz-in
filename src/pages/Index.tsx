@@ -3,9 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Award, UserPlus, IndianRupee, ArrowRight, LogIn, Trophy, Sparkles, PartyPopper, Rocket, Zap, HelpCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from "@/hooks/use-toast";
+
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -14,6 +16,7 @@ const Index: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
+
   useEffect(() => {
     const name = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     if (name) {
@@ -34,6 +37,7 @@ const Index: React.FC = () => {
       }, 1000);
     }
   }, [toast]);
+
   const handleStartClick = () => {
     if (userName) {
       navigate('/quiz');
@@ -41,6 +45,7 @@ const Index: React.FC = () => {
       navigate('/register');
     }
   };
+
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (userName.trim()) {
@@ -55,7 +60,9 @@ const Index: React.FC = () => {
       }, 500);
     }
   };
-  return <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+
+  return (
+    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
       <Header />
       <NewsTicker className="mt-16" />
       
@@ -148,16 +155,9 @@ Invite friends to earn even more!</p>
         </div>
       </div>
       
-      <footer className="py-6 border-t border-border mt-auto backdrop-blur-sm bg-white/50 dark:bg-gray-900/50">
-        <div className="container">
-          <div className="flex items-center justify-center gap-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <p className="text-center text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-    </main>;
+      <Footer />
+    </main>
+  );
 };
+
 export default Index;

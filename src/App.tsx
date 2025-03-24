@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -19,6 +18,9 @@ import Registration from "@/pages/Registration";
 import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from '@/pages/AdminLoginPage';
 import HowToPlay from '@/pages/HowToPlay';
+import TermsPage from '@/pages/TermsPage';
+import DisclaimerPage from '@/pages/DisclaimerPage';
+import PrivacyPage from '@/pages/PrivacyPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -124,6 +126,9 @@ function App() {
           <Route path="/register" element={<Registration />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/disclaimer" element={<DisclaimerPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           
           <Route path="/profile" element={
             <ProtectedRoute>

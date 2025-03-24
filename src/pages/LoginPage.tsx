@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import UserLogin from '@/components/UserLogin';
 
 const LoginPage: React.FC = () => {
@@ -26,13 +27,7 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
       
-      <footer className="py-6 border-t border-border mt-auto">
-        <div className="container">
-          <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 };
