@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
-import { Sparkles, Brain, ZapIcon, Timer, Award, Flame, Clock } from 'lucide-react';
+import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
+import CountdownButton from './CountdownButton';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -18,23 +18,8 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Effect to handle countdown timer
-  useEffect(() => {
-    if (countdown !== null && countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    } else if (countdown === 0) {
-      // When countdown reaches zero, navigate to answer page
-      proceedToAnswerPage();
-    }
-  }, [countdown]);
   
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
@@ -191,16 +176,12 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
         variant: "destructive"
       });
       setIsSubmitting(false);
-      setCountdown(null);
     }
   };
   
-  const handleSubmitAnswer = async () => {
-    if (!selectedOption || isSubmitting || countdown !== null) return;
-    
+  const handleSubmitAnswer = () => {
+    if (!selectedOption || isSubmitting) return;
     setIsSubmitting(true);
-    // Start countdown from 5 seconds
-    setCountdown(5);
   };
   
   const getDifficultyIcon = () => {
@@ -263,21 +244,15 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
+        <CountdownButton
+          onCountdownComplete={proceedToAnswerPage}
+          initialSeconds={5}
+          disabled={!selectedOption || isSubmitting}
           className={`w-full ${selectedOption ? 'fun-button' : ''}`}
-          disabled={!selectedOption || isSubmitting || countdown !== null}
-          onClick={handleSubmitAnswer}
+          icon={<Sparkles className="h-4 w-4" />}
         >
-          {countdown !== null ? (
-            <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4 animate-pulse" />
-              Submitting in {countdown}s
-            </span>
-          ) : (
-            isSubmitting ? "Submitting..." : "Submit Answer"
-          )}
-          {selectedOption && countdown === null && !isSubmitting && <Sparkles className="ml-2 h-4 w-4" />}
-        </Button>
+          Submit Answer
+        </CountdownButton>
       </CardFooter>
     </Card>
   );
