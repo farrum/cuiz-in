@@ -16,10 +16,9 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { getUserLoginStreak, checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+import { getUserLoginStreak, resetLoginBonusSession } from '@/services/loginStreakService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ProfileEditor from '@/components/ProfileEditor';
-import LoginBonusPopup from '@/components/LoginBonusPopup';
 
 interface Achievement {
   id: string;
@@ -50,9 +49,6 @@ const Profile: React.FC = () => {
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loginStreak, setLoginStreak] = useState<{current: number, highest: number} | null>(null);
-  const [showBonusPopup, setShowBonusPopup] = useState(false);
-  const [bonusPoints, setBonusPoints] = useState(0);
-  const [streakDays, setStreakDays] = useState(1);
   
   useEffect(() => {
     const userIdFromStorage = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -72,8 +68,6 @@ const Profile: React.FC = () => {
       fetchLoginStreak(userIdFromStorage);
       
       fetchUserProfile(userIdFromStorage);
-      
-      checkLoginBonus(userIdFromStorage);
     } else {
       const generatedUserId = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString(36).slice(-4);
       setUserId(generatedUserId);
@@ -116,22 +110,6 @@ const Profile: React.FC = () => {
     
     return () => window.removeEventListener('pointsUpdated', handlePointsUpdate);
   }, [navigate]);
-  
-  const checkLoginBonus = async (userId: string) => {
-    try {
-      console.log('Checking login bonus for user:', userId);
-      const bonus = await checkAndUpdateLoginStreak(userId);
-      
-      if (bonus !== null && bonus > 0) {
-        console.log(`User earned ${bonus} bonus points for their streak`);
-        setBonusPoints(bonus);
-        setStreakDays(Math.min(bonus, 30));
-        setShowBonusPopup(true);
-      }
-    } catch (error) {
-      console.error('Error checking login bonus:', error);
-    }
-  };
   
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -252,6 +230,8 @@ const Profile: React.FC = () => {
     localStorage.removeItem('quiz_app_user_phone');
     localStorage.removeItem('quiz_app_user_upi');
     
+    resetLoginBonusSession();
+    
     navigate('/');
     
     toast({
@@ -353,14 +333,6 @@ const Profile: React.FC = () => {
         {userName.substring(0, 1).toUpperCase()}
       </div>
     );
-  };
-  
-  const handleBonusPopupClose = () => {
-    setShowBonusPopup(false);
-    toast({
-      title: "Login Bonus!",
-      description: `You earned ${bonusPoints} bonus points for your ${streakDays}-day streak!`,
-    });
   };
   
   return (
@@ -637,13 +609,6 @@ const Profile: React.FC = () => {
                 <WithdrawalSection />
               </TabsContent>
             </Tabs>
-            
-            <LoginBonusPopup
-              isOpen={showBonusPopup}
-              onClose={handleBonusPopupClose}
-              bonusPoints={bonusPoints}
-              streakDays={streakDays}
-            />
           </>
         )}
       </main>

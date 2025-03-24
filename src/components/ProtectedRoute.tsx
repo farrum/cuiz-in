@@ -24,6 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [showBonusPopup, setShowBonusPopup] = useState(false);
   const [bonusPoints, setBonusPoints] = useState(0);
   const [streakDays, setStreakDays] = useState(1);
+  const [bonusChecked, setBonusChecked] = useState(false);
 
   // Check authentication status
   useEffect(() => {
@@ -81,10 +82,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
   }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
 
-  // Log login activity and check streak
+  // Log login activity and check streak - this is the primary place to check for login streak
   useEffect(() => {
     const logLoginActivity = async () => {
-      if (!userName || !userId) return;
+      if (!userName || !userId || bonusChecked) return;
       
       try {
         // Log the login activity in Supabase
@@ -102,11 +103,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           
         console.log('Login activity logged for user:', userName);
         
-        // Check and update login streak
+        // Check and update login streak - only do this once per session
         const bonus = await checkAndUpdateLoginStreak(userId);
+        setBonusChecked(true);
         
         // If bonus points were awarded (first login of the day)
-        if (bonus !== null && bonus > 0 && !location.pathname.includes('/login')) {
+        if (bonus !== null && bonus > 0) {
           console.log(`User earned ${bonus} bonus points for logging in today`);
           setBonusPoints(bonus);
           setStreakDays(Math.min(bonus, 30)); // Streak days = bonus points (capped at 30)
@@ -120,7 +122,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (isAuthenticated === true) {
       logLoginActivity();
     }
-  }, [userName, userId, isAuthenticated, location.pathname]);
+  }, [userName, userId, isAuthenticated, bonusChecked]);
 
   // Show access denied toast
   useEffect(() => {

@@ -1,7 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { calculatePoints, logPointsForDay, logPointsForMonth } from '@/utils/quizData';
+
+// Session key to track if bonus has been shown in current session
+const BONUS_SHOWN_SESSION_KEY = 'login_bonus_shown_today';
 
 interface LoginStreak {
   id: string;
@@ -20,6 +22,13 @@ interface LoginStreak {
 export const checkAndUpdateLoginStreak = async (userId: string): Promise<number | null> => {
   if (!userId) {
     console.log('No userId provided to checkAndUpdateLoginStreak');
+    return null;
+  }
+  
+  // Check if bonus has already been shown in this session
+  const bonusShownToday = localStorage.getItem(BONUS_SHOWN_SESSION_KEY);
+  if (bonusShownToday === 'true') {
+    console.log('Login bonus already shown in this session');
     return null;
   }
   
@@ -50,6 +59,14 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     if (streakError) {
       console.error('Error checking login streak:', streakError);
+      return null;
+    }
+    
+    // If streak exists, check if user has already claimed bonus today
+    if (streakData && streakData.last_login_date === todayStr && streakData.bonus_claimed_today) {
+      console.log('User already claimed bonus today');
+      // Mark as shown in this session
+      localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
       return null;
     }
     
@@ -135,6 +152,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         // Award the bonus points locally if applicable
         if (bonusPoints > 0) {
           await awardBonusPoints(userId, bonusPoints);
+          // Mark as shown in this session
+          localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
         }
         return bonusPoints > 0 ? bonusPoints : null;
       }
@@ -144,6 +163,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       // Award the bonus points if applicable
       if (bonusPoints > 0) {
         await awardBonusPoints(userId, bonusPoints);
+        // Mark as shown in this session
+        localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
       }
       return bonusPoints > 0 ? bonusPoints : null;
     }
@@ -153,6 +174,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     // If streak exists, check if user has already claimed bonus today
     if (streakData.last_login_date === todayStr && streakData.bonus_claimed_today) {
       console.log('User already claimed bonus today');
+      // Mark as shown in this session
+      localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
       return null;
     }
     
@@ -225,6 +248,10 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     // Award the bonus points
     await awardBonusPoints(userId, bonusPoints);
+    
+    // Mark as shown in this session
+    localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
+    
     return bonusPoints;
   } catch (error) {
     console.error('Error in checkAndUpdateLoginStreak:', error);
@@ -353,4 +380,12 @@ export const getUserLoginStreak = async (userId: string): Promise<LoginStreak | 
     console.error('Error in getUserLoginStreak:', error);
     return null;
   }
+};
+
+/**
+ * Resets the session flag when the user logs out, so they can get a bonus next time they login
+ */
+export const resetLoginBonusSession = (): void => {
+  localStorage.removeItem(BONUS_SHOWN_SESSION_KEY);
+  console.log('Login bonus session flag reset');
 };

@@ -9,8 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import MD5 from 'crypto-js/md5';
-import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
-import LoginBonusPopup from '@/components/LoginBonusPopup';
 
 const UserLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -18,11 +16,6 @@ const UserLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  // Login bonus state
-  const [showBonusPopup, setShowBonusPopup] = useState(false);
-  const [bonusPoints, setBonusPoints] = useState(0);
-  const [streakDays, setStreakDays] = useState(1);
   
   // Function to hash password with MD5
   const hashPassword = (password: string): string => {
@@ -77,29 +70,17 @@ const UserLogin: React.FC = () => {
         successful: true
       });
       
-      // Check and update login streak - ensure this is awaited properly
-      console.log('Checking login streak for user ID:', userData.id);
-      const bonus = await checkAndUpdateLoginStreak(userData.id);
-      console.log('Login streak check returned bonus:', bonus);
+      // Login success toast
+      toast({
+        title: "Login successful!",
+        description: `Welcome back, ${userData.username}!`,
+      });
       
-      // If bonus points were awarded (first login of the day)
-      if (bonus !== null && bonus > 0) {
-        console.log(`User earned ${bonus} bonus points for logging in today`);
-        setBonusPoints(bonus);
-        setStreakDays(bonus); // Use actual bonus points as streak days
-        setShowBonusPopup(true);
-      } else {
-        // If no bonus (already claimed today), proceed to quiz page
-        toast({
-          title: "Login successful!",
-          description: `Welcome back, ${userData.username}!`,
-        });
-        
-        // Trigger points updated event
-        window.dispatchEvent(new Event('pointsUpdated'));
-        
-        navigate('/quiz');
-      }
+      // Trigger points updated event
+      window.dispatchEvent(new Event('pointsUpdated'));
+      
+      // Navigate to quiz page - login bonus is now handled in ProtectedRoute
+      navigate('/quiz');
     } catch (error) {
       console.error('Login error:', error);
       
@@ -122,85 +103,60 @@ const UserLogin: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  // Handle bonus popup close
-  const handleBonusPopupClose = () => {
-    setShowBonusPopup(false);
-    
-    toast({
-      title: "Login successful!",
-      description: `Welcome back, ${username}! You earned ${bonusPoints} bonus points.`,
-    });
-    
-    // Trigger points updated event
-    window.dispatchEvent(new Event('pointsUpdated'));
-    
-    navigate('/quiz');
-  };
   
   return (
-    <>
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>Log In</CardTitle>
-          <CardDescription>
-            Log in to your account to start earning points
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Log In"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <p className="text-sm text-muted-foreground text-center">
-            Don't have an account?{" "}
-            <a href="/register" className="text-primary hover:underline">
-              Create Account
-            </a>
-          </p>
-          <div className="text-center w-full">
-            <a href="/admin-login" className="text-xs text-muted-foreground hover:underline">
-              Admin Login
-            </a>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Log In</CardTitle>
+        <CardDescription>
+          Log in to your account to start earning points
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
+            />
           </div>
-        </CardFooter>
-      </Card>
-      
-      {/* Login Bonus Popup */}
-      <LoginBonusPopup
-        isOpen={showBonusPopup}
-        onClose={handleBonusPopupClose}
-        bonusPoints={bonusPoints}
-        streakDays={streakDays}
-      />
-    </>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Logging in..." : "Log In"}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="flex flex-col space-y-2">
+        <p className="text-sm text-muted-foreground text-center">
+          Don't have an account?{" "}
+          <a href="/register" className="text-primary hover:underline">
+            Create Account
+          </a>
+        </p>
+        <div className="text-center w-full">
+          <a href="/admin-login" className="text-xs text-muted-foreground hover:underline">
+            Admin Login
+          </a>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
 
