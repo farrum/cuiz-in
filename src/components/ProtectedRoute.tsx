@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
 import { useLoginActivity } from '@/hooks/useLoginActivity';
 import AuthRedirect from '@/components/AuthRedirect';
@@ -7,7 +7,8 @@ import AdminRouteGuard from '@/components/AdminRouteGuard';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import LoginBonusPopup from '@/components/LoginBonusPopup';
 import { useToast } from '@/hooks/use-toast';
-import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
+import { checkAndSuspendInactiveAccounts, reactivateUserAccount } from '@/utils/accountSuspension';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -34,6 +35,33 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     closeBonusPopup 
   } = useLoginActivity(userId, userName, isAuthenticated);
 
+  // Check if user's reactivation has been approved and apply it if needed
+  useEffect(() => {
+    const checkReactivationApproval = async () => {
+      if (isAuthenticated && localIsSuspended && userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('reactivation_approved')
+          .eq('id', userId)
+          .single();
+          
+        if (!error && data && data.reactivation_approved) {
+          // If approved, reactivate the account
+          const result = await reactivateUserAccount(userId);
+          if (result.success) {
+            setLocalIsSuspended(false);
+            toast({
+              title: "Account Reactivated",
+              description: "Your account has been reactivated by an administrator.",
+            });
+          }
+        }
+      }
+    };
+    
+    checkReactivationApproval();
+  }, [isAuthenticated, localIsSuspended, userId, toast]);
+
   // Show loading state
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
@@ -54,6 +82,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     });
   };
 
+  // Handle account reactivation from admin approval
+  const handleAccountReactivated = () => {
+    setLocalIsSuspended(false);
+  };
+
   return (
     <>
       {/* Auth redirect handling */}
@@ -71,7 +104,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         isAuthenticated={isAuthenticated}
         isSuspended={localIsSuspended}
         userRole={userRole}
-        onReactivated={() => setLocalIsSuspended(false)}
+        onReactivated={handleAccountReactivated}
       >
         {children}
       </SuspendedAccountHandler>

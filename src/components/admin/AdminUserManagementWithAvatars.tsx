@@ -9,11 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserRound, Ban, UserCheck, Edit, Trash, Award } from 'lucide-react';
+import { Search, UserRound, Ban, UserCheck, Edit, Trash, Award, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { getUserLoginStreak } from '@/services/loginStreakService';
+import { approveReactivationRequest } from '@/utils/accountSuspension';
 
 interface UserData {
   id: string;
@@ -25,7 +26,10 @@ interface UserData {
   profile_picture?: string;
   created_at: string;
   upi_id?: string;
-  login_streak?: number; // Added login_streak property
+  login_streak?: number;
+  reactivation_requested?: boolean;
+  reactivation_approved?: boolean;
+  reactivation_requested_at?: string;
 }
 
 const AdminUserManagementWithAvatars: React.FC = () => {
@@ -228,6 +232,38 @@ const AdminUserManagementWithAvatars: React.FC = () => {
     }
   };
 
+  const handleApproveReactivation = async (userId: string) => {
+    try {
+      const result = await approveReactivationRequest(userId);
+      
+      if (result.success) {
+        toast({
+          title: 'Success',
+          description: 'Reactivation request approved',
+        });
+        
+        setUsers(users.map(user => 
+          user.id === userId 
+            ? { ...user, reactivation_approved: true } 
+            : user
+        ));
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to approve reactivation request',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error approving reactivation:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const renderUserAvatar = (user: UserData) => {
     if (user.profile_picture) {
       if (user.profile_picture.startsWith('http')) {
@@ -356,17 +392,29 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     {user.suspended ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Suspended
-                      </span>
+                      user.reactivation_requested && !user.reactivation_approved ? (
+                        <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> Reactivation Requested
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">Suspended</Badge>
+                      )
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
+                      <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {user.suspended && user.reactivation_requested && !user.reactivation_approved && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() => handleApproveReactivation(user.id)}
+                        >
+                          <UserCheck className="h-4 w-4 mr-1" /> Approve
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" onClick={() => toggleUserSuspension(user)}>
                         {user.suspended ? <UserCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
                       </Button>
@@ -511,4 +559,3 @@ const AdminUserManagementWithAvatars: React.FC = () => {
 };
 
 export default AdminUserManagementWithAvatars;
-

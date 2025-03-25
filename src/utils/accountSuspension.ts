@@ -49,7 +49,11 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
         
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ suspended: true })
+          .update({ 
+            suspended: true, 
+            reactivation_requested: false,
+            reactivation_approved: false
+          })
           .eq('id', profile.id);
           
         if (updateError) {
@@ -67,7 +71,37 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
 };
 
 /**
- * Reactivates a suspended user account
+ * Marks a user's reactivation request as approved by an admin
+ * (Note: Does not actually reactivate the account, which happens in ProtectedRoute)
+ */
+export const approveReactivationRequest = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    if (!userId) {
+      return { success: false, error: 'No user ID provided' };
+    }
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        reactivation_approved: true,
+        reactivation_approved_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+      
+    if (error) {
+      console.error('Error approving reactivation request:', error);
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in approveReactivationRequest:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Fully reactivates a suspended user account, clearing all reactivation flags
  */
 export const reactivateUserAccount = async (userId: string): Promise<{ success: boolean; error?: string }> => {
   try {
@@ -77,7 +111,13 @@ export const reactivateUserAccount = async (userId: string): Promise<{ success: 
     
     const { error } = await supabase
       .from('profiles')
-      .update({ suspended: false })
+      .update({ 
+        suspended: false,
+        reactivation_requested: false,
+        reactivation_approved: false,
+        reactivation_requested_at: null,
+        reactivation_approved_at: null
+      })
       .eq('id', userId);
       
     if (error) {
