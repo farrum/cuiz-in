@@ -52,6 +52,17 @@ const UserLogin: React.FC = () => {
       }
       
       console.log('User authenticated successfully:', userData.id);
+
+      // Check if the account is suspended, but still allow login
+      // The ProtectedRoute component will handle showing the reactivation UI
+      if (userData.suspended) {
+        console.warn('User account is suspended:', userData.id);
+        toast({
+          title: "Account Suspended",
+          description: "Your account has been suspended due to inactivity. You'll need to reactivate it.",
+          variant: "warning"
+        });
+      }
       
       // Store user information in localStorage
       localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);

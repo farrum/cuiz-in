@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -6,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
 import LoginBonusPopup from '@/components/LoginBonusPopup';
+import AccountReactivation from '@/components/AccountReactivation';
+import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isSuspended, setIsSuspended] = useState<boolean>(false);
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
   const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
@@ -40,6 +42,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       // Check if we have a userId (custom auth)
       if (userId && userName) {
         console.log('User authenticated via custom auth:', userName);
+        
+        // Check if user is suspended
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('suspended')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (!profileError && profileData) {
+          setIsSuspended(profileData.suspended || false);
+        }
+        
         setIsAuthenticated(true);
         
         // Check user role
@@ -56,6 +70,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           console.log('No role found for user, assuming player role');
           setUserRole('player');
         }
+        
+        // Check for inactive accounts and suspend if needed
+        // We do this check whenever a user authenticates to keep the system updated
+        checkAndSuspendInactiveAccounts();
       } else {
         console.log('User not authenticated');
         setIsAuthenticated(false);
@@ -171,6 +189,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     })();
     
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Handle suspended account
+  if (isAuthenticated && isSuspended) {
+    // For admin routes, don't block access even if suspended
+    if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
+      return <>{children}</>;
+    }
+    
+    // For regular routes, show reactivation UI
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+        <AccountReactivation 
+          onReactivated={() => setIsSuspended(false)} 
+        />
+      </div>
+    );
   }
 
   // Handle popup close
