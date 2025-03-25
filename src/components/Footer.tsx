@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, SitemapIcon } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -65,7 +65,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <FileText className="w-4 h-4 mr-2" />
+                  <Map className="w-4 h-4 mr-2" />
                   Sitemap
                 </a>
               </li>
