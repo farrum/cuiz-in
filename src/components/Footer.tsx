@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, SitemapIcon } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -62,6 +62,12 @@ const Footer: React.FC = () => {
                   <Lock className="w-4 h-4 mr-2" />
                   Privacy Policy
                 </Link>
+              </li>
+              <li>
+                <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Sitemap
+                </a>
               </li>
             </ul>
           </div>
