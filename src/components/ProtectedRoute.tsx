@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { STORAGE_KEYS } from '@/utils/quizData';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+
+import React, { useState } from 'react';
+import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { useLoginActivity } from '@/hooks/useLoginActivity';
+import AuthRedirect from '@/components/AuthRedirect';
+import AdminRouteGuard from '@/components/AdminRouteGuard';
+import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import LoginBonusPopup from '@/components/LoginBonusPopup';
-import AccountReactivation from '@/components/AccountReactivation';
+import { useToast } from '@/hooks/use-toast';
 import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
 
 interface ProtectedRouteProps {
@@ -14,203 +15,38 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
-  const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isSuspended, setIsSuspended] = useState<boolean>(false);
-  const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-  const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-  const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  const { 
+    isAuthenticated, 
+    userRole, 
+    isSuspended, 
+    userId, 
+    userName, 
+    isAdminAuth 
+  } = useAuthCheck();
   
-  // Login bonus state
-  const [showBonusPopup, setShowBonusPopup] = useState(false);
-  const [bonusPoints, setBonusPoints] = useState(0);
-  const [streakDays, setStreakDays] = useState(1);
-  const [bonusChecked, setBonusChecked] = useState(false);
-
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      // First check if admin auth is present in localStorage
-      if (isAdminAuth && location.pathname.startsWith('/admin')) {
-        console.log('Admin authenticated via localStorage');
-        setIsAuthenticated(true);
-        setUserRole('admin');
-        return;
-      }
-      
-      // Check if we have a userId (custom auth)
-      if (userId && userName) {
-        console.log('User authenticated via custom auth:', userName);
-        
-        // Check if user is suspended
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('suspended')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        if (!profileError && profileData) {
-          setIsSuspended(profileData.suspended || false);
-        }
-        
-        setIsAuthenticated(true);
-        
-        // Check user role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        if (!roleError && roleData) {
-          setUserRole(roleData.role);
-          console.log('User role:', roleData.role);
-        } else {
-          console.log('No role found for user, assuming player role');
-          setUserRole('player');
-        }
-        
-        // Check for inactive accounts and suspend if needed
-        // We do this check whenever a user authenticates to keep the system updated
-        checkAndSuspendInactiveAccounts();
-      } else {
-        console.log('User not authenticated');
-        setIsAuthenticated(false);
-      }
-    };
-    
-    checkAuth();
-  }, [userId, userName, isAdminAuth, location.pathname]);
-
-  // Check access to admin routes
-  useEffect(() => {
-    if (isAuthenticated && location.pathname.startsWith('/admin')) {
-      // Allow access if user has admin auth in localStorage or has admin/team_leader role
-      if (!isAdminAuth && userRole !== 'admin' && userRole !== 'team_leader') {
-        toast({
-          title: "Access Denied",
-          description: "You don't have permission to access the admin area",
-          variant: "destructive"
-        });
-        
-        // Redirect non-admin users trying to access admin routes
-        window.location.href = '/';
-      }
-    }
-  }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
-
-  // Log login activity and check streak - this is the primary place to check for login streak
-  useEffect(() => {
-    const logLoginActivity = async () => {
-      if (!userName || !userId || bonusChecked) return;
-      
-      try {
-        // Log the login activity in Supabase
-        const device = navigator.userAgent;
-        
-        await supabase
-          .from('login_logs')
-          .insert({
-            username: userName,
-            ip_address: "client-side",
-            device: device,
-            login_time: new Date().toISOString(),
-            successful: true
-          });
-          
-        console.log('Login activity logged for user:', userName);
-        
-        // Check and update login streak - only do this once per session
-        const bonus = await checkAndUpdateLoginStreak(userId);
-        setBonusChecked(true);
-        
-        // If bonus points were awarded (first login of the day)
-        if (bonus !== null && bonus > 0) {
-          console.log(`User earned ${bonus} bonus points for logging in today`);
-          setBonusPoints(bonus);
-          setStreakDays(Math.min(bonus, 30)); // Streak days = bonus points (capped at 30)
-          setShowBonusPopup(true);
-        }
-      } catch (err) {
-        console.error('Failed to log login activity:', err);
-      }
-    };
-    
-    if (isAuthenticated === true) {
-      logLoginActivity();
-    }
-  }, [userName, userId, isAuthenticated, bonusChecked]);
-
-  // Show access denied toast
-  useEffect(() => {
-    if (isAuthenticated === false && !location.pathname.includes('/login')) {
-      toast({
-        title: "Access Denied",
-        description: "Please log in to access this page",
-        variant: "destructive"
-      });
-    }
-  }, [toast, isAuthenticated, location.pathname]);
+  const [localIsSuspended, setLocalIsSuspended] = useState(isSuspended);
+  
+  // Use the login activity hook to track logins and handle login streaks
+  const { 
+    showBonusPopup, 
+    bonusPoints, 
+    streakDays, 
+    closeBonusPopup 
+  } = useLoginActivity(userId, userName, isAuthenticated);
 
   // Show loading state
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
-  if (isAuthenticated === false && !location.pathname.includes('/login')) {
-    // Log the attempted access
-    const accessAttempt = {
-      date: new Date().toISOString(),
-      path: location.pathname,
-      type: 'access_denied'
-    };
-    
-    const accessLog = JSON.parse(localStorage.getItem('quiz_app_access_log') || '[]');
-    accessLog.push(accessAttempt);
-    localStorage.setItem('quiz_app_access_log', JSON.stringify(accessLog));
-    
-    // Also log the failed login attempt to Supabase
-    (async () => {
-      try {
-        await supabase
-          .from('login_logs')
-          .insert({
-            username: 'anonymous',
-            ip_address: 'client-side',
-            device: navigator.userAgent,
-            login_time: new Date().toISOString(),
-            successful: false
-          });
-      } catch (err) {
-        console.error('Failed to log failed access to Supabase:', err);
-      }
-    })();
-    
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // Handle suspended account
-  if (isAuthenticated && isSuspended) {
-    // For admin routes, don't block access even if suspended
-    if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
-      return <>{children}</>;
-    }
-    
-    // For regular routes, show reactivation UI
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <AccountReactivation 
-          onReactivated={() => setIsSuspended(false)} 
-        />
-      </div>
-    );
+  // Check for inactive accounts and suspend if needed when a user authenticates
+  if (isAuthenticated) {
+    checkAndSuspendInactiveAccounts();
   }
 
   // Handle popup close
   const handleBonusPopupClose = () => {
-    setShowBonusPopup(false);
+    closeBonusPopup();
     
     toast({
       title: "Login Bonus!",
@@ -220,7 +56,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   return (
     <>
-      {children}
+      {/* Auth redirect handling */}
+      <AuthRedirect isAuthenticated={isAuthenticated} />
+      
+      {/* Admin route access control */}
+      <AdminRouteGuard 
+        isAuthenticated={isAuthenticated} 
+        userRole={userRole} 
+        isAdminAuth={isAdminAuth} 
+      />
+      
+      {/* Account suspension handling */}
+      <SuspendedAccountHandler
+        isAuthenticated={isAuthenticated}
+        isSuspended={localIsSuspended}
+        userRole={userRole}
+        onReactivated={() => setLocalIsSuspended(false)}
+      >
+        {children}
+      </SuspendedAccountHandler>
       
       {/* Login Bonus Popup */}
       <LoginBonusPopup
