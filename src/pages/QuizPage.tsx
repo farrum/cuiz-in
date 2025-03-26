@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuizCard from '@/components/QuizCard';
@@ -20,7 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { getAllBadges } from '@/utils/badgeData';
-import { useAuthCheck } from '@/hooks/useAuthCheck';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -34,9 +31,7 @@ const QuizPage: React.FC = () => {
   const [showMotivation, setShowMotivation] = useState(false);
   const [motivationMessage, setMotivationMessage] = useState('');
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { isSuspended, userId } = useAuthCheck();
   
   useEffect(() => {
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
@@ -54,15 +49,17 @@ const QuizPage: React.FC = () => {
     loadNewQuestion();
     fetchPoints();
     updateNextBadgeThreshold(completedQuestions.length);
-  }, [isSuspended, navigate, userId]);
+  }, []);
   
   const updateNextBadgeThreshold = (currentAnsweredCount: number) => {
     const allBadges = getAllBadges();
     
+    // Filter to question-based badges
     const questionBadges = allBadges.filter(
       badge => badge.criteria.type === 'questions_answered'
     ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
     
+    // Find the next badge threshold
     for (const badge of questionBadges) {
       if (badge.criteria.threshold > currentAnsweredCount) {
         setNextBadgeThreshold(badge.criteria.threshold);
@@ -70,6 +67,7 @@ const QuizPage: React.FC = () => {
       }
     }
     
+    // If all badges are earned, use the highest threshold + 10
     if (questionBadges.length > 0) {
       const highestThreshold = Math.max(
         ...questionBadges.map(badge => badge.criteria.threshold)

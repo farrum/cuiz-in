@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import AccountReactivation from '@/components/AccountReactivation';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -79,53 +79,22 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     }
   };
 
-  // For admin routes, don't block access even if suspended
+  // Handle suspended account
   if (isAuthenticated && isSuspended) {
+    // For admin routes, don't block access even if suspended
     if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
       return <>{children}</>;
     }
     
-    // For essential pages like index, terms, etc. show overlay
-    if (location.pathname === '/' || 
-        location.pathname === '/login' || 
-        location.pathname === '/register' || 
-        location.pathname === '/terms' || 
-        location.pathname === '/privacy' || 
-        location.pathname === '/disclaimer' ||
-        location.pathname === '/how-to-play') {
-      return (
-        <div className="relative min-h-screen">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-            <AccountReactivation 
-              reactivationRequested={reactivationRequested}
-              reactivationApproved={reactivationApproved}
-              requestDate={requestDate}
-              onReactivationRequest={handleRequestReactivation}
-              onReactivated={onReactivated}
-            />
-          </div>
-          <div className="pointer-events-none opacity-20">
-            {children}
-          </div>
-        </div>
-      );
-    }
-    
-    // For all other routes (e.g., quiz, profile, etc.), show the overlay on top instead of redirecting
+    // For regular routes, show reactivation UI
     return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-          <AccountReactivation 
-            reactivationRequested={reactivationRequested}
-            reactivationApproved={reactivationApproved}
-            requestDate={requestDate}
-            onReactivationRequest={handleRequestReactivation}
-            onReactivated={onReactivated}
-          />
-        </div>
-        <div className="pointer-events-none opacity-20">
-          {children}
-        </div>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+        <AccountReactivation 
+          reactivationRequested={reactivationRequested}
+          reactivationApproved={reactivationApproved}
+          requestDate={requestDate}
+          onReactivationRequest={handleRequestReactivation}
+        />
       </div>
     );
   }
