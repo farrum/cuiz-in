@@ -14,8 +14,9 @@ import AdminBadgeManagement from './AdminBadgeManagement';
 import { RealtimeStatus } from './RealtimeStatus';
 import FunMessagesAdmin from './FunMessagesAdmin';
 import NewsTickerAdmin from './NewsTickerAdmin';
+import ReactivationRequestsPanel from './ReactivationRequestsPanel';
 import { Button } from '@/components/ui/button';
-import { LogOut, Megaphone } from 'lucide-react';
+import { LogOut, Megaphone, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
@@ -52,6 +53,10 @@ const AdminPage = () => {
           <TabsTrigger value="performers">Performance</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="ticker">News Ticker</TabsTrigger>
+          <TabsTrigger value="reactivations">
+            <UserCheck className="h-4 w-4 mr-1" />
+            Reactivations
+          </TabsTrigger>
           <TabsTrigger value="sync">Sync</TabsTrigger>
         </TabsList>
         
@@ -97,6 +102,10 @@ const AdminPage = () => {
         
         <TabsContent value="ticker" className="space-y-4">
           <NewsTickerAdmin />
+        </TabsContent>
+        
+        <TabsContent value="reactivations" className="space-y-4">
+          <ReactivationRequestsPanel />
         </TabsContent>
         
         <TabsContent value="sync" className="space-y-4">

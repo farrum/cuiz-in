@@ -90,10 +90,10 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
         <AccountReactivation 
-          onReactivationRequest={handleRequestReactivation}
           reactivationRequested={reactivationRequested}
           reactivationApproved={reactivationApproved}
           requestDate={requestDate}
+          onReactivationRequest={handleRequestReactivation}
         />
       </div>
     );
