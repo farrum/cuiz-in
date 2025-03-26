@@ -57,6 +57,10 @@ export const useAuthCheck = () => {
           
         const isSuspended = !profileError && profileData ? (profileData.suspended || false) : false;
         
+        if (isSuspended) {
+          console.log('User account is suspended:', userName);
+        }
+        
         // Check user role
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')

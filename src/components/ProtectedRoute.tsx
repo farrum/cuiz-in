@@ -27,13 +27,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   const [localIsSuspended, setLocalIsSuspended] = useState(isSuspended);
   
+  // Update local suspended state when the prop changes
+  useEffect(() => {
+    setLocalIsSuspended(isSuspended);
+  }, [isSuspended]);
+  
   // Use the login activity hook to track logins and handle login streaks
   const { 
     showBonusPopup, 
     bonusPoints, 
     streakDays, 
     closeBonusPopup 
-  } = useLoginActivity(userId, userName, isAuthenticated);
+  } = useLoginActivity(userId, userName, isAuthenticated && !localIsSuspended); // Only check login activity if not suspended
 
   // Check if user's reactivation has been approved and apply it if needed
   useEffect(() => {
@@ -109,13 +114,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         {children}
       </SuspendedAccountHandler>
       
-      {/* Login Bonus Popup */}
-      <LoginBonusPopup
-        isOpen={showBonusPopup}
-        onClose={handleBonusPopupClose}
-        bonusPoints={bonusPoints}
-        streakDays={streakDays}
-      />
+      {/* Login Bonus Popup - Only show if user is NOT suspended */}
+      {!localIsSuspended && (
+        <LoginBonusPopup
+          isOpen={showBonusPopup}
+          onClose={handleBonusPopupClose}
+          bonusPoints={bonusPoints}
+          streakDays={streakDays}
+        />
+      )}
     </>
   );
 };

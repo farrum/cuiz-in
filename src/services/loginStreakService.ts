@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { calculatePoints, logPointsForDay, logPointsForMonth } from '@/utils/quizData';
@@ -125,14 +126,14 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     // If this is the user's first login ever, create a new streak
     if (!streakData) {
       console.log('First login for user, creating new streak record');
-      const bonusPoints = consecutiveDays > 0 ? consecutiveDays : 0; // Points based on streak
+      const bonusPoints = consecutiveDays > 0 ? consecutiveDays : 1; // Minimum 1 point for first login
       
       const { data: newStreak, error: createError } = await supabase
         .from('login_streaks')
         .insert({
           user_id: userId,
-          current_streak: consecutiveDays,
-          highest_streak: consecutiveDays,
+          current_streak: consecutiveDays > 0 ? consecutiveDays : 1,
+          highest_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           last_login_date: todayStr,
           bonus_points_today: bonusPoints,
           bonus_claimed_today: bonusPoints > 0
@@ -144,8 +145,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         console.error('Error creating login streak:', createError);
         // Save locally if Supabase fails
         localStorage.setItem('quiz_app_login_streak', JSON.stringify({
-          current_streak: consecutiveDays,
-          highest_streak: consecutiveDays,
+          current_streak: consecutiveDays > 0 ? consecutiveDays : 1,
+          highest_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           last_login_date: todayStr
         }));
         
@@ -202,12 +203,15 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
     } else {
       // Streak broken (more than 1 day since last login)
+      // IMPORTANT: Always restart at 1, not at the calculated consecutiveDays
       newStreak = 1; // Reset streak to 1 (today)
       bonusPoints = 1; // First day gives 1 point
+      
+      console.log('Streak broken! Resetting to 1.');
     }
     
-    // Use the calculated consecutiveDays if it's valid and different
-    if (consecutiveDays > 0 && consecutiveDays !== newStreak) {
+    // Only use the calculated consecutiveDays if it's valid and different and we haven't broken the streak
+    if (diffDays <= 1 && consecutiveDays > 0 && consecutiveDays !== newStreak) {
       console.log('Using login logs consecutive days:', consecutiveDays, 'instead of calculated:', newStreak);
       newStreak = consecutiveDays;
       bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
