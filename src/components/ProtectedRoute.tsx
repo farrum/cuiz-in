@@ -82,7 +82,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     });
   };
 
-  // Handle account reactivation from admin approval
+  // Handle account reactivated from admin approval
   const handleAccountReactivated = () => {
     setLocalIsSuspended(false);
   };

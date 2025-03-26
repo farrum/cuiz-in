@@ -52,7 +52,9 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
           .update({ 
             suspended: true, 
             reactivation_requested: false,
-            reactivation_approved: false
+            reactivation_approved: false,
+            reactivation_requested_at: null,
+            reactivation_approved_at: null
           })
           .eq('id', profile.id);
           
@@ -72,7 +74,6 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
 
 /**
  * Marks a user's reactivation request as approved by an admin
- * (Note: Does not actually reactivate the account, which happens in ProtectedRoute)
  */
 export const approveReactivationRequest = async (userId: string): Promise<{ success: boolean; error?: string }> => {
   try {
@@ -128,6 +129,35 @@ export const reactivateUserAccount = async (userId: string): Promise<{ success: 
     return { success: true };
   } catch (error: any) {
     console.error('Error in reactivateUserAccount:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Denies a user's reactivation request
+ */
+export const denyReactivationRequest = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    if (!userId) {
+      return { success: false, error: 'No user ID provided' };
+    }
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        reactivation_requested: false,
+        reactivation_requested_at: null
+      })
+      .eq('id', userId);
+      
+    if (error) {
+      console.error('Error denying reactivation request:', error);
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in denyReactivationRequest:', error);
     return { success: false, error: error.message };
   }
 };

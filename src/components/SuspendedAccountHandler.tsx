@@ -23,6 +23,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
   const location = useLocation();
   const [reactivationRequested, setReactivationRequested] = useState(false);
   const [reactivationApproved, setReactivationApproved] = useState(false);
+  const [requestDate, setRequestDate] = useState<string | null>(null);
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   // Check if reactivation has been requested and/or approved
@@ -32,13 +33,14 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
         // Check if user has a pending reactivation request
         const { data: profileData, error } = await supabase
           .from('profiles')
-          .select('reactivation_requested, reactivation_approved')
+          .select('reactivation_requested, reactivation_approved, reactivation_requested_at')
           .eq('id', userId)
           .single();
 
         if (!error && profileData) {
           setReactivationRequested(profileData.reactivation_requested || false);
           setReactivationApproved(profileData.reactivation_approved || false);
+          setRequestDate(profileData.reactivation_requested_at);
           
           // If reactivation is approved, call onReactivated to update parent state
           if (profileData.reactivation_approved) {
@@ -51,6 +53,32 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     checkReactivationStatus();
   }, [isAuthenticated, isSuspended, userId, onReactivated]);
 
+  // Handle requesting reactivation
+  const handleRequestReactivation = async () => {
+    if (!userId) return;
+    
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          reactivation_requested: true,
+          reactivation_requested_at: now
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error requesting reactivation:', error);
+        return;
+      }
+
+      setReactivationRequested(true);
+      setRequestDate(now);
+    } catch (err) {
+      console.error('Failed to request reactivation:', err);
+    }
+  };
+
   // Handle suspended account
   if (isAuthenticated && isSuspended) {
     // For admin routes, don't block access even if suspended
@@ -62,9 +90,10 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
         <AccountReactivation 
-          onReactivated={onReactivated}
+          onReactivationRequest={handleRequestReactivation}
           reactivationRequested={reactivationRequested}
           reactivationApproved={reactivationApproved}
+          requestDate={requestDate}
         />
       </div>
     );

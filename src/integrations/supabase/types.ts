@@ -397,6 +397,10 @@ export type Database = {
           phone: string | null
           points: number | null
           profile_picture: string | null
+          reactivation_approved: boolean | null
+          reactivation_approved_at: string | null
+          reactivation_requested: boolean | null
+          reactivation_requested_at: string | null
           suspended: boolean | null
           upi_id: string | null
           username: string
@@ -410,6 +414,10 @@ export type Database = {
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
+          reactivation_approved?: boolean | null
+          reactivation_approved_at?: string | null
+          reactivation_requested?: boolean | null
+          reactivation_requested_at?: string | null
           suspended?: boolean | null
           upi_id?: string | null
           username: string
@@ -423,6 +431,10 @@ export type Database = {
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
+          reactivation_approved?: boolean | null
+          reactivation_approved_at?: string | null
+          reactivation_requested?: boolean | null
+          reactivation_requested_at?: string | null
           suspended?: boolean | null
           upi_id?: string | null
           username?: string
