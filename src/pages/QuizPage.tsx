@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -20,7 +21,6 @@ import { supabase } from '@/integrations/supabase/client';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { getAllBadges } from '@/utils/badgeData';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
-import AccountReactivation from '@/components/AccountReactivation';
 
 const QuizPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -34,18 +34,11 @@ const QuizPage: React.FC = () => {
   const [showMotivation, setShowMotivation] = useState(false);
   const [motivationMessage, setMotivationMessage] = useState('');
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
-  const [reactivationRequested, setReactivationRequested] = useState(false);
-  const [requestDate, setRequestDate] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSuspended, userId } = useAuthCheck();
   
   useEffect(() => {
-    if (isSuspended) {
-      navigate('/', { replace: true });
-      return;
-    }
-    
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
@@ -61,54 +54,7 @@ const QuizPage: React.FC = () => {
     loadNewQuestion();
     fetchPoints();
     updateNextBadgeThreshold(completedQuestions.length);
-    
-    if (userId) {
-      checkReactivationStatus(userId);
-    }
   }, [isSuspended, navigate, userId]);
-  
-  const checkReactivationStatus = async (userId: string) => {
-    const { data: profileData, error } = await supabase
-      .from('profiles')
-      .select('reactivation_requested, reactivation_requested_at')
-      .eq('id', userId)
-      .single();
-      
-    if (!error && profileData) {
-      setReactivationRequested(profileData.reactivation_requested || false);
-      setRequestDate(profileData.reactivation_requested_at);
-    }
-  };
-  
-  const handleRequestReactivation = async () => {
-    if (!userId) return;
-    
-    try {
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          reactivation_requested: true,
-          reactivation_requested_at: now
-        })
-        .eq('id', userId);
-
-      if (error) {
-        console.error('Error requesting reactivation:', error);
-        return;
-      }
-
-      setReactivationRequested(true);
-      setRequestDate(now);
-      
-      toast({
-        title: "Reactivation Requested",
-        description: "Your reactivation request has been sent. An administrator will review your request.",
-      });
-    } catch (err) {
-      console.error('Failed to request reactivation:', err);
-    }
-  };
   
   const updateNextBadgeThreshold = (currentAnsweredCount: number) => {
     const allBadges = getAllBadges();
@@ -255,18 +201,6 @@ const QuizPage: React.FC = () => {
       }, 5000);
     }
   }, [questionsAnswered]);
-  
-  if (isSuspended) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <AccountReactivation 
-          reactivationRequested={reactivationRequested}
-          requestDate={requestDate}
-          onReactivationRequest={handleRequestReactivation}
-        />
-      </div>
-    );
-  }
   
   return (
     <div className="min-h-screen flex flex-col bg-background">

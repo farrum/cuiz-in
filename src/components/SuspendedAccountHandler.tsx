@@ -85,7 +85,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       return <>{children}</>;
     }
     
-    // For essential pages like index, terms, etc. don't redirect but show overlay
+    // For essential pages like index, terms, etc. show overlay
     if (location.pathname === '/' || 
         location.pathname === '/login' || 
         location.pathname === '/register' || 
@@ -111,8 +111,23 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       );
     }
     
-    // For all other routes (e.g., quiz, profile, etc.), redirect to home
-    return <Navigate to="/" replace />;
+    // For all other routes (e.g., quiz, profile, etc.), show the overlay on top instead of redirecting
+    return (
+      <div className="relative min-h-screen">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+          <AccountReactivation 
+            reactivationRequested={reactivationRequested}
+            reactivationApproved={reactivationApproved}
+            requestDate={requestDate}
+            onReactivationRequest={handleRequestReactivation}
+            onReactivated={onReactivated}
+          />
+        </div>
+        <div className="pointer-events-none opacity-20">
+          {children}
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

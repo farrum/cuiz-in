@@ -56,6 +56,7 @@ export const useAuthCheck = () => {
           .maybeSingle();
           
         const isSuspended = !profileError && profileData ? (profileData.suspended || false) : false;
+        console.log('User suspended status:', isSuspended);
         
         // Check user role
         const { data: roleData, error: roleError } = await supabase
