@@ -134,7 +134,7 @@ export const reactivateUserAccount = async (userId: string): Promise<{ success: 
       .from('login_streaks')
       .update({
         current_streak: 1,
-        highest_streak: value => `GREATEST(highest_streak, 1)`,
+        highest_streak: 1, // Fixed: Using a number instead of a function
         bonus_points_today: 0,
         bonus_claimed_today: false,
         updated_at: now
