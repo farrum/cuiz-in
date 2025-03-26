@@ -8,15 +8,19 @@ import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface AccountReactivationProps {
-  onReactivated: () => void;
+  onReactivated?: () => void;
   reactivationRequested?: boolean;
   reactivationApproved?: boolean;
+  requestDate?: string | null;
+  onReactivationRequest?: () => Promise<void>;
 }
 
 const AccountReactivation: React.FC<AccountReactivationProps> = ({ 
-  onReactivated,
+  onReactivated = () => {},
   reactivationRequested = false,
-  reactivationApproved = false
+  reactivationApproved = false,
+  requestDate = null,
+  onReactivationRequest
 }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +28,12 @@ const AccountReactivation: React.FC<AccountReactivationProps> = ({
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   
   const handleRequestReactivation = async () => {
+    if (onReactivationRequest) {
+      await onReactivationRequest();
+      setRequestSent(true);
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -86,6 +96,16 @@ const AccountReactivation: React.FC<AccountReactivationProps> = ({
   
   // When reactivation request is pending
   if (requestSent) {
+    const requestDateFormatted = requestDate 
+      ? new Date(requestDate).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      : 'Recently';
+      
     return (
       <Card className="w-full max-w-md mx-auto shadow-lg border-orange-200">
         <CardHeader className="bg-orange-50">
@@ -102,6 +122,11 @@ const AccountReactivation: React.FC<AccountReactivationProps> = ({
             Your account is currently suspended. We've received your request to reactivate your account.
             An administrator will review your request and reactivate your account soon.
           </p>
+          {requestDate && (
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Request submitted: {requestDateFormatted}
+            </p>
+          )}
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
           <p className="text-sm text-muted-foreground italic">
