@@ -39,6 +39,32 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     
     console.log('Checking login streak for user:', userId, 'today:', todayStr);
     
+    // Check if user is suspended - if yes, we should reset streak
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('suspended, reactivation_approved, reactivation_approved_at')
+      .eq('id', userId)
+      .single();
+      
+    // If user was recently reactivated, reset their streak
+    let wasRecentlyReactivated = false;
+    
+    if (profileData && profileData.reactivation_approved) {
+      const reactivationDate = profileData.reactivation_approved_at ? 
+        new Date(profileData.reactivation_approved_at) : null;
+        
+      // If reactivation happened in the last 24 hours, reset streak
+      if (reactivationDate) {
+        const timeSinceReactivation = today.getTime() - reactivationDate.getTime();
+        const daysSinceReactivation = timeSinceReactivation / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceReactivation < 1) {
+          wasRecentlyReactivated = true;
+          console.log('User was recently reactivated, resetting streak');
+        }
+      }
+    }
+    
     // Fetch login logs to determine consecutive days
     const { data: loginLogs, error: logsError } = await supabase
       .from('login_logs')
@@ -61,13 +87,36 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       console.error('Error checking login streak:', streakError);
       return null;
     }
-    
-    // If streak exists, check if user has already claimed bonus today
-    if (streakData && streakData.last_login_date === todayStr && streakData.bonus_claimed_today) {
-      console.log('User already claimed bonus today');
-      // Mark as shown in this session
-      localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
-      return null;
+
+    // If user was recently reactivated, reset their streak
+    if (wasRecentlyReactivated && streakData) {
+      console.log('Resetting streak for recently reactivated user');
+      
+      // Update streak to 1 (starting fresh after reactivation)
+      const { error: resetError } = await supabase
+        .from('login_streaks')
+        .update({
+          current_streak: 1,
+          bonus_points_today: 1,
+          bonus_claimed_today: false,
+          last_login_date: todayStr,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+        
+      if (resetError) {
+        console.error('Error resetting streak after reactivation:', resetError);
+      } else {
+        console.log('Successfully reset streak to 1 after reactivation');
+        
+        // Award 1 point for first day of new streak
+        await awardBonusPoints(userId, 1);
+        
+        // Mark as shown in this session
+        localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
+        
+        return 1; // Return the 1 point bonus
+      }
     }
     
     // Process login logs to determine consecutive days

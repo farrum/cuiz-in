@@ -110,20 +110,40 @@ export const reactivateUserAccount = async (userId: string): Promise<{ success: 
       return { success: false, error: 'No user ID provided' };
     }
     
+    const now = new Date().toISOString();
+    
+    // Reactivate the account
     const { error } = await supabase
       .from('profiles')
       .update({ 
         suspended: false,
         reactivation_requested: false,
-        reactivation_approved: false,
+        reactivation_approved: true, // Set to true to mark that it was approved
         reactivation_requested_at: null,
-        reactivation_approved_at: null
+        reactivation_approved_at: now // Record when it was approved
       })
       .eq('id', userId);
       
     if (error) {
       console.error('Error reactivating account:', error);
       return { success: false, error: error.message };
+    }
+    
+    // Reset login streak to 1 when account is reactivated
+    const { error: streakError } = await supabase
+      .from('login_streaks')
+      .update({
+        current_streak: 1,
+        highest_streak: value => `GREATEST(highest_streak, 1)`,
+        bonus_points_today: 0,
+        bonus_claimed_today: false,
+        updated_at: now
+      })
+      .eq('user_id', userId);
+      
+    if (streakError) {
+      console.error('Error resetting login streak:', streakError);
+      // Don't fail the operation if streak reset fails
     }
     
     return { success: true };
