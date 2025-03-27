@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -38,7 +37,6 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
   const [adminName, setAdminName] = useState<string>('Admin');
 
-  // Fetch admin info on load
   useEffect(() => {
     const fetchAdminInfo = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -58,7 +56,6 @@ const AdminPage: React.FC = () => {
     fetchAdminInfo();
   }, []);
 
-  // Set the active tab based on the URL when component mounts or URL changes
   useEffect(() => {
     const path = location.pathname;
     let tab = 'users'; // default tab
@@ -77,7 +74,6 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/sync')) tab = 'sync';
     else if (path.includes('/requests')) tab = 'requests';
     else if (path === '/admin') {
-      // If just at /admin, redirect to /admin/users
       navigate('/admin/users', { replace: true });
       tab = 'users';
     }
@@ -85,20 +81,16 @@ const AdminPage: React.FC = () => {
     setActiveTab(tab);
   }, [location.pathname, navigate]);
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     navigate(`/admin/${value}`);
   };
 
-  // Handle logout
   const handleLogout = async () => {
     try {
-      // First clear local storage admin values
       localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_USERNAME);
       
-      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -122,14 +114,12 @@ const AdminPage: React.FC = () => {
         description: "An unexpected error occurred during logout",
         variant: "destructive"
       });
-      // Force navigation to login page as fallback
       navigate('/admin-login');
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
       <header className="border-b bg-card">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center space-x-4">
@@ -142,7 +132,6 @@ const AdminPage: React.FC = () => {
                 <NavigationMenuTrigger>
                   <Bell className="mr-1 h-4 w-4" />
                   Notifications
-                  {/* We'll add an unread count badge later */}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4">
