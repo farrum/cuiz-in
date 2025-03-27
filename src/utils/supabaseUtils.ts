@@ -36,7 +36,8 @@ export const adminNotificationsApi = {
         .order('created_at', { ascending: false });
         
       return { 
-        data: result.data as AdminNotification[] | null, 
+        // Using an explicit type cast to avoid TypeScript errors
+        data: result.data as unknown as AdminNotification[] | null, 
         error: result.error 
       };
     } catch (err) {
@@ -49,7 +50,7 @@ export const adminNotificationsApi = {
     try {
       const result = await safeSupabaseOperation
         .from('admin_notifications')
-        .update({ read: true })
+        .update({ read: true } as any)
         .eq('id', id);
         
       return { error: result.error };
@@ -63,7 +64,7 @@ export const adminNotificationsApi = {
     try {
       const result = await safeSupabaseOperation
         .from('admin_notifications')
-        .update({ read: true })
+        .update({ read: true } as any)
         .eq('read', false);
         
       return { error: result.error };
@@ -77,7 +78,7 @@ export const adminNotificationsApi = {
     try {
       const result = await safeSupabaseOperation
         .from('admin_notifications')
-        .insert(notification);
+        .insert(notification as any);
         
       return { error: result.error };
     } catch (err) {

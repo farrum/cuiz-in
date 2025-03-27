@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -46,12 +45,10 @@ const AdminPaymentsOverview: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Get users first
       const usersFromStorage = localStorage.getItem('admin_users');
       const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
       setUsers(loadedUsers);
       
-      // Fetch payments from Supabase
       const { data: supabasePayments, error } = await supabase
         .from('payments')
         .select('*')
@@ -65,16 +62,13 @@ const AdminPaymentsOverview: React.FC = () => {
           variant: "destructive"
         });
         
-        // Fall back to localStorage
         const paymentsFromStorage = localStorage.getItem('admin_payments');
         if (paymentsFromStorage) {
           setPayments(JSON.parse(paymentsFromStorage));
         } else {
-          // Generate and save mock data
           generateAndSaveMockPayments(loadedUsers);
         }
       } else if (supabasePayments && supabasePayments.length > 0) {
-        // Transform Supabase data to match our interface
         const transformedPayments: PaymentData[] = supabasePayments.map(payment => ({
           id: payment.id,
           userId: payment.user_id,
@@ -89,10 +83,8 @@ const AdminPaymentsOverview: React.FC = () => {
         
         setPayments(transformedPayments);
         
-        // Sync with localStorage for backward compatibility
         localStorage.setItem('admin_payments', JSON.stringify(transformedPayments));
         
-        // Mark any related notifications as read
         const pendingPaymentIds = supabasePayments
           .filter(p => p.status === 'pending')
           .map(p => p.user_id);
@@ -100,21 +92,18 @@ const AdminPaymentsOverview: React.FC = () => {
         if (pendingPaymentIds.length > 0) {
           await safeSupabaseOperation
             .from('admin_notifications')
-            .update({ read: true })
+            .update({ read: true } as any)
             .in('type', ['withdrawal_request', 'achievement_claim'])
             .in('user_id', pendingPaymentIds);
         }
       } else {
-        // No data in Supabase, check localStorage or generate mock data
         const paymentsFromStorage = localStorage.getItem('admin_payments');
         if (paymentsFromStorage) {
           const storedPayments = JSON.parse(paymentsFromStorage);
           setPayments(storedPayments);
           
-          // Sync localStorage data to Supabase
           await syncPaymentsToSupabase(storedPayments);
         } else {
-          // Generate mock data
           generateAndSaveMockPayments(loadedUsers);
         }
       }
@@ -134,7 +123,6 @@ const AdminPaymentsOverview: React.FC = () => {
     const mockPayments: PaymentData[] = [];
     
     loadedUsers.forEach((user: User) => {
-      // Add quiz earnings
       if (user.points > 0) {
         const quizEarnings = Math.floor(user.points / 100);
         if (quizEarnings > 0) {
@@ -152,7 +140,6 @@ const AdminPaymentsOverview: React.FC = () => {
         }
       }
       
-      // Add referral earnings (random for demo)
       if (Math.random() > 0.6) {
         mockPayments.push({
           id: `r-${user.id}-${Date.now()}`,
@@ -172,7 +159,6 @@ const AdminPaymentsOverview: React.FC = () => {
       setPayments(mockPayments);
       localStorage.setItem('admin_payments', JSON.stringify(mockPayments));
       
-      // Sync to Supabase
       await syncPaymentsToSupabase(mockPayments);
     }
   };
@@ -227,10 +213,8 @@ const AdminPaymentsOverview: React.FC = () => {
   
   const markAsPaid = async (paymentId: string) => {
     try {
-      // Generate transaction ID
       const transactionId = Math.random().toString(36).substring(7).toUpperCase();
       
-      // Update payment in Supabase
       const { error } = await supabase
         .from('payments')
         .update({
@@ -249,7 +233,6 @@ const AdminPaymentsOverview: React.FC = () => {
         return;
       }
       
-      // Update local state
       const updatedPayments = payments.map(payment => {
         if (payment.id === paymentId) {
           return {
@@ -263,7 +246,6 @@ const AdminPaymentsOverview: React.FC = () => {
       
       setPayments(updatedPayments);
       
-      // Update localStorage for backward compatibility
       localStorage.setItem('admin_payments', JSON.stringify(updatedPayments));
       
       toast({
