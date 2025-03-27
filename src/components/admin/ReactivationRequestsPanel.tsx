@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +44,16 @@ const ReactivationRequestsPanel: React.FC = () => {
         
         setPendingRequests(pending);
         setApprovedRequests(approved);
+        
+        // Also mark any related notifications as read
+        if (pending.length > 0) {
+          const userIds = pending.map(request => request.id);
+          await supabase
+            .from('admin_notifications')
+            .update({ read: true })
+            .eq('type', 'reactivation_request')
+            .in('user_id', userIds);
+        }
       }
     } catch (error) {
       console.error('Error loading reactivation requests:', error);

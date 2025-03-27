@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AccountReactivation from '@/components/AccountReactivation';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { useToast } from '@/hooks/use-toast';
 
 interface SuspendedAccountHandlerProps {
   isAuthenticated: boolean | null;
@@ -22,6 +23,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [reactivationRequested, setReactivationRequested] = useState(false);
   const [reactivationApproved, setReactivationApproved] = useState(false);
   const [requestDate, setRequestDate] = useState<string | null>(null);
@@ -60,6 +62,18 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     
     try {
       const now = new Date().toISOString();
+      
+      // First create a notification for admins
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          type: 'reactivation_request',
+          message: `User has requested account reactivation`,
+          user_id: userId,
+          read: false
+        });
+      
+      // Then update the user's profile
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -70,13 +84,28 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
 
       if (error) {
         console.error('Error requesting reactivation:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit reactivation request. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
 
       setReactivationRequested(true);
       setRequestDate(now);
+      
+      toast({
+        title: "Request Submitted",
+        description: "Your account reactivation request has been submitted for review.",
+      });
     } catch (err) {
       console.error('Failed to request reactivation:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -88,12 +117,19 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
         return;
       }
       
-      // For game-related pages, redirect to home page
+      // For game-related pages, redirect to profile page
       if (location.pathname === '/quiz' || location.pathname.startsWith('/answer')) {
-        navigate('/', { replace: true });
+        navigate('/profile', { replace: true });
+        
+        // Show toast to explain the redirect
+        toast({
+          title: "Account Suspended",
+          description: "Your account is currently suspended. Please request reactivation from your profile page.",
+          variant: "destructive"
+        });
       }
     }
-  }, [isAuthenticated, isSuspended, location.pathname, navigate, userRole]);
+  }, [isAuthenticated, isSuspended, location.pathname, navigate, userRole, toast]);
 
   // Handle suspended account overlay
   if (isAuthenticated && isSuspended) {
@@ -102,7 +138,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       return <>{children}</>;
     }
     
-    // For game-related routes, show reactivation UI
+    // For all other routes, show reactivation UI
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
         <div className="w-full max-w-md p-4">

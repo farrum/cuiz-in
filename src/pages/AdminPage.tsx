@@ -139,13 +139,16 @@ const AdminPage: React.FC = () => {
                 <NavigationMenuTrigger>
                   <Bell className="mr-1 h-4 w-4" />
                   Notifications
+                  {/* We'll add an unread count badge later */}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[320px] gap-3 p-4">
+                  <ul className="grid w-[400px] gap-3 p-4">
                     <li className="row-span-3">
-                      <div className="text-sm text-muted-foreground">
-                        No new notifications
-                      </div>
+                      <NavigationMenuLink asChild>
+                        <div className="h-48 overflow-auto">
+                          <AdminNotifications />
+                        </div>
+                      </NavigationMenuLink>
                     </li>
                   </ul>
                 </NavigationMenuContent>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
@@ -157,6 +156,7 @@ const WithdrawalSection: React.FC = () => {
     
     // Add withdrawal to Supabase payments table
     try {
+      // First, create the payment record
       const { error } = await supabase
         .from('payments')
         .insert({
@@ -172,7 +172,28 @@ const WithdrawalSection: React.FC = () => {
         
       if (error) {
         console.error('Error creating payment record:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit withdrawal request. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
+      
+      // Then create an admin notification for the withdrawal request
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          type: 'withdrawal_request',
+          message: `New withdrawal request for ₹${amount.toFixed(2)}`,
+          user_id: userId,
+          data: { 
+            transaction_id: transactionId,
+            amount: amount,
+            method: paymentMethod
+          }
+        });
+        
     } catch (err) {
       console.error('Error creating payment record:', err);
     }
@@ -216,6 +237,7 @@ const WithdrawalSection: React.FC = () => {
     
     // Add withdrawal to Supabase payments table
     try {
+      // First, create the payment record
       const { error } = await supabase
         .from('payments')
         .insert({
@@ -231,7 +253,24 @@ const WithdrawalSection: React.FC = () => {
         
       if (error) {
         console.error('Error creating payment record:', error);
+        return;
       }
+      
+      // Then create an admin notification for the achievement reward claim
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          type: 'achievement_claim',
+          message: `Achievement reward claim for ₹${achievement.reward.toFixed(2)}`,
+          user_id: userId,
+          data: { 
+            transaction_id: transactionId,
+            amount: achievement.reward,
+            achievement_type: achievement.type,
+            achievement_month: achievement.month
+          }
+        });
+        
     } catch (err) {
       console.error('Error creating payment record:', err);
     }

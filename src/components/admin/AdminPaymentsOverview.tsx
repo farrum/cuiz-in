@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -40,87 +39,94 @@ const AdminPaymentsOverview: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Load payments and users from Supabase or localStorage
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+  const fetchData = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Get users first
+      const usersFromStorage = localStorage.getItem('admin_users');
+      const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
+      setUsers(loadedUsers);
       
-      try {
-        // Get users first
-        const usersFromStorage = localStorage.getItem('admin_users');
-        const loadedUsers = usersFromStorage ? JSON.parse(usersFromStorage) : [];
-        setUsers(loadedUsers);
+      // Fetch payments from Supabase
+      const { data: supabasePayments, error } = await supabase
+        .from('payments')
+        .select('*')
+        .order('date', { ascending: false });
         
-        // Fetch payments from Supabase
-        const { data: supabasePayments, error } = await supabase
-          .from('payments')
-          .select('*')
-          .order('date', { ascending: false });
-          
-        if (error) {
-          console.error('Error fetching payments:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load payments from database",
-            variant: "destructive"
-          });
-          
-          // Fall back to localStorage
-          const paymentsFromStorage = localStorage.getItem('admin_payments');
-          if (paymentsFromStorage) {
-            setPayments(JSON.parse(paymentsFromStorage));
-          } else {
-            // Generate and save mock data
-            generateAndSaveMockPayments(loadedUsers);
-          }
-        } else if (supabasePayments && supabasePayments.length > 0) {
-          // Transform Supabase data to match our interface
-          const transformedPayments: PaymentData[] = supabasePayments.map(payment => ({
-            id: payment.id,
-            userId: payment.user_id,
-            userName: payment.username,
-            amount: Number(payment.amount),
-            type: payment.type as 'quiz' | 'referral',
-            status: payment.status as 'paid' | 'pending',
-            date: payment.date,
-            method: payment.method,
-            transactionId: payment.transaction_id
-          }));
-          
-          setPayments(transformedPayments);
-          
-          // Sync with localStorage for backward compatibility
-          localStorage.setItem('admin_payments', JSON.stringify(transformedPayments));
-        } else {
-          // No data in Supabase, check localStorage or generate mock data
-          const paymentsFromStorage = localStorage.getItem('admin_payments');
-          if (paymentsFromStorage) {
-            const storedPayments = JSON.parse(paymentsFromStorage);
-            setPayments(storedPayments);
-            
-            // Sync localStorage data to Supabase
-            await syncPaymentsToSupabase(storedPayments);
-          } else {
-            // Generate mock data
-            generateAndSaveMockPayments(loadedUsers);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch payments data:', err);
+      if (error) {
+        console.error('Error fetching payments:', error);
         toast({
           title: "Error",
-          description: "An error occurred while loading payments",
+          description: "Failed to load payments from database",
           variant: "destructive"
         });
-      } finally {
-        setIsLoading(false);
+        
+        // Fall back to localStorage
+        const paymentsFromStorage = localStorage.getItem('admin_payments');
+        if (paymentsFromStorage) {
+          setPayments(JSON.parse(paymentsFromStorage));
+        } else {
+          // Generate and save mock data
+          generateAndSaveMockPayments(loadedUsers);
+        }
+      } else if (supabasePayments && supabasePayments.length > 0) {
+        // Transform Supabase data to match our interface
+        const transformedPayments: PaymentData[] = supabasePayments.map(payment => ({
+          id: payment.id,
+          userId: payment.user_id,
+          userName: payment.username,
+          amount: Number(payment.amount),
+          type: payment.type as 'quiz' | 'referral',
+          status: payment.status as 'paid' | 'pending',
+          date: payment.date,
+          method: payment.method,
+          transactionId: payment.transaction_id
+        }));
+        
+        setPayments(transformedPayments);
+        
+        // Sync with localStorage for backward compatibility
+        localStorage.setItem('admin_payments', JSON.stringify(transformedPayments));
+        
+        // Mark any related notifications as read
+        const pendingPaymentIds = supabasePayments
+          .filter(p => p.status === 'pending')
+          .map(p => p.user_id);
+          
+        if (pendingPaymentIds.length > 0) {
+          await supabase
+            .from('admin_notifications')
+            .update({ read: true })
+            .in('type', ['withdrawal_request', 'achievement_claim'])
+            .in('user_id', pendingPaymentIds);
+        }
+      } else {
+        // No data in Supabase, check localStorage or generate mock data
+        const paymentsFromStorage = localStorage.getItem('admin_payments');
+        if (paymentsFromStorage) {
+          const storedPayments = JSON.parse(paymentsFromStorage);
+          setPayments(storedPayments);
+          
+          // Sync localStorage data to Supabase
+          await syncPaymentsToSupabase(storedPayments);
+        } else {
+          // Generate mock data
+          generateAndSaveMockPayments(loadedUsers);
+        }
       }
-    };
-    
-    fetchData();
-  }, [toast]);
+    } catch (err) {
+      console.error('Failed to fetch payments data:', err);
+      toast({
+        title: "Error",
+        description: "An error occurred while loading payments",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Generate mock payments and save to both localStorage and Supabase
   const generateAndSaveMockPayments = async (loadedUsers: User[]) => {
     const mockPayments: PaymentData[] = [];
     
@@ -168,7 +174,6 @@ const AdminPaymentsOverview: React.FC = () => {
     }
   };
   
-  // Sync payments from localStorage to Supabase
   const syncPaymentsToSupabase = async (payments: PaymentData[]) => {
     try {
       for (const payment of payments) {
@@ -195,14 +200,12 @@ const AdminPaymentsOverview: React.FC = () => {
     }
   };
   
-  // Filter payments based on search term
   const filteredPayments = payments.filter(payment => 
     payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (payment.transactionId && payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  // Calculate stats
   const totalPaid = payments
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
@@ -219,7 +222,6 @@ const AdminPaymentsOverview: React.FC = () => {
     .filter(p => p.type === 'referral')
     .reduce((sum, p) => sum + p.amount, 0);
   
-  // Mark payment as paid and update Supabase
   const markAsPaid = async (paymentId: string) => {
     try {
       // Generate transaction ID
