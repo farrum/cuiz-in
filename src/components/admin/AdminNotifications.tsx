@@ -5,40 +5,37 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Bell, CheckCircle, UserCheck, AlertCircle, Wallet } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
-import { safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch notifications
   const fetchNotifications = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .select('*')
-        .order('created_at', { ascending: false }) as { data: AdminNotification[] | null, error: any };
+      const { data, error } = await adminNotificationsApi.getAll();
         
       if (error) {
         console.error('Error fetching notifications:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load notifications',
-          variant: 'destructive',
-        });
+        setError('Failed to load notifications. Please try again.');
         setNotifications([]);
       } else if (data) {
-        setNotifications(data);
+        setNotifications(data as AdminNotification[]);
         setUnreadCount(data.filter(n => !n.read).length);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setError('An unexpected error occurred while loading notifications.');
       setNotifications([]);
     } finally {
       setIsLoading(false);
@@ -51,7 +48,7 @@ const AdminNotifications: React.FC = () => {
     
     // Set up realtime subscription for new notifications
     try {
-      const channel = safeSupabaseOperation.createChannel('admin_notification_changes')
+      const channel = adminNotificationsApi.createChannel('admin_notification_changes')
         .on(
           'postgres_changes',
           {
@@ -74,7 +71,9 @@ const AdminNotifications: React.FC = () => {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        import('@/integrations/supabase/client').then(({ supabase }) => {
+          supabase.removeChannel(channel);
+        });
       };
     } catch (error) {
       console.error('Error setting up realtime subscription:', error);
@@ -84,9 +83,7 @@ const AdminNotifications: React.FC = () => {
   // Mark notification as read
   const markAsRead = async (id: string) => {
     try {
-      const { error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .update({ read: true })
-        .eq('id', id) as { error: any };
+      const { error } = await adminNotificationsApi.markAsRead(id);
         
       if (error) {
         console.error('Error marking notification as read:', error);
@@ -104,9 +101,7 @@ const AdminNotifications: React.FC = () => {
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      const { error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .update({ read: true })
-        .eq('read', false) as { error: any };
+      const { error } = await adminNotificationsApi.markAllAsRead();
         
       if (error) {
         console.error('Error marking all notifications as read:', error);
@@ -187,6 +182,23 @@ const AdminNotifications: React.FC = () => {
               </Badge>
             </TabsTrigger>
           </TabsList>
+          
+          {error && (
+            <div className="p-4 mb-4 border border-red-200 bg-red-50 rounded-lg text-red-800">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                <p>{error}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2" 
+                onClick={fetchNotifications}
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
           
           <TabsContent value="all">
             {isLoading ? (

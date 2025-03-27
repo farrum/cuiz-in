@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { AdminNotification } from '@/types/adminNotification';
-import { safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 interface SuspendedAccountHandlerProps {
   isAuthenticated: boolean | null;
@@ -62,13 +62,12 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       const now = new Date().toISOString();
       
       try {
-        await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-          .insert({
-            type: 'reactivation_request',
-            message: `User has requested account reactivation`,
-            user_id: userId,
-            read: false
-          } as Partial<AdminNotification>);
+        await adminNotificationsApi.create({
+          type: 'reactivation_request',
+          message: `User has requested account reactivation`,
+          user_id: userId,
+          read: false
+        });
       } catch (err) {
         console.error('Error creating admin notification:', err);
         // Continue with the process even if notification fails

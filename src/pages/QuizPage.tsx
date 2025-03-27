@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -80,17 +79,33 @@ const QuizPage: React.FC = () => {
     checkSuspensionStatus();
   }, [navigate, toast]);
   
-  const loadInitialData = () => {
+  const loadInitialData = async () => {
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    if (!adsSynced) {
-      syncAdSlotsToLocal().then(() => {
+    try {
+      // Force reload ad slots from server to ensure latest ads are used
+      const { data: adSlots, error } = await supabase
+        .from('ad_slots')
+        .select('*')
+        .eq('active', true);
+        
+      if (!error && adSlots) {
+        console.log('Loaded ad slots:', adSlots.length);
+        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
         setAdsSynced(true);
-      });
+      } else {
+        console.error('Error fetching ad slots:', error);
+        await syncAdSlotsToLocal();
+        setAdsSynced(true);
+      }
+    } catch (err) {
+      console.error('Error syncing ad slots:', err);
+      await syncAdSlotsToLocal();
+      setAdsSynced(true);
     }
     
     loadNewQuestion();
@@ -269,7 +284,7 @@ const QuizPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
-        <AdvertisementBanner position="top" />
+        <AdvertisementBanner position="top" slotId="quiz-top" pageSection="quiz-page" />
         
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           <PointsDisplay animateUpdate className="flex-1" />
@@ -300,7 +315,7 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        <AdvertisementBanner position="middle" size="small" />
+        <AdvertisementBanner position="middle" size="small" slotId="quiz-middle-small" pageSection="quiz-page" />
         
         <div className="mb-6 mt-6">
           <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
@@ -324,7 +339,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        <AdvertisementBanner position="middle" />
+        <AdvertisementBanner position="middle" slotId="quiz-middle" pageSection="quiz-page" />
         
         {isLoading ? (
           <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
@@ -352,7 +367,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        <AdvertisementBanner position="bottom" />
+        <AdvertisementBanner position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
       </main>
       
       <Footer />
