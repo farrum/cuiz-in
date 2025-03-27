@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,7 @@ const AdminNotifications: React.FC = () => {
     setError(null);
     
     try {
+      console.log('Fetching notifications...');
       const { data, error } = await adminNotificationsApi.getAll();
         
       if (error) {
@@ -30,8 +30,9 @@ const AdminNotifications: React.FC = () => {
         setError('Failed to load notifications. Please try again.');
         setNotifications([]);
       } else if (data) {
-        setNotifications(data as unknown as AdminNotification[]);
-        setUnreadCount(data.filter((n: any) => !n.read).length);
+        console.log('Notifications fetched successfully:', data);
+        setNotifications(data as AdminNotification[]);
+        setUnreadCount(data.filter((n: AdminNotification) => !n.read).length);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -43,10 +44,13 @@ const AdminNotifications: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log('AdminNotifications component mounted');
     fetchNotifications();
     
     try {
+      console.log('Setting up realtime subscription for admin_notifications');
       const channel = adminNotificationsApi.subscribeToNotifications((newNotification) => {
+        console.log('New notification received in component:', newNotification);
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
         
@@ -57,6 +61,7 @@ const AdminNotifications: React.FC = () => {
       });
 
       return () => {
+        console.log('Cleaning up subscription');
         supabase.removeChannel(channel);
       };
     } catch (error) {
@@ -66,11 +71,13 @@ const AdminNotifications: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
+      console.log('Marking notification as read:', id);
       const { error } = await adminNotificationsApi.markAsRead(id);
         
       if (error) {
         console.error('Error marking notification as read:', error);
       } else {
+        console.log('Notification marked as read');
         setNotifications(prev => 
           prev.map(n => (n.id === id ? { ...n, read: true } : n))
         );
@@ -83,11 +90,13 @@ const AdminNotifications: React.FC = () => {
 
   const markAllAsRead = async () => {
     try {
+      console.log('Marking all notifications as read');
       const { error } = await adminNotificationsApi.markAllAsRead();
         
       if (error) {
         console.error('Error marking all notifications as read:', error);
       } else {
+        console.log('All notifications marked as read');
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
         

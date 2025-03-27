@@ -300,7 +300,12 @@ const AdminPaymentsOverview: React.FC = () => {
         read: false
       };
       
-      await adminNotificationsApi.create(notificationData);
+      const { error } = await adminNotificationsApi.create(notificationData);
+      if (error) {
+        console.error('Failed to create notification:', error);
+      } else {
+        console.log('Successfully created notification:', message);
+      }
     } catch (err) {
       console.error('Failed to send notification:', err);
     }

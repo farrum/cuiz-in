@@ -12,7 +12,8 @@ export const setupRealtimeSubscriptions = () => {
     'payments',
     'user_referrals',
     'ad_views',
-    'ad_clicks'
+    'ad_clicks',
+    'admin_notifications'  // Add this line
   ];
   
   console.log('Setting up realtime subscriptions for all tables...');

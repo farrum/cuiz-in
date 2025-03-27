@@ -9,11 +9,14 @@ import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotific
 export const adminNotificationsApi = {
   getAll: async () => {
     try {
-      // Use raw query with cast to avoid type issues
+      // Use raw query with explicit type casting to avoid TypeScript errors
       const { data, error } = await supabase
         .from('admin_notifications')
         .select('*')
-        .order('created_at', { ascending: false }) as any;
+        .order('created_at', { ascending: false }) as unknown as { 
+          data: AdminNotification[] | null, 
+          error: any 
+        };
         
       return { 
         data: data || [], 
@@ -27,11 +30,11 @@ export const adminNotificationsApi = {
   
   markAsRead: async (id: string) => {
     try {
-      // Use raw query with cast to avoid type issues
+      // Use raw query with explicit type casting to avoid TypeScript errors
       const { error } = await supabase
         .from('admin_notifications')
         .update({ read: true })
-        .eq('id', id) as any;
+        .eq('id', id) as unknown as { error: any };
         
       return { error };
     } catch (err) {
@@ -42,11 +45,11 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      // Use raw query with cast to avoid type issues
+      // Use raw query with explicit type casting to avoid TypeScript errors
       const { error } = await supabase
         .from('admin_notifications')
         .update({ read: true })
-        .eq('read', false) as any;
+        .eq('read', false) as unknown as { error: any };
         
       return { error };
     } catch (err) {
@@ -57,10 +60,10 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
-      // Use raw query with cast to avoid type issues
+      // Use raw query with explicit type casting to avoid TypeScript errors
       const { error } = await supabase
         .from('admin_notifications')
-        .insert([notification]) as any;
+        .insert([notification]) as unknown as { error: any };
         
       return { error };
     } catch (err) {
@@ -80,6 +83,7 @@ export const adminNotificationsApi = {
           table: 'admin_notifications',
         },
         (payload) => {
+          console.log('New notification received:', payload);
           callback(payload.new as AdminNotification);
         }
       )
@@ -102,7 +106,7 @@ export const safeSupabaseOperation = {
         const { error } = await supabase
           .from('admin_notifications')
           .update(data)
-          .eq('id', id) as any;
+          .eq('id', id) as unknown as { error: any };
           
         return { error };
       } catch (err) {

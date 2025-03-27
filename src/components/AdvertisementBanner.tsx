@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useId } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';

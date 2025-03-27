@@ -82,7 +82,8 @@ export function RealtimeStatus() {
     { table: 'quiz_answers', displayName: 'Quiz Answers' },
     { table: 'payments', displayName: 'Payments' },
     { table: 'user_referrals', displayName: 'Referrals' },
-    { table: 'news_ticker', displayName: 'News Ticker' }
+    { table: 'news_ticker', displayName: 'News Ticker' },
+    { table: 'admin_notifications', displayName: 'Admin Notifications' }
   ];
   
   const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(
@@ -94,13 +95,9 @@ export function RealtimeStatus() {
     }))
   );
 
-  // Set up realtime monitoring for each table
   tablesToMonitor.forEach((tableInfo, index) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isConnected, lastUpdate } = useSupabaseRealtime(tableInfo.table);
     
-    // Update table status when connection state or data changes
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       setTableStatuses(prev => {
         const newStatuses = [...prev];
