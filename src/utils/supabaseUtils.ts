@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AdminNotification } from '@/types/adminNotification';
+import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 
 /**
  * Helper function to perform Supabase operations on tables that might not be 
@@ -29,12 +29,16 @@ export const safeSupabaseOperation = {
 export const adminNotificationsApi = {
   getAll: async () => {
     try {
-      const { data, error } = await safeSupabaseOperation
-        .from<AdminNotification>('admin_notifications')
+      // Using a more direct approach to avoid type issues
+      const result = await supabase
+        .from('admin_notifications')
         .select('*')
         .order('created_at', { ascending: false });
         
-      return { data, error };
+      return { 
+        data: result.data as AdminNotification[] | null, 
+        error: result.error 
+      };
     } catch (err) {
       console.error('Error fetching notifications:', err);
       return { data: null, error: err };
@@ -43,12 +47,12 @@ export const adminNotificationsApi = {
   
   markAsRead: async (id: string) => {
     try {
-      const { error } = await safeSupabaseOperation
-        .from<AdminNotification>('admin_notifications')
+      const result = await supabase
+        .from('admin_notifications')
         .update({ read: true })
         .eq('id', id);
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error marking notification as read:', err);
       return { error: err };
@@ -57,28 +61,45 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      const { error } = await safeSupabaseOperation
-        .from<AdminNotification>('admin_notifications')
+      const result = await supabase
+        .from('admin_notifications')
         .update({ read: true })
         .eq('read', false);
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
       return { error: err };
     }
   },
   
-  create: async (notification: Partial<AdminNotification>) => {
+  create: async (notification: AdminNotificationInsert) => {
     try {
-      const { error } = await safeSupabaseOperation
-        .from<AdminNotification>('admin_notifications')
+      const result = await supabase
+        .from('admin_notifications')
         .insert(notification);
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error creating notification:', err);
       return { error: err };
     }
+  },
+
+  // Add a channel subscription for notifications
+  subscribeToNotifications: (callback: (notification: AdminNotification) => void) => {
+    return supabase.channel('admin_notification_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_notifications',
+        },
+        (payload) => {
+          callback(payload.new as AdminNotification);
+        }
+      )
+      .subscribe();
   }
 };

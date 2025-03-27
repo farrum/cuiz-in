@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AccountReactivation from '@/components/AccountReactivation';
@@ -60,12 +61,14 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       const now = new Date().toISOString();
       
       try {
-        await adminNotificationsApi.create({
-          type: 'reactivation_request',
+        const notificationData = {
+          type: 'reactivation_request' as const,
           message: `User has requested account reactivation`,
           user_id: userId,
           read: false
-        });
+        };
+        
+        await adminNotificationsApi.create(notificationData);
       } catch (err) {
         console.error('Error creating admin notification:', err);
         // Continue with the process even if notification fails

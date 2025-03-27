@@ -8,3 +8,12 @@ export interface AdminNotification {
   user_id: string | null;
   data?: any;
 }
+
+// Define the shape of what we send to the database
+export interface AdminNotificationInsert {
+  type: AdminNotification['type'];
+  message: string;
+  read: boolean;
+  user_id?: string | null;
+  data?: any;
+}

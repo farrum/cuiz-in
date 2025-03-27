@@ -7,7 +7,7 @@ import { Bell, CheckCircle, UserCheck, AlertCircle, Wallet } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
-import { adminNotificationsApi, safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminNotifications: React.FC = () => {
@@ -30,7 +30,7 @@ const AdminNotifications: React.FC = () => {
         setError('Failed to load notifications. Please try again.');
         setNotifications([]);
       } else if (data) {
-        setNotifications(data as AdminNotification[]);
+        setNotifications(data);
         setUnreadCount(data.filter(n => !n.read).length);
       }
     } catch (error) {
@@ -48,27 +48,17 @@ const AdminNotifications: React.FC = () => {
     
     // Set up realtime subscription for new notifications
     try {
-      const channel = safeSupabaseOperation.channel('admin_notification_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'admin_notifications',
-          },
-          (payload) => {
-            // Add the new notification to the list
-            setNotifications(prev => [payload.new as AdminNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
-            
-            // Show a toast notification
-            toast({
-              title: 'New Notification',
-              description: payload.new.message,
-            });
-          }
-        )
-        .subscribe();
+      const channel = adminNotificationsApi.subscribeToNotifications((newNotification) => {
+        // Add the new notification to the list
+        setNotifications(prev => [newNotification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+        
+        // Show a toast notification
+        toast({
+          title: 'New Notification',
+          description: newNotification.message,
+        });
+      });
 
       return () => {
         supabase.removeChannel(channel);

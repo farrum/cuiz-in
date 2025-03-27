@@ -13,8 +13,8 @@ import { Search, Wallet, PiggyBank, CreditCard, Check, Clock, Download, Loader }
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AdminNotification } from '@/types/adminNotification';
-import { safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 interface PaymentData {
   id: string;
@@ -97,7 +97,8 @@ const AdminPaymentsOverview: React.FC = () => {
           .map(p => p.user_id);
           
         if (pendingPaymentIds.length > 0) {
-          await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
+          await supabase
+            .from('admin_notifications')
             .update({ read: true })
             .in('type', ['withdrawal_request', 'achievement_claim'])
             .in('user_id', pendingPaymentIds);
@@ -200,7 +201,7 @@ const AdminPaymentsOverview: React.FC = () => {
       console.error('Failed to sync payments to Supabase:', err);
     }
   };
-  
+
   const filteredPayments = payments.filter(payment => 
     payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -309,24 +310,22 @@ const AdminPaymentsOverview: React.FC = () => {
 
   const sendNotification = async (userId: string, message: string) => {
     try {
-      const notificationData: Partial<AdminNotification> = {
+      const notificationData: AdminNotificationInsert = {
         type: 'withdrawal_request',
         message,
         user_id: userId,
         read: false
       };
       
-      const { error } = await safeSupabaseOperation
-        .from<AdminNotification>('admin_notifications')
-        .insert(notificationData);
-      
-      if (error) {
-        console.error('Error sending notification:', error);
-      }
+      await adminNotificationsApi.create(notificationData);
     } catch (err) {
       console.error('Failed to send notification:', err);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
