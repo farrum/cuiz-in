@@ -25,8 +25,9 @@ import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
 import { SyncSettings } from '@/components/admin/SyncSettings';
 import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import AdminNotifications from '@/components/admin/AdminNotifications';
+import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image } from 'lucide-react';
+import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
@@ -74,6 +75,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/ticker')) tab = 'ticker';
     else if (path.includes('/icons')) tab = 'icons';
     else if (path.includes('/sync')) tab = 'sync';
+    else if (path.includes('/requests')) tab = 'requests';
     else if (path === '/admin') {
       // If just at /admin, redirect to /admin/users
       navigate('/admin/users', { replace: true });
@@ -205,6 +207,10 @@ const AdminPage: React.FC = () => {
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="badges">Badges</TabsTrigger>
             <TabsTrigger value="quiz">Quiz</TabsTrigger>
+            <TabsTrigger value="requests">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              Requests
+            </TabsTrigger>
             <TabsTrigger value="reports">
               <BarChart className="w-4 h-4 mr-1" />
               Reports
@@ -246,6 +252,9 @@ const AdminPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="quiz">
             <QuizManagement />
+          </TabsContent>
+          <TabsContent value="requests">
+            <RequestsManagementPanel />
           </TabsContent>
           <TabsContent value="reports">
             <AdminReports />
