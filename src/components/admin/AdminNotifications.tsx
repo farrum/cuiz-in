@@ -110,31 +110,35 @@ const AdminNotifications: React.FC = () => {
     }
   };
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'reactivation_request':
+      case 'reactivation_approved':
+        return <UserCheck className="h-5 w-5 text-blue-500" />;
+      case 'withdrawal_request':
+      case 'achievement_claim':
+      case 'payment_approved':
+        return <Wallet className="h-5 w-5 text-green-500" />;
+      default:
+        return <Bell className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
   const handleNotificationAction = async (notification: AdminNotification) => {
     await markAsRead(notification.id);
     
     switch (notification.type) {
       case 'reactivation_request':
-        window.location.href = '/admin/users?tab=reactivation';
+      case 'reactivation_approved':
+        window.location.href = '/admin/requests?tab=reactivation';
         break;
       case 'withdrawal_request':
       case 'achievement_claim':
-        window.location.href = '/admin/payments';
+      case 'payment_approved':
+        window.location.href = '/admin/requests?tab=payment';
         break;
       default:
         break;
-    }
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'reactivation_request':
-        return <UserCheck className="h-5 w-5 text-blue-500" />;
-      case 'withdrawal_request':
-      case 'achievement_claim':
-        return <Wallet className="h-5 w-5 text-green-500" />;
-      default:
-        return <Bell className="h-5 w-5 text-gray-500" />;
     }
   };
 

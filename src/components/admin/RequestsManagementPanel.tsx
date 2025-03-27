@@ -108,7 +108,7 @@ const RequestsManagementPanel: React.FC = () => {
         
         // Create admin notification for approval
         await adminNotificationsApi.create({
-          type: 'reactivation_approved',
+          type: 'system',
           message: 'Reactivation request has been approved',
           read: false,
           data: { userId }
@@ -206,7 +206,7 @@ const RequestsManagementPanel: React.FC = () => {
       
       // Create admin notification for payment approval
       await adminNotificationsApi.create({
-        type: 'payment_approved',
+        type: 'system',
         message: 'Payment request has been approved',
         read: false,
         data: { paymentId }
