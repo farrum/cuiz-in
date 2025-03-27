@@ -172,17 +172,17 @@ const WithdrawalSection: React.FC = () => {
         return;
       }
       
-      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .insert({
-          type: 'withdrawal_request',
-          message: `New withdrawal request for ₹${amount.toFixed(2)}`,
-          user_id: userId,
-          data: { 
-            transaction_id: transactionId,
-            amount: amount,
-            method: paymentMethod
-          }
-        });
+      await safeSupabaseOperation.adminNotifications.insert({
+        type: 'withdrawal_request',
+        message: `New withdrawal request for ₹${amount.toFixed(2)}`,
+        user_id: userId,
+        read: false,
+        data: { 
+          transaction_id: transactionId,
+          amount: amount,
+          method: paymentMethod
+        }
+      });
         
     } catch (err) {
       console.error('Error creating payment record:', err);
@@ -239,18 +239,18 @@ const WithdrawalSection: React.FC = () => {
         return;
       }
       
-      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .insert({
-          type: 'achievement_claim',
-          message: `Achievement reward claim for ₹${achievement.reward.toFixed(2)}`,
-          user_id: userId,
-          data: { 
-            transaction_id: transactionId,
-            amount: achievement.reward,
-            achievement_type: achievement.type,
-            achievement_month: achievement.month
-          }
-        });
+      await safeSupabaseOperation.adminNotifications.insert({
+        type: 'achievement_claim',
+        message: `Achievement reward claim for ₹${achievement.reward.toFixed(2)}`,
+        user_id: userId,
+        read: false,
+        data: { 
+          transaction_id: transactionId,
+          amount: achievement.reward,
+          achievement_type: achievement.type,
+          achievement_month: achievement.month
+        }
+      });
         
     } catch (err) {
       console.error('Error creating payment record:', err);

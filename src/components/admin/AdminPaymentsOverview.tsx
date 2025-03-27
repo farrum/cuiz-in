@@ -14,7 +14,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AdminNotificationInsert } from '@/types/adminNotification';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
+import { adminNotificationsApi, safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 interface PaymentData {
   id: string;
@@ -92,7 +92,7 @@ const AdminPaymentsOverview: React.FC = () => {
         if (pendingPaymentIds.length > 0) {
           await supabase
             .from('admin_notifications')
-            .update({ read: true })
+            .update({ read: true } as any)
             .in('type', ['withdrawal_request', 'achievement_claim'])
             .in('user_id', pendingPaymentIds);
         }
@@ -300,7 +300,7 @@ const AdminPaymentsOverview: React.FC = () => {
         read: false
       };
       
-      await adminNotificationsApi.create(notificationData);
+      await safeSupabaseOperation.adminNotifications.insert(notificationData);
     } catch (err) {
       console.error('Failed to send notification:', err);
     }

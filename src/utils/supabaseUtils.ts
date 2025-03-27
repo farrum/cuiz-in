@@ -3,20 +3,61 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 
 /**
+ * A helper function to safely perform operations on tables that may not be fully 
+ * typed in the generated TypeScript definitions
+ */
+export const safeSupabaseOperation = {
+  /**
+   * Execute a raw query on the admin_notifications table
+   */
+  adminNotifications: {
+    insert: async (notification: AdminNotificationInsert) => {
+      try {
+        // Use a more direct approach with type assertions
+        const result = await supabase
+          .from('admin_notifications')
+          .insert([notification as any]);
+          
+        return { error: result.error };
+      } catch (err) {
+        console.error('Error in adminNotifications.insert:', err);
+        return { error: err };
+      }
+    },
+    
+    update: async (id: string, data: any) => {
+      try {
+        const result = await supabase
+          .from('admin_notifications')
+          .update(data)
+          .eq('id', id);
+          
+        return { error: result.error };
+      } catch (err) {
+        console.error('Error in adminNotifications.update:', err);
+        return { error: err };
+      }
+    },
+    
+    // Add other operations as needed
+  }
+};
+
+/**
  * Safely interact with the admin_notifications table without TypeScript errors
  */
 export const adminNotificationsApi = {
   getAll: async () => {
     try {
       // Use raw query approach to avoid type issues
-      const { data, error } = await supabase
+      const result = await supabase
         .from('admin_notifications')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any;
         
       return { 
-        data: data || [], 
-        error 
+        data: result.data || [], 
+        error: result.error 
       };
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -26,12 +67,12 @@ export const adminNotificationsApi = {
   
   markAsRead: async (id: string) => {
     try {
-      const { error } = await supabase
+      const result = await supabase
         .from('admin_notifications')
-        .update({ read: true })
+        .update({ read: true } as any)
         .eq('id', id);
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error marking notification as read:', err);
       return { error: err };
@@ -40,12 +81,12 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      const { error } = await supabase
+      const result = await supabase
         .from('admin_notifications')
-        .update({ read: true })
-        .eq('read', false);
+        .update({ read: true } as any)
+        .eq('read', false) as any;
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
       return { error: err };
@@ -54,11 +95,12 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
-      const { error } = await supabase
+      // Use direct method with type assertions to avoid TypeScript errors
+      const result = await supabase
         .from('admin_notifications')
-        .insert(notification);
+        .insert([notification as any]);
         
-      return { error };
+      return { error: result.error };
     } catch (err) {
       console.error('Error creating notification:', err);
       return { error: err };

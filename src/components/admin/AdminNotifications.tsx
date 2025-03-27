@@ -17,7 +17,6 @@ const AdminNotifications: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch notifications
   const fetchNotifications = async () => {
     setIsLoading(true);
     setError(null);
@@ -30,8 +29,8 @@ const AdminNotifications: React.FC = () => {
         setError('Failed to load notifications. Please try again.');
         setNotifications([]);
       } else if (data) {
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        setNotifications(data as unknown as AdminNotification[]);
+        setUnreadCount(data.filter((n: any) => !n.read).length);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -42,18 +41,14 @@ const AdminNotifications: React.FC = () => {
     }
   };
 
-  // Subscribe to realtime notifications
   useEffect(() => {
     fetchNotifications();
     
-    // Set up realtime subscription for new notifications
     try {
       const channel = adminNotificationsApi.subscribeToNotifications((newNotification) => {
-        // Add the new notification to the list
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
         
-        // Show a toast notification
         toast({
           title: 'New Notification',
           description: newNotification.message,
@@ -68,7 +63,6 @@ const AdminNotifications: React.FC = () => {
     }
   }, [toast]);
 
-  // Mark notification as read
   const markAsRead = async (id: string) => {
     try {
       const { error } = await adminNotificationsApi.markAsRead(id);
@@ -86,7 +80,6 @@ const AdminNotifications: React.FC = () => {
     }
   };
 
-  // Mark all as read
   const markAllAsRead = async () => {
     try {
       const { error } = await adminNotificationsApi.markAllAsRead();
@@ -107,7 +100,6 @@ const AdminNotifications: React.FC = () => {
     }
   };
 
-  // Navigate to the appropriate page based on notification type
   const handleNotificationAction = async (notification: AdminNotification) => {
     await markAsRead(notification.id);
     
@@ -124,7 +116,6 @@ const AdminNotifications: React.FC = () => {
     }
   };
 
-  // Get icon based on notification type
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'reactivation_request':
