@@ -14,7 +14,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AdminNotificationInsert } from '@/types/adminNotification';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
+import { adminNotificationsApi, safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 interface PaymentData {
   id: string;

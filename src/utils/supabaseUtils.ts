@@ -37,7 +37,7 @@ export const adminNotificationsApi = {
         
       return { 
         // Using an explicit type cast to avoid TypeScript errors
-        data: result.data as unknown as AdminNotification[] | null, 
+        data: (result.data || []) as unknown as AdminNotification[], 
         error: result.error 
       };
     } catch (err) {
@@ -76,6 +76,7 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
+      // Use type assertion to bypass TypeScript's type checking
       const result = await safeSupabaseOperation
         .from('admin_notifications')
         .insert(notification as any);
