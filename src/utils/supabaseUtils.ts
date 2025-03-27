@@ -30,7 +30,7 @@ export const adminNotificationsApi = {
   getAll: async () => {
     try {
       // Using a more direct approach to avoid type issues
-      const result = await supabase
+      const result = await safeSupabaseOperation
         .from('admin_notifications')
         .select('*')
         .order('created_at', { ascending: false });
@@ -47,7 +47,7 @@ export const adminNotificationsApi = {
   
   markAsRead: async (id: string) => {
     try {
-      const result = await supabase
+      const result = await safeSupabaseOperation
         .from('admin_notifications')
         .update({ read: true })
         .eq('id', id);
@@ -61,7 +61,7 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      const result = await supabase
+      const result = await safeSupabaseOperation
         .from('admin_notifications')
         .update({ read: true })
         .eq('read', false);
@@ -75,7 +75,7 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
-      const result = await supabase
+      const result = await safeSupabaseOperation
         .from('admin_notifications')
         .insert(notification);
         
@@ -88,7 +88,7 @@ export const adminNotificationsApi = {
 
   // Add a channel subscription for notifications
   subscribeToNotifications: (callback: (notification: AdminNotification) => void) => {
-    return supabase.channel('admin_notification_changes')
+    return safeSupabaseOperation.channel('admin_notification_changes')
       .on(
         'postgres_changes',
         {

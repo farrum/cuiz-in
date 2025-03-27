@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -13,8 +14,8 @@ import { Search, Wallet, PiggyBank, CreditCard, Check, Clock, Download, Loader }
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
+import { AdminNotificationInsert } from '@/types/adminNotification';
+import { adminNotificationsApi, safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 interface PaymentData {
   id: string;
@@ -97,7 +98,7 @@ const AdminPaymentsOverview: React.FC = () => {
           .map(p => p.user_id);
           
         if (pendingPaymentIds.length > 0) {
-          await supabase
+          await safeSupabaseOperation
             .from('admin_notifications')
             .update({ read: true })
             .in('type', ['withdrawal_request', 'achievement_claim'])
