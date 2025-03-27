@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AccountReactivation from '@/components/AccountReactivation';
@@ -60,13 +61,18 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     try {
       const now = new Date().toISOString();
       
-      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-        .insert({
-          type: 'reactivation_request',
-          message: `User has requested account reactivation`,
-          user_id: userId,
-          read: false
-        } as Partial<AdminNotification>);
+      try {
+        await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
+          .insert({
+            type: 'reactivation_request',
+            message: `User has requested account reactivation`,
+            user_id: userId,
+            read: false
+          } as Partial<AdminNotification>);
+      } catch (err) {
+        console.error('Error creating admin notification:', err);
+        // Continue with the process even if notification fails
+      }
       
       const { error } = await supabase
         .from('profiles')
@@ -105,11 +111,18 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
 
   useEffect(() => {
     if (isAuthenticated && isSuspended) {
+      // Allow admins and team leaders to access admin pages even when suspended
       if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
         return;
       }
       
-      if (location.pathname === '/quiz' || location.pathname.startsWith('/answer')) {
+      // Force redirect from quiz and answer pages to profile page
+      const restrictedPages = ['/quiz', '/answer'];
+      const isRestricted = restrictedPages.some(page => 
+        location.pathname === page || location.pathname.startsWith(page + '/')
+      );
+      
+      if (isRestricted) {
         navigate('/profile', { replace: true });
         
         toast({

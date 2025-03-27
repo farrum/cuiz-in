@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,12 +32,14 @@ const AdminNotifications: React.FC = () => {
           description: 'Failed to load notifications',
           variant: 'destructive',
         });
+        setNotifications([]);
       } else if (data) {
         setNotifications(data);
         setUnreadCount(data.filter(n => !n.read).length);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -47,31 +50,35 @@ const AdminNotifications: React.FC = () => {
     fetchNotifications();
     
     // Set up realtime subscription for new notifications
-    const channel = safeSupabaseOperation.createChannel('admin_notification_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'admin_notifications',
-        },
-        (payload) => {
-          // Add the new notification to the list
-          setNotifications(prev => [payload.new as AdminNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // Show a toast notification
-          toast({
-            title: 'New Notification',
-            description: payload.new.message,
-          });
-        }
-      )
-      .subscribe();
+    try {
+      const channel = safeSupabaseOperation.createChannel('admin_notification_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'admin_notifications',
+          },
+          (payload) => {
+            // Add the new notification to the list
+            setNotifications(prev => [payload.new as AdminNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // Show a toast notification
+            toast({
+              title: 'New Notification',
+              description: payload.new.message,
+            });
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (error) {
+      console.error('Error setting up realtime subscription:', error);
+    }
   }, [toast]);
 
   // Mark notification as read

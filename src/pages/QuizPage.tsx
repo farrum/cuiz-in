@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuizCard from '@/components/QuizCard';
@@ -20,6 +22,7 @@ import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { getAllBadges } from '@/utils/badgeData';
 
 const QuizPage: React.FC = () => {
+  const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [streak, setStreak] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
@@ -31,9 +34,53 @@ const QuizPage: React.FC = () => {
   const [showMotivation, setShowMotivation] = useState(false);
   const [motivationMessage, setMotivationMessage] = useState('');
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
+  const [isSuspended, setIsSuspended] = useState(false);
   const { toast } = useToast();
   
+  // Check if the user account is suspended
   useEffect(() => {
+    const checkSuspensionStatus = async () => {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!userId) {
+        navigate('/login');
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('suspended')
+          .eq('id', userId)
+          .single();
+          
+        if (error) {
+          console.error('Error checking suspension status:', error);
+          return;
+        }
+        
+        if (data && data.suspended) {
+          setIsSuspended(true);
+          navigate('/profile', { replace: true });
+          toast({
+            title: "Account Suspended",
+            description: "Your account is currently suspended. Please request reactivation from your profile page.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Only proceed with loading game content if user is not suspended
+        setIsSuspended(false);
+        loadInitialData();
+      } catch (error) {
+        console.error('Failed to check suspension status:', error);
+      }
+    };
+    
+    checkSuspensionStatus();
+  }, [navigate, toast]);
+  
+  const loadInitialData = () => {
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setUserPoints(savedPoints);
     
@@ -49,7 +96,7 @@ const QuizPage: React.FC = () => {
     loadNewQuestion();
     fetchPoints();
     updateNextBadgeThreshold(completedQuestions.length);
-  }, []);
+  };
   
   const updateNextBadgeThreshold = (currentAnsweredCount: number) => {
     const allBadges = getAllBadges();
@@ -121,13 +168,24 @@ const QuizPage: React.FC = () => {
       
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('points')
+        .select('points, suspended')
         .eq('id', userId)
         .single();
         
       if (profileData) {
         setUserPoints(Number(profileData.points));
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+        
+        // Check if suspension status has changed
+        if (profileData.suspended && !isSuspended) {
+          setIsSuspended(true);
+          navigate('/profile', { replace: true });
+          toast({
+            title: "Account Suspended",
+            description: "Your account is currently suspended. Please request reactivation from your profile page.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching points:', error);
@@ -199,6 +257,11 @@ const QuizPage: React.FC = () => {
       }, 5000);
     }
   }, [questionsAnswered]);
+  
+  // If the user is suspended, don't render the quiz content
+  if (isSuspended) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
