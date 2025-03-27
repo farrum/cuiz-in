@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { AdminNotification } from '@/types/adminNotification';
+import { safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 interface SuspendedAccountHandlerProps {
   isAuthenticated: boolean | null;
@@ -59,8 +60,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     try {
       const now = new Date().toISOString();
       
-      await supabase
-        .from('admin_notifications')
+      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .insert({
           type: 'reactivation_request',
           message: `User has requested account reactivation`,

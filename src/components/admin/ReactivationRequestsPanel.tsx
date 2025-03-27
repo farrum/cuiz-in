@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { approveReactivationRequest, denyReactivationRequest, reactivateUserAccount } from '@/utils/accountSuspension';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
+import { safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 interface ReactivationRequest {
   id: string;
@@ -45,8 +46,7 @@ const ReactivationRequestsPanel: React.FC = () => {
         
         if (pending.length > 0) {
           const userIds = pending.map(request => request.id);
-          await supabase
-            .from('admin_notifications')
+          await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
             .update({ read: true })
             .eq('type', 'reactivation_request')
             .in('user_id', userIds) as { error: any };

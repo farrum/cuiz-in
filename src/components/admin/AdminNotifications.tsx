@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
+import { safeSupabaseOperation } from '@/utils/supabaseUtils';
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -19,8 +20,7 @@ const AdminNotifications: React.FC = () => {
   const fetchNotifications = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('admin_notifications')
+      const { data, error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .select('*')
         .order('created_at', { ascending: false }) as { data: AdminNotification[] | null, error: any };
         
@@ -47,8 +47,7 @@ const AdminNotifications: React.FC = () => {
     fetchNotifications();
     
     // Set up realtime subscription for new notifications
-    const channel = supabase
-      .channel('admin_notification_changes')
+    const channel = safeSupabaseOperation.createChannel('admin_notification_changes')
       .on(
         'postgres_changes',
         {
@@ -78,8 +77,7 @@ const AdminNotifications: React.FC = () => {
   // Mark notification as read
   const markAsRead = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('admin_notifications')
+      const { error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .update({ read: true })
         .eq('id', id) as { error: any };
         
@@ -99,8 +97,7 @@ const AdminNotifications: React.FC = () => {
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      const { error } = await supabase
-        .from('admin_notifications')
+      const { error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .update({ read: true })
         .eq('read', false) as { error: any };
         

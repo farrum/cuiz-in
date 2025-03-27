@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { IndianRupee, ArrowUpCircle, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { AdminNotification } from '@/types/adminNotification';
 
 interface WithdrawalRequest {
   id: string;
@@ -40,28 +42,23 @@ const WithdrawalSection: React.FC = () => {
     const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setCashAvailable(calculateCashAmount(savedPoints));
     
-    // Set user ID and username
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || '';
     const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
     setUserId(userId);
     setUserName(userName);
     
-    // Load achievements
     const savedAchievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     setAchievements(savedAchievements);
     
-    // Get UPI ID from localStorage for payment method
     const upiId = localStorage.getItem('quiz_app_user_upi');
     if (upiId) {
       setPaymentMethod(upiId);
     }
     
-    // Fetch payment status updates from Supabase
     if (userId) {
       fetchPaymentUpdates(userId);
     }
     
-    // Set up interval to check payment status
     const intervalId = setInterval(() => {
       if (userId) {
         fetchPaymentUpdates(userId);
@@ -84,10 +81,8 @@ const WithdrawalSection: React.FC = () => {
       }
       
       if (data && data.length > 0) {
-        // Update local withdrawals with status from database
         const localWithdrawals = JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]');
         
-        // Map the withdrawals to include status updates from the database
         const updatedWithdrawals = localWithdrawals.map((withdrawal: WithdrawalRequest) => {
           const matchingPayment = data.find(p => p.transaction_id === withdrawal.id);
           if (matchingPayment) {
@@ -141,7 +136,6 @@ const WithdrawalSection: React.FC = () => {
     
     const transactionId = Date.now().toString();
     
-    // Create withdrawal request
     const newWithdrawal: WithdrawalRequest = {
       id: transactionId,
       amount,
@@ -154,9 +148,7 @@ const WithdrawalSection: React.FC = () => {
     setWithdrawals(updatedWithdrawals);
     localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
     
-    // Add withdrawal to Supabase payments table
     try {
-      // First, create the payment record
       const { error } = await supabase
         .from('payments')
         .insert({
@@ -180,9 +172,7 @@ const WithdrawalSection: React.FC = () => {
         return;
       }
       
-      // Then create an admin notification for the withdrawal request
-      await supabase
-        .from('admin_notifications')
+      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .insert({
           type: 'withdrawal_request',
           message: `New withdrawal request for ₹${amount.toFixed(2)}`,
@@ -198,19 +188,15 @@ const WithdrawalSection: React.FC = () => {
       console.error('Error creating payment record:', err);
     }
     
-    // Subtract points (only when withdrawal is confirmed in a real app)
-    const pointsToDeduct = amount * 1.5; // Updated to use 1.5 points = Rs. 1
+    const pointsToDeduct = amount * 1.5;
     const currentPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     const newPoints = currentPoints - pointsToDeduct;
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
     
-    // Update available cash
     setCashAvailable(calculateCashAmount(newPoints));
     
-    // Dispatch event to notify other components
     window.dispatchEvent(new Event('pointsUpdated'));
     
-    // Reset form
     setWithdrawalAmount('');
     
     toast({
@@ -222,7 +208,6 @@ const WithdrawalSection: React.FC = () => {
   const handleClaimAchievement = async (achievement: Achievement) => {
     const transactionId = Date.now().toString();
     
-    // Create a withdrawal request for the achievement reward
     const newWithdrawal: WithdrawalRequest = {
       id: transactionId,
       amount: achievement.reward,
@@ -235,9 +220,7 @@ const WithdrawalSection: React.FC = () => {
     setWithdrawals(updatedWithdrawals);
     localStorage.setItem('quiz_app_withdrawals', JSON.stringify(updatedWithdrawals));
     
-    // Add withdrawal to Supabase payments table
     try {
-      // First, create the payment record
       const { error } = await supabase
         .from('payments')
         .insert({
@@ -256,9 +239,7 @@ const WithdrawalSection: React.FC = () => {
         return;
       }
       
-      // Then create an admin notification for the achievement reward claim
-      await supabase
-        .from('admin_notifications')
+      await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
         .insert({
           type: 'achievement_claim',
           message: `Achievement reward claim for ₹${achievement.reward.toFixed(2)}`,
@@ -275,7 +256,6 @@ const WithdrawalSection: React.FC = () => {
       console.error('Error creating payment record:', err);
     }
     
-    // Mark achievement as claimed
     const updatedAchievements = achievements.map(a => 
       a.id === achievement.id ? { ...a, claimed: true } : a
     );
@@ -294,7 +274,6 @@ const WithdrawalSection: React.FC = () => {
     return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   };
   
-  // Filter unclaimed achievements
   const unclaimedAchievements = achievements.filter(a => !a.claimed);
 
   return (
@@ -309,7 +288,6 @@ const WithdrawalSection: React.FC = () => {
         </div>
       </div>
       
-      {/* Unclaimed Monthly Target Rewards */}
       {unclaimedAchievements.length > 0 && (
         <div className="mb-8">
           <h4 className="font-medium mb-3 flex items-center">
