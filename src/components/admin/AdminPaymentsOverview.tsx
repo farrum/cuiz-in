@@ -300,7 +300,7 @@ const AdminPaymentsOverview: React.FC = () => {
         read: false
       };
       
-      await safeSupabaseOperation.adminNotifications.insert(notificationData);
+      await adminNotificationsApi.create(notificationData);
     } catch (err) {
       console.error('Failed to send notification:', err);
     }
