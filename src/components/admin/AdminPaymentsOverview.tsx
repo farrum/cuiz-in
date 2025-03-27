@@ -13,6 +13,7 @@ import { Search, Wallet, PiggyBank, CreditCard, Check, Clock, Download, Loader }
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AdminNotification } from '@/types/adminNotification';
 
 interface PaymentData {
   id: string;
@@ -469,3 +470,18 @@ const AdminPaymentsOverview: React.FC = () => {
 };
 
 export default AdminPaymentsOverview;
+
+const sendNotification = async (userId: string, message: string) => {
+  const { error } = await supabase
+    .from('admin_notifications')
+    .insert({
+      type: 'withdrawal_request',
+      message,
+      user_id: userId,
+      read: false
+    } as Partial<AdminNotification>);
+  
+  if (error) {
+    console.error('Error sending notification:', error);
+  }
+};

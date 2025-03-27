@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +7,7 @@ import { Bell, CheckCircle, UserCheck, AlertCircle, Wallet } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
-
-interface AdminNotification {
-  id: string;
-  created_at: string;
-  type: 'reactivation_request' | 'withdrawal_request' | 'achievement_claim' | 'system';
-  message: string;
-  read: boolean;
-  user_id: string;
-  data: any;
-}
+import { AdminNotification } from '@/types/adminNotification';
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -32,7 +22,7 @@ const AdminNotifications: React.FC = () => {
       const { data, error } = await supabase
         .from('admin_notifications')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: AdminNotification[] | null, error: any };
         
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -91,7 +81,7 @@ const AdminNotifications: React.FC = () => {
       const { error } = await supabase
         .from('admin_notifications')
         .update({ read: true })
-        .eq('id', id);
+        .eq('id', id) as { error: any };
         
       if (error) {
         console.error('Error marking notification as read:', error);
@@ -112,7 +102,7 @@ const AdminNotifications: React.FC = () => {
       const { error } = await supabase
         .from('admin_notifications')
         .update({ read: true })
-        .eq('read', false);
+        .eq('read', false) as { error: any };
         
       if (error) {
         console.error('Error marking all notifications as read:', error);
@@ -132,18 +122,14 @@ const AdminNotifications: React.FC = () => {
 
   // Navigate to the appropriate page based on notification type
   const handleNotificationAction = async (notification: AdminNotification) => {
-    // Mark as read first
     await markAsRead(notification.id);
     
-    // Handle action based on type
     switch (notification.type) {
       case 'reactivation_request':
-        // Navigate to AdminUserManagement and scroll to reactivation requests
         window.location.href = '/admin/users?tab=reactivation';
         break;
       case 'withdrawal_request':
       case 'achievement_claim':
-        // Navigate to Payments tab
         window.location.href = '/admin/payments';
         break;
       default:

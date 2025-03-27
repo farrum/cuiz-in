@@ -24,6 +24,7 @@ import { QuizManagement } from '@/components/admin/quiz-management';
 import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
 import { SyncSettings } from '@/components/admin/SyncSettings';
 import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
+import AdminNotifications from '@/components/admin/AdminNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

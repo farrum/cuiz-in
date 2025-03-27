@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { approveReactivationRequest, denyReactivationRequest, reactivateUserAccount } from '@/utils/accountSuspension';
 import { format, formatDistanceToNow } from 'date-fns';
+import { AdminNotification } from '@/types/adminNotification';
 
 interface ReactivationRequest {
   id: string;
@@ -24,11 +25,9 @@ const ReactivationRequestsPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
-  // Load reactivation requests
   const loadReactivationRequests = async () => {
     setIsLoading(true);
     try {
-      // Fetch all users with reactivation_requested = true
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, display_name, reactivation_requested_at, reactivation_approved')
@@ -38,21 +37,19 @@ const ReactivationRequestsPanel: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        // Separate pending and approved requests
         const pending = data.filter(req => !req.reactivation_approved);
         const approved = data.filter(req => req.reactivation_approved);
         
         setPendingRequests(pending);
         setApprovedRequests(approved);
         
-        // Also mark any related notifications as read
         if (pending.length > 0) {
           const userIds = pending.map(request => request.id);
           await supabase
             .from('admin_notifications')
             .update({ read: true })
             .eq('type', 'reactivation_request')
-            .in('user_id', userIds);
+            .in('user_id', userIds) as { error: any };
         }
       }
     } catch (error) {
@@ -71,7 +68,6 @@ const ReactivationRequestsPanel: React.FC = () => {
     loadReactivationRequests();
   }, []);
   
-  // Handle approving a reactivation request
   const handleApprove = async (userId: string) => {
     try {
       const result = await approveReactivationRequest(userId);
@@ -99,7 +95,6 @@ const ReactivationRequestsPanel: React.FC = () => {
     }
   };
   
-  // Handle denying a reactivation request
   const handleDeny = async (userId: string) => {
     try {
       const result = await denyReactivationRequest(userId);
@@ -127,7 +122,6 @@ const ReactivationRequestsPanel: React.FC = () => {
     }
   };
   
-  // Handle fully reactivating a user account
   const handleReactivate = async (userId: string) => {
     try {
       const result = await reactivateUserAccount(userId);
@@ -155,7 +149,6 @@ const ReactivationRequestsPanel: React.FC = () => {
     }
   };
   
-  // Define columns for the pending requests table
   const pendingColumns = [
     {
       header: 'User',
@@ -217,7 +210,6 @@ const ReactivationRequestsPanel: React.FC = () => {
     }
   ];
   
-  // Define columns for the approved requests table
   const approvedColumns = [
     {
       header: 'User',

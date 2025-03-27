@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AccountReactivation from '@/components/AccountReactivation';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import { AdminNotification } from '@/types/adminNotification';
 
 interface SuspendedAccountHandlerProps {
   isAuthenticated: boolean | null;
@@ -29,11 +29,9 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
   const [requestDate, setRequestDate] = useState<string | null>(null);
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
-  // Check if reactivation has been requested and/or approved
   useEffect(() => {
     const checkReactivationStatus = async () => {
       if (isAuthenticated && isSuspended && userId) {
-        // Check if user has a pending reactivation request
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('reactivation_requested, reactivation_approved, reactivation_requested_at')
@@ -45,7 +43,6 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
           setReactivationApproved(profileData.reactivation_approved || false);
           setRequestDate(profileData.reactivation_requested_at);
           
-          // If reactivation is approved, call onReactivated to update parent state
           if (profileData.reactivation_approved) {
             onReactivated();
           }
@@ -56,14 +53,12 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     checkReactivationStatus();
   }, [isAuthenticated, isSuspended, userId, onReactivated]);
 
-  // Handle requesting reactivation
   const handleRequestReactivation = async () => {
     if (!userId) return;
     
     try {
       const now = new Date().toISOString();
       
-      // First create a notification for admins
       await supabase
         .from('admin_notifications')
         .insert({
@@ -71,9 +66,8 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
           message: `User has requested account reactivation`,
           user_id: userId,
           read: false
-        });
+        } as Partial<AdminNotification>);
       
-      // Then update the user's profile
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -109,19 +103,15 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     }
   };
 
-  // Redirect suspended users away from game-related pages
   useEffect(() => {
     if (isAuthenticated && isSuspended) {
-      // For admin routes, don't block access even if suspended
       if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
         return;
       }
       
-      // For game-related pages, redirect to profile page
       if (location.pathname === '/quiz' || location.pathname.startsWith('/answer')) {
         navigate('/profile', { replace: true });
         
-        // Show toast to explain the redirect
         toast({
           title: "Account Suspended",
           description: "Your account is currently suspended. Please request reactivation from your profile page.",
@@ -131,14 +121,11 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     }
   }, [isAuthenticated, isSuspended, location.pathname, navigate, userRole, toast]);
 
-  // Handle suspended account overlay
   if (isAuthenticated && isSuspended) {
-    // For admin routes, don't block access even if suspended
     if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
       return <>{children}</>;
     }
     
-    // For all other routes, show reactivation UI
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
         <div className="w-full max-w-md p-4">
