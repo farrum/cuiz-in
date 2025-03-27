@@ -3,57 +3,35 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 
 /**
- * Helper function to perform Supabase operations on tables that might not be 
- * in the generated TypeScript types
- */
-export const safeSupabaseOperation = {
-  /**
-   * Safely select from a table, with type assertion
-   */
-  from: <T = any>(table: string) => {
-    // @ts-ignore - We're deliberately bypassing TypeScript's type checking here
-    return supabase.from(table);
-  },
-  
-  /**
-   * Safely create a realtime channel subscription
-   */
-  channel: (channelName: string) => {
-    return supabase.channel(channelName);
-  }
-};
-
-/**
  * Safely interact with the admin_notifications table without TypeScript errors
  */
 export const adminNotificationsApi = {
   getAll: async () => {
     try {
-      // Using a more direct approach to avoid type issues
-      const result = await safeSupabaseOperation
+      // Use raw query approach to avoid type issues
+      const { data, error } = await supabase
         .from('admin_notifications')
         .select('*')
         .order('created_at', { ascending: false });
         
       return { 
-        // Using an explicit type cast to avoid TypeScript errors
-        data: (result.data || []) as unknown as AdminNotification[], 
-        error: result.error 
+        data: data || [], 
+        error 
       };
     } catch (err) {
       console.error('Error fetching notifications:', err);
-      return { data: null, error: err };
+      return { data: [], error: err };
     }
   },
   
   markAsRead: async (id: string) => {
     try {
-      const result = await safeSupabaseOperation
+      const { error } = await supabase
         .from('admin_notifications')
-        .update({ read: true } as any)
+        .update({ read: true })
         .eq('id', id);
         
-      return { error: result.error };
+      return { error };
     } catch (err) {
       console.error('Error marking notification as read:', err);
       return { error: err };
@@ -62,12 +40,12 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      const result = await safeSupabaseOperation
+      const { error } = await supabase
         .from('admin_notifications')
-        .update({ read: true } as any)
+        .update({ read: true })
         .eq('read', false);
         
-      return { error: result.error };
+      return { error };
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
       return { error: err };
@@ -76,12 +54,11 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
-      // Use type assertion to bypass TypeScript's type checking
-      const result = await safeSupabaseOperation
+      const { error } = await supabase
         .from('admin_notifications')
-        .insert(notification as any);
+        .insert(notification);
         
-      return { error: result.error };
+      return { error };
     } catch (err) {
       console.error('Error creating notification:', err);
       return { error: err };
@@ -90,7 +67,7 @@ export const adminNotificationsApi = {
 
   // Add a channel subscription for notifications
   subscribeToNotifications: (callback: (notification: AdminNotification) => void) => {
-    return safeSupabaseOperation.channel('admin_notification_changes')
+    return supabase.channel('admin_notification_changes')
       .on(
         'postgres_changes',
         {
