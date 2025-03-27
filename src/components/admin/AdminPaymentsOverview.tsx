@@ -307,6 +307,27 @@ const AdminPaymentsOverview: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const sendNotification = async (userId: string, message: string) => {
+    try {
+      const notificationData: Partial<AdminNotification> = {
+        type: 'withdrawal_request',
+        message,
+        user_id: userId,
+        read: false
+      };
+      
+      const { error } = await safeSupabaseOperation
+        .from<AdminNotification>('admin_notifications')
+        .insert(notificationData);
+      
+      if (error) {
+        console.error('Error sending notification:', error);
+      }
+    } catch (err) {
+      console.error('Failed to send notification:', err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -470,17 +491,3 @@ const AdminPaymentsOverview: React.FC = () => {
 };
 
 export default AdminPaymentsOverview;
-
-const sendNotification = async (userId: string, message: string) => {
-  const { error } = await safeSupabaseOperation.from<AdminNotification>('admin_notifications')
-    .insert({
-      type: 'withdrawal_request',
-      message,
-      user_id: userId,
-      read: false
-    } as Partial<AdminNotification>);
-  
-  if (error) {
-    console.error('Error sending notification:', error);
-  }
-};

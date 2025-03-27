@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { AdminNotification } from '@/types/adminNotification';
 
 /**
  * Helper function to perform Supabase operations on tables that might not be 
@@ -17,7 +18,7 @@ export const safeSupabaseOperation = {
   /**
    * Safely create a realtime channel subscription
    */
-  createChannel: (channelName: string) => {
+  channel: (channelName: string) => {
     return supabase.channel(channelName);
   }
 };
@@ -29,7 +30,7 @@ export const adminNotificationsApi = {
   getAll: async () => {
     try {
       const { data, error } = await safeSupabaseOperation
-        .from('admin_notifications')
+        .from<AdminNotification>('admin_notifications')
         .select('*')
         .order('created_at', { ascending: false });
         
@@ -43,7 +44,7 @@ export const adminNotificationsApi = {
   markAsRead: async (id: string) => {
     try {
       const { error } = await safeSupabaseOperation
-        .from('admin_notifications')
+        .from<AdminNotification>('admin_notifications')
         .update({ read: true })
         .eq('id', id);
         
@@ -57,7 +58,7 @@ export const adminNotificationsApi = {
   markAllAsRead: async () => {
     try {
       const { error } = await safeSupabaseOperation
-        .from('admin_notifications')
+        .from<AdminNotification>('admin_notifications')
         .update({ read: true })
         .eq('read', false);
         
@@ -68,10 +69,10 @@ export const adminNotificationsApi = {
     }
   },
   
-  create: async (notification: any) => {
+  create: async (notification: Partial<AdminNotification>) => {
     try {
       const { error } = await safeSupabaseOperation
-        .from('admin_notifications')
+        .from<AdminNotification>('admin_notifications')
         .insert(notification);
         
       return { error };

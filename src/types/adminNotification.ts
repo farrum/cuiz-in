@@ -6,5 +6,5 @@ export interface AdminNotification {
   message: string;
   read: boolean;
   user_id: string | null;
-  data: any;
+  data?: any;
 }

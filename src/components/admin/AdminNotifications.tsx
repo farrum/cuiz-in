@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,8 @@ import { Bell, CheckCircle, UserCheck, AlertCircle, Wallet } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
+import { adminNotificationsApi, safeSupabaseOperation } from '@/utils/supabaseUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -48,7 +48,7 @@ const AdminNotifications: React.FC = () => {
     
     // Set up realtime subscription for new notifications
     try {
-      const channel = adminNotificationsApi.createChannel('admin_notification_changes')
+      const channel = safeSupabaseOperation.channel('admin_notification_changes')
         .on(
           'postgres_changes',
           {
@@ -71,9 +71,7 @@ const AdminNotifications: React.FC = () => {
         .subscribe();
 
       return () => {
-        import('@/integrations/supabase/client').then(({ supabase }) => {
-          supabase.removeChannel(channel);
-        });
+        supabase.removeChannel(channel);
       };
     } catch (error) {
       console.error('Error setting up realtime subscription:', error);
