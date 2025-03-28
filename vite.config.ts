@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
       "/ads.txt": {
         target: "https://srv.adstxtmanager.com/19390/cuiz.in",
         changeOrigin: true,
-        rewrite: () => "",
+        rewrite: (path) => "",
       }
     },
   },
