@@ -9,14 +9,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    proxy: {
-      // Redirect /ads.txt to the AdsTxtManager URL
-      "/ads.txt": {
-        target: "https://srv.adstxtmanager.com/19390/cuiz.in",
-        changeOrigin: true,
-        rewrite: (path) => path, // Keep the path as "/ads.txt"
-      }
-    },
+    // Remove proxy for ads.txt as we're now using a direct meta refresh
   },
   plugins: [
     react(),
