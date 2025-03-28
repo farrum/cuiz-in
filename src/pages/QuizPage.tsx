@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -36,6 +37,28 @@ const QuizPage: React.FC = () => {
   const [isSuspended, setIsSuspended] = useState(false);
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const { toast } = useToast();
+  
+  // Define the missing updateNextBadgeThreshold function
+  const updateNextBadgeThreshold = (questionCount: number) => {
+    const allBadges = getAllBadges();
+    const questionBadges = allBadges.filter(badge => 
+      badge.criteria.type === 'questions_answered'
+    ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
+    
+    // Find the next badge threshold based on current question count
+    for (const badge of questionBadges) {
+      if (questionCount < badge.criteria.threshold) {
+        setNextBadgeThreshold(badge.criteria.threshold);
+        return;
+      }
+    }
+    
+    // If all badge thresholds are passed, use the highest one
+    if (questionBadges.length > 0) {
+      const highestThreshold = questionBadges[questionBadges.length - 1].criteria.threshold;
+      setNextBadgeThreshold(highestThreshold);
+    }
+  };
   
   // Check if the user account is suspended
   useEffect(() => {
