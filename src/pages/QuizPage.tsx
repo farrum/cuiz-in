@@ -34,6 +34,7 @@ const QuizPage: React.FC = () => {
   const [motivationMessage, setMotivationMessage] = useState('');
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const [isSuspended, setIsSuspended] = useState(false);
+  const [forceReloadAds, setForceReloadAds] = useState(0);
   const { toast } = useToast();
   
   // Check if the user account is suspended
@@ -87,6 +88,7 @@ const QuizPage: React.FC = () => {
     setQuestionsAnswered(completedQuestions.length);
     
     try {
+      console.log('Syncing ad slots from server...');
       // Force reload ad slots from server to ensure latest ads are used
       const { data: adSlots, error } = await supabase
         .from('ad_slots')
@@ -94,9 +96,15 @@ const QuizPage: React.FC = () => {
         .eq('active', true);
         
       if (!error && adSlots) {
-        console.log('Loaded ad slots:', adSlots.length);
+        console.log('Successfully loaded ad slots:', adSlots.length);
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
         setAdsSynced(true);
+        
+        // Force reload of ads
+        setForceReloadAds(prev => prev + 1);
+        
+        // Broadcast ad slots update
+        window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
       } else {
         console.error('Error fetching ad slots:', error);
         await syncAdSlotsToLocal();
@@ -110,40 +118,21 @@ const QuizPage: React.FC = () => {
     
     loadNewQuestion();
     fetchPoints();
-    updateNextBadgeThreshold(completedQuestions.length);
+    updateNextBadgeThreshold(JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]').length);
   };
   
-  const updateNextBadgeThreshold = (currentAnsweredCount: number) => {
-    const allBadges = getAllBadges();
-    
-    // Filter to question-based badges
-    const questionBadges = allBadges.filter(
-      badge => badge.criteria.type === 'questions_answered'
-    ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
-    
-    // Find the next badge threshold
-    for (const badge of questionBadges) {
-      if (badge.criteria.threshold > currentAnsweredCount) {
-        setNextBadgeThreshold(badge.criteria.threshold);
-        return;
-      }
-    }
-    
-    // If all badges are earned, use the highest threshold + 10
-    if (questionBadges.length > 0) {
-      const highestThreshold = Math.max(
-        ...questionBadges.map(badge => badge.criteria.threshold)
-      );
-      setNextBadgeThreshold(highestThreshold + 10);
-    }
-  };
-
+  // Listen for ad slot updates
   useEffect(() => {
-    if (!localStorage.getItem('ad_tracking_session_id')) {
-      const sessionId = crypto.randomUUID ? crypto.randomUUID() : 
-        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('ad_tracking_session_id', sessionId);
-    }
+    const handleAdSlotsUpdated = () => {
+      console.log('Ad slots updated, refreshing ad display...');
+      setForceReloadAds(prev => prev + 1);
+    };
+    
+    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    
+    return () => {
+      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    };
   }, []);
   
   const fetchPoints = async () => {
@@ -284,7 +273,7 @@ const QuizPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
-        <AdvertisementBanner position="top" slotId="quiz-top" pageSection="quiz-page" />
+        <AdvertisementBanner key={`top-ad-${forceReloadAds}`} position="top" slotId="quiz-top" pageSection="quiz-page" />
         
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           <PointsDisplay animateUpdate className="flex-1" />
@@ -315,7 +304,7 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        <AdvertisementBanner position="middle" size="small" slotId="quiz-middle-small" pageSection="quiz-page" />
+        <AdvertisementBanner key={`middle-small-ad-${forceReloadAds}`} position="middle" size="small" slotId="quiz-middle-small" pageSection="quiz-page" />
         
         <div className="mb-6 mt-6">
           <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
@@ -339,7 +328,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        <AdvertisementBanner position="middle" slotId="quiz-middle" pageSection="quiz-page" />
+        <AdvertisementBanner key={`middle-ad-${forceReloadAds}`} position="middle" slotId="quiz-middle" pageSection="quiz-page" />
         
         {isLoading ? (
           <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
@@ -367,7 +356,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        <AdvertisementBanner position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
+        <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
       </main>
       
       <Footer />

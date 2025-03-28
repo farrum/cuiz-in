@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useId } from 'react';
+
+import React, { useState, useEffect, useId, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useScriptExecution } from '@/hooks/useScriptExecution';
@@ -39,106 +40,103 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   // Use our custom hook to execute scripts in the ad content
   useScriptExecution(adContent, containerId);
   
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}`);
-        
-        // First try to get ads from Supabase
-        const { data: supabaseAds, error } = await supabase
-          .from('ad_slots')
-          .select('*')
-          .eq('position', position)
-          .eq('active', true);
-        
-        if (error) {
-          console.error('Error fetching ads from Supabase:', error);
-          fallbackToLocalStorage();
-          return;
-        }
-        
-        if (supabaseAds && supabaseAds.length > 0) {
-          // If Supabase has ads, use them
-          const randomIndex = Math.floor(Math.random() * supabaseAds.length);
-          const selectedAd = supabaseAds[randomIndex];
-          
-          console.log(`Ad selected from server: ${selectedAd.id} (${selectedAd.name})`);
-          setAdDebug(`Server ad: ${selectedAd.name}`);
-          
-          setTimeout(() => {
-            setAdContent(selectedAd.code);
-            setAdId(selectedAd.id);
-            setAdLoaded(true);
-            
-            // Track the ad impression
-            trackAdImpression(selectedAd.id);
-          }, 1000);
-          
-          setAdActive(true);
-        } else {
-          console.log('No active ads found in Supabase for position:', position);
-          fallbackToLocalStorage();
-        }
-      } catch (err) {
-        console.error('Error in ad fetching:', err);
-        fallbackToLocalStorage();
-      }
-    };
-    
-    const fallbackToLocalStorage = () => {
-      // Load ad slots from localStorage as fallback
-      const adSlotsJson = localStorage.getItem('quiz_app_ad_slots');
-      console.log('Falling back to localStorage ads');
+  const fetchAds = useCallback(async () => {
+    try {
+      console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}`);
+      setAdLoaded(false);
       
-      if (!adSlotsJson) {
-        console.log('No ad slots found in localStorage');
-        setAdActive(false);
+      // First try to get ads from Supabase
+      const { data: supabaseAds, error } = await supabase
+        .from('ad_slots')
+        .select('*')
+        .eq('position', position)
+        .eq('active', true);
+      
+      if (error) {
+        console.error('Error fetching ads from Supabase:', error);
+        fallbackToLocalStorage();
         return;
       }
       
-      try {
-        const adSlots = JSON.parse(adSlotsJson);
-        console.log(`Found ${adSlots.length} ad slots in localStorage`);
+      if (supabaseAds && supabaseAds.length > 0) {
+        // If Supabase has ads, use them
+        const randomIndex = Math.floor(Math.random() * supabaseAds.length);
+        const selectedAd = supabaseAds[randomIndex];
         
-        // Find a matching ad for this position
-        const matchingAds = adSlots.filter((ad: any) => 
-          ad.position === position && ad.active
-        );
+        console.log(`Ad selected from server: ${selectedAd.id} (${selectedAd.name})`);
+        setAdDebug(`Server ad: ${selectedAd.name}`);
         
-        console.log(`Found ${matchingAds.length} matching ads for position: ${position}`);
+        setTimeout(() => {
+          setAdContent(selectedAd.code);
+          setAdId(selectedAd.id);
+          setAdLoaded(true);
+          
+          // Track the ad impression
+          trackAdImpression(selectedAd.id);
+        }, 1000);
         
-        if (matchingAds.length > 0) {
-          // If multiple ads match the position, choose one randomly
-          const randomIndex = Math.floor(Math.random() * matchingAds.length);
-          const selectedAd = matchingAds[randomIndex];
+        setAdActive(true);
+      } else {
+        console.log('No active ads found in Supabase for position:', position);
+        fallbackToLocalStorage();
+      }
+    } catch (err) {
+      console.error('Error in ad fetching:', err);
+      fallbackToLocalStorage();
+    }
+  }, [position, slotId]);
+  
+  const fallbackToLocalStorage = useCallback(() => {
+    // Load ad slots from localStorage as fallback
+    const adSlotsJson = localStorage.getItem('quiz_app_ad_slots');
+    console.log('Falling back to localStorage ads');
+    
+    if (!adSlotsJson) {
+      console.log('No ad slots found in localStorage');
+      setAdActive(false);
+      return;
+    }
+    
+    try {
+      const adSlots = JSON.parse(adSlotsJson);
+      console.log(`Found ${adSlots.length} ad slots in localStorage`);
+      
+      // Find a matching ad for this position
+      const matchingAds = adSlots.filter((ad: any) => 
+        ad.position === position && ad.active
+      );
+      
+      console.log(`Found ${matchingAds.length} matching ads for position: ${position}`);
+      
+      if (matchingAds.length > 0) {
+        // If multiple ads match the position, choose one randomly
+        const randomIndex = Math.floor(Math.random() * matchingAds.length);
+        const selectedAd = matchingAds[randomIndex];
+        
+        console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
+        setAdDebug(`Local ad: ${selectedAd.name}`);
+        
+        // Simulate ad loading
+        setTimeout(() => {
+          setAdContent(selectedAd.code);
+          setAdId(selectedAd.id);
+          setAdLoaded(true);
           
-          console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
-          setAdDebug(`Local ad: ${selectedAd.name}`);
-          
-          // Simulate ad loading
-          setTimeout(() => {
-            setAdContent(selectedAd.code);
-            setAdId(selectedAd.id);
-            setAdLoaded(true);
-            
-            // Track the ad impression
-            trackAdImpression(selectedAd.id);
-          }, 1000);
-          
-          setAdActive(true);
-        } else {
-          // No matching ads or all are inactive
-          console.log('No matching active ads found for position:', position);
-          setAdActive(false);
-        }
-      } catch (error) {
-        console.error('Error parsing ad slots from localStorage:', error);
+          // Track the ad impression
+          trackAdImpression(selectedAd.id);
+        }, 1000);
+        
+        setAdActive(true);
+      } else {
+        // No matching ads or all are inactive
+        console.log('No matching active ads found for position:', position);
         setAdActive(false);
       }
-    };
-    
-    fetchAds();
-  }, [position, slotId]);
+    } catch (error) {
+      console.error('Error parsing ad slots from localStorage:', error);
+      setAdActive(false);
+    }
+  }, [position]);
 
   // Track ad impression when it's displayed
   const trackAdImpression = async (adSlotId: string) => {
@@ -195,6 +193,23 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       console.error('Error tracking ad click:', error);
     }
   };
+  
+  useEffect(() => {
+    // Initial fetch of ads
+    fetchAds();
+    
+    // Add listeners for ad slot updates
+    const handleAdSlotsUpdated = () => {
+      console.log('Ad slots updated, refreshing ad...');
+      fetchAds();
+    };
+    
+    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    
+    return () => {
+      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    };
+  }, [fetchAds]);
 
   if (!adActive) {
     console.log(`Ad not active for position: ${position}`);
@@ -249,7 +264,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           {process.env.NODE_ENV === 'development' && adDebug && (
             <p className="text-xs text-blue-500 mb-2 text-center">{adDebug}</p>
           )}
-          <div id={containerId}></div>
+          <div id={containerId} dangerouslySetInnerHTML={{ __html: adContent }}></div>
         </div>
       )}
     </div>

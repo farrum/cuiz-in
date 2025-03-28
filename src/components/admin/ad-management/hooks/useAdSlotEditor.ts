@@ -63,8 +63,12 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setAdSlots([...adSlots, data[0] as AdSlot]);
-          localStorage.setItem('quiz_app_ad_slots', JSON.stringify([...adSlots, data[0]]));
+          const updatedSlots = [...adSlots, data[0] as AdSlot];
+          setAdSlots(updatedSlots);
+          localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+          
+          // Dispatch event to notify other components of the update
+          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
           
           toast({
             title: "Ad Slot Created",
@@ -97,6 +101,9 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         
         setAdSlots(updatedSlots);
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
+        
+        // Dispatch event to notify other components of the update
+        window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
         
         toast({
           title: "Ad Slot Updated",

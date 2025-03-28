@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 export interface AdSlot {
   id: string;
@@ -17,9 +18,16 @@ export const useAdSlots = () => {
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Set up realtime subscription to ad_slots table
+  const { isConnected } = useSupabaseRealtime('ad_slots', {
+    updateLocalStorage: true,
+    showToasts: true
+  });
+  
   const fetchAdSlots = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching ad slots from database...');
       const { data, error } = await supabase
         .from('ad_slots')
         .select('*')
@@ -30,8 +38,12 @@ export const useAdSlots = () => {
       }
       
       if (data) {
+        console.log(`Successfully fetched ${data.length} ad slots`);
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
         setAdSlots(data as AdSlot[]);
+        
+        // Dispatch a custom event to notify other components that ad slots have been updated
+        window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: data }));
       }
     } catch (error) {
       console.error('Error fetching ad slots:', error);
@@ -77,6 +89,9 @@ export const useAdSlots = () => {
       setAdSlots(updatedSlots);
       localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
       
+      // Dispatch a custom event to notify other components that ad slots have been updated
+      window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
+      
       toast({
         title: "Ad Slot Updated",
         description: `The ad slot has been ${newActiveState ? 'activated' : 'deactivated'}.`,
@@ -93,7 +108,27 @@ export const useAdSlots = () => {
   
   useEffect(() => {
     fetchAdSlots();
+    
+    // Setup event listener for when ad slots are updated from elsewhere
+    const handleAdSlotsUpdated = () => {
+      console.log('Ad slots updated event detected, refreshing...');
+      fetchAdSlots();
+    };
+    
+    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    
+    return () => {
+      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    };
   }, []);
+  
+  // This effect refreshes ad slots when realtime connection status changes
+  useEffect(() => {
+    if (isConnected) {
+      console.log('Realtime connection established, refreshing ad slots...');
+      fetchAdSlots();
+    }
+  }, [isConnected]);
   
   return {
     adSlots,
