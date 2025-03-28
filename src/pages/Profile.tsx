@@ -9,7 +9,7 @@ import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
-import { UserCog, LogOut, Wallet, Copy, Target, Award, Trophy, Medal, UserCheck, Flame, CalendarIcon } from 'lucide-react';
+import { UserCog, LogOut, Wallet, Copy, Target, Award, Trophy, Medal, UserCheck, Flame, CalendarIcon, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getUserLoginStreak, resetLoginBonusSession } from '@/services/loginStreakService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ProfileEditor from '@/components/ProfileEditor';
+import RecentlyAnsweredQuestions from '@/components/RecentlyAnsweredQuestions';
 
 interface Achievement {
   id: string;
@@ -532,6 +533,17 @@ const Profile: React.FC = () => {
               pageSection="profile-content"
             />
             
+            <div className="glass rounded-2xl p-6 mb-8">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-medium">Recently Answered Questions</h3>
+              </div>
+              
+              <RecentlyAnsweredQuestions userId={userId} limit={5} />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <LeaderboardSection />
               
@@ -589,8 +601,9 @@ const Profile: React.FC = () => {
             )}
             
             <Tabs defaultValue="badges" className="w-full animate-fade-in">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsList className="grid w-full grid-cols-4 mb-8">
                 <TabsTrigger value="badges">All Badges</TabsTrigger>
+                <TabsTrigger value="history">Question History</TabsTrigger>
                 <TabsTrigger value="referrals">Referrals & Earnings</TabsTrigger>
                 <TabsTrigger value="withdraw">Withdraw Funds</TabsTrigger>
               </TabsList>
@@ -598,6 +611,12 @@ const Profile: React.FC = () => {
               <TabsContent value="badges" className="animate-fade-in">
                 <div className="glass rounded-2xl p-6">
                   <BadgesSection userId={userId} showProgress={true} />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="history" className="animate-fade-in">
+                <div className="glass rounded-2xl p-6">
+                  <RecentlyAnsweredQuestions userId={userId} limit={10} />
                 </div>
               </TabsContent>
               
