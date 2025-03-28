@@ -69,17 +69,48 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
       }
 
       // Transform data to AnsweredQuestion format
-      const formattedData: AnsweredQuestion[] = data.map(item => ({
-        id: item.id,
-        question: item.quiz_questions?.question || 'Question not available',
-        options: item.quiz_questions?.options || [],
-        correct_answer: item.quiz_questions?.correct_answer || '',
-        selected_answer: item.selected_answer,
-        answered_at: item.answered_at,
-        explanation: item.quiz_questions?.explanation || 'No explanation available',
-        category: item.quiz_questions?.category || 'General',
-        correct: item.correct
-      }));
+      const formattedData: AnsweredQuestion[] = data.map(item => {
+        // Convert options to string array regardless of what format it comes in
+        let parsedOptions: string[] = [];
+        
+        if (item.quiz_questions?.options) {
+          // Handle different possible formats
+          const options = item.quiz_questions.options;
+          
+          if (Array.isArray(options)) {
+            // If it's already an array, make sure all elements are strings
+            parsedOptions = options.map(opt => String(opt));
+          } else if (typeof options === 'object') {
+            // If it's an object, extract values
+            parsedOptions = Object.values(options).map(opt => String(opt));
+          } else if (typeof options === 'string') {
+            // If it's a JSON string, try to parse it
+            try {
+              const parsed = JSON.parse(options);
+              if (Array.isArray(parsed)) {
+                parsedOptions = parsed.map(opt => String(opt));
+              } else if (typeof parsed === 'object') {
+                parsedOptions = Object.values(parsed).map(opt => String(opt));
+              }
+            } catch {
+              // If parsing fails, use it as a single item array
+              parsedOptions = [String(options)];
+            }
+          }
+        }
+
+        return {
+          id: item.id,
+          question: item.quiz_questions?.question || 'Question not available',
+          options: parsedOptions,
+          correct_answer: item.quiz_questions?.correct_answer || '',
+          selected_answer: item.selected_answer,
+          answered_at: item.answered_at,
+          explanation: item.quiz_questions?.explanation || 'No explanation available',
+          category: item.quiz_questions?.category || 'General',
+          correct: item.correct
+        };
+      });
 
       setAnsweredQuestions(formattedData);
     } catch (err) {
