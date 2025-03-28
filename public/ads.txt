@@ -1,3 +1,3 @@
 
 # This file is redirected to https://srv.adstxtmanager.com/19390/cuiz.in
-# The actual content is managed via AdsTxtManager
+# Please do not modify this file directly as it is managed through AdsTxtManager
