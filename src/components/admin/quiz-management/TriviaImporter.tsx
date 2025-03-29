@@ -194,7 +194,7 @@ const TriviaImporter: React.FC<TriviaImporterProps> = ({ onSuccess, onCancel }) 
                 <SelectValue placeholder="Any Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Category</SelectItem>
+                <SelectItem value="any">Any Category</SelectItem>
                 {Object.entries(categories).map(([id, name]) => (
                   <SelectItem key={id} value={id}>{name}</SelectItem>
                 ))}
@@ -209,7 +209,7 @@ const TriviaImporter: React.FC<TriviaImporterProps> = ({ onSuccess, onCancel }) 
                 <SelectValue placeholder="Any Difficulty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Difficulty</SelectItem>
+                <SelectItem value="any">Any Difficulty</SelectItem>
                 <SelectItem value="easy">Easy</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="hard">Hard</SelectItem>
