@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,8 +26,9 @@ import { SyncSettings } from '@/components/admin/SyncSettings';
 import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
+import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle } from 'lucide-react';
+import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
@@ -35,6 +37,7 @@ const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('users');
+  const [activeQuizTab, setActiveQuizTab] = useState<string>('questions');
   const [adminName, setAdminName] = useState<string>('Admin');
 
   useEffect(() => {
@@ -65,7 +68,16 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/ads')) tab = 'ads';
     else if (path.includes('/payments')) tab = 'payments';
     else if (path.includes('/referrals')) tab = 'referrals';
-    else if (path.includes('/quiz')) tab = 'quiz';
+    else if (path.includes('/quiz')) {
+      tab = 'quiz';
+      
+      // Set active quiz sub-tab based on URL
+      if (path.includes('/quiz/challenges')) {
+        setActiveQuizTab('challenges');
+      } else {
+        setActiveQuizTab('questions');
+      }
+    }
     else if (path.includes('/badges')) tab = 'badges';
     else if (path.includes('/reports')) tab = 'reports';
     else if (path.includes('/messages')) tab = 'messages';
@@ -83,7 +95,17 @@ const AdminPage: React.FC = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    navigate(`/admin/${value}`);
+    
+    if (value === 'quiz') {
+      navigate(`/admin/${value}/${activeQuizTab}`);
+    } else {
+      navigate(`/admin/${value}`);
+    }
+  };
+
+  const handleQuizTabChange = (value: string) => {
+    setActiveQuizTab(value);
+    navigate(`/admin/quiz/${value}`);
   };
 
   const handleLogout = async () => {
@@ -240,7 +262,24 @@ const AdminPage: React.FC = () => {
             <AdminBadgeManagement />
           </TabsContent>
           <TabsContent value="quiz">
-            <QuizManagement />
+            <Tabs value={activeQuizTab} onValueChange={handleQuizTabChange} className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="questions">
+                  Questions
+                </TabsTrigger>
+                <TabsTrigger value="challenges">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  Daily Challenges
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="questions">
+                <QuizManagement />
+              </TabsContent>
+              <TabsContent value="challenges">
+                <AdminDailyChallenges />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
           <TabsContent value="requests">
             <RequestsManagementPanel />
