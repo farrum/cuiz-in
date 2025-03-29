@@ -14,7 +14,9 @@ export type RealtimeTable =
   | 'user_roles' 
   | 'news_ticker'
   | 'login_streaks'
-  | 'admin_notifications';  // Add admin_notifications to the list
+  | 'admin_notifications'
+  | 'daily_challenges'  // Add new table
+  | 'user_challenge_progress';  // Add new table
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
@@ -140,7 +142,9 @@ export function useSupabaseRealtime(
       user_roles: 'admin_user_roles',
       news_ticker: 'news_ticker',
       login_streaks: 'login_streaks',
-      admin_notifications: 'admin_notifications'  // Add mapping for admin_notifications
+      admin_notifications: 'admin_notifications',
+      daily_challenges: 'daily_challenges',  // Add mapping for daily challenges
+      user_challenge_progress: 'user_challenge_progress'  // Add mapping for challenge progress
     };
     
     return mapping[tableName] || tableName;

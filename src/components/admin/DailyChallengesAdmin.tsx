@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,37 +8,67 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Calendar as CalendarIcon, Plus, RefreshCw, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { DailyChallenge } from '@/types/challenges';
+import { challengesService } from '@/services/challengesService';
 import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
-// Types for the challenges
-interface DailyChallenge {
-  id: string;
-  title: string;
-  description: string | null;
-  num_questions: number;
-  points_multiplier: number;
-  question_ids: string[];
-  is_active: boolean;
-  start_date: string;
-  end_date: string;
-  created_at: string;
-  created_by: string;
+interface DateRangePickerProps {
+  date: { from: Date; to: Date | undefined };
+  setDate: (date: { from: Date; to: Date | undefined }) => void;
 }
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  category: string;
-}
+const DatePickerWithRange: React.FC<DateRangePickerProps> = ({ date, setDate }) => {
+  return (
+    <div className="grid gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id="date"
+            variant={"outline"}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
+                </>
+              ) : (
+                format(date.from, "LLL dd, y")
+              )
+            ) : (
+              <span>Pick a date range</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={{ from: date.from, to: date.to }}
+            onSelect={(selectedDate: any) => setDate(selectedDate)}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 const DailyChallengesAdmin: React.FC = () => {
   const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active');
@@ -56,7 +85,7 @@ const DailyChallengesAdmin: React.FC = () => {
   });
   
   // Set up realtime updates
-  const { lastUpdate } = useSupabaseRealtime('daily_challenges');
+  const { lastUpdate } = useSupabaseRealtime('daily_challenges' as any);
   
   // Fetch challenges and quiz questions
   useEffect(() => {
@@ -67,13 +96,8 @@ const DailyChallengesAdmin: React.FC = () => {
   const fetchChallenges = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('daily_challenges')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setChallenges(data || []);
+      const data = await challengesService.getAllChallenges();
+      setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
       toast({
@@ -149,11 +173,8 @@ const DailyChallengesAdmin: React.FC = () => {
         created_by: userData.user.id
       };
       
-      const { error } = await supabase
-        .from('daily_challenges')
-        .insert([newChallenge]);
-        
-      if (error) throw error;
+      const { success, error } = await challengesService.createChallenge(newChallenge);
+      if (!success) throw error;
       
       toast({
         title: 'Success',
@@ -182,12 +203,8 @@ const DailyChallengesAdmin: React.FC = () => {
   
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('daily_challenges')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
-        
-      if (error) throw error;
+      const { success, error } = await challengesService.toggleChallengeStatus(id, currentStatus);
+      if (!success) throw error;
       
       toast({
         title: 'Success',
@@ -208,21 +225,8 @@ const DailyChallengesAdmin: React.FC = () => {
   
   const handleDeleteChallenge = async (id: string) => {
     try {
-      // First, delete related progress entries
-      const { error: progressError } = await supabase
-        .from('user_challenge_progress')
-        .delete()
-        .eq('challenge_id', id);
-        
-      if (progressError) throw progressError;
-      
-      // Then delete the challenge
-      const { error } = await supabase
-        .from('daily_challenges')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
+      const { success, error } = await challengesService.deleteChallenge(id);
+      if (!success) throw error;
       
       toast({
         title: 'Success',
@@ -259,29 +263,29 @@ const DailyChallengesAdmin: React.FC = () => {
       header: "Status",
       accessorKey: "is_active",
       cell: (row: any) => (
-        <Badge variant={row.is_active ? "success" : "secondary"}>
-          {row.is_active ? "Active" : "Inactive"}
+        <Badge variant={row.getValue("is_active") ? "secondary" : "outline"}>
+          {row.getValue("is_active") ? "Active" : "Inactive"}
         </Badge>
       )
     },
     {
       header: "Questions",
       accessorKey: "num_questions",
-      cell: (row: any) => `${row.num_questions} questions`
+      cell: (row: any) => `${row.getValue("num_questions")} questions`
     },
     {
       header: "Points Multiplier",
       accessorKey: "points_multiplier",
-      cell: (row: any) => `${row.points_multiplier}x`
+      cell: (row: any) => `${row.getValue("points_multiplier")}x`
     },
     {
       header: "Period",
       accessorKey: "start_date",
       cell: (row: any) => (
         <div className="text-sm">
-          <div>{format(new Date(row.start_date), 'MMM d, yyyy')}</div>
+          <div>{format(new Date(row.getValue("start_date")), 'MMM d, yyyy')}</div>
           <div className="text-muted-foreground">to</div>
-          <div>{format(new Date(row.end_date), 'MMM d, yyyy')}</div>
+          <div>{format(new Date(row.original.end_date), 'MMM d, yyyy')}</div>
         </div>
       )
     },
@@ -293,14 +297,14 @@ const DailyChallengesAdmin: React.FC = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => handleToggleActive(row.id, row.is_active)}
+            onClick={() => handleToggleActive(row.original.id, row.original.is_active)}
           >
-            {row.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+            {row.original.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => handleDeleteChallenge(row.id)}
+            onClick={() => handleDeleteChallenge(row.original.id)}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>

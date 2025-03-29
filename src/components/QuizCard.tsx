@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,17 +9,68 @@ import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
 
-interface QuizCardProps {
-  question: QuizQuestion;
-  onComplete: (isCorrect: boolean) => void;
-}
-
-const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
+const QuizCard: React.FC = () => {
+  const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Fetch a random question on component mount
+  useEffect(() => {
+    fetchRandomQuestion();
+  }, []);
+  
+  const fetchRandomQuestion = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get completed questions from localStorage
+      const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
+      
+      // Fetch a random question that hasn't been completed yet
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .not('id', 'in', `(${completedQuestions.join(',')})`)
+        .limit(1)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Format the question to match our QuizQuestion type
+        const quizQuestion: QuizQuestion = {
+          id: data[0].id,
+          question: data[0].question,
+          options: data[0].options as string[],
+          correctAnswer: data[0].correct_answer,
+          category: data[0].category,
+          difficulty: data[0].difficulty || 'medium',
+          explanation: data[0].explanation || ''
+        };
+        
+        setQuestion(quizQuestion);
+      } else {
+        // No more questions available, show message
+        toast({
+          title: 'No more questions',
+          description: 'You have completed all available questions!'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load quiz question',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
@@ -28,7 +79,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
   };
   
   const proceedToAnswerPage = async () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !question) return;
     
     try {
       // Get user ID from local storage
@@ -162,9 +213,6 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
         window.dispatchEvent(new Event('pointsUpdated'));
       }
       
-      // Call the onComplete callback
-      onComplete(isCorrect);
-      
       // Navigate to the answer page
       navigate(`/answer/${question.id}/${selectedOption}`);
       
@@ -184,14 +232,40 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
     setIsSubmitting(true);
   };
   
-  const getDifficultyIcon = () => {
-    switch (question.difficulty) {
+  const getDifficultyIcon = (difficulty?: string) => {
+    switch (difficulty) {
       case 'easy': return <Brain size={18} />;
       case 'medium': return <ZapIcon size={18} />;
       case 'hard': return <Flame size={18} />;
       default: return <Brain size={18} />;
     }
   };
+  
+  if (isLoading || !question) {
+    return (
+      <Card className="quiz-card">
+        <CardHeader>
+          <CardTitle className="text-xl">Loading question...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="space-y-2 mt-6">
+              <div className="h-12 bg-gray-100 rounded"></div>
+              <div className="h-12 bg-gray-100 rounded"></div>
+              <div className="h-12 bg-gray-100 rounded"></div>
+              <div className="h-12 bg-gray-100 rounded"></div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button disabled className="w-full">Loading...</Button>
+        </CardFooter>
+      </Card>
+    );
+  }
   
   return (
     <Card className="quiz-card fun-card">
@@ -202,7 +276,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
             question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
             'bg-red-100 text-red-800'
           }`}>
-            {getDifficultyIcon()}
+            {getDifficultyIcon(question.difficulty)}
             {question.difficulty}
           </span>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
