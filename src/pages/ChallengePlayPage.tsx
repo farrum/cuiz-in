@@ -43,6 +43,17 @@ interface Answer {
   correctAnswer: string;
 }
 
+// Simple interface for the question map to avoid type recursion
+interface QuestionExplanation {
+  question: string;
+  explanation: string;
+  correctAnswer: string;
+}
+
+interface QuestionMap {
+  [key: string]: QuestionExplanation;
+}
+
 const ChallengePlayPage = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
@@ -132,7 +143,7 @@ const ChallengePlayPage = () => {
             .in('id', challengeData.question_ids);
             
           // Map questions for easy lookup
-          const questionMap = {};
+          const questionMap: QuestionMap = {};
           if (questionData) {
             questionData.forEach(q => {
               questionMap[q.id] = {
@@ -148,7 +159,7 @@ const ChallengePlayPage = () => {
           
           if (answerData && answerData.length > 0) {
             // Create a map of question_id to answer for quick lookup
-            const answerMap = {};
+            const answerMap: Record<string, any> = {};
             answerData.forEach(a => {
               answerMap[a.question_id] = a;
             });
@@ -449,7 +460,6 @@ const ChallengePlayPage = () => {
               
               <div className="space-y-3 mb-6 max-w-md mx-auto">
                 <h4 className="font-medium text-left mb-2">Question Summary</h4>
-                {/* Only show the questions the user actually answered */}
                 {answers.map((answer, index) => {
                   // Find the corresponding question
                   const question = questions.find(q => q.id === answer.questionId);
