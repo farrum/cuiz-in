@@ -69,7 +69,13 @@ export const DataTable: React.FC<DataTableProps> = ({
               <TableRow key={row.id || index}>
                 {columns.map((column) => (
                   <TableCell key={column.accessorKey}>
-                    {column.cell ? column.cell(row) : row[column.accessorKey]}
+                    {column.cell ? column.cell({
+                      row: { 
+                        original: row,
+                        getValue: () => row[column.accessorKey]
+                      },
+                      getValue: () => row[column.accessorKey]
+                    }) : row[column.accessorKey]}
                   </TableCell>
                 ))}
               </TableRow>
