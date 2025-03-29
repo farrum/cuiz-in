@@ -22,6 +22,7 @@ import HowToPlay from '@/pages/HowToPlay';
 import TermsPage from '@/pages/TermsPage';
 import DisclaimerPage from '@/pages/DisclaimerPage';
 import PrivacyPage from '@/pages/PrivacyPage';
+import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -118,6 +119,11 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
+          <Route path="/challenge/:challengeId" element={
+            <ProtectedRoute>
+              <ChallengePlayPage />
+            </ProtectedRoute>
+          } />
           <Route path="/referral" element={
             <ProtectedRoute>
               <ReferralPage />

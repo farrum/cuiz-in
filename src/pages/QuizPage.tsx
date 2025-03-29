@@ -7,6 +7,7 @@ import QuizCard from '@/components/QuizCard';
 import PointsDisplay from '@/components/PointsDisplay';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
+import DailyChallenges from '@/components/DailyChallenges';
 import { 
   STORAGE_KEYS, 
   QuizQuestion, 
@@ -378,6 +379,9 @@ const QuizPage: React.FC = () => {
             <p>No questions available. Please try again later.</p>
           </div>
         )}
+        
+        {/* Daily Challenges section */}
+        <DailyChallenges />
         
         <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
       </main>
