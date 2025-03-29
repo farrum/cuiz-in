@@ -158,13 +158,43 @@ const DailyChallengesReport: React.FC = () => {
         usernameMap[profile.id] = profile.username;
       });
 
+      // Get user answers for each challenge question to properly count attempted questions
+      const questionIds = challengeData.question_ids || [];
+      const userQuestionAttempts: Record<string, Set<string>> = {};
+      const userCorrectAnswers: Record<string, number> = {};
+
+      // First initialize the records
+      progressData?.forEach(progress => {
+        userQuestionAttempts[progress.user_id] = new Set();
+        userCorrectAnswers[progress.user_id] = 0;
+      });
+
+      // Fetch quiz answers for all users in this challenge
+      if (userIds.length > 0 && questionIds.length > 0) {
+        const { data: answersData, error: answersError } = await supabase
+          .from('quiz_answers')
+          .select('*')
+          .in('user_id', userIds)
+          .in('question_id', questionIds);
+          
+        if (answersError) throw answersError;
+        
+        // Process answers to count attempted and correct answers
+        answersData?.forEach(answer => {
+          if (userQuestionAttempts[answer.user_id]) {
+            userQuestionAttempts[answer.user_id].add(answer.question_id);
+            if (answer.correct) {
+              userCorrectAnswers[answer.user_id] = (userCorrectAnswers[answer.user_id] || 0) + 1;
+            }
+          }
+        });
+      }
+
       // Process player participation data
       const playerData = progressData?.map(progress => {
         const totalQuestions = challengeData.num_questions;
-        // For this example, we'll estimate attempted questions from the score
-        // In a real app, you might have more detailed tracking
-        const attempted = Math.ceil(progress.score / 10); // Assuming 10 points per question
-        const correct = Math.floor(progress.score / 10);
+        const attempted = userQuestionAttempts[progress.user_id]?.size || 0;
+        const correct = userCorrectAnswers[progress.user_id] || 0;
         
         return {
           id: progress.id,
@@ -173,8 +203,8 @@ const DailyChallengesReport: React.FC = () => {
           challenge_id: challengeId,
           challenge_title: challengeData.title,
           total_questions: totalQuestions,
-          attempted_questions: Math.min(attempted, totalQuestions),
-          correct_answers: Math.min(correct, totalQuestions),
+          attempted_questions: attempted,
+          correct_answers: correct,
           score: progress.score,
           completion_status: progress.completed ? 'Completed' : 'In Progress'
         };
