@@ -131,16 +131,21 @@ const ChallengePlayPage = () => {
           
         if (questionError) throw questionError;
         
-        // Convert DB question format to QuizQuestion format
+        // Convert DB question format to QuizQuestion format with proper type conversion
         const formattedQuestions: QuizQuestion[] = questionData.map(q => ({
           id: q.id,
           question: q.question,
-          options: Array.isArray(q.options) ? q.options : [],
+          // Ensure options is always parsed as a string array
+          options: Array.isArray(q.options) 
+            ? q.options.map(opt => String(opt)) 
+            : typeof q.options === 'object' && q.options !== null
+              ? Object.values(q.options).map(opt => String(opt))
+              : [],
           correctAnswer: q.correct_answer,
-          explanation: q.explanation,
+          explanation: q.explanation || '',
           category: q.category,
-          difficulty: q.difficulty,
-          points: q.points
+          difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+          points: q.points || 10
         }));
         
         // Ensure questions are in the same order as question_ids
@@ -435,6 +440,7 @@ const ChallengePlayPage = () => {
             <QuizCard
               question={questions[currentQuestionIndex]}
               onComplete={handleQuestionComplete}
+              pointsMultiplier={challenge?.points_multiplier}
             />
           </div>
         ) : (
