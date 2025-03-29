@@ -28,6 +28,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { generateExcelFile, prepareAdTrackingDataForExport } from "@/utils/excelUtils";
+import DailyChallengesReport from './DailyChallengesReport';
 
 const downloadCSV = (data: any[], filename: string) => {
   const csvContent = data.reduce((csv, row) => {
@@ -943,6 +944,10 @@ const AdminReports = () => {
           <PlayCircle className="w-4 h-4 mr-2" />
           Play Reports
         </TabsTrigger>
+        <TabsTrigger value="challenges-reports" className="flex items-center">
+          <Calendar className="w-4 h-4 mr-2" />
+          Challenges Reports
+        </TabsTrigger>
         <TabsTrigger value="ad-reports" className="flex items-center">
           <BarChart3 className="w-4 h-4 mr-2" />
           Ad Reports
@@ -959,6 +964,10 @@ const AdminReports = () => {
       
       <TabsContent value="play-reports">
         <DailyPlayReports />
+      </TabsContent>
+      
+      <TabsContent value="challenges-reports">
+        <DailyChallengesReport />
       </TabsContent>
       
       <TabsContent value="ad-reports">
