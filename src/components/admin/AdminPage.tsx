@@ -16,8 +16,9 @@ import FunMessagesAdmin from './FunMessagesAdmin';
 import NewsTickerAdmin from './NewsTickerAdmin';
 import ReactivationRequestsPanel from './ReactivationRequestsPanel';
 import AdminNotificationsUI from './AdminNotificationsUI';
+import DailyChallengesAdmin from './DailyChallengesAdmin';
 import { Button } from '@/components/ui/button';
-import { Bell, LogOut, Megaphone, UserCheck } from 'lucide-react';
+import { Bell, LogOut, Megaphone, UserCheck, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
@@ -45,6 +46,10 @@ const AdminPage = () => {
         <TabsList className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 mb-6">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+          <TabsTrigger value="challenges">
+            <Award className="h-4 w-4 mr-1" />
+            Challenges
+          </TabsTrigger>
           <TabsTrigger value="ads">Ads</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
@@ -71,6 +76,10 @@ const AdminPage = () => {
         
         <TabsContent value="quizzes" className="space-y-4">
           <QuizManagement />
+        </TabsContent>
+        
+        <TabsContent value="challenges" className="space-y-4">
+          <DailyChallengesAdmin />
         </TabsContent>
         
         <TabsContent value="ads" className="space-y-4">
