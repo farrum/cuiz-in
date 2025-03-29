@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -10,11 +11,17 @@ import CountdownButton from './CountdownButton';
 
 interface QuizCardProps {
   question: QuizQuestion;
-  onComplete: (isCorrect: boolean) => void;
+  onComplete: (isCorrect: boolean, selectedAnswer: string) => void;
   pointsMultiplier?: number;
+  isChallenge?: boolean;
 }
 
-const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, pointsMultiplier = 1 }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ 
+  question, 
+  onComplete, 
+  pointsMultiplier = 1,
+  isChallenge = false
+}) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -42,13 +49,15 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, pointsMultipl
       completedQuestions.push(question.id);
       localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
       
-      // Show a fun welcome message
-      const welcomeMessage = getRandomMessage('welcome');
-      toast({
-        title: "Quiz Time! 🧠",
-        description: welcomeMessage.text,
-        variant: "default",
-      });
+      // Show a fun welcome message (only for regular quiz, not challenge)
+      if (!isChallenge) {
+        const welcomeMessage = getRandomMessage('welcome');
+        toast({
+          title: "Quiz Time! 🧠",
+          description: welcomeMessage.text,
+          variant: "default",
+        });
+      }
       
       // Record answer in Supabase if user is logged in
       if (userId) {
@@ -166,10 +175,10 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, pointsMultipl
       }
       
       // Call the onComplete callback
-      onComplete(isCorrect);
+      onComplete(isCorrect, selectedOption);
       
       // Navigate to the answer page (only for regular quiz, not challenges)
-      if (pointsMultiplier === 1) {
+      if (!isChallenge) {
         navigate(`/answer/${question.id}/${selectedOption}`);
       }
       

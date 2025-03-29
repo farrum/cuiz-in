@@ -77,14 +77,41 @@ const DailyChallengesReport: React.FC = () => {
         
       if (progressError) throw progressError;
       
+      // Fetch quiz answers to calculate actual attempted and completed counts
+      const { data: answersData, error: answersError } = await supabase
+        .from('quiz_answers')
+        .select('user_id, question_id, correct');
+        
+      if (answersError) throw answersError;
+      
       // Process and combine the data
-      const challengesWithStats = challengesData?.map(challenge => {
+      const challengesWithStats = await Promise.all(challengesData?.map(async challenge => {
         const relatedProgress = progressData?.filter(progress => progress.challenge_id === challenge.id) || [];
         const participantCount = relatedProgress.length;
-        const completedCount = relatedProgress.filter(p => p.completed).length;
-        const completionRate = participantCount > 0 
-          ? `${((completedCount / participantCount) * 100).toFixed(1)}%` 
+        
+        // For each participant, check how many questions they actually attempted
+        let totalAttemptedQuestions = 0;
+        let totalPossibleQuestions = 0;
+        
+        if (challenge.question_ids && challenge.question_ids.length > 0) {
+          // Calculate total possible questions
+          totalPossibleQuestions = participantCount * challenge.num_questions;
+          
+          // Get answers related to this challenge's questions
+          const challengeAnswers = answersData?.filter(answer => 
+            challenge.question_ids.includes(answer.question_id)
+          ) || [];
+          
+          // Count total attempted questions
+          totalAttemptedQuestions = challengeAnswers.length;
+        }
+        
+        // Calculate completion rate based on attempted questions vs total possible
+        const completionRate = totalPossibleQuestions > 0 
+          ? `${((totalAttemptedQuestions / totalPossibleQuestions) * 100).toFixed(1)}%` 
           : '0%';
+        
+        // Calculate average score
         const totalScore = relatedProgress.reduce((sum, p) => sum + (p.score || 0), 0);
         const avgScore = participantCount > 0 
           ? parseFloat((totalScore / participantCount).toFixed(1)) 
@@ -101,7 +128,7 @@ const DailyChallengesReport: React.FC = () => {
           avg_score: avgScore,
           completion_rate: completionRate
         };
-      });
+      }) || []);
       
       setChallenges(challengesWithStats || []);
       
@@ -158,7 +185,7 @@ const DailyChallengesReport: React.FC = () => {
         usernameMap[profile.id] = profile.username;
       });
 
-      // Get user answers for each challenge question to properly count attempted questions
+      // Get user answers for each challenge question to properly count attempted questions and correct answers
       const questionIds = challengeData.question_ids || [];
       const userQuestionAttempts: Record<string, Set<string>> = {};
       const userCorrectAnswers: Record<string, number> = {};
@@ -195,6 +222,11 @@ const DailyChallengesReport: React.FC = () => {
         const totalQuestions = challengeData.num_questions;
         const attempted = userQuestionAttempts[progress.user_id]?.size || 0;
         const correct = userCorrectAnswers[progress.user_id] || 0;
+        
+        // Calculate score based on correct answers and question values
+        // For this implementation, we'll use the score from the progress table,
+        // but in a real application, you might want to recalculate it based on
+        // the correct answers and question point values
         
         return {
           id: progress.id,

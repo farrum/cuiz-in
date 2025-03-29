@@ -10,7 +10,7 @@ import QuizCard from '@/components/QuizCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,7 +46,7 @@ const ChallengePlayPage = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState<{correct: boolean}[]>([]);
+  const [answers, setAnswers] = useState<{correct: boolean, explanation: string, correctAnswer: string}[]>([]);
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [currentPoints, setCurrentPoints] = useState(0);
@@ -111,13 +111,36 @@ const ChallengePlayPage = () => {
         if (progressData.completed) {
           const { data: answerData } = await supabase
             .from('quiz_answers')
-            .select('correct')
+            .select('correct, question_id')
             .eq('user_id', userId)
             .in('question_id', challengeData.question_ids)
             .order('answered_at', { ascending: true });
             
           if (answerData) {
-            setAnswers(answerData);
+            // Get question data to include explanations and correct answers
+            const { data: questionData } = await supabase
+              .from('quiz_questions')
+              .select('id, explanation, correct_answer')
+              .in('id', challengeData.question_ids);
+              
+            const questionMap = {};
+            if (questionData) {
+              questionData.forEach(q => {
+                questionMap[q.id] = {
+                  explanation: q.explanation || '',
+                  correctAnswer: q.correct_answer
+                };
+              });
+            }
+            
+            // Map answers with explanations and correct answers
+            const answersWithExplanations = answerData.map(a => ({
+              correct: a.correct,
+              explanation: questionMap[a.question_id]?.explanation || '',
+              correctAnswer: questionMap[a.question_id]?.correctAnswer || ''
+            }));
+            
+            setAnswers(answersWithExplanations);
           }
         }
       }
@@ -167,14 +190,19 @@ const ChallengePlayPage = () => {
     }
   };
   
-  const handleQuestionComplete = async (isCorrect: boolean) => {
+  const handleQuestionComplete = async (isCorrect: boolean, selectedAnswer: string) => {
     if (!challenge || !questions[currentQuestionIndex]) return;
     
-    const newAnswers = [...answers, { correct: isCorrect }];
+    const currentQuestion = questions[currentQuestionIndex];
+    const newAnswers = [...answers, { 
+      correct: isCorrect, 
+      explanation: currentQuestion.explanation || '',
+      correctAnswer: currentQuestion.correctAnswer
+    }];
     setAnswers(newAnswers);
     
     // Calculate earned points
-    const basePoints = questions[currentQuestionIndex].points || 10;
+    const basePoints = currentQuestion.points || 10;
     const earnedPoints = isCorrect ? basePoints * challenge.points_multiplier : 0;
     const newTotalPoints = currentPoints + earnedPoints;
     setCurrentPoints(newTotalPoints);
@@ -182,9 +210,9 @@ const ChallengePlayPage = () => {
     try {
       // Record the answer
       await supabase.from('quiz_answers').insert([{
-        question_id: questions[currentQuestionIndex].id,
+        question_id: currentQuestion.id,
         user_id: userId,
-        selected_answer: '', // This would need the actual selected answer
+        selected_answer: selectedAnswer,
         correct: isCorrect,
         points_earned: earnedPoints
       }]);
@@ -202,7 +230,7 @@ const ChallengePlayPage = () => {
     }
   };
   
-  const completeChallenge = async (finalScore: number, finalAnswers: {correct: boolean}[]) => {
+  const completeChallenge = async (finalScore: number, finalAnswers: {correct: boolean, explanation: string, correctAnswer: string}[]) => {
     if (!challenge || !progress) return;
     
     try {
@@ -367,15 +395,33 @@ const ChallengePlayPage = () => {
               <div className="space-y-3 mb-6 max-w-md mx-auto">
                 <h4 className="font-medium text-left mb-2">Question Summary</h4>
                 {answers.map((answer, index) => (
-                  <div key={index} className="flex items-center glass p-2 rounded">
-                    {answer.correct ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                  <div key={index} className="glass p-3 rounded mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      {answer.correct ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      )}
+                      <span className="text-sm font-medium">
+                        Q{index + 1}: {questions[index]?.question || 'Question'}
+                      </span>
+                    </div>
+                    
+                    {!answer.correct && (
+                      <div className="bg-muted/40 p-2 rounded text-sm mb-2">
+                        <span className="font-medium">Correct answer: </span> 
+                        {answer.correctAnswer}
+                      </div>
                     )}
-                    <span className="text-sm truncate">
-                      Q{index + 1}: {questions[index]?.question || 'Question'}
-                    </span>
+                    
+                    {answer.explanation && (
+                      <div className="bg-primary/5 p-2 rounded text-sm text-left">
+                        <div className="flex items-start gap-1">
+                          <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-xs">{answer.explanation}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -441,6 +487,7 @@ const ChallengePlayPage = () => {
               question={questions[currentQuestionIndex]}
               onComplete={handleQuestionComplete}
               pointsMultiplier={challenge?.points_multiplier}
+              isChallenge={true}
             />
           </div>
         ) : (
