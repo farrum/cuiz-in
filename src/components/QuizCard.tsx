@@ -1,4 +1,4 @@
-// Fix imports to reference QuizQuestion type from challenges.ts
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Timer, HelpCircle } from "lucide-react";
 import { useTimer } from 'react-timer-hook';
@@ -17,7 +17,7 @@ import { useConfettiStore } from '@/store/confetti';
 import { useQuestionDifficulty } from '@/hooks/useQuestionDifficulty';
 
 // Update the QuizCardProps to use the QuizQuestion from challenges.ts
-import { QuizQuestion, QuestionDifficulty } from '@/types/challenges';
+import { QuizQuestion } from '@/types/challenges';
 
 export interface QuizCardProps {
   question: QuizQuestion;

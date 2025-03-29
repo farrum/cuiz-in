@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import QuizCard from '@/components/QuizCard';
+import { QuizCard } from '@/components/QuizCard';
 import Footer from '@/components/Footer';
 import DailyChallenges from '@/components/DailyChallenges';
 import { STORAGE_KEYS } from '@/utils/quizData';

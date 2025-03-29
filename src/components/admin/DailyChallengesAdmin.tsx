@@ -255,30 +255,30 @@ const DailyChallengesAdmin: React.FC = () => {
 
   const columns = [
     {
-      header: "Title",
       accessorKey: "title",
+      header: "Title",
     },
     {
-      header: "Start Date",
       accessorKey: "start_date",
+      header: "Start Date",
       cell: (row: any) => {
         return new Date(row.getValue()).toLocaleDateString();
       }
     },
     {
-      header: "End Date",
       accessorKey: "end_date",
+      header: "End Date",
       cell: (row: any) => {
         return new Date(row.getValue()).toLocaleDateString();
       }
     },
     {
-      header: "Questions",
       accessorKey: "num_questions",
+      header: "Questions",
     },
     {
-      header: "Status",
       accessorKey: "is_active",
+      header: "Status",
       cell: (row: any) => {
         return row.getValue() ? (
           <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 border-green-400">
@@ -292,8 +292,8 @@ const DailyChallengesAdmin: React.FC = () => {
       }
     },
     {
-      header: "Actions",
       accessorKey: "id",
+      header: "Actions",
       cell: (row: any) => (
         <div className="flex items-center gap-2">
           <Button
@@ -321,7 +321,7 @@ const DailyChallengesAdmin: React.FC = () => {
         </div>
       )
     }
-  ] as const;
+  ];
 
   return (
     <div className="container mx-auto py-6">
