@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -179,6 +178,16 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/quiz/questions" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/quiz/challenges" element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/badges" element={
             <ProtectedRoute>
               <AdminPage />
@@ -209,7 +218,6 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
-          {/* Add the requests route */}
           <Route path="/admin/requests" element={
             <ProtectedRoute>
               <AdminPage />
