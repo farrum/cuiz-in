@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -12,9 +11,10 @@ import CountdownButton from './CountdownButton';
 interface QuizCardProps {
   question: QuizQuestion;
   onComplete: (isCorrect: boolean) => void;
+  pointsMultiplier?: number;
 }
 
-const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete, pointsMultiplier = 1 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -61,6 +61,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
             case "hard": pointsEarned = 4; break;
             default: pointsEarned = 2;
           }
+          
+          // Apply points multiplier for challenges
+          pointsEarned = pointsEarned * pointsMultiplier;
         } else {
           // Wrong answer always gives 0.5 points
           pointsEarned = 0.5;
@@ -165,8 +168,10 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
       // Call the onComplete callback
       onComplete(isCorrect);
       
-      // Navigate to the answer page
-      navigate(`/answer/${question.id}/${selectedOption}`);
+      // Navigate to the answer page (only for regular quiz, not challenges)
+      if (pointsMultiplier === 1) {
+        navigate(`/answer/${question.id}/${selectedOption}`);
+      }
       
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -217,6 +222,11 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
         <CardDescription className="text-sm mt-2 flex items-center justify-center gap-1">
           <Timer className="h-4 w-4" />
           Select the correct answer below
+          {pointsMultiplier > 1 && (
+            <span className="text-primary font-medium ml-1">
+              {pointsMultiplier}x Points!
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>

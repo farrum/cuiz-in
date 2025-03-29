@@ -1,11 +1,21 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import canvasConfetti from "canvas-confetti";
 
 // Utility function for merging class names
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// Export confetti function
+export const confetti = () => {
+  canvasConfetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+};
 
 // Animation variants for staggered animations
 export const fadeIn = {

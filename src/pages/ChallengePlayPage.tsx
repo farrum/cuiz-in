@@ -131,9 +131,21 @@ const ChallengePlayPage = () => {
           
         if (questionError) throw questionError;
         
+        // Convert DB question format to QuizQuestion format
+        const formattedQuestions: QuizQuestion[] = questionData.map(q => ({
+          id: q.id,
+          question: q.question,
+          options: Array.isArray(q.options) ? q.options : [],
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation,
+          category: q.category,
+          difficulty: q.difficulty,
+          points: q.points
+        }));
+        
         // Ensure questions are in the same order as question_ids
         const orderedQuestions = challengeData.question_ids.map(id => 
-          questionData.find(q => q.id === id)
+          formattedQuestions.find(q => q.id === id)
         ).filter(Boolean) as QuizQuestion[];
         
         setQuestions(orderedQuestions);
@@ -393,19 +405,19 @@ const ChallengePlayPage = () => {
         </div>
         
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">{challenge.title}</h1>
-          {challenge.description && (
+          <h1 className="text-2xl font-bold">{challenge?.title}</h1>
+          {challenge?.description && (
             <p className="text-muted-foreground mt-1">{challenge.description}</p>
           )}
         </div>
         
         <div className="mb-8">
           <div className="flex justify-between text-sm mb-1">
-            <span>Question {currentQuestionIndex + 1} of {challenge.num_questions}</span>
+            <span>Question {currentQuestionIndex + 1} of {challenge?.num_questions || 0}</span>
             <span>Points: {currentPoints}</span>
           </div>
           <Progress 
-            value={((currentQuestionIndex) / challenge.num_questions) * 100} 
+            value={((currentQuestionIndex) / (challenge?.num_questions || 1)) * 100} 
             className="h-2"
           />
         </div>
@@ -423,7 +435,6 @@ const ChallengePlayPage = () => {
             <QuizCard
               question={questions[currentQuestionIndex]}
               onComplete={handleQuestionComplete}
-              pointsMultiplier={challenge.points_multiplier}
             />
           </div>
         ) : (
