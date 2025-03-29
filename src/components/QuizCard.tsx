@@ -44,13 +44,13 @@ const QuizCard: React.FC<QuizCardProps> = ({
       // Check if the selected answer is correct
       const isCorrect = selectedOption === question.correctAnswer;
       
-      // Track completed question in local storage
-      const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-      completedQuestions.push(question.id);
-      localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
-      
-      // Show a fun welcome message (only for regular quiz, not challenge)
+      // Track completed question in local storage - only for non-challenge questions
       if (!isChallenge) {
+        const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
+        completedQuestions.push(question.id);
+        localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
+        
+        // Show a fun welcome message (only for regular quiz, not challenge)
         const welcomeMessage = getRandomMessage('welcome');
         toast({
           title: "Quiz Time! 🧠",
@@ -74,8 +74,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
           // Apply points multiplier (used for challenges)
           pointsEarned = pointsEarned * pointsMultiplier;
         } else {
-          // Wrong answer always gives 0.5 points
-          pointsEarned = 0.5;
+          // Wrong answer always gives 0.5 points (but still apply multiplier for challenges)
+          pointsEarned = 0.5 * (isChallenge ? pointsMultiplier : 1);
         }
         
         // Get current date for tracking daily/monthly stats

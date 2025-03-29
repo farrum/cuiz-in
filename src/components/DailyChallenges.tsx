@@ -108,12 +108,9 @@ const DailyChallenges: React.FC = () => {
     try {
       // Check if already started
       if (progress[challenge.id]) {
-        // If already completed, just show message
+        // If already completed, navigate to challenge results
         if (progress[challenge.id].completed) {
-          toast({
-            title: "Already Completed",
-            description: "You've already completed this challenge",
-          });
+          navigate(`/challenge/${challenge.id}`);
           return;
         }
         

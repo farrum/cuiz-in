@@ -58,7 +58,7 @@ const ChallengePlayPage = () => {
     }
     
     fetchChallengeData();
-  }, [challengeId, userId]);
+  }, [challengeId, userId, navigate]);
   
   const fetchChallengeData = async () => {
     if (!challengeId) return;
@@ -109,44 +109,62 @@ const ChallengePlayPage = () => {
         
         // If already completed, load all answers
         if (progressData.completed) {
+          // Get all answers for this challenge in the correct order
           const { data: answerData } = await supabase
             .from('quiz_answers')
             .select('correct, selected_answer, question_id')
             .eq('user_id', userId)
             .in('question_id', challengeData.question_ids)
             .order('answered_at', { ascending: true });
+          
+          // Create a map of question_id to index
+          const questionOrder = {};
+          challengeData.question_ids.forEach((id, index) => {
+            questionOrder[id] = index;
+          });
+          
+          // Create an array of the right size filled with null
+          const orderedAnswers = new Array(challengeData.question_ids.length).fill(null);
+          
+          // Get question data to include explanations and correct answers
+          const { data: questionData } = await supabase
+            .from('quiz_questions')
+            .select('id, explanation, correct_answer')
+            .in('id', challengeData.question_ids);
             
-          if (answerData) {
-            // Get question data to include explanations and correct answers
-            const { data: questionData } = await supabase
-              .from('quiz_questions')
-              .select('id, explanation, correct_answer')
-              .in('id', challengeData.question_ids);
-              
-            const questionMap = {};
-            if (questionData) {
-              questionData.forEach(q => {
-                questionMap[q.id] = {
-                  explanation: q.explanation || '',
-                  correctAnswer: q.correct_answer
-                };
-              });
-            }
-            
-            // Map answers with explanations and correct answers
-            const answersWithDetails = answerData.map(a => ({
-              correct: a.correct,
-              selectedAnswer: a.selected_answer,
-              explanation: questionMap[a.question_id]?.explanation || '',
-              correctAnswer: questionMap[a.question_id]?.correctAnswer || ''
-            }));
-            
-            setAnswers(answersWithDetails);
+          const questionMap = {};
+          if (questionData) {
+            questionData.forEach(q => {
+              questionMap[q.id] = {
+                explanation: q.explanation || '',
+                correctAnswer: q.correct_answer
+              };
+            });
           }
+          
+          // Fill in the array with answers in the right order
+          if (answerData) {
+            // Only include answers that match questions in this challenge
+            answerData.forEach(a => {
+              if (a.question_id in questionOrder) {
+                const index = questionOrder[a.question_id];
+                orderedAnswers[index] = {
+                  correct: a.correct,
+                  selectedAnswer: a.selected_answer,
+                  explanation: questionMap[a.question_id]?.explanation || '',
+                  correctAnswer: questionMap[a.question_id]?.correctAnswer || ''
+                };
+              }
+            });
+          }
+          
+          // Filter out any nulls (questions without answers)
+          const finalAnswers = orderedAnswers.filter(a => a !== null);
+          setAnswers(finalAnswers);
         }
       }
       
-      // Fetch questions data
+      // Fetch questions data in the correct order
       if (challengeData.question_ids && challengeData.question_ids.length > 0) {
         const { data: questionData, error: questionError } = await supabase
           .from('quiz_questions')
@@ -156,25 +174,28 @@ const ChallengePlayPage = () => {
         if (questionError) throw questionError;
         
         // Convert DB question format to QuizQuestion format with proper type conversion
-        const formattedQuestions: QuizQuestion[] = questionData.map(q => ({
-          id: q.id,
-          question: q.question,
-          // Ensure options is always parsed as a string array
-          options: Array.isArray(q.options) 
-            ? q.options.map(opt => String(opt)) 
-            : typeof q.options === 'object' && q.options !== null
-              ? Object.values(q.options).map(opt => String(opt))
-              : [],
-          correctAnswer: q.correct_answer,
-          explanation: q.explanation || '',
-          category: q.category,
-          difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
-          points: q.points || 10
-        }));
+        const formattedQuestions: Record<string, QuizQuestion> = {};
+        
+        questionData.forEach(q => {
+          formattedQuestions[q.id] = {
+            id: q.id,
+            question: q.question,
+            options: Array.isArray(q.options) 
+              ? q.options.map(opt => String(opt)) 
+              : typeof q.options === 'object' && q.options !== null
+                ? Object.values(q.options).map(opt => String(opt))
+                : [],
+            correctAnswer: q.correct_answer,
+            explanation: q.explanation || '',
+            category: q.category,
+            difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+            points: q.points || 10
+          };
+        });
         
         // Ensure questions are in the same order as question_ids
         const orderedQuestions = challengeData.question_ids.map(id => 
-          formattedQuestions.find(q => q.id === id)
+          formattedQuestions[id]
         ).filter(Boolean) as QuizQuestion[];
         
         setQuestions(orderedQuestions);
@@ -333,9 +354,11 @@ const ChallengePlayPage = () => {
   
   // Challenge completion summary
   if (isComplete) {
+    // Only count actual answered questions for the summary
+    const answeredCount = answers.length;
     const correctAnswers = answers.filter(a => a.correct).length;
     const totalQuestions = challenge.num_questions;
-    const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+    const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
     
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -396,7 +419,8 @@ const ChallengePlayPage = () => {
               
               <div className="space-y-3 mb-6 max-w-md mx-auto">
                 <h4 className="font-medium text-left mb-2">Question Summary</h4>
-                {answers.map((answer, index) => (
+                {/* Only show the questions the user actually answered */}
+                {answers.slice(0, totalQuestions).map((answer, index) => (
                   <div key={index} className="glass p-3 rounded mb-3">
                     <div className="flex items-center gap-2 mb-2">
                       {answer.correct ? (

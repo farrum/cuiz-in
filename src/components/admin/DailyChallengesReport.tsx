@@ -20,7 +20,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { format } from "date-fns";
 import { downloadCSV } from '@/utils/excelUtils';
 
 interface Challenge {
@@ -93,11 +92,11 @@ const DailyChallengesReport: React.FC = () => {
         // Process data for analytics
         const totalQuestionsAvailable = participantCount * challenge.num_questions;
         
-        // Count total attempted questions from answers
+        // Count attempted questions from answers - group by user to count unique question attempts
         let totalAttemptedQuestions = 0;
         let totalCorrectAnswers = 0;
         
-        if (answersData) {
+        if (answersData && answersData.length > 0) {
           // Group answers by user to count unique question attempts
           const userAttempts = new Map();
           
@@ -114,7 +113,7 @@ const DailyChallengesReport: React.FC = () => {
           });
         }
         
-        // Calculate completion rate
+        // Calculate completion rate - percentage of total questions attempted out of total available
         const completionRate = totalQuestionsAvailable > 0 
           ? ((totalAttemptedQuestions / totalQuestionsAvailable) * 100).toFixed(1) + '%'
           : '0%';
@@ -148,6 +147,9 @@ const DailyChallengesReport: React.FC = () => {
       if (challengesWithStats && challengesWithStats.length > 0) {
         setSelectedChallenge(challengesWithStats[0].id);
         fetchPlayerParticipationData(challengesWithStats[0].id);
+      } else {
+        setPlayerParticipation([]);
+        setPlayerDataLoading(false);
       }
     } catch (error) {
       console.error('Error fetching challenges data:', error);
@@ -156,6 +158,7 @@ const DailyChallengesReport: React.FC = () => {
         description: "Failed to fetch challenges data",
         variant: "destructive"
       });
+      setPlayerParticipation([]);
     } finally {
       setLoading(false);
     }
@@ -216,16 +219,14 @@ const DailyChallengesReport: React.FC = () => {
       // Create data structure to track user attempts and correct answers
       const userStats: Record<string, {
         attempted: Set<string>,
-        correct: Set<string>,
-        score: number
+        correct: Set<string>
       }> = {};
       
       // Initialize stats for each user
       userIds.forEach(userId => {
         userStats[userId] = {
           attempted: new Set(),
-          correct: new Set(),
-          score: 0
+          correct: new Set()
         };
       });
       
@@ -240,9 +241,6 @@ const DailyChallengesReport: React.FC = () => {
             if (answer.correct) {
               userStats[answer.user_id].correct.add(answer.question_id);
             }
-            
-            // Add to score
-            userStats[answer.user_id].score += answer.points_earned || 0;
           }
         });
       }
@@ -251,9 +249,12 @@ const DailyChallengesReport: React.FC = () => {
       const playerData = progressData.map(progress => {
         const stats = userStats[progress.user_id] || { 
           attempted: new Set(), 
-          correct: new Set(),
-          score: 0
+          correct: new Set()
         };
+        
+        // Calculate attempted and correct counts
+        const attemptedCount = stats.attempted.size;
+        const correctCount = stats.correct.size;
         
         return {
           id: progress.id,
@@ -262,9 +263,9 @@ const DailyChallengesReport: React.FC = () => {
           challenge_id: challengeId,
           challenge_title: challengeData.title,
           total_questions: challengeData.num_questions,
-          attempted_questions: stats.attempted.size,
-          correct_answers: stats.correct.size,
-          score: progress.score || stats.score, // Use progress score if available, fallback to calculated
+          attempted_questions: attemptedCount,
+          correct_answers: correctCount,
+          score: progress.score || 0,
           completion_status: progress.completed ? 'Completed' : 'In Progress'
         };
       });
@@ -277,6 +278,7 @@ const DailyChallengesReport: React.FC = () => {
         description: "Failed to fetch player participation data",
         variant: "destructive"
       });
+      setPlayerParticipation([]);
     } finally {
       setPlayerDataLoading(false);
     }
@@ -287,10 +289,12 @@ const DailyChallengesReport: React.FC = () => {
   }, []);
 
   const filteredChallenges = challenges.filter(challenge => {
+    if (!dateRange?.from || !dateRange?.to) return true;
+    
     const challengeDate = new Date(challenge.start_date);
     return (
-      (!dateRange?.from || challengeDate >= dateRange.from) &&
-      (!dateRange?.to || challengeDate <= dateRange.to)
+      challengeDate >= dateRange.from &&
+      challengeDate <= dateRange.to
     );
   });
 
