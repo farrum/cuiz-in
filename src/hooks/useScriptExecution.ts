@@ -13,34 +13,45 @@ export function useScriptExecution(
   const scriptExecuted = useRef(false);
 
   useEffect(() => {
+    // Skip if no content or already executed
     if (!htmlContent || scriptExecuted.current) return;
 
-    const container = document.getElementById(containerId);
-    if (!container) return;
+    try {
+      const container = document.getElementById(containerId);
+      if (!container) return;
 
-    // Clear previous content
-    container.innerHTML = htmlContent;
+      // Clear previous content
+      container.innerHTML = htmlContent;
 
-    // Find all script tags in the content
-    const scripts = container.getElementsByTagName('script');
-    
-    // Execute each script
-    Array.from(scripts).forEach(oldScript => {
-      const newScript = document.createElement('script');
+      // Find all script tags in the content
+      const scripts = container.getElementsByTagName('script');
       
-      // Copy all attributes from the original script
-      Array.from(oldScript.attributes).forEach(attr => {
-        newScript.setAttribute(attr.name, attr.value);
+      // Execute each script
+      Array.from(scripts).forEach(oldScript => {
+        try {
+          const newScript = document.createElement('script');
+          
+          // Copy all attributes from the original script
+          Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+          });
+          
+          // Copy the content of the script
+          newScript.textContent = oldScript.textContent;
+          
+          // Replace the old script with the new one to execute it
+          if (oldScript.parentNode) {
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          }
+        } catch (scriptError) {
+          console.error('Error executing script:', scriptError);
+        }
       });
-      
-      // Copy the content of the script
-      newScript.textContent = oldScript.textContent;
-      
-      // Replace the old script with the new one to execute it
-      oldScript.parentNode?.replaceChild(newScript, oldScript);
-    });
 
-    scriptExecuted.current = true;
+      scriptExecuted.current = true;
+    } catch (error) {
+      console.error('Error in useScriptExecution:', error);
+    }
 
     // Cleanup function
     return () => {

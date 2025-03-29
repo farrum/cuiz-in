@@ -25,11 +25,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     isAdminAuth 
   } = useAuthCheck();
   
-  const [localIsSuspended, setLocalIsSuspended] = useState(isSuspended);
+  const [localIsSuspended, setLocalIsSuspended] = useState(false);
   
-  // Update local suspended state when the prop changes
+  // Update local suspended state when the auth check completes
   useEffect(() => {
-    setLocalIsSuspended(isSuspended);
+    if (isSuspended !== undefined) {
+      setLocalIsSuspended(isSuspended);
+    }
   }, [isSuspended]);
   
   // Use the login activity hook to track logins and handle login streaks
@@ -43,28 +45,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Check if user's reactivation has been approved and apply it if needed
   useEffect(() => {
     const checkReactivationApproval = async () => {
-      if (isAuthenticated && localIsSuspended && userId) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('reactivation_approved')
-          .eq('id', userId)
-          .single();
-          
-        if (!error && data && data.reactivation_approved) {
-          // If approved, reactivate the account
-          const result = await reactivateUserAccount(userId);
-          if (result.success) {
-            setLocalIsSuspended(false);
-            toast({
-              title: "Account Reactivated",
-              description: "Your account has been reactivated by an administrator.",
-            });
+      try {
+        if (isAuthenticated && localIsSuspended && userId) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('reactivation_approved')
+            .eq('id', userId)
+            .single();
+            
+          if (!error && data && data.reactivation_approved) {
+            // If approved, reactivate the account
+            const result = await reactivateUserAccount(userId);
+            if (result.success) {
+              setLocalIsSuspended(false);
+              toast({
+                title: "Account Reactivated",
+                description: "Your account has been reactivated by an administrator.",
+              });
+            }
           }
         }
+      } catch (err) {
+        console.error('Error checking reactivation approval:', err);
       }
     };
     
-    checkReactivationApproval();
+    if (isAuthenticated !== null) {
+      checkReactivationApproval();
+    }
   }, [isAuthenticated, localIsSuspended, userId, toast]);
 
   // Show loading state
