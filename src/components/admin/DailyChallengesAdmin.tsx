@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -18,6 +17,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
 import {
@@ -43,7 +43,7 @@ import * as z from "zod"
 import { CalendarIcon, Eye, EyeOff, Edit, Trash, PlusCircle } from "lucide-react"
 import { addDays } from 'date-fns';
 import { challengesService } from '@/services/challengesService';
-import { DailyChallenge, CreateChallengeInput } from '@/types/challenges';
+import { DailyChallenge } from '@/types/challenges';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from "@/components/ui/data-table"
 
@@ -112,7 +112,7 @@ const DailyChallengesAdmin: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const challengeData: CreateChallengeInput = {
+      const challengeData = {
         title: values.title,
         description: values.description || null,
         num_questions: values.num_questions,
