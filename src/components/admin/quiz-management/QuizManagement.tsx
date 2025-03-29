@@ -26,15 +26,18 @@ import {
   Download, 
   FileQuestion,
   RefreshCw,
-  Upload
+  Upload,
+  BookOpen
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
+import TriviaImporter from './TriviaImporter';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
 import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
 import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
+import { findAllDuplicateQuestions } from '@/utils/quizDuplicateChecker';
 
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -48,6 +51,9 @@ const QuizManagement: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
+  const [duplicateCount, setDuplicateCount] = useState<number>(0);
+  const [isDuplicateCheckLoading, setIsDuplicateCheckLoading] = useState(false);
   const { toast } = useToast();
   const { fetchData: refreshAllData, syncToSupabase, isSyncing } = useFetchSupabaseData(false);
 
@@ -324,6 +330,28 @@ const QuizManagement: React.FC = () => {
     }
   };
 
+  const checkForDuplicates = async () => {
+    setIsDuplicateCheckLoading(true);
+    try {
+      const duplicateGroups = await findAllDuplicateQuestions();
+      setDuplicateCount(duplicateGroups.length);
+      
+      toast({
+        title: "Duplicate Check Complete",
+        description: `Found ${duplicateGroups.length} groups of duplicate questions.`,
+      });
+    } catch (error) {
+      console.error('Error checking for duplicates:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check for duplicate questions.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDuplicateCheckLoading(false);
+    }
+  };
+
   const columns = [
     {
       header: "Question",
@@ -418,6 +446,14 @@ const QuizManagement: React.FC = () => {
             Import
           </Button>
           <Button 
+            onClick={() => setIsTriviaBatchDialogOpen(true)}
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <BookOpen className="h-4 w-4" />
+            Learn Trivia
+          </Button>
+          <Button 
             onClick={exportToExcel}
             variant="outline"
             className="flex items-center gap-1"
@@ -463,6 +499,27 @@ const QuizManagement: React.FC = () => {
               <SelectItem value="hard">Hard</SelectItem>
             </SelectContent>
           </Select>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={checkForDuplicates}
+            disabled={isDuplicateCheckLoading}
+            className="flex items-center gap-1"
+          >
+            {isDuplicateCheckLoading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                Check Duplicates
+                {duplicateCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-800 rounded-full text-xs">
+                    {duplicateCount}
+                  </span>
+                )}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
@@ -549,6 +606,28 @@ const QuizManagement: React.FC = () => {
               setIsImportDialogOpen(false);
             }}
             onCancel={() => setIsImportDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTriviaBatchDialogOpen} onOpenChange={setIsTriviaBatchDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Learn New Trivia Questions</DialogTitle>
+            <DialogDescription>
+              Import trivia questions from Open Trivia Database and check for duplicates.
+            </DialogDescription>
+          </DialogHeader>
+          <TriviaImporter 
+            onSuccess={() => {
+              fetchQuestions();
+              setIsTriviaBatchDialogOpen(false);
+              toast({
+                title: "Trivia Import Complete",
+                description: "New trivia questions have been added to your quiz database.",
+              });
+            }}
+            onCancel={() => setIsTriviaBatchDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
