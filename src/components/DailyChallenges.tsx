@@ -29,10 +29,8 @@ const DailyChallenges = () => {
         throw new Error('User not authenticated');
       }
       
-      // Fetch active challenges using our service
       const challengesData = await challengesService.getActiveChallenges();
       
-      // Fetch user progress for these challenges
       if (challengesData && challengesData.length > 0) {
         const challengeIds = challengesData.map(c => c.id);
         const progressMap = await challengeProgressService.getUserChallengeProgress(userId, challengeIds);
@@ -60,9 +58,7 @@ const DailyChallenges = () => {
         throw new Error('User not authenticated');
       }
       
-      // Check if this challenge is already started
       if (progress[challenge.id]) {
-        // If it's already completed, show a message
         if (progress[challenge.id].completed) {
           toast({
             title: 'Challenge completed',
@@ -71,7 +67,6 @@ const DailyChallenges = () => {
           return;
         }
         
-        // Otherwise, continue the challenge
         toast({
           title: 'Continue challenge',
           description: 'Continuing your progress on this challenge'
@@ -79,12 +74,10 @@ const DailyChallenges = () => {
         return;
       }
       
-      // Start the challenge
       const { success, error } = await challengeProgressService.startChallenge(userId, challenge.id);
       
       if (!success) throw error;
       
-      // Refresh the challenges
       fetchActiveChallenges();
       
       toast({

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -8,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
+import { Button } from '@/components/ui/button';
+import { QuestionDifficulty } from '@/types/challenges';
 
 const QuizCard: React.FC = () => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
@@ -18,7 +19,6 @@ const QuizCard: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Fetch a random question on component mount
   useEffect(() => {
     fetchRandomQuestion();
   }, []);
@@ -27,10 +27,8 @@ const QuizCard: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Get completed questions from localStorage
       const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
       
-      // Fetch a random question that hasn't been completed yet
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('*')
@@ -41,20 +39,18 @@ const QuizCard: React.FC = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Format the question to match our QuizQuestion type
         const quizQuestion: QuizQuestion = {
           id: data[0].id,
           question: data[0].question,
           options: data[0].options as string[],
           correctAnswer: data[0].correct_answer,
           category: data[0].category,
-          difficulty: data[0].difficulty || 'medium',
+          difficulty: (data[0].difficulty || 'medium') as QuestionDifficulty,
           explanation: data[0].explanation || ''
         };
         
         setQuestion(quizQuestion);
       } else {
-        // No more questions available, show message
         toast({
           title: 'No more questions',
           description: 'You have completed all available questions!'
@@ -82,18 +78,14 @@ const QuizCard: React.FC = () => {
     if (!selectedOption || !question) return;
     
     try {
-      // Get user ID from local storage
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       
-      // Check if the selected answer is correct
       const isCorrect = selectedOption === question.correctAnswer;
       
-      // Track completed question in local storage
       const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
       completedQuestions.push(question.id);
       localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
       
-      // Show a fun welcome message
       const welcomeMessage = getRandomMessage('welcome');
       toast({
         title: "Quiz Time! 🧠",
@@ -101,9 +93,7 @@ const QuizCard: React.FC = () => {
         variant: "default",
       });
       
-      // Record answer in Supabase if user is logged in
       if (userId) {
-        // Calculate points based on difficulty
         let pointsEarned = 0;
         if (isCorrect) {
           switch (question.difficulty) {
@@ -113,28 +103,22 @@ const QuizCard: React.FC = () => {
             default: pointsEarned = 2;
           }
         } else {
-          // Wrong answer always gives 0.5 points
           pointsEarned = 0.5;
         }
         
-        // Get current date for tracking daily/monthly stats
         const now = new Date();
         const today = now.toISOString().split('T')[0];
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-
-        // Save answer to Supabase
+        
         await supabase.from('quiz_answers').insert({
           user_id: userId,
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
+          answered_at: now.toISOString()
         });
         
-        console.log(`Answer saved with ${pointsEarned} points`);
-        
-        // Update daily points
         const { data: dailyData, error: dailyError } = await supabase
           .from('daily_points')
           .select('points')
@@ -142,26 +126,19 @@ const QuizCard: React.FC = () => {
           .eq('date', today)
           .maybeSingle();
           
-        console.log('Daily points check:', { dailyData, dailyError });
-        
         if (dailyData) {
-          // Update existing record
           const updatedPoints = Number(dailyData.points) + pointsEarned;
           await supabase
             .from('daily_points')
             .update({ points: updatedPoints })
             .eq('user_id', userId)
             .eq('date', today);
-          console.log(`Updated daily points to ${updatedPoints}`);
         } else {
-          // Create new record
           await supabase
             .from('daily_points')
             .insert({ user_id: userId, date: today, points: pointsEarned });
-          console.log(`Created new daily points record with ${pointsEarned} points`);
         }
         
-        // Update monthly points
         const { data: monthlyData, error: monthlyError } = await supabase
           .from('monthly_points')
           .select('points')
@@ -169,26 +146,19 @@ const QuizCard: React.FC = () => {
           .eq('month', currentMonth)
           .maybeSingle();
           
-        console.log('Monthly points check:', { monthlyData, monthlyError });
-        
         if (monthlyData) {
-          // Update existing record
           const updatedPoints = Number(monthlyData.points) + pointsEarned;
           await supabase
             .from('monthly_points')
             .update({ points: updatedPoints })
             .eq('user_id', userId)
             .eq('month', currentMonth);
-          console.log(`Updated monthly points to ${updatedPoints}`);
         } else {
-          // Create new record
           await supabase
             .from('monthly_points')
             .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
-          console.log(`Created new monthly points record with ${pointsEarned} points`);
         }
         
-        // Update user's points in the profiles table
         const { data } = await supabase
           .from('profiles')
           .select('points')
@@ -203,17 +173,12 @@ const QuizCard: React.FC = () => {
             .update({ points: newTotal })
             .eq('id', userId);
             
-          console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
-          
-          // Update local storage with new total points
           localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
         }
         
-        // Dispatch point update event
         window.dispatchEvent(new Event('pointsUpdated'));
       }
       
-      // Navigate to the answer page
       navigate(`/answer/${question.id}/${selectedOption}`);
       
     } catch (error) {

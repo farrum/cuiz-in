@@ -6,7 +6,8 @@ export const challengesService = {
   // Get active challenges
   getActiveChallenges: async (): Promise<DailyChallenge[]> => {
     try {
-      const { data, error } = await supabase
+      // Use any to bypass TypeScript restrictions due to database schema not being fully synchronized
+      const { data, error } = await (supabase as any)
         .from('daily_challenges')
         .select('*')
         .eq('is_active', true)
@@ -15,8 +16,7 @@ export const challengesService = {
       
       if (error) throw error;
       
-      // Type assertion since we know the shape matches our DailyChallenge interface
-      return data as unknown as DailyChallenge[];
+      return data as DailyChallenge[];
     } catch (error) {
       console.error('Error fetching active challenges:', error);
       return [];
@@ -26,14 +26,15 @@ export const challengesService = {
   // Get all challenges (for admin)
   getAllChallenges: async (): Promise<DailyChallenge[]> => {
     try {
-      const { data, error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { data, error } = await (supabase as any)
         .from('daily_challenges')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       
-      return data as unknown as DailyChallenge[];
+      return data as DailyChallenge[];
     } catch (error) {
       console.error('Error fetching all challenges:', error);
       return [];
@@ -43,7 +44,8 @@ export const challengesService = {
   // Create a new challenge
   createChallenge: async (challenge: CreateChallengeInput): Promise<{ success: boolean; error: any }> => {
     try {
-      const { error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { error } = await (supabase as any)
         .from('daily_challenges')
         .insert([challenge]);
       
@@ -59,7 +61,8 @@ export const challengesService = {
   // Update challenge active status
   toggleChallengeStatus: async (id: string, isActive: boolean): Promise<{ success: boolean; error: any }> => {
     try {
-      const { error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { error } = await (supabase as any)
         .from('daily_challenges')
         .update({ is_active: !isActive })
         .eq('id', id);
@@ -77,7 +80,8 @@ export const challengesService = {
   deleteChallenge: async (id: string): Promise<{ success: boolean; error: any }> => {
     try {
       // First, delete related progress entries
-      const { error: progressError } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { error: progressError } = await (supabase as any)
         .from('user_challenge_progress')
         .delete()
         .eq('challenge_id', id);
@@ -85,7 +89,7 @@ export const challengesService = {
       if (progressError) throw progressError;
       
       // Then delete the challenge
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('daily_challenges')
         .delete()
         .eq('id', id);
@@ -106,7 +110,8 @@ export const challengeProgressService = {
     try {
       if (!challengeIds.length) return {};
       
-      const { data, error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { data, error } = await (supabase as any)
         .from('user_challenge_progress')
         .select('*')
         .eq('user_id', userId)
@@ -116,7 +121,7 @@ export const challengeProgressService = {
       
       // Create a map of challenge progress by challenge_id
       const progressMap: Record<string, ChallengeProgress> = {};
-      (data as unknown as ChallengeProgress[])?.forEach(p => {
+      (data as ChallengeProgress[])?.forEach(p => {
         progressMap[p.challenge_id] = p;
       });
       
@@ -131,7 +136,8 @@ export const challengeProgressService = {
   startChallenge: async (userId: string, challengeId: string): Promise<{ success: boolean; error: any }> => {
     try {
       // Check if progress already exists
-      const { data, error: checkError } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { data, error: checkError } = await (supabase as any)
         .from('user_challenge_progress')
         .select('*')
         .eq('user_id', userId)
@@ -146,13 +152,15 @@ export const challengeProgressService = {
       }
       
       // Create a new progress entry
-      const { error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { error } = await (supabase as any)
         .from('user_challenge_progress')
         .insert([{
           user_id: userId,
           challenge_id: challengeId,
           completed: false,
-          score: 0
+          score: 0,
+          started_at: new Date().toISOString()
         }]);
       
       if (error) throw error;
@@ -174,7 +182,8 @@ export const challengeProgressService = {
         updateData.completed_at = new Date().toISOString();
       }
       
-      const { error } = await supabase
+      // Use any to bypass TypeScript restrictions
+      const { error } = await (supabase as any)
         .from('user_challenge_progress')
         .update(updateData)
         .eq('user_id', userId)

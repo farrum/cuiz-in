@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +17,7 @@ import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DateRangePickerProps {
   date: { from: Date; to: Date | undefined };
@@ -291,7 +291,7 @@ const DailyChallengesAdmin: React.FC = () => {
     },
     {
       header: "Actions",
-      id: "actions",
+      accessorKey: "id",
       cell: (row: any) => (
         <div className="flex space-x-2">
           <Button 

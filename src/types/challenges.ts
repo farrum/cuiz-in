@@ -34,3 +34,5 @@ export interface CreateChallengeInput {
   end_date: string;
   created_by: string;
 }
+
+export type QuestionDifficulty = "easy" | "medium" | "hard";
