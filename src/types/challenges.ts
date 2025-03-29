@@ -36,3 +36,14 @@ export interface CreateChallengeInput {
 }
 
 export type QuestionDifficulty = "easy" | "medium" | "hard";
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  difficulty: QuestionDifficulty;
+  category: string;
+  points: number;
+  explanation: string;
+}
