@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -42,10 +41,33 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { CalendarIcon, Eye, EyeOff, Edit, Trash, PlusCircle } from "lucide-react"
+import { DateRange } from "react-day-picker"
 import { addDays } from 'date-fns';
 import { challengesService } from '@/services/challengesService';
 import { DailyChallenge } from '@/types/challenges';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { DataTable } from "@/components/ui/data-table"
 
 // Import supabase client
@@ -113,18 +135,10 @@ const DailyChallengesAdmin: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const challengeData = {
-        title: values.title,
-        description: values.description || null,
-        num_questions: values.num_questions,
-        points_multiplier: values.points_multiplier,
-        question_ids: values.question_ids || [],
-        is_active: values.is_active,
-        start_date: values.start_date.toISOString(),
-        end_date: values.end_date.toISOString(),
-      };
-
-      const { success, error } = await challengesService.createChallenge(challengeData);
+      const { success, error } = await challengesService.createChallenge({
+        ...values,
+        created_by: 'admin',
+      });
 
       if (!success) throw error;
 
@@ -241,30 +255,30 @@ const DailyChallengesAdmin: React.FC = () => {
 
   const columns = [
     {
-      accessorKey: "title",
       header: "Title",
+      accessorKey: "title",
     },
     {
-      accessorKey: "start_date",
       header: "Start Date",
+      accessorKey: "start_date",
       cell: (row: any) => {
         return new Date(row.getValue()).toLocaleDateString();
       }
     },
     {
-      accessorKey: "end_date",
       header: "End Date",
+      accessorKey: "end_date",
       cell: (row: any) => {
         return new Date(row.getValue()).toLocaleDateString();
       }
     },
     {
-      accessorKey: "num_questions",
       header: "Questions",
+      accessorKey: "num_questions",
     },
     {
-      accessorKey: "is_active",
       header: "Status",
+      accessorKey: "is_active",
       cell: (row: any) => {
         return row.getValue() ? (
           <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 border-green-400">
@@ -278,8 +292,8 @@ const DailyChallengesAdmin: React.FC = () => {
       }
     },
     {
-      accessorKey: "id",
       header: "Actions",
+      accessorKey: "id",
       cell: (row: any) => (
         <div className="flex items-center gap-2">
           <Button
@@ -307,7 +321,7 @@ const DailyChallengesAdmin: React.FC = () => {
         </div>
       )
     }
-  ];
+  ] as const;
 
   return (
     <div className="container mx-auto py-6">

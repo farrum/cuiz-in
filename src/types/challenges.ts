@@ -32,7 +32,7 @@ export interface CreateChallengeInput {
   is_active: boolean;
   start_date: string;
   end_date: string;
-  created_by?: string; // Make created_by optional
+  created_by: string;
 }
 
 export type QuestionDifficulty = "easy" | "medium" | "hard";

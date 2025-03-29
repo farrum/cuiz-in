@@ -44,24 +44,10 @@ export const challengesService = {
   // Create a new challenge
   createChallenge: async (challenge: CreateChallengeInput): Promise<{ success: boolean; error: any }> => {
     try {
-      // Get the current user's ID
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-      
-      // Create challenge with current user's ID
-      const challengeData = {
-        ...challenge,
-        created_by: userId
-      };
-      
       // Use any to bypass TypeScript restrictions
       const { error } = await (supabase as any)
         .from('daily_challenges')
-        .insert([challengeData]);
+        .insert([challenge]);
       
       if (error) throw error;
       
