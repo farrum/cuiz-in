@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +40,14 @@ interface Answer {
   selectedAnswer: string;
   explanation: string;
   correctAnswer: string;
+}
+
+interface QuestionMap {
+  [key: string]: {
+    question: string;
+    explanation: string;
+    correctAnswer: string;
+  };
 }
 
 const ChallengePlayPage = () => {
@@ -132,7 +139,7 @@ const ChallengePlayPage = () => {
             .in('id', challengeData.question_ids);
             
           // Map questions for easy lookup
-          const questionMap = {};
+          const questionMap: QuestionMap = {};
           if (questionData) {
             questionData.forEach(q => {
               questionMap[q.id] = {
@@ -148,7 +155,7 @@ const ChallengePlayPage = () => {
           
           if (answerData && answerData.length > 0) {
             // Create a map of question_id to answer for quick lookup
-            const answerMap = {};
+            const answerMap: Record<string, any> = {};
             answerData.forEach(a => {
               answerMap[a.question_id] = a;
             });
@@ -384,7 +391,6 @@ const ChallengePlayPage = () => {
     );
   }
   
-  // Challenge completion summary
   if (isComplete) {
     const correctCount = answers.filter(a => a.correct).length;
     const totalCount = challenge.num_questions;
@@ -449,9 +455,7 @@ const ChallengePlayPage = () => {
               
               <div className="space-y-3 mb-6 max-w-md mx-auto">
                 <h4 className="font-medium text-left mb-2">Question Summary</h4>
-                {/* Only show the questions the user actually answered */}
                 {answers.map((answer, index) => {
-                  // Find the corresponding question
                   const question = questions.find(q => q.id === answer.questionId);
                   
                   return (
@@ -505,7 +509,6 @@ const ChallengePlayPage = () => {
     );
   }
   
-  // Challenge in progress - show the current question
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
