@@ -44,7 +44,7 @@ import { CalendarIcon, Eye, EyeOff, Edit, Trash, PlusCircle } from "lucide-react
 import { DateRange } from "react-day-picker"
 import { addDays } from 'date-fns';
 import { challengesService } from '@/services/challengesService';
-import { DailyChallenge, CreateChallengeInput } from '@/types/challenges';
+import { DailyChallenge } from '@/types/challenges';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -56,6 +56,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { DataTable } from "@/components/ui/data-table"
 
 // Import supabase client
@@ -123,19 +135,10 @@ const DailyChallengesAdmin: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const challengeInput: CreateChallengeInput = {
-        title: values.title,
-        description: values.description || null,
-        num_questions: values.num_questions,
-        points_multiplier: values.points_multiplier,
-        question_ids: values.question_ids || [],
-        is_active: values.is_active,
-        start_date: values.start_date.toISOString(),
-        end_date: values.end_date.toISOString(),
+      const { success, error } = await challengesService.createChallenge({
+        ...values,
         created_by: 'admin',
-      };
-
-      const { success, error } = await challengesService.createChallenge(challengeInput);
+      });
 
       if (!success) throw error;
 

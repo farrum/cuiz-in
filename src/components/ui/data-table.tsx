@@ -3,7 +3,7 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export interface Column {
+interface Column {
   header: string;
   accessorKey: string;
   cell?: (row: any) => React.ReactNode;
@@ -69,7 +69,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               <TableRow key={row.id || index}>
                 {columns.map((column) => (
                   <TableCell key={column.accessorKey}>
-                    {column.cell ? column.cell({ getValue: () => row[column.accessorKey], row: { original: row } }) : row[column.accessorKey]}
+                    {column.cell ? column.cell(row) : row[column.accessorKey]}
                   </TableCell>
                 ))}
               </TableRow>
@@ -79,4 +79,4 @@ export const DataTable: React.FC<DataTableProps> = ({
       </Table>
     </div>
   );
-}
+};
