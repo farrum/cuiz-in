@@ -244,12 +244,12 @@ const DailyChallenges: React.FC = () => {
                 <Button 
                   variant={isCompleted ? "outline" : "default"}
                   className={`w-full ${isCompleted ? "border-primary/30 text-primary" : ""}`}
-                  disabled={isUpcoming || hasEnded}
+                  disabled={isUpcoming || (hasEnded && !isCompleted)}
                   onClick={() => handleStartChallenge(challenge)}
                 >
                   {isCompleted 
                     ? "View Results" 
-                    : userProgress
+                    : userProgress && !isCompleted
                       ? "Continue Challenge"
                       : "Start Challenge"
                   }
@@ -257,7 +257,7 @@ const DailyChallenges: React.FC = () => {
                 </Button>
               </CardFooter>
             </Card>
-          )
+          );
         })}
       </div>
     </div>

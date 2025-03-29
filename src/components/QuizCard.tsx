@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -75,7 +74,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           pointsEarned = pointsEarned * pointsMultiplier;
         } else {
           // Wrong answer always gives 0.5 points (but still apply multiplier for challenges)
-          pointsEarned = 0.5 * (isChallenge ? pointsMultiplier : 1);
+          pointsEarned = 0.5 * pointsMultiplier;
         }
         
         // Get current date for tracking daily/monthly stats
@@ -90,7 +89,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
+          answered_at: now.toISOString(), // Add timestamp to help with filtering by day/month
+          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null // Add challenge ID if in challenge
         });
         
         console.log(`Answer saved with ${pointsEarned} points`);

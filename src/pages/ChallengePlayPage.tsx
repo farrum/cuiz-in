@@ -35,6 +35,14 @@ interface ChallengeProgress {
   score: number;
 }
 
+interface Answer {
+  questionId: string;
+  correct: boolean;
+  selectedAnswer: string;
+  explanation: string;
+  correctAnswer: string;
+}
+
 const ChallengePlayPage = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
@@ -46,7 +54,7 @@ const ChallengePlayPage = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState<{correct: boolean, selectedAnswer: string, explanation: string, correctAnswer: string}[]>([]);
+  const [answers, setAnswers] = useState<Answer[]>([]);
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [currentPoints, setCurrentPoints] = useState(0);
@@ -107,60 +115,60 @@ const ChallengePlayPage = () => {
         setIsComplete(progressData.completed);
         setScore(progressData.score);
         
-        // If already completed, load all answers
+        // If already completed, load all answers for result page
         if (progressData.completed) {
-          // Get all answers for this challenge in the correct order
+          // Get all answers for this challenge
           const { data: answerData } = await supabase
             .from('quiz_answers')
-            .select('correct, selected_answer, question_id')
+            .select('question_id, correct, selected_answer')
             .eq('user_id', userId)
-            .in('question_id', challengeData.question_ids)
-            .order('answered_at', { ascending: true });
-          
-          // Create a map of question_id to index
-          const questionOrder = {};
-          challengeData.question_ids.forEach((id, index) => {
-            questionOrder[id] = index;
-          });
-          
-          // Create an array of the right size filled with null
-          const orderedAnswers = new Array(challengeData.question_ids.length).fill(null);
+            .eq('challenge_id', challengeId)
+            .order('created_at', { ascending: true });
           
           // Get question data to include explanations and correct answers
           const { data: questionData } = await supabase
             .from('quiz_questions')
-            .select('id, explanation, correct_answer')
+            .select('*')
             .in('id', challengeData.question_ids);
             
+          // Map questions for easy lookup
           const questionMap = {};
           if (questionData) {
             questionData.forEach(q => {
               questionMap[q.id] = {
+                question: q.question,
                 explanation: q.explanation || '',
                 correctAnswer: q.correct_answer
               };
             });
           }
           
-          // Fill in the array with answers in the right order
-          if (answerData) {
-            // Only include answers that match questions in this challenge
+          // Create answers array using the correct order from challenge.question_ids
+          const completedAnswers: Answer[] = [];
+          
+          if (answerData && answerData.length > 0) {
+            // Create a map of question_id to answer for quick lookup
+            const answerMap = {};
             answerData.forEach(a => {
-              if (a.question_id in questionOrder) {
-                const index = questionOrder[a.question_id];
-                orderedAnswers[index] = {
-                  correct: a.correct,
-                  selectedAnswer: a.selected_answer,
-                  explanation: questionMap[a.question_id]?.explanation || '',
-                  correctAnswer: questionMap[a.question_id]?.correctAnswer || ''
-                };
+              answerMap[a.question_id] = a;
+            });
+            
+            // Build answers array in the correct order
+            challengeData.question_ids.forEach(qId => {
+              const answer = answerMap[qId];
+              if (answer) {
+                completedAnswers.push({
+                  questionId: qId,
+                  correct: answer.correct,
+                  selectedAnswer: answer.selected_answer,
+                  explanation: questionMap[qId]?.explanation || '',
+                  correctAnswer: questionMap[qId]?.correctAnswer || ''
+                });
               }
             });
           }
           
-          // Filter out any nulls (questions without answers)
-          const finalAnswers = orderedAnswers.filter(a => a !== null);
-          setAnswers(finalAnswers);
+          setAnswers(completedAnswers);
         }
       }
       
@@ -194,9 +202,9 @@ const ChallengePlayPage = () => {
         });
         
         // Ensure questions are in the same order as question_ids
-        const orderedQuestions = challengeData.question_ids.map(id => 
-          formattedQuestions[id]
-        ).filter(Boolean) as QuizQuestion[];
+        const orderedQuestions = challengeData.question_ids
+          .map(id => formattedQuestions[id])
+          .filter(Boolean) as QuizQuestion[];
         
         setQuestions(orderedQuestions);
       }
@@ -216,19 +224,37 @@ const ChallengePlayPage = () => {
     if (!challenge || !questions[currentQuestionIndex]) return;
     
     const currentQuestion = questions[currentQuestionIndex];
-    const newAnswers = [...answers, { 
-      correct: isCorrect, 
+    
+    // Calculate earned points
+    let earnedPoints = 0;
+    if (isCorrect) {
+      // Calculate points based on difficulty
+      switch (currentQuestion.difficulty) {
+        case "easy": earnedPoints = 2; break;
+        case "medium": earnedPoints = 3; break;
+        case "hard": earnedPoints = 4; break;
+        default: earnedPoints = 2;
+      }
+      // Apply multiplier
+      earnedPoints = earnedPoints * (challenge.points_multiplier || 1);
+    } else {
+      // Wrong answer gives 0.5 points with multiplier
+      earnedPoints = 0.5 * (challenge.points_multiplier || 1);
+    }
+    
+    const newTotalPoints = currentPoints + earnedPoints;
+    setCurrentPoints(newTotalPoints);
+    
+    // Add to answers array
+    const newAnswer: Answer = {
+      questionId: currentQuestion.id,
+      correct: isCorrect,
       selectedAnswer: selectedAnswer,
       explanation: currentQuestion.explanation || '',
       correctAnswer: currentQuestion.correctAnswer
-    }];
-    setAnswers(newAnswers);
+    };
     
-    // Calculate earned points
-    const basePoints = isCorrect ? (currentQuestion.points || 10) : 0;
-    const earnedPoints = basePoints * (challenge.points_multiplier || 1);
-    const newTotalPoints = currentPoints + earnedPoints;
-    setCurrentPoints(newTotalPoints);
+    setAnswers([...answers, newAnswer]);
     
     try {
       // Record the answer
@@ -237,23 +263,29 @@ const ChallengePlayPage = () => {
         user_id: userId,
         selected_answer: selectedAnswer,
         correct: isCorrect,
-        points_earned: earnedPoints
+        points_earned: earnedPoints,
+        challenge_id: challengeId // Add reference to challenge
       }]);
       
       // Check if this was the last question
-      if (currentQuestionIndex === challenge.num_questions - 1) {
+      if (currentQuestionIndex >= challenge.num_questions - 1) {
         // Challenge complete!
-        await completeChallenge(newTotalPoints, newAnswers);
+        await completeChallenge(newTotalPoints);
       } else {
         // Move to next question
         setCurrentQuestionIndex(prevIndex => prevIndex + 1);
       }
     } catch (error) {
       console.error('Error recording answer:', error);
+      toast({
+        title: "Error saving answer",
+        description: "Your progress might not be fully saved",
+        variant: "destructive"
+      });
     }
   };
   
-  const completeChallenge = async (finalScore: number, finalAnswers: {correct: boolean, selectedAnswer: string, explanation: string, correctAnswer: string}[]) => {
+  const completeChallenge = async (finalScore: number) => {
     if (!challenge || !progress) return;
     
     try {
@@ -297,11 +329,11 @@ const ChallengePlayPage = () => {
       });
       
       // Only trigger confetti if there are correct answers
-      if (finalAnswers.some(a => a.correct)) {
+      if (answers.some(a => a.correct)) {
         confetti();
       }
       
-      // Update state
+      // Update progress state
       setProgress({
         ...progress,
         completed: true,
@@ -354,11 +386,9 @@ const ChallengePlayPage = () => {
   
   // Challenge completion summary
   if (isComplete) {
-    // Only count actual answered questions for the summary
-    const answeredCount = answers.length;
-    const correctAnswers = answers.filter(a => a.correct).length;
-    const totalQuestions = challenge.num_questions;
-    const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    const correctCount = answers.filter(a => a.correct).length;
+    const totalCount = challenge.num_questions;
+    const percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
     
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -405,7 +435,7 @@ const ChallengePlayPage = () => {
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>Correct Answers</span>
-                      <span className="font-medium">{correctAnswers} / {totalQuestions}</span>
+                      <span className="font-medium">{correctCount} / {totalCount}</span>
                     </div>
                     <Progress value={percentage} className="h-2" />
                   </div>
@@ -420,41 +450,46 @@ const ChallengePlayPage = () => {
               <div className="space-y-3 mb-6 max-w-md mx-auto">
                 <h4 className="font-medium text-left mb-2">Question Summary</h4>
                 {/* Only show the questions the user actually answered */}
-                {answers.slice(0, totalQuestions).map((answer, index) => (
-                  <div key={index} className="glass p-3 rounded mb-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      {answer.correct ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                      )}
-                      <span className="text-sm font-medium">
-                        Q{index + 1}: {questions[index]?.question || 'Question'}
-                      </span>
-                    </div>
-                    
-                    <div className="text-sm text-left mt-1">
-                      <span className="font-medium">Your answer: </span>
-                      {answer.selectedAnswer}
-                    </div>
-                    
-                    {!answer.correct && (
-                      <div className="bg-muted/40 p-2 rounded text-sm mb-2 mt-2 text-left">
-                        <span className="font-medium">Correct answer: </span> 
-                        {answer.correctAnswer}
+                {answers.map((answer, index) => {
+                  // Find the corresponding question
+                  const question = questions.find(q => q.id === answer.questionId);
+                  
+                  return (
+                    <div key={index} className="glass p-3 rounded mb-3">
+                      <div className="flex items-start gap-2 mb-2">
+                        {answer.correct ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-1" />
+                        )}
+                        <span className="text-sm font-medium">
+                          Q{index + 1}: {question?.question || 'Question'}
+                        </span>
                       </div>
-                    )}
-                    
-                    {answer.explanation && (
-                      <div className="bg-primary/5 p-2 rounded text-sm text-left mt-2">
-                        <div className="flex items-start gap-1">
-                          <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">{answer.explanation}</span>
+                      
+                      <div className="text-sm text-left mt-1">
+                        <span className="font-medium">Your answer: </span>
+                        {answer.selectedAnswer}
+                      </div>
+                      
+                      {!answer.correct && (
+                        <div className="bg-muted/40 p-2 rounded text-sm mt-2 text-left">
+                          <span className="font-medium">Correct answer: </span> 
+                          {answer.correctAnswer}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                      
+                      {answer.explanation && (
+                        <div className="bg-primary/5 p-2 rounded text-sm text-left mt-2">
+                          <div className="flex items-start gap-1">
+                            <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-xs">{answer.explanation}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               
               <Button onClick={() => navigate('/quiz')} className="mt-4">
@@ -470,7 +505,7 @@ const ChallengePlayPage = () => {
     );
   }
   
-  // Challenge in progress
+  // Challenge in progress - show the current question
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
