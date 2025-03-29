@@ -1,153 +1,261 @@
-// Fix imports to reference QuizQuestion type from challenges.ts
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Timer, HelpCircle } from "lucide-react";
-import { useTimer } from 'react-timer-hook';
-import { useConfettiStore } from '@/store/confetti';
-import { useQuestionDifficulty } from '@/hooks/useQuestionDifficulty';
 
-// Update the QuizCardProps to use the QuizQuestion from challenges.ts
-import { QuizQuestion, QuestionDifficulty } from '@/types/challenges';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { getRandomMessage } from '@/utils/funMessages';
+import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
+import CountdownButton from './CountdownButton';
 
-export interface QuizCardProps {
+interface QuizCardProps {
   question: QuizQuestion;
-  onComplete: (isCorrect: boolean, points: number) => void;
+  onComplete: (isCorrect: boolean) => void;
 }
 
-const shuffleArray = (array: any[]) => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
+const QuizCard: React.FC<QuizCardProps> = ({ question, onComplete }) => {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handleSelectOption = (option: string) => {
+    setSelectedOption(option);
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+  
+  const proceedToAnswerPage = async () => {
+    if (!selectedOption) return;
+    
+    try {
+      // Get user ID from local storage
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      
+      // Check if the selected answer is correct
+      const isCorrect = selectedOption === question.correctAnswer;
+      
+      // Track completed question in local storage
+      const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
+      completedQuestions.push(question.id);
+      localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
+      
+      // Show a fun welcome message
+      const welcomeMessage = getRandomMessage('welcome');
+      toast({
+        title: "Quiz Time! 🧠",
+        description: welcomeMessage.text,
+        variant: "default",
+      });
+      
+      // Record answer in Supabase if user is logged in
+      if (userId) {
+        // Calculate points based on difficulty
+        let pointsEarned = 0;
+        if (isCorrect) {
+          switch (question.difficulty) {
+            case "easy": pointsEarned = 2; break;
+            case "medium": pointsEarned = 3; break;
+            case "hard": pointsEarned = 4; break;
+            default: pointsEarned = 2;
+          }
+        } else {
+          // Wrong answer always gives 0.5 points
+          pointsEarned = 0.5;
+        }
+        
+        // Get current date for tracking daily/monthly stats
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
 
-export function QuizCard({ question, onComplete }: QuizCardProps) {
-  const [value, setValue] = React.useState("");
-  const [isAnswered, setIsAnswered] = React.useState(false);
-  const [shuffledOptions, setShuffledOptions] = React.useState<string[]>([]);
-  const [isCorrect, setIsCorrect] = React.useState(false);
-  const { addConfetti } = useConfettiStore();
-  const { difficultyColors } = useQuestionDifficulty(question.difficulty);
-
-  const now = new Date();
-  const time = new Date();
-  time.setSeconds(now.getSeconds() + 20);
-  const {
-    seconds,
-    isRunning,
-    start,
-    restart,
-  } = useTimer({ expiryTimestamp: time, onExpire: () => handleTimeout() });
-
-  useEffect(() => {
-    setShuffledOptions(shuffleArray(question.options));
-    start();
-  }, [question]);
-
-  const handleAnswer = (option: string) => {
-    if (isAnswered) return;
-
-    setIsAnswered(true);
-    setValue(option);
-
-    const correct = option === question.correctAnswer;
-    setIsCorrect(correct);
-
-    if (correct) {
-      addConfetti();
+        // Save answer to Supabase
+        await supabase.from('quiz_answers').insert({
+          user_id: userId,
+          question_id: question.id,
+          selected_answer: selectedOption,
+          correct: isCorrect,
+          points_earned: pointsEarned,
+          answered_at: now.toISOString() // Add timestamp to help with filtering by day/month
+        });
+        
+        console.log(`Answer saved with ${pointsEarned} points`);
+        
+        // Update daily points
+        const { data: dailyData, error: dailyError } = await supabase
+          .from('daily_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .maybeSingle();
+          
+        console.log('Daily points check:', { dailyData, dailyError });
+        
+        if (dailyData) {
+          // Update existing record
+          const updatedPoints = Number(dailyData.points) + pointsEarned;
+          await supabase
+            .from('daily_points')
+            .update({ points: updatedPoints })
+            .eq('user_id', userId)
+            .eq('date', today);
+          console.log(`Updated daily points to ${updatedPoints}`);
+        } else {
+          // Create new record
+          await supabase
+            .from('daily_points')
+            .insert({ user_id: userId, date: today, points: pointsEarned });
+          console.log(`Created new daily points record with ${pointsEarned} points`);
+        }
+        
+        // Update monthly points
+        const { data: monthlyData, error: monthlyError } = await supabase
+          .from('monthly_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('month', currentMonth)
+          .maybeSingle();
+          
+        console.log('Monthly points check:', { monthlyData, monthlyError });
+        
+        if (monthlyData) {
+          // Update existing record
+          const updatedPoints = Number(monthlyData.points) + pointsEarned;
+          await supabase
+            .from('monthly_points')
+            .update({ points: updatedPoints })
+            .eq('user_id', userId)
+            .eq('month', currentMonth);
+          console.log(`Updated monthly points to ${updatedPoints}`);
+        } else {
+          // Create new record
+          await supabase
+            .from('monthly_points')
+            .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
+          console.log(`Created new monthly points record with ${pointsEarned} points`);
+        }
+        
+        // Update user's points in the profiles table
+        const { data } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', userId)
+          .single();
+            
+        if (data) {
+          const currentPoints = data.points || 0;
+          const newTotal = Number(currentPoints) + pointsEarned;
+          await supabase
+            .from('profiles')
+            .update({ points: newTotal })
+            .eq('id', userId);
+            
+          console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
+          
+          // Update local storage with new total points
+          localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
+        }
+        
+        // Dispatch point update event
+        window.dispatchEvent(new Event('pointsUpdated'));
+      }
+      
+      // Call the onComplete callback
+      onComplete(isCorrect);
+      
+      // Navigate to the answer page
+      navigate(`/answer/${question.id}/${selectedOption}`);
+      
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast({
+        title: "Failed to submit answer",
+        description: "Please try again",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
     }
-
-    onComplete(correct, question.points);
   };
-
-  const handleTimeout = () => {
-    if (isAnswered) return;
-
-    setIsAnswered(true);
-    setIsCorrect(false);
-    onComplete(false, 0);
+  
+  const handleSubmitAnswer = () => {
+    if (!selectedOption || isSubmitting) return;
+    setIsSubmitting(true);
   };
-
-  const handleNextQuestion = () => {
-    setIsAnswered(false);
-    setValue("");
-    setIsCorrect(false);
-
-    const now = new Date();
-    const time = new Date();
-    time.setSeconds(now.getSeconds() + 20);
-    restart(time)
+  
+  const getDifficultyIcon = () => {
+    switch (question.difficulty) {
+      case 'easy': return <Brain size={18} />;
+      case 'medium': return <ZapIcon size={18} />;
+      case 'hard': return <Flame size={18} />;
+      default: return <Brain size={18} />;
+    }
   };
-
+  
   return (
-    <Card className="w-[550px]">
+    <Card className="quiz-card fun-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>
-            {question.question}
-          </CardTitle>
-          <Badge variant="secondary" className={`border-${difficultyColors.border} bg-${difficultyColors.background} text-${difficultyColors.text}`}>
+        <div className="flex justify-between items-center mb-2">
+          <span className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 ${
+            question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+            question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {getDifficultyIcon()}
             {question.difficulty}
-          </Badge>
+          </span>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Award size={14} />
+            {question.category}
+          </span>
         </div>
-        <CardDescription>
-          <div className="flex items-center justify-between">
-            Choose the correct answer
-            <div className="flex items-center space-x-2">
-              <Timer className="h-4 w-4" />
-              <span>{seconds}</span>
-            </div>
-          </div>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Sparkles className="text-primary h-5 w-5" />
+          {question.question}
+        </CardTitle>
+        <CardDescription className="text-sm mt-2 flex items-center justify-center gap-1">
+          <Timer className="h-4 w-4" />
+          Select the correct answer below
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <RadioGroup value={value} onValueChange={setValue}>
-          <div className="grid gap-2">
-            {shuffledOptions.map((option) => (
-              <div key={option}>
-                <RadioGroupItem value={option} id={option} disabled={isAnswered} />
-                <label htmlFor={option} className="peer-data-[state=checked]:bg-secondary/50 flex cursor-pointer items-center p-4 border rounded-md">
-                  {option}
-                </label>
+        <div className="space-y-3">
+          {question.options.map((option, index) => (
+            <div
+              key={index}
+              className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
+                selectedOption === option
+                  ? 'border-primary bg-primary/10 transform scale-105'
+                  : 'hover:bg-accent hover:border-accent hover:shadow-md'
+              } ${isAnimating && selectedOption === option ? 'bounce-in' : ''}`}
+              onClick={() => handleSelectOption(option)}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
+                  selectedOption === option ? 'border-primary bg-primary text-white' : 'border-muted-foreground'
+                }`}>
+                  {String.fromCharCode(65 + index)}
+                </div>
+                <div className="flex-1">{option}</div>
               </div>
-            ))}
-          </div>
-        </RadioGroup>
+            </div>
+          ))}
+        </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        {isAnswered ? (
-          <div className="flex items-center space-x-2">
-            {isCorrect ? (
-              <>
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-green-500">Correct!</span>
-              </>
-            ) : (
-              <>
-                <HelpCircle className="h-4 w-4 text-red-500" />
-                <span className="text-sm text-red-500">Incorrect!</span>
-              </>
-            )}
-          </div>
-        ) : null}
-        {isAnswered ? (
-          <Button onClick={handleNextQuestion}>Next Question</Button>
-        ) : (
-          <Button onClick={() => handleAnswer(value)} disabled={!value || isAnswered || !isRunning}>Submit Answer</Button>
-        )}
+      <CardFooter>
+        <CountdownButton
+          onCountdownComplete={proceedToAnswerPage}
+          initialSeconds={5}
+          disabled={!selectedOption || isSubmitting}
+          className={`w-full ${selectedOption ? 'fun-button' : ''}`}
+          icon={<Sparkles className="h-4 w-4" />}
+        >
+          Submit Answer
+        </CountdownButton>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
+
+export default QuizCard;

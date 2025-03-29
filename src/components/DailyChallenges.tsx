@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +8,31 @@ import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { Trophy, Calendar, Award, Clock, ArrowRight } from 'lucide-react';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { DailyChallenge } from '@/types/challenges';
-import { challengesService, challengeProgressService } from '@/services/challengesService';
+
+interface DailyChallenge {
+  id: string;
+  title: string;
+  description: string | null;
+  num_questions: number;
+  points_multiplier: number;
+  question_ids: string[];
+  is_active: boolean;
+  start_date: string;
+  end_date: string;
+}
+
+interface ChallengeProgress {
+  id: string;
+  challenge_id: string;
+  completed: boolean;
+  score: number;
+  started_at: string;
+  completed_at: string | null;
+}
 
 const DailyChallenges = () => {
   const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
-  const [progress, setProgress] = useState<Record<string, any>>({});
+  const [progress, setProgress] = useState<Record<string, ChallengeProgress>>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
@@ -29,11 +49,34 @@ const DailyChallenges = () => {
         throw new Error('User not authenticated');
       }
       
-      const challengesData = await challengesService.getActiveChallenges();
+      // Fetch active challenges
+      const { data: challengesData, error: challengesError } = await supabase
+        .from('daily_challenges')
+        .select('*')
+        .eq('is_active', true)
+        .gte('end_date', new Date().toISOString())
+        .order('start_date', { ascending: true });
+        
+      if (challengesError) throw challengesError;
       
+      // Fetch user progress for these challenges
       if (challengesData && challengesData.length > 0) {
         const challengeIds = challengesData.map(c => c.id);
-        const progressMap = await challengeProgressService.getUserChallengeProgress(userId, challengeIds);
+        
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_challenge_progress')
+          .select('*')
+          .eq('user_id', userId)
+          .in('challenge_id', challengeIds);
+          
+        if (progressError) throw progressError;
+        
+        // Create a map of challenge progress by challenge_id
+        const progressMap: Record<string, ChallengeProgress> = {};
+        progressData?.forEach(p => {
+          progressMap[p.challenge_id] = p;
+        });
+        
         setProgress(progressMap);
       }
       
@@ -58,7 +101,9 @@ const DailyChallenges = () => {
         throw new Error('User not authenticated');
       }
       
+      // Check if this challenge is already started
       if (progress[challenge.id]) {
+        // If it's already completed, show a message
         if (progress[challenge.id].completed) {
           toast({
             title: 'Challenge completed',
@@ -67,6 +112,8 @@ const DailyChallenges = () => {
           return;
         }
         
+        // Otherwise, continue the challenge
+        // Here you would redirect to the challenge page
         toast({
           title: 'Continue challenge',
           description: 'Continuing your progress on this challenge'
@@ -74,10 +121,21 @@ const DailyChallenges = () => {
         return;
       }
       
-      const { success, error } = await challengeProgressService.startChallenge(userId, challenge.id);
+      // Create a new progress entry
+      const { error } = await supabase
+        .from('user_challenge_progress')
+        .insert([
+          {
+            user_id: userId,
+            challenge_id: challenge.id,
+            completed: false,
+            score: 0
+          }
+        ]);
+        
+      if (error) throw error;
       
-      if (!success) throw error;
-      
+      // Refresh the challenges
       fetchActiveChallenges();
       
       toast({
@@ -85,6 +143,7 @@ const DailyChallenges = () => {
         description: 'Good luck with the challenge!'
       });
       
+      // Here you would redirect to the challenge page
     } catch (error) {
       console.error('Error starting challenge:', error);
       toast({
@@ -156,7 +215,7 @@ const DailyChallenges = () => {
               <CardHeader className="pb-2">
                 <div className="flex justify-between">
                   <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                  <Badge variant={isCompleted ? "outline" : "secondary"}>
+                  <Badge variant={isCompleted ? "success" : "secondary"}>
                     {isCompleted ? "Completed" : isStarted ? "In Progress" : "New"}
                   </Badge>
                 </div>

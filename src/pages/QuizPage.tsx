@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import QuizCard from '@/components/QuizCard';
 import Footer from '@/components/Footer';
 import DailyChallenges from '@/components/DailyChallenges';
+import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { challengesService } from '@/services/challengesService';
 
 function QuizPage() {
   const [activeChallenges, setActiveChallenges] = useState(0);
@@ -18,8 +17,15 @@ function QuizPage() {
         
         if (!userId) return;
         
-        const challenges = await challengesService.getActiveChallenges();
-        setActiveChallenges(challenges?.length || 0);
+        const { data, error } = await supabase
+          .from('daily_challenges')
+          .select('id')
+          .eq('is_active', true)
+          .gte('end_date', new Date().toISOString());
+          
+        if (error) throw error;
+        
+        setActiveChallenges(data?.length || 0);
       } catch (error) {
         console.error('Error checking active challenges:', error);
       }

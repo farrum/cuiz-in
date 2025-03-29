@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,9 +14,7 @@ export type RealtimeTable =
   | 'user_roles' 
   | 'news_ticker'
   | 'login_streaks'
-  | 'admin_notifications'
-  | 'daily_challenges'
-  | 'user_challenge_progress';
+  | 'admin_notifications';  // Add admin_notifications to the list
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
@@ -141,9 +140,7 @@ export function useSupabaseRealtime(
       user_roles: 'admin_user_roles',
       news_ticker: 'news_ticker',
       login_streaks: 'login_streaks',
-      admin_notifications: 'admin_notifications',
-      daily_challenges: 'daily_challenges',
-      user_challenge_progress: 'user_challenge_progress'
+      admin_notifications: 'admin_notifications'  // Add mapping for admin_notifications
     };
     
     return mapping[tableName] || tableName;

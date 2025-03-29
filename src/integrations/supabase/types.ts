@@ -154,48 +154,6 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_challenges: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          end_date: string
-          id: string
-          is_active: boolean
-          num_questions: number
-          points_multiplier: number
-          question_ids: string[]
-          start_date: string
-          title: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          end_date: string
-          id?: string
-          is_active?: boolean
-          num_questions: number
-          points_multiplier?: number
-          question_ids: string[]
-          start_date: string
-          title: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          end_date?: string
-          id?: string
-          is_active?: boolean
-          num_questions?: number
-          points_multiplier?: number
-          question_ids?: string[]
-          start_date?: string
-          title?: string
-        }
-        Relationships: []
-      }
       daily_points: {
         Row: {
           created_at: string | null
@@ -589,44 +547,6 @@ export type Database = {
           question?: string
         }
         Relationships: []
-      }
-      user_challenge_progress: {
-        Row: {
-          challenge_id: string
-          completed: boolean
-          completed_at: string | null
-          id: string
-          score: number
-          started_at: string
-          user_id: string
-        }
-        Insert: {
-          challenge_id: string
-          completed?: boolean
-          completed_at?: string | null
-          id?: string
-          score?: number
-          started_at?: string
-          user_id: string
-        }
-        Update: {
-          challenge_id?: string
-          completed?: boolean
-          completed_at?: string | null
-          id?: string
-          score?: number
-          started_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
-            columns: ["challenge_id"]
-            isOneToOne: false
-            referencedRelation: "daily_challenges"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_referrals: {
         Row: {
