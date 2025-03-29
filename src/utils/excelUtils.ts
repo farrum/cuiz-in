@@ -47,3 +47,28 @@ export const prepareAdTrackingDataForExport = (data: any[], type: 'views' | 'cli
     return baseData;
   });
 };
+
+// Download data as CSV file
+export const downloadCSV = (data: any[], filename: string): void => {
+  try {
+    // Create CSV header row from the first object's keys
+    const csvContent = data.reduce((csv, row) => {
+      const rowContent = Object.values(row).join(',');
+      return `${csv}${rowContent}\n`;
+    }, Object.keys(data[0]).join(',') + '\n');
+    
+    // Create blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error generating CSV file:', error);
+    throw error;
+  }
+};

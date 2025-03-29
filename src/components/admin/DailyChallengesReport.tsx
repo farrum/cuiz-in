@@ -69,8 +69,8 @@ const DailyChallengesReport: React.FC = () => {
           : '0%';
         const totalScore = relatedProgress.reduce((sum, p) => sum + (p.score || 0), 0);
         const avgScore = participantCount > 0 
-          ? (totalScore / participantCount).toFixed(1) 
-          : '0';
+          ? parseFloat((totalScore / participantCount).toFixed(1)) 
+          : 0;
         
         return {
           id: challenge.id,
