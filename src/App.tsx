@@ -173,11 +173,6 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
-          <Route path="/admin/challenges" element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          } />
           <Route path="/admin/badges" element={
             <ProtectedRoute>
               <AdminPage />
@@ -208,6 +203,7 @@ function App() {
               <AdminPage />
             </ProtectedRoute>
           } />
+          {/* Add the requests route */}
           <Route path="/admin/requests" element={
             <ProtectedRoute>
               <AdminPage />

@@ -15,10 +15,8 @@ import { RealtimeStatus } from './RealtimeStatus';
 import FunMessagesAdmin from './FunMessagesAdmin';
 import NewsTickerAdmin from './NewsTickerAdmin';
 import ReactivationRequestsPanel from './ReactivationRequestsPanel';
-import AdminNotificationsUI from './AdminNotificationsUI';
-import DailyChallengesAdmin from './DailyChallengesAdmin';
 import { Button } from '@/components/ui/button';
-import { Bell, LogOut, Megaphone, UserCheck, Award } from 'lucide-react';
+import { LogOut, Megaphone, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
@@ -46,10 +44,6 @@ const AdminPage = () => {
         <TabsList className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 mb-6">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
-          <TabsTrigger value="challenges">
-            <Award className="h-4 w-4 mr-1" />
-            Challenges
-          </TabsTrigger>
           <TabsTrigger value="ads">Ads</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
@@ -59,10 +53,6 @@ const AdminPage = () => {
           <TabsTrigger value="performers">Performance</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="ticker">News Ticker</TabsTrigger>
-          <TabsTrigger value="notifications">
-            <Bell className="h-4 w-4 mr-1" />
-            Notifications
-          </TabsTrigger>
           <TabsTrigger value="reactivations">
             <UserCheck className="h-4 w-4 mr-1" />
             Reactivations
@@ -76,10 +66,6 @@ const AdminPage = () => {
         
         <TabsContent value="quizzes" className="space-y-4">
           <QuizManagement />
-        </TabsContent>
-        
-        <TabsContent value="challenges" className="space-y-4">
-          <DailyChallengesAdmin />
         </TabsContent>
         
         <TabsContent value="ads" className="space-y-4">
@@ -116,10 +102,6 @@ const AdminPage = () => {
         
         <TabsContent value="ticker" className="space-y-4">
           <NewsTickerAdmin />
-        </TabsContent>
-        
-        <TabsContent value="notifications" className="space-y-4">
-          <AdminNotificationsUI />
         </TabsContent>
         
         <TabsContent value="reactivations" className="space-y-4">
