@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { 
   FileDownIcon, 
   ChevronDownIcon,
-  Loader2
+  Loader2,
+  UsersIcon
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { format } from "date-fns";
@@ -33,9 +35,25 @@ interface Challenge {
   completion_rate: string;
 }
 
+interface PlayerParticipation {
+  id: string;
+  user_id: string;
+  username: string;
+  challenge_id: string;
+  challenge_title: string;
+  total_questions: number;
+  attempted_questions: number;
+  correct_answers: number;
+  score: number;
+  completion_status: string;
+}
+
 const DailyChallengesReport: React.FC = () => {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [playerParticipation, setPlayerParticipation] = useState<PlayerParticipation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [playerDataLoading, setPlayerDataLoading] = useState(true);
+  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
@@ -86,6 +104,12 @@ const DailyChallengesReport: React.FC = () => {
       });
       
       setChallenges(challengesWithStats || []);
+      
+      // If there are challenges, set the first one as selected
+      if (challengesWithStats && challengesWithStats.length > 0) {
+        setSelectedChallenge(challengesWithStats[0].id);
+        fetchPlayerParticipationData(challengesWithStats[0].id);
+      }
     } catch (error) {
       console.error('Error fetching challenges data:', error);
       toast({
@@ -95,6 +119,77 @@ const DailyChallengesReport: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPlayerParticipationData = async (challengeId: string) => {
+    setPlayerDataLoading(true);
+    try {
+      // Get the selected challenge data
+      const { data: challengeData, error: challengeError } = await supabase
+        .from('daily_challenges')
+        .select('*')
+        .eq('id', challengeId)
+        .single();
+        
+      if (challengeError) throw challengeError;
+      
+      // Get all user progress for this challenge
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_challenge_progress')
+        .select('*')
+        .eq('challenge_id', challengeId);
+        
+      if (progressError) throw progressError;
+      
+      // Get usernames from profiles
+      const userIds = progressData?.map(progress => progress.user_id) || [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+        
+      if (profilesError) throw profilesError;
+      
+      // Create a mapping of user IDs to usernames
+      const usernameMap: Record<string, string> = {};
+      profilesData?.forEach(profile => {
+        usernameMap[profile.id] = profile.username;
+      });
+
+      // Process player participation data
+      const playerData = progressData?.map(progress => {
+        const totalQuestions = challengeData.num_questions;
+        // For this example, we'll estimate attempted questions from the score
+        // In a real app, you might have more detailed tracking
+        const attempted = Math.ceil(progress.score / 10); // Assuming 10 points per question
+        const correct = Math.floor(progress.score / 10);
+        
+        return {
+          id: progress.id,
+          user_id: progress.user_id,
+          username: usernameMap[progress.user_id] || 'Unknown User',
+          challenge_id: challengeId,
+          challenge_title: challengeData.title,
+          total_questions: totalQuestions,
+          attempted_questions: Math.min(attempted, totalQuestions),
+          correct_answers: Math.min(correct, totalQuestions),
+          score: progress.score,
+          completion_status: progress.completed ? 'Completed' : 'In Progress'
+        };
+      });
+      
+      setPlayerParticipation(playerData || []);
+    } catch (error) {
+      console.error('Error fetching player participation data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch player participation data",
+        variant: "destructive"
+      });
+    } finally {
+      setPlayerDataLoading(false);
     }
   };
 
@@ -120,6 +215,20 @@ const DailyChallengesReport: React.FC = () => {
     { header: 'Completion Rate', accessorKey: 'completion_rate' }
   ];
 
+  const playerColumns = [
+    { header: 'Username', accessorKey: 'username' },
+    { header: 'Total Questions', accessorKey: 'total_questions' },
+    { header: 'Attempted', accessorKey: 'attempted_questions' },
+    { header: 'Correct', accessorKey: 'correct_answers' },
+    { header: 'Score', accessorKey: 'score' },
+    { header: 'Status', accessorKey: 'completion_status' }
+  ];
+
+  const handleChallengeSelect = (challengeId: string) => {
+    setSelectedChallenge(challengeId);
+    fetchPlayerParticipationData(challengeId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -142,6 +251,9 @@ const DailyChallengesReport: React.FC = () => {
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => downloadCSV(filteredChallenges, 'daily-challenges-report')}>
                 Export Challenges Data
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadCSV(playerParticipation, 'player-participation-report')}>
+                Export Player Participation
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -196,21 +308,70 @@ const DailyChallengesReport: React.FC = () => {
         </Card>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Challenges Performance</CardTitle>
-          <CardDescription>
-            Details of all daily challenges and their performance
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable 
-            columns={columns} 
-            data={filteredChallenges}
-            isLoading={loading}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="challenges">
+        <TabsList>
+          <TabsTrigger value="challenges">Challenge Performance</TabsTrigger>
+          <TabsTrigger value="players" className="flex items-center">
+            <UsersIcon className="h-4 w-4 mr-2" />
+            Player Participation
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="challenges">
+          <Card>
+            <CardHeader>
+              <CardTitle>Challenges Performance</CardTitle>
+              <CardDescription>
+                Details of all daily challenges and their performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={columns} 
+                data={filteredChallenges}
+                isLoading={loading}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="players">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div>
+                  <CardTitle>Player Participation</CardTitle>
+                  <CardDescription>
+                    Player performance for selected challenge
+                  </CardDescription>
+                </div>
+                
+                <div className="w-full md:w-64">
+                  <select 
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={selectedChallenge || ''}
+                    onChange={(e) => handleChallengeSelect(e.target.value)}
+                    disabled={loading || challenges.length === 0}
+                  >
+                    {challenges.map(challenge => (
+                      <option key={challenge.id} value={challenge.id}>
+                        {challenge.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={playerColumns} 
+                data={playerParticipation}
+                isLoading={playerDataLoading}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
