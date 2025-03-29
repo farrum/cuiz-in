@@ -46,7 +46,7 @@ const ChallengePlayPage = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState<{correct: boolean, explanation: string, correctAnswer: string}[]>([]);
+  const [answers, setAnswers] = useState<{correct: boolean, selectedAnswer: string, explanation: string, correctAnswer: string}[]>([]);
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [currentPoints, setCurrentPoints] = useState(0);
@@ -111,7 +111,7 @@ const ChallengePlayPage = () => {
         if (progressData.completed) {
           const { data: answerData } = await supabase
             .from('quiz_answers')
-            .select('correct, question_id')
+            .select('correct, selected_answer, question_id')
             .eq('user_id', userId)
             .in('question_id', challengeData.question_ids)
             .order('answered_at', { ascending: true });
@@ -134,13 +134,14 @@ const ChallengePlayPage = () => {
             }
             
             // Map answers with explanations and correct answers
-            const answersWithExplanations = answerData.map(a => ({
+            const answersWithDetails = answerData.map(a => ({
               correct: a.correct,
+              selectedAnswer: a.selected_answer,
               explanation: questionMap[a.question_id]?.explanation || '',
               correctAnswer: questionMap[a.question_id]?.correctAnswer || ''
             }));
             
-            setAnswers(answersWithExplanations);
+            setAnswers(answersWithDetails);
           }
         }
       }
@@ -196,14 +197,15 @@ const ChallengePlayPage = () => {
     const currentQuestion = questions[currentQuestionIndex];
     const newAnswers = [...answers, { 
       correct: isCorrect, 
+      selectedAnswer: selectedAnswer,
       explanation: currentQuestion.explanation || '',
       correctAnswer: currentQuestion.correctAnswer
     }];
     setAnswers(newAnswers);
     
     // Calculate earned points
-    const basePoints = currentQuestion.points || 10;
-    const earnedPoints = isCorrect ? basePoints * challenge.points_multiplier : 0;
+    const basePoints = isCorrect ? (currentQuestion.points || 10) : 0;
+    const earnedPoints = basePoints * (challenge.points_multiplier || 1);
     const newTotalPoints = currentPoints + earnedPoints;
     setCurrentPoints(newTotalPoints);
     
@@ -230,7 +232,7 @@ const ChallengePlayPage = () => {
     }
   };
   
-  const completeChallenge = async (finalScore: number, finalAnswers: {correct: boolean, explanation: string, correctAnswer: string}[]) => {
+  const completeChallenge = async (finalScore: number, finalAnswers: {correct: boolean, selectedAnswer: string, explanation: string, correctAnswer: string}[]) => {
     if (!challenge || !progress) return;
     
     try {
@@ -407,15 +409,20 @@ const ChallengePlayPage = () => {
                       </span>
                     </div>
                     
+                    <div className="text-sm text-left mt-1">
+                      <span className="font-medium">Your answer: </span>
+                      {answer.selectedAnswer}
+                    </div>
+                    
                     {!answer.correct && (
-                      <div className="bg-muted/40 p-2 rounded text-sm mb-2">
+                      <div className="bg-muted/40 p-2 rounded text-sm mb-2 mt-2 text-left">
                         <span className="font-medium">Correct answer: </span> 
                         {answer.correctAnswer}
                       </div>
                     )}
                     
                     {answer.explanation && (
-                      <div className="bg-primary/5 p-2 rounded text-sm text-left">
+                      <div className="bg-primary/5 p-2 rounded text-sm text-left mt-2">
                         <div className="flex items-start gap-1">
                           <AlertCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                           <span className="text-xs">{answer.explanation}</span>

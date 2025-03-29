@@ -71,7 +71,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
             default: pointsEarned = 2;
           }
           
-          // Apply points multiplier for challenges
+          // Apply points multiplier (used for challenges)
           pointsEarned = pointsEarned * pointsMultiplier;
         } else {
           // Wrong answer always gives 0.5 points
@@ -95,83 +95,87 @@ const QuizCard: React.FC<QuizCardProps> = ({
         
         console.log(`Answer saved with ${pointsEarned} points`);
         
-        // Update daily points
-        const { data: dailyData, error: dailyError } = await supabase
-          .from('daily_points')
-          .select('points')
-          .eq('user_id', userId)
-          .eq('date', today)
-          .maybeSingle();
-          
-        console.log('Daily points check:', { dailyData, dailyError });
-        
-        if (dailyData) {
-          // Update existing record
-          const updatedPoints = Number(dailyData.points) + pointsEarned;
-          await supabase
+        // Don't update daily/monthly/total points for challenge questions
+        // Those will be handled by the challenge component
+        if (!isChallenge) {
+          // Update daily points
+          const { data: dailyData, error: dailyError } = await supabase
             .from('daily_points')
-            .update({ points: updatedPoints })
+            .select('points')
             .eq('user_id', userId)
-            .eq('date', today);
-          console.log(`Updated daily points to ${updatedPoints}`);
-        } else {
-          // Create new record
-          await supabase
-            .from('daily_points')
-            .insert({ user_id: userId, date: today, points: pointsEarned });
-          console.log(`Created new daily points record with ${pointsEarned} points`);
-        }
-        
-        // Update monthly points
-        const { data: monthlyData, error: monthlyError } = await supabase
-          .from('monthly_points')
-          .select('points')
-          .eq('user_id', userId)
-          .eq('month', currentMonth)
-          .maybeSingle();
-          
-        console.log('Monthly points check:', { monthlyData, monthlyError });
-        
-        if (monthlyData) {
-          // Update existing record
-          const updatedPoints = Number(monthlyData.points) + pointsEarned;
-          await supabase
-            .from('monthly_points')
-            .update({ points: updatedPoints })
-            .eq('user_id', userId)
-            .eq('month', currentMonth);
-          console.log(`Updated monthly points to ${updatedPoints}`);
-        } else {
-          // Create new record
-          await supabase
-            .from('monthly_points')
-            .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
-          console.log(`Created new monthly points record with ${pointsEarned} points`);
-        }
-        
-        // Update user's points in the profiles table
-        const { data } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', userId)
-          .single();
+            .eq('date', today)
+            .maybeSingle();
             
-        if (data) {
-          const currentPoints = data.points || 0;
-          const newTotal = Number(currentPoints) + pointsEarned;
-          await supabase
+          console.log('Daily points check:', { dailyData, dailyError });
+          
+          if (dailyData) {
+            // Update existing record
+            const updatedPoints = Number(dailyData.points) + pointsEarned;
+            await supabase
+              .from('daily_points')
+              .update({ points: updatedPoints })
+              .eq('user_id', userId)
+              .eq('date', today);
+            console.log(`Updated daily points to ${updatedPoints}`);
+          } else {
+            // Create new record
+            await supabase
+              .from('daily_points')
+              .insert({ user_id: userId, date: today, points: pointsEarned });
+            console.log(`Created new daily points record with ${pointsEarned} points`);
+          }
+          
+          // Update monthly points
+          const { data: monthlyData, error: monthlyError } = await supabase
+            .from('monthly_points')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('month', currentMonth)
+            .maybeSingle();
+            
+          console.log('Monthly points check:', { monthlyData, monthlyError });
+          
+          if (monthlyData) {
+            // Update existing record
+            const updatedPoints = Number(monthlyData.points) + pointsEarned;
+            await supabase
+              .from('monthly_points')
+              .update({ points: updatedPoints })
+              .eq('user_id', userId)
+              .eq('month', currentMonth);
+            console.log(`Updated monthly points to ${updatedPoints}`);
+          } else {
+            // Create new record
+            await supabase
+              .from('monthly_points')
+              .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
+            console.log(`Created new monthly points record with ${pointsEarned} points`);
+          }
+          
+          // Update user's points in the profiles table
+          const { data } = await supabase
             .from('profiles')
-            .update({ points: newTotal })
-            .eq('id', userId);
+            .select('points')
+            .eq('id', userId)
+            .single();
+              
+          if (data) {
+            const currentPoints = data.points || 0;
+            const newTotal = Number(currentPoints) + pointsEarned;
+            await supabase
+              .from('profiles')
+              .update({ points: newTotal })
+              .eq('id', userId);
+              
+            console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
             
-          console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
+            // Update local storage with new total points
+            localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
+          }
           
-          // Update local storage with new total points
-          localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
+          // Dispatch point update event
+          window.dispatchEvent(new Event('pointsUpdated'));
         }
-        
-        // Dispatch point update event
-        window.dispatchEvent(new Event('pointsUpdated'));
       }
       
       // Call the onComplete callback

@@ -70,49 +70,61 @@ const DailyChallengesReport: React.FC = () => {
         
       if (challengesError) throw challengesError;
       
-      // Fetch user challenge progress for stats
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_challenge_progress')
-        .select('challenge_id, score, completed');
-        
-      if (progressError) throw progressError;
-      
-      // Fetch quiz answers to calculate actual attempted and completed counts
-      const { data: answersData, error: answersError } = await supabase
-        .from('quiz_answers')
-        .select('user_id, question_id, correct');
-        
-      if (answersError) throw answersError;
-      
-      // Process and combine the data
+      // For each challenge, calculate metrics
       const challengesWithStats = await Promise.all(challengesData?.map(async challenge => {
-        const relatedProgress = progressData?.filter(progress => progress.challenge_id === challenge.id) || [];
-        const participantCount = relatedProgress.length;
+        // Get user challenge progress for this challenge
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_challenge_progress')
+          .select('*')
+          .eq('challenge_id', challenge.id);
+          
+        if (progressError) throw progressError;
         
-        // For each participant, check how many questions they actually attempted
+        const participantCount = progressData?.length || 0;
+        
+        // Get quiz answers to calculate actual attempts and correct answers
+        const { data: answersData, error: answersError } = await supabase
+          .from('quiz_answers')
+          .select('user_id, question_id, correct')
+          .in('question_id', challenge.question_ids || []);
+          
+        if (answersError) throw answersError;
+        
+        // Process data for analytics
+        const totalQuestionsAvailable = participantCount * challenge.num_questions;
+        
+        // Count total attempted questions from answers
         let totalAttemptedQuestions = 0;
-        let totalPossibleQuestions = 0;
+        let totalCorrectAnswers = 0;
         
-        if (challenge.question_ids && challenge.question_ids.length > 0) {
-          // Calculate total possible questions
-          totalPossibleQuestions = participantCount * challenge.num_questions;
+        if (answersData) {
+          // Group answers by user to count unique question attempts
+          const userAttempts = new Map();
           
-          // Get answers related to this challenge's questions
-          const challengeAnswers = answersData?.filter(answer => 
-            challenge.question_ids.includes(answer.question_id)
-          ) || [];
-          
-          // Count total attempted questions
-          totalAttemptedQuestions = challengeAnswers.length;
+          answersData.forEach(answer => {
+            const key = `${answer.user_id}-${answer.question_id}`;
+            if (!userAttempts.has(key)) {
+              userAttempts.set(key, true);
+              totalAttemptedQuestions++;
+              
+              if (answer.correct) {
+                totalCorrectAnswers++;
+              }
+            }
+          });
         }
         
-        // Calculate completion rate based on attempted questions vs total possible
-        const completionRate = totalPossibleQuestions > 0 
-          ? `${((totalAttemptedQuestions / totalPossibleQuestions) * 100).toFixed(1)}%` 
+        // Calculate completion rate
+        const completionRate = totalQuestionsAvailable > 0 
+          ? ((totalAttemptedQuestions / totalQuestionsAvailable) * 100).toFixed(1) + '%'
           : '0%';
         
-        // Calculate average score
-        const totalScore = relatedProgress.reduce((sum, p) => sum + (p.score || 0), 0);
+        // Calculate average score from progress data
+        let totalScore = 0;
+        progressData?.forEach(progress => {
+          totalScore += progress.score || 0;
+        });
+        
         const avgScore = participantCount > 0 
           ? parseFloat((totalScore / participantCount).toFixed(1)) 
           : 0;
@@ -169,8 +181,14 @@ const DailyChallengesReport: React.FC = () => {
         
       if (progressError) throw progressError;
       
+      if (!progressData || progressData.length === 0) {
+        setPlayerParticipation([]);
+        setPlayerDataLoading(false);
+        return;
+      }
+      
       // Get usernames from profiles
-      const userIds = progressData?.map(progress => progress.user_id) || [];
+      const userIds = progressData.map(progress => progress.user_id);
       
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -185,48 +203,57 @@ const DailyChallengesReport: React.FC = () => {
         usernameMap[profile.id] = profile.username;
       });
 
-      // Get user answers for each challenge question to properly count attempted questions and correct answers
-      const questionIds = challengeData.question_ids || [];
-      const userQuestionAttempts: Record<string, Set<string>> = {};
-      const userCorrectAnswers: Record<string, number> = {};
-
-      // First initialize the records
-      progressData?.forEach(progress => {
-        userQuestionAttempts[progress.user_id] = new Set();
-        userCorrectAnswers[progress.user_id] = 0;
-      });
-
-      // Fetch quiz answers for all users in this challenge
-      if (userIds.length > 0 && questionIds.length > 0) {
-        const { data: answersData, error: answersError } = await supabase
-          .from('quiz_answers')
-          .select('*')
-          .in('user_id', userIds)
-          .in('question_id', questionIds);
-          
-        if (answersError) throw answersError;
+      // Fetch all quiz answers for this challenge to accurately count attempts and correct answers
+      const { data: answersData, error: answersError } = await supabase
+        .from('quiz_answers')
+        .select('*')
+        .in('user_id', userIds)
+        .in('question_id', challengeData.question_ids)
+        .order('answered_at', { ascending: true });
         
-        // Process answers to count attempted and correct answers
-        answersData?.forEach(answer => {
-          if (userQuestionAttempts[answer.user_id]) {
-            userQuestionAttempts[answer.user_id].add(answer.question_id);
+      if (answersError) throw answersError;
+      
+      // Create data structure to track user attempts and correct answers
+      const userStats: Record<string, {
+        attempted: Set<string>,
+        correct: Set<string>,
+        score: number
+      }> = {};
+      
+      // Initialize stats for each user
+      userIds.forEach(userId => {
+        userStats[userId] = {
+          attempted: new Set(),
+          correct: new Set(),
+          score: 0
+        };
+      });
+      
+      // Process all answers to get accurate counts
+      if (answersData) {
+        answersData.forEach(answer => {
+          if (userStats[answer.user_id]) {
+            // Track attempted questions (unique question IDs)
+            userStats[answer.user_id].attempted.add(answer.question_id);
+            
+            // Track correct answers
             if (answer.correct) {
-              userCorrectAnswers[answer.user_id] = (userCorrectAnswers[answer.user_id] || 0) + 1;
+              userStats[answer.user_id].correct.add(answer.question_id);
             }
+            
+            // Add to score
+            userStats[answer.user_id].score += answer.points_earned || 0;
           }
         });
       }
-
-      // Process player participation data
-      const playerData = progressData?.map(progress => {
-        const totalQuestions = challengeData.num_questions;
-        const attempted = userQuestionAttempts[progress.user_id]?.size || 0;
-        const correct = userCorrectAnswers[progress.user_id] || 0;
-        
-        // Calculate score based on correct answers and question values
-        // For this implementation, we'll use the score from the progress table,
-        // but in a real application, you might want to recalculate it based on
-        // the correct answers and question point values
+      
+      // Build player participation data
+      const playerData = progressData.map(progress => {
+        const stats = userStats[progress.user_id] || { 
+          attempted: new Set(), 
+          correct: new Set(),
+          score: 0
+        };
         
         return {
           id: progress.id,
@@ -234,15 +261,15 @@ const DailyChallengesReport: React.FC = () => {
           username: usernameMap[progress.user_id] || 'Unknown User',
           challenge_id: challengeId,
           challenge_title: challengeData.title,
-          total_questions: totalQuestions,
-          attempted_questions: attempted,
-          correct_answers: correct,
-          score: progress.score,
+          total_questions: challengeData.num_questions,
+          attempted_questions: stats.attempted.size,
+          correct_answers: stats.correct.size,
+          score: progress.score || stats.score, // Use progress score if available, fallback to calculated
           completion_status: progress.completed ? 'Completed' : 'In Progress'
         };
       });
       
-      setPlayerParticipation(playerData || []);
+      setPlayerParticipation(playerData);
     } catch (error) {
       console.error('Error fetching player participation data:', error);
       toast({
