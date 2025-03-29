@@ -272,9 +272,24 @@ const DailyPlayReports = () => {
         
       if (error) throw error;
       
+      const userIds = [...new Set(data?.map(play => play.user_id) || [])];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+        
+      if (profilesError) throw profilesError;
+      
+      const usernameMap: Record<string, string> = {};
+      profilesData?.forEach(profile => {
+        usernameMap[profile.id] = profile.username;
+      });
+      
       const playData = data?.map(play => ({
         id: play.id,
-        username: play.user_id,
+        userId: play.user_id,
+        username: usernameMap[play.user_id] || 'Unknown User',
         date: play.answered_at ? new Date(play.answered_at).toLocaleDateString() : 'Unknown',
         time: play.answered_at ? new Date(play.answered_at).toLocaleTimeString() : 'Unknown',
         question: play.question_id?.question || 'Unknown',
@@ -339,7 +354,7 @@ const DailyPlayReports = () => {
   const columns = [
     { header: 'Date', accessorKey: 'date' },
     { header: 'Time', accessorKey: 'time' },
-    { header: 'User ID', accessorKey: 'username' },
+    { header: 'Username', accessorKey: 'username' },
     { header: 'Question', accessorKey: 'question' },
     { header: 'Answer', accessorKey: 'answer' },
     { header: 'Correct', accessorKey: 'correct' },
