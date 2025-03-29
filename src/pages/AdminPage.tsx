@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -83,6 +84,12 @@ const AdminPage: React.FC = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    
+    // Handle quiz tab navigation - don't override sub-tabs
+    if (value === 'quiz' && location.pathname.includes('/quiz/challenges')) {
+      return; // Keep the current URL with the challenges sub-tab
+    }
+    
     navigate(`/admin/${value}`);
   };
 
