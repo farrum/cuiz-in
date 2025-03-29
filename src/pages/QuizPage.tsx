@@ -56,18 +56,14 @@ function QuizPage() {
       <Header />
       
       <main className="flex-grow container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <QuizCard 
-              question={sampleQuestion} 
-              onComplete={handleQuestionComplete} 
-            />
-          </div>
+        <div className="flex flex-col space-y-6">
+          <QuizCard 
+            question={sampleQuestion} 
+            onComplete={handleQuestionComplete} 
+          />
           
-          <div className="space-y-6">
-            {/* Show daily challenges component */}
-            <DailyChallenges />
-          </div>
+          {/* Daily Challenges section */}
+          <DailyChallenges />
         </div>
       </main>
       
