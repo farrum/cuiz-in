@@ -43,25 +43,18 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
         continue;
       }
       
-      // If no login logs or last login was more than 5 days ago, suspend the account
-      if (!loginLogs || loginLogs.length === 0 || new Date(loginLogs[0].login_time) < fiveDaysAgo) {
-        console.log(`Suspending account for ${profile.username} due to inactivity`);
+      // Only suspend if there are no login records or the last login was more than 5 days ago
+      if (!loginLogs || loginLogs.length === 0) {
+        console.log(`Suspending account for ${profile.username} due to no login records`);
+        await suspendUserAccount(profile.id);
+      } else {
+        const lastLoginDate = new Date(loginLogs[0].login_time);
         
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            suspended: true, 
-            reactivation_requested: false,
-            reactivation_approved: false,
-            reactivation_requested_at: null,
-            reactivation_approved_at: null
-          })
-          .eq('id', profile.id);
-          
-        if (updateError) {
-          console.error(`Error suspending account for ${profile.username}:`, updateError);
+        if (lastLoginDate < fiveDaysAgo) {
+          console.log(`Suspending account for ${profile.username} due to inactivity since ${lastLoginDate.toISOString()}`);
+          await suspendUserAccount(profile.id);
         } else {
-          console.log(`Successfully suspended account for ${profile.username}`);
+          console.log(`User ${profile.username} is active, last login: ${lastLoginDate.toISOString()}`);
         }
       }
     }
@@ -69,6 +62,32 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
     console.log('Finished checking and suspending inactive accounts');
   } catch (error) {
     console.error('Error in checkAndSuspendInactiveAccounts:', error);
+  }
+};
+
+/**
+ * Helper function to suspend a user account
+ */
+const suspendUserAccount = async (userId: string): Promise<void> => {
+  try {
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        suspended: true, 
+        reactivation_requested: false,
+        reactivation_approved: false,
+        reactivation_requested_at: null,
+        reactivation_approved_at: null
+      })
+      .eq('id', userId);
+      
+    if (updateError) {
+      console.error(`Error suspending account ID ${userId}:`, updateError);
+    } else {
+      console.log(`Successfully suspended account ID ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error in suspendUserAccount:', error);
   }
 };
 

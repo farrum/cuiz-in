@@ -7,7 +7,7 @@ import AdminRouteGuard from '@/components/AdminRouteGuard';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import LoginBonusPopup from '@/components/LoginBonusPopup';
 import { useToast } from '@/hooks/use-toast';
-import { checkAndSuspendInactiveAccounts, reactivateUserAccount } from '@/utils/accountSuspension';
+import { reactivateUserAccount } from '@/utils/accountSuspension';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
@@ -70,11 +70,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Show loading state
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
-  }
-
-  // Check for inactive accounts and suspend if needed when a user authenticates
-  if (isAuthenticated) {
-    checkAndSuspendInactiveAccounts();
   }
 
   // Handle popup close
