@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -121,7 +122,6 @@ const DailyChallengesAdmin: React.FC = () => {
         is_active: values.is_active,
         start_date: values.start_date.toISOString(),
         end_date: values.end_date.toISOString(),
-        created_by: 'admin',
       };
 
       const { success, error } = await challengesService.createChallenge(challengeData);
