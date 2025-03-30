@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,16 +42,22 @@ interface Answer {
   correctAnswer: string;
 }
 
-// Simple interface for the question map to avoid type recursion
+// Simple interface for question data to avoid type recursion
 interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-interface QuestionMap {
-  [key: string]: QuestionExplanation;
-}
+// Create a proper type for the map to avoid infinite recursion
+type QuestionMap = Record<string, QuestionExplanation>;
+
+// Create a proper type for the answer map
+type AnswerMap = Record<string, {
+  question_id: string;
+  correct: boolean;
+  selected_answer: string;
+}>;
 
 const ChallengePlayPage = () => {
   const { challengeId } = useParams<{ challengeId: string }>();
@@ -159,7 +164,7 @@ const ChallengePlayPage = () => {
           
           if (answerData && answerData.length > 0) {
             // Create a map of question_id to answer for quick lookup
-            const answerMap: Record<string, any> = {};
+            const answerMap: AnswerMap = {};
             answerData.forEach(a => {
               answerMap[a.question_id] = a;
             });
