@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuizQuestion } from '@/utils/quizData';
+import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { NavigateFunction } from 'react-router-dom';
 import { confetti } from '@/utils/animations';
 
@@ -32,22 +32,24 @@ export interface Answer {
   correctAnswer: string;
 }
 
-// Simple interface for question data to avoid type recursion
+// Define simple interfaces to avoid type recursion
 interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-// Create a proper type for the map to avoid infinite recursion
+// Use Record type to avoid infinite recursion
 type QuestionMap = Record<string, QuestionExplanation>;
 
-// Create a proper type for the answer map
+// Define interface for answer details
 interface AnswerDetails {
   question_id: string;
   correct: boolean;
   selected_answer: string;
 }
+
+// Use Record type for the answer map
 type AnswerMap = Record<string, AnswerDetails>;
 
 const useChallengeData = (
