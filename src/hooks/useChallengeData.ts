@@ -32,15 +32,15 @@ export interface Answer {
   correctAnswer: string;
 }
 
-// Using a simple interface without nested types to avoid recursion
+// Simple flat types to avoid recursion issues
 interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-// Plain object type using string keys to map question IDs to explanations
-type QuestionMap = Record<string, QuestionExplanation>;
+// Use non-generic plain object type 
+type QuestionMap = {[questionId: string]: QuestionExplanation};
 
 // Interface for storing question answer data
 interface AnswerDetails {
@@ -49,8 +49,8 @@ interface AnswerDetails {
   selected_answer: string;
 }
 
-// Plain object type to map question IDs to answer details
-type AnswerMap = Record<string, AnswerDetails>;
+// Use non-generic plain object type
+type AnswerMap = {[questionId: string]: AnswerDetails};
 
 const useChallengeData = (
   challengeId: string | undefined,
@@ -137,34 +137,34 @@ const useChallengeData = (
             .select('*')
             .in('id', challengeData.question_ids);
             
-          // Map questions for easy lookup
-          const questionMap: QuestionMap = {};
+          // Create simple lookup objects instead of complex maps
+          const questionMap: {[key: string]: QuestionExplanation} = {};
           if (questionData) {
-            questionData.forEach(q => {
+            for (const q of questionData) {
               questionMap[q.id] = {
                 question: q.question,
                 explanation: q.explanation || '',
                 correctAnswer: q.correct_answer
               };
-            });
+            }
           }
           
           // Create answers array using the correct order from challenge.question_ids
           const completedAnswers: Answer[] = [];
           
           if (answerData && answerData.length > 0) {
-            // Create a map of question_id to answer for quick lookup
-            const answerMap: AnswerMap = {};
-            answerData.forEach(a => {
+            // Create a simple lookup object
+            const answerMap: {[key: string]: any} = {};
+            for (const a of answerData) {
               answerMap[a.question_id] = {
                 question_id: a.question_id,
                 correct: a.correct,
                 selected_answer: a.selected_answer
               };
-            });
+            }
             
             // Build answers array in the correct order
-            challengeData.question_ids.forEach(qId => {
+            for (const qId of challengeData.question_ids) {
               const answer = answerMap[qId];
               if (answer) {
                 completedAnswers.push({
@@ -175,7 +175,7 @@ const useChallengeData = (
                   correctAnswer: questionMap[qId]?.correctAnswer || ''
                 });
               }
-            });
+            }
           }
           
           setAnswers(completedAnswers);
@@ -192,7 +192,7 @@ const useChallengeData = (
         if (questionError) throw questionError;
         
         // Convert DB question format to QuizQuestion format with proper type conversion
-        const formattedQuestions: Record<string, QuizQuestion> = {};
+        const formattedQuestions: {[key: string]: QuizQuestion} = {};
         
         questionData.forEach(q => {
           formattedQuestions[q.id] = {
