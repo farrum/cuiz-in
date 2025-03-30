@@ -32,24 +32,24 @@ export interface Answer {
   correctAnswer: string;
 }
 
-// Define simple interfaces to avoid type recursion
+// Using a simple interface without nested types to avoid recursion
 interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-// Use Record type to avoid infinite recursion
+// Plain object type using string keys to map question IDs to explanations
 type QuestionMap = Record<string, QuestionExplanation>;
 
-// Define interface for answer details
+// Interface for storing question answer data
 interface AnswerDetails {
   question_id: string;
   correct: boolean;
   selected_answer: string;
 }
 
-// Use Record type for the answer map
+// Plain object type to map question IDs to answer details
 type AnswerMap = Record<string, AnswerDetails>;
 
 const useChallengeData = (
@@ -156,7 +156,11 @@ const useChallengeData = (
             // Create a map of question_id to answer for quick lookup
             const answerMap: AnswerMap = {};
             answerData.forEach(a => {
-              answerMap[a.question_id] = a;
+              answerMap[a.question_id] = {
+                question_id: a.question_id,
+                correct: a.correct,
+                selected_answer: a.selected_answer
+              };
             });
             
             // Build answers array in the correct order
