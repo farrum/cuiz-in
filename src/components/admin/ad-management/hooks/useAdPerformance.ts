@@ -86,53 +86,80 @@ export const useAdPerformance = () => {
         
       if (adSlotsError) throw adSlotsError;
       
-      // Get impression data
+      // Get impression data - Using a SQL query with GROUP BY instead of .group() method
       const { data: impressions, error: impressionsError } = await supabase
-        .from('ad_views')
-        .select('ad_id, ad_position, slot_id, page_section, count(*)')
-        .group('ad_id, ad_position, slot_id, page_section');
+        .rpc('get_ad_impressions_count');
         
-      if (impressionsError) throw impressionsError;
-      
-      // Get click data
-      const { data: clicks, error: clicksError } = await supabase
-        .from('ad_clicks')
-        .select('ad_id, ad_position, slot_id, page_section, count(*)')
-        .group('ad_id, ad_position, slot_id, page_section');
+      if (impressionsError) {
+        console.error('Error fetching impression counts via RPC:', impressionsError);
+        // Fallback to simple count method
+        const { data: fallbackImpressions, error: fallbackError } = await supabase
+          .from('ad_views')
+          .select('*');
+          
+        if (fallbackError) throw fallbackError;
         
-      if (clicksError) throw clicksError;
-      
-      console.log(`Manually calculating performance from ${impressions.length} impressions and ${clicks.length} clicks`);
-      
-      // Convert to the expected format
-      const manualPerformance: AdPerformance[] = [];
-      
-      for (const impression of impressions as ImpressionData[]) {
-        const adSlot = adSlots.find((slot: SlotData) => slot.id === impression.ad_id);
-        const clickData = clicks.find((click: ClickData) => 
-          click.ad_id === impression.ad_id && 
-          click.ad_position === impression.ad_position &&
-          click.slot_id === impression.slot_id &&
-          click.page_section === impression.page_section
-        );
-        
-        const clickCount = clickData ? parseInt(clickData.count) : 0;
-        const impressionCount = parseInt(impression.count);
-        
-        manualPerformance.push({
-          ad_id: impression.ad_id,
-          ad_name: adSlot ? adSlot.name : 'Unknown Ad',
-          ad_position: impression.ad_position,
-          slot_id: impression.slot_id || undefined,
-          page_section: impression.page_section || undefined,
-          impressions: impressionCount,
-          clicks: clickCount,
-          ctr: impressionCount > 0 ? (clickCount / impressionCount) * 100 : 0
+        // Group the impressions manually in JS
+        const impressionGroups: Record<string, ImpressionData> = {};
+        fallbackImpressions?.forEach(impression => {
+          const key = `${impression.ad_id}-${impression.ad_position}-${impression.slot_id}-${impression.page_section}`;
+          if (!impressionGroups[key]) {
+            impressionGroups[key] = {
+              ad_id: impression.ad_id,
+              ad_position: impression.ad_position,
+              slot_id: impression.slot_id,
+              page_section: impression.page_section,
+              count: '1'
+            };
+          } else {
+            impressionGroups[key].count = (parseInt(impressionGroups[key].count) + 1).toString();
+          }
         });
+        
+        const groupedImpressions = Object.values(impressionGroups);
+        console.log(`Manually grouped ${groupedImpressions.length} impression records`);
+        
+        // Get click data - manually group clicks too
+        const { data: fallbackClicks, error: fallbackClicksError } = await supabase
+          .from('ad_clicks')
+          .select('*');
+          
+        if (fallbackClicksError) throw fallbackClicksError;
+        
+        // Group the clicks manually
+        const clickGroups: Record<string, ClickData> = {};
+        fallbackClicks?.forEach(click => {
+          const key = `${click.ad_id}-${click.ad_position}-${click.slot_id}-${click.page_section}`;
+          if (!clickGroups[key]) {
+            clickGroups[key] = {
+              ad_id: click.ad_id,
+              ad_position: click.ad_position,
+              slot_id: click.slot_id,
+              page_section: click.page_section,
+              count: '1'
+            };
+          } else {
+            clickGroups[key].count = (parseInt(clickGroups[key].count) + 1).toString();
+          }
+        });
+        
+        const groupedClicks = Object.values(clickGroups);
+        console.log(`Manually grouped ${groupedClicks.length} click records`);
+        
+        processPerformanceData(adSlots, groupedImpressions, groupedClicks);
+        return;
       }
       
-      console.log(`Generated ${manualPerformance.length} manual performance records`);
-      setAdPerformance(manualPerformance);
+      // Get click data - Using a SQL query with GROUP BY instead of .group() method
+      const { data: clicks, error: clicksError } = await supabase
+        .rpc('get_ad_clicks_count');
+        
+      if (clicksError) {
+        console.error('Error fetching click counts via RPC:', clicksError);
+        throw clicksError;
+      }
+      
+      processPerformanceData(adSlots, impressions as ImpressionData[], clicks as ClickData[]);
       
     } catch (error) {
       console.error('Error calculating performance manually:', error);
@@ -143,6 +170,45 @@ export const useAdPerformance = () => {
       });
       setAdPerformance([]);
     }
+  };
+  
+  // Helper function to process the performance data
+  const processPerformanceData = (
+    adSlots: SlotData[] | null, 
+    impressions: ImpressionData[], 
+    clicks: ClickData[]
+  ) => {
+    console.log(`Processing performance data from ${impressions.length} impressions and ${clicks.length} clicks`);
+    
+    // Convert to the expected format
+    const manualPerformance: AdPerformance[] = [];
+    
+    for (const impression of impressions) {
+      const adSlot = adSlots?.find((slot: SlotData) => slot.id === impression.ad_id);
+      const clickData = clicks.find((click: ClickData) => 
+        click.ad_id === impression.ad_id && 
+        click.ad_position === impression.ad_position &&
+        click.slot_id === impression.slot_id &&
+        click.page_section === impression.page_section
+      );
+      
+      const clickCount = clickData ? parseInt(clickData.count) : 0;
+      const impressionCount = parseInt(impression.count);
+      
+      manualPerformance.push({
+        ad_id: impression.ad_id,
+        ad_name: adSlot ? adSlot.name : 'Unknown Ad',
+        ad_position: impression.ad_position,
+        slot_id: impression.slot_id || undefined,
+        page_section: impression.page_section || undefined,
+        impressions: impressionCount,
+        clicks: clickCount,
+        ctr: impressionCount > 0 ? (clickCount / impressionCount) * 100 : 0
+      });
+    }
+    
+    console.log(`Generated ${manualPerformance.length} manual performance records`);
+    setAdPerformance(manualPerformance);
   };
   
   return {
