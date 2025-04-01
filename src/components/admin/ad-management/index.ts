@@ -11,5 +11,5 @@ export { default as TriviaImporter } from './TriviaImporter';
 
 // Export hooks
 export { useAdSlots } from './hooks/useAdSlots';
-export { useAdPerformance } from './hooks/useAdPerformance';
+export { useAdPerformance, type AdPerformance } from './hooks/useAdPerformance';
 export { useAdSlotEditor } from './hooks/useAdSlotEditor';
