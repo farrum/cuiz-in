@@ -73,7 +73,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
             </div>
             <QuizCard
               question={questions[currentQuestionIndex]}
-              onComplete={(_, selectedOption) => onComplete(selectedOption)}
+              onComplete={(isCorrect, selectedOption) => onComplete(selectedOption)}
               pointsMultiplier={challenge?.points_multiplier}
               isChallenge={true}
             />

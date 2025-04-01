@@ -80,7 +80,8 @@ const ChallengePlayPage = () => {
       currentPoints={currentPoints}
       onExit={() => navigate('/quiz')}
       onComplete={(selectedOption) => {
-        handleQuestionComplete(selectedOption === questions[currentQuestionIndex].correctAnswer, selectedOption);
+        const currentQuestion = questions[currentQuestionIndex];
+        handleQuestionComplete(selectedOption === currentQuestion.correctAnswer, selectedOption);
       }}
     />
   );
