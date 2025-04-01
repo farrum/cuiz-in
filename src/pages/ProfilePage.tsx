@@ -100,6 +100,36 @@ const ProfilePage: React.FC = () => {
     });
   };
   
+  // Force reload ads from server on initial load
+  useEffect(() => {
+    const syncAdSlots = async () => {
+      try {
+        console.log('Syncing ad slots from server for profile page...');
+        const { data: adSlots, error } = await supabase
+          .from('ad_slots')
+          .select('*')
+          .eq('active', true);
+          
+        if (!error && adSlots) {
+          console.log(`Successfully loaded ${adSlots.length} ad slots for profile page`);
+          localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
+          
+          // Force reload of ads
+          setForceReloadAds(prev => prev + 1);
+          
+          // Broadcast ad slots update
+          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
+        } else {
+          console.error('Error fetching ad slots for profile page:', error);
+        }
+      } catch (err) {
+        console.error('Error syncing ad slots for profile page:', err);
+      }
+    };
+    
+    syncAdSlots();
+  }, []);
+  
   if (suspended) {
     return (
       <SuspendedAccountHandler 

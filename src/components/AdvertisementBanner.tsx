@@ -34,6 +34,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const [adActive, setAdActive] = useState(true);
   const [adId, setAdId] = useState<string | null>(null);
   const [adDebug, setAdDebug] = useState<string | null>(null);
+  const [adError, setAdError] = useState<string | null>(null);
   const sessionId = getSessionId();
   const containerId = useId().replace(/:/g, '-') + '-ad-container';
   
@@ -44,6 +45,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     try {
       console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
       setAdLoaded(false);
+      setAdError(null);
       
       // First try to get ads from Supabase
       const { data: supabaseAds, error } = await supabase
@@ -54,6 +56,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       
       if (error) {
         console.error('Error fetching ads from Supabase:', error);
+        setAdError(`Database error: ${error.message}`);
         fallbackToLocalStorage();
         return;
       }
@@ -73,15 +76,17 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           
           // Track the ad impression
           trackAdImpression(selectedAd.id);
-        }, 1000);
+        }, 300);
         
         setAdActive(true);
       } else {
         console.log('No active ads found in Supabase for position:', position);
+        setAdError(`No active ads for position: ${position}`);
         fallbackToLocalStorage();
       }
     } catch (err) {
       console.error('Error in ad fetching:', err);
+      setAdError(`Fetch error: ${err instanceof Error ? err.message : String(err)}`);
       fallbackToLocalStorage();
     }
   }, [position, slotId, pageSection]);
@@ -93,6 +98,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     if (!adSlotsJson) {
       console.log('No ad slots found in localStorage');
+      setAdError('No ad slots in localStorage');
       setAdActive(false);
       return;
     }
@@ -124,16 +130,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           
           // Track the ad impression
           trackAdImpression(selectedAd.id);
-        }, 1000);
+        }, 300);
         
         setAdActive(true);
       } else {
         // No matching ads or all are inactive
         console.log('No matching active ads found for position:', position);
+        setAdError(`No active ads for position: ${position} in localStorage`);
         setAdActive(false);
       }
     } catch (error) {
       console.error('Error parsing ad slots from localStorage:', error);
+      setAdError(`LocalStorage parse error: ${error instanceof Error ? error.message : String(error)}`);
       setAdActive(false);
     }
   }, [position]);
@@ -147,10 +155,10 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       const pageUrl = window.location.href;
       const deviceInfo = navigator.userAgent;
       
-      console.log(`Tracking impression for ad: ${adSlotId} in ${slotId || position} / ${pageSection || position}`);
+      console.log(`Tracking impression for ad: ${adSlotId} in ${slotId || position} / ${pageSection || 'unknown'}`);
       
       // Record impression in database
-      await supabase.from('ad_views').insert({
+      const { error } = await supabase.from('ad_views').insert({
         ad_id: adSlotId,
         user_id: userId,
         session_id: sessionId,
@@ -158,12 +166,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         device_info: deviceInfo,
         ad_position: position,
         slot_id: slotId || position,
-        page_section: pageSection || position
+        page_section: pageSection || 'default'
       });
       
-      console.log(`Ad impression tracked: ${adSlotId}`);
+      if (error) {
+        console.error('Error tracking ad impression:', error);
+        setAdError(`Impression tracking error: ${error.message}`);
+      } else {
+        console.log(`Ad impression tracked: ${adSlotId}`);
+      }
     } catch (error) {
       console.error('Error tracking ad impression:', error);
+      setAdError(`Impression tracking error: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -176,10 +190,10 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       const pageUrl = window.location.href;
       const deviceInfo = navigator.userAgent;
       
-      console.log(`Tracking click for ad: ${adId} in ${slotId || position} / ${pageSection || position}`);
+      console.log(`Tracking click for ad: ${adId} in ${slotId || position} / ${pageSection || 'unknown'}`);
       
       // Record click in database
-      await supabase.from('ad_clicks').insert({
+      const { error } = await supabase.from('ad_clicks').insert({
         ad_id: adId,
         user_id: userId,
         session_id: sessionId,
@@ -187,10 +201,14 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         device_info: deviceInfo,
         ad_position: position,
         slot_id: slotId || position,
-        page_section: pageSection || position
+        page_section: pageSection || 'default'
       });
       
-      console.log(`Ad click tracked: ${adId}`);
+      if (error) {
+        console.error('Error tracking ad click:', error);
+      } else {
+        console.log(`Ad click tracked: ${adId}`);
+      }
     } catch (error) {
       console.error('Error tracking ad click:', error);
     }
@@ -215,7 +233,16 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
 
   if (!adActive) {
     console.log(`Ad not active for position: ${position}`);
-    return null; // Don't render anything if no active ad for this position
+    // In development, return a placeholder to show where the ad would be
+    if (process.env.NODE_ENV === 'development') {
+      return (
+        <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
+          Ad slot inactive: {position} / {slotId}
+          {adError && <div className="text-destructive mt-1">{adError}</div>}
+        </div>
+      );
+    }
+    return null; // In production, don't show anything
   }
 
   const getSizeClasses = () => {
@@ -259,12 +286,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         <div className="flex items-center justify-center space-x-2">
           <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
           <p className="text-sm text-muted-foreground">Loading advertisement...</p>
+          {adError && process.env.NODE_ENV === 'development' && (
+            <p className="text-xs text-destructive">{adError}</p>
+          )}
         </div>
       ) : (
         <div className="w-full">
           <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-          {process.env.NODE_ENV === 'development' && adDebug && (
-            <p className="text-xs text-blue-500 mb-2 text-center">{adDebug}</p>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-2 text-center">
+              {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
+              <p className="text-xs text-muted-foreground">Slot: {slotId || position} / Section: {pageSection || 'default'}</p>
+            </div>
           )}
           <div id={containerId} dangerouslySetInnerHTML={{ __html: adContent }}></div>
         </div>
