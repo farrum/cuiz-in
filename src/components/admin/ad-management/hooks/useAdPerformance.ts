@@ -86,80 +86,72 @@ export const useAdPerformance = () => {
         
       if (adSlotsError) throw adSlotsError;
       
-      // Get impression data using custom SQL function
+      // Get impression data using a direct SQL query instead of RPC
+      // due to type definition limitations
       const { data: impressionsResult, error: impressionsError } = await supabase
-        .rpc('get_ad_impressions_count');
+        .from('ad_views')
+        .select('ad_id, ad_position, slot_id, page_section')
+        .then(({ data, error }) => {
+          if (error) throw error;
+          
+          // Manually aggregate the data
+          const grouped: Record<string, ImpressionData> = {};
+          data?.forEach(impression => {
+            const key = `${impression.ad_id}-${impression.ad_position}-${impression.slot_id}-${impression.page_section}`;
+            if (!grouped[key]) {
+              grouped[key] = {
+                ad_id: impression.ad_id,
+                ad_position: impression.ad_position,
+                slot_id: impression.slot_id,
+                page_section: impression.page_section,
+                count: '1'
+              };
+            } else {
+              grouped[key].count = (parseInt(grouped[key].count) + 1).toString();
+            }
+          });
+          
+          return { data: Object.values(grouped), error: null };
+        });
         
       if (impressionsError) {
         console.error('Error fetching impression counts:', impressionsError);
-        // Fallback to simple count method
-        const { data: fallbackImpressions, error: fallbackError } = await supabase
-          .from('ad_views')
-          .select('*');
-          
-        if (fallbackError) throw fallbackError;
-        
-        // Group the impressions manually in JS
-        const impressionGroups: Record<string, ImpressionData> = {};
-        fallbackImpressions?.forEach(impression => {
-          const key = `${impression.ad_id}-${impression.ad_position}-${impression.slot_id}-${impression.page_section}`;
-          if (!impressionGroups[key]) {
-            impressionGroups[key] = {
-              ad_id: impression.ad_id,
-              ad_position: impression.ad_position,
-              slot_id: impression.slot_id,
-              page_section: impression.page_section,
-              count: '1'
-            };
-          } else {
-            impressionGroups[key].count = (parseInt(impressionGroups[key].count) + 1).toString();
-          }
-        });
-        
-        const groupedImpressions = Object.values(impressionGroups);
-        console.log(`Manually grouped ${groupedImpressions.length} impression records`);
-        
-        // Get click data - manually group clicks too
-        const { data: fallbackClicks, error: fallbackClicksError } = await supabase
-          .from('ad_clicks')
-          .select('*');
-          
-        if (fallbackClicksError) throw fallbackClicksError;
-        
-        // Group the clicks manually
-        const clickGroups: Record<string, ClickData> = {};
-        fallbackClicks?.forEach(click => {
-          const key = `${click.ad_id}-${click.ad_position}-${click.slot_id}-${click.page_section}`;
-          if (!clickGroups[key]) {
-            clickGroups[key] = {
-              ad_id: click.ad_id,
-              ad_position: click.ad_position,
-              slot_id: click.slot_id,
-              page_section: click.page_section,
-              count: '1'
-            };
-          } else {
-            clickGroups[key].count = (parseInt(clickGroups[key].count) + 1).toString();
-          }
-        });
-        
-        const groupedClicks = Object.values(clickGroups);
-        console.log(`Manually grouped ${groupedClicks.length} click records`);
-        
-        processPerformanceData(adSlots, groupedImpressions, groupedClicks);
-        return;
+        throw impressionsError;
       }
       
-      // Get click data using custom SQL function
+      // Get click data in a similar way
       const { data: clicksResult, error: clicksError } = await supabase
-        .rpc('get_ad_clicks_count');
+        .from('ad_clicks')
+        .select('ad_id, ad_position, slot_id, page_section')
+        .then(({ data, error }) => {
+          if (error) throw error;
+          
+          // Manually aggregate the data
+          const grouped: Record<string, ClickData> = {};
+          data?.forEach(click => {
+            const key = `${click.ad_id}-${click.ad_position}-${click.slot_id}-${click.page_section}`;
+            if (!grouped[key]) {
+              grouped[key] = {
+                ad_id: click.ad_id,
+                ad_position: click.ad_position,
+                slot_id: click.slot_id,
+                page_section: click.page_section,
+                count: '1'
+              };
+            } else {
+              grouped[key].count = (parseInt(grouped[key].count) + 1).toString();
+            }
+          });
+          
+          return { data: Object.values(grouped), error: null };
+        });
         
       if (clicksError) {
         console.error('Error fetching click counts:', clicksError);
         throw clicksError;
       }
       
-      // Since we are using rpc, the returned data should already be in the correct format
+      // Now we have properly typed data
       const impressions = impressionsResult as ImpressionData[];
       const clicks = clicksResult as ClickData[];
       
