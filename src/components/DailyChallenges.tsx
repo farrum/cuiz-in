@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, Trophy, Clock, ChevronRight, Award } from 'lucide-react';
+import { Calendar, Trophy, Clock, ChevronRight, Award, Archive } from 'lucide-react';
 import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -54,7 +53,6 @@ const DailyChallenges: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Get active challenges
       const { data: challengesData, error: challengesError } = await supabase
         .from('daily_challenges')
         .select('*')
@@ -66,7 +64,6 @@ const DailyChallenges: React.FC = () => {
       if (challengesData && challengesData.length > 0) {
         setChallenges(challengesData);
 
-        // Get user progress for these challenges
         const { data: progressData, error: progressError } = await supabase
           .from('user_challenge_progress')
           .select('*')
@@ -75,7 +72,6 @@ const DailyChallenges: React.FC = () => {
 
         if (progressError) throw progressError;
 
-        // Build progress lookup object
         const progressLookup: {[key: string]: ChallengeProgress} = {};
         if (progressData) {
           progressData.forEach(p => {
@@ -106,20 +102,16 @@ const DailyChallenges: React.FC = () => {
     }
 
     try {
-      // Check if already started
       if (progress[challenge.id]) {
-        // If already completed, navigate to challenge results
         if (progress[challenge.id].completed) {
           navigate(`/challenge/${challenge.id}`);
           return;
         }
         
-        // If started but not completed, navigate to challenge
         navigate(`/challenge/${challenge.id}`);
         return;
       }
 
-      // Create new progress entry
       const { data, error } = await supabase
         .from('user_challenge_progress')
         .insert([
@@ -136,13 +128,11 @@ const DailyChallenges: React.FC = () => {
 
       if (error) throw error;
 
-      // Update local state
       setProgress({
         ...progress,
         [challenge.id]: data
       });
 
-      // Navigate to challenge page
       navigate(`/challenge/${challenge.id}`);
     } catch (error) {
       console.error('Error starting challenge:', error);
@@ -169,7 +159,17 @@ const DailyChallenges: React.FC = () => {
   if (!challenges.length) {
     return (
       <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Daily Challenges</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Daily Challenges</h2>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/archived-challenges')}
+            className="flex items-center"
+          >
+            <Archive className="h-4 w-4 mr-1" /> View Archived
+          </Button>
+        </div>
         <Card>
           <CardContent className="pt-6 text-center">
             <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
@@ -183,7 +183,17 @@ const DailyChallenges: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Daily Challenges</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Daily Challenges</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate('/archived-challenges')}
+          className="flex items-center"
+        >
+          <Archive className="h-4 w-4 mr-1" /> View Archived
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {challenges.map((challenge) => {
           const hasStarted = isPast(new Date(challenge.start_date));

@@ -1,8 +1,7 @@
 
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Challenge, ChallengeProgress, Answer } from './challengeTypes';
-import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
-import { confetti } from '@/utils/animations';
+import { Challenge, ChallengeProgress, Answer, QuizQuestion } from './challengeTypes';
 
 export const useAnswerManagement = (
   challenge: Challenge | null,
@@ -20,123 +19,87 @@ export const useAnswerManagement = (
   progress: ChallengeProgress | null,
   toast: any
 ) => {
-  const handleQuestionComplete = async (isCorrect: boolean, selectedAnswer: string) => {
-    if (!challenge || !questions[currentQuestionIndex] || !userId) return;
-    
-    const currentQuestion = questions[currentQuestionIndex];
-    
-    // Calculate earned points
-    let earnedPoints = 0;
-    if (isCorrect) {
-      // Calculate points based on difficulty
-      switch (currentQuestion.difficulty) {
-        case "easy": earnedPoints = 2; break;
-        case "medium": earnedPoints = 3; break;
-        case "hard": earnedPoints = 4; break;
-        default: earnedPoints = 2;
-      }
-      // Apply multiplier
-      earnedPoints = earnedPoints * (challenge.points_multiplier || 1);
-    } else {
-      // Wrong answer gives 0.5 points with multiplier
-      earnedPoints = 0.5 * (challenge.points_multiplier || 1);
-    }
-    
-    const newTotalPoints = currentPoints + earnedPoints;
-    setCurrentPoints(newTotalPoints);
-    
-    // Add to answers array
-    const newAnswer: Answer = {
-      questionId: currentQuestion.id,
-      correct: isCorrect,
-      selectedAnswer: selectedAnswer,
-      explanation: currentQuestion.explanation || '',
-      correctAnswer: currentQuestion.correctAnswer
-    };
-    
-    setAnswers([...answers, newAnswer]);
+  const handleQuestionComplete = async (selectedOption: string) => {
+    if (!challenge || !userId || !challengeId || questions.length === 0) return;
     
     try {
+      const currentQuestion = questions[currentQuestionIndex];
+      const isCorrect = selectedOption === currentQuestion.correctAnswer;
+      
+      // Calculate points for this answer
+      const pointsForQuestion = currentQuestion.points || 10;
+      const pointsMultiplier = challenge.points_multiplier || 1;
+      const earnedPoints = isCorrect ? pointsForQuestion * pointsMultiplier : 0;
+      
+      // Update running total
+      const newTotalPoints = currentPoints + earnedPoints;
+      setCurrentPoints(newTotalPoints);
+      
       // Record the answer
-      await supabase.from('quiz_answers').insert([{
-        question_id: currentQuestion.id,
-        user_id: userId,
-        selected_answer: selectedAnswer,
+      const newAnswer: Answer = {
+        questionId: currentQuestion.id,
         correct: isCorrect,
-        points_earned: earnedPoints,
-        challenge_id: challengeId
-      }]);
+        selectedAnswer: selectedOption,
+        explanation: currentQuestion.explanation,
+        correctAnswer: currentQuestion.correctAnswer
+      };
+      
+      // Update answers in state
+      const updatedAnswers = [...answers, newAnswer];
+      setAnswers(updatedAnswers);
+      
+      // Store answer in database
+      await supabase.from('quiz_answers').insert({
+        user_id: userId,
+        question_id: currentQuestion.id,
+        selected_answer: selectedOption,
+        correct: isCorrect,
+        points_earned: earnedPoints
+      });
       
       // Check if this was the last question
-      if (currentQuestionIndex >= challenge.num_questions - 1) {
-        // Challenge complete!
-        await completeChallenge(newTotalPoints);
+      const isLastQuestion = currentQuestionIndex === questions.length - 1;
+      
+      if (isLastQuestion) {
+        // Complete the challenge
+        await supabase
+          .from('user_challenge_progress')
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+            score: newTotalPoints
+          })
+          .eq('challenge_id', challengeId)
+          .eq('user_id', userId);
+        
+        // Update user's profile points
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', userId)
+          .single();
+          
+        if (userData) {
+          await supabase
+            .from('profiles')
+            .update({
+              points: (userData.points || 0) + newTotalPoints
+            })
+            .eq('id', userId);
+        }
+        
+        // Update local state
+        setIsComplete(true);
+        setScore(newTotalPoints);
       } else {
         // Move to next question
         setCurrentQuestionIndex(prevIndex => prevIndex + 1);
       }
     } catch (error) {
-      console.error('Error recording answer:', error);
+      console.error('Error handling question completion:', error);
       toast({
-        title: "Error saving answer",
-        description: "Your progress might not be fully saved",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const completeChallenge = async (finalScore: number) => {
-    if (!challenge || !progress || !userId) return;
-    
-    try {
-      // Update user profile points
-      const { data: userProfileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('id', userId)
-        .single();
-        
-      if (profileError) throw profileError;
-      
-      const currentUserPoints = userProfileData.points || 0;
-      const newTotalPoints = currentUserPoints + finalScore;
-      
-      await supabase
-        .from('profiles')
-        .update({ points: newTotalPoints })
-        .eq('id', userId);
-        
-      // Store updated points in localStorage
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotalPoints.toString());
-      
-      // Update challenge progress
-      await supabase
-        .from('user_challenge_progress')
-        .update({
-          completed: true,
-          completed_at: new Date().toISOString(),
-          score: finalScore
-        })
-        .eq('id', progress.id);
-        
-      setIsComplete(true);
-      setScore(finalScore);
-      
-      // Show completion toast and trigger confetti
-      toast({
-        title: "Challenge Completed!",
-        description: `You earned ${finalScore} points!`,
-      });
-      
-      // Only trigger confetti if there are correct answers
-      if (answers.some(a => a.correct)) {
-        confetti();
-      }
-    } catch (error) {
-      console.error('Error completing challenge:', error);
-      toast({
-        title: "Error saving results",
-        description: "Your progress might not be fully saved",
+        title: "Error",
+        description: "Failed to save your answer. Please try again.",
         variant: "destructive"
       });
     }

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -22,6 +23,7 @@ import TermsPage from '@/pages/TermsPage';
 import DisclaimerPage from '@/pages/DisclaimerPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import ChallengePlayPage from '@/pages/ChallengePlayPage';
+import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -121,6 +123,11 @@ function App() {
           <Route path="/challenge/:challengeId" element={
             <ProtectedRoute>
               <ChallengePlayPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/archived-challenges" element={
+            <ProtectedRoute>
+              <ArchivedChallengesPage />
             </ProtectedRoute>
           } />
           <Route path="/referral" element={

@@ -7,6 +7,9 @@ export interface Challenge {
   num_questions: number;
   points_multiplier: number;
   question_ids: string[];
+  start_date?: string;
+  end_date?: string;
+  is_active?: boolean;
 }
 
 export interface ChallengeProgress {
