@@ -33,6 +33,7 @@ export interface UseSupabaseRealtimeOptions {
   updateLocalStorage?: boolean;
   debounceMs?: number;
   skipDuplicates?: boolean;
+  stableChannel?: boolean;
 }
 
 const defaultOptions: UseSupabaseRealtimeOptions = {
@@ -41,8 +42,11 @@ const defaultOptions: UseSupabaseRealtimeOptions = {
   showToasts: true,
   updateLocalStorage: true,
   debounceMs: 300,
-  skipDuplicates: true
+  skipDuplicates: true,
+  stableChannel: false
 };
+
+const activeChannels = new Map<string, any>();
 
 export function useSupabaseRealtime(
   table: RealtimeTable, 
@@ -55,6 +59,7 @@ export function useSupabaseRealtime(
   
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastPayloadHashRef = useRef<string | null>(null);
+  const channelRef = useRef<any>(null);
 
   const hashPayload = (payload: any): string => {
     try {
@@ -70,11 +75,29 @@ export function useSupabaseRealtime(
     }
   };
 
+  const getChannelKey = (table: string, options: UseSupabaseRealtimeOptions) => {
+    return `realtime_${table}_${options.event}_${options.schema}`;
+  };
+
   useEffect(() => {
+    const channelKey = getChannelKey(table, mergedOptions);
+    
+    if (mergedOptions.stableChannel && activeChannels.has(channelKey)) {
+      console.log(`Reusing existing channel for ${table}`);
+      channelRef.current = activeChannels.get(channelKey);
+      setIsConnected(true);
+      return () => {};
+    }
+    
     console.log(`Setting up realtime listener for ${table} with debounce: ${mergedOptions.debounceMs}ms`);
     
-    const channelName = `realtime_${table}_${Date.now()}`;
+    const channelName = `${channelKey}_${Date.now()}`;
     const channel = supabase.channel(channelName);
+    channelRef.current = channel;
+    
+    if (mergedOptions.stableChannel) {
+      activeChannels.set(channelKey, channel);
+    }
     
     channel.on(
       'postgres_changes' as any,
@@ -130,9 +153,13 @@ export function useSupabaseRealtime(
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-      supabase.removeChannel(channel);
+      
+      if (!mergedOptions.stableChannel) {
+        console.log(`Removing channel for ${table}`);
+        supabase.removeChannel(channel);
+      }
     };
-  }, [table, mergedOptions, toast]);
+  }, [table, mergedOptions.event, mergedOptions.schema, mergedOptions.debounceMs, mergedOptions.stableChannel]);
 
   const handleLocalStorageUpdate = (tableName: RealtimeTable, payload: RealtimePayload) => {
     try {
@@ -181,4 +208,12 @@ export function useSupabaseRealtime(
   };
 
   return { isConnected, lastUpdate };
+}
+
+export function cleanupAllRealtimeChannels() {
+  console.log(`Cleaning up all realtime channels (${activeChannels.size} channels)`);
+  activeChannels.forEach((channel, key) => {
+    supabase.removeChannel(channel);
+  });
+  activeChannels.clear();
 }

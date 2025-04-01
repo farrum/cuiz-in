@@ -31,8 +31,14 @@ const ProfilePage: React.FC = () => {
   // Refs to prevent multiple refreshes
   const adSlotsLoadedRef = useRef(false);
   const adRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track component mount state
+  const isMountedRef = useRef(true);
+  // Last ad refresh timestamp to prevent too frequent reloads
+  const lastAdRefreshRef = useRef(0);
   
   useEffect(() => {
+    isMountedRef.current = true;
+    
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!storedUserId) {
       navigate('/login');
@@ -53,27 +59,33 @@ const ProfilePage: React.FC = () => {
           throw error;
         }
         
-        if (data) {
+        if (data && isMountedRef.current) {
           setUsername(data.username);
           setSuspended(data.suspended);
           setUserUpi(data.upi_id || '');
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data.",
-          variant: "destructive"
-        });
+        if (isMountedRef.current) {
+          toast({
+            title: "Error",
+            description: "Failed to load profile data.",
+            variant: "destructive"
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchUserProfile();
     
-    // Debounced refresh for ad slots updates
+    // Create a debounced handler for ad slot updates that respects minimum interval
     const handleAdSlotsUpdated = () => {
+      if (!isMountedRef.current) return;
+      
       console.log('Ad slots updated event received in profile page');
       
       // Clear any existing timeout
@@ -81,17 +93,41 @@ const ProfilePage: React.FC = () => {
         clearTimeout(adRefreshTimeoutRef.current);
       }
       
-      // Set a new timeout to refresh ads
+      // Respect minimum refresh interval (5 seconds)
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastAdRefreshRef.current;
+      
+      if (timeSinceLastRefresh < 5000) {
+        console.log(`Throttling ad refresh, last refresh was ${timeSinceLastRefresh}ms ago`);
+        
+        // Schedule refresh after delay to ensure proper interval
+        adRefreshTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) {
+            console.log('Refreshing profile page ads after throttle delay...');
+            lastAdRefreshRef.current = Date.now();
+            setForceReloadAds(prev => prev + 1);
+          }
+          adRefreshTimeoutRef.current = null;
+        }, 5000 - timeSinceLastRefresh);
+        
+        return;
+      }
+      
+      // Set a new timeout to refresh ads with small delay for batching
       adRefreshTimeoutRef.current = setTimeout(() => {
-        console.log('Refreshing profile page ads after debounce...');
-        setForceReloadAds(prev => prev + 1);
+        if (isMountedRef.current) {
+          console.log('Refreshing profile page ads after debounce...');
+          lastAdRefreshRef.current = Date.now();
+          setForceReloadAds(prev => prev + 1);
+        }
         adRefreshTimeoutRef.current = null;
-      }, 500);
+      }, 300);
     };
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
     return () => {
+      isMountedRef.current = false;
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
       if (adRefreshTimeoutRef.current) {
         clearTimeout(adRefreshTimeoutRef.current);
@@ -124,7 +160,7 @@ const ProfilePage: React.FC = () => {
   // Force reload ads from server only if they haven't been loaded already
   useEffect(() => {
     // Avoid multiple initial ad loads
-    if (adSlotsLoadedRef.current) return;
+    if (adSlotsLoadedRef.current || !isMountedRef.current) return;
     
     const syncAdSlots = async () => {
       try {
@@ -134,25 +170,34 @@ const ProfilePage: React.FC = () => {
           .select('*')
           .eq('active', true);
           
-        if (!error && adSlots) {
+        if (!error && adSlots && isMountedRef.current) {
           console.log(`Successfully loaded ${adSlots.length} ad slots for profile page`);
           localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
           
           // Force reload of ads only once
           setForceReloadAds(1);
           adSlotsLoadedRef.current = true;
+          lastAdRefreshRef.current = Date.now();
           
           // Dispatch a custom event with the specific slots that were updated
-          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
-        } else {
+          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { 
+            detail: { source: 'profilePage', slots: adSlots }
+          }));
+        } else if (isMountedRef.current) {
           console.error('Error fetching ad slots for profile page:', error);
         }
       } catch (err) {
-        console.error('Error syncing ad slots for profile page:', err);
+        if (isMountedRef.current) {
+          console.error('Error syncing ad slots for profile page:', err);
+        }
       }
     };
     
     syncAdSlots();
+    
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
   
   if (suspended) {

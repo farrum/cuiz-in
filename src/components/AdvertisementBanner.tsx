@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useId, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +13,14 @@ const getSessionId = (): string => {
   }
   return sessionId;
 };
+
+// Using a module-level cache for ad content to reduce flickering
+const adContentCache = new Map<string, {
+  content: string,
+  id: string,
+  version: string,
+  timestamp: number
+}>();
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
@@ -42,17 +51,46 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const lastFetchTimeRef = useRef<number>(0);
   // Keep track of whether the component is mounted
   const isMountedRef = useRef<boolean>(true);
+  // Unique identifier for this instance
+  const instanceId = useRef<string>(uuidv4());
+  
+  // Calculate a unique identifier for this ad position
+  const adPositionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
   
   // Use our custom hook to execute scripts in the ad content
   useScriptExecution(adContent, containerId);
   
-  const fetchAds = useCallback(async () => {
+  const fetchAds = useCallback(async (force = false) => {
     // Prevent fetching if not mounted
     if (!isMountedRef.current) return;
     
-    // Rate limiting: Don't fetch more than once every 5 seconds
+    // First, check if we have a cached version that's not too old (less than 5 minutes)
     const now = Date.now();
-    if (now - lastFetchTimeRef.current < 5000) {
+    const cachedAd = adContentCache.get(adPositionKey);
+    
+    if (!force && cachedAd && now - cachedAd.timestamp < 300000) {
+      // Use cached version if it exists and is recent
+      console.log(`Using cached ad for ${adPositionKey} (${(now - cachedAd.timestamp) / 1000}s old)`);
+      
+      // Skip update if the content hasn't changed and is already loaded
+      if (cachedAd.version === adVersion && adLoaded && adContent === cachedAd.content) {
+        console.log(`Ad content unchanged for ${position}, skipping update`);
+        return;
+      }
+      
+      setAdContent(cachedAd.content);
+      setAdId(cachedAd.id);
+      setAdVersion(cachedAd.version);
+      setAdDebug(`Cached ad: ${cachedAd.id}`);
+      setAdLoaded(true);
+      setAdActive(true);
+      
+      // Don't track impression for cached content that was already tracked
+      return;
+    }
+    
+    // Rate limiting: Don't fetch more than once every 5 seconds
+    if (!force && now - lastFetchTimeRef.current < 5000) {
       console.log(`Skipping ad fetch for ${position}, throttled (last fetch ${now - lastFetchTimeRef.current}ms ago)`);
       return;
     }
@@ -61,10 +99,51 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     try {
       console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
-      setAdLoaded(false);
       setAdError(null);
       
-      // First try to get ads from Supabase
+      // First try to get ads from local storage for immediate display
+      const storedAds = localStorage.getItem('quiz_app_ad_slots');
+      
+      if (storedAds) {
+        const adSlots = JSON.parse(storedAds);
+        const matchingAds = adSlots.filter((ad: any) => 
+          ad.position === position && ad.active
+        );
+        
+        if (matchingAds.length > 0) {
+          // If multiple ads match the position, choose one randomly
+          const randomIndex = Math.floor(Math.random() * matchingAds.length);
+          const selectedAd = matchingAds[randomIndex];
+          
+          // Generate a version hash for the content
+          const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
+          
+          // Update cache
+          adContentCache.set(adPositionKey, {
+            content: selectedAd.code,
+            id: selectedAd.id,
+            version: contentVersion,
+            timestamp: now
+          });
+          
+          console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
+          setAdDebug(`Local ad: ${selectedAd.name}`);
+          setAdContent(selectedAd.code);
+          setAdId(selectedAd.id);
+          setAdVersion(contentVersion);
+          setAdLoaded(true);
+          setAdActive(true);
+          
+          // Track impression after a short delay to ensure rendering
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              trackAdImpression(selectedAd.id);
+            }
+          }, 300);
+        }
+      }
+      
+      // Then try to fetch fresh data from Supabase in the background
       const { data: supabaseAds, error } = await supabase
         .from('ad_slots')
         .select('*')
@@ -74,122 +153,60 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       if (error) {
         console.error('Error fetching ads from Supabase:', error);
         setAdError(`Database error: ${error.message}`);
-        fallbackToLocalStorage();
         return;
       }
       
-      if (supabaseAds && supabaseAds.length > 0) {
-        // If Supabase has ads, use them
+      if (supabaseAds && supabaseAds.length > 0 && isMountedRef.current) {
+        // If Supabase has ads, update our data
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
         
         // Generate a version hash for the content
         const contentVersion = btoa(selectedAd.id + selectedAd.last_updated);
         
+        // Update cache
+        adContentCache.set(adPositionKey, {
+          content: selectedAd.code,
+          id: selectedAd.id,
+          version: contentVersion,
+          timestamp: now
+        });
+        
         // Skip update if the content hasn't changed
         if (contentVersion === adVersion && adLoaded) {
-          console.log(`Ad content unchanged for ${position}, skipping update`);
+          console.log(`Ad content unchanged for ${position}, skipping server update`);
           return;
         }
         
-        console.log(`Ad selected from server: ${selectedAd.id} (${selectedAd.name})`);
+        console.log(`Ad updated from server: ${selectedAd.id} (${selectedAd.name})`);
         setAdDebug(`Server ad: ${selectedAd.name}`);
         
-        setTimeout(() => {
-          if (isMountedRef.current) {
-            setAdContent(selectedAd.code);
-            setAdId(selectedAd.id);
-            setAdVersion(contentVersion);
-            setAdLoaded(true);
-            
-            // Track the ad impression
-            trackAdImpression(selectedAd.id);
-          }
-        }, 300);
-        
+        // Update component state
+        setAdContent(selectedAd.code);
+        setAdId(selectedAd.id);
+        setAdVersion(contentVersion);
+        setAdLoaded(true);
         setAdActive(true);
-      } else {
-        console.log('No active ads found in Supabase for position:', position);
+        
+        // Only track impression if this is a new ad
+        if (selectedAd.id !== adId) {
+          trackAdImpression(selectedAd.id);
+        }
+      } else if (!adLoaded) {
+        console.log('No active ads found for position:', position);
         setAdError(`No active ads for position: ${position}`);
-        fallbackToLocalStorage();
+        setAdActive(false);
       }
     } catch (err) {
       console.error('Error in ad fetching:', err);
       setAdError(`Fetch error: ${err instanceof Error ? err.message : String(err)}`);
-      fallbackToLocalStorage();
-    }
-  }, [position, slotId, pageSection, adVersion, adLoaded]);
-  
-  const fallbackToLocalStorage = useCallback(() => {
-    // Load ad slots from localStorage as fallback
-    const adSlotsJson = localStorage.getItem('quiz_app_ad_slots');
-    console.log('Falling back to localStorage ads');
-    
-    if (!adSlotsJson) {
-      console.log('No ad slots found in localStorage');
-      setAdError('No ad slots in localStorage');
-      setAdActive(false);
-      return;
-    }
-    
-    try {
-      const adSlots = JSON.parse(adSlotsJson);
-      console.log(`Found ${adSlots.length} ad slots in localStorage`);
-      
-      // Find a matching ad for this position
-      const matchingAds = adSlots.filter((ad: any) => 
-        ad.position === position && ad.active
-      );
-      
-      console.log(`Found ${matchingAds.length} matching ads for position: ${position}`);
-      
-      if (matchingAds.length > 0) {
-        // If multiple ads match the position, choose one randomly
-        const randomIndex = Math.floor(Math.random() * matchingAds.length);
-        const selectedAd = matchingAds[randomIndex];
-        
-        // Generate a version hash for the content
-        const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
-        
-        // Skip update if the content hasn't changed
-        if (contentVersion === adVersion && adLoaded) {
-          console.log(`Ad content unchanged for ${position}, skipping update`);
-          return;
-        }
-        
-        console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
-        setAdDebug(`Local ad: ${selectedAd.name}`);
-        
-        // Simulate ad loading
-        setTimeout(() => {
-          if (isMountedRef.current) {
-            setAdContent(selectedAd.code);
-            setAdId(selectedAd.id);
-            setAdVersion(contentVersion);
-            setAdLoaded(true);
-            
-            // Track the ad impression
-            trackAdImpression(selectedAd.id);
-          }
-        }, 300);
-        
-        setAdActive(true);
-      } else {
-        // No matching ads or all are inactive
-        console.log('No matching active ads found for position:', position);
-        setAdError(`No active ads for position: ${position} in localStorage`);
-        setAdActive(false);
-      }
-    } catch (error) {
-      console.error('Error parsing ad slots from localStorage:', error);
-      setAdError(`LocalStorage parse error: ${error instanceof Error ? error.message : String(error)}`);
       setAdActive(false);
     }
-  }, [position, adVersion, adLoaded]);
+  }, [position, slotId, pageSection, adVersion, adLoaded, adContent, adId, adPositionKey]);
 
   // Track ad impression when it's displayed
   const trackAdImpression = async (adSlotId: string) => {
-    if (!adSlotId) return;
+    if (!adSlotId || !isMountedRef.current) return;
     
     try {
       const userId = localStorage.getItem('user_id') || null;
@@ -224,7 +241,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
 
   // Track ad click when user interacts with the ad
   const handleAdClick = async () => {
-    if (!adId) return;
+    if (!adId || !isMountedRef.current) return;
     
     try {
       const userId = localStorage.getItem('user_id') || null;
@@ -258,6 +275,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   // Initial fetch and event listener setup
   useEffect(() => {
     isMountedRef.current = true;
+    
     // Initial fetch of ads
     fetchAds();
     
@@ -266,14 +284,21 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       // We need to cast the event to access the detail property
       const customEvent = event as CustomEvent;
       
+      // Don't process if not mounted
+      if (!isMountedRef.current) return;
+      
       // Check if the update is relevant to this ad position
       const updatedSlots = customEvent.detail || [];
-      const isRelevant = Array.isArray(updatedSlots) && 
-        updatedSlots.some((slot: any) => slot.position === position);
+      
+      // Extract slots from different event formats
+      const slots = Array.isArray(updatedSlots) ? updatedSlots : 
+                   (updatedSlots.slots && Array.isArray(updatedSlots.slots) ? updatedSlots.slots : []);
+      
+      const isRelevant = slots.some((slot: any) => slot.position === position);
       
       if (isRelevant) {
-        console.log(`Relevant ad slots updated, refreshing ad for ${position}...`);
-        fetchAds();
+        console.log(`Relevant ad slots updated for instance ${instanceId.current.slice(0,8)}, refreshing ad for ${position}...`);
+        fetchAds(true);
       } else {
         console.log(`Ad slots updated but not relevant for position ${position}, skipping refresh`);
       }
@@ -281,14 +306,14 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
+    // Cleanup function
     return () => {
       isMountedRef.current = false;
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     };
-  }, [fetchAds]);
+  }, [fetchAds, position]);
 
   if (!adActive) {
-    console.log(`Ad not active for position: ${position}`);
     // In development, return a placeholder to show where the ad would be
     if (process.env.NODE_ENV === 'development') {
       return (
@@ -338,6 +363,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       data-ad-slot={slotId || position}
       data-ad-section={pageSection || position}
       data-ad-version={adVersion}
+      data-instance-id={instanceId.current.slice(0,8)}
     >
       {!adLoaded ? (
         <div className="flex items-center justify-center space-x-2">
