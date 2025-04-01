@@ -88,8 +88,7 @@ export const useAdPerformance = () => {
       
       // Get impression data using custom SQL function
       const { data: impressionsResult, error: impressionsError } = await supabase
-        .from('get_ad_impressions_count')
-        .select('*');
+        .rpc('get_ad_impressions_count');
         
       if (impressionsError) {
         console.error('Error fetching impression counts:', impressionsError);
@@ -153,15 +152,14 @@ export const useAdPerformance = () => {
       
       // Get click data using custom SQL function
       const { data: clicksResult, error: clicksError } = await supabase
-        .from('get_ad_clicks_count')
-        .select('*');
+        .rpc('get_ad_clicks_count');
         
       if (clicksError) {
         console.error('Error fetching click counts:', clicksError);
         throw clicksError;
       }
       
-      // Convert to the expected types before processing
+      // Since we are using rpc, the returned data should already be in the correct format
       const impressions = impressionsResult as ImpressionData[];
       const clicks = clicksResult as ClickData[];
       
