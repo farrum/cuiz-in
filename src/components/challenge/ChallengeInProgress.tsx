@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft } from 'lucide-react';
-import { Challenge } from '@/hooks/useChallengeData';
+import { Challenge } from '@/hooks/challenge/challengeTypes';
 import { QuizQuestion } from '@/utils/quizData';
 import QuizCard from '@/components/QuizCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';

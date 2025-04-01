@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, CheckCircle2, XCircle, ArrowLeft, AlertCircle } from 'lucide-react';
-import { Challenge, Answer } from '@/hooks/useChallengeData';
+import { Challenge, Answer } from '@/hooks/challenge/challengeTypes';
 import { QuizQuestion } from '@/utils/quizData';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import AdvertisementBanner from '@/components/AdvertisementBanner';

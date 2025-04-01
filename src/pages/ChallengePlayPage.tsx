@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import useChallengeData from '@/hooks/useChallengeData';
+import useChallengeData from '@/hooks/challenge/useChallengeData';
 import ChallengeInProgress from '@/components/challenge/ChallengeInProgress';
 import ChallengeComplete from '@/components/challenge/ChallengeComplete';
 import ChallengeNotFound from '@/components/challenge/ChallengeNotFound';
