@@ -32,25 +32,29 @@ export interface Answer {
   correctAnswer: string;
 }
 
-// Simple flat types to avoid recursion issues
+// Using simple interface types without generics to avoid recursion
 interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-// Use non-generic plain object type 
-type QuestionMap = {[questionId: string]: QuestionExplanation};
+// Using a simple indexed object to avoid generic type complexity
+interface QuestionMap {
+  [id: string]: QuestionExplanation;
+}
 
-// Interface for storing question answer data
-interface AnswerDetails {
+// Interface for storing answer data
+interface AnswerDetail {
   question_id: string;
   correct: boolean;
   selected_answer: string;
 }
 
-// Use non-generic plain object type
-type AnswerMap = {[questionId: string]: AnswerDetails};
+// Using a simple indexed object to avoid generic type complexity
+interface AnswerMap {
+  [id: string]: AnswerDetail;
+}
 
 const useChallengeData = (
   challengeId: string | undefined,
@@ -131,50 +135,58 @@ const useChallengeData = (
             .eq('challenge_id', challengeId)
             .order('created_at', { ascending: true });
           
+          if (!answerData) {
+            setAnswers([]);
+            return;
+          }
+          
           // Get question data to include explanations and correct answers
           const { data: questionData } = await supabase
             .from('quiz_questions')
             .select('*')
             .in('id', challengeData.question_ids);
             
-          // Create simple lookup objects instead of complex maps
-          const questionMap: {[key: string]: QuestionExplanation} = {};
-          if (questionData) {
-            for (const q of questionData) {
-              questionMap[q.id] = {
-                question: q.question,
-                explanation: q.explanation || '',
-                correctAnswer: q.correct_answer
-              };
-            }
+          if (!questionData) {
+            setAnswers([]);
+            return;
+          }
+            
+          // Create simple lookup objects without using complex generic types
+          const questionLookup: QuestionMap = {};
+          
+          for (const q of questionData) {
+            questionLookup[q.id] = {
+              question: q.question,
+              explanation: q.explanation || '',
+              correctAnswer: q.correct_answer
+            };
           }
           
           // Create answers array using the correct order from challenge.question_ids
           const completedAnswers: Answer[] = [];
           
-          if (answerData && answerData.length > 0) {
-            // Create a simple lookup object
-            const answerMap: {[key: string]: any} = {};
-            for (const a of answerData) {
-              answerMap[a.question_id] = {
-                question_id: a.question_id,
-                correct: a.correct,
-                selected_answer: a.selected_answer
-              };
-            }
-            
-            // Build answers array in the correct order
-            for (const qId of challengeData.question_ids) {
-              const answer = answerMap[qId];
-              if (answer) {
-                completedAnswers.push({
-                  questionId: qId,
-                  correct: answer.correct,
-                  selectedAnswer: answer.selected_answer,
-                  explanation: questionMap[qId]?.explanation || '',
-                  correctAnswer: questionMap[qId]?.correctAnswer || ''
-                });
-              }
+          // Create a simple lookup object for answers
+          const answerLookup: AnswerMap = {};
+          
+          for (const a of answerData) {
+            answerLookup[a.question_id] = {
+              question_id: a.question_id,
+              correct: a.correct,
+              selected_answer: a.selected_answer
+            };
+          }
+          
+          // Build answers array in the correct order
+          for (const qId of challengeData.question_ids) {
+            const answer = answerLookup[qId];
+            if (answer) {
+              completedAnswers.push({
+                questionId: qId,
+                correct: answer.correct,
+                selectedAnswer: answer.selected_answer,
+                explanation: questionLookup[qId]?.explanation || '',
+                correctAnswer: questionLookup[qId]?.correctAnswer || ''
+              });
             }
           }
           
@@ -191,10 +203,10 @@ const useChallengeData = (
           
         if (questionError) throw questionError;
         
-        // Convert DB question format to QuizQuestion format with proper type conversion
-        const formattedQuestions: {[key: string]: QuizQuestion} = {};
+        // Using a simple object without complex type instantiation
+        const formattedQuestions: { [key: string]: QuizQuestion } = {};
         
-        questionData.forEach(q => {
+        for (const q of questionData) {
           formattedQuestions[q.id] = {
             id: q.id,
             question: q.question,
@@ -209,12 +221,15 @@ const useChallengeData = (
             difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
             points: q.points || 10
           };
-        });
+        }
         
         // Ensure questions are in the same order as question_ids
-        const orderedQuestions = challengeData.question_ids
-          .map(id => formattedQuestions[id])
-          .filter(Boolean) as QuizQuestion[];
+        const orderedQuestions: QuizQuestion[] = [];
+        for (const id of challengeData.question_ids) {
+          if (formattedQuestions[id]) {
+            orderedQuestions.push(formattedQuestions[id]);
+          }
+        }
         
         setQuestions(orderedQuestions);
       }
