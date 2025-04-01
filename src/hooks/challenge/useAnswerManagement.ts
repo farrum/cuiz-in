@@ -19,12 +19,11 @@ export const useAnswerManagement = (
   progress: ChallengeProgress | null,
   toast: any
 ) => {
-  const handleQuestionComplete = async (selectedOption: string) => {
+  const handleQuestionComplete = async (isCorrect: boolean, selectedOption: string) => {
     if (!challenge || !userId || !challengeId || questions.length === 0) return;
     
     try {
       const currentQuestion = questions[currentQuestionIndex];
-      const isCorrect = selectedOption === currentQuestion.correctAnswer;
       
       // Calculate points for this answer
       const pointsForQuestion = currentQuestion.points || 10;
@@ -92,7 +91,7 @@ export const useAnswerManagement = (
         setIsComplete(true);
         setScore(newTotalPoints);
       } else {
-        // Move to next question - FIX: Pass a number directly, not a function
+        // Move to next question - Pass a number directly, not a function
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
     } catch (error) {

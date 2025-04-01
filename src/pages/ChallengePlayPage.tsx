@@ -80,7 +80,6 @@ const ChallengePlayPage = () => {
       currentPoints={currentPoints}
       onExit={() => navigate('/quiz')}
       onComplete={(selectedOption) => {
-        // Convert the single parameter function to match the expected 2 parameter signature
         const currentQuestion = questions[currentQuestionIndex];
         const isCorrect = selectedOption === currentQuestion.correctAnswer;
         handleQuestionComplete(isCorrect, selectedOption);
