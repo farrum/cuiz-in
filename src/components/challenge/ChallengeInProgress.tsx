@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +10,8 @@ import MotivationalCharacter from '@/components/MotivationalCharacter';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface ChallengeInProgressProps {
   challenge: Challenge;
@@ -28,6 +30,46 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
   onExit,
   onComplete
 }) => {
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [errorState, setErrorState] = useState<{ hasError: boolean, message: string }>({
+    hasError: false,
+    message: ""
+  });
+
+  const handleExitClick = () => {
+    setShowExitDialog(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitDialog(false);
+    onExit();
+  };
+
+  const handleCancelExit = () => {
+    setShowExitDialog(false);
+  };
+
+  const handleComplete = (isCorrect: boolean, selectedOption: string) => {
+    try {
+      if (!selectedOption) {
+        setErrorState({
+          hasError: true,
+          message: "Please select an answer to continue"
+        });
+        return;
+      }
+      
+      setErrorState({ hasError: false, message: "" });
+      onComplete(selectedOption);
+    } catch (error) {
+      console.error("Error completing question:", error);
+      setErrorState({
+        hasError: true,
+        message: "Something went wrong. Please try again."
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -35,7 +77,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
         <div className="mb-6">
           <Button 
             variant="outline" 
-            onClick={onExit}
+            onClick={handleExitClick}
             size="sm"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -61,6 +103,15 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
           />
         </div>
         
+        {errorState.hasError && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTitle>Warning</AlertTitle>
+            <AlertDescription>
+              {errorState.message}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <AdvertisementBanner position="middle" slotId="challenge-middle" pageSection="challenge-page" />
         
         {questions.length > currentQuestionIndex ? (
@@ -73,7 +124,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
             </div>
             <QuizCard
               question={questions[currentQuestionIndex]}
-              onComplete={(isCorrect, selectedOption) => onComplete(selectedOption)}
+              onComplete={(isCorrect, selectedOption) => handleComplete(isCorrect, selectedOption)}
               pointsMultiplier={challenge?.points_multiplier}
               isChallenge={true}
             />
@@ -87,6 +138,22 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
         <AdvertisementBanner position="bottom" slotId="challenge-bottom" pageSection="challenge-page" />
       </main>
       <Footer />
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Challenge?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your progress will be saved, but you won't earn points for this question. 
+              Are you sure you want to exit the challenge?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelExit}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmExit}>Exit Challenge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
