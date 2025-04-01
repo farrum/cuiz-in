@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Challenge, ChallengeProgress, Answer, QuizQuestion } from './challengeTypes';
 import { confetti } from '@/utils/animations';
 
