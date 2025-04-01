@@ -17,8 +17,10 @@ export type Database = {
           conversion: boolean | null
           device_info: string | null
           id: string
+          page_section: string | null
           page_url: string | null
           session_id: string
+          slot_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -28,8 +30,10 @@ export type Database = {
           conversion?: boolean | null
           device_info?: string | null
           id?: string
+          page_section?: string | null
           page_url?: string | null
           session_id: string
+          slot_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -39,8 +43,10 @@ export type Database = {
           conversion?: boolean | null
           device_info?: string | null
           id?: string
+          page_section?: string | null
           page_url?: string | null
           session_id?: string
+          slot_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -89,8 +95,10 @@ export type Database = {
           ad_position: string
           device_info: string | null
           id: string
+          page_section: string | null
           page_url: string | null
           session_id: string
+          slot_id: string | null
           user_id: string | null
           view_date: string
         }
@@ -99,8 +107,10 @@ export type Database = {
           ad_position: string
           device_info?: string | null
           id?: string
+          page_section?: string | null
           page_url?: string | null
           session_id: string
+          slot_id?: string | null
           user_id?: string | null
           view_date?: string
         }
@@ -109,8 +119,10 @@ export type Database = {
           ad_position?: string
           device_info?: string | null
           id?: string
+          page_section?: string | null
           page_url?: string | null
           session_id?: string
+          slot_id?: string | null
           user_id?: string | null
           view_date?: string
         }
@@ -704,6 +716,8 @@ export type Database = {
           clicks: number | null
           ctr: number | null
           impressions: number | null
+          page_section: string | null
+          slot_id: string | null
         }
         Relationships: [
           {

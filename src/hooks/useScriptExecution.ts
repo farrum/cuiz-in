@@ -1,61 +1,58 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 /**
- * Custom hook to safely execute scripts in HTML content
- * @param htmlContent The HTML content containing scripts to execute
- * @param containerId The ID of the container element
+ * Custom hook to safely execute scripts in a specific container
+ * @param adContent The HTML content that may contain scripts
+ * @param containerId The ID of the container element where scripts should be executed
  */
-export function useScriptExecution(
-  htmlContent: string,
-  containerId: string
-) {
-  const scriptExecuted = useRef(false);
-
+export const useScriptExecution = (adContent: string, containerId: string) => {
   useEffect(() => {
-    // Skip if no content or already executed
-    if (!htmlContent || scriptExecuted.current) return;
+    if (!adContent || !containerId) return;
 
-    try {
-      const container = document.getElementById(containerId);
-      if (!container) return;
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-      // Clear previous content
-      container.innerHTML = htmlContent;
+    // Find all script tags in the ad content
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(adContent, 'text/html');
+    const scripts = doc.querySelectorAll('script');
 
-      // Find all script tags in the content
-      const scripts = container.getElementsByTagName('script');
+    // Execute each script
+    scripts.forEach(originalScript => {
+      const script = document.createElement('script');
       
-      // Execute each script
-      Array.from(scripts).forEach(oldScript => {
-        try {
-          const newScript = document.createElement('script');
-          
-          // Copy all attributes from the original script
-          Array.from(oldScript.attributes).forEach(attr => {
-            newScript.setAttribute(attr.name, attr.value);
-          });
-          
-          // Copy the content of the script
-          newScript.textContent = oldScript.textContent;
-          
-          // Replace the old script with the new one to execute it
-          if (oldScript.parentNode) {
-            oldScript.parentNode.replaceChild(newScript, oldScript);
-          }
-        } catch (scriptError) {
-          console.error('Error executing script:', scriptError);
-        }
+      // Copy all attributes from the original script
+      Array.from(originalScript.attributes).forEach(attr => {
+        script.setAttribute(attr.name, attr.value);
       });
+      
+      // Copy the content of the script
+      script.textContent = originalScript.textContent;
+      
+      // Replace the original script in the container with the new one
+      try {
+        // For scripts with src attribute, we need to create and append
+        if (script.src) {
+          script.async = true;
+          container.appendChild(script);
+        } else if (script.textContent) {
+          // For inline scripts, we create a function and call it
+          const executeScript = new Function(script.textContent || '');
+          executeScript();
+        }
+      } catch (error) {
+        console.error('Error executing ad script:', error);
+      }
+    });
 
-      scriptExecuted.current = true;
-    } catch (error) {
-      console.error('Error in useScriptExecution:', error);
-    }
-
-    // Cleanup function
+    // Clean up on unmount
     return () => {
-      scriptExecuted.current = false;
+      // Remove any scripts that were added
+      const addedScripts = container.querySelectorAll('script');
+      addedScripts.forEach(script => {
+        script.remove();
+      });
     };
-  }, [htmlContent, containerId]);
-}
+  }, [adContent, containerId]);
+};

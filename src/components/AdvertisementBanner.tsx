@@ -42,7 +42,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   
   const fetchAds = useCallback(async () => {
     try {
-      console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}`);
+      console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
       setAdLoaded(false);
       
       // First try to get ads from Supabase
@@ -84,7 +84,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       console.error('Error in ad fetching:', err);
       fallbackToLocalStorage();
     }
-  }, [position, slotId]);
+  }, [position, slotId, pageSection]);
   
   const fallbackToLocalStorage = useCallback(() => {
     // Load ad slots from localStorage as fallback
@@ -147,7 +147,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       const pageUrl = window.location.href;
       const deviceInfo = navigator.userAgent;
       
-      console.log(`Tracking impression for ad: ${adSlotId} in ${slotId || position}`);
+      console.log(`Tracking impression for ad: ${adSlotId} in ${slotId || position} / ${pageSection || position}`);
       
       // Record impression in database
       await supabase.from('ad_views').insert({
@@ -161,7 +161,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         page_section: pageSection || position
       });
       
-      console.log(`Ad impression tracked: ${adSlotId} in ${slotId || position}`);
+      console.log(`Ad impression tracked: ${adSlotId}`);
     } catch (error) {
       console.error('Error tracking ad impression:', error);
     }
@@ -176,6 +176,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       const pageUrl = window.location.href;
       const deviceInfo = navigator.userAgent;
       
+      console.log(`Tracking click for ad: ${adId} in ${slotId || position} / ${pageSection || position}`);
+      
       // Record click in database
       await supabase.from('ad_clicks').insert({
         ad_id: adId,
@@ -188,7 +190,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         page_section: pageSection || position
       });
       
-      console.log(`Ad click tracked: ${adId} in ${slotId || position}`);
+      console.log(`Ad click tracked: ${adId}`);
     } catch (error) {
       console.error('Error tracking ad click:', error);
     }
