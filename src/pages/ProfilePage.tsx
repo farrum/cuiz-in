@@ -15,28 +15,34 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
+import { useAuthCheck } from '@/hooks/useAuthCheck';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string | null>(null);
+  const [userUpi, setUserUpi] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
   const [forceReloadAds, setForceReloadAds] = useState(0);
+  const { isAuthenticated, userRole } = useAuthCheck();
   
   useEffect(() => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    if (!userId) {
+    const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!storedUserId) {
       navigate('/login');
       return;
     }
+    
+    setUserId(storedUserId);
     
     const fetchUserProfile = async () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, suspended')
-          .eq('id', userId)
+          .select('username, suspended, upi_id')
+          .eq('id', storedUserId)
           .single();
           
         if (error) {
@@ -46,6 +52,7 @@ const ProfilePage: React.FC = () => {
         if (data) {
           setUsername(data.username);
           setSuspended(data.suspended);
+          setUserUpi(data.upi_id || '');
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -71,8 +78,39 @@ const ProfilePage: React.FC = () => {
     return () => window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
   }, [navigate, toast]);
   
+  const handleProfileUpdate = (data: {
+    displayName?: string;
+    upiId?: string;
+    profilePicture?: string;
+  }) => {
+    if (data.displayName) {
+      setUsername(data.displayName);
+    }
+    
+    if (data.upiId !== undefined) {
+      setUserUpi(data.upiId);
+    }
+  };
+  
+  const handleReactivated = () => {
+    setSuspended(false);
+    toast({
+      title: "Account Reactivated",
+      description: "Your account has been successfully reactivated."
+    });
+  };
+  
   if (suspended) {
-    return <SuspendedAccountHandler />;
+    return (
+      <SuspendedAccountHandler 
+        isAuthenticated={isAuthenticated || false}
+        isSuspended={suspended}
+        userRole={userRole}
+        onReactivated={handleReactivated}
+      >
+        <div>Account is suspended</div>
+      </SuspendedAccountHandler>
+    );
   }
   
   return (
@@ -90,7 +128,12 @@ const ProfilePage: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
           <AccountReactivation />
-          <ProfileEditor />
+          <ProfileEditor 
+            userName={username || ''}
+            userUpi={userUpi}
+            userId={userId || ''}
+            onProfileUpdate={handleProfileUpdate}
+          />
         </div>
         
         <AdvertisementBanner 
@@ -101,13 +144,13 @@ const ProfilePage: React.FC = () => {
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <BadgesSection />
+          {userId && <BadgesSection userId={userId} />}
           <ReferralSection />
         </div>
         
-        <WithdrawalSection className="mb-6" />
+        <WithdrawalSection />
         
-        <RecentlyAnsweredQuestions />
+        {userId && <RecentlyAnsweredQuestions userId={userId} />}
         
         <AdvertisementBanner 
           key={`profile-bottom-${forceReloadAds}`} 
