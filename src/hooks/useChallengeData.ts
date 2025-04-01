@@ -5,6 +5,7 @@ import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { NavigateFunction } from 'react-router-dom';
 import { confetti } from '@/utils/animations';
 
+// Define basic interfaces without complex nesting
 export interface Challenge {
   id: string;
   title: string;
@@ -28,32 +29,20 @@ export interface Answer {
   questionId: string;
   correct: boolean;
   selectedAnswer: string;
-  explanation: string;
-  correctAnswer: string;
+  explanation?: string;
+  correctAnswer?: string;
 }
 
-// Using simple interface types without generics to avoid recursion
-interface QuestionExplanation {
+// Simplified explanation interface without nesting
+export interface QuestionExplanation {
   question: string;
   explanation: string;
   correctAnswer: string;
 }
 
-// Using a simple indexed object to avoid generic type complexity
-interface QuestionMap {
-  [id: string]: QuestionExplanation;
-}
-
-// Interface for storing answer data
-interface AnswerDetail {
-  question_id: string;
-  correct: boolean;
-  selected_answer: string;
-}
-
-// Using a simple indexed object to avoid generic type complexity
-interface AnswerMap {
-  [id: string]: AnswerDetail;
+// Simple lookup interface using string key
+interface SimpleMap<T> {
+  [key: string]: T;
 }
 
 const useChallengeData = (
@@ -128,48 +117,48 @@ const useChallengeData = (
         // If already completed, load all answers for result page
         if (progressData.completed) {
           // Get all answers for this challenge
-          const { data: answerData } = await supabase
+          const { data: answerData, error: answerError } = await supabase
             .from('quiz_answers')
             .select('question_id, correct, selected_answer')
             .eq('user_id', userId)
             .eq('challenge_id', challengeId)
             .order('created_at', { ascending: true });
           
-          if (!answerData) {
+          if (answerError) throw answerError;
+          
+          if (!answerData || answerData.length === 0) {
             setAnswers([]);
             return;
           }
           
           // Get question data to include explanations and correct answers
-          const { data: questionData } = await supabase
+          const { data: questionData, error: questionError } = await supabase
             .from('quiz_questions')
             .select('*')
             .in('id', challengeData.question_ids);
             
-          if (!questionData) {
-            setAnswers([]);
-            return;
-          }
-            
-          // Create simple lookup objects without using complex generic types
-          const questionLookup: QuestionMap = {};
+          if (questionError) throw questionError;
           
-          for (const q of questionData) {
-            questionLookup[q.id] = {
+          // Create simple lookup objects
+          const questionMap: SimpleMap<QuestionExplanation> = {};
+          
+          for (const q of questionData || []) {
+            questionMap[q.id] = {
               question: q.question,
               explanation: q.explanation || '',
               correctAnswer: q.correct_answer
             };
           }
           
-          // Create answers array using the correct order from challenge.question_ids
-          const completedAnswers: Answer[] = [];
+          // Create a simple answer map
+          const answerMap: SimpleMap<{
+            question_id: string;
+            correct: boolean;
+            selected_answer: string;
+          }> = {};
           
-          // Create a simple lookup object for answers
-          const answerLookup: AnswerMap = {};
-          
-          for (const a of answerData) {
-            answerLookup[a.question_id] = {
+          for (const a of answerData || []) {
+            answerMap[a.question_id] = {
               question_id: a.question_id,
               correct: a.correct,
               selected_answer: a.selected_answer
@@ -177,15 +166,19 @@ const useChallengeData = (
           }
           
           // Build answers array in the correct order
+          const completedAnswers: Answer[] = [];
+          
           for (const qId of challengeData.question_ids) {
-            const answer = answerLookup[qId];
-            if (answer) {
+            const answer = answerMap[qId];
+            const question = questionMap[qId];
+            
+            if (answer && question) {
               completedAnswers.push({
                 questionId: qId,
                 correct: answer.correct,
                 selectedAnswer: answer.selected_answer,
-                explanation: questionLookup[qId]?.explanation || '',
-                correctAnswer: questionLookup[qId]?.correctAnswer || ''
+                explanation: question.explanation,
+                correctAnswer: question.correctAnswer
               });
             }
           }
@@ -194,45 +187,47 @@ const useChallengeData = (
         }
       }
       
-      // Fetch questions data in the correct order
-      if (challengeData.question_ids && challengeData.question_ids.length > 0) {
-        const { data: questionData, error: questionError } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .in('id', challengeData.question_ids);
-          
-        if (questionError) throw questionError;
+      // Fetch quiz questions
+      const { data: questionData, error: questionError } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .in('id', challengeData.question_ids);
         
-        // Using a simple object without complex type instantiation
-        const formattedQuestions: { [key: string]: QuizQuestion } = {};
-        
-        for (const q of questionData) {
-          formattedQuestions[q.id] = {
-            id: q.id,
-            question: q.question,
-            options: Array.isArray(q.options) 
-              ? q.options.map(opt => String(opt)) 
-              : typeof q.options === 'object' && q.options !== null
-                ? Object.values(q.options).map(opt => String(opt))
-                : [],
-            correctAnswer: q.correct_answer,
-            explanation: q.explanation || '',
-            category: q.category,
-            difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
-            points: q.points || 10
-          };
-        }
-        
-        // Ensure questions are in the same order as question_ids
-        const orderedQuestions: QuizQuestion[] = [];
-        for (const id of challengeData.question_ids) {
-          if (formattedQuestions[id]) {
-            orderedQuestions.push(formattedQuestions[id]);
-          }
-        }
-        
-        setQuestions(orderedQuestions);
+      if (questionError) throw questionError;
+      
+      if (!questionData || questionData.length === 0) {
+        setQuestions([]);
+        setLoading(false);
+        return;
       }
+      
+      // Format questions with consistent structure
+      const orderedQuestions: QuizQuestion[] = [];
+      for (const qId of challengeData.question_ids) {
+        const question = questionData.find(q => q.id === qId);
+        if (question) {
+          // Format options to ensure consistent structure
+          let options: string[] = [];
+          if (Array.isArray(question.options)) {
+            options = question.options.map(opt => String(opt));
+          } else if (typeof question.options === 'object' && question.options !== null) {
+            options = Object.values(question.options).map(opt => String(opt));
+          }
+          
+          orderedQuestions.push({
+            id: question.id,
+            question: question.question,
+            options: options,
+            correctAnswer: question.correct_answer,
+            explanation: question.explanation || '',
+            category: question.category,
+            difficulty: question.difficulty || 'medium',
+            points: question.points || 10
+          });
+        }
+      }
+      
+      setQuestions(orderedQuestions);
     } catch (error) {
       console.error('Error fetching challenge data:', error);
       toast({
@@ -246,7 +241,7 @@ const useChallengeData = (
   };
   
   const handleQuestionComplete = async (isCorrect: boolean, selectedAnswer: string) => {
-    if (!challenge || !questions[currentQuestionIndex]) return;
+    if (!challenge || !questions[currentQuestionIndex] || !userId) return;
     
     const currentQuestion = questions[currentQuestionIndex];
     
@@ -315,15 +310,15 @@ const useChallengeData = (
     
     try {
       // Update user profile points
-      const userProfileData = await supabase
+      const { data: userProfileData, error: profileError } = await supabase
         .from('profiles')
         .select('points')
         .eq('id', userId)
         .single();
         
-      if (userProfileData.error) throw userProfileData.error;
+      if (profileError) throw profileError;
       
-      const currentUserPoints = userProfileData.data.points || 0;
+      const currentUserPoints = userProfileData.points || 0;
       const newTotalPoints = currentUserPoints + finalScore;
       
       await supabase
