@@ -1,3 +1,4 @@
 
 # Redirect ads.txt to AdsTxtManager
-Redirect 301 /ads.txt https://srv.adstxtmanager.com/73993/cuiz.in
+RewriteEngine On
+RewriteRule ^ads.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
