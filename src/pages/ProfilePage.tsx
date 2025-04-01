@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -27,6 +27,10 @@ const ProfilePage: React.FC = () => {
   const [suspended, setSuspended] = useState(false);
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const { isAuthenticated, userRole } = useAuthCheck();
+  
+  // Refs to prevent multiple refreshes
+  const adSlotsLoadedRef = useRef(false);
+  const adRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -68,14 +72,31 @@ const ProfilePage: React.FC = () => {
     
     fetchUserProfile();
     
-    // Refresh ads when ad slots are updated
+    // Debounced refresh for ad slots updates
     const handleAdSlotsUpdated = () => {
-      console.log('Ad slots updated, refreshing profile page ads...');
-      setForceReloadAds(prev => prev + 1);
+      console.log('Ad slots updated event received in profile page');
+      
+      // Clear any existing timeout
+      if (adRefreshTimeoutRef.current) {
+        clearTimeout(adRefreshTimeoutRef.current);
+      }
+      
+      // Set a new timeout to refresh ads
+      adRefreshTimeoutRef.current = setTimeout(() => {
+        console.log('Refreshing profile page ads after debounce...');
+        setForceReloadAds(prev => prev + 1);
+        adRefreshTimeoutRef.current = null;
+      }, 500);
     };
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-    return () => window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    
+    return () => {
+      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      if (adRefreshTimeoutRef.current) {
+        clearTimeout(adRefreshTimeoutRef.current);
+      }
+    };
   }, [navigate, toast]);
   
   const handleProfileUpdate = (data: {
@@ -100,8 +121,11 @@ const ProfilePage: React.FC = () => {
     });
   };
   
-  // Force reload ads from server on initial load
+  // Force reload ads from server only if they haven't been loaded already
   useEffect(() => {
+    // Avoid multiple initial ad loads
+    if (adSlotsLoadedRef.current) return;
+    
     const syncAdSlots = async () => {
       try {
         console.log('Syncing ad slots from server for profile page...');
@@ -114,10 +138,11 @@ const ProfilePage: React.FC = () => {
           console.log(`Successfully loaded ${adSlots.length} ad slots for profile page`);
           localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
           
-          // Force reload of ads
-          setForceReloadAds(prev => prev + 1);
+          // Force reload of ads only once
+          setForceReloadAds(1);
+          adSlotsLoadedRef.current = true;
           
-          // Broadcast ad slots update
+          // Dispatch a custom event with the specific slots that were updated
           window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
         } else {
           console.error('Error fetching ad slots for profile page:', error);

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,7 +13,7 @@ export type RealtimeTable =
   | 'user_roles' 
   | 'news_ticker'
   | 'login_streaks'
-  | 'admin_notifications';  // Add admin_notifications to the list
+  | 'admin_notifications';
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
@@ -32,13 +31,17 @@ export interface UseSupabaseRealtimeOptions {
   schema?: string;
   showToasts?: boolean;
   updateLocalStorage?: boolean;
+  debounceMs?: number;
+  skipDuplicates?: boolean;
 }
 
 const defaultOptions: UseSupabaseRealtimeOptions = {
   event: '*',
   schema: 'public',
   showToasts: true,
-  updateLocalStorage: true
+  updateLocalStorage: true,
+  debounceMs: 300,
+  skipDuplicates: true
 };
 
 export function useSupabaseRealtime(
@@ -49,20 +52,32 @@ export function useSupabaseRealtime(
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<RealtimePayload | null>(null);
   const { toast } = useToast();
+  
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPayloadHashRef = useRef<string | null>(null);
+
+  const hashPayload = (payload: any): string => {
+    try {
+      const relevantData = {
+        id: payload.new?.id || payload.old?.id,
+        table: payload.table,
+        event: payload.eventType,
+        timestamp: payload.commit_timestamp
+      };
+      return JSON.stringify(relevantData);
+    } catch (err) {
+      return Date.now().toString();
+    }
+  };
 
   useEffect(() => {
-    console.log(`Setting up realtime listener for ${table}`);
+    console.log(`Setting up realtime listener for ${table} with debounce: ${mergedOptions.debounceMs}ms`);
     
-    // Create a unique channel name
     const channelName = `realtime_${table}_${Date.now()}`;
-    
-    // Create the channel
     const channel = supabase.channel(channelName);
     
-    // Configure the channel to listen for postgres changes
-    // The type definition issue is with how we use the .on() method
     channel.on(
-      'postgres_changes' as any, // Use type assertion to work around the type issue
+      'postgres_changes' as any,
       {
         event: mergedOptions.event,
         schema: mergedOptions.schema,
@@ -70,30 +85,51 @@ export function useSupabaseRealtime(
       },
       (payload: any) => {
         console.log(`Realtime update received for ${table}:`, payload);
-        setLastUpdate(payload);
         
-        if (mergedOptions.showToasts) {
-          toast({
-            title: `${table} Updated`,
-            description: `${payload.eventType} operation detected.`,
-          });
+        const payloadHash = hashPayload(payload);
+        
+        if (mergedOptions.skipDuplicates && payloadHash === lastPayloadHashRef.current) {
+          console.log(`Skipping duplicate realtime event for ${table}`);
+          return;
         }
         
-        if (mergedOptions.updateLocalStorage) {
-          handleLocalStorageUpdate(table, payload);
+        lastPayloadHashRef.current = payloadHash;
+        
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
         }
+        
+        debounceTimerRef.current = setTimeout(() => {
+          console.log(`Processing debounced update for ${table}`);
+          
+          setLastUpdate(payload);
+          
+          if (mergedOptions.showToasts) {
+            toast({
+              title: `${table} Updated`,
+              description: `${payload.eventType} operation detected.`,
+            });
+          }
+          
+          if (mergedOptions.updateLocalStorage) {
+            handleLocalStorageUpdate(table, payload);
+          }
+          
+          debounceTimerRef.current = null;
+        }, mergedOptions.debounceMs);
       }
     );
     
-    // Subscribe to the channel
     channel.subscribe((status: string) => {
       console.log(`Subscription status for ${table}:`, status);
       setIsConnected(status === 'SUBSCRIBED');
     });
 
-    // Cleanup function
     return () => {
       console.log(`Cleaning up realtime listener for ${table}`);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       supabase.removeChannel(channel);
     };
   }, [table, mergedOptions, toast]);
@@ -103,7 +139,6 @@ export function useSupabaseRealtime(
       const localStorageKey = getLocalStorageKey(tableName);
       
       if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-        // Update existing data
         const existingData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
         const index = existingData.findIndex((item: any) => item.id === payload.new.id);
         
@@ -117,7 +152,6 @@ export function useSupabaseRealtime(
         console.log(`Updated ${localStorageKey} in localStorage with realtime data`);
       } 
       else if (payload.eventType === 'DELETE') {
-        // Remove deleted item
         const existingData = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
         const filteredData = existingData.filter((item: any) => item.id !== payload.old.id);
         localStorage.setItem(localStorageKey, JSON.stringify(filteredData));
@@ -140,7 +174,7 @@ export function useSupabaseRealtime(
       user_roles: 'admin_user_roles',
       news_ticker: 'news_ticker',
       login_streaks: 'login_streaks',
-      admin_notifications: 'admin_notifications'  // Add mapping for admin_notifications
+      admin_notifications: 'admin_notifications'
     };
     
     return mapping[tableName] || tableName;
