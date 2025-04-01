@@ -92,8 +92,8 @@ export const useAnswerManagement = (
         setIsComplete(true);
         setScore(newTotalPoints);
       } else {
-        // Move to next question
-        setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+        // Move to next question - FIX: Pass a number directly, not a function
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
     } catch (error) {
       console.error('Error handling question completion:', error);

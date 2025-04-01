@@ -17,7 +17,7 @@ interface ChallengeInProgressProps {
   currentQuestionIndex: number;
   currentPoints: number;
   onExit: () => void;
-  onComplete: (isCorrect: boolean, selectedAnswer: string) => void;
+  onComplete: (selectedAnswer: string) => void;
 }
 
 const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({

@@ -37,7 +37,7 @@ export const useCompletedChallenge = (
         .from('quiz_answers')
         .select('question_id, correct, selected_answer')
         .eq('user_id', userId)
-        .eq('challenge_id', challengeId)
+        .in('question_id', challengeData.question_ids)
         .order('created_at', { ascending: true });
       
       if (answerError) throw answerError;
@@ -68,11 +68,11 @@ export const useCompletedChallenge = (
       }
       
       // Create a simple answer map
-      const answerMap: SimpleMap<{
+      const answerMap: {[key: string]: {
         question_id: string;
         correct: boolean;
         selected_answer: string;
-      }> = {};
+      }} = {};
       
       for (const a of answerData) {
         answerMap[a.question_id] = {

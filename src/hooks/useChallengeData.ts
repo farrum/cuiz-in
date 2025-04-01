@@ -121,7 +121,7 @@ const useChallengeData = (
             .from('quiz_answers')
             .select('question_id, correct, selected_answer')
             .eq('user_id', userId)
-            .eq('challenge_id', challengeId)
+            .in('question_id', challengeData.question_ids)
             .order('created_at', { ascending: true });
           
           if (answerError) throw answerError;
@@ -140,7 +140,7 @@ const useChallengeData = (
           if (questionError) throw questionError;
           
           // Create simple lookup objects
-          const questionMap: SimpleMap<QuestionExplanation> = {};
+          const questionMap: {[key: string]: QuestionExplanation} = {};
           
           for (const q of questionData || []) {
             questionMap[q.id] = {
@@ -151,11 +151,11 @@ const useChallengeData = (
           }
           
           // Create a simple answer map
-          const answerMap: SimpleMap<{
+          const answerMap: {[key: string]: {
             question_id: string;
             correct: boolean;
             selected_answer: string;
-          }> = {};
+          }} = {};
           
           for (const a of answerData || []) {
             answerMap[a.question_id] = {
@@ -214,6 +214,12 @@ const useChallengeData = (
             options = Object.values(question.options).map(opt => String(opt));
           }
           
+          // Ensure difficulty is of the expected type
+          let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+          if (question.difficulty === 'easy' || question.difficulty === 'medium' || question.difficulty === 'hard') {
+            difficulty = question.difficulty;
+          }
+          
           orderedQuestions.push({
             id: question.id,
             question: question.question,
@@ -221,7 +227,7 @@ const useChallengeData = (
             correctAnswer: question.correct_answer,
             explanation: question.explanation || '',
             category: question.category,
-            difficulty: question.difficulty || 'medium',
+            difficulty: difficulty,
             points: question.points || 10
           });
         }
@@ -293,7 +299,7 @@ const useChallengeData = (
         await completeChallenge(newTotalPoints);
       } else {
         // Move to next question
-        setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
     } catch (error) {
       console.error('Error recording answer:', error);
