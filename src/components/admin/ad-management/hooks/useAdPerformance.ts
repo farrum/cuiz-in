@@ -86,12 +86,13 @@ export const useAdPerformance = () => {
         
       if (adSlotsError) throw adSlotsError;
       
-      // Get impression data - Using a SQL query with GROUP BY instead of .group() method
-      const { data: impressions, error: impressionsError } = await supabase
-        .rpc('get_ad_impressions_count');
+      // Get impression data using custom SQL function
+      const { data: impressionsResult, error: impressionsError } = await supabase
+        .from('get_ad_impressions_count')
+        .select('*');
         
       if (impressionsError) {
-        console.error('Error fetching impression counts via RPC:', impressionsError);
+        console.error('Error fetching impression counts:', impressionsError);
         // Fallback to simple count method
         const { data: fallbackImpressions, error: fallbackError } = await supabase
           .from('ad_views')
@@ -150,16 +151,21 @@ export const useAdPerformance = () => {
         return;
       }
       
-      // Get click data - Using a SQL query with GROUP BY instead of .group() method
-      const { data: clicks, error: clicksError } = await supabase
-        .rpc('get_ad_clicks_count');
+      // Get click data using custom SQL function
+      const { data: clicksResult, error: clicksError } = await supabase
+        .from('get_ad_clicks_count')
+        .select('*');
         
       if (clicksError) {
-        console.error('Error fetching click counts via RPC:', clicksError);
+        console.error('Error fetching click counts:', clicksError);
         throw clicksError;
       }
       
-      processPerformanceData(adSlots, impressions as ImpressionData[], clicks as ClickData[]);
+      // Convert to the expected types before processing
+      const impressions = impressionsResult as ImpressionData[];
+      const clicks = clicksResult as ClickData[];
+      
+      processPerformanceData(adSlots, impressions, clicks);
       
     } catch (error) {
       console.error('Error calculating performance manually:', error);
