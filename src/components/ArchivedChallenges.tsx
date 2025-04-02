@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, ChevronRight, Trophy, ArrowLeft, Clock } from 'lucide-react';
+import { Calendar, ChevronRight, Trophy, ArrowLeft, Clock, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
@@ -54,19 +53,17 @@ const ArchivedChallenges: React.FC = () => {
     try {
       setIsLoading(true);
 
-      // Get archived challenges (challenges whose end_date has passed)
       const { data: challengesData, error: challengesError } = await supabase
         .from('daily_challenges')
         .select('*')
-        .lt('end_date', new Date().toISOString()) // Only get challenges that have ended
-        .order('end_date', { ascending: false }); // Newest to oldest
+        .lt('end_date', new Date().toISOString())
+        .order('end_date', { ascending: false });
 
       if (challengesError) throw challengesError;
 
       if (challengesData && challengesData.length > 0) {
         setArchivedChallenges(challengesData);
 
-        // Get user progress for these challenges
         const { data: progressData, error: progressError } = await supabase
           .from('user_challenge_progress')
           .select('*')
@@ -75,7 +72,6 @@ const ArchivedChallenges: React.FC = () => {
 
         if (progressError) throw progressError;
 
-        // Build progress lookup object
         const progressLookup: {[key: string]: ChallengeProgress} = {};
         if (progressData) {
           progressData.forEach(p => {
@@ -99,8 +95,16 @@ const ArchivedChallenges: React.FC = () => {
     }
   };
 
-  const handleViewChallenge = (challengeId: string) => {
-    navigate(`/challenge/${challengeId}`);
+  const handleViewChallenge = (challengeId: string, isCompleted: boolean) => {
+    if (isCompleted) {
+      navigate(`/challenge/${challengeId}`);
+    } else {
+      toast({
+        title: "Challenge Expired",
+        description: "This challenge has ended and cannot be played anymore.",
+        variant: "warning"
+      });
+    }
   };
 
   if (isLoading) {
@@ -141,23 +145,20 @@ const ArchivedChallenges: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {archivedChallenges.map((challenge) => {
             const userProgress = progress[challenge.id];
+            const isCompleted = userProgress?.completed || false;
             
             return (
-              <Card key={challenge.id} className={userProgress?.completed ? "border-primary/40" : ""}>
+              <Card key={challenge.id} className={isCompleted ? "border-primary/40" : "border-muted/40"}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                    {userProgress?.completed ? (
+                    {isCompleted ? (
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                         <Trophy className="h-3 w-3 mr-1" /> Completed
                       </Badge>
-                    ) : userProgress ? (
-                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
-                        <Clock className="h-3 w-3 mr-1" /> Incomplete
-                      </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-muted/30 text-muted-foreground">
-                        Not Attempted
+                      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+                        <Ban className="h-3 w-3 mr-1" /> Expired
                       </Badge>
                     )}
                   </div>
@@ -171,7 +172,7 @@ const ArchivedChallenges: React.FC = () => {
                       <Calendar className="h-4 w-4 mr-1" />
                       Ended {formatDistanceToNow(new Date(challenge.end_date), { addSuffix: true })}
                     </div>
-                    {userProgress && (
+                    {isCompleted && (
                       <div className="flex items-center text-primary">
                         <Trophy className="h-4 w-4 mr-1" />
                         Score: {userProgress.score || 0} points
@@ -181,15 +182,13 @@ const ArchivedChallenges: React.FC = () => {
                 </CardContent>
                 <CardFooter>
                   <Button 
-                    variant={userProgress?.completed ? "outline" : "default"}
-                    className={`w-full ${userProgress?.completed ? "border-primary/30 text-primary" : ""}`}
-                    onClick={() => handleViewChallenge(challenge.id)}
+                    variant={isCompleted ? "outline" : "secondary"} 
+                    className={`w-full ${isCompleted ? "border-primary/30 text-primary" : "text-muted-foreground"}`}
+                    onClick={() => handleViewChallenge(challenge.id, isCompleted)}
                   >
-                    {userProgress?.completed 
+                    {isCompleted 
                       ? "View Results" 
-                      : userProgress
-                        ? "Continue Challenge"
-                        : "View Challenge"
+                      : "View Details"
                     }
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>

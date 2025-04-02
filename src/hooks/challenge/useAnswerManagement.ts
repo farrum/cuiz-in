@@ -90,7 +90,8 @@ export const useAnswerManagement = (
         question_id: currentQuestion.id,
         selected_answer: selectedOption,
         correct: isCorrect,
-        points_earned: earnedPoints
+        points_earned: earnedPoints,
+        challenge_id: challengeId
       });
       
       if (answerError) {
@@ -106,81 +107,25 @@ export const useAnswerManagement = (
       const isLastQuestion = currentQuestionIndex === questions.length - 1;
       
       if (isLastQuestion) {
-        // Complete the challenge
-        const { error: progressError } = await supabase
-          .from('user_challenge_progress')
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString(),
-            score: newTotalPoints
-          })
-          .eq('challenge_id', challengeId)
-          .eq('user_id', userId);
-          
-        if (progressError) {
-          console.error("Error updating challenge progress:", progressError);
-          toast({
-            title: "Warning",
-            description: "Your challenge was completed but we couldn't save your final score. Please contact support.",
-            variant: "warning"
-          });
-        }
-        
-        // Update user's profile points
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', userId)
-          .single();
-          
-        if (userError) {
-          console.error("Error fetching user profile:", userError);
-          toast({
-            title: "Warning",
-            description: "We couldn't update your profile points. Please check your profile later.",
-            variant: "warning"
-          });
-        } else if (userData) {
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              points: (userData.points || 0) + newTotalPoints
-            })
-            .eq('id', userId);
-            
-          if (updateError) {
-            console.error("Error updating user points:", updateError);
-            toast({
-              title: "Warning",
-              description: "We couldn't update your profile points. Please check your profile later.",
-              variant: "warning"
-            });
-          } else {
-            // Update local storage with new points
-            const currentStoredPoints = localStorage.getItem(STORAGE_KEYS.USER_POINTS);
-            const newTotalUserPoints = (parseInt(currentStoredPoints || '0', 10) + newTotalPoints).toString();
-            localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotalUserPoints);
-          }
-        }
-        
-        // Update local state
-        setIsComplete(true);
+        // Prepare for completion but don't navigate yet - we'll do that after the delay
+        // The challenge will be marked as complete when the user clicks "Complete Challenge"
         setScore(newTotalPoints);
-        
-        // Show completion toast
-        toast({
-          title: "Challenge Completed!",
-          description: `You earned ${newTotalPoints} points!`,
-        });
-        
-        // Only trigger confetti if there are correct answers
-        if (updatedAnswers.some(a => a.correct)) {
-          confetti();
-        }
-      } else {
-        // Move to next question
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
+      
+      // Show correct/incorrect toast
+      toast({
+        title: isCorrect ? "Correct!" : "Incorrect",
+        description: isCorrect 
+          ? `You earned ${earnedPoints} points!` 
+          : `The correct answer was: ${currentQuestion.correctAnswer}`,
+        variant: isCorrect ? "default" : "warning",
+      });
+      
+      // Only show confetti for correct answers
+      if (isCorrect) {
+        setTimeout(() => confetti(), 300);
+      }
+      
     } catch (error) {
       console.error('Error handling question completion:', error);
       toast({

@@ -63,6 +63,17 @@ const useChallengeData = (
     fetchChallengeData();
   }, [challengeId, userId]);
   
+  // Add a new function to handle moving to the next question
+  const handleNextQuestion = () => {
+    // Check if it's the last question
+    if (currentQuestionIndex >= questions.length - 1) {
+      setIsComplete(true);
+    } else {
+      // Move to the next question
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+  
   return {
     challenge,
     progress,
@@ -74,6 +85,7 @@ const useChallengeData = (
     currentQuestionIndex,
     currentPoints,
     handleQuestionComplete,
+    handleNextQuestion,
   };
 };
 

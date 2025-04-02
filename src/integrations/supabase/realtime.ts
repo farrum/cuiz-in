@@ -16,7 +16,9 @@ export const setupRealtimeSubscriptions = () => {
     'user_referrals',
     'ad_views',
     'ad_clicks',
-    'admin_notifications'
+    'admin_notifications',
+    'daily_challenges',
+    'user_challenge_progress'
   ];
   
   console.log('Setting up realtime subscriptions for all tables...');
@@ -58,11 +60,27 @@ export const setupRealtimeSubscriptions = () => {
             debouncedDispatchEvent('adSlotsUpdated', detail);
           }
         }
+        
+        // For daily_challenges table, emit relevant events
+        if (table === 'daily_challenges') {
+          const challengeData = payload.new || payload.old;
+          if (challengeData) {
+            debouncedDispatchEvent('challengesUpdated', [challengeData]);
+          }
+        }
+        
+        // For user_challenge_progress table, emit progress events
+        if (table === 'user_challenge_progress') {
+          const progressData = payload.new || payload.old;
+          if (progressData) {
+            debouncedDispatchEvent('challengeProgressUpdated', [progressData]);
+          }
+        }
       }
     );
   });
   
-  // Subscribe to the channel
+  // Subscribe to the channel only once
   channel.subscribe(status => {
     console.log(`Realtime subscription status: ${status}`);
     
@@ -100,7 +118,7 @@ const debouncedDispatchEvent = (eventName, detail, timeout = 500) => {
   pendingEvents.set(eventName, timer);
 };
 
-// New function to remove realtime subscriptions
+// Function to remove realtime subscriptions
 export const removeRealtimeSubscriptions = () => {
   if (activeSubscriptions.has('global')) {
     const channel = activeSubscriptions.get('global');
@@ -117,7 +135,7 @@ export const removeRealtimeSubscriptions = () => {
   }
 };
 
-// New function to check if realtime is connected
+// Function to check if realtime is connected
 export const isRealtimeConnected = () => {
   return activeSubscriptions.has('global');
 };
