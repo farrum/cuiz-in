@@ -78,8 +78,8 @@ const Index: React.FC = () => {
             <p className="text-muted-foreground max-w-2xl mx-auto text-2xl">Play Quiz for Free, Earn Points, and convert them to real money. 
 Invite friends to earn even more!</p>
             
-            <div className="mt-6 inline-block bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium border border-green-200 dark:border-green-800">
-              <span className="flex items-center">
+            <div className="mt-6 inline-block text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium border border-green-200 dark:border-green-800 bg-teal-300">
+              <span className="flex items-center text-2xl text-red-600">
                 <Check className="w-4 h-4 mr-2" />
                 No Deposits Required to Play the Quiz
               </span>
