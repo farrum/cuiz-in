@@ -1,10 +1,9 @@
-
 import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import DailyChallenges from '@/components/DailyChallenges';
+import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useQuizState } from '@/hooks/useQuizState';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
@@ -31,7 +30,6 @@ const QuizPage: React.FC = () => {
     setForceReloadAds
   } = useQuizState();
   
-  // Initialize monthly reset hook
   useMonthlyReset();
   
   useEffect(() => {

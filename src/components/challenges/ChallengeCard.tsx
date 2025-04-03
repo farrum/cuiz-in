@@ -1,0 +1,94 @@
+
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Trophy, Clock, ChevronRight, Award } from 'lucide-react';
+import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
+import { Challenge, ChallengeProgress } from './types';
+
+interface ChallengeCardProps {
+  challenge: Challenge;
+  userProgress?: ChallengeProgress;
+  onStartChallenge: (challenge: Challenge) => void;
+}
+
+const ChallengeCard: React.FC<ChallengeCardProps> = ({ 
+  challenge, 
+  userProgress, 
+  onStartChallenge 
+}) => {
+  const hasStarted = isPast(new Date(challenge.start_date));
+  const hasEnded = isPast(new Date(challenge.end_date));
+  const isUpcoming = isFuture(new Date(challenge.start_date));
+  const isCompleted = userProgress?.completed;
+  
+  return (
+    <Card key={challenge.id} className={isCompleted ? "border-primary/40" : ""}>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg">{challenge.title}</CardTitle>
+          {isCompleted && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Trophy className="h-3 w-3 mr-1" /> Completed
+            </Badge>
+          )}
+          {isUpcoming && (
+            <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/30">
+              <Clock className="h-3 w-3 mr-1" /> Upcoming
+            </Badge>
+          )}
+          {hasEnded && !isCompleted && (
+            <Badge variant="outline" className="bg-muted/30 text-muted-foreground">
+              Ended
+            </Badge>
+          )}
+        </div>
+        {challenge.description && (
+          <CardDescription>{challenge.description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="flex flex-col space-y-1 text-sm">
+          <div className="flex items-center text-muted-foreground">
+            <Award className="h-4 w-4 mr-1" />
+            <span className="font-medium text-foreground">{challenge.points_multiplier}x</span> points multiplier
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Calendar className="h-4 w-4 mr-1" />
+            {isUpcoming 
+              ? `Starts ${formatDistanceToNow(new Date(challenge.start_date), { addSuffix: true })}`
+              : hasEnded 
+                ? `Ended ${formatDistanceToNow(new Date(challenge.end_date), { addSuffix: true })}`
+                : `Ends ${formatDistanceToNow(new Date(challenge.end_date), { addSuffix: true })}`
+            }
+          </div>
+          {isCompleted && (
+            <div className="flex items-center text-primary">
+              <Trophy className="h-4 w-4 mr-1" />
+              Score: {userProgress?.score || 0} points
+            </div>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button 
+          variant={isCompleted ? "outline" : "default"}
+          className={`w-full ${isCompleted ? "border-primary/30 text-primary" : ""}`}
+          disabled={isUpcoming || (hasEnded && !isCompleted)}
+          onClick={() => onStartChallenge(challenge)}
+        >
+          {isCompleted 
+            ? "View Results" 
+            : userProgress && !isCompleted
+              ? "Continue Challenge"
+              : "Start Challenge"
+          }
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default ChallengeCard;
