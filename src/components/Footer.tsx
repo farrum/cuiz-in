@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, Map } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -29,6 +29,12 @@ const Footer: React.FC = () => {
               <li>
                 <Link to="/referral" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Users className="w-4 h-4 mr-2" />
+                  Referral Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/referral-program" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <UserPlus className="w-4 h-4 mr-2" />
                   Referral Program
                 </Link>
               </li>
@@ -81,7 +87,9 @@ const Footer: React.FC = () => {
               playing and earning rewards.
             </p>
             <p className="text-muted-foreground">
-              Refer friends and build your team to increase your monthly earnings.
+              <Link to="/referral-program" className="text-primary hover:underline">
+                Refer friends and build your team
+              </Link> to increase your monthly earnings.
             </p>
           </div>
         </div>

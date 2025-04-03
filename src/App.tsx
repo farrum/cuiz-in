@@ -13,6 +13,7 @@ import Index from "@/pages/Index";
 import QuizPage from "@/pages/QuizPage";
 import AnswerPage from "@/pages/AnswerPage";
 import ReferralPage from "@/pages/ReferralPage";
+import ReferralProgramPage from "@/pages/ReferralProgramPage";
 import Profile from "@/pages/Profile";
 import LoginPage from "@/pages/LoginPage";
 import Registration from "@/pages/Registration";
@@ -135,6 +136,7 @@ function App() {
               <ReferralPage />
             </ProtectedRoute>
           } />
+          <Route path="/referral-program" element={<ReferralProgramPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/admin-login" element={<AdminLoginPage />} />

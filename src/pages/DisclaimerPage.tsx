@@ -2,6 +2,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const DisclaimerPage: React.FC = () => {
   return (
@@ -34,8 +35,36 @@ const DisclaimerPage: React.FC = () => {
               </p>
             </section>
             
-            {/* Add more sections as needed */}
+            <section>
+              <h2 className="text-xl font-semibold mb-3">User Responsibility</h2>
+              <p className="text-muted-foreground">
+                Users are responsible for ensuring they are eligible to participate in the CuizIN platform and to receive rewards based on the laws and regulations in their jurisdiction.
+              </p>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Content Accuracy</h2>
+              <p className="text-muted-foreground">
+                While we strive to ensure the accuracy of our quiz questions and educational content, CuizIN does not guarantee the accuracy, completeness, or usefulness of any information on the platform.
+              </p>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Technical Issues</h2>
+              <p className="text-muted-foreground">
+                CuizIN is not liable for any technical issues that may impact your ability to participate in quizzes or activities, including but not limited to internet connectivity issues, server outages, or device compatibility problems.
+              </p>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold mb-3">Changes to Game Features</h2>
+              <p className="text-muted-foreground">
+                CuizIN reserves the right to modify, suspend, or discontinue any aspect of the platform, including game features, reward structures, and availability, at any time without prior notice.
+              </p>
+            </section>
           </div>
+          
+          <AdvertisementBanner position="bottom" slotId="disclaimer-bottom" pageSection="disclaimer-page" className="mt-8" />
         </div>
       </main>
       
