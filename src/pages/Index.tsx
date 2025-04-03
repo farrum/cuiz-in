@@ -8,7 +8,6 @@ import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from "@/hooks/use-toast";
-
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -17,7 +16,6 @@ const Index: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
-
   useEffect(() => {
     const name = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     if (name) {
@@ -38,7 +36,6 @@ const Index: React.FC = () => {
       }, 1000);
     }
   }, [toast]);
-
   const handleStartClick = () => {
     if (userName) {
       navigate('/quiz');
@@ -46,7 +43,6 @@ const Index: React.FC = () => {
       navigate('/register');
     }
   };
-
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (userName.trim()) {
@@ -61,9 +57,7 @@ const Index: React.FC = () => {
       }, 500);
     }
   };
-
-  return (
-    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+  return <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
       <Header />
       <NewsTicker className="mt-16" />
       
@@ -157,7 +151,7 @@ Invite friends to earn even more!</p>
           <AdvertisementBanner position="middle" slotId="home-ad" pageSection="home-page" />
           
           <div className="mt-12 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-            <h2 className="text-3xl font-bold mb-6">How to Earn Money Playing Cuizin</h2>
+            <h2 className="text-3xl font-bold mb-6">How to Earn Money Playing CuizIN</h2>
             <p className="text-lg text-muted-foreground mb-8">
               Turn your knowledge into rewards! Join thousands of players who are already earning real money through our engaging quiz platform.
             </p>
@@ -224,8 +218,6 @@ Invite friends to earn even more!</p>
       </div>
       
       <Footer />
-    </main>
-  );
+    </main>;
 };
-
 export default Index;
