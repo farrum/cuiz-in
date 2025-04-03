@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,12 +51,15 @@ export const useDailyChallenges = () => {
         
         setProgress(progressLookup);
         
-        // Filter out challenges that have ended and the user hasn't started
+        // Filter out challenges that have ended and are completed
         filteredChallenges = challengesData.filter(challenge => {
           const hasEnded = isPast(new Date(challenge.end_date));
-          const userStarted = !!progressLookup[challenge.id];
+          const userCompleted = progressLookup[challenge.id]?.completed;
           
-          return !hasEnded || (hasEnded && userStarted);
+          // Keep challenges that:
+          // 1. Haven't ended, OR
+          // 2. Have ended but user hasn't completed them yet
+          return !hasEnded || (hasEnded && !userCompleted);
         });
         
         setChallenges(filteredChallenges);

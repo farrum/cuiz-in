@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -97,7 +98,7 @@ const ChallengePlayPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
-        <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
           <div className="mb-6">
             <Button 
               variant="outline" 
@@ -122,7 +123,7 @@ const ChallengePlayPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
-        <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
           <div className="mb-6">
             <Button 
               variant="outline" 
@@ -166,7 +167,7 @@ const ChallengePlayPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
-        <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
           <div className="mb-6">
             <Button 
               variant="outline" 
@@ -194,7 +195,7 @@ const ChallengePlayPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
-        <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
           <div className="mb-6">
             <Button 
               variant="outline" 
