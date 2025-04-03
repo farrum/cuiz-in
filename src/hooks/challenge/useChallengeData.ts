@@ -3,46 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { NavigateFunction } from 'react-router-dom';
 import { confetti } from '@/utils/animations';
-
-// Define basic interfaces without complex nesting
-export interface Challenge {
-  id: string;
-  title: string;
-  description: string | null;
-  num_questions: number;
-  points_multiplier: number;
-  question_ids: string[];
-}
-
-export interface ChallengeProgress {
-  id: string;
-  challenge_id: string;
-  user_id: string;
-  started_at: string;
-  completed_at: string | null;
-  completed: boolean;
-  score: number;
-}
-
-export interface Answer {
-  questionId: string;
-  correct: boolean;
-  selectedAnswer: string;
-  explanation?: string;
-  correctAnswer?: string;
-}
-
-// Simplified explanation interface without nesting
-export interface QuestionExplanation {
-  question: string;
-  explanation: string;
-  correctAnswer: string;
-}
-
-// Simple lookup interface using string key
-interface SimpleMap<T> {
-  [key: string]: T;
-}
+import { Challenge, ChallengeProgress, Answer, QuestionExplanation, SimpleMap } from './challengeTypes';
 
 const useChallengeData = (
   challengeId: string | undefined,
@@ -72,7 +33,6 @@ const useChallengeData = (
     try {
       setLoading(true);
       
-      // Fetch challenge data
       const { data: challengeData, error: challengeError } = await supabase
         .from('daily_challenges')
         .select('*')
@@ -82,7 +42,6 @@ const useChallengeData = (
       if (challengeError) throw challengeError;
       setChallenge(challengeData);
       
-      // Fetch progress data
       const { data: progressData, error: progressError } = await supabase
         .from('user_challenge_progress')
         .select('*')
@@ -93,7 +52,6 @@ const useChallengeData = (
       if (progressError) throw progressError;
       
       if (!progressData) {
-        // Create new progress record if it doesn't exist
         const { data: newProgress, error: newProgressError } = await supabase
           .from('user_challenge_progress')
           .insert([{
@@ -113,9 +71,7 @@ const useChallengeData = (
         setIsComplete(progressData.completed);
         setScore(progressData.score);
         
-        // If already completed, load all answers for result page
         if (progressData.completed) {
-          // Get all answers for this challenge
           const { data: answerData, error: answerError } = await supabase
             .from('quiz_answers')
             .select('question_id, correct, selected_answer')
@@ -130,7 +86,6 @@ const useChallengeData = (
             return;
           }
           
-          // Get question data to include explanations and correct answers
           const { data: questionData, error: questionError } = await supabase
             .from('quiz_questions')
             .select('*')
@@ -138,7 +93,6 @@ const useChallengeData = (
             
           if (questionError) throw questionError;
           
-          // Create simple lookup objects
           const questionMap: {[key: string]: QuestionExplanation} = {};
           
           for (const q of questionData || []) {
@@ -149,7 +103,6 @@ const useChallengeData = (
             };
           }
           
-          // Create a simple answer map
           const answerMap: {[key: string]: {
             question_id: string;
             correct: boolean;
@@ -164,7 +117,6 @@ const useChallengeData = (
             };
           }
           
-          // Build answers array in the correct order
           const completedAnswers: Answer[] = [];
           
           for (const qId of challengeData.question_ids) {
@@ -186,7 +138,6 @@ const useChallengeData = (
         }
       }
       
-      // Fetch quiz questions
       const { data: questionData, error: questionError } = await supabase
         .from('quiz_questions')
         .select('*')
@@ -200,12 +151,10 @@ const useChallengeData = (
         return;
       }
       
-      // Format questions with consistent structure
       const orderedQuestions: QuizQuestion[] = [];
       for (const qId of challengeData.question_ids) {
         const question = questionData.find(q => q.id === qId);
         if (question) {
-          // Format options to ensure consistent structure
           let options: string[] = [];
           if (Array.isArray(question.options)) {
             options = question.options.map(opt => String(opt));
@@ -213,7 +162,6 @@ const useChallengeData = (
             options = Object.values(question.options).map(opt => String(opt));
           }
           
-          // Ensure difficulty is of the expected type
           let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
           if (question.difficulty === 'easy' || question.difficulty === 'medium' || question.difficulty === 'hard') {
             difficulty = question.difficulty;
@@ -250,27 +198,22 @@ const useChallengeData = (
     
     const currentQuestion = questions[currentQuestionIndex];
     
-    // Calculate earned points
     let earnedPoints = 0;
     if (isCorrect) {
-      // Calculate points based on difficulty
       switch (currentQuestion.difficulty) {
         case "easy": earnedPoints = 2; break;
         case "medium": earnedPoints = 3; break;
         case "hard": earnedPoints = 4; break;
         default: earnedPoints = 2;
       }
-      // Apply multiplier
       earnedPoints = earnedPoints * (challenge.points_multiplier || 1);
     } else {
-      // Wrong answer gives 0.5 points with multiplier
       earnedPoints = 0.5 * (challenge.points_multiplier || 1);
     }
     
     const newTotalPoints = currentPoints + earnedPoints;
     setCurrentPoints(newTotalPoints);
     
-    // Add to answers array
     const newAnswer: Answer = {
       questionId: currentQuestion.id,
       correct: isCorrect,
@@ -282,22 +225,18 @@ const useChallengeData = (
     setAnswers([...answers, newAnswer]);
     
     try {
-      // Record the answer
       await supabase.from('quiz_answers').insert([{
         question_id: currentQuestion.id,
         user_id: userId,
         selected_answer: selectedAnswer,
         correct: isCorrect,
         points_earned: earnedPoints,
-        challenge_id: challengeId // Add reference to challenge
+        challenge_id: challengeId
       }]);
       
-      // Check if this was the last question
       if (currentQuestionIndex >= challenge.num_questions - 1) {
-        // Challenge complete!
         await completeChallenge(newTotalPoints);
       } else {
-        // Move to next question
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
     } catch (error) {
@@ -314,7 +253,6 @@ const useChallengeData = (
     if (!challenge || !progress || !userId) return;
     
     try {
-      // Update user profile points
       const { data: userProfileData, error: profileError } = await supabase
         .from('profiles')
         .select('points')
@@ -331,10 +269,8 @@ const useChallengeData = (
         .update({ points: newTotalPoints })
         .eq('id', userId);
         
-      // Store updated points in localStorage
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotalPoints.toString());
       
-      // Update challenge progress
       await supabase
         .from('user_challenge_progress')
         .update({
@@ -347,12 +283,10 @@ const useChallengeData = (
       setIsComplete(true);
       setScore(finalScore);
       
-      // Add points to daily and monthly targets
       const today = new Date();
-      const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
-      const monthString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`; // YYYY-MM
+      const dateString = today.toISOString().split('T')[0];
+      const monthString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
       
-      // Update daily points
       const { data: dailyPointsData, error: dailyPointsError } = await supabase
         .from('daily_points')
         .select('*')
@@ -363,13 +297,11 @@ const useChallengeData = (
       if (dailyPointsError) throw dailyPointsError;
       
       if (dailyPointsData) {
-        // Update existing daily points record
         await supabase
           .from('daily_points')
           .update({ points: dailyPointsData.points + finalScore })
           .eq('id', dailyPointsData.id);
       } else {
-        // Create new daily points record
         await supabase
           .from('daily_points')
           .insert([{ 
@@ -379,7 +311,6 @@ const useChallengeData = (
           }]);
       }
       
-      // Update monthly points
       const { data: monthlyPointsData, error: monthlyPointsError } = await supabase
         .from('monthly_points')
         .select('*')
@@ -390,13 +321,11 @@ const useChallengeData = (
       if (monthlyPointsError) throw monthlyPointsError;
       
       if (monthlyPointsData) {
-        // Update existing monthly points record
         await supabase
           .from('monthly_points')
           .update({ points: monthlyPointsData.points + finalScore })
           .eq('id', monthlyPointsData.id);
       } else {
-        // Create new monthly points record
         await supabase
           .from('monthly_points')
           .insert([{ 
@@ -406,18 +335,15 @@ const useChallengeData = (
           }]);
       }
       
-      // Show completion toast and trigger confetti
       toast({
         title: "Challenge Completed!",
         description: `You earned ${finalScore} points!`,
       });
       
-      // Only trigger confetti if there are correct answers
       if (answers.some(a => a.correct)) {
         confetti();
       }
       
-      // Update progress state
       setProgress({
         ...progress,
         completed: true,
@@ -434,13 +360,10 @@ const useChallengeData = (
     }
   };
   
-  // Add a new function to handle moving to the next question
   const handleNextQuestion = () => {
-    // Check if it's the last question
     if (currentQuestionIndex >= questions.length - 1) {
       setIsComplete(true);
     } else {
-      // Move to the next question
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
