@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useId, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -96,8 +97,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         );
         
         if (matchingAds.length > 0) {
-          const now = new Date();
-          const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+          const currentTime = Date.now(); // Fix: Using number timestamp instead of Date object
+          const dayKey = new Date().toISOString().split('T')[0];
           const positionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
           const consistencyKey = `${dayKey}-${positionKey}`;
           
@@ -118,7 +119,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
             content: selectedAd.code,
             id: selectedAd.id,
             version: contentVersion,
-            timestamp: now
+            timestamp: currentTime
           });
           
           console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
