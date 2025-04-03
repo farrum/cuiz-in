@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Function to hash password with MD5
   const hashPassword = (password: string): string => {
     return MD5(password).toString();
   };
@@ -29,11 +27,9 @@ const UserLogin: React.FC = () => {
     try {
       console.log(`Attempting to sign in with username: ${username}`);
       
-      // Hash the password
       const hashedPassword = hashPassword(password);
       console.log('Password hashed for authentication');
       
-      // Query the profiles table to find the user with matching username and password
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('*')
@@ -53,49 +49,49 @@ const UserLogin: React.FC = () => {
       
       console.log('User authenticated successfully:', userData.id);
 
-      // Check if the account is suspended, but still allow login
-      // The ProtectedRoute component will handle showing the reactivation UI
       if (userData.suspended) {
         console.warn('User account is suspended:', userData.id);
         toast({
           title: "Account Suspended",
           description: "Your account has been suspended due to inactivity. You'll need to reactivate it.",
-          variant: "destructive" // Changed from "warning" to "destructive"
+          variant: "destructive"
         });
       }
       
-      // Store user information in localStorage
       localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points ? userData.points.toString() : '0');
       
-      // Record login in login_logs table
       const clientInfo = {
         device: navigator.userAgent
       };
       
       await supabase.from('login_logs').insert({
         username: userData.username,
-        ip_address: "client-side", // We can't get IP on client side
+        ip_address: "client-side",
         device: JSON.stringify(clientInfo),
         successful: true
       });
       
-      // Login success toast
+      const { data: loginHistory } = await supabase
+        .from('login_logs')
+        .select('id')
+        .eq('username', userData.username)
+        .limit(2);
+        
+      const isFirstLogin = !loginHistory || loginHistory.length <= 1;
+      
       toast({
         title: "Login successful!",
-        description: `Welcome back, ${userData.username}!`,
+        description: `Welcome ${isFirstLogin ? 'to Cuizin' : 'back'}, ${userData.username}!`,
       });
       
-      // Trigger points updated event
       window.dispatchEvent(new Event('pointsUpdated'));
       
-      // Navigate to quiz page - login bonus is now handled in ProtectedRoute
-      navigate('/quiz');
+      navigate(isFirstLogin ? '/profile' : '/quiz');
     } catch (error) {
       console.error('Login error:', error);
       
-      // Record failed login attempt
       try {
         await supabase.from('login_logs').insert({
           username: username,

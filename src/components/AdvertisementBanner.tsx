@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect, useId, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useScriptExecution } from '@/hooks/useScriptExecution';
 
-// Get or create a session ID for tracking
 const getSessionId = (): string => {
   let sessionId = localStorage.getItem('ad_tracking_session_id');
   if (!sessionId) {
@@ -14,7 +12,6 @@ const getSessionId = (): string => {
   return sessionId;
 };
 
-// Using a module-level cache for ad content to reduce flickering
 const adContentCache = new Map<string, {
   content: string,
   id: string,
@@ -47,32 +44,23 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const sessionId = getSessionId();
   const containerId = useId().replace(/:/g, '-') + '-ad-container';
   
-  // Keep track of the last fetch time to prevent too frequent requests
   const lastFetchTimeRef = useRef<number>(0);
-  // Keep track of whether the component is mounted
   const isMountedRef = useRef<boolean>(true);
-  // Unique identifier for this instance
   const instanceId = useRef<string>(uuidv4());
   
-  // Calculate a unique identifier for this ad position
   const adPositionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
   
-  // Use our custom hook to execute scripts in the ad content
   useScriptExecution(adContent, containerId);
   
   const fetchAds = useCallback(async (force = false) => {
-    // Prevent fetching if not mounted
     if (!isMountedRef.current) return;
     
-    // First, check if we have a cached version that's not too old (less than 5 minutes)
     const now = Date.now();
     const cachedAd = adContentCache.get(adPositionKey);
     
     if (!force && cachedAd && now - cachedAd.timestamp < 300000) {
-      // Use cached version if it exists and is recent
       console.log(`Using cached ad for ${adPositionKey} (${(now - cachedAd.timestamp) / 1000}s old)`);
       
-      // Skip update if the content hasn't changed and is already loaded
       if (cachedAd.version === adVersion && adLoaded && adContent === cachedAd.content) {
         console.log(`Ad content unchanged for ${position}, skipping update`);
         return;
@@ -85,11 +73,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       setAdLoaded(true);
       setAdActive(true);
       
-      // Don't track impression for cached content that was already tracked
       return;
     }
     
-    // Rate limiting: Don't fetch more than once every 5 seconds
     if (!force && now - lastFetchTimeRef.current < 5000) {
       console.log(`Skipping ad fetch for ${position}, throttled (last fetch ${now - lastFetchTimeRef.current}ms ago)`);
       return;
@@ -101,7 +87,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
       setAdError(null);
       
-      // First try to get ads from local storage for immediate display
       const storedAds = localStorage.getItem('quiz_app_ad_slots');
       
       if (storedAds) {
@@ -111,14 +96,24 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         );
         
         if (matchingAds.length > 0) {
-          // If multiple ads match the position, choose one randomly
-          const randomIndex = Math.floor(Math.random() * matchingAds.length);
-          const selectedAd = matchingAds[randomIndex];
+          const now = new Date();
+          const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+          const positionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
+          const consistencyKey = `${dayKey}-${positionKey}`;
           
-          // Generate a version hash for the content
+          let index = 0;
+          const savedIndex = localStorage.getItem(`ad_index_${consistencyKey}`);
+          if (savedIndex) {
+            index = parseInt(savedIndex);
+          } else {
+            index = Math.floor(Math.random() * matchingAds.length);
+            localStorage.setItem(`ad_index_${consistencyKey}`, index.toString());
+          }
+          
+          const selectedAd = matchingAds[index];
+          
           const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
           
-          // Update cache
           adContentCache.set(adPositionKey, {
             content: selectedAd.code,
             id: selectedAd.id,
@@ -134,7 +129,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           setAdLoaded(true);
           setAdActive(true);
           
-          // Track impression after a short delay to ensure rendering
           setTimeout(() => {
             if (isMountedRef.current) {
               trackAdImpression(selectedAd.id);
@@ -143,7 +137,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         }
       }
       
-      // Then try to fetch fresh data from Supabase in the background
       const { data: supabaseAds, error } = await supabase
         .from('ad_slots')
         .select('*')
@@ -157,14 +150,11 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       }
       
       if (supabaseAds && supabaseAds.length > 0 && isMountedRef.current) {
-        // If Supabase has ads, update our data
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
         
-        // Generate a version hash for the content
         const contentVersion = btoa(selectedAd.id + selectedAd.last_updated);
         
-        // Update cache
         adContentCache.set(adPositionKey, {
           content: selectedAd.code,
           id: selectedAd.id,
@@ -172,7 +162,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           timestamp: now
         });
         
-        // Skip update if the content hasn't changed
         if (contentVersion === adVersion && adLoaded) {
           console.log(`Ad content unchanged for ${position}, skipping server update`);
           return;
@@ -181,14 +170,12 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         console.log(`Ad updated from server: ${selectedAd.id} (${selectedAd.name})`);
         setAdDebug(`Server ad: ${selectedAd.name}`);
         
-        // Update component state
         setAdContent(selectedAd.code);
         setAdId(selectedAd.id);
         setAdVersion(contentVersion);
         setAdLoaded(true);
         setAdActive(true);
         
-        // Only track impression if this is a new ad
         if (selectedAd.id !== adId) {
           trackAdImpression(selectedAd.id);
         }
@@ -204,7 +191,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     }
   }, [position, slotId, pageSection, adVersion, adLoaded, adContent, adId, adPositionKey]);
 
-  // Track ad impression when it's displayed
   const trackAdImpression = async (adSlotId: string) => {
     if (!adSlotId || !isMountedRef.current) return;
     
@@ -215,7 +201,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       
       console.log(`Tracking impression for ad: ${adSlotId} in ${slotId || position} / ${pageSection || 'unknown'}`);
       
-      // Record impression in database
       const { error } = await supabase.from('ad_views').insert({
         ad_id: adSlotId,
         user_id: userId,
@@ -239,7 +224,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     }
   };
 
-  // Track ad click when user interacts with the ad
   const handleAdClick = async () => {
     if (!adId || !isMountedRef.current) return;
     
@@ -250,7 +234,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       
       console.log(`Tracking click for ad: ${adId} in ${slotId || position} / ${pageSection || 'unknown'}`);
       
-      // Record click in database
       const { error } = await supabase.from('ad_clicks').insert({
         ad_id: adId,
         user_id: userId,
@@ -272,25 +255,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     }
   };
   
-  // Initial fetch and event listener setup
   useEffect(() => {
     isMountedRef.current = true;
     
-    // Initial fetch of ads
     fetchAds();
     
-    // Add listeners for ad slot updates
     const handleAdSlotsUpdated = (event: Event) => {
-      // We need to cast the event to access the detail property
       const customEvent = event as CustomEvent;
       
-      // Don't process if not mounted
       if (!isMountedRef.current) return;
       
-      // Check if the update is relevant to this ad position
       const updatedSlots = customEvent.detail || [];
       
-      // Extract slots from different event formats
       const slots = Array.isArray(updatedSlots) ? updatedSlots : 
                    (updatedSlots.slots && Array.isArray(updatedSlots.slots) ? updatedSlots.slots : []);
       
@@ -306,7 +282,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
-    // Cleanup function
     return () => {
       isMountedRef.current = false;
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
@@ -314,7 +289,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   }, [fetchAds, position]);
 
   if (!adActive) {
-    // In development, return a placeholder to show where the ad would be
     if (process.env.NODE_ENV === 'development') {
       return (
         <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
@@ -323,7 +297,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         </div>
       );
     }
-    return null; // In production, don't show anything
+    return null;
   }
 
   const getSizeClasses = () => {

@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import UserLogin from '@/components/UserLogin';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const LoginPage: React.FC = () => {
   return (
@@ -22,7 +23,11 @@ const LoginPage: React.FC = () => {
               Back to Home
             </Link>
             
+            <AdvertisementBanner position="top" slotId="login-top" pageSection="login-page" className="mb-8" />
+            
             <UserLogin />
+            
+            <AdvertisementBanner position="bottom" slotId="login-bottom" pageSection="login-page" className="mt-8" />
           </div>
         </div>
       </div>
