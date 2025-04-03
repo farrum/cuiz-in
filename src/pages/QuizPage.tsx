@@ -1,150 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import QuizCard from '@/components/QuizCard';
-import PointsDisplay from '@/components/PointsDisplay';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import DailyChallenges from '@/components/DailyChallenges';
-import { 
-  STORAGE_KEYS, 
-  QuizQuestion, 
-  getRandomQuestion,
-  DAILY_TARGET,
-  MONTHLY_TARGET,
-  syncAdSlotsToLocal
-} from '@/utils/quizData';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
-import MotivationalCharacter from '@/components/MotivationalCharacter';
-import { getAllBadges } from '@/utils/badgeData';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
+import { useQuizState } from '@/hooks/useQuizState';
+import PointsAndProgress from '@/components/quiz/PointsAndProgress';
+import QuizContent from '@/components/quiz/QuizContent';
 
 const QuizPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [questionsAnswered, setQuestionsAnswered] = useState(0);
-  const [userPoints, setUserPoints] = useState(0);
-  const [dailyPoints, setDailyPoints] = useState(0);
-  const [monthlyPoints, setMonthlyPoints] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [adsSynced, setAdsSynced] = useState(false);
-  const [showMotivation, setShowMotivation] = useState(false);
-  const [motivationMessage, setMotivationMessage] = useState('');
-  const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
-  const [isSuspended, setIsSuspended] = useState(false);
-  const [forceReloadAds, setForceReloadAds] = useState(0);
-  const { toast } = useToast();
+  const {
+    currentQuestion,
+    streak,
+    questionsAnswered,
+    dailyPoints,
+    monthlyPoints,
+    isLoading,
+    showMotivation,
+    motivationMessage,
+    nextBadgeThreshold,
+    isSuspended,
+    forceReloadAds,
+    checkSuspensionStatus,
+    loadInitialData,
+    handleAdSlotsUpdated,
+    handleQuestionComplete,
+    showMotivationalMessage,
+    setForceReloadAds
+  } = useQuizState();
   
+  // Initialize monthly reset hook
   useMonthlyReset();
   
-  const updateNextBadgeThreshold = (questionCount: number) => {
-    const allBadges = getAllBadges();
-    const questionBadges = allBadges.filter(badge => 
-      badge.criteria.type === 'questions_answered'
-    ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
-    
-    for (const badge of questionBadges) {
-      if (questionCount < badge.criteria.threshold) {
-        setNextBadgeThreshold(badge.criteria.threshold);
-        return;
-      }
-    }
-    
-    if (questionBadges.length > 0) {
-      const highestThreshold = questionBadges[questionBadges.length - 1].criteria.threshold;
-      setNextBadgeThreshold(highestThreshold);
-    }
-  };
-  
   useEffect(() => {
-    const checkSuspensionStatus = async () => {
-      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      if (!userId) {
-        navigate('/login');
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('suspended')
-          .eq('id', userId)
-          .single();
-          
-        if (error) {
-          console.error('Error checking suspension status:', error);
-          return;
-        }
-        
-        if (data && data.suspended) {
-          setIsSuspended(true);
-          navigate('/profile', { replace: true });
-          toast({
-            title: "Account Suspended",
-            description: "Your account is currently suspended. Please request reactivation from your profile page.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        setIsSuspended(false);
+    checkSuspensionStatus().then(success => {
+      if (success) {
         loadInitialData();
-      } catch (error) {
-        console.error('Failed to check suspension status:', error);
       }
-    };
-    
-    checkSuspensionStatus();
-  }, [navigate, toast]);
-  
-  const loadInitialData = async () => {
-    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-    setUserPoints(savedPoints);
-    
-    const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-    setQuestionsAnswered(completedQuestions.length);
-    
-    try {
-      console.log('Syncing ad slots from server...');
-      const { data: adSlots, error } = await supabase
-        .from('ad_slots')
-        .select('*')
-        .eq('active', true);
-        
-      if (!error && adSlots) {
-        console.log('Successfully loaded ad slots:', adSlots.length);
-        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
-        setAdsSynced(true);
-        
-        setForceReloadAds(prev => prev + 1);
-        
-        window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
-      } else {
-        console.error('Error fetching ad slots:', error);
-        await syncAdSlotsToLocal();
-        setAdsSynced(true);
-      }
-    } catch (err) {
-      console.error('Error syncing ad slots:', err);
-      await syncAdSlotsToLocal();
-      setAdsSynced(true);
-    }
-    
-    loadNewQuestion();
-    fetchPoints();
-    updateNextBadgeThreshold(JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]').length);
-  };
+    });
+  }, []);
   
   useEffect(() => {
-    const handleAdSlotsUpdated = () => {
-      console.log('Ad slots updated, refreshing ad display...');
-      setForceReloadAds(prev => prev + 1);
-    };
-    
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
     return () => {
@@ -152,130 +50,8 @@ const QuizPage: React.FC = () => {
     };
   }, []);
   
-  const fetchPoints = async () => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    if (!userId) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    
-    try {
-      const { data: dailyData } = await supabase
-        .from('daily_points')
-        .select('points')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .maybeSingle();
-        
-      if (dailyData) {
-        setDailyPoints(Number(dailyData.points));
-      } else {
-        setDailyPoints(0);
-      }
-      
-      const { data: monthlyData } = await supabase
-        .from('monthly_points')
-        .select('points')
-        .eq('user_id', userId)
-        .eq('month', currentMonth)
-        .maybeSingle();
-        
-      if (monthlyData) {
-        setMonthlyPoints(Number(monthlyData.points));
-      } else {
-        setMonthlyPoints(0);
-      }
-      
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('points, suspended')
-        .eq('id', userId)
-        .single();
-        
-      if (profileData) {
-        setUserPoints(Number(profileData.points));
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
-        
-        if (profileData.suspended && !isSuspended) {
-          setIsSuspended(true);
-          navigate('/profile', { replace: true });
-          toast({
-            title: "Account Suspended",
-            description: "Your account is currently suspended. Please request reactivation from your profile page.",
-            variant: "destructive"
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching points:', error);
-    }
-  };
-  
-  const loadNewQuestion = async () => {
-    setIsLoading(true);
-    
-    try {
-      const question = await getRandomQuestion();
-      setCurrentQuestion(question);
-    } catch (error) {
-      console.error('Error loading question:', error);
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 600);
-    }
-  };
-  
-  const handleQuestionComplete = (isCorrect: boolean) => {
-    if (!currentQuestion) return;
-    
-    const newQuestionsAnswered = questionsAnswered + 1;
-    setQuestionsAnswered(newQuestionsAnswered);
-    updateNextBadgeThreshold(newQuestionsAnswered);
-    
-    if (isCorrect) {
-      const newStreak = streak + 1;
-      setStreak(newStreak);
-      
-      if (newStreak % 5 === 0) {
-        const bonusPoints = 5;
-        toast({
-          title: `${newStreak} Question Streak!`,
-          description: `Bonus ${bonusPoints} points awarded!`,
-        });
-      }
-    } else {
-      setStreak(0);
-    }
-    
-    setTimeout(() => {
-      fetchPoints();
-      window.dispatchEvent(new Event('pointsUpdated'));
-    }, 1000);
-    
-    loadNewQuestion();
-  };
-
   useEffect(() => {
-    if (questionsAnswered > 0 && questionsAnswered % 3 === 0) {
-      setShowMotivation(true);
-      
-      const motivationalMessages = [
-        "You're doing great! Keep going!",
-        "Your brain is getting stronger with every question!",
-        "You're on a roll! Can you answer a few more?",
-        "Learning is an adventure, and you're acing it!",
-        "Keep up this momentum! You're amazing!"
-      ];
-      
-      const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-      setMotivationMessage(randomMessage);
-      
-      setTimeout(() => {
-        setShowMotivation(false);
-      }, 5000);
-    }
+    showMotivationalMessage();
   }, [questionsAnswered]);
   
   if (isSuspended) {
@@ -290,86 +66,25 @@ const QuizPage: React.FC = () => {
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
         <AdvertisementBanner key={`top-ad-${forceReloadAds}`} position="top" slotId="quiz-top" pageSection="quiz-page" />
         
-        <div className="flex flex-col md:flex-row gap-6 mb-8">
-          <PointsDisplay animateUpdate className="flex-1" />
-          
-          <div className="glass rounded-2xl p-4 flex-1">
-            <div className="flex flex-col items-center">
-              <h4 className="text-sm text-muted-foreground mb-1">Questions Answered</h4>
-              <div className="text-3xl font-bold">{questionsAnswered}</div>
-              
-              {streak > 0 && (
-                <div className="mt-2 text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                  {streak} question streak!
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="glass rounded-2xl p-4 mb-8">
-          <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
-          <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2 mb-4" />
-          
-          <h4 className="text-sm font-medium mb-3">Monthly Target: {monthlyPoints.toFixed(1)} / {MONTHLY_TARGET} points</h4>
-          <Progress value={(monthlyPoints / MONTHLY_TARGET) * 100} className="h-2" />
-          
-          <div className="mt-3 text-xs text-muted-foreground">
-            Complete the monthly target to earn ₹8,000 reward!
-          </div>
-        </div>
+        <PointsAndProgress 
+          questionsAnswered={questionsAnswered}
+          streak={streak}
+          dailyPoints={dailyPoints}
+          monthlyPoints={monthlyPoints}
+          nextBadgeThreshold={nextBadgeThreshold}
+        />
         
         <AdvertisementBanner key={`middle-small-ad-${forceReloadAds}`} position="middle" size="small" slotId="quiz-middle-small" pageSection="quiz-page" />
         
-        <div className="mb-6 mt-6">
-          <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
-            <div 
-              className="absolute inset-y-0 left-0 bg-primary transition-all duration-1000"
-              style={{ width: `${Math.min(((questionsAnswered % nextBadgeThreshold) / nextBadgeThreshold) * 100, 100)}%` }}
-            />
-          </div>
-          <div className="text-xs text-muted-foreground text-right">
-            {nextBadgeThreshold - (questionsAnswered % nextBadgeThreshold)} more questions until next milestone
-          </div>
-        </div>
-        
-        {showMotivation && (
-          <div className="flex justify-center my-4">
-            <MotivationalCharacter 
-              mood="happy" 
-              message={motivationMessage}
-              showMessage={true}
-            />
-          </div>
-        )}
-        
         <AdvertisementBanner key={`middle-ad-${forceReloadAds}`} position="middle" slotId="quiz-middle" pageSection="quiz-page" />
         
-        {isLoading ? (
-          <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading next question...</p>
-            </div>
-          </div>
-        ) : currentQuestion ? (
-          <div className="relative">
-            <div className="absolute -top-16 -right-10 z-10 transform scale-75">
-              <MotivationalCharacter 
-                mood="neutral"
-                showMessage={false}
-              />
-            </div>
-            <QuizCard
-              question={currentQuestion}
-              onComplete={handleQuestionComplete}
-            />
-          </div>
-        ) : (
-          <div className="quiz-card text-center">
-            <p>No questions available. Please try again later.</p>
-          </div>
-        )}
+        <QuizContent 
+          isLoading={isLoading}
+          currentQuestion={currentQuestion}
+          showMotivation={showMotivation}
+          motivationMessage={motivationMessage}
+          onQuestionComplete={handleQuestionComplete}
+        />
         
         <DailyChallenges />
         
