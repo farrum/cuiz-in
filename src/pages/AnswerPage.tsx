@@ -10,6 +10,7 @@ import CountdownButton from '@/components/CountdownButton';
 import ResultCard from '@/components/ResultCard';
 import LoadingCard from '@/components/LoadingCard';
 import QuestionNotFound from '@/components/QuestionNotFound';
+import TopPlayersSection from '@/components/TopPlayersSection';
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
@@ -55,6 +56,11 @@ const AnswerPage: React.FC = () => {
               >
                 Next Question
               </CountdownButton>
+            </div>
+            
+            {/* Top Players Section */}
+            <div className="mt-8">
+              <TopPlayersSection showMonthlyComparison={true} />
             </div>
           </>
         ) : (

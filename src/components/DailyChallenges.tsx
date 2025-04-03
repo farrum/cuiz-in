@@ -61,9 +61,10 @@ const DailyChallenges: React.FC = () => {
 
       if (challengesError) throw challengesError;
 
+      const now = new Date();
+      let filteredChallenges: Challenge[] = [];
+      
       if (challengesData && challengesData.length > 0) {
-        setChallenges(challengesData);
-
         const { data: progressData, error: progressError } = await supabase
           .from('user_challenge_progress')
           .select('*')
@@ -71,7 +72,7 @@ const DailyChallenges: React.FC = () => {
           .in('challenge_id', challengesData.map(c => c.id));
 
         if (progressError) throw progressError;
-
+        
         const progressLookup: {[key: string]: ChallengeProgress} = {};
         if (progressData) {
           progressData.forEach(p => {
@@ -80,6 +81,15 @@ const DailyChallenges: React.FC = () => {
         }
         
         setProgress(progressLookup);
+        
+        filteredChallenges = challengesData.filter(challenge => {
+          const hasEnded = isPast(new Date(challenge.end_date));
+          const userStarted = !!progressLookup[challenge.id];
+          
+          return !hasEnded || (hasEnded && userStarted);
+        });
+        
+        setChallenges(filteredChallenges);
       } else {
         setChallenges([]);
       }

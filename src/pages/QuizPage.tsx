@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -21,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { getAllBadges } from '@/utils/badgeData';
+import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 
 const QuizPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,14 +39,14 @@ const QuizPage: React.FC = () => {
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const { toast } = useToast();
   
-  // Define the missing updateNextBadgeThreshold function
+  useMonthlyReset();
+  
   const updateNextBadgeThreshold = (questionCount: number) => {
     const allBadges = getAllBadges();
     const questionBadges = allBadges.filter(badge => 
       badge.criteria.type === 'questions_answered'
     ).sort((a, b) => a.criteria.threshold - b.criteria.threshold);
     
-    // Find the next badge threshold based on current question count
     for (const badge of questionBadges) {
       if (questionCount < badge.criteria.threshold) {
         setNextBadgeThreshold(badge.criteria.threshold);
@@ -54,14 +54,12 @@ const QuizPage: React.FC = () => {
       }
     }
     
-    // If all badge thresholds are passed, use the highest one
     if (questionBadges.length > 0) {
       const highestThreshold = questionBadges[questionBadges.length - 1].criteria.threshold;
       setNextBadgeThreshold(highestThreshold);
     }
   };
   
-  // Check if the user account is suspended
   useEffect(() => {
     const checkSuspensionStatus = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -93,7 +91,6 @@ const QuizPage: React.FC = () => {
           return;
         }
         
-        // Only proceed with loading game content if user is not suspended
         setIsSuspended(false);
         loadInitialData();
       } catch (error) {
@@ -113,7 +110,6 @@ const QuizPage: React.FC = () => {
     
     try {
       console.log('Syncing ad slots from server...');
-      // Force reload ad slots from server to ensure latest ads are used
       const { data: adSlots, error } = await supabase
         .from('ad_slots')
         .select('*')
@@ -124,10 +120,8 @@ const QuizPage: React.FC = () => {
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
         setAdsSynced(true);
         
-        // Force reload of ads
         setForceReloadAds(prev => prev + 1);
         
-        // Broadcast ad slots update
         window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
       } else {
         console.error('Error fetching ad slots:', error);
@@ -145,7 +139,6 @@ const QuizPage: React.FC = () => {
     updateNextBadgeThreshold(JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]').length);
   };
   
-  // Listen for ad slot updates
   useEffect(() => {
     const handleAdSlotsUpdated = () => {
       console.log('Ad slots updated, refreshing ad display...');
@@ -204,7 +197,6 @@ const QuizPage: React.FC = () => {
         setUserPoints(Number(profileData.points));
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
         
-        // Check if suspension status has changed
         if (profileData.suspended && !isSuspended) {
           setIsSuspended(true);
           navigate('/profile', { replace: true });
@@ -286,7 +278,6 @@ const QuizPage: React.FC = () => {
     }
   }, [questionsAnswered]);
   
-  // If the user is suspended, don't render the quiz content
   if (isSuspended) {
     return null;
   }
@@ -380,7 +371,6 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        {/* Daily Challenges section */}
         <DailyChallenges />
         
         <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
