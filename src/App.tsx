@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
 import scheduledSyncService from './services/scheduledSync';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import React from 'react';
 
 // Pages
 import Index from "@/pages/Index";
