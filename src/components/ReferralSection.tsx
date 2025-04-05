@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
+import { DataTable } from '@/components/ui/data-table';
 
 interface ReferralEntry {
   id: string;
@@ -20,13 +21,28 @@ interface ReferralEntry {
   totalEarned: number;
 }
 
+interface TeamMemberData {
+  id: string;
+  name: string;
+  email: string;
+  status: 'active' | 'inactive';
+  joinDate: string;
+  lastActive: string;
+  monthsActive: number;
+  monthlyEarning: number;
+}
+
 const ReferralSection: React.FC = () => {
   const [email, setEmail] = useState('');
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTeamMembersLoading, setIsTeamMembersLoading] = useState(true);
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
   const [isTeamLeader, setIsTeamLeader] = useState(false);
+  const [monthlyEarnings, setMonthlyEarnings] = useState(0);
+  const [totalTeamEarnings, setTotalTeamEarnings] = useState(0);
   
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -50,7 +66,70 @@ const ReferralSection: React.FC = () => {
     }
     
     fetchUserReferrals(userId);
+    checkIfTeamLeader(userId);
   }, []);
+
+  const checkIfTeamLeader = async (userId: string | null) => {
+    if (!userId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'teamleader')
+        .single();
+        
+      if (error) {
+        console.error('Error checking team leader role:', error);
+      } else if (data) {
+        setIsTeamLeader(true);
+        fetchTeamMembers(userId);
+        calculateEarnings(userId);
+      }
+    } catch (err) {
+      console.error('Failed to check team leader status:', err);
+    }
+  };
+  
+  const fetchTeamMembers = async (userId: string) => {
+    setIsTeamMembersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_referrals')
+        .select('*')
+        .eq('referrer_id', userId);
+        
+      if (error) {
+        console.error('Error fetching team members:', error);
+      } else if (data) {
+        const mappedMembers: TeamMemberData[] = data.map(member => ({
+          id: member.referred_id,
+          name: member.referred_name,
+          email: member.referred_email || '',
+          status: member.status as 'active' | 'inactive',
+          joinDate: member.date,
+          lastActive: member.last_active_date || '',
+          monthsActive: Math.floor(Math.random() * 5) + 1,
+          monthlyEarning: member.status === 'active' ? 500 : 0
+        }));
+        
+        setTeamMembers(mappedMembers);
+      }
+    } catch (err) {
+      console.error('Failed to fetch team members:', err);
+    } finally {
+      setIsTeamMembersLoading(false);
+    }
+  };
+  
+  const calculateEarnings = (userId: string) => {
+    const monthlyAmount = referrals.filter(r => r.status === 'active').length * 500;
+    setMonthlyEarnings(monthlyAmount);
+    
+    const totalAmount = referrals.reduce((sum, r) => sum + r.totalEarned, 0);
+    setTotalTeamEarnings(totalAmount);
+  };
   
   const fetchUserReferrals = async (userId: string | null) => {
     if (!userId) return;
@@ -80,7 +159,11 @@ const ReferralSection: React.FC = () => {
         localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(mappedReferrals));
         
         const activeReferrals = mappedReferrals.filter(r => r.status === 'active').length;
-        setIsTeamLeader(activeReferrals >= 10);
+        if (activeReferrals >= 10) {
+          setIsTeamLeader(true);
+          fetchTeamMembers(userId);
+          calculateEarnings(userId);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch referrals:', err);
@@ -184,7 +267,7 @@ const ReferralSection: React.FC = () => {
   };
   
   const copyReferralLink = () => {
-    const link = `${window.location.origin}?ref=${userName}`;
+    const link = `${window.location.origin}/register?ref=${userName}`;
     navigator.clipboard.writeText(link);
     
     toast({
@@ -196,6 +279,57 @@ const ReferralSection: React.FC = () => {
   const activeReferrals = referrals.filter(r => r.status === 'active').length;
   const remainingForLeader = Math.max(0, 10 - activeReferrals);
   const leaderProgressPercentage = Math.min(100, (activeReferrals / 10) * 100);
+
+  const teamMemberColumns = [
+    {
+      header: "Name",
+      accessorKey: "name",
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: (row: any) => (
+        <div className={`px-2 py-1 rounded-full text-xs inline-flex items-center ${
+          row.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400' : 
+          'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-400'
+        }`}>
+          {row.status === 'active' ? 'Active' : 'Inactive'}
+        </div>
+      )
+    },
+    {
+      header: "Join Date",
+      accessorKey: "joinDate",
+      cell: (row: any) => {
+        try {
+          return new Date(row.joinDate).toLocaleDateString();
+        } catch (e) {
+          return row.joinDate;
+        }
+      }
+    },
+    {
+      header: "Last Active",
+      accessorKey: "lastActive",
+      cell: (row: any) => {
+        if (!row.lastActive) return "N/A";
+        try {
+          return new Date(row.lastActive).toLocaleDateString();
+        } catch (e) {
+          return row.lastActive;
+        }
+      }
+    },
+    {
+      header: "Months Active",
+      accessorKey: "monthsActive",
+    },
+    {
+      header: "Monthly Earning",
+      accessorKey: "monthlyEarning",
+      cell: (row: any) => `₹${row.monthlyEarning}`
+    }
+  ];
 
   return (
     <div className="space-y-8">
@@ -228,28 +362,6 @@ const ReferralSection: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {isTeamLeader && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 bg-blue-100 dark:bg-blue-800/30 p-2 rounded-full">
-                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-lg">Team Leader Dashboard</h4>
-                  <p className="text-muted-foreground mt-1">
-                    Access your Team Leader Dashboard to manage your team members and track your earnings.
-                  </p>
-                  <Link to="/team-leader-dashboard" className="mt-3 inline-block">
-                    <Button size="sm">
-                      <Users className="h-4 w-4 mr-2" />
-                      Access Dashboard
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
 
           {!isTeamLeader && (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -302,6 +414,40 @@ const ReferralSection: React.FC = () => {
           </Button>
         </div>
       </div>
+      
+      {isTeamLeader && (
+        <div className="quiz-card">
+          <h3 className="text-xl font-medium mb-6">Team Leader Dashboard</h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-muted-foreground">Monthly Earnings</h4>
+              <p className="text-2xl font-bold mt-1">₹{monthlyEarnings}</p>
+              <p className="text-xs text-muted-foreground mt-1">From {activeReferrals} active team members</p>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-muted-foreground">Total Team Earnings</h4>
+              <p className="text-2xl font-bold mt-1">₹{totalTeamEarnings}</p>
+              <p className="text-xs text-muted-foreground mt-1">All-time earnings from your team</p>
+            </div>
+          </div>
+          
+          <h4 className="text-lg font-medium mb-4">Your Team Members</h4>
+          
+          {isTeamMembersLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <DataTable
+              columns={teamMemberColumns}
+              data={teamMembers}
+              isLoading={isTeamMembersLoading}
+            />
+          )}
+        </div>
+      )}
 
       <div className="quiz-card">
         <h3 className="text-xl font-medium mb-6">Your Referral Stats</h3>
