@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,16 +27,19 @@ const UserRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Extract referral code from URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const refCode = params.get('ref');
     
     if (refCode) {
       setReferralCode(refCode);
+      // Check if referrer exists in the system
       checkReferrer(refCode);
     }
   }, [location]);
   
+  // Function to check if referrer exists
   const checkReferrer = async (referrerUsername: string) => {
     try {
       const { data: referrerData, error } = await supabase
@@ -61,12 +65,14 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
+  // Auto-fill display name based on username
   useEffect(() => {
     if (username && !displayName) {
       setDisplayName(username);
     }
   }, [username, displayName]);
   
+  // Check username availability with debounce
   useEffect(() => {
     if (!username) return;
     
@@ -107,6 +113,7 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
+  // Function to hash password with MD5
   const hashPassword = (password: string): string => {
     return MD5(password).toString();
   };
@@ -146,6 +153,7 @@ const UserRegistrationForm: React.FC = () => {
     try {
       console.log('Registering with username:', username);
       
+      // Check if username already exists
       const { data: existingUser, error: userCheckError } = await supabase
         .from('profiles')
         .select('username')
@@ -166,17 +174,20 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
+      // Hash the password
       const hashedPassword = hashPassword(password);
       console.log('Password hashed for storage');
       
+      // Generate a UUID for the user
       const userId = uuidv4();
       
+      // Create profile directly in profiles table with hashed password
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
           id: userId,
           username: username,
-          display_name: displayName || username,
+          display_name: displayName || username, // Use the display name, default to username if empty
           phone: phone,
           points: 0,
           suspended: false,
@@ -194,6 +205,7 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
+      // Set user role as player by default
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -203,8 +215,10 @@ const UserRegistrationForm: React.FC = () => {
         
       if (roleError) {
         console.error('Role error:', roleError);
+        // Continue anyway as this is not critical
       }
       
+      // Handle referral code if provided
       if (referralCode) {
         try {
           const { data: referrerData, error: referrerError } = await supabase
@@ -234,9 +248,11 @@ const UserRegistrationForm: React.FC = () => {
           }
         } catch (referralErr) {
           console.error('Referral processing error:', referralErr);
+          // Don't stop registration for referral errors
         }
       }
       
+      // Store user auth status in localStorage
       localStorage.setItem('quiz_app_user_auth', 'true');
       localStorage.setItem('quiz_app_user_id', userId);
       localStorage.setItem('quiz_app_user_name', displayName || username);
@@ -246,6 +262,7 @@ const UserRegistrationForm: React.FC = () => {
         description: "Your account has been created. You will be redirected to login.",
       });
       
+      // Redirect to login page after successful registration
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
