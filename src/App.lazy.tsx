@@ -6,6 +6,7 @@ const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const QuizPage = React.lazy(() => import('./pages/QuizPage'));
 const ChallengePlayPage = React.lazy(() => import('./pages/ChallengePlayPage'));
 const AdminPage = React.lazy(() => import('./pages/AdminPage'));
+const TeamLeaderDashboardPage = React.lazy(() => import('./pages/TeamLeaderDashboardPage'));
 
 // Export all lazy-loaded components
 export {
@@ -14,4 +15,5 @@ export {
   QuizPage,
   ChallengePlayPage, 
   AdminPage,
+  TeamLeaderDashboardPage
 };

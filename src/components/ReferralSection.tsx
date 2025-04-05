@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -9,9 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 interface ReferralEntry {
   id: string;
@@ -24,30 +20,6 @@ interface ReferralEntry {
   totalEarned: number;
 }
 
-// Interface for team members in dashboard
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  status: 'active' | 'inactive' | 'suspended';
-  lastActive: string;
-  monthsActive: number;
-  joinDate: string;
-  totalEarned: number;
-}
-
-// Interface for earnings in dashboard
-interface EarningDetail {
-  month: string;
-  amount: number;
-  membersCount: number;
-  breakdown: {
-    memberId: string;
-    memberName: string;
-    amount: number;
-  }[];
-}
-
 const ReferralSection: React.FC = () => {
   const [email, setEmail] = useState('');
   const [referrals, setReferrals] = useState<ReferralEntry[]>([]);
@@ -55,16 +27,6 @@ const ReferralSection: React.FC = () => {
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
   const [isTeamLeader, setIsTeamLeader] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  // Dashboard state (moved from TeamLeaderDashboardPage)
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [earnings, setEarnings] = useState<EarningDetail[]>([]);
-  const [totalEarnings, setTotalEarnings] = useState<number>(0);
-  const [activeMembers, setActiveMembers] = useState<number>(0);
-  const [inactiveMembers, setInactiveMembers] = useState<number>(0);
-  const [suspendedMembers, setSuspendedMembers] = useState<number>(0);
-  const [dashboardLoading, setDashboardLoading] = useState<boolean>(true);
   
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -87,33 +49,8 @@ const ReferralSection: React.FC = () => {
       setIsTeamLeader(activeReferrals >= 10);
     }
     
-    fetchUserRole(userId);
     fetchUserReferrals(userId);
   }, []);
-  
-  // Fetch user role from Supabase
-  const fetchUserRole = async (userId: string | null) => {
-    if (!userId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-        
-      if (!error && data) {
-        setUserRole(data.role);
-        if (data.role === 'team_leader') {
-          setIsTeamLeader(true);
-          fetchTeamMembers(userId);
-          fetchEarnings(userId);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching user role:', err);
-    }
-  };
   
   const fetchUserReferrals = async (userId: string | null) => {
     if (!userId) return;
@@ -129,13 +66,13 @@ const ReferralSection: React.FC = () => {
         console.error('Error fetching referrals:', error);
       } else if (data && data.length > 0) {
         const mappedReferrals: ReferralEntry[] = data.map(r => ({
-          id: r.referred_id || r.id,
+          id: r.id,
           email: r.referred_email || '',
           name: r.referred_name,
           date: r.date,
           status: r.status as 'pending' | 'active' | 'inactive',
           lastActive: r.last_active_date || '',
-          monthsActive: Math.max(1, Math.floor((new Date().getTime() - new Date(r.date).getTime()) / (30 * 24 * 60 * 60 * 1000))),
+          monthsActive: Math.floor(Math.random() * 5) + 1,
           totalEarned: Number(r.earnings) || Math.floor(Math.random() * 1000) + 500
         }));
         
@@ -143,7 +80,7 @@ const ReferralSection: React.FC = () => {
         localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(mappedReferrals));
         
         const activeReferrals = mappedReferrals.filter(r => r.status === 'active').length;
-        setIsTeamLeader(activeReferrals >= 10 || userRole === 'team_leader');
+        setIsTeamLeader(activeReferrals >= 10);
       }
     } catch (err) {
       console.error('Failed to fetch referrals:', err);
@@ -247,8 +184,7 @@ const ReferralSection: React.FC = () => {
   };
   
   const copyReferralLink = () => {
-    // Updated to point directly to registration page
-    const link = `${window.location.origin}/register?ref=${userName}`;
+    const link = `${window.location.origin}?ref=${userName}`;
     navigator.clipboard.writeText(link);
     
     toast({
@@ -260,145 +196,6 @@ const ReferralSection: React.FC = () => {
   const activeReferrals = referrals.filter(r => r.status === 'active').length;
   const remainingForLeader = Math.max(0, 10 - activeReferrals);
   const leaderProgressPercentage = Math.min(100, (activeReferrals / 10) * 100);
-
-  // Team Leader Dashboard Functions (moved from TeamLeaderDashboardPage)
-  const fetchTeamMembers = async (leaderId: string) => {
-    setDashboardLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_referrals')
-        .select('*')
-        .eq('referrer_id', leaderId);
-
-      if (error) throw error;
-      
-      if (data) {
-        const members = data.map(r => ({
-          id: r.referred_id || r.id,
-          name: r.referred_name,
-          email: r.referred_email || '',
-          status: r.status as 'active' | 'inactive' | 'suspended',
-          lastActive: r.last_active_date || '-',
-          monthsActive: Math.max(1, Math.floor((new Date().getTime() - new Date(r.date).getTime()) / (30 * 24 * 60 * 60 * 1000))),
-          joinDate: r.date,
-          totalEarned: Number(r.earnings) || 0
-        }));
-
-        setTeamMembers(members);
-        
-        setActiveMembers(members.filter(m => m.status === 'active').length);
-        setInactiveMembers(members.filter(m => m.status === 'inactive').length);
-        setSuspendedMembers(members.filter(m => m.status === 'suspended').length);
-      }
-    } catch (err) {
-      console.error('Error fetching team members:', err);
-      toast({
-        title: "Error",
-        description: "Failed to load team members data.",
-        variant: "destructive",
-      });
-    } finally {
-      setDashboardLoading(false);
-    }
-  };
-
-  const fetchEarnings = async (leaderId: string) => {
-    try {
-      // Simulated earnings data
-      const months = [];
-      const now = new Date();
-      
-      for (let i = 0; i < 6; i++) {
-        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = month.toLocaleString('default', { month: 'long', year: 'numeric' });
-        months.push(monthStr);
-      }
-      
-      const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
-      let referrals: any[] = [];
-      
-      if (savedReferrals) {
-        referrals = JSON.parse(savedReferrals);
-      }
-      
-      const earningsData: EarningDetail[] = months.map((month, index) => {
-        const activeCount = Math.max(10, referrals.filter(r => r.status === 'active').length);
-        const monthAmount = activeCount * 500;
-        
-        const mockBreakdown = referrals
-          .filter(r => r.status === 'active')
-          .map(r => ({
-            memberId: r.id,
-            memberName: r.name,
-            amount: 500
-          }));
-        
-        return {
-          month,
-          amount: monthAmount,
-          membersCount: activeCount,
-          breakdown: mockBreakdown
-        };
-      });
-      
-      setEarnings(earningsData);
-      
-      const total = earningsData.reduce((sum, month) => sum + month.amount, 0);
-      setTotalEarnings(total);
-    } catch (err) {
-      console.error('Error fetching earnings:', err);
-      toast({
-        title: "Error",
-        description: "Failed to load earnings data.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStatusChange = async (memberId: string, newStatus: 'active' | 'inactive' | 'suspended') => {
-    try {
-      const updatedMembers = teamMembers.map(member => {
-        if (member.id === memberId) {
-          return { ...member, status: newStatus };
-        }
-        return member;
-      });
-      
-      setTeamMembers(updatedMembers);
-      
-      setActiveMembers(updatedMembers.filter(m => m.status === 'active').length);
-      setInactiveMembers(updatedMembers.filter(m => m.status === 'inactive').length);
-      setSuspendedMembers(updatedMembers.filter(m => m.status === 'suspended').length);
-      
-      toast({
-        title: "Status Updated",
-        description: `Member status has been updated to ${newStatus}.`,
-      });
-    } catch (err) {
-      console.error('Error updating member status:', err);
-      toast({
-        title: "Error",
-        description: "Failed to update member status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
-    try {
-      toast({
-        title: "Request Submitted",
-        description: `Your request to ${action} this account has been submitted for admin review.`,
-      });
-    } catch (err) {
-      console.error(`Error requesting account ${action}:`, err);
-      toast({
-        title: "Error",
-        description: `Failed to submit ${action} request.`,
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -431,6 +228,28 @@ const ReferralSection: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {isTeamLeader && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-blue-100 dark:bg-blue-800/30 p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-lg">Team Leader Dashboard</h4>
+                  <p className="text-muted-foreground mt-1">
+                    Access your Team Leader Dashboard to manage your team members and track your earnings.
+                  </p>
+                  <Link to="/team-leader-dashboard" className="mt-3 inline-block">
+                    <Button size="sm">
+                      <Users className="h-4 w-4 mr-2" />
+                      Access Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!isTeamLeader && (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -520,164 +339,6 @@ const ReferralSection: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Team Leader Dashboard Section */}
-      {isTeamLeader && (
-        <div className="space-y-8">
-          <h3 className="text-2xl font-bold tracking-tight">Team Leader Dashboard</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">Total Earnings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">₹{totalEarnings}</p>
-                <p className="text-muted-foreground text-sm">Lifetime earnings</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">Active Members</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-green-500" />
-                <p className="text-3xl font-bold">{activeMembers}</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">Inactive Members</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-amber-500" />
-                <p className="text-3xl font-bold">{inactiveMembers}</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">Suspended Members</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-red-500" />
-                <p className="text-3xl font-bold">{suspendedMembers}</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Tabs defaultValue="members" className="mb-8">
-            <TabsList className="mb-4">
-              <TabsTrigger value="members">
-                <Users className="h-4 w-4 mr-2" />
-                Team Members
-              </TabsTrigger>
-              <TabsTrigger value="earnings">
-                <Award className="h-4 w-4 mr-2" />
-                Monthly Earnings
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="members">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Team Members</CardTitle>
-                  <CardDescription>
-                    View and manage the status of your referred team members.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {dashboardLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <div className="rounded-md border">
-                      <div className="bg-muted/50 p-3 grid grid-cols-6 gap-3 font-medium">
-                        <div>Name</div>
-                        <div>Status</div>
-                        <div>Last Active</div>
-                        <div>Months Active</div>
-                        <div>Earnings</div>
-                        <div>Actions</div>
-                      </div>
-                      <div className="divide-y">
-                        {teamMembers.map((member) => (
-                          <div key={member.id} className="p-3 grid grid-cols-6 gap-3 items-center">
-                            <div className="font-medium">{member.name}</div>
-                            <div>
-                              <Badge variant={
-                                member.status === 'active' ? 'success' : 
-                                member.status === 'inactive' ? 'secondary' : 
-                                'destructive'
-                              }>
-                                {member.status}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-muted-foreground">{member.lastActive}</div>
-                            <div>{member.monthsActive}</div>
-                            <div>₹{member.totalEarned}</div>
-                            <div className="flex space-x-2">
-                              {member.status !== 'suspended' ? (
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm"
-                                  onClick={() => requestAccountAction(member.id, 'suspend')}
-                                >
-                                  Request Suspension
-                                </Button>
-                              ) : (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => requestAccountAction(member.id, 'reactivate')}
-                                >
-                                  Request Reactivation
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="earnings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Earnings</CardTitle>
-                  <CardDescription>
-                    View your monthly earnings from active members.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border">
-                    <div className="bg-muted/50 p-3 grid grid-cols-3 gap-3 font-medium">
-                      <div>Month</div>
-                      <div>Active Members</div>
-                      <div>Amount</div>
-                    </div>
-                    <div className="divide-y">
-                      {earnings.map((earning, index) => (
-                        <div key={index} className="p-3 grid grid-cols-3 gap-3">
-                          <div>{earning.month}</div>
-                          <div>{earning.membersCount}</div>
-                          <div className="font-medium">₹{earning.amount}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
     </div>
   );
 };

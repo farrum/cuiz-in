@@ -245,25 +245,6 @@ const UserRegistrationForm: React.FC = () => {
               });
               
             console.log('Referral recorded successfully');
-            
-            // Check if this referral makes the referrer a team leader
-            const { data: referrerReferrals } = await supabase
-              .from('user_referrals')
-              .select('id')
-              .eq('referrer_id', referrerData.id)
-              .eq('status', 'active');
-              
-            if (referrerReferrals && referrerReferrals.length >= 10) {
-              // Update user role to team leader if they have 10 or more active referrals
-              const { error: updateRoleError } = await supabase
-                .from('user_roles')
-                .update({ role: 'team_leader' })
-                .eq('user_id', referrerData.id);
-                
-              if (!updateRoleError) {
-                console.log('Referrer promoted to team leader');
-              }
-            }
           }
         } catch (referralErr) {
           console.error('Referral processing error:', referralErr);

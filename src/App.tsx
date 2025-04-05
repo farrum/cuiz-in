@@ -27,6 +27,7 @@ import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import TeamLeaderDashboardPage from '@/pages/TeamLeaderDashboardPage';
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -232,6 +233,14 @@ function App() {
             <Route path="/admin/requests" element={
               <ProtectedRoute>
                 <AdminPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/team-leader-dashboard" element={
+              <ProtectedRoute>
+                <React.Suspense fallback={<p>Loading...</p>}>
+                  <TeamLeaderDashboardPage />
+                </React.Suspense>
               </ProtectedRoute>
             } />
             
