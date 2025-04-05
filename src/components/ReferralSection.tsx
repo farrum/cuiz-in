@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -8,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from "@/components/ui/separator";
+import { Link } from 'react-router-dom';
 
 interface ReferralEntry {
   id: string;
@@ -40,18 +40,15 @@ const ReferralSection: React.FC = () => {
       setUserName(userName);
     }
     
-    // Load referrals from localStorage first for immediate display
     const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
     if (savedReferrals) {
       const parsedReferrals = JSON.parse(savedReferrals);
       setReferrals(parsedReferrals);
       
-      // Check if user is a team leader (10+ active referrals)
       const activeReferrals = parsedReferrals.filter(r => r.status === 'active').length;
       setIsTeamLeader(activeReferrals >= 10);
     }
     
-    // Then try to fetch from Supabase for the most up-to-date data
     fetchUserReferrals(userId);
   }, []);
   
@@ -68,7 +65,6 @@ const ReferralSection: React.FC = () => {
       if (error) {
         console.error('Error fetching referrals:', error);
       } else if (data && data.length > 0) {
-        // Map Supabase data to our ReferralEntry format
         const mappedReferrals: ReferralEntry[] = data.map(r => ({
           id: r.id,
           email: r.referred_email || '',
@@ -76,14 +72,13 @@ const ReferralSection: React.FC = () => {
           date: r.date,
           status: r.status as 'pending' | 'active' | 'inactive',
           lastActive: r.last_active_date || '',
-          monthsActive: Math.floor(Math.random() * 5) + 1, // Placeholder
-          totalEarned: Number(r.earnings) || Math.floor(Math.random() * 1000) + 500 // Use earnings or placeholder
+          monthsActive: Math.floor(Math.random() * 5) + 1,
+          totalEarned: Number(r.earnings) || Math.floor(Math.random() * 1000) + 500
         }));
         
         setReferrals(mappedReferrals);
         localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(mappedReferrals));
         
-        // Check if user is a team leader (10+ active referrals)
         const activeReferrals = mappedReferrals.filter(r => r.status === 'active').length;
         setIsTeamLeader(activeReferrals >= 10);
       }
@@ -106,7 +101,6 @@ const ReferralSection: React.FC = () => {
       return;
     }
     
-    // Check if email already exists
     if (referrals.some(r => r.email === email)) {
       toast({
         title: "Already Invited",
@@ -116,11 +110,10 @@ const ReferralSection: React.FC = () => {
       return;
     }
     
-    // Create new referral entry
     const newReferral: ReferralEntry = {
       id: Date.now().toString(),
       email,
-      name: email.split('@')[0], // Simple name extraction from email
+      name: email.split('@')[0],
       date: new Date().toISOString(),
       status: 'pending',
       lastActive: '',
@@ -132,7 +125,6 @@ const ReferralSection: React.FC = () => {
     setReferrals(updatedReferrals);
     localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(updatedReferrals));
     
-    // In a real app, this would send an email - we'll just simulate it
     toast({
       title: "Invitation Sent!",
       description: `An invitation has been sent to ${email}`,
@@ -140,17 +132,14 @@ const ReferralSection: React.FC = () => {
     
     setEmail('');
     
-    // Simulate a successful referral for demo purposes
     setTimeout(() => {
       simulateSuccessfulReferral(newReferral.id);
     }, 5000);
   };
   
   const simulateSuccessfulReferral = (id: string) => {
-    // Update referral status
     const updated = referrals.map(ref => {
       if (ref.id === id) {
-        // First month active - add ₹500
         return { 
           ...ref, 
           status: 'active' as const,
@@ -165,15 +154,12 @@ const ReferralSection: React.FC = () => {
     setReferrals(updated);
     localStorage.setItem(STORAGE_KEYS.REFERRALS, JSON.stringify(updated));
     
-    // Add ₹500 for successful referral
     const currentPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-    const newPoints = currentPoints + 20; // We add 20 points to the referrer
+    const newPoints = currentPoints + 20;
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
     
-    // Add the money to the user's balance
     addReferralReward(500);
     
-    // Dispatch event to notify other components
     window.dispatchEvent(new Event('pointsUpdated'));
     
     toast({
@@ -183,14 +169,12 @@ const ReferralSection: React.FC = () => {
   };
   
   const addReferralReward = (amount: number) => {
-    // Get current achievements/rewards
     const achievements = JSON.parse(localStorage.getItem('quiz_app_achievements') || '[]');
     
-    // Add a new referral achievement
     achievements.push({
       id: Date.now().toString(),
       type: 'referral_reward',
-      month: new Date().toISOString().slice(0, 7), // YYYY-MM
+      month: new Date().toISOString().slice(0, 7),
       reward: amount,
       date: new Date().toISOString(),
       claimed: false
@@ -200,7 +184,6 @@ const ReferralSection: React.FC = () => {
   };
   
   const copyReferralLink = () => {
-    // Include the username as the ref code in the URL
     const link = `${window.location.origin}?ref=${userName}`;
     navigator.clipboard.writeText(link);
     
@@ -216,7 +199,6 @@ const ReferralSection: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* First card: Referral Program Details */}
       <div className="quiz-card">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-medium">Refer Friends</h3>
@@ -246,6 +228,28 @@ const ReferralSection: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {isTeamLeader && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-blue-100 dark:bg-blue-800/30 p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-lg">Team Leader Dashboard</h4>
+                  <p className="text-muted-foreground mt-1">
+                    Access your Team Leader Dashboard to manage your team members and track your earnings.
+                  </p>
+                  <Link to="/team-leader-dashboard" className="mt-3 inline-block">
+                    <Button size="sm">
+                      <Users className="h-4 w-4 mr-2" />
+                      Access Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!isTeamLeader && (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -299,7 +303,6 @@ const ReferralSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics Card */}
       <div className="quiz-card">
         <h3 className="text-xl font-medium mb-6">Your Referral Stats</h3>
         
