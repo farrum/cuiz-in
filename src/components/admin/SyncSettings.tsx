@@ -1,16 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useScheduledSync } from '@/hooks/useScheduledSync';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Upload, Clock } from "lucide-react";
+import { Loader2, RefreshCw, Upload, Clock, Orbit, AlertOctagon } from "lucide-react";
 import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
+import { refreshAdminUsers, resetAndReconnectRealtime } from '@/integrations/supabase/realtime';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 export function SyncSettings() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isEmergencyRefresh, setIsEmergencyRefresh] = useState(false);
+  const { toast } = useToast();
   const { 
     isAutoSyncEnabled, 
     lastFetchTime, 
@@ -37,6 +42,48 @@ export function SyncSettings() {
       await syncToSupabase();
     } finally {
       setIsSyncing(false);
+    }
+  };
+  
+  const handleResetConnection = async () => {
+    setIsResetting(true);
+    try {
+      const channel = resetAndReconnectRealtime();
+      if (channel) {
+        toast({
+          title: "Connection Reset",
+          description: "Realtime connection has been reset and reconnected successfully.",
+        });
+      } else {
+        toast({
+          title: "Reset Failed",
+          description: "Failed to reset realtime connection.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsResetting(false);
+    }
+  };
+  
+  const handleEmergencyRefresh = async () => {
+    setIsEmergencyRefresh(true);
+    try {
+      const result = await refreshAdminUsers();
+      if (result) {
+        toast({
+          title: "Emergency Refresh Successful",
+          description: "Admin users data has been refreshed from the database.",
+        });
+      } else {
+        toast({
+          title: "Emergency Refresh Failed",
+          description: "Failed to refresh admin users data.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsEmergencyRefresh(false);
     }
   };
   
@@ -116,6 +163,39 @@ export function SyncSettings() {
                 <Upload className="h-4 w-4" />
               )}
               {isSyncing ? 'Syncing...' : 'Sync to Supabase'}
+            </Button>
+          </div>
+        </div>
+        
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-medium mb-2">Connection Management</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Button 
+              variant="outline"
+              onClick={handleResetConnection}
+              disabled={isResetting}
+              className="gap-2"
+            >
+              {isResetting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Orbit className="h-4 w-4" />
+              )}
+              {isResetting ? 'Resetting...' : 'Reset Connection'}
+            </Button>
+            
+            <Button 
+              variant="destructive"
+              onClick={handleEmergencyRefresh}
+              disabled={isEmergencyRefresh}
+              className="gap-2"
+            >
+              {isEmergencyRefresh ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <AlertOctagon className="h-4 w-4" />
+              )}
+              {isEmergencyRefresh ? 'Refreshing...' : 'Emergency User Refresh'}
             </Button>
           </div>
         </div>

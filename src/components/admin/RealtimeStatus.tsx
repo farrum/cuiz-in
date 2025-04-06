@@ -1,8 +1,12 @@
+
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, CheckCircle, XCircle } from "lucide-react";
+import { Activity, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime, RealtimeTable } from '@/hooks/useSupabaseRealtime';
+import { resetAndReconnectRealtime } from '@/integrations/supabase/realtime';
+import { useToast } from '@/hooks/use-toast';
 
 type StatusItemProps = {
   tableName: string;
@@ -74,6 +78,8 @@ interface TableStatus {
 }
 
 export function RealtimeStatus() {
+  const { toast } = useToast();
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const tablesToMonitor: {table: RealtimeTable, displayName: string}[] = [
     { table: 'profiles', displayName: 'User Profiles' },
     { table: 'login_logs', displayName: 'Login Logs' },
@@ -94,6 +100,37 @@ export function RealtimeStatus() {
       lastUpdate: null
     }))
   );
+  
+  const handleReconnect = async () => {
+    setIsReconnecting(true);
+    try {
+      const channel = resetAndReconnectRealtime();
+      if (channel) {
+        toast({
+          title: "Reconnection Successful",
+          description: "Realtime connections have been refreshed.",
+        });
+        
+        // Wait a moment for connections to establish
+        setTimeout(() => setIsReconnecting(false), 2000);
+      } else {
+        toast({
+          title: "Reconnection Failed",
+          description: "Failed to reconnect to realtime channels.",
+          variant: "destructive"
+        });
+        setIsReconnecting(false);
+      }
+    } catch (error) {
+      console.error('Error reconnecting:', error);
+      toast({
+        title: "Reconnection Error",
+        description: "An unexpected error occurred during reconnection.",
+        variant: "destructive"
+      });
+      setIsReconnecting(false);
+    }
+  };
 
   tablesToMonitor.forEach((tableInfo, index) => {
     const { isConnected, lastUpdate } = useSupabaseRealtime(tableInfo.table);
@@ -110,6 +147,9 @@ export function RealtimeStatus() {
       });
     }, [isConnected, lastUpdate]);
   });
+  
+  const connectionCount = tableStatuses.filter(status => status.isConnected).length;
+  const totalConnections = tableStatuses.length;
   
   return (
     <Card>
@@ -137,6 +177,21 @@ export function RealtimeStatus() {
           ))}
         </div>
       </CardContent>
+      <CardFooter className="flex justify-between pt-3 border-t">
+        <div className="text-sm text-muted-foreground">
+          {connectionCount} of {totalConnections} connections active
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleReconnect}
+          disabled={isReconnecting} 
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
+          {isReconnecting ? 'Reconnecting...' : 'Reconnect All'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
