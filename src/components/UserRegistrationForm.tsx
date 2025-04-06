@@ -245,6 +245,18 @@ const UserRegistrationForm: React.FC = () => {
               });
               
             console.log('Referral recorded successfully');
+            
+            // Try to add points to the referrer using the 'functions' method instead of the RPC method
+            try {
+              await supabase
+                .from('profiles')
+                .update({ points: referrerData.points + 20 })
+                .eq('id', referrerData.id);
+                
+              console.log('Added 20 points to referrer');
+            } catch (pointsError) {
+              console.error('Failed to add points to referrer:', pointsError);
+            }
           }
         } catch (referralErr) {
           console.error('Referral processing error:', referralErr);
