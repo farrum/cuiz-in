@@ -81,12 +81,12 @@ export const setupRealtimeSubscriptions = () => {
         // For user_roles table, emit role update events
         if (table === 'user_roles') {
           const roleData = payload.new || payload.old;
-          if (roleData) {
+          if (roleData && roleData.user_id !== undefined) { // Ensure user_id exists
             debouncedDispatchEvent('userRoleUpdated', [roleData]);
             
             // If the current user's role was updated, update localStorage
             const userId = localStorage.getItem('quiz_app_user_id');
-            if (userId && roleData.user_id === userId) {
+            if (userId && roleData.user_id === userId && roleData.role) { // Check for role property
               localStorage.setItem('quiz_app_user_role', roleData.role);
               
               // Force reload if on admin page to refresh permissions

@@ -1,7 +1,9 @@
+
 export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
   USER_POINTS: 'quiz_app_user_points',
+  USER_ROLE: 'quiz_app_user_role', // Add the USER_ROLE key
   COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
   QUIZ_QUESTIONS: 'quiz_app_quiz_questions',
   AD_SLOTS: 'quiz_app_ad_slots',
