@@ -226,7 +226,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -382,6 +382,18 @@ const AdminUserManagementEnhanced: React.FC = () => {
       }
       
       if (roleError) throw roleError;
+      
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          type: 'role_change',
+          message: `User ${selectedUser.username} role updated to ${selectedRole}`,
+          user_id: selectedUser.id,
+          data: { 
+            old_role: selectedUser.role || 'player', 
+            new_role: selectedRole 
+          }
+        });
       
       toast({
         title: "Success",
@@ -831,4 +843,3 @@ const AdminUserManagementEnhanced: React.FC = () => {
 };
 
 export default AdminUserManagementEnhanced;
-

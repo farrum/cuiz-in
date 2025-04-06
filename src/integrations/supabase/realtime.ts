@@ -18,7 +18,8 @@ export const setupRealtimeSubscriptions = () => {
     'ad_clicks',
     'admin_notifications',
     'daily_challenges',
-    'user_challenge_progress'
+    'user_challenge_progress',
+    'user_roles'  // Added user_roles table to track role changes
   ];
   
   console.log('Setting up realtime subscriptions for all tables...');
@@ -74,6 +75,25 @@ export const setupRealtimeSubscriptions = () => {
           const progressData = payload.new || payload.old;
           if (progressData) {
             debouncedDispatchEvent('challengeProgressUpdated', [progressData]);
+          }
+        }
+        
+        // For user_roles table, emit role update events
+        if (table === 'user_roles') {
+          const roleData = payload.new || payload.old;
+          if (roleData) {
+            debouncedDispatchEvent('userRoleUpdated', [roleData]);
+            
+            // If the current user's role was updated, update localStorage
+            const userId = localStorage.getItem('quiz_app_user_id');
+            if (userId && roleData.user_id === userId) {
+              localStorage.setItem('quiz_app_user_role', roleData.role);
+              
+              // Force reload if on admin page to refresh permissions
+              if (window.location.pathname.startsWith('/admin')) {
+                debouncedDispatchEvent('currentUserRoleUpdated', [roleData]);
+              }
+            }
           }
         }
       }
@@ -138,4 +158,10 @@ export const removeRealtimeSubscriptions = () => {
 // Function to check if realtime is connected
 export const isRealtimeConnected = () => {
   return activeSubscriptions.has('global');
+};
+
+// Function to reset and reconnect realtime subscriptions
+export const resetRealtimeConnection = () => {
+  removeRealtimeSubscriptions();
+  return setupRealtimeSubscriptions();
 };

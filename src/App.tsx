@@ -1,8 +1,9 @@
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
 import scheduledSyncService from './services/scheduledSync';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -27,6 +28,7 @@ import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -56,12 +58,29 @@ function App() {
             localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
             localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
             localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+            
+            // Get user role
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', userId)
+              .maybeSingle();
+              
+            if (roleData) {
+              localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
+            } else {
+              localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
+            }
           }
         }
         
         // Fetch all app data
         await fetchAllAppData();
         console.log('Initial data fetch complete');
+        
+        // Set up realtime subscriptions
+        setupRealtimeSubscriptions();
+        console.log('Realtime subscriptions initialized');
         
         setIsInitialized(true);
       } catch (error) {
@@ -79,6 +98,34 @@ function App() {
       scheduledSyncService.start();
     }
   }, [isInitialized]);
+  
+  // Listen for role updates
+  useEffect(() => {
+    const handleRoleUpdate = (event: any) => {
+      const roleData = event.detail?.[0];
+      
+      if (roleData) {
+        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        
+        if (userId && roleData.user_id === userId) {
+          localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
+          console.log('User role updated:', roleData.role);
+          
+          // Force reload if on admin page to refresh permissions
+          if (window.location.pathname.startsWith('/admin') || 
+              window.location.pathname.startsWith('/team-dashboard')) {
+            window.location.reload();
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
+    };
+  }, []);
 
   // Set up auth state listener
   useEffect(() => {
@@ -99,12 +146,26 @@ function App() {
             localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
             localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
             localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+            
+            // Get user role
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', userId)
+              .maybeSingle();
+              
+            if (roleData) {
+              localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
+            } else {
+              localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
+            }
           }
         } else if (event === 'SIGNED_OUT') {
           // User signed out, clear local storage
           localStorage.removeItem(STORAGE_KEYS.USER_ID);
           localStorage.removeItem(STORAGE_KEYS.USER_NAME);
           localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+          localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
         }
       }
     );
@@ -146,6 +207,12 @@ function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/disclaimer" element={<DisclaimerPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            
+            <Route path="/team-dashboard" element={
+              <ProtectedRoute>
+                <TeamLeaderDashboardPage />
+              </ProtectedRoute>
+            } />
             
             <Route path="/profile" element={
               <ProtectedRoute>

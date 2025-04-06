@@ -51,15 +51,18 @@ export const useDailyChallenges = () => {
         
         setProgress(progressLookup);
         
-        // Filter out challenges that have ended and are completed
+        // Filter challenges:
+        // 1. Keep active challenges that haven't ended yet
+        // 2. Remove challenges that have been completed by the user
         filteredChallenges = challengesData.filter(challenge => {
-          const hasEnded = isPast(new Date(challenge.end_date));
+          const endDate = new Date(challenge.end_date);
+          const hasEnded = endDate < now;
           const userCompleted = progressLookup[challenge.id]?.completed;
           
-          // Keep challenges that:
-          // 1. Haven't ended, OR
-          // 2. Have ended but user hasn't completed them yet
-          return !hasEnded || (hasEnded && !userCompleted);
+          // Only keep challenges that:
+          // 1. Haven't ended yet, AND
+          // 2. User hasn't completed them yet
+          return !hasEnded && !userCompleted;
         });
         
         setChallenges(filteredChallenges);

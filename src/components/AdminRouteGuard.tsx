@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminRouteGuardProps {
@@ -15,6 +15,7 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
   isAdminAuth 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,10 +29,10 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
         });
         
         // Redirect non-admin users trying to access admin routes
-        window.location.href = '/';
+        navigate('/');
       }
     }
-  }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth]);
+  }, [isAuthenticated, location.pathname, userRole, toast, isAdminAuth, navigate]);
 
   return null;
 };

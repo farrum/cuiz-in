@@ -71,6 +71,9 @@ export const useAuthCheck = () => {
         const userRole = !roleError && roleData ? roleData.role : 'player';
         console.log('User role:', userRole || 'player');
         
+        // Store the user role in localStorage for easy access
+        localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole || 'player');
+        
         setAuthState({
           isAuthenticated: true,
           userRole,
