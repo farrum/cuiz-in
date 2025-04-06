@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -226,7 +227,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -403,6 +404,21 @@ const AdminUserManagementEnhanced: React.FC = () => {
       setUsers(users.map(user => 
         user.id === selectedUser.id ? { ...user, role: selectedRole } : user
       ));
+      
+      // Dispatch a custom event for role change
+      window.dispatchEvent(new CustomEvent('userRoleUpdated', {
+        detail: {
+          userId: selectedUser.id,
+          oldRole: selectedUser.role || 'player',
+          newRole: selectedRole
+        }
+      }));
+      
+      // If user has local storage, update it
+      const userId = localStorage.getItem('quiz_app_user_id');
+      if (userId && userId === selectedUser.id) {
+        localStorage.setItem('quiz_app_user_role', selectedRole);
+      }
       
       setIsEditRoleDialogOpen(false);
     } catch (error: any) {
