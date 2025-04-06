@@ -76,15 +76,6 @@ export const setupRealtimeSubscriptions = () => {
             debouncedDispatchEvent('challengeProgressUpdated', [progressData]);
           }
         }
-        
-        // For profiles table, ensure we update admin_users in localStorage
-        if (table === 'profiles') {
-          const profileData = payload.new || payload.old;
-          if (profileData) {
-            updateLocalStorageForTable('profiles', profileData, payload.eventType);
-            debouncedDispatchEvent('profilesUpdated', [profileData]);
-          }
-        }
       }
     );
   });
@@ -109,67 +100,9 @@ export const setupRealtimeSubscriptions = () => {
   return channel;
 };
 
-// Update localStorage for a specific table
-const updateLocalStorageForTable = (table: string, data: any, eventType: string) => {
-  try {
-    const mappings: Record<string, string> = {
-      'profiles': 'admin_users',
-      'login_logs': 'quiz_app_login_log',
-      'ad_slots': 'quiz_app_ad_slots',
-      'quiz_questions': 'quiz_questions',
-      'quiz_answers': 'quiz_answers',
-      'payments': 'admin_payments',
-      'user_referrals': 'admin_referrals',
-      'ad_views': 'quiz_app_ad_views',
-      'ad_clicks': 'quiz_app_ad_clicks',
-      'daily_challenges': 'daily_challenges',
-      'user_challenge_progress': 'user_challenge_progress'
-    };
-    
-    const localStorageKey = mappings[table] || table;
-    
-    if (!localStorageKey) {
-      console.warn(`No localStorage mapping found for table: ${table}`);
-      return;
-    }
-    
-    // Get existing data from localStorage
-    const existingDataStr = localStorage.getItem(localStorageKey);
-    let existingData = existingDataStr ? JSON.parse(existingDataStr) : [];
-    
-    if (!Array.isArray(existingData)) {
-      console.warn(`Invalid data format in localStorage for ${localStorageKey}, resetting to empty array`);
-      existingData = [];
-    }
-    
-    if (eventType === 'INSERT' || eventType === 'UPDATE') {
-      // Check if item already exists
-      const index = existingData.findIndex((item: any) => item.id === data.id);
-      
-      if (index !== -1) {
-        // Update existing item
-        existingData[index] = data;
-      } else {
-        // Add new item
-        existingData.push(data);
-      }
-    } else if (eventType === 'DELETE') {
-      // Remove item
-      existingData = existingData.filter((item: any) => item.id !== data.id);
-    }
-    
-    // Save back to localStorage
-    localStorage.setItem(localStorageKey, JSON.stringify(existingData));
-    console.log(`Updated localStorage for ${localStorageKey} (${eventType})`);
-    
-  } catch (error) {
-    console.error(`Error updating localStorage for table ${table}:`, error);
-  }
-};
-
 // Implement debounced event dispatch to prevent multiple rapid updates
 const pendingEvents = new Map();
-const debouncedDispatchEvent = (eventName: string, detail: any, timeout = 500) => {
+const debouncedDispatchEvent = (eventName, detail, timeout = 500) => {
   // Cancel any existing timeout for this event
   if (pendingEvents.has(eventName)) {
     clearTimeout(pendingEvents.get(eventName));
@@ -205,38 +138,4 @@ export const removeRealtimeSubscriptions = () => {
 // Function to check if realtime is connected
 export const isRealtimeConnected = () => {
   return activeSubscriptions.has('global');
-};
-
-// Function to force refresh admin_users from the profiles table
-export const refreshAdminUsers = async () => {
-  try {
-    console.log('Manually refreshing admin users from database...');
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching profiles:', error);
-      return false;
-    }
-    
-    if (data) {
-      localStorage.setItem('admin_users', JSON.stringify(data));
-      console.log(`Refreshed admin_users in localStorage with ${data.length} users`);
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Error refreshing admin users:', error);
-    return false;
-  }
-};
-
-// Function to manually reset and reconnect realtime
-export const resetAndReconnectRealtime = () => {
-  console.log('Performing full realtime reset and reconnection...');
-  removeRealtimeSubscriptions();
-  return setupRealtimeSubscriptions();
 };
