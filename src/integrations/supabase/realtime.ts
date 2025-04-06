@@ -4,6 +4,13 @@ import { supabase } from './client';
 // Track active subscriptions to prevent duplicates
 const activeSubscriptions = new Map();
 
+// Define interface for role data to fix TypeScript errors
+interface RoleData {
+  user_id?: string;
+  role?: string;
+  [key: string]: any;
+}
+
 // Connect to realtime channel for specific tables
 export const setupRealtimeSubscriptions = () => {
   const tables = [
@@ -80,13 +87,13 @@ export const setupRealtimeSubscriptions = () => {
         
         // For user_roles table, emit role update events
         if (table === 'user_roles') {
-          const roleData = payload.new || payload.old;
-          if (roleData && roleData.user_id !== undefined) { // Ensure user_id exists
+          const roleData = (payload.new || payload.old) as RoleData; // Cast to RoleData type
+          if (roleData && roleData.user_id) { // Check if user_id exists
             debouncedDispatchEvent('userRoleUpdated', [roleData]);
             
             // If the current user's role was updated, update localStorage
             const userId = localStorage.getItem('quiz_app_user_id');
-            if (userId && roleData.user_id === userId && roleData.role) { // Check for role property
+            if (userId && roleData.user_id === userId && roleData.role) {
               localStorage.setItem('quiz_app_user_role', roleData.role);
               
               // Force reload if on admin page to refresh permissions
