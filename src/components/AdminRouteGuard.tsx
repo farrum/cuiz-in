@@ -36,8 +36,11 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
     
     // Guard for team leader dashboard
     if (isAuthenticated && location.pathname.startsWith('/team-dashboard')) {
+      // Normalize role check to include both variations of team leader role
+      const isTeamLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
+      
       // Only allow access if user has team_leader role
-      if (userRole !== 'team_leader' && userRole !== 'admin') {
+      if (!isTeamLeaderRole && userRole !== 'admin') {
         toast({
           title: "Access Denied",
           description: "Only team leaders can access the team dashboard",

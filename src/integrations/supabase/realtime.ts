@@ -89,6 +89,11 @@ export const setupRealtimeSubscriptions = () => {
         if (table === 'user_roles') {
           const roleData = (payload.new || payload.old) as RoleData; // Cast to RoleData type
           if (roleData && roleData.user_id) { // Check if user_id exists
+            // Normalize role name for team leaders
+            if (roleData.role === 'teamleader') {
+              roleData.role = 'team_leader';
+            }
+            
             debouncedDispatchEvent('userRoleUpdated', [roleData]);
             
             // If the current user's role was updated, update localStorage
@@ -96,10 +101,12 @@ export const setupRealtimeSubscriptions = () => {
             if (userId && roleData.user_id === userId && roleData.role) {
               localStorage.setItem('quiz_app_user_role', roleData.role);
               
+              // Dispatch event immediately - this is important!
+              window.dispatchEvent(new CustomEvent('currentUserRoleUpdated', { detail: [roleData] }));
+              
               // Force reload if on specific pages to refresh permissions
               if (window.location.pathname.startsWith('/admin') || 
                   window.location.pathname.startsWith('/team-dashboard')) {
-                debouncedDispatchEvent('currentUserRoleUpdated', [roleData]);
                 
                 // Force page reload to apply new permissions
                 setTimeout(() => {

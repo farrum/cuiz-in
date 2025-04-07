@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Copy, ArrowUp, Award, Shield, Users } from 'lucide-react';
+import { UserPlus, Copy, ArrowUp, Award, Shield, Users, BarChartIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Progress } from '@/components/ui/progress';
@@ -47,6 +48,7 @@ const ReferralSection: React.FC = () => {
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
     
     if (userId) {
       setUserId(userId);
@@ -56,36 +58,81 @@ const ReferralSection: React.FC = () => {
       setUserName(userName);
     }
     
+    // First check if user has team_leader role in localStorage
+    if (userRole === 'team_leader' || userRole === 'teamleader') {
+      setIsTeamLeader(true);
+      console.log('User is a team leader based on role:', userRole);
+    }
+    
     const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
     if (savedReferrals) {
       const parsedReferrals = JSON.parse(savedReferrals);
       setReferrals(parsedReferrals);
       
-      const activeReferrals = parsedReferrals.filter(r => r.status === 'active').length;
-      setIsTeamLeader(activeReferrals >= 10);
+      // Only set team leader status based on referrals count if no role is found
+      if (userRole !== 'team_leader' && userRole !== 'teamleader') {
+        const activeReferrals = parsedReferrals.filter((r: any) => r.status === 'active').length;
+        const shouldBeTeamLeader = activeReferrals >= 10;
+        
+        if (shouldBeTeamLeader) {
+          setIsTeamLeader(true);
+          console.log('User should be a team leader based on referrals count:', activeReferrals);
+        }
+      }
     }
     
     fetchUserReferrals(userId);
     checkIfTeamLeader(userId);
+    
+    // Listen for role updates
+    const handleRoleUpdate = () => {
+      const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
+      console.log('Role update received in ReferralSection, new role:', userRole);
+    };
+    
+    window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
+    };
   }, []);
 
   const checkIfTeamLeader = async (userId: string | null) => {
     if (!userId) return;
     
     try {
+      // First check local storage for role
+      const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+      if (userRole === 'team_leader' || userRole === 'teamleader') {
+        setIsTeamLeader(true);
+        fetchTeamMembers(userId);
+        calculateEarnings(userId);
+        return;
+      }
+      
+      // Then check Supabase
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('role', 'teamleader')
         .single();
         
       if (error) {
         console.error('Error checking team leader role:', error);
       } else if (data) {
-        setIsTeamLeader(true);
-        fetchTeamMembers(userId);
-        calculateEarnings(userId);
+        const role = data.role;
+        const isTeamLeaderRole = role === 'team_leader' || role === 'teamleader';
+        
+        if (isTeamLeaderRole) {
+          setIsTeamLeader(true);
+          // Update localStorage with normalized role name
+          localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'team_leader');
+          fetchTeamMembers(userId);
+          calculateEarnings(userId);
+        }
       }
     } catch (err) {
       console.error('Failed to check team leader status:', err);
@@ -359,6 +406,15 @@ const ReferralSection: React.FC = () => {
                     Invite your friends to play QuizPoints and earn ₹500 for each friend who joins and plays actively for one day.
                   </p>
                 )}
+                
+                {isTeamLeader && (
+                  <div className="mt-4">
+                    <Link to="/team-dashboard" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                      <BarChartIcon className="h-4 w-4" />
+                      <span>View Team Dashboard</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -435,6 +491,14 @@ const ReferralSection: React.FC = () => {
           
           <h4 className="text-lg font-medium mb-4">Your Team Members</h4>
           
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-muted-foreground">Quick overview of your team</span>
+            <Link to="/team-dashboard" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+              <BarChartIcon className="h-4 w-4" />
+              <span>Full Team Dashboard</span>
+            </Link>
+          </div>
+          
           {isTeamMembersLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -442,7 +506,7 @@ const ReferralSection: React.FC = () => {
           ) : (
             <DataTable
               columns={teamMemberColumns}
-              data={teamMembers}
+              data={teamMembers.slice(0, 5)} // Show only first 5 members
               isLoading={isTeamMembersLoading}
             />
           )}

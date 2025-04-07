@@ -11,6 +11,7 @@ interface AuthState {
   userId: string | null;
   userName: string | null;
   isAdminAuth: boolean;
+  isTeamLeader: boolean;
 }
 
 export const useAuthCheck = () => {
@@ -21,7 +22,8 @@ export const useAuthCheck = () => {
     isSuspended: false,
     userId: null,
     userName: null,
-    isAdminAuth: false
+    isAdminAuth: false,
+    isTeamLeader: false
   });
 
   useEffect(() => {
@@ -39,7 +41,8 @@ export const useAuthCheck = () => {
           isSuspended: false,
           userId,
           userName,
-          isAdminAuth
+          isAdminAuth,
+          isTeamLeader: false
         });
         return;
       }
@@ -73,6 +76,15 @@ export const useAuthCheck = () => {
         // Log the role for debugging
         console.log('Fetched user role from database:', userRole);
         
+        // Check if user is a team leader
+        const isTeamLeader = userRole === 'team_leader' || userRole === 'teamleader';
+        
+        if (isTeamLeader) {
+          // Normalize the role name to 'team_leader'
+          userRole = 'team_leader';
+          console.log('User is a team leader');
+        }
+        
         // Store the user role in localStorage for easy access
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole || 'player');
         
@@ -82,7 +94,8 @@ export const useAuthCheck = () => {
           isSuspended,
           userId,
           userName,
-          isAdminAuth
+          isAdminAuth,
+          isTeamLeader
         });
       } else {
         console.log('User not authenticated');
@@ -92,7 +105,8 @@ export const useAuthCheck = () => {
           isSuspended: false,
           userId: null,
           userName: null,
-          isAdminAuth: false
+          isAdminAuth: false,
+          isTeamLeader: false
         });
       }
     };
@@ -101,13 +115,16 @@ export const useAuthCheck = () => {
     
     // Add listener for role updates
     const handleRoleUpdate = () => {
+      console.log('Role update event received, rechecking auth...');
       checkAuth();
     };
     
     window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
     
     return () => {
       window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
     };
   }, [location.pathname]);
 

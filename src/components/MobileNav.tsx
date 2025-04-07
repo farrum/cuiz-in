@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain } from 'lucide-react';
+import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain, BarChartIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +12,8 @@ const MobileNav: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isAuthenticated = localStorage.getItem(STORAGE_KEYS.USER_NAME) !== null;
   const isAdmin = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  const isTeamLeader = localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' || 
+                      localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'teamleader';
   const location = useLocation();
   const isMobile = useIsMobile();
   const [todayPoints, setTodayPoints] = useState(0);
@@ -89,6 +92,23 @@ const MobileNav: React.FC = () => {
       };
     }
   }, [isAuthenticated]);
+
+  // Listen for role updates
+  useEffect(() => {
+    const handleRoleUpdate = () => {
+      console.log('Role update received in MobileNav');
+      // Force re-render by setting state
+      setIsOpen(isOpen);
+    };
+    
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
+    window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
+      window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    };
+  }, [isOpen]);
   
   if (!isMobile) return null;
   
@@ -170,6 +190,19 @@ const MobileNav: React.FC = () => {
                   <Gift className="mr-3 h-5 w-5" />
                   Referrals
                 </Link>
+
+                {isTeamLeader && (
+                  <Link 
+                    to="/team-dashboard" 
+                    className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                      location.pathname === '/team-dashboard' ? 'bg-primary text-primary-foreground' : ''
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    <BarChartIcon className="mr-3 h-5 w-5" />
+                    Team Dashboard
+                  </Link>
+                )}
                 
                 {isAdmin && (
                   <Link 

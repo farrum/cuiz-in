@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield, LogIn, BarChartIcon } from 'lucide-react';
@@ -35,22 +36,26 @@ const Header: React.FC = () => {
       
       setIsLoggedIn(!!userName && !!userId);
       setIsAdmin(userName === 'admin' || userName === 'quizadmin' || userRole === 'admin');
-      setIsTeamLeader(userRole === 'team_leader');
+      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
       
       console.log('Current user role:', userRole);
+      console.log('Is team leader:', userRole === 'team_leader' || userRole === 'teamleader');
     };
     
     checkAuth();
     
     // Listen for role updates
     const handleRoleUpdate = () => {
+      console.log('Role update event received in Header');
       checkAuth();
     };
     
     window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
     
     return () => {
       window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
     };
   }, []);
   
