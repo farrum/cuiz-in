@@ -68,8 +68,10 @@ export const useAuthCheck = () => {
           .eq('user_id', userId)
           .maybeSingle();
           
-        const userRole = !roleError && roleData ? roleData.role : 'player';
-        console.log('User role:', userRole || 'player');
+        let userRole = !roleError && roleData ? roleData.role : 'player';
+        
+        // Log the role for debugging
+        console.log('Fetched user role from database:', userRole);
         
         // Store the user role in localStorage for easy access
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole || 'player');
@@ -96,6 +98,17 @@ export const useAuthCheck = () => {
     };
     
     checkAuth();
+    
+    // Add listener for role updates
+    const handleRoleUpdate = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    };
   }, [location.pathname]);
 
   return authState;

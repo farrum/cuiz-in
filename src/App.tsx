@@ -111,9 +111,10 @@ function App() {
           localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
           console.log('User role updated:', roleData.role);
           
-          // Force reload if on admin page to refresh permissions
+          // Force reload if on access-controlled pages to refresh permissions
           if (window.location.pathname.startsWith('/admin') || 
               window.location.pathname.startsWith('/team-dashboard')) {
+            console.log('User is on a role-controlled page, will reload to apply permissions');
             window.location.reload();
           }
         }

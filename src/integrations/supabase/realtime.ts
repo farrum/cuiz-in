@@ -96,9 +96,16 @@ export const setupRealtimeSubscriptions = () => {
             if (userId && roleData.user_id === userId && roleData.role) {
               localStorage.setItem('quiz_app_user_role', roleData.role);
               
-              // Force reload if on admin page to refresh permissions
-              if (window.location.pathname.startsWith('/admin')) {
+              // Force reload if on specific pages to refresh permissions
+              if (window.location.pathname.startsWith('/admin') || 
+                  window.location.pathname.startsWith('/team-dashboard')) {
                 debouncedDispatchEvent('currentUserRoleUpdated', [roleData]);
+                
+                // Force page reload to apply new permissions
+                setTimeout(() => {
+                  console.log('Role changed, reloading page to apply new permissions');
+                  window.location.reload();
+                }, 1500);
               }
             }
           }
@@ -172,3 +179,4 @@ export const resetRealtimeConnection = () => {
   removeRealtimeSubscriptions();
   return setupRealtimeSubscriptions();
 };
+

@@ -19,6 +19,7 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
+    // Guard for admin routes
     if (isAuthenticated && location.pathname.startsWith('/admin')) {
       // Allow access if user has admin auth in localStorage or has admin/team_leader role
       if (!isAdminAuth && userRole !== 'admin' && userRole !== 'team_leader') {
@@ -29,6 +30,21 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
         });
         
         // Redirect non-admin users trying to access admin routes
+        navigate('/');
+      }
+    }
+    
+    // Guard for team leader dashboard
+    if (isAuthenticated && location.pathname.startsWith('/team-dashboard')) {
+      // Only allow access if user has team_leader role
+      if (userRole !== 'team_leader' && userRole !== 'admin') {
+        toast({
+          title: "Access Denied",
+          description: "Only team leaders can access the team dashboard",
+          variant: "destructive"
+        });
+        
+        // Redirect non-team-leaders trying to access team dashboard
         navigate('/');
       }
     }

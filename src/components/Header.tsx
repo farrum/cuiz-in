@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Award, User, Home, UserPlus, Target, Shield, LogIn } from 'lucide-react';
+import { Award, User, Home, UserPlus, Target, Shield, LogIn, BarChartIcon } from 'lucide-react';
 import { cn } from "@/utils/animations";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+
 const Header: React.FC = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [todayPoints, setTodayPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isTeamLeader, setIsTeamLeader] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -23,15 +26,34 @@ const Header: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
   useEffect(() => {
     const checkAuth = () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+      
       setIsLoggedIn(!!userName && !!userId);
-      setIsAdmin(userName === 'admin' || userName === 'quizadmin');
+      setIsAdmin(userName === 'admin' || userName === 'quizadmin' || userRole === 'admin');
+      setIsTeamLeader(userRole === 'team_leader');
+      
+      console.log('Current user role:', userRole);
     };
+    
     checkAuth();
+    
+    // Listen for role updates
+    const handleRoleUpdate = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    };
   }, []);
+  
   useEffect(() => {
     const updatePoints = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -85,8 +107,10 @@ const Header: React.FC = () => {
       };
     }
   }, [isLoggedIn]);
+  
   const dailyProgress = Math.min(100, todayPoints / DAILY_TARGET * 100);
   const monthlyProgress = Math.min(100, monthlyPoints / MONTHLY_TARGET * 100);
+  
   return <header className={cn("fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300", scrolled ? "glass shadow-sm backdrop-blur-md" : "bg-transparent")}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -134,11 +158,18 @@ const Header: React.FC = () => {
           path: '/profile',
           label: 'Profile',
           icon: <User className="w-5 h-5" />
-        }, ...(isAdmin ? [{
+        }, 
+        ...(isTeamLeader ? [{
+          path: '/team-dashboard',
+          label: 'Team Dashboard',
+          icon: <BarChartIcon className="w-5 h-5" />
+        }] : []),
+        ...(isAdmin ? [{
           path: '/admin',
           label: 'Admin',
           icon: <Shield className="w-5 h-5" />
-        }] : [])].map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
+        }] : [])
+        ].map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
           animationDelay: `${index * 50}ms`
         }}>
                 {item.icon}
