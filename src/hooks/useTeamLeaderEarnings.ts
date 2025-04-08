@@ -33,6 +33,7 @@ export const useTeamLeaderEarnings = (teamLeaderId?: string | null) => {
         }
 
         // Fetch from Supabase
+        // Using the raw SQL query to work around TypeScript type limitations
         const { data, error } = await supabase
           .from('team_leader_earnings')
           .select('*')
