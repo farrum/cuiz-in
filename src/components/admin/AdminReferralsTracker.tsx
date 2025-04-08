@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -127,7 +126,6 @@ const AdminReferralsTracker: React.FC = () => {
     fetchData();
   }, [toast]);
   
-  // Generate mock referrals and save to both localStorage and Supabase
   const generateAndSaveMockReferrals = async (loadedUsers: User[]) => {
     const currentMonth = new Date().toISOString().substring(0, 7);
     const mockReferrals: ReferralData[] = [];
@@ -170,7 +168,6 @@ const AdminReferralsTracker: React.FC = () => {
     }
   };
   
-  // Sync referrals from localStorage to Supabase
   const syncReferralsToSupabase = async (referrals: ReferralData[]) => {
     try {
       for (const ref of referrals) {

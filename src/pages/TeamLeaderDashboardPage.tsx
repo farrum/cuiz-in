@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -117,7 +116,7 @@ const TeamLeaderDashboardPage = () => {
     }
   };
 
-  // Define columns for the team members table
+  // Update the memberColumns array to change "Months Active" to "Days Active"
   const memberColumns = [
     {
       header: "Name",
@@ -163,8 +162,8 @@ const TeamLeaderDashboardPage = () => {
       ),
     },
     {
-      header: "Months Active",
-      accessorKey: "monthsActive",
+      header: "Days Active",
+      accessorKey: "daysActive",
     },
     {
       header: "Earnings",
