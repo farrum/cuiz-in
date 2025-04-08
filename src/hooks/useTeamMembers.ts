@@ -24,11 +24,13 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const calculateDaysActive = (joinDate: string, lastActive: string): number => {
+  const calculateDaysActive = (joinDate: string, lastActive: string, status: string): number => {
     const today = new Date();
     let comparisonDate: Date;
     
-    if (lastActive && new Date(lastActive) > new Date(joinDate)) {
+    // For active users, calculate days active from the day they became active (last inactive date + 1)
+    // For inactive/suspended users, calculate from join date
+    if (status === 'active' && lastActive && new Date(lastActive) > new Date(joinDate)) {
       comparisonDate = new Date(lastActive);
     } else {
       comparisonDate = new Date(joinDate);
@@ -67,7 +69,7 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
             email: r.referred_email || '',
             status: r.status as 'active' | 'inactive' | 'suspended',
             lastActive: r.last_active_date || '-',
-            daysActive: calculateDaysActive(r.date, r.last_active_date || ''),
+            daysActive: calculateDaysActive(r.date, r.last_active_date || '', r.status),
             joinDate: r.date,
             totalEarned: Number(r.earnings) || 0
           }));

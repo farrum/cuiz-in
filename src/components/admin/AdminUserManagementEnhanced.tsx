@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -78,11 +77,11 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-const calculateDaysActive = (createdAt: string, lastLogin: string | null): number => {
+const calculateDaysActive = (createdAt: string, lastLogin: string | null, status: string = 'active'): number => {
   const today = new Date();
   let comparisonDate: Date;
   
-  if (lastLogin && new Date(lastLogin) > new Date(createdAt)) {
+  if (status === 'active' && lastLogin && new Date(lastLogin) > new Date(createdAt)) {
     comparisonDate = new Date(lastLogin);
   } else {
     comparisonDate = new Date(createdAt);
@@ -189,7 +188,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         const userRole = userRoles.find((role: any) => role.user_id === profile.id);
         const role = userRole ? userRole.role : 'player';
         
-        const daysActive = calculateDaysActive(profile.created_at, lastLogin);
+        const daysActive = calculateDaysActive(profile.created_at, lastLogin, profile.suspended ? 'inactive' : 'active');
         
         return {
           id: profile.id,
