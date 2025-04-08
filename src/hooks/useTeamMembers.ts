@@ -10,7 +10,7 @@ export interface TeamMember {
   email: string;
   status: 'active' | 'inactive' | 'suspended';
   lastActive: string;
-  daysActive: number;
+  daysActive: number | string;
   joinDate: string;
   totalEarned: number;
 }
@@ -24,12 +24,16 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const calculateDaysActive = (joinDate: string, lastActive: string, status: string): number => {
+  const calculateDaysActive = (joinDate: string, lastActive: string, status: string): number | string => {
+    // For inactive or suspended users, return "N/A"
+    if (status === 'inactive' || status === 'suspended') {
+      return "N/A";
+    }
+    
+    // For active users, calculate days active from the day they became active (last inactive date + 1)
     const today = new Date();
     let comparisonDate: Date;
     
-    // For active users, calculate days active from the day they became active (last inactive date + 1)
-    // For inactive/suspended users, calculate from join date
     if (status === 'active' && lastActive && new Date(lastActive) > new Date(joinDate)) {
       comparisonDate = new Date(lastActive);
     } else {

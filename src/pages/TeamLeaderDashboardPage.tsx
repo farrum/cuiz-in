@@ -159,6 +159,13 @@ const TeamLeaderDashboardPage = () => {
     {
       header: "Days Active",
       accessorKey: "daysActive",
+      cell: (row: any) => {
+        return (
+          <span>
+            {typeof row.daysActive === 'number' ? `${row.daysActive} days` : row.daysActive}
+          </span>
+        );
+      },
     },
     {
       header: "Earnings",

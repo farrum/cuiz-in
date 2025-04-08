@@ -65,7 +65,7 @@ interface User {
   monthly_logins?: number;
   login_streak?: number;
   display_name?: string;
-  daysActive?: number;
+  daysActive?: number | string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -77,7 +77,11 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-const calculateDaysActive = (createdAt: string, lastLogin: string | null, status: string = 'active'): number => {
+const calculateDaysActive = (createdAt: string, lastLogin: string | null, status: string = 'active'): number | string => {
+  if (status === 'inactive' || status === 'suspended') {
+    return "N/A";
+  }
+  
   const today = new Date();
   let comparisonDate: Date;
   
@@ -241,7 +245,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -568,7 +572,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
       accessorKey: "daysActive",
       cell: (row: User) => (
         <Badge variant="outline" className="bg-green-50 text-green-700">
-          {row.daysActive} days
+          {typeof row.daysActive === 'number' ? `${row.daysActive} days` : row.daysActive}
         </Badge>
       ),
     },
