@@ -602,6 +602,39 @@ export type Database = {
         }
         Relationships: []
       }
+      team_leader_earnings: {
+        Row: {
+          active_members: number
+          amount: number
+          created_at: string | null
+          id: string
+          month: string
+          team_leader_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          active_members?: number
+          amount?: number
+          created_at?: string | null
+          id?: string
+          month: string
+          team_leader_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          active_members?: number
+          amount?: number
+          created_at?: string | null
+          id?: string
+          month?: string
+          team_leader_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       user_challenge_progress: {
         Row: {
           challenge_id: string

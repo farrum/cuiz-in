@@ -16,43 +16,29 @@ import {
   CheckCircle, XCircle, AlertCircle, RefreshCw, Ban
 } from 'lucide-react';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-
-// Types for team members
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  status: 'active' | 'inactive' | 'suspended';
-  lastActive: string;
-  monthsActive: number;
-  joinDate: string;
-  totalEarned: number;
-}
-
-// Types for earnings
-interface EarningDetail {
-  month: string;
-  amount: number;
-  membersCount: number;
-  breakdown: {
-    memberId: string;
-    memberName: string;
-    amount: number;
-  }[];
-}
+import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
+import { ChartContainer } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [earnings, setEarnings] = useState<EarningDetail[]>([]);
-  const [totalEarnings, setTotalEarnings] = useState<number>(0);
-  const [activeMembers, setActiveMembers] = useState<number>(0);
-  const [inactiveMembers, setInactiveMembers] = useState<number>(0);
-  const [suspendedMembers, setSuspendedMembers] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [isTeamLeader, setIsTeamLeader] = useState<boolean>(false);
+  const { 
+    teamMembers, 
+    activeMembers, 
+    inactiveMembers, 
+    suspendedMembers, 
+    isLoading: membersLoading,
+    handleStatusChange
+  } = useTeamMembers();
+  const {
+    earnings,
+    totalEarnings,
+    isLoading: earningsLoading
+  } = useTeamLeaderEarnings();
 
   useEffect(() => {
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -67,12 +53,24 @@ const TeamLeaderDashboardPage = () => {
     // Check if user is a team leader
     const checkTeamLeaderStatus = async () => {
       try {
-        // First check local referrals
-        const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
-        if (savedReferrals) {
-          const parsedReferrals = JSON.parse(savedReferrals);
-          const activeReferrals = parsedReferrals.filter((r: any) => r.status === 'active').length;
-          const isLeader = activeReferrals >= 10;
+        // Get user role from localStorage
+        const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+        const isLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
+        
+        if (isLeaderRole) {
+          setIsTeamLeader(true);
+        } else {
+          // Fetch from database to make sure
+          const { data, error } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', storedUserId)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          const role = data?.role;
+          const isLeader = role === 'team_leader' || role === 'teamleader';
           
           setIsTeamLeader(isLeader);
           
@@ -83,168 +81,27 @@ const TeamLeaderDashboardPage = () => {
               variant: "destructive",
             });
             navigate('/profile');
-            return;
           }
         }
-        
-        // Then fetch from Supabase for the most up-to-date data
-        fetchTeamMembers(storedUserId);
-        fetchEarnings(storedUserId);
       } catch (error) {
         console.error('Error checking team leader status:', error);
-      } finally {
-        setIsLoading(false);
+        setIsTeamLeader(false);
       }
     };
     
     checkTeamLeaderStatus();
   }, [navigate, toast]);
 
-  // Fetch team members data
-  const fetchTeamMembers = async (leaderId: string) => {
-    try {
-      const { data: referrals, error } = await supabase
-        .from('user_referrals')
-        .select('*')
-        .eq('referrer_id', leaderId);
-
-      if (error) throw error;
-      
-      if (referrals) {
-        const members = referrals.map(r => ({
-          id: r.referred_id || r.id,
-          name: r.referred_name,
-          email: r.referred_email || '',
-          status: r.status as 'active' | 'inactive' | 'suspended',
-          lastActive: r.last_active_date || '-',
-          monthsActive: Math.max(1, Math.floor((new Date().getTime() - new Date(r.date).getTime()) / (30 * 24 * 60 * 60 * 1000))),
-          joinDate: r.date,
-          totalEarned: Number(r.earnings) || 0
-        }));
-
-        setTeamMembers(members);
-        
-        // Update status counts
-        setActiveMembers(members.filter(m => m.status === 'active').length);
-        setInactiveMembers(members.filter(m => m.status === 'inactive').length);
-        setSuspendedMembers(members.filter(m => m.status === 'suspended').length);
-      }
-    } catch (err) {
-      console.error('Error fetching team members:', err);
-      toast({
-        title: "Error",
-        description: "Failed to load team members data.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Fetch earnings data
-  const fetchEarnings = async (leaderId: string) => {
-    try {
-      // For this example, we'll simulate earnings data
-      // In a real application, this should come from the database
-      
-      // Get the current month and previous 5 months
-      const months = [];
-      const now = new Date();
-      
-      for (let i = 0; i < 6; i++) {
-        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStr = month.toLocaleString('default', { month: 'long', year: 'numeric' });
-        months.push(monthStr);
-      }
-      
-      // Get saved referrals for mockup earnings data
-      const savedReferrals = localStorage.getItem(STORAGE_KEYS.REFERRALS);
-      let referrals: any[] = [];
-      
-      if (savedReferrals) {
-        referrals = JSON.parse(savedReferrals);
-      }
-      
-      // Create earnings data
-      const earningsData: EarningDetail[] = months.map((month, index) => {
-        // For the mockup: more earnings for recent months, less for older months
-        const activeCount = Math.max(10, referrals.filter(r => r.status === 'active').length);
-        const monthAmount = activeCount * 500;
-        
-        const mockBreakdown = referrals
-          .filter(r => r.status === 'active')
-          .map(r => ({
-            memberId: r.id,
-            memberName: r.name,
-            amount: 500
-          }));
-        
-        return {
-          month,
-          amount: monthAmount,
-          membersCount: activeCount,
-          breakdown: mockBreakdown
-        };
-      });
-      
-      setEarnings(earningsData);
-      
-      // Calculate total earnings
-      const total = earningsData.reduce((sum, month) => sum + month.amount, 0);
-      setTotalEarnings(total);
-      
-    } catch (err) {
-      console.error('Error fetching earnings:', err);
-      toast({
-        title: "Error",
-        description: "Failed to load earnings data.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStatusChange = async (memberId: string, newStatus: 'active' | 'inactive' | 'suspended') => {
-    try {
-      // Update in local state first for responsive UI
-      const updatedMembers = teamMembers.map(member => {
-        if (member.id === memberId) {
-          return { ...member, status: newStatus };
-        }
-        return member;
-      });
-      
-      setTeamMembers(updatedMembers);
-      
-      // Update status counts
-      setActiveMembers(updatedMembers.filter(m => m.status === 'active').length);
-      setInactiveMembers(updatedMembers.filter(m => m.status === 'inactive').length);
-      setSuspendedMembers(updatedMembers.filter(m => m.status === 'suspended').length);
-      
-      // In a real application, send this update to the server
-      // await supabase.from('user_referrals').update({ status: newStatus }).eq('referred_id', memberId);
-      
-      toast({
-        title: "Status Updated",
-        description: `Member status has been updated to ${newStatus}.`,
-      });
-    } catch (err) {
-      console.error('Error updating member status:', err);
-      toast({
-        title: "Error",
-        description: "Failed to update member status.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
     try {
-      // In a real application, send this request to the server
-      // await supabase.from('account_action_requests').insert({
-      //   team_leader_id: userId,
-      //   member_id: memberId,
-      //   action_requested: action,
-      //   request_date: new Date().toISOString(),
-      //   status: 'pending'
-      // });
+      // Send notification to admin
+      const { error } = await supabase.from('admin_notifications').insert({
+        type: `account_${action}_request`,
+        message: `Team leader ${userId} has requested to ${action} account ${memberId}`,
+        data: { team_leader_id: userId, member_id: memberId, action }
+      });
+      
+      if (error) throw error;
       
       toast({
         title: "Request Submitted",
@@ -359,6 +216,8 @@ const TeamLeaderDashboardPage = () => {
     },
   ];
 
+  const isLoading = membersLoading || earningsLoading;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -394,6 +253,13 @@ const TeamLeaderDashboardPage = () => {
       </div>
     );
   }
+
+  // Prepare data for the earnings chart
+  const chartData = earnings.slice(0, 6).map(item => ({
+    month: item.month,
+    amount: item.amount,
+    members: item.membersCount
+  })).reverse();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -454,6 +320,34 @@ const TeamLeaderDashboardPage = () => {
             </CardContent>
           </Card>
         </div>
+        
+        {chartData.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Monthly Earnings Trend</CardTitle>
+              <CardDescription>
+                View your earnings over time
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="amount" name="Earnings (₹)" fill="#8884d8" />
+                  <Bar yAxisId="right" dataKey="members" name="Active Members" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
         
         <Tabs defaultValue="members" className="mb-8">
           <TabsList className="mb-4">
