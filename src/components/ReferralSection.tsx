@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -174,6 +175,7 @@ const ReferralSection: React.FC = () => {
           };
         });
         
+        console.log('Fetched and mapped team members:', mappedMembers);
         setTeamMembers(mappedMembers);
       }
     } catch (err) {
