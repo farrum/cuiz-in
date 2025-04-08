@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -65,6 +66,7 @@ interface User {
   monthly_logins?: number;
   login_streak?: number;
   display_name?: string;
+  daysActive?: number;
 }
 
 const formatDate = (dateString: string): string => {
@@ -240,7 +242,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
