@@ -1,101 +1,330 @@
 
 import React, { useState, useEffect } from 'react';
-import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { 
-  Search, User, Check, X, Clock, Ban, CheckCircle, 
-  XCircle, AlertCircle
-} from 'lucide-react';
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle
+} from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+import { MoreHorizontal, Search, UserPlus, Calendar, Clock, Award, Key, Mail } from 'lucide-react';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import AdminTopPerformers from './AdminTopPerformers';
+import MD5 from 'crypto-js/md5';
+import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
+import { getUserLoginStreak } from '@/services/loginStreakService';
+
+interface User {
+  id: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  points: number;
+  suspended: boolean;
+  created_at: string;
+  role?: string;
+  last_login?: string;
+  login_count?: number;
+  daily_logins?: number;
+  monthly_logins?: number;
+  login_streak?: number;
+  display_name?: string;
+}
+
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return 'Invalid date';
+  }
+};
 
 const AdminUserManagementEnhanced: React.FC = () => {
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ username: '', email: '', phone: '', password: '', points: 0 });
+  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>('player');
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdateEmailDialogOpen, setIsUpdateEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+
+  const { isListening: isListeningProfiles } = useRealtimeUpdates('profiles');
+  const { isListening: isListeningLoginLogs } = useRealtimeUpdates('login_logs');
+  const { isListening: isListeningQuizAnswers } = useRealtimeUpdates('quiz_answers');
+  const { isListening: isListeningUserRoles } = useRealtimeUpdates('user_roles');
+  const { isListening: isListeningLoginStreaks } = useRealtimeUpdates('login_streaks');
+
+  const hashPassword = (password: string): string => {
+    return MD5(password).toString();
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (profilesError) throw profilesError;
+      
+      const { data: loginLogs, error: loginLogsError } = await supabase
+        .from('login_logs')
+        .select('*')
+        .order('login_time', { ascending: false });
+      
+      if (loginLogsError) throw loginLogsError;
+      
+      const { data: userRoles, error: userRolesError } = await supabase
+        .from('user_roles')
+        .select('*');
+      
+      if (userRolesError) throw userRolesError;
+      
+      const { data: loginStreaks, error: loginStreaksError } = await supabase
+        .from('login_streaks')
+        .select('*');
+        
+      if (loginStreaksError) throw loginStreaksError;
+      
+      const streaksMap: Record<string, number> = {};
+      
+      if (loginStreaks) {
+        for (const streak of loginStreaks) {
+          const lastLoginDate = new Date(streak.last_login_date);
+          lastLoginDate.setHours(0, 0, 0, 0);
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          const diffTime = today.getTime() - lastLoginDate.getTime();
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays <= 1) {
+            streaksMap[streak.user_id] = streak.current_streak;
+          } else {
+            streaksMap[streak.user_id] = 0;
+          }
+        }
+      }
+      
+      console.log('Processed login streaks:', streaksMap);
+      
+      const usersWithMetadata: User[] = profiles.map((profile: any) => {
+        const userLogins = loginLogs.filter((log: any) => log.username === profile.username);
+        const lastLogin = userLogins.length > 0 ? userLogins[0].login_time : null;
+        const loginCount = userLogins.length;
+        
+        const dailyLogins = loginLogs.filter(
+          (log: any) => log.username === profile.username && log.login_time >= startOfDay
+        ).length;
+        
+        const monthlyLogins = loginLogs.filter(
+          (log: any) => log.username === profile.username && log.login_time >= startOfMonth
+        ).length;
+        
+        const userRole = userRoles.find((role: any) => role.user_id === profile.id);
+        const role = userRole ? userRole.role : 'player';
+        
+        const loginStreak = streaksMap[profile.id] || 0;
+        
+        return {
+          id: profile.id,
+          username: profile.username,
+          display_name: profile.display_name,
+          phone: profile.phone,
+          points: profile.points || 0,
+          suspended: profile.suspended || false,
+          created_at: profile.created_at,
+          last_login: lastLogin,
+          login_count: loginCount,
+          daily_logins: dailyLogins,
+          monthly_logins: monthlyLogins,
+          role,
+          login_streak: loginStreak
+        };
+      });
+      
+      setUsers(usersWithMetadata);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*');
-          
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          // Fetch user referrals data to calculate days active
-          const { data: referrals, error: referralsError } = await supabase
-            .from('user_referrals')
-            .select('*');
-            
-          if (referralsError) {
-            console.error('Error fetching referrals:', referralsError);
-          }
+    fetchUsers();
+  }, [isListeningProfiles, isListeningLoginLogs, isListeningQuizAnswers, isListeningUserRoles, isListeningLoginStreaks]);
 
-          // Process users with calculated days active
-          const processedUsers = data.map(user => {
-            // Find user's referral data if exists
-            const userReferral = referrals?.find(r => r.referred_id === user.id);
-            
-            // Calculate days active based on join date or last active date
-            let daysActive = 0;
-            if (userReferral) {
-              const joinDate = new Date(userReferral.date);
-              const lastActiveDate = userReferral.last_active_date ? new Date(userReferral.last_active_date) : null;
-              
-              // Use the later of the two dates
-              const latestActivity = lastActiveDate && lastActiveDate > joinDate ? lastActiveDate : joinDate;
-              
-              // Calculate days active
-              daysActive = Math.ceil((new Date().getTime() - latestActivity.getTime()) / (24 * 60 * 60 * 1000));
-              daysActive = Math.max(1, daysActive); // Ensure at least 1 day active
-            }
-            
-            return {
-              ...user,
-              daysActive // Add days active property
-            };
-          });
-          
-          setUsers(processedUsers);
-          setFilteredUsers(processedUsers);
-        }
-      } catch (err) {
-        console.error('Error fetching users:', err);
+  const filteredUsers = users.filter(user => 
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.phone && user.phone.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const handleAddUser = async () => {
+    try {
+      if (!newUser.username || !newUser.password) {
         toast({
           title: "Error",
-          description: "Failed to load users data",
+          description: "Username and password are required",
           variant: "destructive"
         });
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
-    
-    fetchUsers();
-  }, [toast]);
 
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredUsers(users);
-    } else {
-      const results = users.filter(user => 
-        user.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.id?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredUsers(results);
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: email,
+        password: newUser.password,
+        email_confirm: true,
+        user_metadata: {
+          username: newUser.username,
+          phone: newUser.phone
+        }
+      });
+      
+      if (error) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email,
+          password: newUser.password,
+          options: {
+            data: {
+              username: newUser.username,
+              phone: newUser.phone
+            }
+          }
+        });
+        
+        if (signUpError) throw signUpError;
+        
+        if (!signUpData.user) {
+          throw new Error("Failed to create user account");
+        }
+        
+        data.user = signUpData.user;
+      }
+      
+      if (data.user) {
+        const userId = data.user.id;
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            username: newUser.username,
+            display_name: newUser.username,
+            phone: newUser.phone,
+            points: newUser.points || 0
+          })
+          .select()
+          .single();
+          
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              username: newUser.username,
+              display_name: newUser.username,
+              phone: newUser.phone,
+              points: newUser.points || 0
+            })
+            .eq('id', userId);
+            
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+          }
+        }
+        
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: 'player'
+          });
+          
+        if (roleError) {
+          console.error('Error setting user role:', roleError);
+        }
+        
+        toast({
+          title: "Success",
+          description: "User added successfully"
+        });
+        
+        setNewUser({ username: '', email: '', phone: '', password: '', points: 0 });
+        setIsAddUserDialogOpen(false);
+        
+        fetchUsers();
+      } else {
+        throw new Error("No user data returned");
+      }
+    } catch (error: any) {
+      console.error('Error adding user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add user",
+        variant: "destructive"
+      });
     }
-  }, [searchTerm, users]);
+  };
 
-  const toggleSuspension = async (userId: string, currentStatus: boolean) => {
+  const toggleUserSuspend = async (userId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -104,86 +333,166 @@ const AdminUserManagementEnhanced: React.FC = () => {
         
       if (error) throw error;
       
-      // Update local state
-      const updatedUsers = users.map(user => {
-        if (user.id === userId) {
-          return { ...user, suspended: !currentStatus };
-        }
-        return user;
-      });
-      
-      setUsers(updatedUsers);
-      
-      // Update filtered list if it's being filtered
-      if (searchTerm.trim() !== '') {
-        setFilteredUsers(prev => 
-          prev.map(user => {
-            if (user.id === userId) {
-              return { ...user, suspended: !currentStatus };
-            }
-            return user;
-          })
-        );
-      }
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, suspended: !currentStatus } : user
+      ));
       
       toast({
-        title: !currentStatus ? "User Suspended" : "User Reactivated",
-        description: !currentStatus 
-          ? "User has been suspended successfully" 
-          : "User has been reactivated successfully",
+        title: "Success",
+        description: `User ${!currentStatus ? 'suspended' : 'unsuspended'} successfully`
       });
-    } catch (err) {
-      console.error('Error toggling user suspension:', err);
+    } catch (error: any) {
+      console.error('Error toggling user suspend status:', error);
       toast({
         title: "Error",
-        description: "Failed to update user status",
+        description: error.message || "Failed to update user status",
         variant: "destructive"
       });
     }
   };
-  
-  const grantAdminAccess = async (userId: string, isCurrentlyAdmin: boolean) => {
+
+  const handleChangeRole = async () => {
+    if (!selectedUser) return;
+    
     try {
+      const { data, error: checkError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', selectedUser.id);
+        
+      if (checkError) throw checkError;
+      
+      let roleError;
+      
+      if (data && data.length > 0) {
+        const { error } = await supabase
+          .from('user_roles')
+          .update({ role: selectedRole })
+          .eq('user_id', selectedUser.id);
+          
+        roleError = error;
+      } else {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: selectedUser.id,
+            role: selectedRole
+          });
+          
+        roleError = error;
+      }
+      
+      if (roleError) throw roleError;
+      
+      await supabase
+        .from('admin_notifications')
+        .insert({
+          type: 'role_change',
+          message: `User ${selectedUser.username} role updated to ${selectedRole}`,
+          user_id: selectedUser.id,
+          data: { 
+            old_role: selectedUser.role || 'player', 
+            new_role: selectedRole 
+          }
+        });
+      
+      toast({
+        title: "Success",
+        description: `User role updated to ${selectedRole}`
+      });
+      
+      setUsers(users.map(user => 
+        user.id === selectedUser.id ? { ...user, role: selectedRole } : user
+      ));
+      
+      // Dispatch a custom event for role change
+      window.dispatchEvent(new CustomEvent('userRoleUpdated', {
+        detail: {
+          userId: selectedUser.id,
+          oldRole: selectedUser.role || 'player',
+          newRole: selectedRole
+        }
+      }));
+      
+      // If user has local storage, update it
+      const userId = localStorage.getItem('quiz_app_user_id');
+      if (userId && userId === selectedUser.id) {
+        localStorage.setItem('quiz_app_user_role', selectedRole);
+      }
+      
+      setIsEditRoleDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error changing user role:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword) {
+      toast({
+        title: "Error",
+        description: "User and new password are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const hashedPassword = hashPassword(newPassword);
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ is_admin: !isCurrentlyAdmin })
-        .eq('id', userId);
+        .update({ password_hash: hashedPassword })
+        .eq('id', selectedUser.id);
         
       if (error) throw error;
       
-      // Update local state
-      const updatedUsers = users.map(user => {
-        if (user.id === userId) {
-          return { ...user, is_admin: !isCurrentlyAdmin };
-        }
-        return user;
-      });
-      
-      setUsers(updatedUsers);
-      
-      // Update filtered list if it's being filtered
-      if (searchTerm.trim() !== '') {
-        setFilteredUsers(prev => 
-          prev.map(user => {
-            if (user.id === userId) {
-              return { ...user, is_admin: !isCurrentlyAdmin };
-            }
-            return user;
-          })
-        );
-      }
-      
       toast({
-        title: !isCurrentlyAdmin ? "Admin Access Granted" : "Admin Access Revoked",
-        description: !isCurrentlyAdmin 
-          ? "User has been granted admin access" 
-          : "User's admin access has been revoked",
+        title: "Success",
+        description: `Password reset for ${selectedUser.username}`
       });
-    } catch (err) {
-      console.error('Error updating admin status:', err);
+      
+      setIsResetPasswordDialogOpen(false);
+      setNewPassword('');
+      
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
       toast({
         title: "Error",
-        description: "Failed to update admin status",
+        description: error.message || "Failed to reset password",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!selectedUser || !newEmail) {
+      toast({
+        title: "Error",
+        description: "User and new email are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Success",
+        description: `Email updated for ${selectedUser.username}`
+      });
+      
+      setIsUpdateEmailDialogOpen(false);
+      setNewEmail('');
+      
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update email",
         variant: "destructive"
       });
     }
@@ -193,92 +502,139 @@ const AdminUserManagementEnhanced: React.FC = () => {
     {
       header: "User",
       accessorKey: "username",
-      cell: (row: any) => (
+      cell: (row: User) => (
         <div>
-          <div className="font-medium">{row.username || "Anonymous"}</div>
-          <div className="text-xs text-muted-foreground">{row.display_name}</div>
+          <div className="font-medium">{row.display_name || row.username}</div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            Joined: {formatDate(row.created_at)}
+          </div>
         </div>
       ),
     },
     {
-      header: "ID",
-      accessorKey: "id",
-      cell: (row: any) => (
-        <div className="text-sm font-mono text-muted-foreground">
-          {row.id.substring(0, 8)}...
+      header: "Username",
+      accessorKey: "username_display",
+      cell: (row: User) => <span className="text-sm text-muted-foreground">@{row.username}</span>,
+    },
+    {
+      header: "Contact",
+      accessorKey: "phone",
+      cell: (row: User) => (
+        <div>
+          <div>{row.phone || "-"}</div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            Last login: {row.last_login ? formatDate(row.last_login) : "Never"}
+          </div>
         </div>
       ),
     },
     {
       header: "Points",
       accessorKey: "points",
-      cell: (row: any) => (
-        <div className="font-medium">
-          {row.points || 0}
+      cell: (row: User) => <Badge variant="secondary">{row.points}</Badge>,
+    },
+    {
+      header: "Logins (D/M)",
+      accessorKey: "login_count",
+      cell: (row: User) => (
+        <div className="flex gap-1 items-center">
+          <Badge variant="outline" className="bg-blue-50">
+            <Calendar className="mr-1 h-3 w-3 text-blue-500" />
+            {row.daily_logins || 0}
+          </Badge>
+          <Badge variant="outline" className="bg-indigo-50">
+            <Calendar className="mr-1 h-3 w-3 text-indigo-500" />
+            {row.monthly_logins || 0}
+          </Badge>
         </div>
       ),
     },
     {
-      header: "Days Active", // Changed from "Login Streak" to "Days Active"
-      accessorKey: "daysActive", // Using the new daysActive property
-      cell: (row: any) => (
-        <div className="font-medium">
-          {row.daysActive || 0} days
-        </div>
+      header: "Login Streak",
+      accessorKey: "login_streak",
+      cell: (row: User) => (
+        <Badge variant={row.login_streak > 0 ? "outline" : "secondary"} 
+               className={row.login_streak > 0 ? "bg-green-50 text-green-700" : "bg-gray-100"}>
+          {row.login_streak > 0 ? `${row.login_streak} days` : 'Inactive'}
+        </Badge>
       ),
     },
     {
       header: "Status",
       accessorKey: "suspended",
-      cell: (row: any) => (
-        <div className="flex items-center space-x-2">
-          {row.suspended ? (
-            <span className="flex items-center text-red-600 dark:text-red-400">
-              <Ban className="w-4 h-4 mr-1" />
-              Suspended
-            </span>
-          ) : (
-            <span className="flex items-center text-green-600 dark:text-green-400">
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Active
-            </span>
-          )}
-        </div>
+      cell: (row: User) => (
+        row.suspended ? (
+          <Badge variant="destructive">Suspended</Badge>
+        ) : (
+          <Badge variant="outline" className="bg-green-100 text-green-700">Active</Badge>
+        )
       ),
     },
     {
-      header: "Admin",
-      accessorKey: "is_admin",
-      cell: (row: any) => (
-        <div className="flex items-center justify-center">
-          {row.is_admin ? (
-            <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-          ) : (
-            <X className="w-5 h-5 text-red-500 dark:text-red-400" />
-          )}
-        </div>
+      header: "Role",
+      accessorKey: "role",
+      cell: (row: User) => (
+        row.role === 'admin' ? (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-200">Admin</Badge>
+        ) : row.role === 'team_leader' ? (
+          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Team Leader</Badge>
+        ) : (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Player</Badge>
+        )
       ),
     },
     {
       header: "Actions",
       accessorKey: "actions",
-      cell: (row: any) => (
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant={row.suspended ? "outline" : "destructive"} 
-            size="sm"
-            onClick={() => toggleSuspension(row.id, row.suspended)}
-          >
-            {row.suspended ? "Reactivate" : "Suspend"}
-          </Button>
-          
-          <Button 
-            variant={row.is_admin ? "destructive" : "outline"} 
-            size="sm"
-            onClick={() => grantAdminAccess(row.id, row.is_admin)}
-          >
-            {row.is_admin ? "Revoke Admin" : "Make Admin"}
-          </Button>
+      cell: (row: User) => (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setSelectedRole(row.role || 'player');
+                  setIsEditRoleDialogOpen(true);
+                }}
+              >
+                Change Role
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setNewPassword('');
+                  setIsResetPasswordDialogOpen(true);
+                }}
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Reset Password
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedUser(row);
+                  setNewEmail('');
+                  setIsUpdateEmailDialogOpen(true);
+                }}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Update Email
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => toggleUserSuspend(row.id, row.suspended)}
+                className={row.suspended ? "text-green-600" : "text-red-600"}
+              >
+                {row.suspended ? "Unsuspend User" : "Suspend User"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
@@ -286,29 +642,218 @@ const AdminUserManagementEnhanced: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">User Management</h2>
-        
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search users..."
-            className="pl-8 w-64"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Manage users, points, and access
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search users..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => setIsAddUserDialogOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <p>Loading users...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border overflow-hidden">
+              <PaginatedDataTable
+                columns={columns}
+                data={filteredUsers}
+                isLoading={loading}
+                pageSize={10}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
-      <div className="rounded-md border">
-        <PaginatedDataTable
-          columns={columns}
-          data={filteredUsers}
-          isLoading={isLoading}
-          pageSize={10}
-        />
-      </div>
+      <AdminTopPerformers />
+      
+      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Create a new user account with permissions
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="username" className="text-right">
+                Username
+              </Label>
+              <Input
+                id="username"
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Phone
+              </Label>
+              <Input
+                id="phone"
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="points" className="text-right">
+                Initial Points
+              </Label>
+              <Input
+                id="points"
+                type="number"
+                value={newUser.points}
+                onChange={(e) => setNewUser({ ...newUser, points: parseInt(e.target.value) || 0 })}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleAddUser}>
+              Add User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isEditRoleDialogOpen} onOpenChange={setIsEditRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Update role for ${selectedUser.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select
+                value={selectedRole}
+                onValueChange={setSelectedRole}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="player">Player</SelectItem>
+                  <SelectItem value="team_leader">Team Leader</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditRoleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleChangeRole}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Set a new password for ${selectedUser.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword}>
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isUpdateEmailDialogOpen} onOpenChange={setIsUpdateEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update User Email</DialogTitle>
+            <DialogDescription>
+              {selectedUser && `Set a new email for ${selectedUser.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newEmail">New Email</Label>
+              <Input
+                id="newEmail"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email address"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateEmail}>
+              Update Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

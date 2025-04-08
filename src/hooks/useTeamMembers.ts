@@ -10,7 +10,7 @@ export interface TeamMember {
   email: string;
   status: 'active' | 'inactive' | 'suspended';
   lastActive: string;
-  daysActive: number; // Changed from monthsActive to daysActive
+  monthsActive: number;
   joinDate: string;
   totalEarned: number;
 }
@@ -47,28 +47,16 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
         if (error) throw error;
         
         if (referrals) {
-          const members = referrals.map(r => {
-            // Calculate days active based on join date or last active date (whichever is later)
-            const joinDate = new Date(r.date);
-            const lastActiveDate = r.last_active_date ? new Date(r.last_active_date) : null;
-            
-            // Use the later of the two dates
-            const latestActivity = lastActiveDate && lastActiveDate > joinDate ? lastActiveDate : joinDate;
-            
-            // Calculate days active
-            const daysActive = Math.ceil((new Date().getTime() - latestActivity.getTime()) / (24 * 60 * 60 * 1000));
-            
-            return {
-              id: r.referred_id || r.id,
-              name: r.referred_name,
-              email: r.referred_email || '',
-              status: r.status as 'active' | 'inactive' | 'suspended',
-              lastActive: r.last_active_date || '-',
-              daysActive: Math.max(1, daysActive), // Ensure at least 1 day active
-              joinDate: r.date,
-              totalEarned: Number(r.earnings) || 0
-            };
-          });
+          const members = referrals.map(r => ({
+            id: r.referred_id || r.id,
+            name: r.referred_name,
+            email: r.referred_email || '',
+            status: r.status as 'active' | 'inactive' | 'suspended',
+            lastActive: r.last_active_date || '-',
+            monthsActive: Math.max(1, Math.floor((new Date().getTime() - new Date(r.date).getTime()) / (30 * 24 * 60 * 60 * 1000))),
+            joinDate: r.date,
+            totalEarned: Number(r.earnings) || 0
+          }));
 
           setTeamMembers(members);
           

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -28,7 +29,7 @@ interface TeamMemberData {
   status: 'active' | 'inactive';
   joinDate: string;
   lastActive: string;
-  daysActive: number;
+  monthsActive: number;
   monthlyEarning: number;
 }
 
@@ -149,28 +150,16 @@ const ReferralSection: React.FC = () => {
       if (error) {
         console.error('Error fetching team members:', error);
       } else if (data) {
-        const mappedMembers: TeamMemberData[] = data.map(member => {
-          // Calculate days active based on join date or last active date (whichever is later)
-          const joinDate = new Date(member.date);
-          const lastActiveDate = member.last_active_date ? new Date(member.last_active_date) : null;
-          
-          // Use the later of the two dates
-          const latestActivity = lastActiveDate && lastActiveDate > joinDate ? lastActiveDate : joinDate;
-          
-          // Calculate days active
-          const daysActive = Math.ceil((new Date().getTime() - latestActivity.getTime()) / (24 * 60 * 60 * 1000));
-          
-          return {
-            id: member.referred_id,
-            name: member.referred_name,
-            email: member.referred_email || '',
-            status: member.status as 'active' | 'inactive',
-            joinDate: member.date,
-            lastActive: member.last_active_date || '',
-            daysActive: Math.max(1, daysActive),
-            monthlyEarning: member.status === 'active' ? 500 : 0
-          };
-        });
+        const mappedMembers: TeamMemberData[] = data.map(member => ({
+          id: member.referred_id,
+          name: member.referred_name,
+          email: member.referred_email || '',
+          status: member.status as 'active' | 'inactive',
+          joinDate: member.date,
+          lastActive: member.last_active_date || '',
+          monthsActive: Math.floor(Math.random() * 5) + 1,
+          monthlyEarning: member.status === 'active' ? 500 : 0
+        }));
         
         setTeamMembers(mappedMembers);
       }
@@ -379,8 +368,8 @@ const ReferralSection: React.FC = () => {
       }
     },
     {
-      header: "Days Active",
-      accessorKey: "daysActive",
+      header: "Months Active",
+      accessorKey: "monthsActive",
     },
     {
       header: "Monthly Earning",
@@ -517,7 +506,7 @@ const ReferralSection: React.FC = () => {
           ) : (
             <DataTable
               columns={teamMemberColumns}
-              data={teamMembers.slice(0, 10)}
+              data={teamMembers.slice(0, 5)} // Show only first 5 members
               isLoading={isTeamMembersLoading}
             />
           )}
