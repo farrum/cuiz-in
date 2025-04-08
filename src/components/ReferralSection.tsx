@@ -169,6 +169,7 @@ const ReferralSection: React.FC = () => {
             joinDate: member.date,
             lastActive: member.last_active_date || '',
             daysActive: daysActive,
+            monthsActive: Math.ceil(daysActive / 30),
             monthlyEarning: member.status === 'active' ? 500 : 0
           };
         });
