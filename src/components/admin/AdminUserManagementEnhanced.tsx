@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -75,6 +74,20 @@ const formatDate = (dateString: string): string => {
   } catch (e) {
     return 'Invalid date';
   }
+};
+
+const calculateDaysActive = (createdAt: string, lastLogin: string | null): number => {
+  const today = new Date();
+  let comparisonDate: Date;
+  
+  if (lastLogin && new Date(lastLogin) > new Date(createdAt)) {
+    comparisonDate = new Date(lastLogin);
+  } else {
+    comparisonDate = new Date(createdAt);
+  }
+  
+  const diffTime = today.getTime() - comparisonDate.getTime();
+  return Math.max(1, Math.floor(diffTime / (24 * 60 * 60 * 1000)));
 };
 
 const AdminUserManagementEnhanced: React.FC = () => {
@@ -174,7 +187,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         const userRole = userRoles.find((role: any) => role.user_id === profile.id);
         const role = userRole ? userRole.role : 'player';
         
-        const loginStreak = streaksMap[profile.id] || 0;
+        const daysActive = calculateDaysActive(profile.created_at, lastLogin);
         
         return {
           id: profile.id,
@@ -189,7 +202,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
           daily_logins: dailyLogins,
           monthly_logins: monthlyLogins,
           role,
-          login_streak: loginStreak
+          daysActive
         };
       });
       
@@ -227,7 +240,7 @@ const AdminUserManagementEnhanced: React.FC = () => {
         return;
       }
 
-      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app`;
+      const email = `${newUser.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@quizpoints.app";
       
       const { data, error } = await supabase.auth.admin.createUser({
         email: email,
@@ -550,12 +563,11 @@ const AdminUserManagementEnhanced: React.FC = () => {
       ),
     },
     {
-      header: "Login Streak",
-      accessorKey: "login_streak",
+      header: "Days Active",
+      accessorKey: "daysActive",
       cell: (row: User) => (
-        <Badge variant={row.login_streak > 0 ? "outline" : "secondary"} 
-               className={row.login_streak > 0 ? "bg-green-50 text-green-700" : "bg-gray-100"}>
-          {row.login_streak > 0 ? `${row.login_streak} days` : 'Inactive'}
+        <Badge variant="outline" className="bg-green-50 text-green-700">
+          {row.daysActive} days
         </Badge>
       ),
     },

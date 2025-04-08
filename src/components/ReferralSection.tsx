@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -31,6 +30,7 @@ interface TeamMemberData {
   lastActive: string;
   monthsActive: number;
   monthlyEarning: number;
+  daysActive: number;
 }
 
 const ReferralSection: React.FC = () => {
@@ -58,7 +58,6 @@ const ReferralSection: React.FC = () => {
       setUserName(userName);
     }
     
-    // First check if user has team_leader role in localStorage
     if (userRole === 'team_leader' || userRole === 'teamleader') {
       setIsTeamLeader(true);
       console.log('User is a team leader based on role:', userRole);
@@ -69,7 +68,6 @@ const ReferralSection: React.FC = () => {
       const parsedReferrals = JSON.parse(savedReferrals);
       setReferrals(parsedReferrals);
       
-      // Only set team leader status based on referrals count if no role is found
       if (userRole !== 'team_leader' && userRole !== 'teamleader') {
         const activeReferrals = parsedReferrals.filter((r: any) => r.status === 'active').length;
         const shouldBeTeamLeader = activeReferrals >= 10;
@@ -84,7 +82,6 @@ const ReferralSection: React.FC = () => {
     fetchUserReferrals(userId);
     checkIfTeamLeader(userId);
     
-    // Listen for role updates
     const handleRoleUpdate = () => {
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
       setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
@@ -104,7 +101,6 @@ const ReferralSection: React.FC = () => {
     if (!userId) return;
     
     try {
-      // First check local storage for role
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
       if (userRole === 'team_leader' || userRole === 'teamleader') {
         setIsTeamLeader(true);
@@ -113,7 +109,6 @@ const ReferralSection: React.FC = () => {
         return;
       }
       
-      // Then check Supabase
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -128,7 +123,6 @@ const ReferralSection: React.FC = () => {
         
         if (isTeamLeaderRole) {
           setIsTeamLeader(true);
-          // Update localStorage with normalized role name
           localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'team_leader');
           fetchTeamMembers(userId);
           calculateEarnings(userId);
@@ -137,6 +131,20 @@ const ReferralSection: React.FC = () => {
     } catch (err) {
       console.error('Failed to check team leader status:', err);
     }
+  };
+  
+  const calculateDaysActive = (joinDate: string, lastActive: string): number => {
+    const today = new Date();
+    let comparisonDate: Date;
+    
+    if (lastActive && new Date(lastActive) > new Date(joinDate)) {
+      comparisonDate = new Date(lastActive);
+    } else {
+      comparisonDate = new Date(joinDate);
+    }
+    
+    const diffTime = today.getTime() - comparisonDate.getTime();
+    return Math.max(1, Math.floor(diffTime / (24 * 60 * 60 * 1000)));
   };
   
   const fetchTeamMembers = async (userId: string) => {
@@ -150,16 +158,20 @@ const ReferralSection: React.FC = () => {
       if (error) {
         console.error('Error fetching team members:', error);
       } else if (data) {
-        const mappedMembers: TeamMemberData[] = data.map(member => ({
-          id: member.referred_id,
-          name: member.referred_name,
-          email: member.referred_email || '',
-          status: member.status as 'active' | 'inactive',
-          joinDate: member.date,
-          lastActive: member.last_active_date || '',
-          monthsActive: Math.floor(Math.random() * 5) + 1,
-          monthlyEarning: member.status === 'active' ? 500 : 0
-        }));
+        const mappedMembers: TeamMemberData[] = data.map(member => {
+          const daysActive = calculateDaysActive(member.date, member.last_active_date || '');
+          
+          return {
+            id: member.referred_id,
+            name: member.referred_name,
+            email: member.referred_email || '',
+            status: member.status as 'active' | 'inactive',
+            joinDate: member.date,
+            lastActive: member.last_active_date || '',
+            daysActive: daysActive,
+            monthlyEarning: member.status === 'active' ? 500 : 0
+          };
+        });
         
         setTeamMembers(mappedMembers);
       }
@@ -368,8 +380,8 @@ const ReferralSection: React.FC = () => {
       }
     },
     {
-      header: "Months Active",
-      accessorKey: "monthsActive",
+      header: "Days Active",
+      accessorKey: "daysActive",
     },
     {
       header: "Monthly Earning",
@@ -506,7 +518,7 @@ const ReferralSection: React.FC = () => {
           ) : (
             <DataTable
               columns={teamMemberColumns}
-              data={teamMembers.slice(0, 5)} // Show only first 5 members
+              data={teamMembers.slice(0, 10)}
               isLoading={isTeamMembersLoading}
             />
           )}

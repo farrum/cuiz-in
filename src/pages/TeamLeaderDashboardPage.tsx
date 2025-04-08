@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -50,17 +49,14 @@ const TeamLeaderDashboardPage = () => {
 
     setUserId(storedUserId);
     
-    // Check if user is a team leader
     const checkTeamLeaderStatus = async () => {
       try {
-        // Get user role from localStorage
         const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
         const isLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
         
         if (isLeaderRole) {
           setIsTeamLeader(true);
         } else {
-          // Fetch from database to make sure
           const { data, error } = await supabase
             .from('user_roles')
             .select('role')
@@ -94,7 +90,6 @@ const TeamLeaderDashboardPage = () => {
 
   const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
     try {
-      // Send notification to admin
       const { error } = await supabase.from('admin_notifications').insert({
         type: `account_${action}_request`,
         message: `Team leader ${userId} has requested to ${action} account ${memberId}`,
@@ -117,7 +112,6 @@ const TeamLeaderDashboardPage = () => {
     }
   };
 
-  // Define columns for the team members table
   const memberColumns = [
     {
       header: "Name",
@@ -163,8 +157,8 @@ const TeamLeaderDashboardPage = () => {
       ),
     },
     {
-      header: "Months Active",
-      accessorKey: "monthsActive",
+      header: "Days Active",
+      accessorKey: "daysActive",
     },
     {
       header: "Earnings",
@@ -199,7 +193,6 @@ const TeamLeaderDashboardPage = () => {
     },
   ];
 
-  // Define columns for the earnings table
   const earningsColumns = [
     {
       header: "Month",
@@ -254,7 +247,6 @@ const TeamLeaderDashboardPage = () => {
     );
   }
 
-  // Prepare data for the earnings chart
   const chartData = earnings.slice(0, 6).map(item => ({
     month: item.month,
     amount: item.amount,

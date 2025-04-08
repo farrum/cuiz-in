@@ -10,7 +10,7 @@ export interface TeamMember {
   email: string;
   status: 'active' | 'inactive' | 'suspended';
   lastActive: string;
-  monthsActive: number;
+  daysActive: number;
   joinDate: string;
   totalEarned: number;
 }
@@ -23,6 +23,20 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const calculateDaysActive = (joinDate: string, lastActive: string): number => {
+    const today = new Date();
+    let comparisonDate: Date;
+    
+    if (lastActive && new Date(lastActive) > new Date(joinDate)) {
+      comparisonDate = new Date(lastActive);
+    } else {
+      comparisonDate = new Date(joinDate);
+    }
+    
+    const diffTime = today.getTime() - comparisonDate.getTime();
+    return Math.max(1, Math.floor(diffTime / (24 * 60 * 60 * 1000)));
+  };
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
@@ -53,7 +67,7 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
             email: r.referred_email || '',
             status: r.status as 'active' | 'inactive' | 'suspended',
             lastActive: r.last_active_date || '-',
-            monthsActive: Math.max(1, Math.floor((new Date().getTime() - new Date(r.date).getTime()) / (30 * 24 * 60 * 60 * 1000))),
+            daysActive: calculateDaysActive(r.date, r.last_active_date || ''),
             joinDate: r.date,
             totalEarned: Number(r.earnings) || 0
           }));
