@@ -9,7 +9,7 @@ interface SitemapEntry {
   priority: string;
 }
 
-export const generateSitemapXml = async (): Promise<string> {
+export const generateSitemapXml = async (): Promise<string> => {
   // Standard site URLs
   const standardUrls: SitemapEntry[] = [
     {
