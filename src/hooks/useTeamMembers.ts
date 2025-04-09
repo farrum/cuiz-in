@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client'; 
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { isUserActive } from '@/utils/accountSuspension';
 
 export interface TeamMember {
   id: string;
@@ -67,23 +68,58 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
         if (error) throw error;
         
         if (referrals) {
-          const members = referrals.map(r => ({
-            id: r.referred_id || r.id,
-            name: r.referred_name,
-            email: r.referred_email || '',
-            status: r.status as 'active' | 'inactive' | 'suspended',
-            lastActive: r.last_active_date || '-',
-            daysActive: calculateDaysActive(r.date, r.last_active_date || '', r.status),
-            joinDate: r.date,
-            totalEarned: Number(r.earnings) || 0
-          }));
-
+          // Process each referral to get the latest status
+          const membersPromises = referrals.map(async (r) => {
+            // Get the referred user's status from profiles and login_logs
+            const isActive = await isUserActive(r.referred_id);
+            
+            // Determine status based on profile.suspended and activity check
+            let status = r.status;
+            
+            // Override status if suspended in profiles or inactive
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('suspended')
+              .eq('id', r.referred_id)
+              .maybeSingle();
+              
+            if (profile?.suspended) {
+              status = 'suspended';
+            } else if (!isActive) {
+              status = 'inactive';
+            } else {
+              status = 'active';
+            }
+            
+            return {
+              id: r.referred_id || r.id,
+              name: r.referred_name,
+              email: r.referred_email || '',
+              status: status as 'active' | 'inactive' | 'suspended',
+              lastActive: r.last_active_date || '-',
+              daysActive: calculateDaysActive(r.date, r.last_active_date || '', status),
+              joinDate: r.date,
+              totalEarned: Number(r.earnings) || 0
+            };
+          });
+          
+          const members = await Promise.all(membersPromises);
           setTeamMembers(members);
           
           // Update status counts
           setActiveMembers(members.filter(m => m.status === 'active').length);
           setInactiveMembers(members.filter(m => m.status === 'inactive').length);
           setSuspendedMembers(members.filter(m => m.status === 'suspended').length);
+          
+          // Also update the database with the latest status
+          for (const member of members) {
+            if (member.status !== referrals.find(r => r.referred_id === member.id)?.status) {
+              await supabase
+                .from('user_referrals')
+                .update({ status: member.status })
+                .eq('referred_id', member.id);
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching team members:', err);
@@ -107,7 +143,12 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
       // Update in local state first for responsive UI
       const updatedMembers = teamMembers.map(member => {
         if (member.id === memberId) {
-          return { ...member, status: newStatus };
+          return { 
+            ...member, 
+            status: newStatus,
+            // If changing to inactive or suspended, set daysActive to "N/A"
+            daysActive: newStatus === 'active' ? member.daysActive : "N/A"
+          };
         }
         return member;
       });
@@ -119,13 +160,32 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
       setInactiveMembers(updatedMembers.filter(m => m.status === 'inactive').length);
       setSuspendedMembers(updatedMembers.filter(m => m.status === 'suspended').length);
       
-      // Update in database
+      // Update in user_referrals table
       const { error } = await supabase
         .from('user_referrals')
         .update({ status: newStatus })
         .eq('referred_id', memberId);
         
       if (error) throw error;
+      
+      // If setting to suspended, also update the profiles table
+      if (newStatus === 'suspended') {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ suspended: true })
+          .eq('id', memberId);
+          
+        if (profileError) throw profileError;
+      } 
+      // If activating a user, make sure they're not suspended in profiles
+      else if (newStatus === 'active') {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ suspended: false })
+          .eq('id', memberId);
+          
+        if (profileError) throw profileError;
+      }
       
       toast({
         title: "Status Updated",

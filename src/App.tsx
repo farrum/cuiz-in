@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
 import scheduledSyncService from './services/scheduledSync';
+import accountStatusService from './services/accountStatusService';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import React from 'react';
 
@@ -92,11 +93,18 @@ function App() {
     initializeApp();
   }, []);
 
-  // Initialize the scheduled sync service when the app loads
+  // Initialize the scheduled services when the app loads
   useEffect(() => {
     if (isInitialized) {
       scheduledSyncService.start();
+      accountStatusService.start(30); // Check every 30 minutes
     }
+    
+    return () => {
+      // Clean up services on unmount
+      scheduledSyncService.stop();
+      accountStatusService.stop();
+    };
   }, [isInitialized]);
   
   // Listen for role updates
