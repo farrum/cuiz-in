@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -87,7 +88,7 @@ serve(async (req) => {
     if (error) {
       console.error('Error fetching quiz questions for sitemap:', error);
       return new Response(generateXml(standardUrls), {
-        headers: { 'Content-Type': 'application/xml' },
+        headers: { 'Content-Type': 'application/xml; charset=UTF-8' },
       });
     }
 
@@ -155,7 +156,10 @@ serve(async (req) => {
 
     // Return the XML with appropriate headers
     return new Response(xml, {
-      headers: { 'Content-Type': 'application/xml' },
+      headers: { 
+        'Content-Type': 'application/xml; charset=UTF-8',
+        'Cache-Control': 'max-age=3600'
+      },
     });
   } catch (error) {
     console.error('Error generating sitemap:', error);
