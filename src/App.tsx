@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -30,6 +29,7 @@ import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
+import QuizQuestionPage from "@/pages/QuizQuestionPage";
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -310,6 +310,8 @@ function App() {
                 <AdminPage />
               </ProtectedRoute>
             } />
+            
+            <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
