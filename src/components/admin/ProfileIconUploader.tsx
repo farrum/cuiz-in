@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,34 +18,53 @@ export function ProfileIconUploader() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    checkAdminStatus();
+  }, []);
+  
+  const checkAdminStatus = async () => {
+    try {
+      console.log('Checking admin status...');
+      
+      // First check if admin auth is in local storage
       const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
       
       if (isAdminAuth) {
+        console.log('Admin status confirmed from localStorage');
         setIsAdmin(true);
         return;
       }
       
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (profile?.is_admin) {
-            setIsAdmin(true);
-          }
+      // If not in localStorage, check session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        console.log('Found active session, checking if user is admin');
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
         }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
+        
+        if (profile?.is_admin) {
+          console.log('User is admin according to profile');
+          setIsAdmin(true);
+          // Store admin status in localStorage for future checks
+          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        } else {
+          console.log('User is not an admin according to profile');
+        }
+      } else {
+        console.log('No active session found');
       }
-    };
-    
-    checkAdminStatus();
-  }, []);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -100,13 +118,19 @@ export function ProfileIconUploader() {
       return;
     }
     
+    // Verify admin status one more time before upload
     if (!isAdmin) {
-      toast({
-        title: "Permission denied",
-        description: "You must be an administrator to upload profile icons.",
-        variant: "destructive"
-      });
-      return;
+      // Check again in case status changed
+      await checkAdminStatus();
+      
+      if (!isAdmin) {
+        toast({
+          title: "Permission denied",
+          description: "You must be an administrator to upload profile icons.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     setIsUploading(true);
@@ -128,33 +152,46 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
-      // First, try direct insertion with admin auth flag
-      let success = false;
+      // Log the current authentication status
+      console.log('Upload attempt with admin status:', isAdmin);
+      console.log('Admin auth from localStorage:', localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH));
       
-      if (localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true') {
-        // Try direct insert first if admin auth is in localStorage
-        try {
-          const { error: directError } = await supabase
-            .from('profile_icons')
-            .insert({
-              name: iconName.trim(),
-              icon_url: base64String,
-              is_active: true
-            });
-              
-          if (!directError) {
-            success = true;
-          } else {
-            console.error('Direct insert error with admin auth:', directError);
-          }
-        } catch (directError) {
-          console.error('Direct insert exception with admin auth:', directError);
-        }
+      // Check for session before attempting upload
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session exists:', !!session);
+      
+      if (session?.user) {
+        console.log('User ID from session:', session.user.id);
       }
       
-      // If direct insert failed or admin auth not in localStorage, try RPC
+      // First, try direct insertion since we've already verified admin status
+      let success = false;
+      
+      try {
+        console.log('Attempting direct insert with admin status');
+        const { data, error: directError } = await supabase
+          .from('profile_icons')
+          .insert({
+            name: iconName.trim(),
+            icon_url: base64String,
+            is_active: true
+          })
+          .select();
+          
+        if (!directError) {
+          success = true;
+          console.log('Direct insert successful');
+        } else {
+          console.error('Direct insert error:', directError);
+        }
+      } catch (directError) {
+        console.error('Direct insert exception:', directError);
+      }
+      
+      // If direct insert failed, try RPC
       if (!success) {
         try {
+          console.log('Attempting RPC insert');
           const { data, error } = await supabase
             .rpc('admin_insert_profile_icon', {
               icon_name: iconName.trim(),
@@ -162,63 +199,22 @@ export function ProfileIconUploader() {
               is_active: true
             });
             
-          if (!error) {
-            success = true;
-          } else {
+          if (error) {
             console.error('RPC insert error:', error);
-            
-            if (error.message.includes('row-level security')) {
-              throw new Error('Permission denied: Row-level security prevented insertion.');
-            }
+            throw error;
+          } else {
+            success = true;
+            console.log('RPC insert successful');
           }
-        } catch (rpcError) {
+        } catch (rpcError: any) {
           console.error('RPC insert failed:', rpcError);
+          throw rpcError;
         }
       }
 
-      // Last attempt - try with session auth
+      // If still not successful, show error
       if (!success) {
-        try {
-          // Get the current session
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            throw new Error('No active session found. Please ensure you are logged in as an administrator.');
-          }
-          
-          // Check if user is admin
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (!profile?.is_admin) {
-            throw new Error('You must be an administrator to upload profile icons.');
-          }
-          
-          // Try insertion again with active session
-          const { error: directError } = await supabase
-            .from('profile_icons')
-            .insert({
-              name: iconName.trim(),
-              icon_url: base64String,
-              is_active: true
-            });
-              
-          if (directError) {
-            throw directError;
-          }
-            
-          success = true;
-        } catch (error: any) {
-          console.error('Session auth insertion error:', error);
-          throw error;
-        }
-      }
-      
-      if (!success) {
-        throw new Error('Failed to upload profile icon after multiple attempts');
+        throw new Error('Failed to upload profile icon. Please try refreshing the page and logging in again.');
       }
       
       toast({
