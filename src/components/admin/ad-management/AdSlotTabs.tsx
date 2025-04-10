@@ -7,7 +7,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import AdSlotCard from './AdSlotCard';
+import { AdSlotCard } from './AdSlotCard';
 import AdSlotGrid from './AdSlotGrid';
 import { Button } from '@/components/ui/button';
 

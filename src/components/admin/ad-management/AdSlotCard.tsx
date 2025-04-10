@@ -99,3 +99,6 @@ export const AdSlotCard: React.FC<AdSlotCardProps> = ({
     </Card>
   );
 };
+
+// Default export for compatibility with existing imports
+export default AdSlotCard;

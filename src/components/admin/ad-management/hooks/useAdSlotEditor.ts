@@ -1,22 +1,9 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AdSlot } from './useAdSlots';
-
-export interface AdSlotVersion {
-  id: string;
-  slot_id: string;
-  name: string;
-  position: string;
-  code: string;
-  active: boolean;
-  created_at: string;
-  version_number: number;
-  created_by?: string;
-  version_notes?: string;
-}
+import { AdSlotVersion } from '@/types/database-extensions';
 
 export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[]) => void) => {
   const { toast } = useToast();
@@ -32,14 +19,10 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
     try {
       setIsLocked(true);
       
-      // In a real distributed system, we'd use a more robust locking mechanism
-      // But for our purposes, we'll use a simple client-side lock
-      
       if (lockTimeout) {
         clearTimeout(lockTimeout);
       }
       
-      // Auto-release lock after 5 minutes
       const timeout = setTimeout(() => {
         setIsLocked(false);
       }, 5 * 60 * 1000);
@@ -108,7 +91,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
   };
   
   const createNewVersion = async (slotId: string, values: any, currentVersionNumber: number): Promise<void> => {
-    // Create a new version of the ad slot
     const { error: versionError } = await supabase
       .from('ad_slot_versions')
       .insert({
@@ -119,20 +101,19 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         active: values.active,
         version_number: currentVersionNumber + 1,
         version_notes: values.version_notes || 'Update to ad slot'
-      });
+      } as any);
       
     if (versionError) {
       throw versionError;
     }
     
-    // Start tracking performance for this version
     await supabase
       .from('ad_version_performance')
       .insert({
         slot_id: slotId,
-        version_id: slotId, // Using slot_id temporarily here, will be updated when we know the version_id
+        version_id: slotId,
         start_date: new Date().toISOString(),
-      });
+      } as any);
   };
   
   const saveAdSlot = async () => {
@@ -157,7 +138,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         if (data && data.length > 0) {
           const newSlot = data[0] as AdSlot;
           
-          // Create initial version record
           await createNewVersion(newSlot.id, {
             ...values,
             version_notes: 'Initial version'
@@ -167,7 +147,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           setAdSlots(updatedSlots);
           localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
           
-          // Dispatch event to notify other components of the update
           window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
           
           toast({
@@ -176,7 +155,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           });
         }
       } else if (editingSlot) {
-        // Update the ad slot record
         const { error } = await supabase
           .from('ad_slots')
           .update({
@@ -191,7 +169,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           
         if (error) throw error;
         
-        // Create a new version record
         await createNewVersion(
           editingSlot.id,
           {
@@ -201,13 +178,12 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           editingSlot.version_number || 1
         );
         
-        // Close the performance record for previous version
         const now = new Date().toISOString();
         await supabase
           .from('ad_version_performance')
           .update({ end_date: now })
           .eq('slot_id', editingSlot.id)
-          .is('end_date', null);
+          .is('end_date', null) as any;
         
         const updatedSlots = adSlots.map(slot => {
           if (slot.id === values.id) {
@@ -223,7 +199,6 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         setAdSlots(updatedSlots);
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
         
-        // Dispatch event to notify other components of the update
         window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
         
         toast({

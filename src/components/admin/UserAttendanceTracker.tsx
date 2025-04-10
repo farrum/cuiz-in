@@ -30,13 +30,7 @@ import { format, parse, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay }
 import { Check, X, Search, Download } from 'lucide-react';
 import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 import { useToast } from '@/hooks/use-toast';
-
-interface AttendanceRecord {
-  user_id: string;
-  username: string;
-  attendance_date: string;
-  login_time: string;
-}
+import { AttendanceRecord } from '@/types/database-extensions';
 
 interface UserProfile {
   id: string;
@@ -93,7 +87,7 @@ const UserAttendanceTracker: React.FC = () => {
           .from('user_attendance')
           .select('user_id, username, attendance_date, login_time')
           .gte('attendance_date', format(startDate, 'yyyy-MM-dd'))
-          .lte('attendance_date', format(endDate, 'yyyy-MM-dd'));
+          .lte('attendance_date', format(endDate, 'yyyy-MM-dd')) as { data: AttendanceRecord[] | null, error: any };
           
         if (attendanceError) throw attendanceError;
         
@@ -437,6 +431,132 @@ const UserAttendanceTracker: React.FC = () => {
       </Card>
     </div>
   );
+  
+  // Helper functions
+  function handleMonthChange(month: string) {
+    setSelectedMonth(month);
+  }
+  
+  function wasUserPresent(userId: string, date: Date): boolean {
+    const userData = userAttendanceData.find(data => data.user.id === userId);
+    if (!userData) return false;
+    
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    return userData.attendanceDates.includes(formattedDate);
+  }
+  
+  function getMonthOptions() {
+    const options = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const value = format(d, 'yyyy-MM');
+      const label = format(d, 'MMMM yyyy');
+      options.push({ value, label });
+    }
+    
+    return options;
+  }
+  
+  function exportToCSV() {
+    const headers = [
+      'Username', 
+      'Display Name', 
+      'Present Days', 
+      'Absent Days', 
+      ...daysInMonth.map(day => format(day, 'dd MMM'))
+    ];
+    
+    const rows = userAttendanceData.map(data => {
+      return [
+        data.user.username,
+        data.user.display_name || '',
+        data.presentDays.toString(),
+        data.absentDays.toString(),
+        ...daysInMonth.map(day => 
+          wasUserPresent(data.user.id, day) ? 'Present' : 'Absent'
+        )
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `attendance-${selectedMonth}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  
+  // Column definition for the data table
+  const columns = [
+    {
+      header: "User",
+      accessorKey: "user.id",
+      cell: (row: any) => {
+        const userId = row.getValue();
+        const userData = userAttendanceData.find(data => data.user.id === userId);
+        if (!userData) return null;
+        
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              {userData.user.profile_picture ? (
+                <AvatarImage src={userData.user.profile_picture} alt={userData.user.username} />
+              ) : null}
+              <AvatarFallback>
+                {userData.user.display_name?.[0] || userData.user.username[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{userData.user.display_name || userData.user.username}</div>
+              {userData.user.display_name && (
+                <div className="text-xs text-muted-foreground">@{userData.user.username}</div>
+              )}
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Present",
+      accessorKey: "presentDays",
+      cell: (row: any) => (
+        <span className="font-medium text-green-600">{row.getValue()} days</span>
+      )
+    },
+    {
+      header: "Absent",
+      accessorKey: "absentDays",
+      cell: (row: any) => (
+        <span className="font-medium text-red-600">{row.getValue()} days</span>
+      )
+    },
+    {
+      header: "Attendance",
+      accessorKey: "user.id",
+      cell: (row: any) => {
+        const userId = row.getValue();
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedUser(userId === selectedUser ? null : userId)}
+          >
+            View Details
+          </Button>
+        );
+      }
+    }
+  ];
 };
 
 export default UserAttendanceTracker;

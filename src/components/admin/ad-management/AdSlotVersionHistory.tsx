@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from '@/integrations/supabase/client';
 import { History, Eye, ArrowLeft, ArrowRight } from 'lucide-react';
-import { AdSlotVersion } from './hooks/useAdSlotEditor';
+import { AdSlotVersion } from '@/types/database-extensions';
 import { formatDistance } from 'date-fns';
 import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 
@@ -36,7 +36,7 @@ export const AdSlotVersionHistory: React.FC<AdSlotVersionHistoryProps> = ({ slot
         .from('ad_slot_versions')
         .select('*')
         .eq('slot_id', slotId)
-        .order('version_number', { ascending: false });
+        .order('version_number', { ascending: false }) as { data: AdSlotVersion[] | null, error: any };
         
       if (error) throw error;
       

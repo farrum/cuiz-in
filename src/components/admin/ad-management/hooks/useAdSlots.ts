@@ -11,6 +11,7 @@ export interface AdSlot {
   code: string;
   active: boolean;
   last_updated: string;
+  version_number?: number;
 }
 
 // Using a module-level variable to track last fetch time across hook instances

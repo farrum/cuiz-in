@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -205,3 +204,5 @@ export function EditAdSlotDialog({
     </Dialog>
   );
 }
+
+export default EditAdSlotDialog;
