@@ -61,14 +61,41 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
           if (profilesError) throw profilesError;
           
           if (profiles) {
+            // Fetch the latest attendance dates for each user
+            const { data: attendance, error: attendanceError } = await supabase
+              .from('user_attendance')
+              .select('user_id, attendance_date, login_time')
+              .order('attendance_date', { ascending: false });
+              
+            if (attendanceError) console.error("Error fetching attendance:", attendanceError);
+            
+            // Create a map of user_id to their most recent login date
+            const lastActiveMap = new Map();
+            if (attendance) {
+              attendance.forEach(record => {
+                if (!lastActiveMap.has(record.user_id)) {
+                  lastActiveMap.set(record.user_id, {
+                    date: record.attendance_date,
+                    time: record.login_time
+                  });
+                }
+              });
+            }
+            
             const members = profiles.map(profile => {
+              // Get the last active date for this user
+              const lastActive = lastActiveMap.get(profile.id);
+              const lastActiveDate = lastActive 
+                ? new Date(lastActive.date).toLocaleDateString() + ' ' + new Date(lastActive.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : '-';
+              
               return {
                 id: profile.id,
                 name: profile.username || 'Unknown',
                 // Use phone as email or fallback to a dash if not available
                 email: profile.phone || '-',
                 status: profile.suspended ? 'suspended' as const : 'active' as const,
-                lastActive: '-',
+                lastActive: lastActiveDate,
                 daysActive: profile.suspended ? 'N/A' : 'Active',
                 joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-',
                 totalEarned: 0
