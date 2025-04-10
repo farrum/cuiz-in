@@ -51,7 +51,38 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
       setError(null);
       
       try {
-        // Use the provided teamLeaderId or get it from localStorage
+        // For admin view, fetch all users
+        if (!teamLeaderId) {
+          // Fetch all profiles first
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('*');
+            
+          if (profilesError) throw profilesError;
+          
+          if (profiles) {
+            const members = profiles.map(profile => {
+              return {
+                id: profile.id,
+                name: profile.username || 'Unknown',
+                email: profile.email || '-',
+                status: profile.suspended ? 'suspended' as const : 'active' as const,
+                lastActive: '-',
+                daysActive: profile.suspended ? 'N/A' : 'Active',
+                joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-',
+                totalEarned: 0
+              };
+            });
+            
+            setTeamMembers(members);
+            setActiveMembers(members.filter(m => m.status === 'active').length);
+            setSuspendedMembers(members.filter(m => m.status === 'suspended').length);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // Use the provided teamLeaderId or get it from localStorage for team leader view
         const userId = teamLeaderId || localStorage.getItem(STORAGE_KEYS.USER_ID);
         
         if (!userId) {
