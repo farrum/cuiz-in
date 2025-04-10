@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,63 +128,93 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      
-      if (!isAdminAuth) {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          throw new Error('No active session found. Please ensure you are logged in as an administrator.');
-        }
-        
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (!profile?.is_admin) {
-          throw new Error('You must be an administrator to upload profile icons.');
-        }
-      }
-      
+      // First, try direct insertion with admin auth flag
       let success = false;
       
-      try {
-        const { data, error } = await supabase
-          .rpc('admin_insert_profile_icon', {
-            icon_name: iconName.trim(),
-            icon_url: base64String,
-            is_active: true
-          });
-          
-        if (!error) {
-          success = true;
-        } else {
-          console.error('RPC insert error:', error);
-          
-          if (error.message.includes('row-level security')) {
-            throw new Error('Permission denied: Row-level security prevented insertion.');
+      if (localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true') {
+        // Try direct insert first if admin auth is in localStorage
+        try {
+          const { error: directError } = await supabase
+            .from('profile_icons')
+            .insert({
+              name: iconName.trim(),
+              icon_url: base64String,
+              is_active: true
+            });
+              
+          if (!directError) {
+            success = true;
+          } else {
+            console.error('Direct insert error with admin auth:', directError);
           }
+        } catch (directError) {
+          console.error('Direct insert exception with admin auth:', directError);
         }
-      } catch (rpcError) {
-        console.error('RPC insert failed:', rpcError);
+      }
+      
+      // If direct insert failed or admin auth not in localStorage, try RPC
+      if (!success) {
+        try {
+          const { data, error } = await supabase
+            .rpc('admin_insert_profile_icon', {
+              icon_name: iconName.trim(),
+              icon_url: base64String,
+              is_active: true
+            });
+            
+          if (!error) {
+            success = true;
+          } else {
+            console.error('RPC insert error:', error);
+            
+            if (error.message.includes('row-level security')) {
+              throw new Error('Permission denied: Row-level security prevented insertion.');
+            }
+          }
+        } catch (rpcError) {
+          console.error('RPC insert failed:', rpcError);
+        }
       }
 
+      // Last attempt - try with session auth
       if (!success) {
-        const { error: directError } = await supabase
-          .from('profile_icons')
-          .insert({
-            name: iconName.trim(),
-            icon_url: base64String,
-            is_active: true
-          });
-            
-        if (directError) {
-          throw directError;
-        }
+        try {
+          // Get the current session
+          const { data: { session } } = await supabase.auth.getSession();
           
-        success = true;
+          if (!session) {
+            throw new Error('No active session found. Please ensure you are logged in as an administrator.');
+          }
+          
+          // Check if user is admin
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (!profile?.is_admin) {
+            throw new Error('You must be an administrator to upload profile icons.');
+          }
+          
+          // Try insertion again with active session
+          const { error: directError } = await supabase
+            .from('profile_icons')
+            .insert({
+              name: iconName.trim(),
+              icon_url: base64String,
+              is_active: true
+            });
+              
+          if (directError) {
+            throw directError;
+          }
+            
+          success = true;
+        } catch (error: any) {
+          console.error('Session auth insertion error:', error);
+          throw error;
+        }
       }
       
       if (!success) {
