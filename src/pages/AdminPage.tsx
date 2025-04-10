@@ -30,6 +30,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { CacheManagement } from '@/components/admin/CacheManagement';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -298,6 +299,7 @@ const AdminPage: React.FC = () => {
           <TabsContent value="sync">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SyncSettings />
+              <CacheManagement />
               <RealtimeStatus />
             </div>
           </TabsContent>
