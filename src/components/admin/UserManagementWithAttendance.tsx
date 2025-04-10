@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import UserAttendanceTracker from './UserAttendanceTracker';
+import { UserAttendanceTracker } from './attendance';
 import TeamMembersTable from './TeamMembersTable';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const UserManagementWithAttendance: React.FC = () => {
   const [view, setView] = useState<'table' | 'calendar'>('table');
