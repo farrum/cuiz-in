@@ -30,7 +30,10 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
     for (const profile of profiles) {
       // Use the database function to check if the user has been active in the last 5 days
       const { data, error } = await supabase
-        .rpc<boolean>('has_user_been_active_in_days', {
+        .rpc<boolean, {
+          p_user_id: string;
+          p_days: number;
+        }>('has_user_been_active_in_days', {
           p_user_id: profile.id,
           p_days: 5
         });
@@ -223,7 +226,10 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
     
     // Check if they've been active in the last 5 days
     const { data, error } = await supabase
-      .rpc<boolean>('has_user_been_active_in_days', {
+      .rpc<boolean, {
+        p_user_id: string;
+        p_days: number;
+      }>('has_user_been_active_in_days', {
         p_user_id: userId,
         p_days: 5
       });

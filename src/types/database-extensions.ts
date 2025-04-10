@@ -1,8 +1,9 @@
-import { Database } from '@/integrations/supabase/types';
+
+import { Database as OriginalDatabase } from '@/integrations/supabase/types';
 
 // Extend the Database types to include our new tables
 declare module '@/integrations/supabase/types' {
-  interface Database {
+  interface Database extends OriginalDatabase {
     public: {
       Tables: {
         // Existing tables remain as defined in the original types file
