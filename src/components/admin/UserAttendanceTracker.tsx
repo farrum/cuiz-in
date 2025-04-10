@@ -93,7 +93,6 @@ const UserAttendanceTracker: React.FC = () => {
       
       if (usersData) {
         setUsers(usersData);
-        // After fetching users, fetch attendance data for the first time
         console.log("Fetched users:", usersData.length);
       }
     } catch (error) {
@@ -109,7 +108,6 @@ const UserAttendanceTracker: React.FC = () => {
       
       console.log(`Fetching attendance data from ${startDate} to ${endDate}`);
       
-      // Type assert the returned data to the specific shape we expect
       const { data: attendanceData, error } = await supabase
         .from('user_attendance')
         .select('user_id, username, attendance_date, login_time')
@@ -123,12 +121,22 @@ const UserAttendanceTracker: React.FC = () => {
       // Process attendance data by user
       const attendanceByUser: Record<string, Record<string, boolean>> = {};
       
-      attendanceData?.forEach((record) => {
-        if (!attendanceByUser[record.user_id]) {
-          attendanceByUser[record.user_id] = {};
+      // Initialize attendance data for all users first
+      users.forEach(user => {
+        if (!attendanceByUser[user.id]) {
+          attendanceByUser[user.id] = {};
         }
-        attendanceByUser[record.user_id][record.attendance_date] = true;
       });
+      
+      // Fill in attendance records where they exist
+      if (attendanceData) {
+        attendanceData.forEach((record) => {
+          if (!attendanceByUser[record.user_id]) {
+            attendanceByUser[record.user_id] = {};
+          }
+          attendanceByUser[record.user_id][record.attendance_date] = true;
+        });
+      }
       
       // Create attendance records for each user
       const formattedAttendance = users.map(user => ({
@@ -164,9 +172,11 @@ const UserAttendanceTracker: React.FC = () => {
       
       const userAttendanceHistory: Record<string, boolean> = {};
       
-      historyData?.forEach((record) => {
-        userAttendanceHistory[record.attendance_date] = true;
-      });
+      if (historyData) {
+        historyData.forEach((record) => {
+          userAttendanceHistory[record.attendance_date] = true;
+        });
+      }
       
       setUserHistory({
         ...userHistory,
@@ -282,21 +292,21 @@ const UserAttendanceTracker: React.FC = () => {
         ) : (
           <>
             <TabsContent value="calendar" className="mt-0">
-              <div className="overflow-x-auto">
-                <Table className="min-w-[900px]">
-                  <TableHeader className="sticky top-0 bg-background z-10">
-                    <TableRow>
-                      <TableHead className="min-w-[150px] sticky left-0 bg-background">User</TableHead>
-                      {daysInMonth.map(day => (
-                        <TableHead key={day.toString()} className="text-center w-[60px]">
-                          {getDate(day)}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendance.length > 0 ? (
-                      attendance.map(user => (
+              {attendance.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[900px]">
+                    <TableHeader className="sticky top-0 bg-background z-10">
+                      <TableRow>
+                        <TableHead className="min-w-[150px] sticky left-0 bg-background">User</TableHead>
+                        {daysInMonth.map(day => (
+                          <TableHead key={day.toString()} className="text-center w-[60px]">
+                            {getDate(day)}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendance.map(user => (
                         <TableRow key={user.user_id}>
                           <TableCell className="font-medium sticky left-0 bg-background">
                             <div className="flex items-center">
@@ -322,17 +332,16 @@ const UserAttendanceTracker: React.FC = () => {
                             );
                           })}
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={daysInMonth.length + 1} className="text-center py-8">
-                          No attendance data found for this month
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Calendar className="h-16 w-16 mb-4" strokeWidth={1} />
+                  <p>No attendance data found for this month</p>
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="list" className="mt-0">
@@ -401,7 +410,7 @@ const UserAttendanceTracker: React.FC = () => {
                       <span className="ml-3">Loading user history...</span>
                     </div>
                   ) : selectedUser ? (
-                    Object.keys(userHistory[selectedUser] || {}).length > 0 ? (
+                    userHistory[selectedUser] && Object.keys(userHistory[selectedUser]).length > 0 ? (
                       <div className="space-y-4">
                         <h3 className="font-medium">Login History</h3>
                         <div className="max-h-[400px] overflow-y-auto border rounded-md">
@@ -413,7 +422,7 @@ const UserAttendanceTracker: React.FC = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {Object.keys(userHistory[selectedUser] || {})
+                              {Object.keys(userHistory[selectedUser])
                                 .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
                                 .map(date => (
                                   <TableRow key={date}>
