@@ -127,6 +127,26 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      
+      if (!isAdminAuth) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('No active session found. Please ensure you are logged in as an administrator.');
+        }
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (!profile?.is_admin) {
+          throw new Error('You must be an administrator to upload profile icons.');
+        }
+      }
+      
       let success = false;
       
       try {
@@ -141,36 +161,29 @@ export function ProfileIconUploader() {
           success = true;
         } else {
           console.error('RPC insert error:', error);
+          
+          if (error.message.includes('row-level security')) {
+            throw new Error('Permission denied: Row-level security prevented insertion.');
+          }
         }
       } catch (rpcError) {
         console.error('RPC insert failed:', rpcError);
       }
 
       if (!success) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            throw new Error('No active session found');
-          }
-          
-          const { error: directError } = await supabase
-            .from('profile_icons')
-            .insert({
-              name: iconName.trim(),
-              icon_url: base64String,
-              is_active: true
-            });
+        const { error: directError } = await supabase
+          .from('profile_icons')
+          .insert({
+            name: iconName.trim(),
+            icon_url: base64String,
+            is_active: true
+          });
             
-          if (directError) {
-            throw directError;
-          }
-          
-          success = true;
-        } catch (directInsertError) {
-          console.error('Direct insert failed:', directInsertError);
-          throw directInsertError;
+        if (directError) {
+          throw directError;
         }
+          
+        success = true;
       }
       
       if (!success) {
