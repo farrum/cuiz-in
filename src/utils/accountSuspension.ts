@@ -224,8 +224,8 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
     // Check if they've been active in the last 5 days
     const { data, error } = await supabase
       .rpc('has_user_been_active_in_days', {
-          p_user_id: userId,
-          p_days: 5
+        p_user_id: userId,
+        p_days: 5
       });
       
     if (error) {
