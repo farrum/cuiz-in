@@ -73,7 +73,7 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
         // Convert options to string array regardless of what format it comes in
         let parsedOptions: string[] = [];
         
-        if (item.quiz_questions?.options) {
+        if (item.quiz_questions && item.quiz_questions.options) {
           // Handle different possible formats
           const options = item.quiz_questions.options;
           
@@ -101,13 +101,13 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
 
         return {
           id: item.id,
-          question: item.quiz_questions?.question || 'Question not available',
+          question: item.quiz_questions ? item.quiz_questions.question || 'Question not available' : 'Question not available',
           options: parsedOptions,
-          correct_answer: item.quiz_questions?.correct_answer || '',
+          correct_answer: item.quiz_questions ? item.quiz_questions.correct_answer || '' : '',
           selected_answer: item.selected_answer,
           answered_at: item.answered_at,
-          explanation: item.quiz_questions?.explanation || 'No explanation available',
-          category: item.quiz_questions?.category || 'General',
+          explanation: item.quiz_questions ? item.quiz_questions.explanation || 'No explanation available' : 'No explanation available',
+          category: item.quiz_questions ? item.quiz_questions.category || 'General' : 'General',
           correct: item.correct
         };
       });
