@@ -25,21 +25,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Key, MoreHorizontal } from 'lucide-react';
 import { TeamMember } from '@/hooks/useTeamMembers';
 
 interface TeamMembersTableProps {
   teamMembers: TeamMember[];
   isLoading: boolean;
   onStatusChange: (memberId: string, status: 'active' | 'inactive' | 'suspended') => void;
+  onResetPassword?: (memberId: string) => void;
 }
 
 const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   teamMembers,
   isLoading,
-  onStatusChange
+  onStatusChange,
+  onResetPassword
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null);
   
   if (isLoading) {
     return <div className="text-center py-8">Loading team members...</div>;
@@ -110,6 +130,21 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
+  const handleResetPassword = (userId: string) => {
+    setPasswordResetUserId(userId);
+  };
+
+  const confirmResetPassword = () => {
+    if (passwordResetUserId && onResetPassword) {
+      onResetPassword(passwordResetUserId);
+      setPasswordResetUserId(null);
+    }
+  };
+
+  const cancelResetPassword = () => {
+    setPasswordResetUserId(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
@@ -156,28 +191,38 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
                   <TableCell>{member.daysActive}</TableCell>
                   <TableCell>₹{member.totalEarned}</TableCell>
                   <TableCell>
-                    <div className="flex space-x-2">
-                      {member.status !== 'active' && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-green-600"
-                          onClick={() => onStatusChange(member.id, 'active')}
-                        >
-                          Activate
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      )}
-                      {member.status !== 'suspended' && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-red-600"
-                          onClick={() => onStatusChange(member.id, 'suspended')}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {member.status !== 'active' && (
+                          <DropdownMenuItem 
+                            onClick={() => onStatusChange(member.id, 'active')}
+                            className="text-green-600"
+                          >
+                            Activate
+                          </DropdownMenuItem>
+                        )}
+                        {member.status !== 'suspended' && (
+                          <DropdownMenuItem 
+                            onClick={() => onStatusChange(member.id, 'suspended')}
+                            className="text-red-600"
+                          >
+                            Suspend
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => handleResetPassword(member.id)}
+                          className="flex items-center"
                         >
-                          Suspend
-                        </Button>
-                      )}
-                    </div>
+                          <Key className="mr-2 h-4 w-4" />
+                          Reset Password
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -240,6 +285,22 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
           </Pagination>
         </div>
       )}
+
+      {/* Password Reset Confirmation Dialog */}
+      <AlertDialog open={!!passwordResetUserId} onOpenChange={() => setPasswordResetUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reset this user's password? They will need to create a new password on their next login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelResetPassword}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmResetPassword}>Reset Password</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
