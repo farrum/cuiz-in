@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, Check, X } from 'lucide-react';
+import { Loader2, Trash2, Check, X, RefreshCw } from 'lucide-react';
 import { ProfileIconUploader } from './ProfileIconUploader';
 
 interface ProfileIcon {
