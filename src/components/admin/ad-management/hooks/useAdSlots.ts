@@ -1,8 +1,6 @@
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 export interface AdSlot {
   id: string;
@@ -11,192 +9,82 @@ export interface AdSlot {
   code: string;
   active: boolean;
   last_updated: string;
-  version_number?: number;
+  version_number: number; // Added version_number field
 }
 
-// Using a module-level variable to track last fetch time across hook instances
-let lastGlobalFetchTime = 0;
-const FETCH_COOLDOWN = 5000; // 5 seconds cooldown between fetches
-
 export const useAdSlots = () => {
-  const { toast } = useToast();
   const [adSlots, setAdSlots] = useState<AdSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const lastFetchTimeRef = useRef<number>(0);
-  const isMountedRef = useRef<boolean>(true);
-  
-  // Set up realtime subscription to ad_slots table with stable channel
-  const { isConnected } = useSupabaseRealtime('ad_slots', {
-    updateLocalStorage: true,
-    showToasts: false, // Disable automatic toasts
-    debounceMs: 500, // Debounce events by 500ms
-    skipDuplicates: true,
-    stableChannel: true // Use stable channel that persists between renders
-  });
-  
-  const fetchAdSlots = useCallback(async (force = false) => {
-    // Skip if component is unmounted
-    if (!isMountedRef.current) return;
-    
-    // Global rate limiting: Don't fetch more than once every 5 seconds across all components
-    const now = Date.now();
-    if (!force && now - lastGlobalFetchTime < FETCH_COOLDOWN) {
-      console.log(`Skipping ad slots fetch, globally throttled (last fetch ${now - lastGlobalFetchTime}ms ago)`);
-      return;
-    }
-    
-    // Local rate limiting for this hook instance
-    if (!force && now - lastFetchTimeRef.current < FETCH_COOLDOWN) {
-      console.log(`Skipping ad slots fetch, locally throttled (last fetch ${now - lastFetchTimeRef.current}ms ago)`);
-      return;
-    }
-    
-    lastFetchTimeRef.current = now;
-    lastGlobalFetchTime = now;
-    setIsLoading(true);
-    
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAdSlots();
+  }, []);
+
+  const fetchAdSlots = async () => {
+    setLoading(true);
     try {
-      console.log('Fetching ad slots from database...');
       const { data, error } = await supabase
         .from('ad_slots')
         .select('*')
-        .order('name');
-        
+        .order('created_at', { ascending: false });
+
       if (error) {
         throw error;
       }
-      
-      if (data && isMountedRef.current) {
-        console.log(`Successfully fetched ${data.length} ad slots`);
-        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(data));
+
+      if (data) {
         setAdSlots(data as AdSlot[]);
-        
-        // Only dispatch event if this is a forced refresh or the component initiated the fetch
-        if (force) {
-          console.log('Dispatching adSlotsUpdated event (forced refresh)');
-          // This is a controlled dispatch with specific purpose and content
-          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { 
-            detail: { source: 'fetch', slots: data }
-          }));
-        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching ad slots:', error);
-      if (!isMountedRef.current) return;
-      
-      const savedSlots = localStorage.getItem('quiz_app_ad_slots');
-      if (savedSlots) {
-        try {
-          const parsedSlots = JSON.parse(savedSlots);
-          setAdSlots(parsedSlots);
-          console.log('Using cached ad slots from localStorage');
-        } catch (parseError) {
-          console.error('Error parsing cached ad slots:', parseError);
-        }
-      }
-      
       toast({
-        title: "Error Loading Ad Slots",
-        description: "Could not load ad slots from the database. Using local data instead.",
+        title: "Error",
+        description: "Could not load ad slots",
         variant: "destructive"
       });
     } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
+      setLoading(false);
     }
-  }, [toast]);
-  
-  const handleToggleActive = useCallback(async (id: string) => {
-    const slotToUpdate = adSlots.find(slot => slot.id === id);
-    if (!slotToUpdate) return;
-    
-    const newActiveState = !slotToUpdate.active;
-    
+  };
+
+  const toggleActive = async (id: string) => {
+    const slot = adSlots.find(slot => slot.id === id);
+    if (!slot) return;
+
     try {
       const { error } = await supabase
         .from('ad_slots')
-        .update({ 
-          active: newActiveState,
-          last_updated: new Date().toISOString()
-        })
+        .update({ active: !slot.active })
         .eq('id', id);
-        
-      if (error) throw error;
-      
-      // Optimistically update the local state
-      const updatedSlots = adSlots.map(slot => {
-        if (slot.id === id) {
-          return { ...slot, active: newActiveState, last_updated: new Date().toISOString() };
-        }
-        return slot;
-      });
-      
-      setAdSlots(updatedSlots);
-      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
-      
-      // Realtime will handle the update notification, no need to dispatch event here
-      
+
+      if (error) {
+        throw error;
+      }
+
+      // Optimistically update the state
+      setAdSlots(adSlots.map(slot =>
+        slot.id === id ? { ...slot, active: !slot.active } : slot
+      ));
+
       toast({
-        title: "Ad Slot Updated",
-        description: `The ad slot has been ${newActiveState ? 'activated' : 'deactivated'}.`,
+        title: "Success",
+        description: `Ad slot ${slot.name} ${slot.active ? 'deactivated' : 'activated'}`,
       });
-    } catch (error) {
-      console.error('Error updating ad slot:', error);
+    } catch (error: any) {
+      console.error('Error toggling active state:', error);
       toast({
-        title: "Update Failed",
-        description: "There was an error updating the ad slot status.",
+        title: "Error",
+        description: "Could not update ad slot",
         variant: "destructive"
       });
     }
-  }, [adSlots, toast]);
-  
-  // This effect only runs once on component mount to fetch ad slots
-  useEffect(() => {
-    isMountedRef.current = true;
-    fetchAdSlots();
-    
-    // Set up a listener for ad slots updates that only triggers a refresh if needed
-    const handleAdSlotsUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const detail = customEvent.detail;
-      
-      // Avoid refreshing if this component initiated the update
-      if (detail && detail.source === 'fetch') {
-        console.log('Ignoring adSlotsUpdated event from fetch operation');
-        return;
-      }
-      
-      // Schedule a fetch with a short delay
-      console.log('Ad slots updated event detected, scheduling refresh...');
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          fetchAdSlots(true);
-        }
-      }, 300);
-    };
-    
-    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-    
-    return () => {
-      isMountedRef.current = false;
-      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-    };
-  }, [fetchAdSlots]);
-  
-  // This effect refreshes ad slots when realtime connection status changes
-  useEffect(() => {
-    if (isConnected && isMountedRef.current) {
-      console.log('Realtime connection established, refreshing ad slots...');
-      fetchAdSlots(true);
-    }
-  }, [isConnected, fetchAdSlots]);
-  
+  };
+
   return {
     adSlots,
-    setAdSlots,
-    isLoading,
+    loading,
     fetchAdSlots,
-    handleToggleActive
+    toggleActive,
   };
 };

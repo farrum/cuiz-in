@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ExtendedDatabase } from '@/types/database-extensions';
 
@@ -32,11 +31,8 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
     
     // For each profile, check their activity status using the database function
     for (const profile of profiles) {
-      // Using RPC function to check user activity
-      const { data: isActive, error: activityError } = await supabase.rpc<boolean, {
-        p_user_id: string;
-        p_days: number;
-      }>(
+      // Using RPC function to check user activity with explicit type parameters
+      const { data: isActive, error: activityError } = await supabase.rpc<boolean>(
         'has_user_been_active_in_days',
         { p_user_id: profile.id, p_days: 5 }
       );
@@ -225,11 +221,8 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
       return false;
     }
 
-    // Using RPC function to check user activity
-    const { data: isActive, error: activityError } = await supabase.rpc<boolean, {
-      p_user_id: string;
-      p_days: number;
-    }>(
+    // Using RPC function to check user activity with explicit type parameters
+    const { data: isActive, error: activityError } = await supabase.rpc<boolean>(
       'has_user_been_active_in_days',
       { p_user_id: userId, p_days: 5 }
     );

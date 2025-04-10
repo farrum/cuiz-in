@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -41,6 +42,13 @@ interface Attendance {
   user_id: string;
   username: string;
   dates: Record<string, boolean>;
+}
+
+// Define type for attendance record from database
+interface AttendanceRecord {
+  user_id: string;
+  username: string;
+  attendance_date: string;
 }
 
 const UserAttendanceTracker: React.FC = () => {
@@ -95,18 +103,22 @@ const UserAttendanceTracker: React.FC = () => {
       const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
       
+      // Type assert the returned data to the specific shape we expect
       const { data: attendanceData, error } = await supabase
-        .from('user_attendance' as keyof ExtendedDatabase['public']['Tables'])
+        .from('user_attendance')
         .select('user_id, username, attendance_date')
         .gte('attendance_date', startDate)
-        .lte('attendance_date', endDate);
+        .lte('attendance_date', endDate) as { 
+          data: AttendanceRecord[] | null; 
+          error: any 
+        };
         
       if (error) throw error;
       
       // Process attendance data by user
       const attendanceByUser: Record<string, Record<string, boolean>> = {};
       
-      attendanceData?.forEach((record: any) => {
+      attendanceData?.forEach((record) => {
         if (!attendanceByUser[record.user_id]) {
           attendanceByUser[record.user_id] = {};
         }
@@ -130,18 +142,22 @@ const UserAttendanceTracker: React.FC = () => {
 
   const fetchUserHistory = async (userId: string) => {
     try {
+      // Type assert the returned data to the specific shape we expect
       const { data: historyData, error } = await supabase
-        .from('user_attendance' as keyof ExtendedDatabase['public']['Tables'])
+        .from('user_attendance')
         .select('attendance_date')
         .eq('user_id', userId)
         .order('attendance_date', { ascending: false })
-        .limit(90); // Get last 3 months
+        .limit(90) as {
+          data: { attendance_date: string }[] | null;
+          error: any
+        }; // Get last 3 months
         
       if (error) throw error;
       
       const userAttendanceHistory: Record<string, boolean> = {};
       
-      historyData?.forEach((record: any) => {
+      historyData?.forEach((record) => {
         userAttendanceHistory[record.attendance_date] = true;
       });
       
