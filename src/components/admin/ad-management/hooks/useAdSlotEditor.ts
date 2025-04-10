@@ -123,16 +123,19 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             });
             
           // Create initial performance tracker entry
+          // Use type assertion to specify exact shape
+          const initialPerfData = {
+            version_id: newSlot.id, // Using the same ID initially
+            slot_id: newSlot.id,
+            start_date: now,
+            views: 0,
+            clicks: 0,
+            ctr: 0
+          };
+          
           await supabase
             .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
-            .insert({
-              version_id: newSlot.id, // Using the same ID initially
-              slot_id: newSlot.id,
-              start_date: now,
-              views: 0,
-              clicks: 0,
-              ctr: 0
-            });
+            .insert(initialPerfData);
             
           const updatedSlots = [...adSlots, newSlot];
           setAdSlots(updatedSlots);
@@ -182,19 +185,19 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           
         // Create new performance tracker entry
         if (versionData) {
-          // Fix: Use explicit type assertion to avoid deep instantiation error
-          const insertData = {
+          // Fix: Use a simple object without complex type assertions
+          const newPerfData = {
             version_id: versionData.id,
             slot_id: values.id,
             start_date: now,
             views: 0,
             clicks: 0,
             ctr: 0
-          } as unknown as Parameters<typeof supabase.from>[1];
+          };
           
           await supabase
             .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
-            .insert(insertData);
+            .insert(newPerfData);
         }
         
         // Update the main ad_slots table
