@@ -20,6 +20,7 @@ interface AnsweredQuestion {
   correct: boolean;
 }
 
+// This represents a single quiz question as stored in the database
 interface QuizQuestion {
   id: string;
   question: string;
@@ -29,13 +30,14 @@ interface QuizQuestion {
   category: string;
 }
 
+// This represents what we get back from the database query
 interface QuizAnswer {
   id: string;
   question_id: string;
   selected_answer: string;
   correct: boolean;
   answered_at: string;
-  quiz_questions: QuizQuestion;
+  quiz_questions: QuizQuestion; // This is a single object, not an array
 }
 
 interface RecentlyAnsweredQuestionsProps {
@@ -87,11 +89,12 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
       }
 
       // Transform data to AnsweredQuestion format
-      const formattedData: AnsweredQuestion[] = data.map((item: QuizAnswer) => {
+      const formattedData: AnsweredQuestion[] = data.map((item) => {
         // Convert options to string array regardless of what format it comes in
         let parsedOptions: string[] = [];
         
-        if (item.quiz_questions && typeof item.quiz_questions === 'object') {
+        // Check if quiz_questions exists and is an object (not an array)
+        if (item.quiz_questions && typeof item.quiz_questions === 'object' && !Array.isArray(item.quiz_questions)) {
           // Handle different possible formats
           const options = item.quiz_questions.options;
           
@@ -117,19 +120,20 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
           }
         }
 
+        // Access quiz_questions safely, ensuring it's a single object not an array
+        const quizQuestions = !Array.isArray(item.quiz_questions) && item.quiz_questions 
+          ? item.quiz_questions 
+          : { question: 'Question not available', correct_answer: '', explanation: 'No explanation available', category: 'General' };
+
         return {
           id: item.id,
-          question: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
-            item.quiz_questions.question || 'Question not available' : 'Question not available',
+          question: quizQuestions.question || 'Question not available',
           options: parsedOptions,
-          correct_answer: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
-            item.quiz_questions.correct_answer || '' : '',
+          correct_answer: quizQuestions.correct_answer || '',
           selected_answer: item.selected_answer,
           answered_at: item.answered_at,
-          explanation: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
-            item.quiz_questions.explanation || 'No explanation available' : 'No explanation available',
-          category: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
-            item.quiz_questions.category || 'General' : 'General',
+          explanation: quizQuestions.explanation || 'No explanation available',
+          category: quizQuestions.category || 'General',
           correct: item.correct
         };
       });
