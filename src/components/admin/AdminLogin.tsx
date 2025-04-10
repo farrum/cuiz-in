@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,9 +25,8 @@ const AdminLogin: React.FC = () => {
   // Check if already logged in as admin
   useEffect(() => {
     const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-    const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
     
-    if (isAdminAuth && adminUsername) {
+    if (isAdminAuth) {
       console.log('Admin already authenticated, redirecting to admin panel');
       navigate('/admin');
     }
@@ -84,8 +84,7 @@ const AdminLogin: React.FC = () => {
           // Continue with local auth
         }
         
-        // Store admin auth in localStorage
-        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+        // Store only essential admin data in localStorage - minimize caching
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         
         // Log the successful login
@@ -94,7 +93,7 @@ const AdminLogin: React.FC = () => {
             .from('login_logs')
             .insert({
               username: username,
-              ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+              ip_address: '127.0.0.1',
               device: navigator.userAgent,
               login_time: new Date().toISOString(),
               successful: true
@@ -116,7 +115,7 @@ const AdminLogin: React.FC = () => {
       // Try Supabase authentication as fallback
       console.log("Attempting Supabase authentication");
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'quizadmin@example.com', // Using the email we set in our SQL migration
+        email: 'quizadmin@example.com',
         password: password
       });
       
@@ -135,8 +134,7 @@ const AdminLogin: React.FC = () => {
           console.log('Updated user as admin in profiles table');
         }
         
-        // Store admin auth in localStorage
-        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+        // Store only essential admin data in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         
         // Log the successful login
@@ -145,7 +143,7 @@ const AdminLogin: React.FC = () => {
             .from('login_logs')
             .insert({
               username: username,
-              ip_address: '127.0.0.1', // In a real app, this would be the actual IP
+              ip_address: '127.0.0.1',
               device: navigator.userAgent,
               login_time: new Date().toISOString(),
               successful: true

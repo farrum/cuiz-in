@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -58,20 +59,24 @@ const UserLogin: React.FC = () => {
         });
       }
       
+      // Store essential user data only
       localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points ? userData.points.toString() : '0');
       
-      const clientInfo = {
-        device: navigator.userAgent
-      };
+      const loginTime = new Date().toISOString();
       
+      // Log login info in Supabase
       await supabase.from('login_logs').insert({
         username: userData.username,
         ip_address: "client-side",
-        device: JSON.stringify(clientInfo),
+        device: navigator.userAgent,
+        login_time: loginTime,
         successful: true
       });
+      
+      // Track attendance directly - this will trigger the DB function to update user_attendance
+      console.log('Recording user attendance in database');
       
       const { data: loginHistory } = await supabase
         .from('login_logs')
@@ -93,9 +98,11 @@ const UserLogin: React.FC = () => {
       console.error('Login error:', error);
       
       try {
+        // Log failed login
         await supabase.from('login_logs').insert({
           username: username,
-          successful: false
+          successful: false,
+          login_time: new Date().toISOString()
         });
       } catch (logError) {
         console.error('Failed to log failed login attempt:', logError);

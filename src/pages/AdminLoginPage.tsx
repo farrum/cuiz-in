@@ -23,7 +23,7 @@ const AdminLoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // First check localStorage for admin auth
+      // First check localStorage for admin auth - bare minimum
       const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
       if (isAdminAuth) {
         console.log('Admin authenticated via localStorage');
@@ -40,7 +40,7 @@ const AdminLoginPage: React.FC = () => {
         return;
       }
       
-      // Get current user from Supabase
+      // Get current user from Supabase as backup verification
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {

@@ -101,7 +101,7 @@ const UserAttendanceTracker: React.FC = () => {
       }
       
       if (usersData) {
-        console.log(`Fetched ${usersData.length} users`);
+        console.log(`Fetched ${usersData.length} users directly from Supabase`);
         setUsers(usersData);
       } else {
         console.log("No users found");
@@ -122,8 +122,9 @@ const UserAttendanceTracker: React.FC = () => {
       const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
       
-      console.log(`Fetching attendance data from ${startDate} to ${endDate}`);
+      console.log(`Fetching attendance data from ${startDate} to ${endDate} directly from Supabase`);
       
+      // Fetch directly from Supabase instead of relying on localStorage
       const { data: attendanceData, error } = await supabase
         .from('user_attendance')
         .select('id, user_id, username, attendance_date, login_time')
@@ -135,7 +136,7 @@ const UserAttendanceTracker: React.FC = () => {
         throw error;
       }
       
-      console.log(`Fetched ${attendanceData?.length || 0} attendance records`);
+      console.log(`Fetched ${attendanceData?.length || 0} attendance records from Supabase`);
       
       if (attendanceData) {
         setAttendanceRecords(attendanceData);
@@ -178,17 +179,10 @@ const UserAttendanceTracker: React.FC = () => {
 
   const fetchUserHistory = async (userId: string) => {
     setUserHistoryLoading(true);
+    setUserHistory({}); // Reset previous data
     setError(null);
     try {
-      console.log(`Fetching attendance history for user: ${userId}`);
-      
-      // Check if we already have this user's data cached
-      if (userHistory[userId] && userHistory[userId].length > 0) {
-        console.log("Using cached history data");
-        setSelectedUser(userId);
-        setUserHistoryLoading(false);
-        return;
-      }
+      console.log(`Fetching attendance history for user: ${userId} directly from Supabase`);
       
       const { data: historyData, error } = await supabase
         .from('user_attendance')
@@ -201,11 +195,10 @@ const UserAttendanceTracker: React.FC = () => {
         throw error;
       }
       
-      console.log(`Fetched ${historyData?.length || 0} history records for user`);
+      console.log(`Fetched ${historyData?.length || 0} history records for user from Supabase`);
       
       if (historyData) {
         setUserHistory({
-          ...userHistory,
           [userId]: historyData
         });
         
@@ -353,6 +346,14 @@ const UserAttendanceTracker: React.FC = () => {
           <div className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-950 dark:text-red-400">
             <AlertCircle className="flex-shrink-0 inline w-4 h-4 mr-2" />
             <span>{error}</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-auto"
+              onClick={() => setError(null)}
+            >
+              Dismiss
+            </Button>
           </div>
         )}
         
@@ -439,6 +440,18 @@ const UserAttendanceTracker: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="mt-2 w-full"
+                      onClick={() => {
+                        if (selectedUser) {
+                          fetchUserHistory(selectedUser);
+                        }
+                      }}
+                    >
+                      Refresh User Data
+                    </Button>
                   </div>
                   
                   {selectedUser && (

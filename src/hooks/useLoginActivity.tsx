@@ -27,16 +27,18 @@ export const useLoginActivity = (
       if (!userName || !userId || loginBonusState.bonusChecked) return;
       
       try {
-        // Log the login activity in Supabase
+        // Only track attendance directly - don't duplicate data in localStorage
         const device = navigator.userAgent;
+        const loginTime = new Date().toISOString();
         
+        // Log attendance in the database - triggers the track_user_attendance function to update the user_attendance table
         await supabase
           .from('login_logs')
           .insert({
             username: userName,
             ip_address: "client-side",
             device: device,
-            login_time: new Date().toISOString(),
+            login_time: loginTime,
             successful: true
           });
           

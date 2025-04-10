@@ -1,39 +1,36 @@
+
 import { supabase } from './client';
 
 // Define valid table names as a type
-type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'ad_views' | 'ad_clicks' | 'login_streaks';
+type ValidTableName = 'profiles' | 'login_logs' | 'ad_slots' | 'quiz_questions' | 'quiz_answers' | 'payments' | 'user_referrals' | 'ad_views' | 'ad_clicks' | 'login_streaks' | 'user_attendance';
 
-// Function to fetch all application data from Supabase
+// Function to fetch all application data from Supabase with limits to prevent excessive caching
 export const fetchAllAppData = async () => {
-  console.log('Fetching all app data from Supabase...');
+  console.log('Fetching app data from Supabase with optimized caching...');
   
   try {
-    // Create an array of promises to fetch data from all tables
+    // Create an array of promises to fetch data from all tables with reasonable limits
     const [
       profilesResponse,
       loginLogsResponse,
       adSlotsResponse,
       quizQuestionsResponse,
-      quizAnswersResponse,
-      paymentsResponse,
-      referralsResponse,
       adViewsResponse,
       adClicksResponse,
-      loginStreaksResponse
+      loginStreaksResponse,
+      userAttendanceResponse
     ] = await Promise.all([
-      supabase.from('profiles' as ValidTableName).select('*'),
-      supabase.from('login_logs' as ValidTableName).select('*'),
+      supabase.from('profiles' as ValidTableName).select('*').limit(500),
+      supabase.from('login_logs' as ValidTableName).select('*').order('login_time', { ascending: false }).limit(100),
       supabase.from('ad_slots' as ValidTableName).select('*'),
-      supabase.from('quiz_questions' as ValidTableName).select('*'),
-      supabase.from('quiz_answers' as ValidTableName).select('*'),
-      supabase.from('payments' as ValidTableName).select('*'),
-      supabase.from('user_referrals' as ValidTableName).select('*'),
-      supabase.from('ad_views' as ValidTableName).select('*').limit(500),
-      supabase.from('ad_clicks' as ValidTableName).select('*').limit(500),
-      supabase.from('login_streaks' as ValidTableName).select('*')
+      supabase.from('quiz_questions' as ValidTableName).select('*').limit(200),
+      supabase.from('ad_views' as ValidTableName).select('*').limit(100),
+      supabase.from('ad_clicks' as ValidTableName).select('*').limit(100),
+      supabase.from('login_streaks' as ValidTableName).select('*').limit(100),
+      supabase.from('user_attendance' as ValidTableName).select('*').order('attendance_date', { ascending: false }).limit(1000)
     ]);
     
-    // Save responses to localStorage for offline access
+    // Save responses to localStorage for offline access with reduced quantities
     if (profilesResponse.data) {
       localStorage.setItem('admin_users', JSON.stringify(profilesResponse.data));
       console.log(`Stored ${profilesResponse.data.length} profiles in localStorage`);
@@ -54,21 +51,6 @@ export const fetchAllAppData = async () => {
       console.log(`Stored ${quizQuestionsResponse.data.length} quiz questions in localStorage`);
     }
     
-    if (quizAnswersResponse.data) {
-      localStorage.setItem('quiz_answers', JSON.stringify(quizAnswersResponse.data));
-      console.log(`Stored ${quizAnswersResponse.data.length} quiz answers in localStorage`);
-    }
-    
-    if (paymentsResponse.data) {
-      localStorage.setItem('admin_payments', JSON.stringify(paymentsResponse.data));
-      console.log(`Stored ${paymentsResponse.data.length} payments in localStorage`);
-    }
-    
-    if (referralsResponse.data) {
-      localStorage.setItem('admin_referrals', JSON.stringify(referralsResponse.data));
-      console.log(`Stored ${referralsResponse.data.length} referrals in localStorage`);
-    }
-    
     if (adViewsResponse.data) {
       localStorage.setItem('quiz_app_ad_views', JSON.stringify(adViewsResponse.data));
       console.log(`Stored ${adViewsResponse.data.length} ad views in localStorage`);
@@ -84,18 +66,21 @@ export const fetchAllAppData = async () => {
       console.log(`Stored ${loginStreaksResponse.data.length} login streaks in localStorage`);
     }
     
+    if (userAttendanceResponse.data) {
+      localStorage.setItem('user_attendance', JSON.stringify(userAttendanceResponse.data));
+      console.log(`Stored ${userAttendanceResponse.data.length} user attendance records in localStorage`);
+    }
+    
     // Check for errors and log them
     const responses = [
       { name: 'profiles', response: profilesResponse },
       { name: 'login_logs', response: loginLogsResponse },
       { name: 'ad_slots', response: adSlotsResponse },
       { name: 'quiz_questions', response: quizQuestionsResponse },
-      { name: 'quiz_answers', response: quizAnswersResponse },
-      { name: 'payments', response: paymentsResponse },
-      { name: 'user_referrals', response: referralsResponse },
       { name: 'ad_views', response: adViewsResponse },
       { name: 'ad_clicks', response: adClicksResponse },
-      { name: 'login_streaks', response: loginStreaksResponse }
+      { name: 'login_streaks', response: loginStreaksResponse },
+      { name: 'user_attendance', response: userAttendanceResponse }
     ];
     
     for (const { name, response } of responses) {
@@ -104,7 +89,7 @@ export const fetchAllAppData = async () => {
       }
     }
     
-    console.log('App data fetching completed');
+    console.log('App data fetching completed with optimized caching');
     return true;
   } catch (error) {
     console.error('Error fetching app data:', error);
@@ -112,81 +97,27 @@ export const fetchAllAppData = async () => {
   }
 };
 
-// Function to sync localStorage data to Supabase
+// Function to sync only essential localStorage data to Supabase
 export const syncLocalStorageToSupabase = async () => {
-  console.log('Syncing localStorage data to Supabase...');
+  console.log('Syncing essential localStorage data to Supabase...');
   
   const syncOperations = [];
   let successCount = 0;
   let failureCount = 0;
 
   try {
-    // Sync profiles data
-    const adminUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
-    if (adminUsers.length > 0) {
-      const profiles = adminUsers.map((user: any) => ({
-        id: user.id,
-        username: user.name || user.username,
-        phone: user.mobile || user.phone,
-        points: user.points || 0,
-        suspended: user.suspended || false
-      }));
-      
-      syncOperations.push(syncDataWithSupabase('profiles', profiles));
-    }
-
-    // Sync login logs
+    // Sync only critical data (reduce to essentials)
+    
+    // Sync login logs - important for attendance tracking
     const loginLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
     if (loginLogs.length > 0) {
       syncOperations.push(syncDataWithSupabase('login_logs', loginLogs));
     }
 
-    // Sync ad slots
+    // Sync ad slots 
     const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
     if (adSlots.length > 0) {
       syncOperations.push(syncDataWithSupabase('ad_slots', adSlots));
-    }
-
-    // Sync quiz questions
-    const quizQuestions = JSON.parse(localStorage.getItem('quiz_questions') || '[]');
-    if (quizQuestions.length > 0) {
-      syncOperations.push(syncDataWithSupabase('quiz_questions', quizQuestions));
-    }
-
-    // Sync quiz answers
-    const quizAnswers = JSON.parse(localStorage.getItem('quiz_answers') || '[]');
-    if (quizAnswers.length > 0) {
-      syncOperations.push(syncDataWithSupabase('quiz_answers', quizAnswers));
-    }
-
-    // Sync payments
-    const payments = JSON.parse(localStorage.getItem('admin_payments') || '[]');
-    if (payments.length > 0) {
-      syncOperations.push(syncDataWithSupabase('payments', payments));
-    }
-
-    // Sync referrals
-    const referrals = JSON.parse(localStorage.getItem('admin_referrals') || '[]');
-    if (referrals.length > 0) {
-      syncOperations.push(syncDataWithSupabase('user_referrals', referrals));
-    }
-
-    // Sync ad views
-    const adViews = JSON.parse(localStorage.getItem('quiz_app_ad_views') || '[]');
-    if (adViews.length > 0) {
-      syncOperations.push(syncDataWithSupabase('ad_views', adViews));
-    }
-
-    // Sync ad clicks
-    const adClicks = JSON.parse(localStorage.getItem('quiz_app_ad_clicks') || '[]');
-    if (adClicks.length > 0) {
-      syncOperations.push(syncDataWithSupabase('ad_clicks', adClicks));
-    }
-
-    // Sync login streaks
-    const loginStreaks = JSON.parse(localStorage.getItem('quiz_app_login_streaks') || '[]');
-    if (loginStreaks.length > 0) {
-      syncOperations.push(syncDataWithSupabase('login_streaks', loginStreaks));
     }
 
     // Process all sync operations
