@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, Check, X, RefreshCw } from 'lucide-react';
 import { ProfileIconUploader } from './ProfileIconUploader';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface ProfileIcon {
   id: string;
@@ -90,17 +91,37 @@ const ProfileIconsManagement: React.FC = () => {
     }
     
     try {
-      // Use the admin_delete_profile_icon function instead of direct delete
-      const { data, error } = await supabase
-        .rpc('admin_delete_profile_icon', {
-          p_icon_id: icon.id
-        });
-        
-      if (error) throw error;
+      // Ensure admin session authentication
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      if (!isAdminAuth) {
+        throw new Error("Admin authentication required");
+      }
       
-      // If the function returns false, the icon wasn't found
-      if (data === false) {
-        throw new Error("Icon not found");
+      try {
+        // Try using the admin_delete_profile_icon function first
+        const { data, error } = await supabase
+          .rpc('admin_delete_profile_icon', {
+            p_icon_id: icon.id
+          });
+          
+        if (error) throw error;
+        
+        // If the function returns false, the icon wasn't found
+        if (data === false) {
+          throw new Error("Icon not found");
+        }
+      } catch (rpcError: any) {
+        console.error('RPC delete failed, trying direct delete:', rpcError);
+        
+        // Fallback to direct delete if the RPC method fails
+        const { error: directError } = await supabase
+          .from('profile_icons')
+          .delete()
+          .eq('id', icon.id);
+          
+        if (directError) {
+          throw directError;
+        }
       }
       
       // Update local state

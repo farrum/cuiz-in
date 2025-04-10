@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { UploadCloud, X, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 export function ProfileIconUploader() {
   const { toast } = useToast();
@@ -74,6 +76,12 @@ export function ProfileIconUploader() {
     setIsUploading(true);
     
     try {
+      // Ensure admin session authentication
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      if (!isAdminAuth) {
+        throw new Error("Admin authentication required");
+      }
+      
       // Convert image to base64 string for database storage
       const reader = new FileReader();
       
@@ -91,16 +99,34 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
-      // Use the admin_insert_profile_icon function instead of direct insert
-      const { data, error } = await supabase
-        .rpc('admin_insert_profile_icon', {
-          icon_name: iconName.trim(),
-          icon_url: base64String,
-          is_active: true
-        });
-      
-      if (error) {
-        throw error;
+      // Try inserting directly first as fallback approach
+      try {
+        // Use the admin_insert_profile_icon function 
+        const { data, error } = await supabase
+          .rpc('admin_insert_profile_icon', {
+            icon_name: iconName.trim(),
+            icon_url: base64String,
+            is_active: true
+          });
+          
+        if (error) {
+          throw error;
+        }
+      } catch (rpcError: any) {
+        console.error('RPC insert failed, trying direct insert:', rpcError);
+        
+        // Fallback to direct insert if the RPC method fails
+        const { data: directData, error: directError } = await supabase
+          .from('profile_icons')
+          .insert({
+            name: iconName.trim(),
+            icon_url: base64String,
+            is_active: true
+          });
+          
+        if (directError) {
+          throw directError;
+        }
       }
       
       toast({
