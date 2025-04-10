@@ -36,37 +36,41 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDate, parseISO } from 'date-fns';
-
-interface Attendance {
-  user_id: string;
-  username: string;
-  dates: Record<string, boolean>;
-}
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDate, parseISO, isValid } from 'date-fns';
 
 interface AttendanceRecord {
+  id: string;
   user_id: string;
   username: string;
   attendance_date: string;
   login_time: string;
 }
 
+interface UserAttendance {
+  user_id: string;
+  username: string;
+  dates: Record<string, boolean>;
+}
+
 const UserAttendanceTracker: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [users, setUsers] = useState<any[]>([]);
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [attendance, setAttendance] = useState<UserAttendance[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [daysInMonth, setDaysInMonth] = useState<Date[]>([]);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [userHistory, setUserHistory] = useState<Record<string, Record<string, boolean>>>({});
+  const [userHistory, setUserHistory] = useState<Record<string, AttendanceRecord[]>>({});
   const [userHistoryLoading, setUserHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Update days in month and fetch attendance when users or month changes
   useEffect(() => {
     // Get all days in the current month
     const days = eachDayOfInterval({
@@ -84,23 +88,28 @@ const UserAttendanceTracker: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching users...');
+      
       const { data: usersData, error } = await supabase
         .from('profiles')
         .select('id, username, suspended')
         .order('username');
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
       
       if (usersData) {
-        console.log("Fetched users:", usersData.length);
+        console.log(`Fetched ${usersData.length} users`);
         setUsers(usersData);
       } else {
         console.log("No users found");
         setUsers([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error);
-      setError('Failed to load users. Please try again.');
+      setError(`Failed to load users: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -117,44 +126,51 @@ const UserAttendanceTracker: React.FC = () => {
       
       const { data: attendanceData, error } = await supabase
         .from('user_attendance')
-        .select('user_id, username, attendance_date, login_time')
+        .select('id, user_id, username, attendance_date, login_time')
         .gte('attendance_date', startDate)
         .lte('attendance_date', endDate);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching attendance data:', error);
+        throw error;
+      }
       
       console.log(`Fetched ${attendanceData?.length || 0} attendance records`);
-      console.log("Attendance data sample:", attendanceData?.[0]);
       
-      // Process attendance data by user
-      const attendanceByUser: Record<string, Record<string, boolean>> = {};
-      
-      // Initialize attendance data for all users first
-      users.forEach(user => {
-        attendanceByUser[user.id] = {};
-      });
-      
-      // Fill in attendance records where they exist
-      if (attendanceData && attendanceData.length > 0) {
+      if (attendanceData) {
+        setAttendanceRecords(attendanceData);
+        
+        // Process attendance data by user
+        const attendanceByUser: Record<string, Record<string, boolean>> = {};
+        
+        // Initialize attendance data for all users first
+        users.forEach(user => {
+          attendanceByUser[user.id] = {};
+        });
+        
+        // Fill in attendance records where they exist
         attendanceData.forEach((record) => {
           if (record.user_id && record.attendance_date) {
+            if (!attendanceByUser[record.user_id]) {
+              attendanceByUser[record.user_id] = {};
+            }
             attendanceByUser[record.user_id][record.attendance_date] = true;
           }
         });
+        
+        // Create attendance records for each user
+        const formattedAttendance = users.map(user => ({
+          user_id: user.id,
+          username: user.username,
+          dates: attendanceByUser[user.id] || {}
+        }));
+        
+        setAttendance(formattedAttendance);
+        console.log("Processed attendance data for", formattedAttendance.length, "users");
       }
-      
-      // Create attendance records for each user
-      const formattedAttendance = users.map(user => ({
-        user_id: user.id,
-        username: user.username,
-        dates: attendanceByUser[user.id] || {}
-      }));
-      
-      setAttendance(formattedAttendance);
-      console.log("Processed attendance data:", formattedAttendance.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching attendance data:', error);
-      setError('Failed to load attendance data. Please try again.');
+      setError(`Failed to load attendance data: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -166,36 +182,38 @@ const UserAttendanceTracker: React.FC = () => {
     try {
       console.log(`Fetching attendance history for user: ${userId}`);
       
+      // Check if we already have this user's data cached
+      if (userHistory[userId] && userHistory[userId].length > 0) {
+        console.log("Using cached history data");
+        setSelectedUser(userId);
+        setUserHistoryLoading(false);
+        return;
+      }
+      
       const { data: historyData, error } = await supabase
         .from('user_attendance')
-        .select('attendance_date, login_time')
+        .select('id, user_id, username, attendance_date, login_time')
         .eq('user_id', userId)
         .order('attendance_date', { ascending: false });
         
-      if (error) throw error;
-      
-      console.log(`Fetched ${historyData?.length || 0} history records for user`);
-      console.log("History data sample:", historyData?.[0]);
-      
-      const userAttendanceHistory: Record<string, boolean> = {};
-      
-      if (historyData && historyData.length > 0) {
-        historyData.forEach((record) => {
-          if (record.attendance_date) {
-            userAttendanceHistory[record.attendance_date] = true;
-          }
-        });
+      if (error) {
+        console.error('Error fetching user history:', error);
+        throw error;
       }
       
-      setUserHistory({
-        ...userHistory,
-        [userId]: userAttendanceHistory
-      });
+      console.log(`Fetched ${historyData?.length || 0} history records for user`);
       
-      setSelectedUser(userId);
-    } catch (error) {
+      if (historyData) {
+        setUserHistory({
+          ...userHistory,
+          [userId]: historyData
+        });
+        
+        setSelectedUser(userId);
+      }
+    } catch (error: any) {
       console.error('Error fetching user history:', error);
-      setError('Failed to load user history. Please try again.');
+      setError(`Failed to load user history: ${error.message}`);
     } finally {
       setUserHistoryLoading(false);
     }
@@ -247,20 +265,39 @@ const UserAttendanceTracker: React.FC = () => {
   };
   
   const getLastLoginDate = (userId: string): string => {
-    if (!userHistory[userId] || Object.keys(userHistory[userId]).length === 0) {
+    if (!userHistory[userId] || userHistory[userId].length === 0) {
       return 'Never';
     }
     
-    const dates = Object.keys(userHistory[userId]).sort().reverse();
-    if (dates.length > 0) {
+    const records = userHistory[userId];
+    if (records.length > 0) {
       try {
-        return format(parseISO(dates[0]), 'dd MMM yyyy');
+        const dateStr = records[0].attendance_date;
+        if (isValid(parseISO(dateStr))) {
+          return format(parseISO(dateStr), 'dd MMM yyyy');
+        }
+        return dateStr;
       } catch (err) {
         console.error('Date parsing error:', err);
-        return dates[0];
+        return 'Invalid date';
       }
     }
     return 'Never';
+  };
+
+  const formatAttendanceDate = (dateStr: string): string => {
+    try {
+      if (!dateStr) return 'Unknown';
+      
+      const date = parseISO(dateStr);
+      if (isValid(date)) {
+        return format(date, 'dd MMM yyyy');
+      }
+      return dateStr;
+    } catch (err) {
+      console.error('Error formatting date:', err, dateStr);
+      return dateStr || 'Invalid date';
+    }
   };
 
   return (
@@ -417,7 +454,7 @@ const UserAttendanceTracker: React.FC = () => {
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm">Total Days Active</span>
                           <span className="text-sm font-medium">
-                            {userHistory[selectedUser] ? Object.keys(userHistory[selectedUser]).length : 0}
+                            {userHistory[selectedUser] ? userHistory[selectedUser].length : 0}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-2">
@@ -442,7 +479,7 @@ const UserAttendanceTracker: React.FC = () => {
                       <span className="ml-3">Loading user history...</span>
                     </div>
                   ) : selectedUser ? (
-                    userHistory[selectedUser] && Object.keys(userHistory[selectedUser]).length > 0 ? (
+                    userHistory[selectedUser] && userHistory[selectedUser].length > 0 ? (
                       <div className="space-y-4">
                         <h3 className="font-medium">Login History</h3>
                         <div className="max-h-[400px] overflow-y-auto border rounded-md">
@@ -450,15 +487,19 @@ const UserAttendanceTracker: React.FC = () => {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Date</TableHead>
+                                <TableHead>Login Time</TableHead>
                                 <TableHead>Status</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {Object.keys(userHistory[selectedUser])
-                                .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-                                .map(date => (
-                                  <TableRow key={date}>
-                                    <TableCell>{format(parseISO(date), 'dd MMM yyyy')}</TableCell>
+                              {userHistory[selectedUser]
+                                .sort((a, b) => new Date(b.attendance_date).getTime() - new Date(a.attendance_date).getTime())
+                                .map(record => (
+                                  <TableRow key={record.id}>
+                                    <TableCell>{formatAttendanceDate(record.attendance_date)}</TableCell>
+                                    <TableCell>
+                                      {record.login_time ? format(new Date(record.login_time), 'HH:mm:ss') : 'N/A'}
+                                    </TableCell>
                                     <TableCell>
                                       <div className="flex items-center">
                                         <Check className="h-4 w-4 mr-1 text-green-600" />
