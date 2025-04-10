@@ -6,6 +6,17 @@ import { useToast } from '@/hooks/use-toast';
 import { AdSlot } from './useAdSlots';
 import { ExtendedDatabase } from '@/types/database-extensions';
 
+// Define a simple interface for the performance data to avoid complex type inference
+interface VersionPerformanceData {
+  version_id: string;
+  slot_id: string;
+  start_date: string;
+  views: number;
+  clicks: number;
+  ctr: number;
+  end_date?: string | null;
+}
+
 export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[]) => void) => {
   const { toast } = useToast();
   const [editingSlot, setEditingSlot] = useState<AdSlot | null>(null);
@@ -122,9 +133,8 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
               version_notes: versionNotes || 'Initial version'
             });
             
-          // Create initial performance tracker entry
-          // Use type assertion to specify exact shape
-          const initialPerfData = {
+          // Create initial performance tracker entry using the interface
+          const initialPerfData: VersionPerformanceData = {
             version_id: newSlot.id, // Using the same ID initially
             slot_id: newSlot.id,
             start_date: now,
@@ -183,10 +193,9 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             .eq('slot_id', values.id)
             .is('end_date', null);
           
-        // Create new performance tracker entry
+        // Create new performance tracker entry using the interface
         if (versionData) {
-          // Fix: Use a simple object without complex type assertions
-          const newPerfData = {
+          const newPerfData: VersionPerformanceData = {
             version_id: versionData.id,
             slot_id: values.id,
             start_date: now,
