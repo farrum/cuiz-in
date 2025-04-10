@@ -15,7 +15,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Download, 
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
 import ErrorMessage from './ErrorMessage';
@@ -30,6 +31,7 @@ const UserAttendanceTracker: React.FC = () => {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   const {
     attendance,
@@ -39,19 +41,20 @@ const UserAttendanceTracker: React.FC = () => {
     fetchUserHistory,
     getLastLoginDate,
     formatAttendanceDate,
-    setError: setAttendanceError
+    setError: setAttendanceError,
+    fetchAttendanceData
   } = useAttendanceData(currentMonth, users);
 
-  // Fetch users on component mount
+  // Fetch users on component mount and when refreshing
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [refreshCount]);
 
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching users...');
+      console.log('Fetching users for attendance tracker...');
       
       const { data: usersData, error } = await supabase
         .from('profiles')
@@ -64,7 +67,7 @@ const UserAttendanceTracker: React.FC = () => {
       }
       
       if (usersData) {
-        console.log(`Fetched ${usersData.length} users directly from Supabase`);
+        console.log(`Fetched ${usersData.length} users`);
         setUsers(usersData);
       } else {
         console.log("No users found");
@@ -75,6 +78,15 @@ const UserAttendanceTracker: React.FC = () => {
       setError(`Failed to load users: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manually refresh all data
+  const refreshAllData = () => {
+    setRefreshCount(prev => prev + 1);
+    fetchAttendanceData();
+    if (selectedUser) {
+      fetchUserHistory(selectedUser);
     }
   };
 
@@ -165,15 +177,26 @@ const UserAttendanceTracker: React.FC = () => {
             </TabsList>
           </Tabs>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={exportAttendance}
-            disabled={attendance.length === 0 || loading}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshAllData}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportAttendance}
+              disabled={attendance.length === 0 || loading}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

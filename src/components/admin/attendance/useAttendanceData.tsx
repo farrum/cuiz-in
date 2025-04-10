@@ -34,9 +34,16 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
       const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
       
-      console.log(`Fetching attendance data from ${startDate} to ${endDate} directly from Supabase`);
+      console.log(`Fetching attendance data from ${startDate} to ${endDate}`);
       
-      // Fetch directly from Supabase instead of relying on localStorage
+      // First check that the user_attendance table exists and has records
+      const { count } = await supabase
+        .from('user_attendance')
+        .select('*', { count: 'exact', head: true });
+        
+      console.log(`Found ${count || 0} total attendance records`);
+      
+      // Fetch attendance data directly from Supabase for current month
       const { data: attendanceData, error } = await supabase
         .from('user_attendance')
         .select('id, user_id, username, attendance_date, login_time')
@@ -48,9 +55,9 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
         throw error;
       }
       
-      console.log(`Fetched ${attendanceData?.length || 0} attendance records from Supabase`);
+      console.log(`Fetched ${attendanceData?.length || 0} attendance records for current month`);
       
-      if (attendanceData) {
+      if (attendanceData && attendanceData.length > 0) {
         setAttendanceRecords(attendanceData);
         
         // Process attendance data by user
@@ -80,6 +87,15 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
         
         setAttendance(formattedAttendance);
         console.log("Processed attendance data for", formattedAttendance.length, "users");
+      } else {
+        // If no attendance data, create empty records
+        const emptyAttendance = users.map(user => ({
+          user_id: user.id,
+          username: user.username,
+          dates: {}
+        }));
+        setAttendance(emptyAttendance);
+        console.log("No attendance data found for current month, creating empty records");
       }
     } catch (error: any) {
       console.error('Error fetching attendance data:', error);
@@ -94,7 +110,7 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
     setUserHistory({}); // Reset previous data
     setError(null);
     try {
-      console.log(`Fetching attendance history for user: ${userId} directly from Supabase`);
+      console.log(`Fetching attendance history for user: ${userId}`);
       
       const { data: historyData, error } = await supabase
         .from('user_attendance')
@@ -107,12 +123,18 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
         throw error;
       }
       
-      console.log(`Fetched ${historyData?.length || 0} history records for user from Supabase`);
+      console.log(`Fetched ${historyData?.length || 0} history records for user`);
       
-      if (historyData) {
+      if (historyData && historyData.length > 0) {
         setUserHistory({
           [userId]: historyData
         });
+      } else {
+        // Set empty history if no data found
+        setUserHistory({
+          [userId]: []
+        });
+        console.log("No attendance history found for this user");
       }
     } catch (error: any) {
       console.error('Error fetching user history:', error);
@@ -169,6 +191,7 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
     fetchUserHistory,
     getLastLoginDate,
     formatAttendanceDate,
-    setError
+    setError,
+    fetchAttendanceData
   };
 };

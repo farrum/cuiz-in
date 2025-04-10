@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { UploadCloud, X, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
 export function ProfileIconUploader() {
@@ -17,54 +17,40 @@ export function ProfileIconUploader() {
   const [isUploading, setIsUploading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Check admin status when component mounts
   useEffect(() => {
-    checkAdminStatus();
-  }, []);
-  
-  const checkAdminStatus = async () => {
-    try {
-      console.log('Checking admin status...');
-      
-      // First check if admin auth is in local storage
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      
-      if (isAdminAuth) {
-        console.log('Admin status confirmed from localStorage');
-        setIsAdmin(true);
-        return;
-      }
-      
-      // If not in localStorage, check session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        console.log('Found active session, checking if user is admin');
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching profile:', error);
+    const checkAdminStatus = async () => {
+      try {
+        // First check if admin auth is in local storage
+        const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+        
+        if (isAdminAuth) {
+          setIsAdmin(true);
           return;
         }
         
-        if (profile?.is_admin) {
-          console.log('User is admin according to profile');
-          setIsAdmin(true);
-          // Store admin status in localStorage for future checks
-          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-        } else {
-          console.log('User is not an admin according to profile');
+        // If not in localStorage, check session
+        const { data } = await supabase.auth.getSession();
+        
+        if (data?.session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profile?.is_admin) {
+            setIsAdmin(true);
+            localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+          }
         }
-      } else {
-        console.log('No active session found');
+      } catch (error) {
+        console.error('Error checking admin status:', error);
       }
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-    }
-  };
+    };
+    
+    checkAdminStatus();
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -96,6 +82,7 @@ export function ProfileIconUploader() {
       };
       reader.readAsDataURL(selectedFile);
       
+      // Set a default icon name based on file if not already set
       if (!iconName) {
         const baseName = selectedFile.name.split('.')[0];
         setIconName(baseName);
@@ -118,27 +105,21 @@ export function ProfileIconUploader() {
       return;
     }
     
-    // Verify admin status one more time before upload
     if (!isAdmin) {
-      // Check again in case status changed
-      await checkAdminStatus();
-      
-      if (!isAdmin) {
-        toast({
-          title: "Permission denied",
-          description: "You must be an administrator to upload profile icons.",
-          variant: "destructive"
-        });
-        return;
-      }
+      toast({
+        title: "Permission denied",
+        description: "You must be an administrator to upload profile icons.",
+        variant: "destructive"
+      });
+      return;
     }
     
     setIsUploading(true);
     
     try {
-      const reader = new FileReader();
-      
-      const base64Promise = new Promise<string>((resolve, reject) => {
+      // Convert file to base64
+      const base64String = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
         reader.onload = () => {
           if (typeof reader.result === 'string') {
             resolve(reader.result);
@@ -150,81 +131,67 @@ export function ProfileIconUploader() {
         reader.readAsDataURL(file);
       });
       
-      const base64String = await base64Promise;
-      
-      // Log the current authentication status
-      console.log('Upload attempt with admin status:', isAdmin);
-      console.log('Admin auth from localStorage:', localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH));
-      
-      // Check for session before attempting upload
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session exists:', !!session);
-      
-      if (session?.user) {
-        console.log('User ID from session:', session.user.id);
-      }
-      
-      // First, try direct insertion since we've already verified admin status
+      // First try using the admin RPC function (most reliable method)
       let success = false;
       
       try {
-        console.log('Attempting direct insert with admin status');
-        const { data, error: directError } = await supabase
-          .from('profile_icons')
-          .insert({
-            name: iconName.trim(),
+        const { error: rpcError } = await supabase
+          .rpc('admin_insert_profile_icon', {
+            icon_name: iconName.trim(),
             icon_url: base64String,
             is_active: true
-          })
-          .select();
+          });
           
-        if (!directError) {
+        if (!rpcError) {
           success = true;
-          console.log('Direct insert successful');
         } else {
-          console.error('Direct insert error:', directError);
+          console.error('RPC insert error:', rpcError);
+          
+          // If RPC fails with "Invalid JWT", the user isn't properly authenticated
+          if (rpcError.message.includes('JWT')) {
+            throw new Error('Admin authentication required. Please log out and log back in as administrator.');
+          }
         }
-      } catch (directError) {
-        console.error('Direct insert exception:', directError);
+      } catch (rpcError: any) {
+        console.error('RPC insert failed:', rpcError);
       }
       
-      // If direct insert failed, try RPC
+      // If RPC method failed, try direct insertion since we've already verified admin status locally
       if (!success) {
         try {
-          console.log('Attempting RPC insert');
-          const { data, error } = await supabase
-            .rpc('admin_insert_profile_icon', {
-              icon_name: iconName.trim(),
+          const { error: directError } = await supabase
+            .from('profile_icons')
+            .insert({
+              name: iconName.trim(),
               icon_url: base64String,
               is_active: true
             });
             
-          if (error) {
-            console.error('RPC insert error:', error);
-            throw error;
-          } else {
+          if (!directError) {
             success = true;
-            console.log('RPC insert successful');
+          } else {
+            console.error('Direct insert error:', directError);
+            throw directError;
           }
-        } catch (rpcError: any) {
-          console.error('RPC insert failed:', rpcError);
-          throw rpcError;
+        } catch (directError: any) {
+          console.error('Direct insert exception:', directError);
+          throw directError;
         }
       }
-
-      // If still not successful, show error
-      if (!success) {
+      
+      // If successful, show toast and reset form
+      if (success) {
+        toast({
+          title: "Icon uploaded successfully",
+          description: "The new profile icon has been added.",
+        });
+        
+        setIconName('');
+        setFile(null);
+        setPreviewUrl(null);
+      } else {
         throw new Error('Failed to upload profile icon. Please try refreshing the page and logging in again.');
       }
-      
-      toast({
-        title: "Icon uploaded successfully",
-        description: "The new profile icon has been added to the database.",
-      });
-      
-      setIconName('');
-      setFile(null);
-      setPreviewUrl(null);
     } catch (error: any) {
       console.error('Error uploading profile icon:', error);
       toast({
