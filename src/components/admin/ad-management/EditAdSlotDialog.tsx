@@ -1,108 +1,73 @@
 
+// File: src/components/admin/ad-management/EditAdSlotDialog.tsx
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { 
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Check, Plus, HelpCircle } from 'lucide-react';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { UseFormReturn } from 'react-hook-form';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface AdSlot {
-  id: string;
-  name: string;
-  position: string;
-  code: string;
-  active: boolean;
-  last_updated: string;
-}
 
 interface EditAdSlotDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  editingSlot: AdSlot | null;
-  form: UseFormReturn<AdSlot>;
+  editingSlot: any;
+  isCreatingNew: boolean;
+  form: UseFormReturn<any>;
   onCancel: () => void;
   onSave: () => void;
-  isCreatingNew?: boolean;
 }
 
 const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
   isOpen,
   onOpenChange,
   editingSlot,
+  isCreatingNew,
   form,
   onCancel,
-  onSave,
-  isCreatingNew = false
+  onSave
 }) => {
   if (!editingSlot) return null;
-
-  const adCodeExamples = {
-    google: `<!-- Google AdSense Example -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-     data-ad-slot="XXXXXXXXXX"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>`,
-    custom: `<!-- Custom Ad Example -->
-<div id="custom-ad-container">
-  <a href="https://example.com" target="_blank" rel="noopener noreferrer">
-    <img src="https://example.com/ad-image.jpg" alt="Advertisement" style="width:100%;height:auto;" />
-  </a>
-</div>`
-  };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isCreatingNew ? 'Create New Ad Slot' : `Edit Ad Slot: ${editingSlot.name}`}
-          </DialogTitle>
+          <DialogTitle>{isCreatingNew ? "Create New Ad Slot" : "Edit Ad Slot"}</DialogTitle>
           <DialogDescription>
             {isCreatingNew 
-              ? 'Create a new advertisement slot for your application.' 
-              : 'Update the details and ad code for this advertisement slot.'}
+              ? "Configure a new ad slot to display on your site" 
+              : `Update ad slot ${editingSlot.name}. This will create a new version.`
+            }
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
+          <form className="space-y-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ad Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input
-                      id="ad-name"
-                      placeholder="Enter ad slot name"
-                      {...field}
-                    />
+                    <Input placeholder="Ad slot name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,19 +80,22 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Position</FormLabel>
-                  <FormControl>
-                    <select
-                      id="ad-position"
-                      value={field.value}
-                      onChange={field.onChange}
-                      className="w-full p-2 rounded-md border border-border bg-background"
-                    >
-                      <option value="top">Top</option>
-                      <option value="middle">Middle</option>
-                      <option value="bottom">Bottom</option>
-                      <option value="sidebar">Sidebar</option>
-                    </select>
-                  </FormControl>
+                  <Select 
+                    value={field.value} 
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a position" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="top">Top</SelectItem>
+                      <SelectItem value="middle">Middle</SelectItem>
+                      <SelectItem value="bottom">Bottom</SelectItem>
+                      <SelectItem value="sidebar">Sidebar</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,63 +106,14 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Ad Code</FormLabel>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="outline" size="sm" type="button" className="h-7 px-3">
-                            <HelpCircle className="h-3.5 w-3.5 mr-1" />
-                            Examples
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" align="start" className="w-80 p-0">
-                          <div className="flex flex-col">
-                            <div className="border-b border-border p-2">
-                              <p className="font-semibold text-sm">Ad Code Examples</p>
-                            </div>
-                            <div className="p-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() => field.onChange(adCodeExamples.google)}
-                                type="button"
-                              >
-                                Google AdSense
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start"
-                                onClick={() => field.onChange(adCodeExamples.custom)}
-                                type="button"
-                              >
-                                Custom Ad
-                              </Button>
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+                  <FormLabel>Ad Code</FormLabel>
                   <FormControl>
-                    <Textarea
-                      id="ad-code"
-                      placeholder="Enter HTML/JavaScript ad code here"
-                      {...field}
-                      rows={10}
-                      className="font-mono text-sm"
+                    <Textarea 
+                      placeholder="Paste your ad code here" 
+                      className="min-h-[200px] font-mono text-sm"
+                      {...field} 
                     />
                   </FormControl>
-                  <div className="text-xs text-muted-foreground mt-1 space-y-1">
-                    <p>Enter the HTML/JavaScript code for this advertisement.</p>
-                    <ul className="list-disc pl-5">
-                      <li>Include complete script tags with all necessary attributes</li>
-                      <li>Avoid using document.write() in your ad code</li>
-                      <li>For AdSense, include both the initialization and display code</li>
-                    </ul>
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -204,45 +123,63 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
               control={form.control}
               name="active"
               render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center space-x-2">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        id="edit-active"
-                      />
-                    </FormControl>
-                    <Label htmlFor="edit-active">Active</Label>
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Active
+                    </FormLabel>
+                    <FormDescription>
+                      Display this ad on your site
+                    </FormDescription>
                   </div>
-                  <FormMessage />
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
             
-            <DialogFooter>
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isCreatingNew ? (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Ad Slot
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </>
+            {!isCreatingNew && (
+              <FormField
+                control={form.control}
+                name="version_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Version Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Add notes about this version (optional)" 
+                        className="min-h-[60px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </DialogFooter>
+              />
+            )}
           </form>
         </Form>
+        
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={onSave}>
+            {isCreatingNew ? "Create Ad Slot" : "Save Changes"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
 export default EditAdSlotDialog;
+
+// Missing FormDescription import
+const FormDescription = ({ children }: { children: React.ReactNode }) => {
+  return <div className="text-sm text-muted-foreground">{children}</div>;
+};

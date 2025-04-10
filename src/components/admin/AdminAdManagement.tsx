@@ -38,10 +38,12 @@ const AdminAdManagement: React.FC = () => {
     editingSlot,
     isCreatingNew,
     form,
+    isLocked,
     startEditing,
     startCreatingNew,
     cancelEditing,
-    saveAdSlot
+    saveAdSlot,
+    toggleLock
   } = useAdSlotEditor(adSlots, setAdSlots);
   
   const formatDate = (dateString: string) => {
@@ -77,6 +79,7 @@ const AdminAdManagement: React.FC = () => {
           <Button 
             onClick={startCreatingNew}
             className="mr-4"
+            disabled={isLocked}
           >
             <Plus className="w-4 h-4 mr-1" />
             New Ad Slot
@@ -115,6 +118,7 @@ const AdminAdManagement: React.FC = () => {
             <li>Avoid document.write() as it may not execute properly in dynamic content</li>
             <li>Include both the initialization and display code for your ad networks</li>
             <li>Test your ad slots in various browsers and devices</li>
+            <li>All changes create new versions for tracking and historical comparison</li>
           </ul>
         </AlertDescription>
       </Alert>
@@ -127,6 +131,8 @@ const AdminAdManagement: React.FC = () => {
         onEdit={startEditing}
         formatDate={formatDate}
         onCreateNew={startCreatingNew}
+        isLocked={isLocked}
+        onToggleLock={toggleLock}
       />
       
       {/* Edit Ad Slot Dialog */}

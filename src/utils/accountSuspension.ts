@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { ExtendedDatabase } from '@/types/database-extensions';
 
 /**
  * Checks and suspends accounts that have been inactive for more than 5 days
@@ -28,39 +29,27 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
       return;
     }
     
-    // For each profile, check their last login time
+    // For each profile, check their activity status using the database function
     for (const profile of profiles) {
-      const { data: loginLogs, error: logsError } = await supabase
-        .from('login_logs')
-        .select('login_time')
-        .eq('username', profile.username)
-        .order('login_time', { ascending: false })
-        .limit(1);
-        
-      if (logsError) {
-        console.error(`Error fetching login logs for ${profile.username}:`, logsError);
+      // Using RPC function to check user activity
+      const { data: isActive, error: activityError } = await supabase.rpc<boolean>(
+        'has_user_been_active_in_days',
+        { p_user_id: profile.id, p_days: 5 }
+      );
+      
+      if (activityError) {
+        console.error(`Error checking activity for ${profile.username}:`, activityError);
         continue;
       }
       
-      // Only suspend if there are no login records or the last login was more than 5 days ago
-      if (!loginLogs || loginLogs.length === 0) {
-        console.log(`Suspending account for ${profile.username} due to no login records`);
+      if (!isActive) {
+        console.log(`Suspending account for ${profile.username} due to inactivity for 5+ days`);
         await suspendUserAccount(profile.id);
         
         // Also update user_referrals table to keep status in sync
         await updateReferralStatus(profile.id, 'suspended');
       } else {
-        const lastLoginDate = new Date(loginLogs[0].login_time);
-        
-        if (lastLoginDate < fiveDaysAgo) {
-          console.log(`Suspending account for ${profile.username} due to inactivity since ${lastLoginDate.toISOString()}`);
-          await suspendUserAccount(profile.id);
-          
-          // Also update user_referrals table to keep status in sync
-          await updateReferralStatus(profile.id, 'suspended');
-        } else {
-          console.log(`User ${profile.username} is active, last login: ${lastLoginDate.toISOString()}`);
-        }
+        console.log(`User ${profile.username} is active within the last 5 days`);
       }
     }
     
@@ -231,44 +220,19 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
     if (profile.suspended) {
       return false;
     }
+
+    // Using RPC function to check user activity
+    const { data: isActive, error: activityError } = await supabase.rpc<boolean>(
+      'has_user_been_active_in_days',
+      { p_user_id: userId, p_days: 5 }
+    );
     
-    // Get date from 5 days ago
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    
-    // Get the user's username
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', userId)
-      .single();
-      
-    if (userError || !userData) {
-      console.error(`Error getting username for ${userId}:`, userError);
+    if (activityError) {
+      console.error(`Error checking activity for ${userId}:`, activityError);
       return false;
     }
     
-    // Check their last login time
-    const { data: loginLogs, error: logsError } = await supabase
-      .from('login_logs')
-      .select('login_time')
-      .eq('username', userData.username)
-      .order('login_time', { ascending: false })
-      .limit(1);
-      
-    if (logsError) {
-      console.error(`Error fetching login logs for ${userData.username}:`, logsError);
-      return false;
-    }
-    
-    // If no login records, user is not active
-    if (!loginLogs || loginLogs.length === 0) {
-      return false;
-    }
-    
-    // Check if last login was within the last 5 days
-    const lastLoginDate = new Date(loginLogs[0].login_time);
-    return lastLoginDate >= fiveDaysAgo;
+    return isActive || false;
   } catch (error) {
     console.error('Error in isUserActive:', error);
     return false;
