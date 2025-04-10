@@ -70,13 +70,13 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
         if (referrals) {
           // Process each referral to get the latest status
           const membersPromises = referrals.map(async (r) => {
-            // Get the referred user's status from profiles and login_logs
+            // Get the referred user's status from profiles
             const isActive = await isUserActive(r.referred_id);
             
-            // Determine status based on profile.suspended and activity check
+            // Determine status based on profile.suspended only
             let status = r.status;
             
-            // Override status if suspended in profiles or inactive
+            // Override status if suspended in profiles
             const { data: profile } = await supabase
               .from('profiles')
               .select('suspended')
@@ -85,10 +85,8 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
               
             if (profile?.suspended) {
               status = 'suspended';
-            } else if (!isActive) {
-              status = 'inactive';
             } else {
-              status = 'active';
+              status = 'active'; // All non-suspended users are now considered active
             }
             
             return {

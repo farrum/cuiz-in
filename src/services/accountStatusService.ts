@@ -2,7 +2,9 @@
 import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
 
 /**
- * Service to periodically check and update user account status
+ * Service to periodically check user account status
+ * Note: Automatic suspension has been disabled, but we keep the service
+ * for potential future use or additional account status checks
  */
 export const accountStatusService = {
   checkInterval: null as NodeJS.Timeout | null,

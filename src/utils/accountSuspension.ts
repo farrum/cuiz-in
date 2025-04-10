@@ -2,61 +2,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExtendedDatabase } from '@/types/database-extensions';
 
 /**
- * Checks and suspends accounts that have been inactive for more than 5 days
+ * This function is now disabled as we only want admin-initiated suspensions
+ * Keeping the function signature for backward compatibility
  */
 export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
-  try {
-    // Get date from 5 days ago
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    const fiveDaysAgoStr = fiveDaysAgo.toISOString();
-    
-    console.log('Checking for accounts inactive since:', fiveDaysAgoStr);
-    
-    // First, get all users from profiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, username')
-      .eq('suspended', false); // Only check active accounts
-      
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      return;
-    }
-    
-    if (!profiles || profiles.length === 0) {
-      console.log('No active profiles found');
-      return;
-    }
-    
-    // For each profile, check their activity status using the database function
-    for (const profile of profiles) {
-      // Using the correct way to type the function name parameter and return type
-      const { data: isActive, error: activityError } = await supabase.rpc(
-        'has_user_been_active_in_days',
-        { p_user_id: profile.id, p_days: 5 }
-      );
-      
-      if (activityError) {
-        console.error(`Error checking activity for ${profile.username}:`, activityError);
-        continue;
-      }
-      
-      if (!isActive) {
-        console.log(`Suspending account for ${profile.username} due to inactivity for 5+ days`);
-        await suspendUserAccount(profile.id);
-        
-        // Also update user_referrals table to keep status in sync
-        await updateReferralStatus(profile.id, 'suspended');
-      } else {
-        console.log(`User ${profile.username} is active within the last 5 days`);
-      }
-    }
-    
-    console.log('Finished checking and suspending inactive accounts');
-  } catch (error) {
-    console.error('Error in checkAndSuspendInactiveAccounts:', error);
-  }
+  // This function no longer suspends inactive accounts
+  console.log('Automatic account suspension is disabled. Users will only be suspended by admin action.');
+  return;
 };
 
 /**
@@ -200,11 +152,11 @@ export const denyReactivationRequest = async (userId: string): Promise<{ success
 
 /**
  * Checks if a user is active (logged in within the last 5 days)
- * Used to standardize activity status checking across the app
+ * This function now only checks the suspended status in profiles, not inactivity
  */
 export const isUserActive = async (userId: string): Promise<boolean> => {
   try {
-    // First check if the user is suspended directly in profiles
+    // Only check if the user is suspended directly in profiles
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('suspended')
@@ -216,23 +168,8 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // If suspended in profile, they're not active
-    if (profile.suspended) {
-      return false;
-    }
-
-    // Using the correct way to use RPC function
-    const { data: isActive, error: activityError } = await supabase.rpc(
-      'has_user_been_active_in_days',
-      { p_user_id: userId, p_days: 5 }
-    );
-    
-    if (activityError) {
-      console.error(`Error checking activity for ${userId}:`, activityError);
-      return false;
-    }
-    
-    return Boolean(isActive);
+    // User is active if not suspended
+    return !profile.suspended;
   } catch (error) {
     console.error('Error in isUserActive:', error);
     return false;
