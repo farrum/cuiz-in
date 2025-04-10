@@ -121,7 +121,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           
           // Create first version entry
           await supabase
-            .from('ad_slot_versions' as keyof ExtendedDatabase['public']['Tables'])
+            .from('ad_slot_versions')
             .insert({
               slot_id: newSlot.id,
               name: newSlot.name,
@@ -143,9 +143,10 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             ctr: 0
           };
           
+          // Use a type assertion to avoid TypeScript "excessively deep" error
           await supabase
-            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
-            .insert(initialPerfData);
+            .from('ad_version_performance')
+            .insert(initialPerfData as any);
             
           const updatedSlots = [...adSlots, newSlot];
           setAdSlots(updatedSlots);
@@ -168,7 +169,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         
         // Create a new version in ad_slot_versions
         const { data: versionData, error: versionError } = await supabase
-            .from('ad_slot_versions' as keyof ExtendedDatabase['public']['Tables'])
+            .from('ad_slot_versions')
             .insert({
               slot_id: values.id,
               name: values.name,
@@ -186,7 +187,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         
         // Close previous version performance tracking
         await supabase
-            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
+            .from('ad_version_performance')
             .update({
               end_date: now
             })
@@ -204,9 +205,10 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             ctr: 0
           };
           
+          // Use a type assertion to avoid TypeScript "excessively deep" error
           await supabase
-            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
-            .insert(newPerfData);
+            .from('ad_version_performance')
+            .insert(newPerfData as any);
         }
         
         // Update the main ad_slots table
