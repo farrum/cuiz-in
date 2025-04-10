@@ -61,6 +61,7 @@ const UserAttendanceTracker: React.FC = () => {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [userHistory, setUserHistory] = useState<Record<string, Record<string, boolean>>>({});
+  const [userHistoryLoading, setUserHistoryLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -146,6 +147,7 @@ const UserAttendanceTracker: React.FC = () => {
   };
 
   const fetchUserHistory = async (userId: string) => {
+    setUserHistoryLoading(true);
     try {
       console.log(`Fetching attendance history for user: ${userId}`);
       
@@ -174,6 +176,8 @@ const UserAttendanceTracker: React.FC = () => {
       setSelectedUser(userId);
     } catch (error) {
       console.error('Error fetching user history:', error);
+    } finally {
+      setUserHistoryLoading(false);
     }
   };
 
@@ -277,7 +281,7 @@ const UserAttendanceTracker: React.FC = () => {
           </div>
         ) : (
           <>
-            <TabsContent value="calendar" className="block">
+            <TabsContent value="calendar" className="mt-0">
               <div className="overflow-x-auto">
                 <Table className="min-w-[900px]">
                   <TableHeader className="sticky top-0 bg-background z-10">
@@ -291,34 +295,35 @@ const UserAttendanceTracker: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attendance.map(user => (
-                      <TableRow key={user.user_id}>
-                        <TableCell className="font-medium sticky left-0 bg-background">
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                            {user.username}
-                          </div>
-                        </TableCell>
-                        {daysInMonth.map(day => {
-                          const dateStr = format(day, 'yyyy-MM-dd');
-                          const isPresent = user.dates[dateStr] ? true : false;
-                          return (
-                            <TableCell key={dateStr} className="text-center">
-                              {isPresent ? (
-                                <div className="mx-auto flex items-center justify-center bg-green-100 dark:bg-green-900/20 w-8 h-8 rounded-full">
-                                  <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                </div>
-                              ) : (
-                                <div className="mx-auto flex items-center justify-center bg-red-100 dark:bg-red-900/20 w-8 h-8 rounded-full">
-                                  <X className="h-4 w-4 text-red-500 dark:text-red-400" />
-                                </div>
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                    {attendance.length === 0 && (
+                    {attendance.length > 0 ? (
+                      attendance.map(user => (
+                        <TableRow key={user.user_id}>
+                          <TableCell className="font-medium sticky left-0 bg-background">
+                            <div className="flex items-center">
+                              <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                              {user.username}
+                            </div>
+                          </TableCell>
+                          {daysInMonth.map(day => {
+                            const dateStr = format(day, 'yyyy-MM-dd');
+                            const isPresent = user.dates[dateStr] ? true : false;
+                            return (
+                              <TableCell key={dateStr} className="text-center">
+                                {isPresent ? (
+                                  <div className="mx-auto flex items-center justify-center bg-green-100 dark:bg-green-900/20 w-8 h-8 rounded-full">
+                                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                  </div>
+                                ) : (
+                                  <div className="mx-auto flex items-center justify-center bg-red-100 dark:bg-red-900/20 w-8 h-8 rounded-full">
+                                    <X className="h-4 w-4 text-red-500 dark:text-red-400" />
+                                  </div>
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))
+                    ) : (
                       <TableRow>
                         <TableCell colSpan={daysInMonth.length + 1} className="text-center py-8">
                           No attendance data found for this month
@@ -330,7 +335,7 @@ const UserAttendanceTracker: React.FC = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="list" className="block">
+            <TabsContent value="list" className="mt-0">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="md:col-span-1">
                   <div className="mb-4">
@@ -363,7 +368,7 @@ const UserAttendanceTracker: React.FC = () => {
                           <span className="text-sm font-medium">
                             {userHistory[selectedUser] && 
                              Object.keys(userHistory[selectedUser]).length > 0 ? 
-                              format(new Date(Object.keys(userHistory[selectedUser])[0]), 'dd MMM yyyy') : 
+                              format(new Date(Object.keys(userHistory[selectedUser]).sort().reverse()[0]), 'dd MMM yyyy') : 
                               'Never'
                             }
                           </span>
@@ -390,11 +395,16 @@ const UserAttendanceTracker: React.FC = () => {
                 </div>
                 
                 <div className="md:col-span-2">
-                  {selectedUser ? (
+                  {userHistoryLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-3">Loading user history...</span>
+                    </div>
+                  ) : selectedUser ? (
                     Object.keys(userHistory[selectedUser] || {}).length > 0 ? (
                       <div className="space-y-4">
                         <h3 className="font-medium">Login History</h3>
-                        <div className="max-h-[400px] overflow-y-auto">
+                        <div className="max-h-[400px] overflow-y-auto border rounded-md">
                           <Table>
                             <TableHeader>
                               <TableRow>
