@@ -24,7 +24,7 @@ interface AnsweredQuestion {
 interface QuizQuestion {
   id: string;
   question: string;
-  options: any; // Could be array, object, or string
+  options: string[] | Record<string, string> | string;
   correct_answer: string;
   explanation: string;
   category: string;
@@ -37,7 +37,7 @@ interface QuizAnswer {
   selected_answer: string;
   correct: boolean;
   answered_at: string;
-  quiz_questions: QuizQuestion; // This is a single object, not an array
+  quiz_questions: QuizQuestion | null; // This is a single object, not an array
 }
 
 interface RecentlyAnsweredQuestionsProps {
@@ -89,7 +89,7 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
       }
 
       // Transform data to AnsweredQuestion format
-      const formattedData: AnsweredQuestion[] = data.map((item) => {
+      const formattedData: AnsweredQuestion[] = data.map((item: any) => {
         // Convert options to string array regardless of what format it comes in
         let parsedOptions: string[] = [];
         
@@ -121,7 +121,7 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
         }
 
         // Access quiz_questions safely, ensuring it's a single object not an array
-        const quizQuestions = !Array.isArray(item.quiz_questions) && item.quiz_questions 
+        const quizQuestions = item.quiz_questions && typeof item.quiz_questions === 'object' && !Array.isArray(item.quiz_questions) 
           ? item.quiz_questions 
           : { question: 'Question not available', correct_answer: '', explanation: 'No explanation available', category: 'General' };
 
