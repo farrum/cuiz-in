@@ -65,7 +65,8 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
               return {
                 id: profile.id,
                 name: profile.username || 'Unknown',
-                email: profile.email || '-',
+                // Use phone as email or fallback to a dash if not available
+                email: profile.phone || '-',
                 status: profile.suspended ? 'suspended' as const : 'active' as const,
                 lastActive: '-',
                 daysActive: profile.suspended ? 'N/A' : 'Active',
