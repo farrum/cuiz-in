@@ -90,12 +90,18 @@ const ProfileIconsManagement: React.FC = () => {
     }
     
     try {
-      const { error } = await supabase
-        .from('profile_icons')
-        .delete()
-        .eq('id', icon.id);
+      // Use the admin_delete_profile_icon function instead of direct delete
+      const { data, error } = await supabase
+        .rpc('admin_delete_profile_icon', {
+          p_icon_id: icon.id
+        });
         
       if (error) throw error;
+      
+      // If the function returns false, the icon wasn't found
+      if (data === false) {
+        throw new Error("Icon not found");
+      }
       
       // Update local state
       setIcons(icons.filter(i => i.id !== icon.id));

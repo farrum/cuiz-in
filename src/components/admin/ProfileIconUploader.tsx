@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,16 +91,13 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
-      // Insert new profile icon into database
+      // Use the admin_insert_profile_icon function instead of direct insert
       const { data, error } = await supabase
-        .from('profile_icons')
-        .insert({
-          id: uuidv4(),
-          name: iconName.trim(),
+        .rpc('admin_insert_profile_icon', {
+          icon_name: iconName.trim(),
           icon_url: base64String,
           is_active: true
-        })
-        .select();
+        });
       
       if (error) {
         throw error;
