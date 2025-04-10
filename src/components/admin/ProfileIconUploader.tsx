@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,12 +15,42 @@ export function ProfileIconUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      
+      if (isAdminAuth) {
+        setIsAdmin(true);
+        return;
+      }
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profile?.is_admin) {
+            setIsAdmin(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
       
-      // Validate file size (max 200KB)
       if (selectedFile.size > 200 * 1024) {
         toast({
           title: "File too large",
@@ -31,7 +60,6 @@ export function ProfileIconUploader() {
         return;
       }
       
-      // Validate file type
       if (!selectedFile.type.startsWith('image/')) {
         toast({
           title: "Invalid file type",
@@ -43,14 +71,12 @@ export function ProfileIconUploader() {
       
       setFile(selectedFile);
       
-      // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string || null);
       };
       reader.readAsDataURL(selectedFile);
       
-      // Generate default name from filename
       if (!iconName) {
         const baseName = selectedFile.name.split('.')[0];
         setIconName(baseName);
@@ -73,16 +99,18 @@ export function ProfileIconUploader() {
       return;
     }
     
+    if (!isAdmin) {
+      toast({
+        title: "Permission denied",
+        description: "You must be an administrator to upload profile icons.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsUploading(true);
     
     try {
-      // Ensure admin session authentication
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      if (!isAdminAuth) {
-        throw new Error("Admin authentication required");
-      }
-      
-      // Convert image to base64 string for database storage
       const reader = new FileReader();
       
       const base64Promise = new Promise<string>((resolve, reject) => {
@@ -99,9 +127,9 @@ export function ProfileIconUploader() {
       
       const base64String = await base64Promise;
       
-      // Try inserting directly first as fallback approach
+      let success = false;
+      
       try {
-        // Use the admin_insert_profile_icon function 
         const { data, error } = await supabase
           .rpc('admin_insert_profile_icon', {
             icon_name: iconName.trim(),
@@ -109,24 +137,44 @@ export function ProfileIconUploader() {
             is_active: true
           });
           
-        if (error) {
-          throw error;
+        if (!error) {
+          success = true;
+        } else {
+          console.error('RPC insert error:', error);
         }
-      } catch (rpcError: any) {
-        console.error('RPC insert failed, trying direct insert:', rpcError);
-        
-        // Fallback to direct insert if the RPC method fails
-        const { data: directData, error: directError } = await supabase
-          .from('profile_icons')
-          .insert({
-            name: iconName.trim(),
-            icon_url: base64String,
-            is_active: true
-          });
+      } catch (rpcError) {
+        console.error('RPC insert failed:', rpcError);
+      }
+
+      if (!success) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
           
-        if (directError) {
-          throw directError;
+          if (!session) {
+            throw new Error('No active session found');
+          }
+          
+          const { error: directError } = await supabase
+            .from('profile_icons')
+            .insert({
+              name: iconName.trim(),
+              icon_url: base64String,
+              is_active: true
+            });
+            
+          if (directError) {
+            throw directError;
+          }
+          
+          success = true;
+        } catch (directInsertError) {
+          console.error('Direct insert failed:', directInsertError);
+          throw directInsertError;
         }
+      }
+      
+      if (!success) {
+        throw new Error('Failed to upload profile icon after multiple attempts');
       }
       
       toast({
@@ -134,7 +182,6 @@ export function ProfileIconUploader() {
         description: "The new profile icon has been added to the database.",
       });
       
-      // Reset form
       setIconName('');
       setFile(null);
       setPreviewUrl(null);
@@ -203,7 +250,7 @@ export function ProfileIconUploader() {
         
         <Button 
           onClick={handleUpload}
-          disabled={!file || !iconName.trim() || isUploading}
+          disabled={!file || !iconName.trim() || isUploading || !isAdmin}
           className="w-full"
         >
           {isUploading ? (
@@ -218,6 +265,12 @@ export function ProfileIconUploader() {
             </>
           )}
         </Button>
+        
+        {!isAdmin && (
+          <div className="text-sm text-destructive mt-2">
+            You must be logged in as an administrator to upload icons.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
