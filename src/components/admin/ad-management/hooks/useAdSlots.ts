@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +10,7 @@ export interface AdSlot {
   code: string;
   active: boolean;
   last_updated: string;
-  version_number: number; // Added version_number field
+  version_number: number;
 }
 
 export const useAdSlots = () => {

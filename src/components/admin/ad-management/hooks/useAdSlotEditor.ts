@@ -182,16 +182,19 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           
         // Create new performance tracker entry
         if (versionData) {
+          // Fix: Use explicit type assertion to avoid deep instantiation error
+          const insertData = {
+            version_id: versionData.id,
+            slot_id: values.id,
+            start_date: now,
+            views: 0,
+            clicks: 0,
+            ctr: 0
+          } as unknown as Parameters<typeof supabase.from>[1];
+          
           await supabase
             .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
-            .insert({
-              version_id: versionData.id,
-              slot_id: values.id,
-              start_date: now,
-              views: 0,
-              clicks: 0,
-              ctr: 0
-            });
+            .insert(insertData);
         }
         
         // Update the main ad_slots table

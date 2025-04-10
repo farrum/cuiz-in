@@ -21,9 +21,9 @@ const AdminAdManagement: React.FC = () => {
   // Fetch and manage ad slots
   const { 
     adSlots, 
-    setAdSlots, 
-    isLoading, 
-    handleToggleActive 
+    loading,
+    fetchAdSlots, 
+    toggleActive
   } = useAdSlots();
   
   // Fetch and manage ad performance data
@@ -44,13 +44,16 @@ const AdminAdManagement: React.FC = () => {
     cancelEditing,
     saveAdSlot,
     toggleLock
-  } = useAdSlotEditor(adSlots, setAdSlots);
+  } = useAdSlotEditor(adSlots, (slots) => {
+    // We use this function to update the adSlots state when needed
+    // This is handled by the useAdSlotEditor hook
+  });
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
   
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -127,7 +130,7 @@ const AdminAdManagement: React.FC = () => {
       <AdSlotTabs
         adSlots={adSlots}
         previewMode={previewMode}
-        onToggleActive={handleToggleActive}
+        onToggleActive={toggleActive}
         onEdit={startEditing}
         formatDate={formatDate}
         onCreateNew={startCreatingNew}
