@@ -1,15 +1,7 @@
 
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { CalendarIcon, Check, Loader2, User, X } from 'lucide-react';
-import { format, getDate } from 'date-fns';
+import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 import { UserAttendance } from './types';
 
 interface AttendanceCalendarViewProps {
@@ -18,73 +10,76 @@ interface AttendanceCalendarViewProps {
   loading: boolean;
 }
 
-const AttendanceCalendarView: React.FC<AttendanceCalendarViewProps> = ({
+const AttendanceCalendarView: React.FC<AttendanceCalendarViewProps> = ({ 
   attendance,
   daysInMonth,
   loading
 }) => {
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-3">Loading attendance data...</span>
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="animate-spin h-6 w-6 mr-2" />
+        <span>Loading attendance data...</span>
       </div>
     );
   }
 
   if (attendance.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <CalendarIcon className="h-16 w-16 mb-4" strokeWidth={1} />
-        <p className="text-lg font-medium">No attendance data found for this month</p>
-        <p className="text-sm text-muted-foreground mt-1">Select a different month or check your database</p>
+      <div className="text-center py-8 text-muted-foreground">
+        No attendance data available for this month.
       </div>
     );
   }
-
+  
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[900px]">
-        <TableHeader className="sticky top-0 bg-background z-10">
-          <TableRow>
-            <TableHead className="min-w-[150px] sticky left-0 bg-background">User</TableHead>
+      <table className="min-w-full divide-y divide-gray-200 border">
+        <thead className="bg-muted">
+          <tr>
+            <th className="px-4 py-2 text-left text-sm font-medium">Username</th>
             {daysInMonth.map(day => (
-              <TableHead key={day.toString()} className="text-center w-[60px]">
-                {getDate(day)}
-              </TableHead>
+              <th key={format(day, 'yyyy-MM-dd')} className="px-2 py-2 text-center text-xs font-medium w-8">
+                {format(day, 'dd')}
+              </th>
             ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {attendance.map(user => (
-            <TableRow key={user.user_id}>
-              <TableCell className="font-medium sticky left-0 bg-background">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+            <th className="px-4 py-2 text-center text-sm font-medium">Total</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {attendance.map(user => {
+            let totalPresent = 0;
+            
+            return (
+              <tr key={user.user_id} className="hover:bg-muted/50">
+                <td className="px-4 py-2 whitespace-nowrap text-sm">
                   {user.username}
-                </div>
-              </TableCell>
-              {daysInMonth.map(day => {
-                const dateStr = format(day, 'yyyy-MM-dd');
-                const isPresent = user.dates[dateStr] ? true : false;
-                return (
-                  <TableCell key={dateStr} className="text-center">
-                    {isPresent ? (
-                      <div className="mx-auto flex items-center justify-center bg-green-100 dark:bg-green-900/20 w-8 h-8 rounded-full">
-                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      </div>
-                    ) : (
-                      <div className="mx-auto flex items-center justify-center bg-red-100 dark:bg-red-900/20 w-8 h-8 rounded-full">
-                        <X className="h-4 w-4 text-red-500 dark:text-red-400" />
-                      </div>
-                    )}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </td>
+                
+                {daysInMonth.map(day => {
+                  const dateStr = format(day, 'yyyy-MM-dd');
+                  const isPresent = user.dates[dateStr] ? true : false;
+                  
+                  if (isPresent) totalPresent++;
+                  
+                  return (
+                    <td 
+                      key={dateStr} 
+                      className={`px-2 py-2 text-center ${isPresent ? 'bg-green-100' : 'bg-gray-50'}`}
+                    >
+                      {isPresent ? '✓' : ''}
+                    </td>
+                  );
+                })}
+                
+                <td className="px-4 py-2 text-center font-medium">
+                  {totalPresent}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };

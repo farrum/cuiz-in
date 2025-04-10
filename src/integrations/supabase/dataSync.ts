@@ -42,8 +42,12 @@ export const fetchAllAppData = async () => {
     }
     
     if (adSlotsResponse.data) {
-      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlotsResponse.data));
-      console.log(`Stored ${adSlotsResponse.data.length} ad slots in localStorage`);
+      // IMPORTANT FIX: Store timestamp with ad slots to prevent overwriting newer data
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify({
+        data: adSlotsResponse.data,
+        timestamp: Date.now()
+      }));
+      console.log(`Stored ${adSlotsResponse.data.length} ad slots in localStorage with timestamp`);
     }
     
     if (quizQuestionsResponse.data) {
@@ -114,10 +118,31 @@ export const syncLocalStorageToSupabase = async () => {
       syncOperations.push(syncDataWithSupabase('login_logs', loginLogs));
     }
 
-    // Sync ad slots 
-    const adSlots = JSON.parse(localStorage.getItem('quiz_app_ad_slots') || '[]');
-    if (adSlots.length > 0) {
-      syncOperations.push(syncDataWithSupabase('ad_slots', adSlots));
+    // Sync ad slots - be careful not to overwrite newer database data with older cache
+    const adSlotsData = localStorage.getItem('quiz_app_ad_slots');
+    if (adSlotsData) {
+      try {
+        // Check if we have the new format with timestamps
+        const parsedData = JSON.parse(adSlotsData);
+        
+        if (parsedData.timestamp && parsedData.data) {
+          // New format with timestamps - check if data is recent
+          const now = Date.now();
+          const dataAge = now - parsedData.timestamp;
+          
+          // Only sync if data is less than 30 minutes old
+          if (dataAge < 1800000) {
+            syncOperations.push(syncDataWithSupabase('ad_slots', parsedData.data));
+          } else {
+            console.log(`Ad slots data is ${dataAge/1000/60} minutes old, skipping sync`);
+          }
+        } else {
+          // Old format without timestamp or just an array - don't sync to be safe
+          console.log('Ad slots data is in old format without timestamp, skipping sync');
+        }
+      } catch (err) {
+        console.error('Error parsing ad slots data:', err);
+      }
     }
 
     // Process all sync operations
@@ -167,6 +192,37 @@ export const syncDataWithSupabase = async (tableName: string, data: any[]) => {
     return true;
   } catch (error) {
     console.error(`Error syncing data to ${tableName}:`, error);
+    return false;
+  }
+};
+
+// Function to specifically fix the ad slots data in localStorage
+export const fixAdSlotsCache = async () => {
+  try {
+    // Fetch fresh ad slots data
+    const { data: freshAdSlots, error } = await supabase
+      .from('ad_slots')
+      .select('*');
+      
+    if (error) {
+      console.error('Error fetching ad slots:', error);
+      return false;
+    }
+    
+    if (freshAdSlots) {
+      // Store with timestamp
+      localStorage.setItem('quiz_app_ad_slots', JSON.stringify({
+        data: freshAdSlots,
+        timestamp: Date.now()
+      }));
+      
+      console.log(`Fixed ad slots cache with ${freshAdSlots.length} fresh records`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error fixing ad slots cache:', error);
     return false;
   }
 };

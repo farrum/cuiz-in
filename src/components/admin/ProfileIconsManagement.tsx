@@ -1,512 +1,203 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Plus, Trash, Upload, Check, X, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { STORAGE_KEYS } from '@/utils/quizData';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Trash2, Check, X } from 'lucide-react';
+import { ProfileIconUploader } from './ProfileIconUploader';
 
 interface ProfileIcon {
   id: string;
   name: string;
   icon_url: string;
-  created_at: string;
   is_active: boolean;
+  created_at?: string;
 }
 
 const ProfileIconsManagement: React.FC = () => {
   const [icons, setIcons] = useState<ProfileIcon[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [newIconName, setNewIconName] = useState('');
-  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
   
-  const realtimeInitialized = React.useRef(false);
-
   useEffect(() => {
-    const checkAdminAuth = async () => {
-      setIsSessionLoading(true);
-      try {
-        console.log("Checking admin authentication status");
-        
-        // First, check for localStorage admin auth
-        const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-        const adminUsername = localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
-        
-        if (isAdminAuth && adminUsername) {
-          console.log("Admin authenticated via localStorage:", adminUsername);
-          setIsAuthenticated(true);
-          setIsSessionLoading(false);
-          return;
-        }
-        
-        // Then try Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          console.log("Session found, checking if user is admin");
-          
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (profileData?.is_admin) {
-            console.log("User confirmed as admin in database");
-            setIsAuthenticated(true);
-          } else {
-            console.log("User is not an admin in database");
-            setIsAuthenticated(false);
-            toast({
-              title: 'Authentication Error',
-              description: 'You need to be logged in as an administrator to access this section',
-              variant: 'destructive',
-            });
-          }
-        } else {
-          console.log("No active session found");
-          setIsAuthenticated(false);
-          toast({
-            title: 'Authentication Error',
-            description: 'Please log in to manage profile icons',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        setIsAuthenticated(false);
-        toast({
-          title: 'Authentication Error',
-          description: 'Failed to verify your session. Please log in again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsSessionLoading(false);
-      }
-    };
-    
-    checkAdminAuth();
-  }, [toast]);
+    fetchIcons();
+  }, []);
   
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchIcons();
-      
-      if (!realtimeInitialized.current) {
-        const setupRealtime = async () => {
-          try {
-            const channel = supabase
-              .channel('profile_icons_changes')
-              .on('postgres_changes', { 
-                event: '*', 
-                schema: 'public', 
-                table: 'profile_icons' 
-              }, () => {
-                console.log("Realtime update detected for profile_icons table");
-                fetchIcons();
-              })
-              .subscribe((status) => {
-                console.log("Realtime subscription status:", status);
-              });
-              
-            realtimeInitialized.current = true;
-            console.log("Realtime updates initialized for profile icons");
-            
-            return () => {
-              console.log("Cleaning up realtime subscription");
-              supabase.removeChannel(channel);
-            };
-          } catch (error) {
-            console.error("Error setting up realtime updates:", error);
-            return () => {};
-          }
-        };
-        
-        const cleanup = setupRealtime();
-        return () => {
-          if (cleanup) {
-            cleanup.then(cleanupFn => cleanupFn && cleanupFn());
-          }
-        };
-      }
-    }
-  }, [isAuthenticated]);
-
   const fetchIcons = async () => {
     try {
-      setIsLoading(true);
-      console.log("Fetching profile icons...");
+      setLoading(true);
       
       const { data, error } = await supabase
         .from('profile_icons')
         .select('*')
         .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        console.log(`Fetched ${data.length} profile icons`);
-        setIcons(data as ProfileIcon[]);
-      }
-    } catch (error) {
-      console.error('Error fetching profile icons:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load profile icons',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 512000) {
-      toast({
-        title: 'File too large',
-        description: 'Please select an image smaller than 500KB',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please select an image file',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setUploadingFile(file);
-  };
-
-  const handleIconUpload = async () => {
-    if (!uploadingFile || !newIconName.trim()) {
-      toast({
-        title: 'Missing information',
-        description: 'Please provide an icon name and select a file',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadProgress(10);
-      
-      // Check authentication status - admin auth should be in localStorage
-      if (localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) !== 'true') {
-        console.log("Checking Supabase session for admin upload");
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error('No active admin session found. Please login again.');
-        }
-        
-        // Verify admin status
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (!profileData?.is_admin) {
-          throw new Error('Admin privileges required to upload icons.');
-        }
-      }
-      
-      const fileExt = uploadingFile.name.split('.').pop();
-      const fileName = `icon_${Date.now()}.${fileExt}`;
-      const filePath = `icons/${fileName}`;
-
-      setTimeout(() => setUploadProgress(30), 300);
-
-      console.log('Uploading to path:', filePath);
-
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, uploadingFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      console.log('Upload successful:', uploadData);
-      setTimeout(() => setUploadProgress(60), 500);
-
-      const { data: urlData } = await supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
-
-      if (!urlData || !urlData.publicUrl) {
-        throw new Error('Failed to get public URL');
-      }
-
-      console.log('Public URL:', urlData.publicUrl);
-      setTimeout(() => setUploadProgress(80), 700);
-
-      // Use a direct insert instead of the RPC function to avoid RLS issues
-      const { data, error } = await supabase
-        .from('profile_icons')
-        .insert({
-          name: newIconName,
-          icon_url: urlData.publicUrl,
-          is_active: true
-        })
-        .select('id')
-        .single();
-
-      if (error) {
-        console.error('Database insert error:', error);
-        throw new Error(`Database insert failed: ${error.message}`);
-      }
-
-      console.log('Icon record created:', data);
-      setTimeout(() => setUploadProgress(100), 800);
-
-      toast({
-        title: 'Success',
-        description: 'Profile icon uploaded successfully'
-      });
-
-      setNewIconName('');
-      setUploadingFile(null);
-      setIsUploadDialogOpen(false);
-      
-      fetchIcons();
-    } catch (error) {
-      console.error('Error uploading icon:', error);
-      toast({
-        title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Failed to upload icon. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setTimeout(() => {
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 1000);
-    }
-  };
-
-  const handleDeleteIcon = async (iconId: string) => {
-    try {
-      // Use direct delete instead of RPC to avoid RLS issues
-      const { error } = await supabase
-        .from('profile_icons')
-        .delete()
-        .eq('id', iconId);
       
       if (error) throw error;
       
+      setIcons(data || []);
+    } catch (error: any) {
+      console.error('Error fetching icons:', error);
       toast({
-        title: 'Icon deleted',
-        description: 'The profile icon has been removed'
+        title: 'Error',
+        description: `Failed to load profile icons: ${error.message}`,
+        variant: 'destructive'
       });
-
-      fetchIcons();
-    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const toggleIconStatus = async (icon: ProfileIcon) => {
+    try {
+      const { error } = await supabase
+        .from('profile_icons')
+        .update({ is_active: !icon.is_active })
+        .eq('id', icon.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setIcons(icons.map(i => 
+        i.id === icon.id 
+          ? { ...i, is_active: !i.is_active } 
+          : i
+      ));
+      
+      toast({
+        title: 'Success',
+        description: `Icon "${icon.name}" ${icon.is_active ? 'deactivated' : 'activated'}.`
+      });
+    } catch (error: any) {
+      console.error('Error updating icon status:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to update icon status: ${error.message}`,
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  const deleteIcon = async (icon: ProfileIcon) => {
+    if (!confirm(`Are you sure you want to delete the icon "${icon.name}"?`)) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profile_icons')
+        .delete()
+        .eq('id', icon.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setIcons(icons.filter(i => i.id !== icon.id));
+      
+      toast({
+        title: 'Success',
+        description: `Icon "${icon.name}" has been deleted.`
+      });
+    } catch (error: any) {
       console.error('Error deleting icon:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete the icon',
+        description: `Failed to delete icon: ${error.message}`,
         variant: 'destructive'
       });
     }
   };
 
-  if (isSessionLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Icons</CardTitle>
-          <CardDescription>Loading authentication status...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center p-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Authentication Required</CardTitle>
-          <CardDescription>Please log in to manage profile icons</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-md">
-            <p className="text-red-700 dark:text-red-400">
-              You need to be logged in as an administrator to access this section.
-              Please log in again if you were logged out.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Profile Icons</CardTitle>
-            <CardDescription>Manage custom profile icons for users</CardDescription>
-          </div>
-          <Button onClick={() => setIsUploadDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Icon
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-          </div>
-        ) : icons.length === 0 ? (
-          <div className="text-center p-4 border rounded-md">
-            <p className="text-muted-foreground">No custom icons added yet</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {icons.map((icon) => (
-              <div key={icon.id} className="relative border rounded-md p-3 flex flex-col items-center">
-                <Avatar className="h-16 w-16 mb-2">
-                  <AvatarImage src={icon.icon_url} alt={icon.name} />
-                  <AvatarFallback>{icon.name.substring(0, 1).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <p className="text-sm font-medium text-center truncate w-full">{icon.name}</p>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute top-0 right-0 text-red-500 h-8 w-8"
-                  onClick={() => handleDeleteIcon(icon.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ProfileIconUploader />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Profile Icons</CardTitle>
+            <CardDescription>
+              View, activate/deactivate, or delete profile icons
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-
-      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Profile Icon</DialogTitle>
-            <DialogDescription>
-              Upload a new icon that users can select for their profiles.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="icon-name">Icon Name</Label>
-              <Input
-                id="icon-name"
-                value={newIconName}
-                onChange={(e) => setNewIconName(e.target.value)}
-                placeholder="Enter a name for this icon"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Icon Image</Label>
-              <div className="flex flex-col items-center gap-4 border rounded-md p-4">
-                {uploadingFile ? (
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage 
-                      src={URL.createObjectURL(uploadingFile)} 
-                      alt="Icon preview" 
-                    />
-                    <AvatarFallback>
-                      {newIconName ? newIconName.substring(0, 1).toUpperCase() : 'I'}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
+            ) : icons.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No profile icons found. Upload some icons to get started.
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                {icons.map(icon => (
+                  <div 
+                    key={icon.id} 
+                    className="flex items-center space-x-3 border rounded-md p-3"
+                  >
+                    <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden border bg-background">
+                      <img 
+                        src={icon.icon_url} 
+                        alt={icon.name} 
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWltYWdlLW9mZiI+PHBhdGggZD0iTTE4LjM2OSA1LjYzMUwzLjYzMSAyMC4zNjlBMiAyIDAgMSAxIDMuNjMxIDEuNjMxTDE4LjM2OSAxNi4zNjlBMiAyIDAgMSAxIDE4LjM2OSAxLjYzMSIvPjwvc3ZnPg==';
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{icon.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {icon.is_active ? (
+                          <span className="flex items-center text-green-600">
+                            <Check className="w-3 h-3 mr-1" /> Active
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-red-600">
+                            <X className="w-3 h-3 mr-1" /> Inactive
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <Button
+                        variant={icon.is_active ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => toggleIconStatus(icon)}
+                      >
+                        {icon.is_active ? 'Deactivate' : 'Activate'}
+                      </Button>
+                      
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => deleteIcon(icon)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
-                <Label 
-                  htmlFor="icon-upload" 
-                  className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                >
-                  {uploadingFile ? 'Change Image' : 'Upload Image'}
-                </Label>
-                <Input 
-                  id="icon-upload" 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG or GIF. Max 500KB.
-                </p>
-              </div>
-            </div>
-            {uploadProgress > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-1">
-                <div 
-                  className="bg-primary h-1 rounded-full transition-all duration-300" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
+                ))}
               </div>
             )}
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsUploadDialogOpen(false)}
-              disabled={isUploading}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleIconUpload}
-              disabled={isUploading || !uploadingFile || !newIconName.trim()}
-            >
-              {isUploading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Save Icon
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Button onClick={() => fetchIcons()} variant="outline">
+        <RefreshCw className="mr-2 h-4 w-4" />
+        Refresh Icons
+      </Button>
+    </div>
   );
 };
 
