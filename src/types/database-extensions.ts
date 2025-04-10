@@ -104,7 +104,7 @@ export interface Database extends OriginalDatabase {
           clicks?: number;
           ctr?: number;
         };
-      };
+      }
     };
     Views: OriginalDatabase['public']['Views'];
     Functions: {
