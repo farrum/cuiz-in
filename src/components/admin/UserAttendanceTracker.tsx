@@ -26,17 +26,17 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Check, 
   ChevronLeft, 
   ChevronRight, 
   Download, 
   Loader2, 
   User, 
-  X 
+  X,
+  AlertCircle
 } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDate } from 'date-fns';
-import { ExtendedDatabase } from '@/types/database-extensions';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDate, parseISO } from 'date-fns';
 
 interface Attendance {
   user_id: string;
@@ -44,7 +44,6 @@ interface Attendance {
   dates: Record<string, boolean>;
 }
 
-// Define type for attendance record from database
 interface AttendanceRecord {
   user_id: string;
   username: string;
@@ -62,16 +61,11 @@ const UserAttendanceTracker: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [userHistory, setUserHistory] = useState<Record<string, Record<string, boolean>>>({});
   const [userHistoryLoading, setUserHistoryLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  useEffect(() => {
-    if (users.length > 0) {
-      fetchAttendanceData();
-    }
-  }, [users, currentMonth]);
 
   useEffect(() => {
     // Get all days in the current month
@@ -80,9 +74,15 @@ const UserAttendanceTracker: React.FC = () => {
       end: endOfMonth(currentMonth)
     });
     setDaysInMonth(days);
-  }, [currentMonth]);
+    
+    if (users.length > 0) {
+      fetchAttendanceData();
+    }
+  }, [users, currentMonth]);
 
   const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const { data: usersData, error } = await supabase
         .from('profiles')
@@ -92,16 +92,23 @@ const UserAttendanceTracker: React.FC = () => {
       if (error) throw error;
       
       if (usersData) {
-        setUsers(usersData);
         console.log("Fetched users:", usersData.length);
+        setUsers(usersData);
+      } else {
+        console.log("No users found");
+        setUsers([]);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setError('Failed to load users. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchAttendanceData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
@@ -117,24 +124,22 @@ const UserAttendanceTracker: React.FC = () => {
       if (error) throw error;
       
       console.log(`Fetched ${attendanceData?.length || 0} attendance records`);
+      console.log("Attendance data sample:", attendanceData?.[0]);
       
       // Process attendance data by user
       const attendanceByUser: Record<string, Record<string, boolean>> = {};
       
       // Initialize attendance data for all users first
       users.forEach(user => {
-        if (!attendanceByUser[user.id]) {
-          attendanceByUser[user.id] = {};
-        }
+        attendanceByUser[user.id] = {};
       });
       
       // Fill in attendance records where they exist
-      if (attendanceData) {
+      if (attendanceData && attendanceData.length > 0) {
         attendanceData.forEach((record) => {
-          if (!attendanceByUser[record.user_id]) {
-            attendanceByUser[record.user_id] = {};
+          if (record.user_id && record.attendance_date) {
+            attendanceByUser[record.user_id][record.attendance_date] = true;
           }
-          attendanceByUser[record.user_id][record.attendance_date] = true;
         });
       }
       
@@ -149,6 +154,7 @@ const UserAttendanceTracker: React.FC = () => {
       console.log("Processed attendance data:", formattedAttendance.length);
     } catch (error) {
       console.error('Error fetching attendance data:', error);
+      setError('Failed to load attendance data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -156,6 +162,7 @@ const UserAttendanceTracker: React.FC = () => {
 
   const fetchUserHistory = async (userId: string) => {
     setUserHistoryLoading(true);
+    setError(null);
     try {
       console.log(`Fetching attendance history for user: ${userId}`);
       
@@ -163,18 +170,20 @@ const UserAttendanceTracker: React.FC = () => {
         .from('user_attendance')
         .select('attendance_date, login_time')
         .eq('user_id', userId)
-        .order('attendance_date', { ascending: false })
-        .limit(90); // Get last 3 months
+        .order('attendance_date', { ascending: false });
         
       if (error) throw error;
       
       console.log(`Fetched ${historyData?.length || 0} history records for user`);
+      console.log("History data sample:", historyData?.[0]);
       
       const userAttendanceHistory: Record<string, boolean> = {};
       
-      if (historyData) {
+      if (historyData && historyData.length > 0) {
         historyData.forEach((record) => {
-          userAttendanceHistory[record.attendance_date] = true;
+          if (record.attendance_date) {
+            userAttendanceHistory[record.attendance_date] = true;
+          }
         });
       }
       
@@ -186,6 +195,7 @@ const UserAttendanceTracker: React.FC = () => {
       setSelectedUser(userId);
     } catch (error) {
       console.error('Error fetching user history:', error);
+      setError('Failed to load user history. Please try again.');
     } finally {
       setUserHistoryLoading(false);
     }
@@ -235,6 +245,23 @@ const UserAttendanceTracker: React.FC = () => {
     a.click();
     document.body.removeChild(a);
   };
+  
+  const getLastLoginDate = (userId: string): string => {
+    if (!userHistory[userId] || Object.keys(userHistory[userId]).length === 0) {
+      return 'Never';
+    }
+    
+    const dates = Object.keys(userHistory[userId]).sort().reverse();
+    if (dates.length > 0) {
+      try {
+        return format(parseISO(dates[0]), 'dd MMM yyyy');
+      } catch (err) {
+        console.error('Date parsing error:', err);
+        return dates[0];
+      }
+    }
+    return 'Never';
+  };
 
   return (
     <Card className="max-w-full overflow-hidden">
@@ -242,7 +269,7 @@ const UserAttendanceTracker: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="flex items-center">
-              <Calendar className="mr-2 h-6 w-6" /> 
+              <CalendarIcon className="mr-2 h-6 w-6" /> 
               User Attendance Tracker
             </CardTitle>
             <CardDescription>
@@ -277,6 +304,7 @@ const UserAttendanceTracker: React.FC = () => {
             variant="outline" 
             size="sm" 
             onClick={exportAttendance}
+            disabled={attendance.length === 0 || loading}
           >
             <Download className="mr-2 h-4 w-4" />
             Export CSV
@@ -284,6 +312,13 @@ const UserAttendanceTracker: React.FC = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-950 dark:text-red-400">
+            <AlertCircle className="flex-shrink-0 inline w-4 h-4 mr-2" />
+            <span>{error}</span>
+          </div>
+        )}
+        
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -338,8 +373,9 @@ const UserAttendanceTracker: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Calendar className="h-16 w-16 mb-4" strokeWidth={1} />
-                  <p>No attendance data found for this month</p>
+                  <CalendarIcon className="h-16 w-16 mb-4" strokeWidth={1} />
+                  <p className="text-lg font-medium">No attendance data found for this month</p>
+                  <p className="text-sm text-muted-foreground mt-1">Select a different month or check your database</p>
                 </div>
               )}
             </TabsContent>
@@ -375,11 +411,7 @@ const UserAttendanceTracker: React.FC = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Last Login</span>
                           <span className="text-sm font-medium">
-                            {userHistory[selectedUser] && 
-                             Object.keys(userHistory[selectedUser]).length > 0 ? 
-                              format(new Date(Object.keys(userHistory[selectedUser]).sort().reverse()[0]), 'dd MMM yyyy') : 
-                              'Never'
-                            }
+                            {getLastLoginDate(selectedUser)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-2">
@@ -426,7 +458,7 @@ const UserAttendanceTracker: React.FC = () => {
                                 .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
                                 .map(date => (
                                   <TableRow key={date}>
-                                    <TableCell>{format(new Date(date), 'dd MMM yyyy')}</TableCell>
+                                    <TableCell>{format(parseISO(date), 'dd MMM yyyy')}</TableCell>
                                     <TableCell>
                                       <div className="flex items-center">
                                         <Check className="h-4 w-4 mr-1 text-green-600" />
@@ -440,15 +472,17 @@ const UserAttendanceTracker: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                        <Calendar className="h-16 w-16 mb-4" strokeWidth={1} />
-                        <p>No login history found for this user</p>
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border rounded-md">
+                        <CalendarIcon className="h-16 w-16 mb-4" strokeWidth={1} />
+                        <p className="text-lg font-medium">No login history found for this user</p>
+                        <p className="text-sm text-muted-foreground mt-1">The user has not logged in yet</p>
                       </div>
                     )
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border rounded-md">
                       <User className="h-16 w-16 mb-4" strokeWidth={1} />
-                      <p>Select a user to view their attendance history</p>
+                      <p className="text-lg font-medium">Select a user to view their attendance history</p>
+                      <p className="text-sm text-muted-foreground mt-1">Choose a user from the dropdown menu</p>
                     </div>
                   )}
                 </div>
