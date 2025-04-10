@@ -1,5 +1,5 @@
 
-import { syncLocalStorageToSupabase } from '@/integrations/supabase/client';
+import { fetchAllAppData, syncLocalStorageToSupabase } from '@/integrations/supabase/client';
 import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
 
 // Configuration for sync intervals
@@ -71,8 +71,13 @@ class ScheduledSyncService {
       console.log('Running scheduled sync tasks at:', new Date().toISOString());
       
       // Sync local storage to Supabase
-      await syncLocalStorageToSupabase();
-      this.lastSyncTime = new Date();
+      const syncResult = await syncLocalStorageToSupabase();
+      if (syncResult === true) {
+        this.lastSyncTime = new Date();
+        console.log('Successfully synced data to Supabase');
+      } else {
+        console.log('Sync to Supabase failed or was incomplete');
+      }
       
       // Check and suspend inactive accounts
       await checkAndSuspendInactiveAccounts();

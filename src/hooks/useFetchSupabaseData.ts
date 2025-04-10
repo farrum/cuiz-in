@@ -18,7 +18,7 @@ export const useFetchSupabaseData = (autoFetch = true) => {
     try {
       const success = await fetchAllAppData();
       
-      if (success) {
+      if (success === true) {
         setLastFetched(new Date());
         
         toast({
@@ -49,7 +49,7 @@ export const useFetchSupabaseData = (autoFetch = true) => {
     try {
       const success = await syncLocalStorageToSupabase();
       
-      if (success) {
+      if (success === true) {
         setLastSynced(new Date());
         
         toast({
