@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, History, Eye, Lock, Unlock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { ExtendedDatabase } from '@/types/database-extensions';
 
 interface AdSlotVersion {
   id: string;
@@ -61,7 +61,7 @@ const AdSlotVersions: React.FC<AdSlotVersionsProps> = ({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('ad_slot_versions')
+        .from('ad_slot_versions' as keyof ExtendedDatabase['public']['Tables'])
         .select('*')
         .eq('slot_id', slotId)
         .order('version_number', { ascending: false });
@@ -71,9 +71,9 @@ const AdSlotVersions: React.FC<AdSlotVersionsProps> = ({
       }
       
       if (data) {
-        setVersions(data);
+        setVersions(data as unknown as AdSlotVersion[]);
         // Fetch performance data for each version
-        await Promise.all(data.map(version => fetchPerformanceData(version.id)));
+        await Promise.all(data.map((version: any) => fetchPerformanceData(version.id)));
       }
     } catch (error) {
       console.error('Error fetching versions:', error);
@@ -90,7 +90,7 @@ const AdSlotVersions: React.FC<AdSlotVersionsProps> = ({
   const fetchPerformanceData = async (versionId: string) => {
     try {
       const { data, error } = await supabase
-        .from('ad_version_performance')
+        .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
         .select('*')
         .eq('version_id', versionId)
         .single();

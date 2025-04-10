@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -36,6 +35,7 @@ import {
   X 
 } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDate } from 'date-fns';
+import { ExtendedDatabase } from '@/types/database-extensions';
 
 interface Attendance {
   user_id: string;
@@ -96,7 +96,7 @@ const UserAttendanceTracker: React.FC = () => {
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
       
       const { data: attendanceData, error } = await supabase
-        .from('user_attendance')
+        .from('user_attendance' as keyof ExtendedDatabase['public']['Tables'])
         .select('user_id, username, attendance_date')
         .gte('attendance_date', startDate)
         .lte('attendance_date', endDate);
@@ -106,7 +106,7 @@ const UserAttendanceTracker: React.FC = () => {
       // Process attendance data by user
       const attendanceByUser: Record<string, Record<string, boolean>> = {};
       
-      attendanceData?.forEach(record => {
+      attendanceData?.forEach((record: any) => {
         if (!attendanceByUser[record.user_id]) {
           attendanceByUser[record.user_id] = {};
         }
@@ -131,7 +131,7 @@ const UserAttendanceTracker: React.FC = () => {
   const fetchUserHistory = async (userId: string) => {
     try {
       const { data: historyData, error } = await supabase
-        .from('user_attendance')
+        .from('user_attendance' as keyof ExtendedDatabase['public']['Tables'])
         .select('attendance_date')
         .eq('user_id', userId)
         .order('attendance_date', { ascending: false })
@@ -141,7 +141,7 @@ const UserAttendanceTracker: React.FC = () => {
       
       const userAttendanceHistory: Record<string, boolean> = {};
       
-      historyData?.forEach(record => {
+      historyData?.forEach((record: any) => {
         userAttendanceHistory[record.attendance_date] = true;
       });
       
@@ -394,7 +394,7 @@ const UserAttendanceTracker: React.FC = () => {
                                   </div>
                                 </TableCell>
                               </TableRow>
-                          ))}
+                            ))}
                         </TableBody>
                       </Table>
                     </div>

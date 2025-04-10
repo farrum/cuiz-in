@@ -11,6 +11,6 @@ export { default as QuizQuestionForm } from './QuizQuestionForm';
 export { default as TriviaImporter } from './TriviaImporter';
 
 // Export hooks
-export { useAdSlots } from './hooks/useAdSlots';
+export { useAdSlots, type AdSlot } from './hooks/useAdSlots';
 export { useAdPerformance, type AdPerformance } from './hooks/useAdPerformance';
 export { useAdSlotEditor } from './hooks/useAdSlotEditor';

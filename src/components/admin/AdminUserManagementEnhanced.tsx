@@ -1,15 +1,14 @@
-// Export components
-export { default as AdPerformanceReports } from './AdPerformanceReports';
-export { default as AdSlotCard } from './AdSlotCard';
-export { default as AdSlotGrid } from './AdSlotGrid';
-export { default as AdSlotTabs } from './AdSlotTabs';
-export { default as EditAdSlotDialog } from './EditAdSlotDialog';
-export { default as QuizManagement } from './QuizManagement';
-export { default as QuizQuestionForm } from './QuizQuestionForm';
-export { default as TriviaImporter } from './TriviaImporter';
-export { default as AdSlotVersions } from './AdSlotVersions';
+import React from 'react';
+import { AdPerformanceReports, AdSlotCard, AdSlotGrid, AdSlotTabs, EditAdSlotDialog, QuizManagement, QuizQuestionForm, TriviaImporter, AdSlotVersions } from './ad-management';
+import { useAdSlots, useAdPerformance, useAdSlotEditor } from './ad-management';
 
-// Export hooks
-export { useAdSlots } from './hooks/useAdSlots';
-export { useAdPerformance, type AdPerformance } from './hooks/useAdPerformance';
-export { useAdSlotEditor } from './hooks/useAdSlotEditor';
+const AdminUserManagementEnhanced: React.FC = () => {
+  return (
+    <div>
+      <h2>User Management Enhanced</h2>
+      {/* Component content here */}
+    </div>
+  );
+};
+
+export default AdminUserManagementEnhanced;

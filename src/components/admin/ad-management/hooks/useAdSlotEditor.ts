@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AdSlot } from './useAdSlots';
+import { ExtendedDatabase } from '@/types/database-extensions';
 
 export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[]) => void) => {
   const { toast } = useToast();
@@ -109,7 +110,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           
           // Create first version entry
           await supabase
-            .from('ad_slot_versions')
+            .from('ad_slot_versions' as keyof ExtendedDatabase['public']['Tables'])
             .insert({
               slot_id: newSlot.id,
               name: newSlot.name,
@@ -123,7 +124,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             
           // Create initial performance tracker entry
           await supabase
-            .from('ad_version_performance')
+            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
             .insert({
               version_id: newSlot.id, // Using the same ID initially
               slot_id: newSlot.id,
@@ -154,35 +155,35 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         
         // Create a new version in ad_slot_versions
         const { data: versionData, error: versionError } = await supabase
-          .from('ad_slot_versions')
-          .insert({
-            slot_id: values.id,
-            name: values.name,
-            position: values.position,
-            code: values.code,
-            active: values.active,
-            version_number: newVersionNumber,
-            created_by: username,
-            version_notes: versionNotes || `Version ${newVersionNumber}`
-          })
-          .select('id')
-          .single();
+            .from('ad_slot_versions' as keyof ExtendedDatabase['public']['Tables'])
+            .insert({
+              slot_id: values.id,
+              name: values.name,
+              position: values.position,
+              code: values.code,
+              active: values.active,
+              version_number: newVersionNumber,
+              created_by: username,
+              version_notes: versionNotes || `Version ${newVersionNumber}`
+            })
+            .select('id')
+            .single();
           
         if (versionError) throw versionError;
         
         // Close previous version performance tracking
         await supabase
-          .from('ad_version_performance')
-          .update({
-            end_date: now
-          })
-          .eq('slot_id', values.id)
-          .is('end_date', null);
+            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
+            .update({
+              end_date: now
+            })
+            .eq('slot_id', values.id)
+            .is('end_date', null);
           
         // Create new performance tracker entry
         if (versionData) {
           await supabase
-            .from('ad_version_performance')
+            .from('ad_version_performance' as keyof ExtendedDatabase['public']['Tables'])
             .insert({
               version_id: versionData.id,
               slot_id: values.id,
