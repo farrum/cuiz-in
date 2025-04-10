@@ -20,6 +20,24 @@ interface AnsweredQuestion {
   correct: boolean;
 }
 
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: any; // Could be array, object, or string
+  correct_answer: string;
+  explanation: string;
+  category: string;
+}
+
+interface QuizAnswer {
+  id: string;
+  question_id: string;
+  selected_answer: string;
+  correct: boolean;
+  answered_at: string;
+  quiz_questions: QuizQuestion;
+}
+
 interface RecentlyAnsweredQuestionsProps {
   userId: string;
   limit?: number;
@@ -69,18 +87,18 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
       }
 
       // Transform data to AnsweredQuestion format
-      const formattedData: AnsweredQuestion[] = data.map(item => {
+      const formattedData: AnsweredQuestion[] = data.map((item: QuizAnswer) => {
         // Convert options to string array regardless of what format it comes in
         let parsedOptions: string[] = [];
         
-        if (item.quiz_questions && item.quiz_questions.options) {
+        if (item.quiz_questions && typeof item.quiz_questions === 'object') {
           // Handle different possible formats
           const options = item.quiz_questions.options;
           
           if (Array.isArray(options)) {
             // If it's already an array, make sure all elements are strings
             parsedOptions = options.map(opt => String(opt));
-          } else if (typeof options === 'object') {
+          } else if (typeof options === 'object' && options !== null) {
             // If it's an object, extract values
             parsedOptions = Object.values(options).map(opt => String(opt));
           } else if (typeof options === 'string') {
@@ -89,7 +107,7 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
               const parsed = JSON.parse(options);
               if (Array.isArray(parsed)) {
                 parsedOptions = parsed.map(opt => String(opt));
-              } else if (typeof parsed === 'object') {
+              } else if (typeof parsed === 'object' && parsed !== null) {
                 parsedOptions = Object.values(parsed).map(opt => String(opt));
               }
             } catch {
@@ -101,13 +119,17 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
 
         return {
           id: item.id,
-          question: item.quiz_questions ? item.quiz_questions.question || 'Question not available' : 'Question not available',
+          question: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
+            item.quiz_questions.question || 'Question not available' : 'Question not available',
           options: parsedOptions,
-          correct_answer: item.quiz_questions ? item.quiz_questions.correct_answer || '' : '',
+          correct_answer: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
+            item.quiz_questions.correct_answer || '' : '',
           selected_answer: item.selected_answer,
           answered_at: item.answered_at,
-          explanation: item.quiz_questions ? item.quiz_questions.explanation || 'No explanation available' : 'No explanation available',
-          category: item.quiz_questions ? item.quiz_questions.category || 'General' : 'General',
+          explanation: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
+            item.quiz_questions.explanation || 'No explanation available' : 'No explanation available',
+          category: item.quiz_questions && typeof item.quiz_questions === 'object' ? 
+            item.quiz_questions.category || 'General' : 'General',
           correct: item.correct
         };
       });
