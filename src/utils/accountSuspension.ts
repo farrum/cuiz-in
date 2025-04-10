@@ -5,18 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
   try {
-    // Get date from 5 days ago
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    const fiveDaysAgoStr = fiveDaysAgo.toISOString();
+    console.log('Starting account suspension check...');
     
-    console.log('Checking for accounts inactive since:', fiveDaysAgoStr);
-    
-    // First, get all users from profiles
+    // Get all active profiles
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, username')
-      .eq('suspended', false); // Only check active accounts
+      .eq('suspended', false);
       
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -28,39 +23,32 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
       return;
     }
     
-    // For each profile, check their last login time
+    console.log(`Checking ${profiles.length} active profiles for inactivity...`);
+    
+    // Check each profile to see if they've been active in the last 5 days
     for (const profile of profiles) {
-      const { data: loginLogs, error: logsError } = await supabase
-        .from('login_logs')
-        .select('login_time')
-        .eq('username', profile.username)
-        .order('login_time', { ascending: false })
-        .limit(1);
+      // Use the database function to check if the user has been active in the last 5 days
+      const { data, error } = await supabase
+        .rpc('has_user_been_active_in_days', {
+          p_user_id: profile.id,
+          p_days: 5
+        });
         
-      if (logsError) {
-        console.error(`Error fetching login logs for ${profile.username}:`, logsError);
+      if (error) {
+        console.error(`Error checking activity for ${profile.username}:`, error);
         continue;
       }
       
-      // Only suspend if there are no login records or the last login was more than 5 days ago
-      if (!loginLogs || loginLogs.length === 0) {
-        console.log(`Suspending account for ${profile.username} due to no login records`);
+      const isActive = data;
+      
+      if (!isActive) {
+        console.log(`Suspending account for ${profile.username} due to inactivity for more than 5 days`);
         await suspendUserAccount(profile.id);
         
         // Also update user_referrals table to keep status in sync
         await updateReferralStatus(profile.id, 'suspended');
       } else {
-        const lastLoginDate = new Date(loginLogs[0].login_time);
-        
-        if (lastLoginDate < fiveDaysAgo) {
-          console.log(`Suspending account for ${profile.username} due to inactivity since ${lastLoginDate.toISOString()}`);
-          await suspendUserAccount(profile.id);
-          
-          // Also update user_referrals table to keep status in sync
-          await updateReferralStatus(profile.id, 'suspended');
-        } else {
-          console.log(`User ${profile.username} is active, last login: ${lastLoginDate.toISOString()}`);
-        }
+        console.log(`User ${profile.username} has been active in the last 5 days - keeping active`);
       }
     }
     
@@ -220,7 +208,7 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
       .from('profiles')
       .select('suspended')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     if (profileError || !profile) {
       console.error(`Error checking profile status for ${userId}:`, profileError);
@@ -232,43 +220,19 @@ export const isUserActive = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Get date from 5 days ago
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    
-    // Get the user's username
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', userId)
-      .single();
+    // Check if they've been active in the last 5 days
+    const { data, error } = await supabase
+      .rpc('has_user_been_active_in_days', {
+        p_user_id: userId,
+        p_days: 5
+      });
       
-    if (userError || !userData) {
-      console.error(`Error getting username for ${userId}:`, userError);
+    if (error) {
+      console.error(`Error checking activity for ${userId}:`, error);
       return false;
     }
     
-    // Check their last login time
-    const { data: loginLogs, error: logsError } = await supabase
-      .from('login_logs')
-      .select('login_time')
-      .eq('username', userData.username)
-      .order('login_time', { ascending: false })
-      .limit(1);
-      
-    if (logsError) {
-      console.error(`Error fetching login logs for ${userData.username}:`, logsError);
-      return false;
-    }
-    
-    // If no login records, user is not active
-    if (!loginLogs || loginLogs.length === 0) {
-      return false;
-    }
-    
-    // Check if last login was within the last 5 days
-    const lastLoginDate = new Date(loginLogs[0].login_time);
-    return lastLoginDate >= fiveDaysAgo;
+    return !!data;
   } catch (error) {
     console.error('Error in isUserActive:', error);
     return false;

@@ -59,6 +59,53 @@ export type Database = {
           },
         ]
       }
+      ad_slot_versions: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          position: string
+          slot_id: string
+          version_notes: string | null
+          version_number: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          position: string
+          slot_id: string
+          version_notes?: string | null
+          version_number: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          position?: string
+          slot_id?: string
+          version_notes?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_slot_versions_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_slots: {
         Row: {
           active: boolean | null
@@ -68,6 +115,7 @@ export type Database = {
           last_updated: string | null
           name: string
           position: string
+          version_number: number | null
         }
         Insert: {
           active?: boolean | null
@@ -77,6 +125,7 @@ export type Database = {
           last_updated?: string | null
           name: string
           position: string
+          version_number?: number | null
         }
         Update: {
           active?: boolean | null
@@ -86,8 +135,57 @@ export type Database = {
           last_updated?: string | null
           name?: string
           position?: string
+          version_number?: number | null
         }
         Relationships: []
+      }
+      ad_version_performance: {
+        Row: {
+          clicks: number | null
+          ctr: number | null
+          end_date: string | null
+          id: string
+          slot_id: string
+          start_date: string
+          version_id: string
+          views: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          ctr?: number | null
+          end_date?: string | null
+          id?: string
+          slot_id: string
+          start_date?: string
+          version_id: string
+          views?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          ctr?: number | null
+          end_date?: string | null
+          id?: string
+          slot_id?: string
+          start_date?: string
+          version_id?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_version_performance_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_version_performance_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slot_versions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ad_views: {
         Row: {
@@ -635,6 +733,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_attendance: {
+        Row: {
+          attendance_date: string
+          created_at: string
+          id: string
+          login_time: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          attendance_date: string
+          created_at?: string
+          id?: string
+          login_time: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          attendance_date?: string
+          created_at?: string
+          id?: string
+          login_time?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       user_challenge_progress: {
         Row: {
           challenge_id: string
@@ -789,6 +914,10 @@ export type Database = {
       admin_insert_profile_icon: {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
+      }
+      has_user_been_active_in_days: {
+        Args: { p_user_id: string; p_days: number }
+        Returns: boolean
       }
     }
     Enums: {

@@ -27,8 +27,9 @@ import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
+import UserAttendanceTracker from '@/components/admin/UserAttendanceTracker';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
+import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
@@ -39,6 +40,7 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
   const [activeQuizTab, setActiveQuizTab] = useState<string>('questions');
   const [adminName, setAdminName] = useState<string>('Admin');
+  const [activeUserTab, setActiveUserTab] = useState<string>('management');
 
   useEffect(() => {
     const fetchAdminInfo = async () => {
@@ -63,7 +65,16 @@ const AdminPage: React.FC = () => {
     const path = location.pathname;
     let tab = 'users'; // default tab
     
-    if (path.includes('/users')) tab = 'users';
+    if (path.includes('/users')) {
+      tab = 'users';
+      
+      // Set active users sub-tab based on URL
+      if (path.includes('/users/attendance')) {
+        setActiveUserTab('attendance');
+      } else {
+        setActiveUserTab('management');
+      }
+    }
     else if (path.includes('/logs')) tab = 'logs';
     else if (path.includes('/ads')) tab = 'ads';
     else if (path.includes('/payments')) tab = 'payments';
@@ -98,6 +109,8 @@ const AdminPage: React.FC = () => {
     
     if (value === 'quiz') {
       navigate(`/admin/${value}/${activeQuizTab}`);
+    } else if (value === 'users') {
+      navigate(`/admin/${value}/${activeUserTab}`);
     } else {
       navigate(`/admin/${value}`);
     }
@@ -106,6 +119,11 @@ const AdminPage: React.FC = () => {
   const handleQuizTabChange = (value: string) => {
     setActiveQuizTab(value);
     navigate(`/admin/quiz/${value}`);
+  };
+  
+  const handleUserTabChange = (value: string) => {
+    setActiveUserTab(value);
+    navigate(`/admin/users/${value}`);
   };
 
   const handleLogout = async () => {
@@ -244,8 +262,27 @@ const AdminPage: React.FC = () => {
           <Separator className="my-6" />
 
           <TabsContent value="users">
-            <AdminUserManagementEnhanced />
+            <Tabs value={activeUserTab} onValueChange={handleUserTabChange} className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="management">
+                  <User className="w-4 h-4 mr-1" />
+                  User Management
+                </TabsTrigger>
+                <TabsTrigger value="attendance">
+                  <Clock className="w-4 h-4 mr-1" />
+                  Attendance Tracking
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="management">
+                <AdminUserManagementEnhanced />
+              </TabsContent>
+              <TabsContent value="attendance">
+                <UserAttendanceTracker />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
+          
           <TabsContent value="logs">
             <AdminLoginLogs />
           </TabsContent>
