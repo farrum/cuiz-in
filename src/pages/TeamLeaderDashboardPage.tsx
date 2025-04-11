@@ -370,7 +370,36 @@ const TeamLeaderDashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <DataTable 
-                  columns={memberColumns} 
+                  columns={memberColumns.map(col => {
+                    if (col.accessorKey === "id" && col.header === "Actions") {
+                      return {
+                        ...col,
+                        cell: (row: any) => (
+                          <div className="flex items-center gap-2">
+                            {row.status !== 'suspended' && (
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => requestAccountAction(row.id, 'suspend')}
+                              >
+                                Request Suspension
+                              </Button>
+                            )}
+                            {row.status === 'suspended' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => requestAccountAction(row.id, 'reactivate')}
+                              >
+                                Request Reactivation
+                              </Button>
+                            )}
+                          </div>
+                        ),
+                      };
+                    }
+                    return col;
+                  })}
                   data={teamMembers} 
                 />
               </CardContent>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -49,13 +48,15 @@ interface TeamMembersTableProps {
   isLoading: boolean;
   onStatusChange: (memberId: string, status: 'active' | 'inactive' | 'suspended') => void;
   onResetPassword?: (memberId: string) => void;
+  onRequestAction?: (memberId: string, action: 'suspend' | 'reactivate') => void;
 }
 
 const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   teamMembers,
   isLoading,
   onStatusChange,
-  onResetPassword
+  onResetPassword,
+  onRequestAction
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -65,13 +66,11 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
     return <div className="text-center py-8">Loading team members...</div>;
   }
   
-  // Calculate pagination
   const totalPages = Math.ceil(teamMembers.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, teamMembers.length);
   const currentMembers = teamMembers.slice(startIndex, endIndex);
   
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxPagesToShow = 5;
@@ -81,14 +80,11 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
         pageNumbers.push(i);
       }
     } else {
-      // Always show first page
       pageNumbers.push(1);
       
-      // Calculate middle pages to show
       let startPage = Math.max(2, currentPage - 1);
       let endPage = Math.min(totalPages - 1, currentPage + 1);
       
-      // Adjust for edge cases
       if (currentPage <= 2) {
         endPage = Math.min(4, totalPages - 1);
       }
@@ -96,22 +92,18 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
         startPage = Math.max(2, totalPages - 3);
       }
       
-      // Add ellipsis if needed
       if (startPage > 2) {
         pageNumbers.push('ellipsis1');
       }
       
-      // Add middle pages
       for (let i = startPage; i <= endPage; i++) {
         pageNumbers.push(i);
       }
       
-      // Add ellipsis if needed
       if (endPage < totalPages - 1) {
         pageNumbers.push('ellipsis2');
       }
       
-      // Always show last page
       if (totalPages > 1) {
         pageNumbers.push(totalPages);
       }
@@ -127,7 +119,7 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   
   const handlePageSizeChange = (value: string) => {
     setPageSize(Number(value));
-    setCurrentPage(1); // Reset to first page when changing page size
+    setCurrentPage(1);
   };
 
   const handleResetPassword = (userId: string) => {
@@ -143,6 +135,12 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
 
   const cancelResetPassword = () => {
     setPasswordResetUserId(null);
+  };
+
+  const handleRequestAction = (memberId: string, action: 'suspend' | 'reactivate') => {
+    if (onRequestAction) {
+      onRequestAction(memberId, action);
+    }
   };
 
   return (
@@ -198,29 +196,54 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {member.status !== 'active' && (
+                        {onRequestAction ? (
+                          <>
+                            {member.status !== 'suspended' && (
+                              <DropdownMenuItem 
+                                onClick={() => handleRequestAction(member.id, 'suspend')}
+                                className="text-red-600"
+                              >
+                                Request Suspension
+                              </DropdownMenuItem>
+                            )}
+                            {member.status === 'suspended' && (
+                              <DropdownMenuItem 
+                                onClick={() => handleRequestAction(member.id, 'reactivate')}
+                                className="text-green-600"
+                              >
+                                Request Reactivation
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {member.status !== 'active' && (
+                              <DropdownMenuItem 
+                                onClick={() => onStatusChange(member.id, 'active')}
+                                className="text-green-600"
+                              >
+                                Activate
+                              </DropdownMenuItem>
+                            )}
+                            {member.status !== 'suspended' && (
+                              <DropdownMenuItem 
+                                onClick={() => onStatusChange(member.id, 'suspended')}
+                                className="text-red-600"
+                              >
+                                Suspend
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                        {onResetPassword && (
                           <DropdownMenuItem 
-                            onClick={() => onStatusChange(member.id, 'active')}
-                            className="text-green-600"
+                            onClick={() => handleResetPassword(member.id)}
+                            className="flex items-center"
                           >
-                            Activate
+                            <Key className="mr-2 h-4 w-4" />
+                            Reset Password
                           </DropdownMenuItem>
                         )}
-                        {member.status !== 'suspended' && (
-                          <DropdownMenuItem 
-                            onClick={() => onStatusChange(member.id, 'suspended')}
-                            className="text-red-600"
-                          >
-                            Suspend
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => handleResetPassword(member.id)}
-                          className="flex items-center"
-                        >
-                          <Key className="mr-2 h-4 w-4" />
-                          Reset Password
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -286,7 +309,6 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
         </div>
       )}
 
-      {/* Password Reset Confirmation Dialog */}
       <AlertDialog open={!!passwordResetUserId} onOpenChange={() => setPasswordResetUserId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
