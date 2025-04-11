@@ -115,7 +115,8 @@ export const setupRealtimeSubscriptions = () => {
       }, (payload) => {
         // Check if this user role update is relevant to the current user
         const userId = localStorage.getItem('quiz_app_user_id');
-        if (userId && payload.new && payload.new.user_id === userId) {
+        // Fix: Check if payload.new exists and has user_id property before accessing it
+        if (userId && payload.new && 'user_id' in payload.new && payload.new.user_id === userId) {
           console.log('User roles updated:', payload.new);
           window.dispatchEvent(new CustomEvent('userRoleUpdated', { 
             detail: [payload.new]
