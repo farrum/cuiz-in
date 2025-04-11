@@ -21,7 +21,7 @@ const adContentCache = new Map<string, {
 }>();
 
 interface AdvertisementBannerProps {
-  position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
+  position?: 'top' | 'bottom' | 'left' | 'right' | 'middle' | 'sidebar';
   className?: string;
   size?: 'small' | 'medium' | 'large';
   slotId?: string;
@@ -122,7 +122,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
             timestamp: currentTime
           });
           
-          console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name})`);
+          console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name}) - position: ${position}`);
           setAdDebug(`Local ad: ${selectedAd.name}`);
           setAdContent(selectedAd.code);
           setAdId(selectedAd.id);
@@ -168,7 +168,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           return;
         }
         
-        console.log(`Ad updated from server: ${selectedAd.id} (${selectedAd.name})`);
+        console.log(`Ad updated from server: ${selectedAd.id} (${selectedAd.name}) - position: ${position}`);
         setAdDebug(`Server ad: ${selectedAd.name}`);
         
         setAdContent(selectedAd.code);
@@ -322,6 +322,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         return 'mr-6';
       case 'right':
         return 'ml-6';
+      case 'sidebar':
+        return 'mx-2 my-4';
       case 'middle':
         return 'my-6';
       default:
@@ -339,6 +341,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       data-ad-section={pageSection || position}
       data-ad-version={adVersion}
       data-instance-id={instanceId.current.slice(0,8)}
+      data-position={position}
     >
       {!adLoaded ? (
         <div className="flex items-center justify-center space-x-2">
@@ -354,7 +357,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           {process.env.NODE_ENV === 'development' && (
             <div className="mb-2 text-center">
               {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
-              <p className="text-xs text-muted-foreground">Slot: {slotId || position} / Section: {pageSection || 'default'}</p>
+              <p className="text-xs text-muted-foreground">Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}</p>
             </div>
           )}
           <div id={containerId} dangerouslySetInnerHTML={{ __html: adContent }}></div>

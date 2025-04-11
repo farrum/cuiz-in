@@ -72,11 +72,11 @@ const AdSlotCard: React.FC<AdSlotCardProps> = ({
         {previewMode ? (
           <div className="bg-secondary/30 border border-secondary rounded-md p-3 min-h-[100px]">
             <div className="text-xs text-muted-foreground mb-2 text-center">Advertisement Preview</div>
-            <div dangerouslySetInnerHTML={{ __html: slot.code }} />
+            <div dangerouslySetInnerHTML={{ __html: slot.code || '' }} />
           </div>
         ) : (
           <div className="font-mono text-xs bg-secondary/10 p-3 rounded-md overflow-x-auto max-h-[200px]">
-            {slot.code}
+            {slot.code || 'No ad code defined'}
           </div>
         )}
         <div className="text-xs text-muted-foreground mt-2">

@@ -85,19 +85,22 @@ const AdSlotTabs: React.FC<AdSlotTabsProps> = ({
           <TabsContent key={position} value={position} className="space-y-4">
             {adSlots
               .filter(slot => slot.position === position)
-              .map(slot => (
-                <AdSlotCard
-                  key={slot.id}
-                  slot={slot}
-                  previewMode={previewMode}
-                  onToggleActive={onToggleActive}
-                  onEdit={onEdit}
-                  formatDate={formatDate}
-                  isLocked={isLocked}
-                  onViewHistory={() => handleViewHistory(slot.id)}
-                />
-              ))}
-              {adSlots.filter(slot => slot.position === position).length === 0 && (
+              .length > 0 ? (
+                adSlots
+                .filter(slot => slot.position === position)
+                .map(slot => (
+                  <AdSlotCard
+                    key={slot.id}
+                    slot={slot}
+                    previewMode={previewMode}
+                    onToggleActive={onToggleActive}
+                    onEdit={onEdit}
+                    formatDate={formatDate}
+                    isLocked={isLocked}
+                    onViewHistory={() => handleViewHistory(slot.id)}
+                  />
+                ))
+              ) : (
                 <div className="text-center p-6 text-muted-foreground">
                   No ad slots found for this position. 
                   <Button variant="link" onClick={onCreateNew} className="ml-2" disabled={isLocked}>
