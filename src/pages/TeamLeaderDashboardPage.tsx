@@ -101,8 +101,13 @@ const TeamLeaderDashboardPage = () => {
         return;
       }
       
+      // Use the correct type value based on the action
+      const notificationType = action === 'suspend' 
+        ? 'account_suspend_request' 
+        : 'account_reactivate_request';
+      
       const notificationData = {
-        type: `account_${action}_request`,
+        type: notificationType,
         message: `Team leader requested to ${action} account ${memberId}`,
         user_id: userId,
         read: false,
