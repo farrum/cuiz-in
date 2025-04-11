@@ -19,6 +19,8 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
 import { ChartContainer } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import TeamMembersTable from '@/components/admin/TeamMembersTable';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -90,11 +92,24 @@ const TeamLeaderDashboardPage = () => {
 
   const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
     try {
-      const { error } = await supabase.from('admin_notifications').insert({
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "User ID not found. Please try logging in again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const notificationData = {
         type: `account_${action}_request`,
-        message: `Team leader ${userId} has requested to ${action} account ${memberId}`,
+        message: `Team leader requested to ${action} account ${memberId}`,
+        user_id: userId,
+        read: false,
         data: { team_leader_id: userId, member_id: memberId, action }
-      });
+      };
+      
+      const { error } = await adminNotificationsApi.create(notificationData);
       
       if (error) throw error;
       
@@ -369,38 +384,11 @@ const TeamLeaderDashboardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <DataTable 
-                  columns={memberColumns.map(col => {
-                    if (col.accessorKey === "id" && col.header === "Actions") {
-                      return {
-                        ...col,
-                        cell: (row: any) => (
-                          <div className="flex items-center gap-2">
-                            {row.status !== 'suspended' && (
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => requestAccountAction(row.id, 'suspend')}
-                              >
-                                Request Suspension
-                              </Button>
-                            )}
-                            {row.status === 'suspended' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => requestAccountAction(row.id, 'reactivate')}
-                              >
-                                Request Reactivation
-                              </Button>
-                            )}
-                          </div>
-                        ),
-                      };
-                    }
-                    return col;
-                  })}
-                  data={teamMembers} 
+                <TeamMembersTable 
+                  teamMembers={teamMembers} 
+                  isLoading={membersLoading} 
+                  onStatusChange={handleStatusChange}
+                  onRequestAction={requestAccountAction}
                 />
               </CardContent>
             </Card>

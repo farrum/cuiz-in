@@ -66,20 +66,21 @@ export const adminNotificationsApi = {
     try {
       console.log('Creating new notification:', notification);
       // Use raw query with explicit type casting to avoid TypeScript errors
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('admin_notifications')
-        .insert([notification]) as unknown as { error: any };
+        .insert([notification])
+        .select() as unknown as { data: any, error: any };
         
       if (error) {
         console.error('Error creating notification:', error);
       } else {
-        console.log('Notification created successfully');
+        console.log('Notification created successfully:', data);
       }
       
-      return { error };
+      return { data, error };
     } catch (err) {
       console.error('Error creating notification:', err);
-      return { error: err };
+      return { data: null, error: err };
     }
   },
 
