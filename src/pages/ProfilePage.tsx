@@ -229,8 +229,8 @@ const ProfilePage: React.FC = () => {
     console.log("Rendering profile avatar with:", profilePicture);
     
     if (profilePicture) {
-      if (profilePicture.startsWith('http')) {
-        // URL-based avatar (from image upload)
+      // Check if the avatar is a URL (either uploaded image or admin uploaded icon)
+      if (profilePicture.startsWith('http') || profilePicture.startsWith('data:')) {
         return (
           <Avatar className="w-20 h-20 border-4 border-primary/10">
             <AvatarImage src={profilePicture} alt={username || 'User'} />

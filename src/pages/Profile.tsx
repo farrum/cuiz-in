@@ -278,7 +278,7 @@ const Profile: React.FC = () => {
   
   const renderProfileAvatar = () => {
     if (profilePicture) {
-      if (profilePicture.startsWith('http')) {
+      if (profilePicture.startsWith('http') || profilePicture.startsWith('data:')) {
         return (
           <Avatar className="w-20 h-20 flex-shrink-0">
             <AvatarImage src={profilePicture} alt={userName} />
