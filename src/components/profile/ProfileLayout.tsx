@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
@@ -15,6 +15,10 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
   forceReloadAds,
   isSuspended = false
 }) => {
+  useEffect(() => {
+    console.log(`ProfileLayout rendered with forceReloadAds: ${forceReloadAds}`);
+  }, [forceReloadAds]);
+
   if (isSuspended) {
     return <>{children}</>;
   }
@@ -51,6 +55,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
           position="bottom" 
           slotId="profile-bottom" 
           pageSection="profile-page" 
+          className="mt-6"
         />
       </main>
       <Footer />

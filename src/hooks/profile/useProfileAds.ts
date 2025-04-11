@@ -74,6 +74,13 @@ export const useProfileAds = () => {
           
         if (!error && adSlots && isMountedRef.current) {
           console.log(`Successfully loaded ${adSlots.length} ad slots for profile page`);
+          
+          // Make sure we have sidebar and bottom ads in our slots
+          const hasBottomAd = adSlots.some(slot => slot.position === 'bottom');
+          const hasSidebarAd = adSlots.some(slot => slot.position === 'sidebar');
+          
+          console.log(`Has bottom ads: ${hasBottomAd}, Has sidebar ads: ${hasSidebarAd}`);
+          
           localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
           
           setForceReloadAds(1);

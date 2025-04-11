@@ -52,6 +52,14 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const adPositionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
   
   useScriptExecution(adContent, containerId);
+
+  // Log on initial render for debugging
+  useEffect(() => {
+    console.log(`AdvertisementBanner rendering - position: ${position}, slotId: ${slotId}, pageSection: ${pageSection}`);
+    return () => {
+      console.log(`AdvertisementBanner unmounting - position: ${position}`);
+    };
+  }, [position, slotId, pageSection]);
   
   const fetchAds = useCallback(async (force = false) => {
     if (!isMountedRef.current) return;
@@ -92,12 +100,16 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       
       if (storedAds) {
         const adSlots = JSON.parse(storedAds);
+        console.log(`Found ${adSlots.length} total ad slots in localStorage`);
+        
         const matchingAds = adSlots.filter((ad: any) => 
           ad.position === position && ad.active
         );
         
+        console.log(`Found ${matchingAds.length} matching ads for position ${position}`);
+        
         if (matchingAds.length > 0) {
-          const currentTime = Date.now(); // Fix: Using number timestamp instead of Date object
+          const currentTime = Date.now(); 
           const dayKey = new Date().toISOString().split('T')[0];
           const positionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
           const consistencyKey = `${dayKey}-${positionKey}`;
@@ -111,7 +123,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
             localStorage.setItem(`ad_index_${consistencyKey}`, index.toString());
           }
           
-          const selectedAd = matchingAds[index];
+          const selectedAd = matchingAds[index % matchingAds.length];
           
           const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
           
@@ -123,7 +135,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           });
           
           console.log(`Ad selected from localStorage: ${selectedAd.id} (${selectedAd.name}) - position: ${position}`);
-          setAdDebug(`Local ad: ${selectedAd.name}`);
+          setAdDebug(`Local ad: ${selectedAd.name} (${selectedAd.position})`);
           setAdContent(selectedAd.code);
           setAdId(selectedAd.id);
           setAdVersion(contentVersion);
@@ -135,6 +147,10 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
               trackAdImpression(selectedAd.id);
             }
           }, 300);
+          
+          return; // We found a matching ad, no need to query Supabase
+        } else {
+          console.log(`No matching ads found in localStorage for position: ${position}`);
         }
       }
       
@@ -151,6 +167,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       }
       
       if (supabaseAds && supabaseAds.length > 0 && isMountedRef.current) {
+        console.log(`Found ${supabaseAds.length} ads from Supabase for position ${position}`);
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
         
@@ -180,8 +197,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         if (selectedAd.id !== adId) {
           trackAdImpression(selectedAd.id);
         }
-      } else if (!adLoaded) {
-        console.log('No active ads found for position:', position);
+      } else {
+        console.log('No active ads found in Supabase for position:', position);
         setAdError(`No active ads for position: ${position}`);
         setAdActive(false);
       }
@@ -286,6 +303,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     return () => {
       isMountedRef.current = false;
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      if (adRefreshTimeoutRef.current) {
+        clearTimeout(adRefreshTimeoutRef.current);
+      }
     };
   }, [fetchAds, position]);
 
