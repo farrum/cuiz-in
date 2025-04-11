@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -40,7 +41,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Key, MoreHorizontal } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Key, MoreHorizontal, CheckSquare, UserCheck, UserX, Ban } from 'lucide-react';
 import { TeamMember } from '@/hooks/useTeamMembers';
 
 interface TeamMembersTableProps {
@@ -61,6 +63,11 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [bulkActionDialog, setBulkActionDialog] = useState<{
+    open: boolean;
+    action: 'activate' | 'suspend' | null;
+  }>({ open: false, action: null });
   
   if (isLoading) {
     return <div className="text-center py-8">Loading team members...</div>;
@@ -142,13 +149,88 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
       onRequestAction(memberId, action);
     }
   };
+  
+  const handleSelectMember = (memberId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedMembers([...selectedMembers, memberId]);
+    } else {
+      setSelectedMembers(selectedMembers.filter(id => id !== memberId));
+    }
+  };
+  
+  const handleSelectAllMembers = (checked: boolean) => {
+    if (checked) {
+      setSelectedMembers(currentMembers.map(member => member.id));
+    } else {
+      setSelectedMembers([]);
+    }
+  };
+  
+  const handleBulkAction = (action: 'activate' | 'suspend') => {
+    setBulkActionDialog({
+      open: true,
+      action: action
+    });
+  };
+  
+  const executeBulkAction = () => {
+    if (!bulkActionDialog.action) return;
+    
+    const status = bulkActionDialog.action === 'activate' ? 'active' : 'suspended';
+    
+    selectedMembers.forEach(memberId => {
+      onStatusChange(memberId, status as 'active' | 'inactive' | 'suspended');
+    });
+    
+    setBulkActionDialog({ open: false, action: null });
+    setSelectedMembers([]);
+  };
 
   return (
     <div className="space-y-4">
+      {selectedMembers.length > 0 && (
+        <div className="flex items-center justify-between bg-muted/30 p-2 rounded-md">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            <span>{selectedMembers.length} members selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={() => handleBulkAction('activate')}
+            >
+              <UserCheck className="h-4 w-4" />
+              Activate Selected
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex items-center gap-1 text-destructive border-destructive hover:bg-destructive/10"
+              onClick={() => handleBulkAction('suspend')}
+            >
+              <Ban className="h-4 w-4" />
+              Suspend Selected
+            </Button>
+          </div>
+        </div>
+      )}
+        
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox 
+                  checked={
+                    currentMembers.length > 0 && 
+                    selectedMembers.length === currentMembers.length
+                  }
+                  onCheckedChange={handleSelectAllMembers}
+                  aria-label="Select all members"
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>
@@ -162,13 +244,22 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
           <TableBody>
             {currentMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   No team members found
                 </TableCell>
               </TableRow>
             ) : (
               currentMembers.map((member) => (
                 <TableRow key={member.id}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedMembers.includes(member.id)}
+                      onCheckedChange={(checked) => 
+                        handleSelectMember(member.id, checked as boolean)
+                      }
+                      aria-label={`Select ${member.name}`}
+                    />
+                  </TableCell>
                   <TableCell>{member.name}</TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell>
@@ -320,6 +411,32 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelResetPassword}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmResetPassword}>Reset Password</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog 
+        open={bulkActionDialog.open} 
+        onOpenChange={(isOpen) => !isOpen && setBulkActionDialog({ open: false, action: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkActionDialog.action === 'activate' 
+                ? 'Activate Selected Members' 
+                : 'Suspend Selected Members'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkActionDialog.action === 'activate' 
+                ? 'Are you sure you want to activate the selected members?' 
+                : 'Are you sure you want to suspend the selected members? They will not be able to access the system until reactivated.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeBulkAction}>
+              {bulkActionDialog.action === 'activate' ? 'Activate' : 'Suspend'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
