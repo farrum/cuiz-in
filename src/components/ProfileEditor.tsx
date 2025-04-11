@@ -55,6 +55,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   // Check for a valid session or localStorage auth when the component mounts
   useEffect(() => {
     console.log("Checking auth in ProfileEditor for userId:", userId);
+    console.log("Current profile picture is:", profilePicture);
     
     // This username check is important - if we have a username, we're authenticated
     if (localStorage.getItem(STORAGE_KEYS.USER_NAME)) {
@@ -85,18 +86,20 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     };
     
     checkAuth();
-  }, [userId]);
+  }, [userId, profilePicture]);
 
-  // Update form values when props change
+  // Update form values and selected avatar when props change
   useEffect(() => {
     form.reset({
       displayName: userName,
       upiId: userUpi,
     });
     setSelectedAvatar(profilePicture || '');
+    console.log("ProfileEditor updated with profile picture:", profilePicture);
   }, [userName, userUpi, profilePicture, form]);
 
   const handleAvatarChange = (avatar: string) => {
+    console.log("Avatar changed to:", avatar);
     setSelectedAvatar(avatar);
   };
 

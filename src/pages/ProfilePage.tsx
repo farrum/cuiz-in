@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserRound } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ const ProfilePage: React.FC = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [userUpi, setUserUpi] = useState<string>('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [profilePicture, setProfilePicture] = useState<string>('');
   const [suspended, setSuspended] = useState(false);
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const { isAuthenticated, userRole } = useAuthCheck();
@@ -51,7 +54,7 @@ const ProfilePage: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, suspended, upi_id')
+          .select('username, suspended, upi_id, profile_picture, display_name')
           .eq('id', storedUserId)
           .single();
           
@@ -60,9 +63,25 @@ const ProfilePage: React.FC = () => {
         }
         
         if (data && isMountedRef.current) {
-          setUsername(data.username);
+          // Set username from display_name if available, otherwise use username
+          setUsername(data.display_name || data.username);
           setSuspended(data.suspended);
           setUserUpi(data.upi_id || '');
+          
+          // Set profile picture
+          if (data.profile_picture) {
+            console.log("Profile picture from DB:", data.profile_picture);
+            setProfilePicture(data.profile_picture);
+            // Also store in localStorage for consistency
+            localStorage.setItem('quiz_app_user_avatar', data.profile_picture);
+          } else {
+            // Check localStorage as fallback
+            const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
+            if (storedAvatar) {
+              console.log("Profile picture from localStorage:", storedAvatar);
+              setProfilePicture(storedAvatar);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -147,6 +166,11 @@ const ProfilePage: React.FC = () => {
     if (data.upiId !== undefined) {
       setUserUpi(data.upiId);
     }
+    
+    if (data.profilePicture !== undefined) {
+      console.log("Profile picture updated:", data.profilePicture);
+      setProfilePicture(data.profilePicture);
+    }
   };
   
   const handleReactivated = () => {
@@ -200,6 +224,88 @@ const ProfilePage: React.FC = () => {
     };
   }, []);
   
+  // Helper function to render profile avatar based on its type
+  const renderProfileAvatar = () => {
+    console.log("Rendering profile avatar with:", profilePicture);
+    
+    if (profilePicture) {
+      if (profilePicture.startsWith('http')) {
+        // URL-based avatar (from image upload)
+        return (
+          <Avatar className="w-20 h-20 border-4 border-primary/10">
+            <AvatarImage src={profilePicture} alt={username || 'User'} />
+            <AvatarFallback className="bg-primary/10 text-xl font-semibold">
+              {username ? username.charAt(0).toUpperCase() : 'U'}
+            </AvatarFallback>
+          </Avatar>
+        );
+      } else {
+        // Default avatars like 'smile', 'robot', etc.
+        // These could be icons or emoji representations
+        switch (profilePicture) {
+          case 'user-round':
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10">
+                  <UserRound className="h-12 w-12 text-primary" />
+                </AvatarFallback>
+              </Avatar>
+            );
+          case 'smile':
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-3xl">
+                  😊
+                </AvatarFallback>
+              </Avatar>
+            );
+          case 'robot':
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-3xl">
+                  🤖
+                </AvatarFallback>
+              </Avatar>
+            );
+          case 'graduation-cap':
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-3xl">
+                  🎓
+                </AvatarFallback>
+              </Avatar>
+            );
+          case 'award':
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-3xl">
+                  🏆
+                </AvatarFallback>
+              </Avatar>
+            );
+          default:
+            // If the stored value doesn't match known types, show initial
+            return (
+              <Avatar className="w-20 h-20 border-4 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-2xl font-semibold">
+                  {username ? username.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
+            );
+        }
+      }
+    }
+    
+    // Fallback if no profile picture is set
+    return (
+      <Avatar className="w-20 h-20 border-4 border-primary/10">
+        <AvatarFallback className="bg-primary/10 text-2xl font-semibold">
+          {username ? username.charAt(0).toUpperCase() : 'U'}
+        </AvatarFallback>
+      </Avatar>
+    );
+  };
+  
   if (suspended) {
     return (
       <SuspendedAccountHandler 
@@ -228,12 +334,27 @@ const ProfilePage: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
           <AccountReactivation />
-          <ProfileEditor 
-            userName={username || ''}
-            userUpi={userUpi}
-            userId={userId || ''}
-            onProfileUpdate={handleProfileUpdate}
-          />
+          <div className="glass p-6 rounded-xl shadow-md flex items-center gap-4">
+            {renderProfileAvatar()}
+            
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <h2 className="text-xl font-bold">{username || 'User'}</h2>
+                <ProfileEditor 
+                  userName={username || ''}
+                  userUpi={userUpi}
+                  userId={userId || ''}
+                  profilePicture={profilePicture}
+                  onProfileUpdate={handleProfileUpdate}
+                />
+              </div>
+              {userUpi && (
+                <p className="text-sm text-muted-foreground">
+                  UPI ID: {userUpi}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
         
         <AdvertisementBanner 
