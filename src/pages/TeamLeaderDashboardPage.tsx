@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -21,6 +22,7 @@ import { ChartContainer } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import TeamMembersTable from '@/components/admin/TeamMembersTable';
 import { adminNotificationsApi } from '@/utils/supabaseUtils';
+import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -101,12 +103,12 @@ const TeamLeaderDashboardPage = () => {
         return;
       }
       
-      // Use the correct type value based on the action
-      const notificationType = action === 'suspend' 
+      // Use the correct type value with explicit typing
+      const notificationType: AdminNotificationInsert['type'] = action === 'suspend' 
         ? 'account_suspend_request' 
         : 'account_reactivate_request';
       
-      const notificationData = {
+      const notificationData: AdminNotificationInsert = {
         type: notificationType,
         message: `Team leader requested to ${action} account ${memberId}`,
         user_id: userId,
