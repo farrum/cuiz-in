@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ProfileEditor from '@/components/ProfileEditor';
+import ProfileEditor from '@/components/profile/editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserRound } from 'lucide-react';
 

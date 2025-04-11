@@ -3,7 +3,7 @@ import React from 'react';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import ProfileLayout from '@/components/profile/ProfileLayout';
 import ProfileContent from '@/components/profile/ProfileContent';
-import { useProfileData } from '@/components/profile/useProfileData';
+import { useProfileData } from '@/hooks/profile';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
 
 const ProfilePage: React.FC = () => {
