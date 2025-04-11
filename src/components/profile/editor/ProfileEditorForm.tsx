@@ -5,7 +5,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import ProfilePictureSelector from '../ProfilePictureSelector';
+import ProfilePictureSelector from '@/components/profile/avatar/ProfilePictureSelector';
 
 const profileSchema = z.object({
   displayName: z.string().min(3, 'Display name must be at least 3 characters'),
