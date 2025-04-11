@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,18 +35,23 @@ export interface UseSupabaseRealtimeOptions {
   debounceMs?: number;
   skipDuplicates?: boolean;
   stableChannel?: boolean;
+  filter?: string; // Add filter option to reduce payload
+  columns?: string; // Add columns option to specify columns
 }
 
 const defaultOptions: UseSupabaseRealtimeOptions = {
   event: '*',
   schema: 'public',
-  showToasts: true,
+  showToasts: false, // Default to no toasts to reduce UI noise
   updateLocalStorage: true,
-  debounceMs: 300,
+  debounceMs: 500, // Increased debounce to reduce updates
   skipDuplicates: true,
-  stableChannel: false
+  stableChannel: true, // Default to stable channels to reuse subscriptions
+  filter: undefined,
+  columns: undefined
 };
 
+// Use a global registry of channels to avoid duplicates
 const activeChannels = new Map<string, any>();
 
 export function useSupabaseRealtime(
@@ -76,7 +82,9 @@ export function useSupabaseRealtime(
   };
 
   const getChannelKey = (table: string, options: UseSupabaseRealtimeOptions) => {
-    return `realtime_${table}_${options.event}_${options.schema}`;
+    const filterPart = options.filter ? `-${options.filter}` : '';
+    const columnsPart = options.columns ? `-${options.columns}` : '';
+    return `realtime_${table}_${options.event}_${options.schema}${filterPart}${columnsPart}`;
   };
 
   useEffect(() => {
@@ -99,13 +107,24 @@ export function useSupabaseRealtime(
       activeChannels.set(channelKey, channel);
     }
     
+    // Build subscription config with filter and columns if provided
+    const subscriptionConfig: any = {
+      event: mergedOptions.event,
+      schema: mergedOptions.schema,
+      table: table
+    };
+    
+    if (mergedOptions.filter) {
+      subscriptionConfig.filter = mergedOptions.filter;
+    }
+    
+    if (mergedOptions.columns) {
+      subscriptionConfig.columns = mergedOptions.columns.split(',');
+    }
+    
     channel.on(
       'postgres_changes' as any,
-      {
-        event: mergedOptions.event,
-        schema: mergedOptions.schema,
-        table: table
-      },
+      subscriptionConfig,
       (payload: any) => {
         console.log(`Realtime update received for ${table}:`, payload);
         
@@ -159,7 +178,7 @@ export function useSupabaseRealtime(
         supabase.removeChannel(channel);
       }
     };
-  }, [table, mergedOptions.event, mergedOptions.schema, mergedOptions.debounceMs, mergedOptions.stableChannel]);
+  }, [table, mergedOptions.event, mergedOptions.schema, mergedOptions.debounceMs, mergedOptions.stableChannel, mergedOptions.filter, mergedOptions.columns]);
 
   const handleLocalStorageUpdate = (tableName: RealtimeTable, payload: RealtimePayload) => {
     try {

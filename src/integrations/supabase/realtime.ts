@@ -14,22 +14,12 @@ interface RoleData {
 // Connect to realtime channel for specific tables
 export const setupRealtimeSubscriptions = () => {
   const tables = [
-    'profiles',
-    'login_logs',
-    'ad_slots',
-    'quiz_questions',
-    'quiz_answers',
-    'payments',
-    'user_referrals',
-    'ad_views',
-    'ad_clicks',
+    'user_roles',  // Only include essential tables
     'admin_notifications',
-    'daily_challenges',
-    'user_challenge_progress',
-    'user_roles'  // Added user_roles table to track role changes
+    'daily_challenges'
   ];
   
-  console.log('Setting up realtime subscriptions for all tables...');
+  console.log('Setting up realtime subscriptions for essential tables...');
   
   // Check if we already have an active subscription
   if (activeSubscriptions.has('global')) {
@@ -43,47 +33,30 @@ export const setupRealtimeSubscriptions = () => {
   // Create the channel
   const channel = supabase.channel(channelId);
   
-  // Subscribe to changes for each table
+  // Subscribe only to changes for essential tables
   tables.forEach(table => {
     console.log(`Adding subscription for table: ${table}`);
+    
+    // Get current user ID to filter events where possible
+    const userId = localStorage.getItem('quiz_app_user_id');
+    
+    // Build appropriate filter for each table
+    let filterConfig: any = {
+      event: '*',
+      schema: 'public',
+      table,
+    };
+    
+    // Add user-specific filters where appropriate
+    if (table === 'user_roles' && userId) {
+      filterConfig.filter = `user_id=eq.${userId}`;
+    }
+    
     channel.on(
       'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table,
-      },
+      filterConfig,
       (payload) => {
         console.log(`Realtime update for ${table}:`, payload);
-        
-        // For ad_slots table, emit a more targeted event
-        if (table === 'ad_slots') {
-          // Create a custom event that includes only the updated record
-          const updatedSlot = payload.new || payload.old;
-          if (updatedSlot) {
-            // Only dispatch event if there's actual content
-            const detail = [updatedSlot];
-            
-            // Use debounced event dispatch
-            debouncedDispatchEvent('adSlotsUpdated', detail);
-          }
-        }
-        
-        // For daily_challenges table, emit relevant events
-        if (table === 'daily_challenges') {
-          const challengeData = payload.new || payload.old;
-          if (challengeData) {
-            debouncedDispatchEvent('challengesUpdated', [challengeData]);
-          }
-        }
-        
-        // For user_challenge_progress table, emit progress events
-        if (table === 'user_challenge_progress') {
-          const progressData = payload.new || payload.old;
-          if (progressData) {
-            debouncedDispatchEvent('challengeProgressUpdated', [progressData]);
-          }
-        }
         
         // For user_roles table, emit role update events
         if (table === 'user_roles') {
@@ -115,6 +88,22 @@ export const setupRealtimeSubscriptions = () => {
                 }, 1500);
               }
             }
+          }
+        }
+        
+        // For daily_challenges, emit targeted events
+        else if (table === 'daily_challenges') {
+          const challengeData = payload.new || payload.old;
+          if (challengeData) {
+            debouncedDispatchEvent('challengesUpdated', [challengeData]);
+          }
+        }
+        
+        // For admin_notifications, emit events with debouncing
+        else if (table === 'admin_notifications') {
+          const notificationData = payload.new || payload.old;
+          if (notificationData) {
+            debouncedDispatchEvent('adminNotificationsUpdated', [notificationData], 250);
           }
         }
       }
@@ -186,4 +175,3 @@ export const resetRealtimeConnection = () => {
   removeRealtimeSubscriptions();
   return setupRealtimeSubscriptions();
 };
-

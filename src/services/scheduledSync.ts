@@ -4,8 +4,8 @@ import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
 
 // Configuration for sync intervals
 export const SYNC_CONFIG = {
-  fetchInterval: 5 * 60 * 1000, // 5 minutes in milliseconds
-  syncInterval: 15 * 60 * 1000, // 15 minutes in milliseconds
+  fetchInterval: 15 * 60 * 1000, // 15 minutes in milliseconds (increased from 5 minutes)
+  syncInterval: 30 * 60 * 1000, // 30 minutes in milliseconds (increased from 15 minutes)
   autoSync: true // Default to enabled
 };
 
@@ -15,6 +15,7 @@ class ScheduledSyncService {
   private lastFetchTime: Date | null = null;
   private lastSyncTime: Date | null = null;
   private isAutoSyncEnabled: boolean = SYNC_CONFIG.autoSync;
+  private isSyncing: boolean = false; // Flag to prevent overlapping sync operations
   
   // Start the scheduled sync
   start(): void {
@@ -39,11 +40,12 @@ class ScheduledSyncService {
   }
   
   // Get current status of the sync service
-  getStatus(): { isAutoSyncEnabled: boolean; lastFetchTime: Date | null; lastSyncTime: Date | null } {
+  getStatus(): { isAutoSyncEnabled: boolean; lastFetchTime: Date | null; lastSyncTime: Date | null; isSyncing: boolean } {
     return {
       isAutoSyncEnabled: this.isAutoSyncEnabled,
       lastFetchTime: this.lastFetchTime,
-      lastSyncTime: this.lastSyncTime
+      lastSyncTime: this.lastSyncTime,
+      isSyncing: this.isSyncing
     };
   }
   
@@ -64,28 +66,47 @@ class ScheduledSyncService {
   
   // Run all sync tasks
   private async runSyncTasks(): Promise<void> {
-    // Skip if auto-sync is disabled
-    if (!this.isAutoSyncEnabled) return;
+    // Skip if auto-sync is disabled or another sync operation is in progress
+    if (!this.isAutoSyncEnabled || this.isSyncing) return;
     
     try {
+      this.isSyncing = true;
       console.log('Running scheduled sync tasks at:', new Date().toISOString());
       
-      // Sync local storage to Supabase
-      const syncResult = await syncLocalStorageToSupabase();
-      if (syncResult === true) {
-        this.lastSyncTime = new Date();
-        console.log('Successfully synced data to Supabase');
+      // Check if we need to sync data from client to server
+      const shouldSyncToServer = !this.lastSyncTime || 
+        (Date.now() - this.lastSyncTime.getTime() > SYNC_CONFIG.syncInterval);
+        
+      if (shouldSyncToServer) {
+        // Sync local storage to Supabase
+        const syncResult = await syncLocalStorageToSupabase();
+        if (syncResult === true) {
+          this.lastSyncTime = new Date();
+          console.log('Successfully synced data to Supabase');
+        } else {
+          console.log('Sync to Supabase failed or was incomplete');
+        }
       } else {
-        console.log('Sync to Supabase failed or was incomplete');
+        console.log('Skipping sync to server - not due yet');
       }
       
-      // Check and suspend inactive accounts
-      await checkAndSuspendInactiveAccounts();
-      this.lastFetchTime = new Date();
+      // Check if we need to fetch from server to client
+      const shouldFetchFromServer = !this.lastFetchTime || 
+        (Date.now() - this.lastFetchTime.getTime() > SYNC_CONFIG.fetchInterval);
+        
+      if (shouldFetchFromServer) {
+        // Check and suspend inactive accounts less frequently
+        await checkAndSuspendInactiveAccounts();
+        this.lastFetchTime = new Date();
+      } else {
+        console.log('Skipping fetch from server - not due yet');
+      }
       
       console.log('Finished scheduled sync tasks');
     } catch (error) {
       console.error('Error in scheduled sync:', error);
+    } finally {
+      this.isSyncing = false;
     }
   }
 }

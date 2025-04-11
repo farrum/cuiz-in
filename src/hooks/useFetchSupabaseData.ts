@@ -11,7 +11,22 @@ export const useFetchSupabaseData = (autoFetch = true) => {
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const { toast } = useToast();
   
-  const fetchData = async () => {
+  // Check if we should fetch based on cache validity
+  const shouldFetch = () => {
+    if (!lastFetched) return true;
+    
+    // Only fetch if the last fetch was more than 10 minutes ago
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    return lastFetched < tenMinutesAgo;
+  };
+  
+  const fetchData = async (force = false) => {
+    // Skip if we recently fetched and this isn't a forced refresh
+    if (!force && !shouldFetch()) {
+      console.log('Using cached data, skipping fetch');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -74,7 +89,7 @@ export const useFetchSupabaseData = (autoFetch = true) => {
   };
   
   useEffect(() => {
-    if (autoFetch) {
+    if (autoFetch && shouldFetch()) {
       fetchData();
     }
   }, [autoFetch]);
@@ -83,7 +98,7 @@ export const useFetchSupabaseData = (autoFetch = true) => {
     isLoading,
     lastFetched,
     error,
-    fetchData,
+    fetchData: (force = false) => fetchData(force),
     isSyncing,
     lastSynced,
     syncToSupabase

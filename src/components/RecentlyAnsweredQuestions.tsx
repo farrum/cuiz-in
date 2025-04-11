@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 interface AnsweredQuestion {
   id: string;
@@ -52,16 +53,54 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
   const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const questionsPerPage = limit;
 
   useEffect(() => {
-    fetchAnsweredQuestions();
-  }, [userId, limit]);
+    if (userId) {
+      fetchAnsweredQuestions();
+    }
+  }, [userId, page, limit]);
+
+  // Get count of total questions for pagination
+  useEffect(() => {
+    if (userId) {
+      fetchQuestionCount();
+    }
+  }, [userId]);
+
+  const fetchQuestionCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('quiz_answers')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error fetching question count:', error);
+        return;
+      }
+      
+      if (count !== null) {
+        setTotalQuestions(count);
+        setTotalPages(Math.ceil(count / questionsPerPage));
+      }
+    } catch (err) {
+      console.error('Failed to fetch question count:', err);
+    }
+  };
 
   const fetchAnsweredQuestions = async () => {
     if (!userId) return;
     
     setIsLoading(true);
     try {
+      // Use offset pagination to reduce data transferred
+      const offset = (page - 1) * questionsPerPage;
+      
+      // Only select the columns we need
       const { data, error } = await supabase
         .from('quiz_answers')
         .select(`
@@ -81,7 +120,7 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
         `)
         .eq('user_id', userId)
         .order('answered_at', { ascending: false })
-        .limit(limit);
+        .range(offset, offset + questionsPerPage - 1);
 
       if (error) {
         console.error('Error fetching answered questions:', error);
@@ -250,6 +289,39 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
           </CardContent>
         </Card>
       ))}
+      
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <Pagination className="mt-4">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  isActive={page === i + 1} 
+                  onClick={() => setPage(i + 1)}
+                  className="cursor-pointer"
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };
