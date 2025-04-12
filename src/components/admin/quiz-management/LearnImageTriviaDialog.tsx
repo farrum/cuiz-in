@@ -23,6 +23,7 @@ import { fetchTriviaQuestions, saveTriviaToDB, getTriviaCategories } from '@/uti
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LearnImageTriviaDialogProps {
   onSuccess: () => void;
@@ -182,7 +183,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
     for (const question of questions) {
       try {
         // Insert the question into the database
-        const { data, error } = await window.supabase
+        const { data, error } = await supabase
           .from('quiz_questions')
           .insert({
             question: question.question,
