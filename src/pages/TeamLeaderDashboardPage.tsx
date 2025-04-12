@@ -1,287 +1,33 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useToast } from '@/hooks/use-toast';
-import { STORAGE_KEYS } from '@/utils/quizData';
-import { supabase } from '@/integrations/supabase/client';
-import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  User, Users, UserCheck, UserX, CalendarDays, 
-  CheckCircle, XCircle, AlertCircle, RefreshCw, Ban
-} from 'lucide-react';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { useTeamMembers } from '@/hooks/useTeamMembers';
-import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
-import { ChartContainer } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import TeamMembersTable from '@/components/admin/TeamMembersTable';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
-import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
-import { TeamLeaderAttendanceTracker } from '@/components/admin/attendance';
+import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
+import TeamLeaderAccessCheck from '@/components/team-leader/TeamLeaderAccessCheck';
+import StatsCards from '@/components/team-leader/StatsCards';
+import EarningsChart from '@/components/team-leader/EarningsChart';
+import TabsSection from '@/components/team-leader/TabsSection';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isTeamLeader, setIsTeamLeader] = useState<boolean>(false);
-  const { 
-    teamMembers, 
-    activeMembers, 
-    inactiveMembers, 
-    suspendedMembers, 
-    isLoading: membersLoading,
-    handleStatusChange
-  } = useTeamMembers();
   const {
-    earnings,
+    isTeamLeader,
+    activeMembers,
+    inactiveMembers,
+    suspendedMembers,
+    teamMembers,
     totalEarnings,
-    isLoading: earningsLoading
-  } = useTeamLeaderEarnings();
-
-  useEffect(() => {
-    const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    
-    if (!storedUserId) {
-      navigate('/login');
-      return;
-    }
-
-    setUserId(storedUserId);
-    
-    const checkTeamLeaderStatus = async () => {
-      try {
-        const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-        const isLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
-        
-        if (isLeaderRole) {
-          setIsTeamLeader(true);
-        } else {
-          const { data, error } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', storedUserId)
-            .maybeSingle();
-            
-          if (error) throw error;
-          
-          const role = data?.role;
-          const isLeader = role === 'team_leader' || role === 'teamleader';
-          
-          setIsTeamLeader(isLeader);
-          
-          if (!isLeader) {
-            toast({
-              title: "Access Denied",
-              description: "Only Team Leaders can access this dashboard. Refer at least 10 active users to become a Team Leader.",
-              variant: "destructive",
-            });
-            navigate('/profile');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking team leader status:', error);
-        setIsTeamLeader(false);
-      }
-    };
-    
-    checkTeamLeaderStatus();
-  }, [navigate, toast]);
-
-  const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
-    try {
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "User ID not found. Please try logging in again.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Use the correct type value with explicit typing
-      const notificationType: AdminNotificationInsert['type'] = action === 'suspend' 
-        ? 'account_suspend_request' 
-        : 'account_reactivate_request';
-      
-      const notificationData: AdminNotificationInsert = {
-        type: notificationType,
-        message: `Team leader requested to ${action} account ${memberId}`,
-        user_id: userId,
-        read: false,
-        data: { team_leader_id: userId, member_id: memberId, action }
-      };
-      
-      const { error } = await adminNotificationsApi.create(notificationData);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Request Submitted",
-        description: `Your request to ${action} this account has been submitted for admin review.`,
-      });
-    } catch (err) {
-      console.error(`Error requesting account ${action}:`, err);
-      toast({
-        title: "Error",
-        description: `Failed to submit ${action} request.`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const memberColumns = [
-    {
-      header: "Name",
-      accessorKey: "name",
-      cell: (row: any) => (
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" />
-          <span>{row.name}</span>
-        </div>
-      ),
-    },
-    {
-      header: "Email",
-      accessorKey: "email",
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      cell: (row: any) => {
-        const status = row.status;
-        return (
-          <Badge variant={
-            status === 'active' ? 'success' : 
-            status === 'inactive' ? 'secondary' : 
-            'destructive'
-          }>
-            {status === 'active' && <UserCheck className="h-3 w-3 mr-1" />}
-            {status === 'inactive' && <UserX className="h-3 w-3 mr-1" />}
-            {status === 'suspended' && <Ban className="h-3 w-3 mr-1" />}
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: "Last Active",
-      accessorKey: "lastActive",
-      cell: (row: any) => (
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          <span>{row.lastActive || 'Never'}</span>
-        </div>
-      ),
-    },
-    {
-      header: "Days Active",
-      accessorKey: "daysActive",
-      cell: (row: any) => {
-        return (
-          <span>
-            {typeof row.daysActive === 'number' ? `${row.daysActive} days` : row.daysActive}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Earnings",
-      accessorKey: "totalEarned",
-      cell: (row: any) => <span>₹{row.totalEarned}</span>,
-    },
-    {
-      header: "Actions",
-      accessorKey: "id",
-      cell: (row: any) => (
-        <div className="flex items-center gap-2">
-          {row.status !== 'suspended' && (
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => requestAccountAction(row.id, 'suspend')}
-            >
-              Request Suspension
-            </Button>
-          )}
-          {row.status === 'suspended' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => requestAccountAction(row.id, 'reactivate')}
-            >
-              Request Reactivation
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const earningsColumns = [
-    {
-      header: "Month",
-      accessorKey: "month",
-    },
-    {
-      header: "Active Members",
-      accessorKey: "membersCount",
-    },
-    {
-      header: "Amount",
-      accessorKey: "amount",
-      cell: (row: any) => <span>₹{row.amount}</span>,
-    },
-  ];
-
-  const isLoading = membersLoading || earningsLoading;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 container max-w-6xl pt-8 pb-12 px-4">
-          <div className="flex justify-center items-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!isTeamLeader) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 container max-w-6xl pt-8 pb-12 px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Restricted</CardTitle>
-              <CardDescription>
-                Only Team Leaders can access this dashboard. Refer at least 10 active users to become a Team Leader.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate('/profile')}>Back to Profile</Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const chartData = earnings.slice(0, 6).map(item => ({
-    month: item.month,
-    amount: item.amount,
-    members: item.membersCount
-  })).reverse();
+    chartData,
+    isLoading,
+    membersLoading,
+    earnings,
+    handleStatusChange,
+    requestAccountAction,
+    earningsColumns
+  } = useTeamLeaderDashboard();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -289,144 +35,44 @@ const TeamLeaderDashboardPage = () => {
       <main className="flex-1 container max-w-6xl pt-8 pb-12 px-4">
         <AdvertisementBanner position="top" slotId="team-leader-top" pageSection="team-leader-dashboard" />
         
-        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Team Leader Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your team members and track your earnings.
-            </p>
-          </div>
-          <Button onClick={() => navigate('/profile')}>
-            Back to Profile
-          </Button>
-        </div>
+        <TeamLeaderAccessCheck 
+          isTeamLeader={isTeamLeader} 
+          isLoading={isLoading} 
+        />
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Total Earnings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">₹{totalEarnings}</p>
-              <p className="text-muted-foreground text-sm">Lifetime earnings</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Active Members</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center gap-2">
-              <UserCheck className="h-6 w-6 text-green-500" />
-              <p className="text-3xl font-bold">{activeMembers}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Inactive Members</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center gap-2">
-              <UserX className="h-6 w-6 text-amber-500" />
-              <p className="text-3xl font-bold">{inactiveMembers}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl">Suspended Members</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center gap-2">
-              <Ban className="h-6 w-6 text-red-500" />
-              <p className="text-3xl font-bold">{suspendedMembers}</p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {chartData.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Monthly Earnings Trend</CardTitle>
-              <CardDescription>
-                View your earnings over time
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="amount" name="Earnings (₹)" fill="#8884d8" />
-                  <Bar yAxisId="right" dataKey="members" name="Active Members" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {isTeamLeader && !isLoading && (
+          <>
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Team Leader Dashboard</h1>
+                <p className="text-muted-foreground mt-1">
+                  Manage your team members and track your earnings.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/profile')}>
+                Back to Profile
+              </Button>
+            </div>
+            
+            <StatsCards
+              totalEarnings={totalEarnings}
+              activeMembers={activeMembers}
+              inactiveMembers={inactiveMembers}
+              suspendedMembers={suspendedMembers}
+            />
+            
+            <EarningsChart chartData={chartData} />
+            
+            <TabsSection
+              teamMembers={teamMembers}
+              earnings={earnings}
+              membersLoading={membersLoading}
+              handleStatusChange={handleStatusChange}
+              requestAccountAction={requestAccountAction}
+              earningsColumns={earningsColumns}
+            />
+          </>
         )}
-        
-        <Tabs defaultValue="members" className="mb-8">
-          <TabsList className="mb-4">
-            <TabsTrigger value="members">
-              <Users className="h-4 w-4 mr-2" />
-              Team Members
-            </TabsTrigger>
-            <TabsTrigger value="attendance">
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Team Attendance
-            </TabsTrigger>
-            <TabsTrigger value="earnings">
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Monthly Earnings
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="members">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Team Members</CardTitle>
-                <CardDescription>
-                  View and manage the status of your referred team members.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TeamMembersTable 
-                  teamMembers={teamMembers} 
-                  isLoading={membersLoading} 
-                  onStatusChange={handleStatusChange}
-                  onRequestAction={requestAccountAction}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="attendance">
-            <TeamLeaderAttendanceTracker />
-          </TabsContent>
-          
-          <TabsContent value="earnings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Earnings</CardTitle>
-                <CardDescription>
-                  View your monthly earnings from active members.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DataTable 
-                  columns={earningsColumns} 
-                  data={earnings} 
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
         
         <AdvertisementBanner position="bottom" slotId="team-leader-bottom" pageSection="team-leader-dashboard" />
       </main>
