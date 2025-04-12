@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormLabel } from "@/components/ui/label";
+import { FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash } from 'lucide-react';
