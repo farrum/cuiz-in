@@ -188,7 +188,7 @@ const WithdrawalSection: React.FC = () => {
       console.error('Error creating payment record:', err);
     }
     
-    const pointsToDeduct = amount * 1.5;
+    const pointsToDeduct = amount * 2;
     const currentPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     const newPoints = currentPoints - pointsToDeduct;
     localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
@@ -328,7 +328,7 @@ const WithdrawalSection: React.FC = () => {
           <span className="text-2xl font-bold">₹{cashAvailable.toFixed(2)}</span>
         </div>
         <div className="text-xs text-muted-foreground mt-1">
-          1.5 points = ₹1.00
+          2 points = ₹1.00
         </div>
       </div>
       
@@ -348,7 +348,7 @@ const WithdrawalSection: React.FC = () => {
           />
           {withdrawalAmount && !isNaN(parseFloat(withdrawalAmount)) && (
             <div className="text-xs text-muted-foreground mt-1">
-              {(parseFloat(withdrawalAmount) * 1.5).toFixed(0)} points will be deducted
+              {(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted
             </div>
           )}
         </div>

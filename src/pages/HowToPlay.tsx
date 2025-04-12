@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift } from 'lucide-react';
@@ -49,7 +50,7 @@ const HowToPlay: React.FC = () => {
             {
               icon: <IndianRupee className="w-8 h-8 text-green-500" />,
               title: "Convert Points to Cash",
-              description: "1.5 points = ₹1.00. Convert your points to real money and withdraw it to your bank account or UPI."
+              description: "2 points = ₹1.00. Convert your points to real money and withdraw it to your bank account or UPI."
             },
             {
               icon: <Calendar className="w-8 h-8 text-blue-500" />,
@@ -116,7 +117,7 @@ const HowToPlay: React.FC = () => {
             <div>
               <h3 className="font-medium text-lg">Is there a minimum withdrawal amount?</h3>
               <p className="text-muted-foreground">
-                Yes, the minimum withdrawal amount is ₹8000 (equivalent to 12,000 points).
+                Yes, the minimum withdrawal amount is ₹8000 (equivalent to 16,000 points).
               </p>
             </div>
             

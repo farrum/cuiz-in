@@ -1,9 +1,8 @@
-
 export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
   USER_POINTS: 'quiz_app_user_points',
-  USER_ROLE: 'quiz_app_user_role', // Add the USER_ROLE key
+  USER_ROLE: 'quiz_app_user_role',
   COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
   QUIZ_QUESTIONS: 'quiz_app_quiz_questions',
   AD_SLOTS: 'quiz_app_ad_slots',
@@ -34,8 +33,8 @@ export const getUserId = (): string | null => {
 
 // Calculate cash amount from points
 export const calculateCashAmount = (points: number): number => {
-  // 1.5 points = ₹1
-  return points / 1.5;
+  // 2 points = ₹1
+  return points / 2;
 };
 
 // Import supabase client
