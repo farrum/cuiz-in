@@ -11,4 +11,3 @@ export interface QuizQuestion {
   imageUrl?: string; // Optional URL for image-based questions
   questionType?: 'text' | 'image'; // Type of question (default is text)
 }
-

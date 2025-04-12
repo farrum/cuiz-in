@@ -20,11 +20,10 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { PlusCircle, Trash, Image as ImageIcon, Upload } from 'lucide-react';
+import { PlusCircle, Trash, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { createImageBasedQuestion } from '@/utils/quizDataService';
 import { useToast } from '@/hooks/use-toast';
-import { Label } from '@/components/ui/label';
 
 interface ImageQuizFormProps {
   categories: string[];
