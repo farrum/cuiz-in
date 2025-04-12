@@ -6,6 +6,8 @@ import ErrorMessage from './ErrorMessage';
 import TeamLeaderAttendanceTracker from './TeamLeaderAttendanceTracker';
 import { useAttendanceData } from './useAttendanceData';
 import * as attendanceHooks from './hooks';
+import AttendanceHeader from './components/AttendanceHeader';
+import LoadingState from './components/LoadingState';
 
 export { 
   UserAttendanceTracker,
@@ -14,7 +16,9 @@ export {
   ErrorMessage,
   TeamLeaderAttendanceTracker,
   useAttendanceData,
-  attendanceHooks
+  attendanceHooks,
+  AttendanceHeader,
+  LoadingState
 };
 
 export default UserAttendanceTracker;

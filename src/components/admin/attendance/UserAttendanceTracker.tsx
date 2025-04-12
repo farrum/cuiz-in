@@ -1,30 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { addMonths, subMonths, format } from 'date-fns';
 import { 
   Card, 
   CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+  CardHeader 
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
-  Download, 
-  Loader2,
-  RefreshCw,
-  Search
-} from 'lucide-react';
-import { format, addMonths, subMonths } from 'date-fns';
-import { Input } from '@/components/ui/input';
+import { TabsContent } from "@/components/ui/tabs";
+import { supabase } from '@/integrations/supabase/client';
 import ErrorMessage from './ErrorMessage';
 import AttendanceCalendarView from './AttendanceCalendarView';
 import UserHistoryView from './UserHistoryView';
 import { useAttendanceData } from './useAttendanceData';
+
+// Import new components
+import AttendanceHeader from './components/AttendanceHeader';
+import LoadingState from './components/LoadingState';
 
 const UserAttendanceTracker: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -102,12 +92,12 @@ const UserAttendanceTracker: React.FC = () => {
   };
 
   // Handle month navigation
-  const handlePreviousMonth = () => {
-    setCurrentMonth(prevMonth => subMonths(prevMonth, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth(prevMonth => addMonths(prevMonth, 1));
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      setCurrentMonth(prevMonth => subMonths(prevMonth, 1));
+    } else {
+      setCurrentMonth(prevMonth => addMonths(prevMonth, 1));
+    }
   };
 
   const handleUserSelect = (userId: string) => {
@@ -156,72 +146,18 @@ const UserAttendanceTracker: React.FC = () => {
   return (
     <Card className="max-w-full overflow-hidden">
       <CardHeader>
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <CardTitle className="flex items-center">
-              <CalendarIcon className="mr-2 h-6 w-6" /> 
-              User Attendance Tracker
-            </CardTitle>
-            <CardDescription>
-              Track daily user logins across your platform
-            </CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="font-medium w-[120px] text-center">
-              {format(currentMonth, 'MMMM yyyy')}
-            </span>
-            <Button variant="outline" size="sm" onClick={handleNextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex justify-between items-center mt-4 flex-wrap gap-4">
-          <Tabs 
-            defaultValue="calendar" 
-            value={view} 
-            onValueChange={(value) => setView(value as 'calendar' | 'list')}
-          >
-            <TabsList>
-              <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-              <TabsTrigger value="list">User History</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search users..."
-                className="pl-8 w-[200px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={fetchAttendanceData}
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={exportAttendance}
-              disabled={attendance.length === 0 || loading}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
-        </div>
+        <AttendanceHeader 
+          currentMonth={currentMonth}
+          view={view}
+          searchTerm={searchTerm}
+          loading={loading}
+          attendanceCount={attendance.length}
+          onMonthChange={handleMonthChange}
+          onViewChange={(newView) => setView(newView)}
+          onSearchChange={setSearchTerm}
+          onRefresh={fetchAttendanceData}
+          onExport={exportAttendance}
+        />
       </CardHeader>
       <CardContent>
         {error && (
@@ -229,10 +165,7 @@ const UserAttendanceTracker: React.FC = () => {
         )}
         
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-3">Loading attendance data...</span>
-          </div>
+          <LoadingState />
         ) : (
           <>
             <TabsContent value="calendar" className="mt-0">
