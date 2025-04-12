@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TeamMember, TeamMemberStats } from './types';
 import { useFetchTeamMembers } from './useFetchTeamMembers';
 import { useTeamMemberStats } from './useTeamMemberStats';
@@ -11,7 +11,7 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   
   // Set team members from fetched data
-  useState(() => {
+  useEffect(() => {
     setTeamMembers(fetchedMembers);
   }, [fetchedMembers]);
   
