@@ -5,6 +5,7 @@ import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { NavigateFunction } from 'react-router-dom';
 import { confetti } from '@/utils/animations';
 import { Challenge, ChallengeProgress, Answer, QuestionExplanation, SimpleMap } from './challengeTypes';
+import { useAnswerManagement } from './useAnswerManagement';
 
 const useChallengeData = (
   challengeId: string | undefined,
@@ -22,6 +23,24 @@ const useChallengeData = (
   const [isComplete, setIsComplete] = useState(false);
   const [currentPoints, setCurrentPoints] = useState(0);
   
+  // Use the answer management hook
+  const { handleQuestionComplete: handleAnswer } = useAnswerManagement(
+    challenge,
+    questions,
+    currentQuestionIndex,
+    userId,
+    challengeId,
+    answers,
+    currentPoints,
+    setCurrentPoints,
+    setAnswers,
+    setCurrentQuestionIndex,
+    setIsComplete,
+    setScore,
+    progress,
+    toast
+  );
+  
   useEffect(() => {
     if (!challengeId || !userId) return;
     
@@ -34,6 +53,7 @@ const useChallengeData = (
     try {
       setLoading(true);
       
+      // Fetch challenge data
       const { data: challengeData, error: challengeError } = await supabase
         .from('daily_challenges')
         .select('*')
@@ -43,6 +63,7 @@ const useChallengeData = (
       if (challengeError) throw challengeError;
       setChallenge(challengeData);
       
+      // Fetch progress data
       const { data: progressData, error: progressError } = await supabase
         .from('user_challenge_progress')
         .select('*')
@@ -53,6 +74,7 @@ const useChallengeData = (
       if (progressError) throw progressError;
       
       if (!progressData) {
+        // Create new progress record if it doesn't exist
         const { data: newProgress, error: newProgressError } = await supabase
           .from('user_challenge_progress')
           .insert([{
@@ -72,7 +94,9 @@ const useChallengeData = (
         setIsComplete(progressData.completed);
         setScore(progressData.score);
         
+        // If already completed, load all answers for result page
         if (progressData.completed) {
+          // Get all answers for this challenge
           const { data: answerData, error: answerError } = await supabase
             .from('quiz_answers')
             .select('question_id, correct, selected_answer')
@@ -87,6 +111,7 @@ const useChallengeData = (
             return;
           }
           
+          // Get question data to include explanations and correct answers
           const { data: questionData, error: questionError } = await supabase
             .from('quiz_questions')
             .select('*')
@@ -94,6 +119,7 @@ const useChallengeData = (
             
           if (questionError) throw questionError;
           
+          // Create simple lookup objects
           const questionMap: {[key: string]: QuestionExplanation} = {};
           
           for (const q of questionData || []) {
@@ -104,6 +130,7 @@ const useChallengeData = (
             };
           }
           
+          // Create a simple answer map
           const answerMap: {[key: string]: {
             question_id: string;
             correct: boolean;
@@ -118,6 +145,7 @@ const useChallengeData = (
             };
           }
           
+          // Build answers array in the correct order
           const completedAnswers: Answer[] = [];
           
           for (const qId of challengeData.question_ids) {
@@ -139,6 +167,7 @@ const useChallengeData = (
         }
       }
       
+      // Fetch quiz questions
       const { data: questionData, error: questionError } = await supabase
         .from('quiz_questions')
         .select('*')
@@ -152,10 +181,12 @@ const useChallengeData = (
         return;
       }
       
+      // Format questions with consistent structure
       const orderedQuestions: QuizQuestion[] = [];
       for (const qId of challengeData.question_ids) {
         const question = questionData.find(q => q.id === qId);
         if (question) {
+          // Format options to ensure consistent structure
           let options: string[] = [];
           if (Array.isArray(question.options)) {
             options = question.options.map(opt => String(opt));
@@ -163,6 +194,7 @@ const useChallengeData = (
             options = Object.values(question.options).map(opt => String(opt));
           }
           
+          // Ensure difficulty is of the expected type
           let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
           if (question.difficulty === 'easy' || question.difficulty === 'medium' || question.difficulty === 'hard') {
             difficulty = question.difficulty;
@@ -194,59 +226,16 @@ const useChallengeData = (
     }
   };
   
+  // This is now a facade that delegates to the extracted handleAnswer function
   const handleQuestionComplete = async (isCorrect: boolean, selectedAnswer: string) => {
-    if (!challenge || !questions[currentQuestionIndex] || !userId) return;
+    await handleAnswer(isCorrect, selectedAnswer);
     
-    const currentQuestion = questions[currentQuestionIndex];
-    
-    let earnedPoints = 0;
-    if (isCorrect) {
-      switch (currentQuestion.difficulty) {
-        case "easy": earnedPoints = 2; break;
-        case "medium": earnedPoints = 3; break;
-        case "hard": earnedPoints = 4; break;
-        default: earnedPoints = 2;
-      }
-      earnedPoints = earnedPoints * (challenge.points_multiplier || 1);
+    // If this was the last question, we prepare for completion
+    // but don't navigate yet - we'll do that when the user clicks a button
+    if (currentQuestionIndex >= (challenge?.num_questions || 0) - 1) {
+      await completeChallenge(currentPoints);
     } else {
-      earnedPoints = 0.5 * (challenge.points_multiplier || 1);
-    }
-    
-    const newTotalPoints = currentPoints + earnedPoints;
-    setCurrentPoints(newTotalPoints);
-    
-    const newAnswer: Answer = {
-      questionId: currentQuestion.id,
-      correct: isCorrect,
-      selectedAnswer: selectedAnswer,
-      explanation: currentQuestion.explanation || '',
-      correctAnswer: currentQuestion.correctAnswer
-    };
-    
-    setAnswers([...answers, newAnswer]);
-    
-    try {
-      await supabase.from('quiz_answers').insert([{
-        question_id: currentQuestion.id,
-        user_id: userId,
-        selected_answer: selectedAnswer,
-        correct: isCorrect,
-        points_earned: earnedPoints,
-        challenge_id: challengeId
-      }]);
-      
-      if (currentQuestionIndex >= challenge.num_questions - 1) {
-        await completeChallenge(newTotalPoints);
-      } else {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      }
-    } catch (error) {
-      console.error('Error recording answer:', error);
-      toast({
-        title: "Error saving answer",
-        description: "Your progress might not be fully saved",
-        variant: "destructive"
-      });
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
   
