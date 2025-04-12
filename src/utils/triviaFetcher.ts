@@ -19,6 +19,15 @@ interface OpenTriviaDBResponse {
   results: OpenTriviaDBQuestion[];
 }
 
+interface TriviaCategory {
+  id: number;
+  name: string;
+}
+
+interface TriviaCategoriesResponse {
+  trivia_categories: TriviaCategory[];
+}
+
 /**
  * Fetches trivia questions from Open Trivia Database API
  * @param amount Number of questions to fetch
@@ -71,7 +80,8 @@ export async function fetchTriviaQuestions(
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
         points: q.difficulty === 'easy' ? 2 : q.difficulty === 'medium' ? 3 : 4,
-        explanation: ''
+        explanation: '',
+        questionType: 'text'
       };
     });
     
@@ -117,7 +127,8 @@ export async function saveTriviaToDB(questions: QuizQuestion[]): Promise<{
           difficulty: question.difficulty,
           category: question.category,
           explanation: question.explanation,
-          points: question.points
+          points: question.points,
+          question_type: 'text'
         })
         .select();
         
@@ -162,10 +173,10 @@ function shuffleArray(array: any[]): void {
 export async function getTriviaCategories(): Promise<Record<number, string>> {
   try {
     const response = await fetch('https://opentdb.com/api_category.php');
-    const data = await response.json();
+    const data: TriviaCategoriesResponse = await response.json();
     
     const categories: Record<number, string> = {};
-    data.trivia_categories.forEach((cat: { id: number, name: string }) => {
+    data.trivia_categories.forEach((cat: TriviaCategory) => {
       categories[cat.id] = cat.name;
     });
     

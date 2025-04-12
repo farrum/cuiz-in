@@ -27,13 +27,15 @@ import {
   RefreshCw,
   Upload,
   BookOpen,
-  Image as ImageIcon
+  Image as ImageIcon,
+  BookOpen as BookOpenIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
 import ImageQuizForm from './ImageQuizForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
 import TriviaImporter from './TriviaImporter';
+import LearnTriviaDialog from './LearnTriviaDialog';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
 import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
@@ -53,6 +55,7 @@ const QuizManagement: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
+  const [isLearnTriviaDialogOpen, setIsLearnTriviaDialogOpen] = useState(false);
   const [duplicateCount, setDuplicateCount] = useState<number>(0);
   const [isDuplicateCheckLoading, setIsDuplicateCheckLoading] = useState(false);
   const { toast } = useToast();
@@ -94,7 +97,6 @@ const QuizManagement: React.FC = () => {
         };
       });
       
-      // Separate text and image questions
       const textQuestions = formattedQuestions.filter(q => q.questionType !== 'image');
       const imgQuestions = formattedQuestions.filter(q => q.questionType === 'image');
       
@@ -128,7 +130,6 @@ const QuizManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Filter based on active tab (text or image questions)
     const baseQuestions = activeTab === 'text' ? questions : imageQuestions;
     let filtered = [...baseQuestions];
     
@@ -423,7 +424,6 @@ const QuizManagement: React.FC = () => {
     }
   ];
 
-  // Define columns for image questions table
   const imageColumns = [
     { header: 'Question', accessorKey: 'question' },
     { 
@@ -511,6 +511,14 @@ const QuizManagement: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4" />
                 Add Question
+              </Button>
+              <Button 
+                onClick={() => setIsLearnTriviaDialogOpen(true)}
+                variant="outline"
+                className="flex items-center gap-1"
+              >
+                <BookOpenIcon className="h-4 w-4" />
+                Learn Trivia
               </Button>
               <Button 
                 onClick={() => setIsImportDialogOpen(true)}
@@ -697,7 +705,6 @@ const QuizManagement: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog for adding standard text question */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -714,7 +721,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for editing questions */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -734,7 +740,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for importing questions */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -753,7 +758,6 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for adding image questions */}
       <Dialog open={isImageQuizDialogOpen} onOpenChange={setIsImageQuizDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -773,24 +777,20 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for importing trivia */}
-      <Dialog open={isTriviaBatchDialogOpen} onOpenChange={setIsTriviaBatchDialogOpen}>
+      <Dialog open={isLearnTriviaDialogOpen} onOpenChange={setIsLearnTriviaDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Import Trivia Question Pack</DialogTitle>
+            <DialogTitle>Learn Trivia Questions</DialogTitle>
             <DialogDescription>
-              Import a pre-defined set of 30 trivia questions across various categories.
+              Import questions from the Open Trivia Database to enhance your quiz.
             </DialogDescription>
           </DialogHeader>
-          <TriviaImporter 
+          <LearnTriviaDialog 
             onSuccess={() => {
               fetchQuestions();
-              setIsTriviaBatchDialogOpen(false);
-              toast({
-                title: "Trivia Pack Imported",
-                description: "30 trivia questions have been added to your quiz database.",
-              });
+              setIsLearnTriviaDialogOpen(false);
             }}
+            onCancel={() => setIsLearnTriviaDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
