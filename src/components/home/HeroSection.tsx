@@ -2,7 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, LogIn, Rocket, Trophy, Sparkles } from 'lucide-react';
+import { UserPlus, LogIn, Rocket, Trophy, Sparkles, Check } from 'lucide-react';
+import NameInputForm from './NameInputForm';
 
 interface HeroSectionProps {
   userName: string;
