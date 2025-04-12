@@ -9,7 +9,6 @@ import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotific
 export const adminNotificationsApi = {
   getAll: async () => {
     try {
-      console.log('Fetching admin notifications');
       // Use raw query with explicit type casting to avoid TypeScript errors
       const { data, error } = await supabase
         .from('admin_notifications')
@@ -18,11 +17,10 @@ export const adminNotificationsApi = {
           data: AdminNotification[] | null, 
           error: any 
         };
-        
-      console.log('Admin notifications fetched:', data?.length || 0);
+      
       return { 
         data: data || [], 
-        error: error 
+        error 
       };
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -32,7 +30,6 @@ export const adminNotificationsApi = {
   
   markAsRead: async (id: string) => {
     try {
-      console.log('Marking notification as read:', id);
       // Use raw query with explicit type casting to avoid TypeScript errors
       const { error } = await supabase
         .from('admin_notifications')
@@ -48,7 +45,6 @@ export const adminNotificationsApi = {
   
   markAllAsRead: async () => {
     try {
-      console.log('Marking all notifications as read');
       // Use raw query with explicit type casting to avoid TypeScript errors
       const { error } = await supabase
         .from('admin_notifications')
@@ -64,7 +60,12 @@ export const adminNotificationsApi = {
   
   create: async (notification: AdminNotificationInsert) => {
     try {
-      console.log('Creating new notification:', notification);
+      // Validate notification data
+      if (!notification.type || !notification.message) {
+        console.error('Invalid notification data:', notification);
+        return { data: null, error: new Error('Invalid notification data') };
+      }
+      
       // Use raw query with explicit type casting to avoid TypeScript errors
       const { data, error } = await supabase
         .from('admin_notifications')
@@ -86,23 +87,29 @@ export const adminNotificationsApi = {
 
   // Add a channel subscription for notifications
   subscribeToNotifications: (callback: (notification: AdminNotification) => void) => {
-    console.log('Setting up notification subscription');
-    return supabase.channel('admin_notification_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'admin_notifications',
-        },
-        (payload) => {
-          console.log('New notification received:', payload);
-          callback(payload.new as AdminNotification);
-        }
-      )
-      .subscribe((status) => {
-        console.log('Notification subscription status:', status);
-      });
+    try {
+      const channel = supabase.channel('admin_notification_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'admin_notifications',
+          },
+          (payload) => {
+            console.log('Real-time notification received:', payload);
+            callback(payload.new as AdminNotification);
+          }
+        )
+        .subscribe((status) => {
+          console.log('Admin notification subscription status:', status);
+        });
+        
+      return channel;
+    } catch (error) {
+      console.error('Error setting up real-time notification subscription:', error);
+      throw error;
+    }
   }
 };
 

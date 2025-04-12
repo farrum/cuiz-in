@@ -2,7 +2,10 @@
 export interface AdminNotification {
   id: string;
   created_at: string;
-  type: 'reactivation_request' | 'withdrawal_request' | 'achievement_claim' | 'system' | 'reactivation_approved' | 'payment_approved' | 'account_suspend_request' | 'account_reactivate_request';
+  type: 'reactivation_request' | 'withdrawal_request' | 'achievement_claim' | 'system' | 
+         'reactivation_approved' | 'payment_approved' | 'account_suspend_request' | 
+         'account_reactivate_request' | 'new_registration' | 'auto_suspended' | 
+         'performance_alert';
   message: string;
   read: boolean;
   user_id: string | null;

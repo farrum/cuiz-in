@@ -1,5 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ExtendedDatabase } from '@/types/database-extensions';
+import { 
+  notifyAutoSuspended, 
+  notifyReactivationRequest, 
+  notifySuspensionRequest 
+} from './notificationUtils';
 
 /**
  * This function is now disabled as we only want admin-initiated suspensions
@@ -14,8 +20,20 @@ export const checkAndSuspendInactiveAccounts = async (): Promise<void> => {
 /**
  * Helper function to suspend a user account
  */
-const suspendUserAccount = async (userId: string): Promise<void> => {
+const suspendUserAccount = async (userId: string, reason: string = 'admin action'): Promise<void> => {
   try {
+    // First get the username
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      console.error(`Error getting profile for user ID ${userId}:`, profileError);
+      return;
+    }
+    
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 
@@ -31,6 +49,9 @@ const suspendUserAccount = async (userId: string): Promise<void> => {
       console.error(`Error suspending account ID ${userId}:`, updateError);
     } else {
       console.log(`Successfully suspended account ID ${userId}`);
+      
+      // Create notification about auto-suspension
+      await notifyAutoSuspended(profileData.username, userId, reason);
     }
   } catch (error) {
     console.error('Error in suspendUserAccount:', error);
@@ -95,6 +116,16 @@ export const reactivateUserAccount = async (userId: string): Promise<{ success: 
       return { success: false, error: 'No user ID provided' };
     }
     
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      return { success: false, error: `Error getting profile: ${profileError.message}` };
+    }
+    
     const { error } = await supabase
       .from('profiles')
       .update({ 
@@ -146,6 +177,109 @@ export const denyReactivationRequest = async (userId: string): Promise<{ success
     return { success: true };
   } catch (error: any) {
     console.error('Error in denyReactivationRequest:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Allow a user to request reactivation of their account
+ */
+export const requestAccountReactivation = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    if (!userId) {
+      return { success: false, error: 'No user ID provided' };
+    }
+    
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('username, suspended')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      return { success: false, error: `Error getting profile: ${profileError.message}` };
+    }
+    
+    if (!profileData.suspended) {
+      return { success: false, error: 'Account is not suspended' };
+    }
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        reactivation_requested: true,
+        reactivation_requested_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+      
+    if (error) {
+      console.error('Error requesting account reactivation:', error);
+      return { success: false, error: error.message };
+    }
+    
+    // Create notification for admin
+    await notifyReactivationRequest(profileData.username, userId);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in requestAccountReactivation:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Allow team leaders to request suspending a team member
+ */
+export const requestMemberSuspension = async (
+  teamLeaderId: string, 
+  memberId: string, 
+  reason: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    // Verify team leader has the right role
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', teamLeaderId)
+      .single();
+      
+    if (roleError || !roleData || !['team_leader', 'teamleader'].includes(roleData.role)) {
+      return { success: false, error: 'Unauthorized: Only team leaders can request suspensions' };
+    }
+    
+    // Get team leader username
+    const { data: leaderData, error: leaderError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', teamLeaderId)
+      .single();
+      
+    if (leaderError) {
+      return { success: false, error: `Error getting team leader profile: ${leaderError.message}` };
+    }
+    
+    // Get member username
+    const { data: memberData, error: memberError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', memberId)
+      .single();
+      
+    if (memberError) {
+      return { success: false, error: `Error getting member profile: ${memberError.message}` };
+    }
+    
+    // Create notification for admin
+    await notifySuspensionRequest(
+      leaderData.username, 
+      memberData.username, 
+      memberId, 
+      reason
+    );
+    
+    return { success: true, message: 'Suspension request submitted for admin review' };
+  } catch (error: any) {
+    console.error('Error in requestMemberSuspension:', error);
     return { success: false, error: error.message };
   }
 };

@@ -1,15 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import UserManagementWithAttendance from '@/components/admin/UserManagementWithAttendance';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
@@ -23,14 +16,14 @@ import { QuizManagement } from '@/components/admin/quiz-management';
 import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
 import { SyncSettings } from '@/components/admin/SyncSettings';
 import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
-import AdminNotifications from '@/components/admin/AdminNotifications';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Settings, User, Bell, BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
+import { BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { CacheManagement } from '@/components/admin/CacheManagement';
+import AdminNavbar from '@/components/admin/AdminNavbar';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -148,58 +141,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-xl font-semibold">Quiz Admin Dashboard</h1>
           </div>
           
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  <Bell className="mr-1 h-4 w-4" />
-                  Notifications
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4">
-                    <li className="row-span-3">
-                      <NavigationMenuLink asChild>
-                        <div className="h-48 overflow-auto">
-                          <AdminNotifications />
-                        </div>
-                      </NavigationMenuLink>
-                    </li>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  <User className="mr-1 h-4 w-4" />
-                  {adminName}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[200px] gap-3 p-4">
-                    <li className="row-span-3">
-                      <NavigationMenuLink asChild>
-                        <Link
-                          to="/admin/sync"
-                          className="flex w-full items-center gap-2 p-2 text-sm hover:bg-muted rounded-md"
-                        >
-                          <Settings className="h-4 w-4" />
-                          Settings
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-2 p-2 text-sm hover:bg-muted rounded-md text-red-500"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+          <AdminNavbar adminName={adminName} onLogout={handleLogout} />
         </div>
       </header>
 
