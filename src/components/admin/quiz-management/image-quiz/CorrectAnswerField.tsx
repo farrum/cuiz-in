@@ -30,11 +30,12 @@ const CorrectAnswerField: React.FC<CorrectAnswerFieldProps> = ({ form }) => {
             </FormControl>
             <SelectContent>
               {options.map((option: string, index: number) => (
-                option && (
+                // Only render SelectItem if option has a non-empty value
+                option && option.trim() !== '' ? (
                   <SelectItem key={index} value={option}>
                     {option}
                   </SelectItem>
-                )
+                ) : null
               ))}
             </SelectContent>
           </Select>

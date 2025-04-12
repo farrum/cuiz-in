@@ -72,7 +72,7 @@ const CategoryField: React.FC<CategoryFieldProps> = ({ form, categories, setLoca
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories.map((category, index) => (
+                  {categories.filter(category => category && category.trim() !== '').map((category, index) => (
                     <SelectItem key={index} value={category}>
                       {category}
                     </SelectItem>

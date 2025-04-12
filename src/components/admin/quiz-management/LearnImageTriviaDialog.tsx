@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -56,13 +55,10 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
     setIsLoading(true);
     
     try {
-      // Convert amount to number
       const amount = parseInt(data.amount, 10);
       
-      // Only convert category to number if it's provided
       const category = data.category ? parseInt(data.category, 10) : undefined;
       
-      // Only use difficulty if it's provided
       const difficulty = data.difficulty || undefined;
       
       toast({
@@ -82,7 +78,6 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
         return;
       }
       
-      // Convert text trivia to image trivia
       const imageQuestions = questions.map(q => ({
         ...q,
         imageUrl: getRandomImageForCategory(q.category),
@@ -94,7 +89,6 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
         description: `Found ${imageQuestions.length} questions. Converting to image questions...`,
       });
       
-      // Save the questions to the database
       const result = await saveImageTriviaToDB(imageQuestions);
       
       toast({
@@ -118,9 +112,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
     }
   });
 
-  // Function to get a random image URL based on the question category
   const getRandomImageForCategory = (category: string): string => {
-    // A collection of image URLs organized by category
     const categoryImages: Record<string, string[]> = {
       'Science': [
         'https://images.unsplash.com/photo-1517976487492-5750f3195933',
@@ -140,7 +132,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
       'Entertainment': [
         'https://images.unsplash.com/photo-1603190287605-e6ade32fa852',
         'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0',
-        'https://images.unsplash.com/photo-1585699324551-f6c309eedeca'
+        'https://images.unsplash.com/photo-1585699324551-a6f1d4b934f1'
       ],
       'Sports': [
         'https://images.unsplash.com/photo-1517649763962-0c623066013b',
@@ -154,14 +146,12 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
       ]
     };
     
-    // Default images for categories not in our mapping
     const defaultImages = [
       'https://images.unsplash.com/photo-1518998053901-5348d3961a04',
       'https://images.unsplash.com/photo-1546521343-4eb2c01aa44b',
       'https://images.unsplash.com/photo-1531297484001-80022131f5a1'
     ];
     
-    // Find the appropriate category image list
     let imageList = defaultImages;
     for (const [key, images] of Object.entries(categoryImages)) {
       if (category.toLowerCase().includes(key.toLowerCase())) {
@@ -170,11 +160,9 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
       }
     }
     
-    // Return a random image from the list
     return imageList[Math.floor(Math.random() * imageList.length)];
   };
-  
-  // Function to save image trivia to the database
+
   const saveImageTriviaToDB = async (questions: any[]) => {
     let saved = 0;
     let duplicates = 0;
@@ -182,7 +170,6 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
     
     for (const question of questions) {
       try {
-        // Insert the question into the database
         const { data, error } = await supabase
           .from('quiz_questions')
           .insert({
@@ -199,7 +186,6 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
           .select();
           
         if (error) {
-          // Check if it's a duplicate error
           if (error.message.includes('duplicate')) {
             duplicates++;
           } else {
@@ -277,7 +263,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Any category</SelectItem>
+                    <SelectItem value="any">Any category</SelectItem>
                     {Object.entries(categories).map(([id, name]) => (
                       <SelectItem key={id} value={id}>{name}</SelectItem>
                     ))}
@@ -306,7 +292,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Any difficulty</SelectItem>
+                    <SelectItem value="any">Any difficulty</SelectItem>
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
