@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useScriptExecution } from '@/hooks/useScriptExecution';
 import AdLoader from './AdLoader';
 
@@ -26,8 +26,20 @@ const AdContent: React.FC<AdContentProps> = ({
   pageSection,
   containerId
 }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  
   // Execute scripts in the ad content
   useScriptExecution(adContent, containerId);
+  
+  // Effect to ensure container exists in DOM before any script execution
+  useEffect(() => {
+    if (adLoaded && adContent && contentRef.current) {
+      // Ensure the container has an ID attribute
+      if (contentRef.current.id !== containerId) {
+        contentRef.current.id = containerId;
+      }
+    }
+  }, [adLoaded, adContent, containerId]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
@@ -44,7 +56,14 @@ const AdContent: React.FC<AdContentProps> = ({
           </p>
         </div>
       )}
-      <div id={containerId} dangerouslySetInnerHTML={{ __html: adContent }}></div>
+      {/* Set both id attribute and ref to ensure the container is accessible */}
+      <div 
+        id={containerId} 
+        ref={contentRef}
+        data-ad-position={position}
+        data-ad-slot={slotId || position}
+        dangerouslySetInnerHTML={{ __html: adContent }}
+      ></div>
     </div>
   );
 };

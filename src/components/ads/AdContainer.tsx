@@ -39,6 +39,8 @@ const AdContainer: React.FC<AdContainerProps> = ({
       data-ad-version={adVersion}
       data-instance-id={instanceId}
       data-position={position}
+      data-ad-container="true"
+      id={`ad-container-${position}-${slotId || 'default'}`}
     >
       {children}
     </div>

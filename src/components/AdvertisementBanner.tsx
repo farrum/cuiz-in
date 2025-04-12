@@ -19,7 +19,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   slotId,
   pageSection
 }) => {
-  const containerId = useId().replace(/:/g, '-') + '-ad-container';
+  // Generate a stable unique ID for this ad container
+  const uniqueId = useId().replace(/:/g, '-');
+  const containerId = `${uniqueId}-ad-container`;
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   const {
