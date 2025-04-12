@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -367,7 +368,7 @@ const QuizManagement: React.FC = () => {
               ? "Try adjusting your filters to see more results."
               : "Get started by adding some quiz questions."}
           </p>
-          <div className="space-x-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
               variant="outline"
@@ -382,7 +383,7 @@ const QuizManagement: React.FC = () => {
               className="flex items-center gap-1"
             >
               <BookOpen className="h-4 w-4" />
-              Import Text Trivia
+              Learn Trivia
             </Button>
             <Button 
               onClick={() => setIsLearnImageTriviaDialogOpen(true)}
@@ -390,66 +391,86 @@ const QuizManagement: React.FC = () => {
               className="flex items-center gap-1"
             >
               <FileImage className="h-4 w-4" />
-              Import Image Trivia
+              Learn Image Trivia
             </Button>
           </div>
         </div>
       ) : (
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40%]">Question</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Answer</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredQuestions.slice(0, 50).map((question) => (
-                <TableRow key={question.id}>
-                  <TableCell className="font-medium">{question.question}</TableCell>
-                  <TableCell>{question.category}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                      question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {question.difficulty}
-                    </span>
-                  </TableCell>
-                  <TableCell>{question.correctAnswer}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setCurrentQuestion(question);
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteQuestion(question.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+        <>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button 
+              onClick={() => setIsLearnTriviaDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <BookOpen className="h-4 w-4" />
+              Learn Trivia
+            </Button>
+            <Button 
+              onClick={() => setIsLearnImageTriviaDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <FileImage className="h-4 w-4" />
+              Learn Image Trivia
+            </Button>
+          </div>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40%]">Question</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Difficulty</TableHead>
+                  <TableHead>Answer</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredQuestions.length > 50 && (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Showing first 50 of {filteredQuestions.length} questions. Please refine your search to see more specific results.
-            </div>
-          )}
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredQuestions.slice(0, 50).map((question) => (
+                  <TableRow key={question.id}>
+                    <TableCell className="font-medium">{question.question}</TableCell>
+                    <TableCell>{question.category}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                        question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {question.difficulty}
+                      </span>
+                    </TableCell>
+                    <TableCell>{question.correctAnswer}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentQuestion(question);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteQuestion(question.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {filteredQuestions.length > 50 && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Showing first 50 of {filteredQuestions.length} questions. Please refine your search to see more specific results.
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
