@@ -10,13 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, RefreshCw, Calendar, User } from 'lucide-react';
-import { AttendanceRecord } from './types';
-import { format, parseISO } from 'date-fns';
 
 interface UserHistoryViewProps {
   users: any[];
   selectedUser: string | null;
-  userHistory: Record<string, AttendanceRecord[]>;
+  userHistory: Record<string, any[]>;
   userHistoryLoading: boolean;
   onUserSelect: (userId: string) => void;
   onRefresh: (userId: string) => void;
@@ -35,7 +33,7 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
   formatAttendanceDate
 }) => {
   // Calculate consecutive days streak if we have history
-  const calculateStreak = (history: AttendanceRecord[]): number => {
+  const calculateStreak = (history: any[]): number => {
     if (!history || history.length === 0) return 0;
     
     // Sort by date (most recent first)
@@ -49,8 +47,8 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
     // Calculate streak
     let streak = 1;
     for (let i = 1; i < uniqueDates.length; i++) {
-      const current = parseISO(uniqueDates[i-1]);
-      const prev = parseISO(uniqueDates[i]);
+      const current = new Date(uniqueDates[i-1]);
+      const prev = new Date(uniqueDates[i]);
       
       // If dates are consecutive (difference is 1 day)
       const diffTime = current.getTime() - prev.getTime();

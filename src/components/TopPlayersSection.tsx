@@ -126,7 +126,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
           <Trophy className="mr-2 h-4 w-4" />
           <span>Top Players</span>
           {showMonthlyComparison && (
-            <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: May 1</Badge>
+            <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: {new Date().getMonth() === 3 ? 'May 1' : 'Next Month'}</Badge>
           )}
         </CardTitle>
       </CardHeader>

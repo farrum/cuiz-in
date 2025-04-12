@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import TopPlayersSection from '@/components/TopPlayersSection';
 
 const UserManagementWithAttendance: React.FC = () => {
   const [view, setView] = useState<'table' | 'calendar'>('table');
@@ -21,12 +22,6 @@ const UserManagementWithAttendance: React.FC = () => {
     try {
       // In a real implementation, you would trigger a password reset via Supabase Auth
       // This is a simplified example that just shows a toast notification
-      
-      // For Supabase password reset, we would typically do something like this:
-      // const { error } = await supabase.auth.admin.resetPasswordForEmail(userEmail);
-      
-      // Since we don't have direct access to admin methods in the client, we'd use a custom API
-      // For now, we'll just show a success toast to demonstrate the UI flow
       
       toast({
         title: "Password reset initiated",
@@ -82,6 +77,11 @@ const UserManagementWithAttendance: React.FC = () => {
       ) : (
         <UserAttendanceTracker />
       )}
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+        <TopPlayersSection className="h-full" limit={5} />
+        <TopPlayersSection className="h-full" limit={5} showMonthlyComparison={true} />
+      </div>
     </div>
   );
 };

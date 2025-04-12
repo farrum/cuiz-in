@@ -2,12 +2,15 @@
 import React from 'react';
 import { format, isWeekend } from 'date-fns';
 import { Loader2 } from 'lucide-react';
-import { UserAttendance } from './types';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AttendanceCalendarViewProps {
-  attendance: UserAttendance[];
+  attendance: Array<{
+    user_id: string;
+    username: string;
+    dates: Record<string, boolean>;
+  }>;
   daysInMonth: Date[];
   loading: boolean;
 }
