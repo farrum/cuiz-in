@@ -8,4 +8,7 @@ export interface QuizQuestion {
   category: string;
   points: number;
   explanation: string;
+  imageUrl?: string; // Optional URL for image-based questions
+  questionType?: 'text' | 'image'; // Type of question (default is text)
 }
+

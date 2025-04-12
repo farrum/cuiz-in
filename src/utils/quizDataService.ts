@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from './types';
 import { STORAGE_KEYS } from './constants';
+import { getRandomImageQuizQuestion, shouldShowImageQuestion } from './imageQuizUtils';
 
 // Mock quiz questions for fallback
 export const quizQuestions: QuizQuestion[] = [
@@ -77,6 +77,11 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
 
 // Get a random question (with preference for unanswered questions)
 export const getRandomQuestion = async (): Promise<QuizQuestion> => {
+  // Randomly decide if we should show an image question
+  if (shouldShowImageQuestion()) {
+    return getRandomImageQuizQuestion();
+  }
+  
   // Try to get the latest questions from Supabase
   let questions = await fetchQuizQuestions();
   
@@ -198,6 +203,43 @@ export const seedAdditionalQuizQuestions = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Error in seedAdditionalQuizQuestions:', error);
+    return false;
+  }
+};
+
+// Create utility for admin to add image-based questions
+export const createImageBasedQuestion = async (
+  question: string,
+  options: string[],
+  correctAnswer: string,
+  category: string,
+  difficulty: 'easy' | 'medium' | 'hard',
+  imageUrl: string,
+  explanation: string = ''
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_questions')
+      .insert([{
+        question,
+        options,
+        correct_answer: correctAnswer,
+        category,
+        difficulty,
+        image_url: imageUrl,
+        question_type: 'image',
+        explanation
+      }]);
+      
+    if (error) {
+      console.error('Error creating image-based question:', error);
+      return false;
+    }
+    
+    console.log('Successfully created image-based question');
+    return true;
+  } catch (err) {
+    console.error('Error in createImageBasedQuestion:', err);
     return false;
   }
 };

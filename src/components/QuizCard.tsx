@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -5,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
-import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
+import { Sparkles, Brain, ZapIcon, Timer, Award, Flame, Image as ImageIcon } from 'lucide-react';
 import CountdownButton from './CountdownButton';
 
 interface QuizCardProps {
@@ -210,6 +211,11 @@ const QuizCard: React.FC<QuizCardProps> = ({
       default: return <Brain size={18} />;
     }
   };
+  
+  // Skip rendering if it's an image-based question
+  if (question.questionType === 'image') {
+    return null;
+  }
   
   return (
     <Card className="quiz-card fun-card">

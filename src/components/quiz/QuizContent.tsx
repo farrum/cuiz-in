@@ -4,13 +4,14 @@ import QuizCard from '@/components/QuizCard';
 import LoadingCard from '@/components/LoadingCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { QuizQuestion } from '@/utils/quizData';
+import ImageQuizContent from './ImageQuizContent';
 
 interface QuizContentProps {
   isLoading: boolean;
   currentQuestion: QuizQuestion | null;
   showMotivation: boolean;
   motivationMessage: string;
-  onQuestionComplete: (isCorrect: boolean) => void;
+  onQuestionComplete: (isCorrect: boolean, selectedAnswer: string) => void;
 }
 
 const QuizContent: React.FC<QuizContentProps> = ({
@@ -38,7 +39,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
       </div>
     );
   }
-  
+
   return (
     <>
       {showMotivation && (
@@ -58,10 +59,18 @@ const QuizContent: React.FC<QuizContentProps> = ({
             showMessage={false}
           />
         </div>
-        <QuizCard
-          question={currentQuestion}
-          onComplete={onQuestionComplete}
-        />
+        
+        {currentQuestion.questionType === 'image' ? (
+          <ImageQuizContent
+            question={currentQuestion}
+            onComplete={onQuestionComplete}
+          />
+        ) : (
+          <QuizCard
+            question={currentQuestion}
+            onComplete={onQuestionComplete}
+          />
+        )}
       </div>
     </>
   );
