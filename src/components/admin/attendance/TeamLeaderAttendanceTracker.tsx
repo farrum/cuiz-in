@@ -7,8 +7,8 @@ import ErrorMessage from './ErrorMessage';
 import AttendanceCalendarView from './AttendanceCalendarView';
 import UserHistoryView from './UserHistoryView';
 import { useAttendanceData } from './useAttendanceData';
-import { AttendanceHeader } from './components/AttendanceHeader';
-import { LoadingState } from './components/LoadingState';
+import AttendanceHeader from './components/AttendanceHeader';
+import LoadingState from './components/LoadingState';
 import { downloadCSV } from '@/utils/excelUtils';
 
 const TeamLeaderAttendanceTracker: React.FC = () => {
