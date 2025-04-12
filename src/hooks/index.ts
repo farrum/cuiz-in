@@ -6,3 +6,6 @@ export * from './useTeamLeaderDashboard'
 
 export * from './team-members';
 export * from './challenge';
+
+// Export useTeamMembers for backward compatibility
+export { useTeamMembers } from './team-members';
