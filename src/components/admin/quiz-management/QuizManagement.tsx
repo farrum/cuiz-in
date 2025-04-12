@@ -36,6 +36,7 @@ import ImageQuizForm from './ImageQuizForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
 import TriviaImporter from './TriviaImporter';
 import LearnTriviaDialog from './LearnTriviaDialog';
+import LearnImageTriviaDialog from './LearnImageTriviaDialog';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
 import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
@@ -56,6 +57,7 @@ const QuizManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
   const [isLearnTriviaDialogOpen, setIsLearnTriviaDialogOpen] = useState(false);
+  const [isLearnImageTriviaDialogOpen, setIsLearnImageTriviaDialogOpen] = useState(false);
   const [duplicateCount, setDuplicateCount] = useState<number>(0);
   const [isDuplicateCheckLoading, setIsDuplicateCheckLoading] = useState(false);
   const { toast } = useToast();
@@ -590,14 +592,24 @@ const QuizManagement: React.FC = () => {
                   ? "Try adjusting your filters to see more results."
                   : "Get started by adding some quiz questions."}
               </p>
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add New Question
-              </Button>
+              <div className="space-x-2">
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Add New Question
+                </Button>
+                <Button 
+                  onClick={() => setIsLearnTriviaDialogOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Learn Trivia
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="border rounded-md">
@@ -621,6 +633,14 @@ const QuizManagement: React.FC = () => {
               >
                 <PlusCircle className="h-4 w-4" />
                 Add Image Question
+              </Button>
+              <Button 
+                onClick={() => setIsLearnImageTriviaDialogOpen(true)}
+                variant="outline"
+                className="flex items-center gap-1"
+              >
+                <BookOpenIcon className="h-4 w-4" />
+                Learn Image Trivia
               </Button>
               <Button 
                 onClick={exportToExcel}
@@ -684,14 +704,24 @@ const QuizManagement: React.FC = () => {
                   ? "Try adjusting your filters to see more results."
                   : "Get started by adding some image-based quiz questions."}
               </p>
-              <Button 
-                onClick={() => setIsImageQuizDialogOpen(true)}
-                variant="default"
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add Image Question
-              </Button>
+              <div className="space-x-2">
+                <Button 
+                  onClick={() => setIsImageQuizDialogOpen(true)}
+                  variant="default"
+                  className="flex items-center gap-1"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Add Image Question
+                </Button>
+                <Button 
+                  onClick={() => setIsLearnImageTriviaDialogOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Learn Image Trivia
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="mt-4">
@@ -791,6 +821,24 @@ const QuizManagement: React.FC = () => {
               setIsLearnTriviaDialogOpen(false);
             }}
             onCancel={() => setIsLearnTriviaDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isLearnImageTriviaDialogOpen} onOpenChange={setIsLearnImageTriviaDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Learn Image Trivia Questions</DialogTitle>
+            <DialogDescription>
+              Import image-based questions from the Open Trivia Database to enhance your quiz.
+            </DialogDescription>
+          </DialogHeader>
+          <LearnImageTriviaDialog
+            onSuccess={() => {
+              fetchQuestions();
+              setIsLearnImageTriviaDialogOpen(false);
+            }}
+            onCancel={() => setIsLearnImageTriviaDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
