@@ -10,6 +10,8 @@ const TermsPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        <AdvertisementBanner position="top" slotId="terms-top" pageSection="terms-page" className="mb-6" />
+        
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
           
@@ -27,6 +29,8 @@ const TermsPage: React.FC = () => {
                 You must be at least 18 years old to use CuizIN. By using the service, you represent and warrant that you are at least 18 years of age.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="terms-middle" pageSection="terms-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">3. User Accounts</h2>
@@ -58,6 +62,8 @@ const TermsPage: React.FC = () => {
                 All content, features, and functionality of the CuizIN service, including but not limited to text, graphics, logos, icons, and software, are the exclusive property of CuizIN and are protected by copyright, trademark, and other intellectual property laws.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="terms-middle-2" pageSection="terms-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Rewards and Payments</h2>

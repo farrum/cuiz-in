@@ -10,6 +10,8 @@ const DisclaimerPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        <AdvertisementBanner position="top" slotId="disclaimer-top" pageSection="disclaimer-page" className="mb-6" />
+        
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Game Disclaimer</h1>
           
@@ -27,6 +29,8 @@ const DisclaimerPage: React.FC = () => {
                 Rewards are earned through active participation, correct answers, and referrals. The amount and frequency of rewards may change based on platform policies.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="disclaimer-middle" pageSection="disclaimer-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">No Guarantee of Income</h2>
@@ -48,6 +52,8 @@ const DisclaimerPage: React.FC = () => {
                 While we strive to ensure the accuracy of our quiz questions and educational content, CuizIN does not guarantee the accuracy, completeness, or usefulness of any information on the platform.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="disclaimer-middle-2" pageSection="disclaimer-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">Technical Issues</h2>

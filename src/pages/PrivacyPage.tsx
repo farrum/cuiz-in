@@ -10,6 +10,8 @@ const PrivacyPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        <AdvertisementBanner position="top" slotId="privacy-top" pageSection="privacy-page" className="mb-6" />
+        
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
           
@@ -23,6 +25,8 @@ const PrivacyPage: React.FC = () => {
                 Additionally, we automatically collect certain information about your device, including IP address, device type, browser type, and usage data.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="privacy-middle" pageSection="privacy-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">2. How We Use Your Information</h2>
@@ -63,6 +67,8 @@ const PrivacyPage: React.FC = () => {
                 We use cookies and similar tracking technologies to collect information about your browsing activities. You can control cookies through your browser settings, but disabling them may limit your use of certain features.
               </p>
             </section>
+            
+            <AdvertisementBanner position="middle" slotId="privacy-middle-2" pageSection="privacy-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Your Choices</h2>

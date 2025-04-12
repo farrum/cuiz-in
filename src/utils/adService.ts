@@ -129,3 +129,24 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
     return [];
   }
 };
+
+// Function to trigger ad slots update event
+export const triggerAdSlotsUpdate = (slots: any[] = []) => {
+  window.dispatchEvent(new CustomEvent('adSlotsUpdated', { 
+    detail: { slots, source: 'adService' }
+  }));
+};
+
+// Function to get available ad slots for a specific position
+export const getAdSlotsByPosition = (position: string): any[] => {
+  try {
+    const storedAds = localStorage.getItem(STORAGE_KEYS.AD_SLOTS);
+    if (!storedAds) return [];
+    
+    const adSlots = JSON.parse(storedAds);
+    return adSlots.filter((ad: any) => ad.position === position && ad.active);
+  } catch (error) {
+    console.error('Error getting ad slots by position:', error);
+    return [];
+  }
+};
