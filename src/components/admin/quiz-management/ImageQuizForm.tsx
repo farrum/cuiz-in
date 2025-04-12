@@ -1,29 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
+  Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage 
 } from "@/components/ui/form";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { PlusCircle, Trash, Image as ImageIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { createImageBasedQuestion } from '@/utils/quizDataService';
 import { useToast } from '@/hooks/use-toast';
+import {
+  ImageUrlField,
+  QuizOptionsField,
+  CategoryField,
+  CorrectAnswerField
+} from './image-quiz';
 
 interface ImageQuizFormProps {
   categories: string[];
@@ -37,8 +28,6 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
   onCancel
 }) => {
   const { toast } = useToast();
-  const [newCategory, setNewCategory] = useState('');
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [localCategories, setLocalCategories] = useState<string[]>(categories);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,67 +42,20 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
     explanation: ''
   };
 
-  const form = useForm({
-    defaultValues
-  });
-
-  const { watch, setValue, getValues } = form;
-  const options = watch('options');
-  const imageUrl = watch('imageUrl');
+  const form = useForm({ defaultValues });
 
   // Update local categories when prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalCategories(categories);
   }, [categories]);
 
-  React.useEffect(() => {
+  // Update preview image when URL changes
+  useEffect(() => {
+    const imageUrl = form.watch('imageUrl');
     if (imageUrl) {
       setPreviewImage(imageUrl);
     }
-  }, [imageUrl]);
-
-  const handleAddOption = () => {
-    setValue('options', [...options, '']);
-  };
-
-  const handleRemoveOption = (index: number) => {
-    if (options.length <= 2) return; // Ensure at least 2 options
-    const newOptions = [...options];
-    newOptions.splice(index, 1);
-    setValue('options', newOptions);
-    
-    // If the correct answer was the removed option, reset it
-    const correctAnswer = getValues('correctAnswer');
-    if (correctAnswer === options[index]) {
-      setValue('correctAnswer', '');
-    }
-  };
-
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
-    setValue('options', newOptions);
-  };
-
-  const handleAddNewCategory = () => {
-    if (newCategory.trim()) {
-      // Add to local categories
-      const newCat = newCategory.trim();
-      if (!localCategories.includes(newCat)) {
-        setLocalCategories([...localCategories, newCat]);
-      }
-      // Set as selected
-      setValue('category', newCat);
-      setNewCategory('');
-      setShowNewCategoryInput(false);
-    }
-  };
-
-  const handleImagePreview = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setPreviewImage(url);
-    setValue('imageUrl', url);
-  };
+  }, [form.watch('imageUrl')]);
 
   const handleFormSubmit = form.handleSubmit(async (data) => {
     // Ensure options array doesn't contain empty strings
@@ -185,54 +127,10 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
     <Form {...form}>
       <form onSubmit={handleFormSubmit} className="space-y-6">
         {/* Image URL Field */}
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          rules={{ required: "Image URL is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <ImageIcon size={16} />
-                Image URL
-              </FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Enter image URL" 
-                  {...field} 
-                  onChange={(e) => handleImagePreview(e)}
-                />
-              </FormControl>
-              <FormDescription>
-                Provide a URL to an image for this question
-              </FormDescription>
-              <FormMessage />
-              
-              {previewImage && (
-                <Card className="mt-2">
-                  <CardContent className="p-3">
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-                      <img
-                        src={previewImage}
-                        alt="Question image preview"
-                        className="object-contain w-full h-full"
-                        onError={() => {
-                          toast({
-                            title: "Image Error",
-                            description: "Unable to load this image URL",
-                            variant: "destructive"
-                          });
-                          setPreviewImage(null);
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Image preview - verify that it loads correctly
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </FormItem>
-          )}
+        <ImageUrlField 
+          form={form} 
+          previewImage={previewImage} 
+          setPreviewImage={setPreviewImage} 
         />
 
         {/* Question Field */}
@@ -256,140 +154,16 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
         />
 
         {/* Options Field */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <FormLabel>Options</FormLabel>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={handleAddOption}
-              className="flex items-center gap-1"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Add Option
-            </Button>
-          </div>
-          {options.map((option, index) => (
-            <div key={index} className="flex gap-2">
-              <Input
-                value={option}
-                onChange={(e) => handleOptionChange(index, e.target.value)}
-                placeholder={`Option ${index + 1}`}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoveOption(index)}
-                disabled={options.length <= 2}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          {options.length < 2 && (
-            <p className="text-sm text-destructive">
-              At least 2 options are required.
-            </p>
-          )}
-        </div>
+        <QuizOptionsField form={form} />
 
         {/* Correct Answer Field */}
-        <FormField
-          control={form.control}
-          name="correctAnswer"
-          rules={{ required: "Correct answer is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Correct Answer</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select the correct answer" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {options.map((option, index) => (
-                    option && (
-                      <SelectItem key={index} value={option}>
-                        {option}
-                      </SelectItem>
-                    )
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <CorrectAnswerField form={form} />
 
         {/* Category Field */}
-        <FormField
-          control={form.control}
-          name="category"
-          rules={{ required: "Category is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              {showNewCategoryInput ? (
-                <div className="flex gap-2">
-                  <Input
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="Enter new category"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleAddNewCategory}
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowNewCategoryInput(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {localCategories.map((category, index) => (
-                        <SelectItem key={index} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="link"
-                    onClick={() => setShowNewCategoryInput(true)}
-                    className="px-0"
-                  >
-                    Add new category
-                  </Button>
-                </>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
+        <CategoryField 
+          form={form} 
+          categories={localCategories}
+          setLocalCategories={setLocalCategories}
         />
 
         {/* Difficulty Field */}
