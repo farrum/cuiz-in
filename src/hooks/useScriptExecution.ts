@@ -44,12 +44,24 @@ export const useScriptExecution = (adContent: string, containerId: string) => {
           // For scripts with src attribute, we need to create and append
           if (script.src) {
             script.async = true;
+            script.onerror = (e) => {
+              console.error(`Error loading external script in ${containerId}:`, e);
+            };
             container.appendChild(script);
             console.log(`Appended external script: ${script.src}`);
           } else if (script.textContent) {
-            // For inline scripts, we create a function and call it
+            // For inline scripts, we create a function and call it in a try-catch block
             try {
-              const executeScript = new Function(script.textContent || '');
+              // Wrap execution in try-catch to prevent script errors from breaking the app
+              const wrappedCode = `
+                try {
+                  ${script.textContent}
+                } catch(err) {
+                  console.error("Error in ad script:", err);
+                }
+              `;
+              
+              const executeScript = new Function(wrappedCode);
               executeScript();
               console.log(`Executed inline script in ${containerId}`);
             } catch (inlineError) {
