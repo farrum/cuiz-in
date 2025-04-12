@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ExtendedDatabase } from '@/types/database-extensions';
 import { 
@@ -277,7 +276,7 @@ export const requestMemberSuspension = async (
       reason
     );
     
-    return { success: true, message: 'Suspension request submitted for admin review' };
+    return { success: true };
   } catch (error: any) {
     console.error('Error in requestMemberSuspension:', error);
     return { success: false, error: error.message };

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AdminNotification } from '@/types/adminNotification';
+import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 import { adminNotificationsApi } from '@/utils/supabaseUtils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -99,9 +99,14 @@ export const useAdminNotifications = () => {
     }
   };
 
-  const createNotification = async (type: string, message: string, userId?: string, data?: any) => {
+  const createNotification = async (
+    type: AdminNotificationInsert['type'], 
+    message: string, 
+    userId?: string | null, 
+    data?: any
+  ) => {
     try {
-      const notification = {
+      const notification: AdminNotificationInsert = {
         type,
         message,
         read: false,
