@@ -25,44 +25,36 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import ErrorMessage from './ErrorMessage';
 import AttendanceCalendarView from './AttendanceCalendarView';
 import UserHistoryView from './UserHistoryView';
-import { AttendanceRecord } from './types';
+import { useAttendanceData } from './useAttendanceData';
 
 const TeamLeaderAttendanceTracker: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
-  const [attendance, setAttendance] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [daysInMonth, setDaysInMonth] = useState<Date[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [userHistory, setUserHistory] = useState<Record<string, AttendanceRecord[]>>({});
-  const [userHistoryLoading, setUserHistoryLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  // Use the shared attendance data hook
+  const { 
+    attendance,
+    daysInMonth,
+    error,
+    setError,
+    userHistory,
+    userHistoryLoading,
+    fetchUserHistory,
+    getLastLoginDate,
+    formatAttendanceDate,
+    getUserAttendanceStats,
+    fetchAttendanceData
+  } = useAttendanceData(currentMonth, teamMembers);
 
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
   }, []);
-
-  // Update days in month and fetch attendance when currentMonth changes
-  useEffect(() => {
-    // Get all days in the current month
-    const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-    
-    const days = [];
-    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-      days.push(new Date(day));
-    }
-    
-    setDaysInMonth(days);
-    
-    if (teamMembers.length > 0) {
-      fetchAttendanceData();
-    }
-  }, [currentMonth, teamMembers]);
 
   // Filter team members when search term changes
   useEffect(() => {
@@ -120,154 +112,6 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
       setError(`Failed to load team members: ${error.message}`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchAttendanceData = async () => {
-    if (teamMembers.length === 0) return;
-    
-    setLoading(true);
-    setError(null);
-    try {
-      const startDate = format(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1), 'yyyy-MM-dd');
-      const endDate = format(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0), 'yyyy-MM-dd');
-      
-      console.log(`Fetching attendance data from ${startDate} to ${endDate}`);
-      
-      // Get member IDs
-      const memberIds = teamMembers.map(member => member.id);
-      
-      // Fetch attendance data directly from Supabase for current month
-      const { data: attendanceData, error } = await supabase
-        .from('user_attendance')
-        .select('id, user_id, username, attendance_date, login_time')
-        .in('user_id', memberIds)
-        .gte('attendance_date', startDate)
-        .lte('attendance_date', endDate)
-        .order('attendance_date', { ascending: false });
-        
-      if (error) {
-        console.error('Error fetching attendance data:', error);
-        throw error;
-      }
-      
-      console.log(`Fetched ${attendanceData?.length || 0} attendance records for current month`);
-      
-      if (attendanceData && attendanceData.length > 0) {
-        // Process attendance data by user
-        const attendanceByUser: Record<string, Record<string, boolean>> = {};
-        
-        // Initialize attendance data for all team members first
-        teamMembers.forEach(member => {
-          attendanceByUser[member.id] = {};
-        });
-        
-        // Fill in attendance records where they exist
-        attendanceData.forEach((record) => {
-          if (record.user_id && record.attendance_date) {
-            if (!attendanceByUser[record.user_id]) {
-              attendanceByUser[record.user_id] = {};
-            }
-            attendanceByUser[record.user_id][record.attendance_date] = true;
-          }
-        });
-        
-        // Create attendance records for each team member
-        const formattedAttendance = teamMembers.map(member => ({
-          user_id: member.id,
-          username: member.username,
-          dates: attendanceByUser[member.id] || {}
-        }));
-        
-        setAttendance(formattedAttendance);
-        console.log("Processed attendance data for", formattedAttendance.length, "team members");
-      } else {
-        // If no attendance data, create empty records
-        const emptyAttendance = teamMembers.map(member => ({
-          user_id: member.id,
-          username: member.username,
-          dates: {}
-        }));
-        setAttendance(emptyAttendance);
-        console.log("No attendance data found for current month, creating empty records");
-      }
-    } catch (error: any) {
-      console.error('Error fetching attendance data:', error);
-      setError(`Failed to load attendance data: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUserHistory = async (userId: string) => {
-    setUserHistoryLoading(true);
-    setUserHistory(prev => ({...prev, [userId]: []})); // Reset previous data for this user
-    setError(null);
-    try {
-      console.log(`Fetching attendance history for team member: ${userId}`);
-      
-      const { data: historyData, error } = await supabase
-        .from('user_attendance')
-        .select('id, user_id, username, attendance_date, login_time')
-        .eq('user_id', userId)
-        .order('attendance_date', { ascending: false });
-        
-      if (error) {
-        console.error('Error fetching user history:', error);
-        throw error;
-      }
-      
-      console.log(`Fetched ${historyData?.length || 0} history records for user`);
-      
-      if (historyData && historyData.length > 0) {
-        setUserHistory(prev => ({
-          ...prev,
-          [userId]: historyData
-        }));
-      } else {
-        // Set empty history if no data found
-        setUserHistory(prev => ({
-          ...prev,
-          [userId]: []
-        }));
-        console.log("No attendance history found for this team member");
-      }
-    } catch (error: any) {
-      console.error('Error fetching user history:', error);
-      setError(`Failed to load team member history: ${error.message}`);
-    } finally {
-      setUserHistoryLoading(false);
-    }
-  };
-
-  const getLastLoginDate = (userId: string): string => {
-    if (!userHistory[userId] || userHistory[userId].length === 0) {
-      return 'Never';
-    }
-    
-    const records = userHistory[userId];
-    if (records.length > 0) {
-      try {
-        const dateStr = records[0].attendance_date;
-        const date = new Date(dateStr);
-        return isNaN(date.getTime()) ? dateStr : format(date, 'dd MMM yyyy');
-      } catch (err) {
-        console.error('Date parsing error:', err);
-        return 'Invalid date';
-      }
-    }
-    return 'Never';
-  };
-
-  const formatAttendanceDate = (dateStr: string): string => {
-    try {
-      if (!dateStr) return 'Unknown';
-      
-      const date = new Date(dateStr);
-      return isNaN(date.getTime()) ? dateStr : format(date, 'dd MMM yyyy');
-    } catch (err) {
-      console.error('Error formatting date:', err);
-      return dateStr || 'Invalid date';
     }
   };
 
