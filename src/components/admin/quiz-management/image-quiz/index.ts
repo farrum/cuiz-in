@@ -1,12 +1,14 @@
 
-import ImageUrlField from './ImageUrlField';
 import QuizOptionsField from './QuizOptionsField';
+import ImageUrlField from './ImageUrlField';
 import CategoryField from './CategoryField';
-import CorrectAnswerField from './CorrectAnswerField';
+import CorrectAnswerField from './CorrectAnswerField'; 
+import { LearnImageTriviaDialog } from './import';
 
 export {
-  ImageUrlField,
   QuizOptionsField,
+  ImageUrlField,
   CategoryField,
-  CorrectAnswerField
+  CorrectAnswerField,
+  LearnImageTriviaDialog
 };

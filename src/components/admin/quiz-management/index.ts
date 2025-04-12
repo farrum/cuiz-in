@@ -5,7 +5,7 @@ import ImportQuizQuestions from './ImportQuizQuestions';
 import TriviaImporter from './TriviaImporter';
 import ImageQuizForm from './ImageQuizForm';
 import LearnTriviaDialog from './LearnTriviaDialog';
-import LearnImageTriviaDialog from './LearnImageTriviaDialog';
+import { LearnImageTriviaDialog } from './image-quiz';
 
 export {
   QuizManagement,
