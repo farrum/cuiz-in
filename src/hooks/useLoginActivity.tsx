@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoginBonusState {
   showBonusPopup: boolean;
@@ -21,18 +22,18 @@ export const useLoginActivity = (
     streakDays: 1,
     bonusChecked: false
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     const logLoginActivity = async () => {
       if (!userName || !userId || loginBonusState.bonusChecked) return;
       
       try {
-        // Only track attendance directly - don't duplicate data in localStorage
+        // Log the login activity to trigger attendance tracking
         const device = navigator.userAgent;
         const loginTime = new Date().toISOString();
         
-        // Log attendance in the database - triggers the track_user_attendance function to update the user_attendance table
-        await supabase
+        const { error: loginLogError } = await supabase
           .from('login_logs')
           .insert({
             username: userName,
@@ -42,7 +43,16 @@ export const useLoginActivity = (
             successful: true
           });
           
-        console.log('Login activity logged for user:', userName);
+        if (loginLogError) {
+          console.error('Error logging login activity:', loginLogError);
+          toast({
+            variant: "destructive",
+            title: "Login tracking failed",
+            description: "Your login was recorded but attendance tracking failed"
+          });
+        } else {
+          console.log('Login activity logged for user:', userName);
+        }
         
         // Check and update login streak - only do this once per session
         const bonus = await checkAndUpdateLoginStreak(userId);
@@ -56,6 +66,14 @@ export const useLoginActivity = (
             streakDays: Math.min(bonus, 30), // Streak days = bonus points (capped at 30)
             showBonusPopup: true
           });
+          
+          // Inform user about the bonus streak
+          if (bonus > 1) {
+            toast({
+              title: `${bonus} Day Streak! 🔥`,
+              description: `You've logged in ${bonus} days in a row. Keep it up!`,
+            });
+          }
         } else {
           setLoginBonusState(prev => ({
             ...prev,
@@ -74,7 +92,7 @@ export const useLoginActivity = (
     if (isAuthenticated === true) {
       logLoginActivity();
     }
-  }, [userName, userId, isAuthenticated, loginBonusState.bonusChecked]);
+  }, [userName, userId, isAuthenticated, loginBonusState.bonusChecked, toast]);
 
   const closeBonusPopup = () => {
     setLoginBonusState(prev => ({

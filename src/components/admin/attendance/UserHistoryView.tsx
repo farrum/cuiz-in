@@ -8,8 +8,10 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Loader2, RefreshCw, Calendar, User } from 'lucide-react';
 import { AttendanceRecord } from './types';
+import { format, parseISO } from 'date-fns';
 
 interface UserHistoryViewProps {
   users: any[];
@@ -32,6 +34,38 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
   getLastLoginDate,
   formatAttendanceDate
 }) => {
+  // Calculate consecutive days streak if we have history
+  const calculateStreak = (history: AttendanceRecord[]): number => {
+    if (!history || history.length === 0) return 0;
+    
+    // Sort by date (most recent first)
+    const sortedDates = [...history]
+      .sort((a, b) => new Date(b.attendance_date).getTime() - new Date(a.attendance_date).getTime())
+      .map(record => record.attendance_date);
+    
+    // Get unique dates (in case there are multiple logins per day)
+    const uniqueDates = Array.from(new Set(sortedDates));
+    
+    // Calculate streak
+    let streak = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const current = parseISO(uniqueDates[i-1]);
+      const prev = parseISO(uniqueDates[i]);
+      
+      // If dates are consecutive (difference is 1 day)
+      const diffTime = current.getTime() - prev.getTime();
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      
+      if (Math.round(diffDays) === 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -69,10 +103,42 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
         )}
       </div>
       
-      {selectedUser && !userHistoryLoading && (
+      {selectedUser && !userHistoryLoading && userHistory[selectedUser] && (
         <>
-          <div className="text-sm">
-            Last login: <span className="font-medium">{getLastLoginDate(selectedUser)}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="p-4 flex items-center space-x-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <User className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Last Login</p>
+                <p className="font-medium">{getLastLoginDate(selectedUser)}</p>
+              </div>
+            </Card>
+            
+            <Card className="p-4 flex items-center space-x-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Attendance Streak</p>
+                <p className="font-medium">
+                  {calculateStreak(userHistory[selectedUser])} days
+                </p>
+              </div>
+            </Card>
+            
+            <Card className="p-4 flex items-center space-x-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Logins</p>
+                <p className="font-medium">
+                  {userHistory[selectedUser]?.length || 0}
+                </p>
+              </div>
+            </Card>
           </div>
           
           <div className="border rounded-lg overflow-hidden">

@@ -16,9 +16,11 @@ import {
   ChevronRight, 
   Download, 
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Search
 } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
+import { Input } from '@/components/ui/input';
 import ErrorMessage from './ErrorMessage';
 import AttendanceCalendarView from './AttendanceCalendarView';
 import UserHistoryView from './UserHistoryView';
@@ -27,11 +29,13 @@ import { useAttendanceData } from './useAttendanceData';
 const UserAttendanceTracker: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [users, setUsers] = useState<any[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const {
     attendance,
@@ -43,12 +47,25 @@ const UserAttendanceTracker: React.FC = () => {
     formatAttendanceDate,
     setError: setAttendanceError,
     fetchAttendanceData
-  } = useAttendanceData(currentMonth, users);
+  } = useAttendanceData(currentMonth, filteredUsers);
 
   // Fetch users on component mount and when refreshing
   useEffect(() => {
     fetchUsers();
   }, [refreshCount]);
+
+  // Filter users when search term changes
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      const lowercaseSearch = searchTerm.toLowerCase();
+      const filtered = users.filter(user => 
+        user.username.toLowerCase().includes(lowercaseSearch)
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -69,9 +86,11 @@ const UserAttendanceTracker: React.FC = () => {
       if (usersData) {
         console.log(`Fetched ${usersData.length} users`);
         setUsers(usersData);
+        setFilteredUsers(usersData);
       } else {
         console.log("No users found");
         setUsers([]);
+        setFilteredUsers([]);
       }
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -143,7 +162,7 @@ const UserAttendanceTracker: React.FC = () => {
   return (
     <Card className="max-w-full overflow-hidden">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
             <CardTitle className="flex items-center">
               <CalendarIcon className="mr-2 h-6 w-6" /> 
@@ -165,7 +184,7 @@ const UserAttendanceTracker: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center mt-4 flex-wrap gap-4">
           <Tabs 
             defaultValue="calendar" 
             value={view} 
@@ -177,14 +196,25 @@ const UserAttendanceTracker: React.FC = () => {
             </TabsList>
           </Tabs>
           
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search users..."
+                className="pl-8 w-[200px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
             <Button 
               variant="outline" 
               size="sm" 
               onClick={refreshAllData}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh Data
+              Refresh
             </Button>
             
             <Button 
@@ -221,7 +251,7 @@ const UserAttendanceTracker: React.FC = () => {
             
             <TabsContent value="list" className="mt-0">
               <UserHistoryView 
-                users={users}
+                users={filteredUsers}
                 selectedUser={selectedUser}
                 userHistory={userHistory}
                 userHistoryLoading={userHistoryLoading}

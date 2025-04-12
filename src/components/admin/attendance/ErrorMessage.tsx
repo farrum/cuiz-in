@@ -1,27 +1,33 @@
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorMessageProps {
   error: string;
-  onDismiss: () => void;
+  onDismiss?: () => void;
 }
 
 const ErrorMessage: React.FC<ErrorMessageProps> = ({ error, onDismiss }) => {
   return (
-    <div className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-950 dark:text-red-400">
-      <AlertCircle className="flex-shrink-0 inline w-4 h-4 mr-2" />
-      <span>{error}</span>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="ml-auto"
-        onClick={onDismiss}
-      >
-        Dismiss
-      </Button>
-    </div>
+    <Alert variant="destructive" className="mb-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription className="flex justify-between items-center">
+        <span>{error}</span>
+        {onDismiss && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onDismiss} 
+            className="ml-2"
+          >
+            Dismiss
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 };
 

@@ -1,8 +1,10 @@
 
 import React from 'react';
-import { format } from 'date-fns';
+import { format, isWeekend } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { UserAttendance } from './types';
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AttendanceCalendarViewProps {
   attendance: UserAttendance[];
@@ -39,8 +41,22 @@ const AttendanceCalendarView: React.FC<AttendanceCalendarViewProps> = ({
           <tr>
             <th className="px-4 py-2 text-left text-sm font-medium">Username</th>
             {daysInMonth.map(day => (
-              <th key={format(day, 'yyyy-MM-dd')} className="px-2 py-2 text-center text-xs font-medium w-8">
-                {format(day, 'dd')}
+              <th 
+                key={format(day, 'yyyy-MM-dd')} 
+                className={`px-2 py-2 text-center text-xs font-medium w-8 ${
+                  isWeekend(day) ? 'bg-gray-100' : ''
+                }`}
+              >
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      {format(day, 'dd')}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {format(day, 'EEEE, MMMM d')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </th>
             ))}
             <th className="px-4 py-2 text-center text-sm font-medium">Total</th>
@@ -59,21 +75,30 @@ const AttendanceCalendarView: React.FC<AttendanceCalendarViewProps> = ({
                 {daysInMonth.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const isPresent = user.dates[dateStr] ? true : false;
+                  const isWeekendDay = isWeekend(day);
                   
                   if (isPresent) totalPresent++;
                   
                   return (
                     <td 
                       key={dateStr} 
-                      className={`px-2 py-2 text-center ${isPresent ? 'bg-green-100' : 'bg-gray-50'}`}
+                      className={`px-2 py-2 text-center ${
+                        isPresent 
+                          ? 'bg-green-100' 
+                          : isWeekendDay 
+                            ? 'bg-gray-50' 
+                            : 'bg-white'
+                      }`}
                     >
                       {isPresent ? '✓' : ''}
                     </td>
                   );
                 })}
                 
-                <td className="px-4 py-2 text-center font-medium">
-                  {totalPresent}
+                <td className="px-4 py-2 text-center">
+                  <Badge variant={totalPresent > daysInMonth.length / 2 ? "default" : "outline"}>
+                    {totalPresent}
+                  </Badge>
                 </td>
               </tr>
             );

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isValid } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isValid, differenceInDays } from 'date-fns';
 import { AttendanceRecord, UserAttendance } from './types';
 
 export const useAttendanceData = (currentMonth: Date, users: any[]) => {
@@ -36,19 +36,13 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
       
       console.log(`Fetching attendance data from ${startDate} to ${endDate}`);
       
-      // First check that the user_attendance table exists and has records
-      const { count } = await supabase
-        .from('user_attendance')
-        .select('*', { count: 'exact', head: true });
-        
-      console.log(`Found ${count || 0} total attendance records`);
-      
       // Fetch attendance data directly from Supabase for current month
       const { data: attendanceData, error } = await supabase
         .from('user_attendance')
         .select('id, user_id, username, attendance_date, login_time')
         .gte('attendance_date', startDate)
-        .lte('attendance_date', endDate);
+        .lte('attendance_date', endDate)
+        .order('attendance_date', { ascending: false });
         
       if (error) {
         console.error('Error fetching attendance data:', error);
@@ -107,7 +101,7 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
 
   const fetchUserHistory = async (userId: string) => {
     setUserHistoryLoading(true);
-    setUserHistory({}); // Reset previous data
+    setUserHistory(prev => ({...prev, [userId]: []})); // Reset previous data for this user
     setError(null);
     try {
       console.log(`Fetching attendance history for user: ${userId}`);
@@ -126,14 +120,16 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
       console.log(`Fetched ${historyData?.length || 0} history records for user`);
       
       if (historyData && historyData.length > 0) {
-        setUserHistory({
+        setUserHistory(prev => ({
+          ...prev,
           [userId]: historyData
-        });
+        }));
       } else {
         // Set empty history if no data found
-        setUserHistory({
+        setUserHistory(prev => ({
+          ...prev,
           [userId]: []
-        });
+        }));
         console.log("No attendance history found for this user");
       }
     } catch (error: any) {
@@ -179,6 +175,48 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
       return dateStr || 'Invalid date';
     }
   };
+
+  const getUserAttendanceStats = (userId: string) => {
+    if (!userHistory[userId] || userHistory[userId].length === 0) {
+      return {
+        totalDays: 0,
+        currentStreak: 0,
+        lastActiveDate: null
+      };
+    }
+
+    const records = userHistory[userId];
+    
+    // Get total unique days
+    const uniqueDates = new Set(records.map(r => r.attendance_date));
+    const totalDays = uniqueDates.size;
+    
+    // Calculate current streak
+    const sortedDates = [...uniqueDates].sort((a, b) => 
+      new Date(b).getTime() - new Date(a).getTime()
+    );
+
+    let currentStreak = 1;
+    let lastDate = parseISO(sortedDates[0]);
+    
+    for (let i = 1; i < sortedDates.length; i++) {
+      const currentDate = parseISO(sortedDates[i]);
+      const diff = differenceInDays(lastDate, currentDate);
+      
+      if (diff === 1) {
+        currentStreak++;
+        lastDate = currentDate;
+      } else {
+        break;
+      }
+    }
+    
+    return {
+      totalDays,
+      currentStreak,
+      lastActiveDate: sortedDates[0]
+    };
+  };
   
   return {
     attendance,
@@ -191,6 +229,7 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
     fetchUserHistory,
     getLastLoginDate,
     formatAttendanceDate,
+    getUserAttendanceStats,
     setError,
     fetchAttendanceData
   };
