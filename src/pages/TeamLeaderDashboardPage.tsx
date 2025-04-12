@@ -23,6 +23,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import TeamMembersTable from '@/components/admin/TeamMembersTable';
 import { adminNotificationsApi } from '@/utils/supabaseUtils';
 import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
+import { TeamLeaderAttendanceTracker } from '@/components/admin/attendance';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -376,6 +377,10 @@ const TeamLeaderDashboardPage = () => {
               <Users className="h-4 w-4 mr-2" />
               Team Members
             </TabsTrigger>
+            <TabsTrigger value="attendance">
+              <CalendarDays className="h-4 w-4 mr-2" />
+              Team Attendance
+            </TabsTrigger>
             <TabsTrigger value="earnings">
               <CalendarDays className="h-4 w-4 mr-2" />
               Monthly Earnings
@@ -399,6 +404,10 @@ const TeamLeaderDashboardPage = () => {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="attendance">
+            <TeamLeaderAttendanceTracker />
           </TabsContent>
           
           <TabsContent value="earnings">
