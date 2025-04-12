@@ -1,8 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
 import { checkForDuplicateQuestion } from './quizDuplicateChecker';
 import { useToast } from '@/hooks/use-toast';
+import { getRandomImageQuizQuestion } from './imageQuizUtils';
 
 // Define interfaces for the Open Trivia DB API response
 interface OpenTriviaDBQuestion {
@@ -93,6 +93,49 @@ export async function fetchTriviaQuestions(
 }
 
 /**
+ * Fetches image quiz questions (simulated since we're using local data)
+ * @param amount Number of questions to fetch
+ * @param category Category filter (optional)
+ * @returns Array of image quiz questions
+ */
+export async function fetchImageQuizQuestions(
+  amount: number = 5,
+  category?: string
+): Promise<QuizQuestion[]> {
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generate random image quiz questions
+    const questions: QuizQuestion[] = [];
+    for (let i = 0; i < amount; i++) {
+      const question = getRandomImageQuizQuestion();
+      
+      // If category filter is applied, only add matching questions
+      if (!category || category === "any" || question.category === category) {
+        questions.push(question);
+      }
+      
+      // If we don't have enough questions of the requested category, 
+      // keep generating until we reach the amount or a reasonable limit
+      if (questions.length < amount && i < amount * 3) {
+        i--;
+      }
+      
+      // Break if we've tried too many times
+      if (i >= amount * 3) {
+        break;
+      }
+    }
+    
+    return questions;
+  } catch (error) {
+    console.error('Error generating image quiz questions:', error);
+    return [];
+  }
+}
+
+/**
  * Save trivia questions to the database, checking for duplicates
  * @param questions Array of questions to save
  * @returns Object with counts of saved and duplicate questions
@@ -141,6 +184,63 @@ export async function saveTriviaToDB(questions: QuizQuestion[]): Promise<{
       }
     } catch (e) {
       console.error('Error processing question:', e);
+      errors++;
+    }
+  }
+  
+  return { saved, duplicates, errors };
+}
+
+/**
+ * Save image trivia questions to the database, checking for duplicates
+ * @param questions Array of image questions to save
+ * @returns Object with counts of saved and duplicate questions
+ */
+export async function saveImageTriviaToDB(questions: QuizQuestion[]): Promise<{
+  saved: number;
+  duplicates: number;
+  errors: number;
+}> {
+  let saved = 0;
+  let duplicates = 0;
+  let errors = 0;
+  
+  for (const question of questions) {
+    try {
+      // Check if this question is a duplicate
+      const isDuplicate = await checkForDuplicateQuestion(question.question);
+      
+      if (isDuplicate) {
+        console.log('Skipping duplicate question:', question.question);
+        duplicates++;
+        continue;
+      }
+      
+      // Insert the question into the database
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .insert({
+          question: question.question,
+          options: question.options,
+          correct_answer: question.correctAnswer,
+          difficulty: question.difficulty,
+          category: question.category,
+          explanation: question.explanation,
+          points: question.points || 10,
+          question_type: 'image',
+          image_url: question.imageUrl
+        })
+        .select();
+        
+      if (error) {
+        console.error('Error saving image question:', error);
+        errors++;
+      } else {
+        saved++;
+        console.log('Successfully saved image question:', question.question);
+      }
+    } catch (e) {
+      console.error('Error processing image question:', e);
       errors++;
     }
   }

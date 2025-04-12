@@ -6,12 +6,14 @@ import {
   TabsTrigger 
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Dialog, 
   DialogContent, 
   DialogDescription, 
+  DialogFooter, 
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
@@ -24,23 +26,17 @@ import {
   Trash, 
   Download, 
   FileQuestion,
-  RefreshCw,
-  Upload,
   BookOpen,
-  Image as ImageIcon,
-  BookOpen as BookOpenIcon
+  FileImage
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import QuizQuestionForm from './QuizQuestionForm';
-import ImageQuizForm from './ImageQuizForm';
 import ImportQuizQuestions from './ImportQuizQuestions';
 import TriviaImporter from './TriviaImporter';
 import LearnTriviaDialog from './LearnTriviaDialog';
+import LearnImageTriviaDialog from './LearnImageTriviaDialog';
 import * as XLSX from 'xlsx';
 import { QuizQuestion } from '@/utils/quizData';
-import { useFetchSupabaseData } from '@/hooks/useFetchSupabaseData';
-import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
-import { findAllDuplicateQuestions } from '@/utils/quizDuplicateChecker';
 
 const QuizManagement: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -51,26 +47,20 @@ const QuizManagement: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
+  const [isLearnTriviaDialogOpen, setIsLearnTriviaDialogOpen] = useState(false);
+  const [isLearnImageTriviaDialogOpen, setIsLearnImageTriviaDialogOpen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isTriviaBatchDialogOpen, setIsTriviaBatchDialogOpen] = useState(false);
-  const [isLearnTriviaDialogOpen, setIsLearnTriviaDialogOpen] = useState(false);
-  const [duplicateCount, setDuplicateCount] = useState<number>(0);
-  const [isDuplicateCheckLoading, setIsDuplicateCheckLoading] = useState(false);
   const { toast } = useToast();
-  const { fetchData: refreshAllData, syncToSupabase, isSyncing } = useFetchSupabaseData(false);
-  const [activeTab, setActiveTab] = useState<string>('text');
-  const [imageQuestions, setImageQuestions] = useState<QuizQuestion[]>([]);
-  const [isImageQuizDialogOpen, setIsImageQuizDialogOpen] = useState(false);
 
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('quiz_questions')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
         
       if (error) {
         throw error;
@@ -91,28 +81,17 @@ const QuizManagement: React.FC = () => {
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
           points: 10,
-          explanation: q.explanation || '',
-          imageUrl: q.image_url,
-          questionType: q.question_type as 'text' | 'image' || 'text'
+          explanation: q.explanation || ''
         };
       });
       
-      const textQuestions = formattedQuestions.filter(q => q.questionType !== 'image');
-      const imgQuestions = formattedQuestions.filter(q => q.questionType === 'image');
-      
-      setQuestions(textQuestions);
-      setImageQuestions(imgQuestions);
-      setFilteredQuestions(activeTab === 'text' ? textQuestions : imgQuestions);
+      setQuestions(formattedQuestions);
+      setFilteredQuestions(formattedQuestions);
       
       const uniqueCategories = Array.from(
         new Set(formattedQuestions.map(q => q.category))
       );
       setCategories(uniqueCategories);
-      
-      toast({
-        title: "Success",
-        description: `Loaded ${formattedQuestions.length} quiz questions.`,
-      });
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({
@@ -130,8 +109,7 @@ const QuizManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const baseQuestions = activeTab === 'text' ? questions : imageQuestions;
-    let filtered = [...baseQuestions];
+    let filtered = [...questions];
     
     if (searchQuery) {
       filtered = filtered.filter(q => 
@@ -149,7 +127,7 @@ const QuizManagement: React.FC = () => {
     }
     
     setFilteredQuestions(filtered);
-  }, [searchQuery, selectedCategory, selectedDifficulty, questions, imageQuestions, activeTab]);
+  }, [searchQuery, selectedCategory, selectedDifficulty, questions]);
 
   const handleAddQuestion = async (question: Omit<QuizQuestion, 'id'>) => {
     try {
@@ -175,8 +153,7 @@ const QuizManagement: React.FC = () => {
           correct_answer: question.correctAnswer,
           difficulty: question.difficulty,
           category: question.category,
-          explanation: question.explanation || '',
-          question_type: 'text'
+          explanation: question.explanation || ''
         })
         .select();
         
@@ -287,23 +264,20 @@ const QuizManagement: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const dataToExport = activeTab === 'text' ? questions : imageQuestions;
-    
     const worksheet = XLSX.utils.json_to_sheet(
-      dataToExport.map(q => ({
+      questions.map(q => ({
         Question: q.question,
         Options: q.options.join('|'),
         CorrectAnswer: q.correctAnswer,
         Category: q.category,
         Difficulty: q.difficulty,
-        Explanation: q.explanation || '',
-        ImageURL: q.imageUrl || ''
+        Explanation: q.explanation || ''
       }))
     );
     
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Quiz Questions`);
-    XLSX.writeFile(workbook, `${activeTab}_quiz_questions.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Quiz Questions');
+    XLSX.writeFile(workbook, 'quiz_questions.xlsx');
     
     toast({
       title: "Success",
@@ -311,399 +285,172 @@ const QuizManagement: React.FC = () => {
     });
   };
 
-  const handleRefreshData = async () => {
-    try {
-      await refreshAllData();
-      await fetchQuestions();
-      
-      toast({
-        title: "Data Refreshed",
-        description: "Quiz questions have been refreshed from the database.",
-      });
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-      toast({
-        title: "Refresh Failed",
-        description: "Failed to refresh quiz data. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSyncToSupabase = async () => {
-    try {
-      await syncToSupabase();
-      
-      toast({
-        title: "Data Synced",
-        description: "Local data has been synced to the Supabase database.",
-      });
-    } catch (error) {
-      console.error('Error syncing data:', error);
-      toast({
-        title: "Sync Failed",
-        description: "Failed to sync local data to Supabase. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const checkForDuplicates = async () => {
-    setIsDuplicateCheckLoading(true);
-    try {
-      const duplicateGroups = await findAllDuplicateQuestions();
-      setDuplicateCount(duplicateGroups.length);
-      
-      toast({
-        title: "Duplicate Check Complete",
-        description: `Found ${duplicateGroups.length} groups of duplicate questions.`,
-      });
-    } catch (error) {
-      console.error('Error checking for duplicates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check for duplicate questions.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsDuplicateCheckLoading(false);
-    }
-  };
-
-  const columns = [
-    {
-      header: "Question",
-      accessorKey: "question",
-      cell: (row: QuizQuestion) => <span className="font-medium">{row.question}</span>
-    },
-    {
-      header: "Category",
-      accessorKey: "category"
-    },
-    {
-      header: "Difficulty",
-      accessorKey: "difficulty",
-      cell: (row: QuizQuestion) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-          row.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {row.difficulty}
-        </span>
-      )
-    },
-    {
-      header: "Answer",
-      accessorKey: "correctAnswer"
-    },
-    {
-      header: "Actions",
-      accessorKey: "actions",
-      cell: (row: QuizQuestion) => (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setCurrentQuestion(row);
-              setIsEditDialogOpen(true);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteQuestion(row.id)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      )
-    }
-  ];
-
-  const imageColumns = [
-    { header: 'Question', accessorKey: 'question' },
-    { 
-      header: 'Image', 
-      accessorKey: 'imageUrl',
-      cell: (row: any) => (
-        <div className="h-16 w-24 relative">
-          {row.imageUrl ? (
-            <img 
-              src={row.imageUrl} 
-              alt="Question" 
-              className="h-full w-full object-contain rounded-md"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/placeholder.svg";
-              }}
-            />
-          ) : (
-            <div className="h-full w-full bg-muted flex items-center justify-center rounded-md">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-          )}
-        </div>
-      )
-    },
-    { header: 'Category', accessorKey: 'category' },
-    { 
-      header: 'Difficulty', 
-      accessorKey: 'difficulty',
-      cell: (row: any) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-          row.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {row.difficulty}
-        </span>
-      )
-    },
-    { header: 'Correct Answer', accessorKey: 'correctAnswer' },
-    { 
-      header: 'Actions', 
-      accessorKey: 'id',
-      cell: (row: any) => (
-        <div className="flex space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setCurrentQuestion(row);
-              setIsEditDialogOpen(true);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteQuestion(row.id)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      )
-    }
-  ];
-
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="text">Text Questions</TabsTrigger>
-          <TabsTrigger value="image" className="flex items-center gap-1">
-            <ImageIcon className="h-4 w-4" />
-            Image Questions
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="text">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Text Quiz Questions</h2>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add Question
-              </Button>
-              <Button 
-                onClick={() => setIsLearnTriviaDialogOpen(true)}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <BookOpenIcon className="h-4 w-4" />
-                Learn Trivia
-              </Button>
-              <Button 
-                onClick={() => setIsImportDialogOpen(true)}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <FileUp className="h-4 w-4" />
-                Import
-              </Button>
-              <Button 
-                onClick={exportToExcel}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Quiz Questions Management</h2>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Question
+          </Button>
+          <Button 
+            onClick={() => setIsImportDialogOpen(true)}
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <FileUp className="h-4 w-4" />
+            Import
+          </Button>
+          <Button 
+            onClick={exportToExcel}
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search questions..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="All Difficulties" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Difficulties</SelectItem>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredQuestions.length === 0 ? (
+        <div className="bg-muted py-10 rounded-md flex flex-col items-center justify-center text-center">
+          <FileQuestion className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No Questions Found</h3>
+          <p className="text-muted-foreground mt-1 mb-4 max-w-md">
+            {searchQuery || selectedCategory || selectedDifficulty 
+              ? "Try adjusting your filters to see more results."
+              : "Get started by adding some quiz questions."}
+          </p>
+          <div className="space-x-2">
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add New Question
+            </Button>
+            <Button 
+              onClick={() => setIsLearnTriviaDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <BookOpen className="h-4 w-4" />
+              Import Text Trivia
+            </Button>
+            <Button 
+              onClick={() => setIsLearnImageTriviaDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <FileImage className="h-4 w-4" />
+              Import Image Trivia
+            </Button>
           </div>
-
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search questions..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Difficulties" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : filteredQuestions.length === 0 ? (
-            <div className="bg-muted py-10 rounded-md flex flex-col items-center justify-center text-center">
-              <FileQuestion className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No Questions Found</h3>
-              <p className="text-muted-foreground mt-1 mb-4 max-w-md">
-                {searchQuery || selectedCategory || selectedDifficulty 
-                  ? "Try adjusting your filters to see more results."
-                  : "Get started by adding some quiz questions."}
-              </p>
-              <Button 
-                onClick={() => setIsAddDialogOpen(true)}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add New Question
-              </Button>
-            </div>
-          ) : (
-            <div className="border rounded-md">
-              <PaginatedDataTable
-                columns={columns}
-                data={filteredQuestions}
-                isLoading={isLoading}
-                pageSize={10}
-              />
+        </div>
+      ) : (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[40%]">Question</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Difficulty</TableHead>
+                <TableHead>Answer</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredQuestions.slice(0, 50).map((question) => (
+                <TableRow key={question.id}>
+                  <TableCell className="font-medium">{question.question}</TableCell>
+                  <TableCell>{question.category}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      question.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                      question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {question.difficulty}
+                    </span>
+                  </TableCell>
+                  <TableCell>{question.correctAnswer}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCurrentQuestion(question);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteQuestion(question.id)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {filteredQuestions.length > 50 && (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Showing first 50 of {filteredQuestions.length} questions. Please refine your search to see more specific results.
             </div>
           )}
-        </TabsContent>
-        
-        <TabsContent value="image">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Image Quiz Questions</h2>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setIsImageQuizDialogOpen(true)}
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add Image Question
-              </Button>
-              <Button 
-                onClick={exportToExcel}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search image questions..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Difficulties" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : filteredQuestions.length === 0 ? (
-            <div className="bg-muted py-10 rounded-md flex flex-col items-center justify-center text-center mt-4">
-              <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No Image Questions Found</h3>
-              <p className="text-muted-foreground mt-1 mb-4 max-w-md">
-                {searchQuery || selectedCategory !== 'all' || selectedDifficulty !== 'all'
-                  ? "Try adjusting your filters to see more results."
-                  : "Get started by adding some image-based quiz questions."}
-              </p>
-              <Button 
-                onClick={() => setIsImageQuizDialogOpen(true)}
-                variant="default"
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add Image Question
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-4">
-              <PaginatedDataTable
-                columns={imageColumns}
-                data={filteredQuestions}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -746,6 +493,7 @@ const QuizManagement: React.FC = () => {
             <DialogTitle>Import Quiz Questions</DialogTitle>
             <DialogDescription>
               Upload an Excel file with quiz questions. 
+              The file should have columns for Question, Options, CorrectAnswer, Category, Difficulty, and Explanation.
             </DialogDescription>
           </DialogHeader>
           <ImportQuizQuestions 
@@ -758,21 +506,23 @@ const QuizManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isImageQuizDialogOpen} onOpenChange={setIsImageQuizDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={isTriviaBatchDialogOpen} onOpenChange={setIsTriviaBatchDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Image Question</DialogTitle>
+            <DialogTitle>Import Trivia Question Pack</DialogTitle>
             <DialogDescription>
-              Create a new image-based quiz question with an image URL.
+              Import a pre-defined set of 30 trivia questions across various categories.
             </DialogDescription>
           </DialogHeader>
-          <ImageQuizForm 
-            categories={categories}
+          <TriviaImporter 
             onSuccess={() => {
               fetchQuestions();
-              setIsImageQuizDialogOpen(false);
+              setIsTriviaBatchDialogOpen(false);
+              toast({
+                title: "Trivia Pack Imported",
+                description: "30 trivia questions have been added to your quiz database.",
+              });
             }}
-            onCancel={() => setIsImageQuizDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -780,9 +530,9 @@ const QuizManagement: React.FC = () => {
       <Dialog open={isLearnTriviaDialogOpen} onOpenChange={setIsLearnTriviaDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Learn Trivia Questions</DialogTitle>
+            <DialogTitle>Learn New Trivia Questions</DialogTitle>
             <DialogDescription>
-              Import questions from the Open Trivia Database to enhance your quiz.
+              Import questions from the Open Trivia Database to enhance your quiz collection.
             </DialogDescription>
           </DialogHeader>
           <LearnTriviaDialog 
@@ -791,6 +541,24 @@ const QuizManagement: React.FC = () => {
               setIsLearnTriviaDialogOpen(false);
             }}
             onCancel={() => setIsLearnTriviaDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isLearnImageTriviaDialogOpen} onOpenChange={setIsLearnImageTriviaDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Learn New Image Quiz Questions</DialogTitle>
+            <DialogDescription>
+              Import image-based questions to enhance your quiz collection.
+            </DialogDescription>
+          </DialogHeader>
+          <LearnImageTriviaDialog 
+            onSuccess={() => {
+              fetchQuestions();
+              setIsLearnImageTriviaDialogOpen(false);
+            }}
+            onCancel={() => setIsLearnImageTriviaDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
