@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from './types';
 import { STORAGE_KEYS } from './constants';
@@ -58,7 +59,9 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
         points: q.points || 10,
-        explanation: q.explanation || ''
+        explanation: q.explanation || '',
+        imageUrl: q.image_url || undefined,
+        questionType: q.question_type as 'text' | 'image' || 'text'
       }));
       
       // Save to localStorage
@@ -218,7 +221,7 @@ export const createImageBasedQuestion = async (
   explanation: string = ''
 ): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('quiz_questions')
       .insert([{
         question,

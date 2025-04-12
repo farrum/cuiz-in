@@ -57,4 +57,3 @@ export interface QuizQuestion {
   imageUrl?: string;
   questionType?: 'text' | 'image';
 }
-

@@ -672,9 +672,11 @@ export type Database = {
           difficulty: string | null
           explanation: string | null
           id: string
+          image_url: string | null
           options: Json
           points: number | null
           question: string
+          question_type: string | null
         }
         Insert: {
           category: string
@@ -683,9 +685,11 @@ export type Database = {
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          image_url?: string | null
           options: Json
           points?: number | null
           question: string
+          question_type?: string | null
         }
         Update: {
           category?: string
@@ -694,9 +698,11 @@ export type Database = {
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          image_url?: string | null
           options?: Json
           points?: number | null
           question?: string
+          question_type?: string | null
         }
         Relationships: []
       }
