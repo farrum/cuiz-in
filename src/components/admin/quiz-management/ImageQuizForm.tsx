@@ -15,17 +15,16 @@ import {
   CategoryField,
   CorrectAnswerField
 } from './image-quiz';
-import { QuizQuestion } from '@/utils/types';
 
 interface ImageQuizFormProps {
   categories: string[];
-  onSubmit: (questionData: Omit<QuizQuestion, 'id'>) => void;
+  onSuccess: () => void;
   onCancel: () => void;
 }
 
 const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
   categories,
-  onSubmit,
+  onSuccess,
   onCancel
 }) => {
   const { toast } = useToast();
@@ -89,20 +88,29 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Create a question object to pass to the parent component's onSubmit handler
-      const questionData = {
-        question: data.question,
-        options: cleanedOptions,
-        correctAnswer: data.correctAnswer,
-        category: data.category,
-        difficulty: data.difficulty,
-        points: 10,
-        explanation: data.explanation,
-        imageUrl: data.imageUrl,
-        questionType: 'image' as const
-      };
+      const success = await createImageBasedQuestion(
+        data.question,
+        cleanedOptions,
+        data.correctAnswer,
+        data.category,
+        data.difficulty,
+        data.imageUrl,
+        data.explanation
+      );
       
-      onSubmit(questionData);
+      if (success) {
+        toast({
+          title: "Success!",
+          description: "Image quiz question created successfully",
+        });
+        onSuccess();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create image question",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error creating image question:', error);
       toast({
@@ -229,4 +237,3 @@ const ImageQuizForm: React.FC<ImageQuizFormProps> = ({
 };
 
 export default ImageQuizForm;
-
