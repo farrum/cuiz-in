@@ -48,6 +48,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const lastFetchTimeRef = useRef<number>(0);
   const isMountedRef = useRef<boolean>(true);
   const instanceId = useRef<string>(uuidv4());
+  const adRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const adPositionKey = `${position}-${slotId || 'default'}-${pageSection || 'default'}`;
   
