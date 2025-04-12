@@ -13,7 +13,7 @@ export const STORAGE_KEYS = {
 };
 
 export const DAILY_TARGET = 400;
-export const MONTHLY_TARGET = 12000;
+export const MONTHLY_TARGET = 10000;
 
 export interface QuizQuestion {
   id: string;
