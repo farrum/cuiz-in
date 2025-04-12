@@ -5,6 +5,7 @@ import UserHistoryView from './UserHistoryView';
 import ErrorMessage from './ErrorMessage';
 import TeamLeaderAttendanceTracker from './TeamLeaderAttendanceTracker';
 import { useAttendanceData } from './useAttendanceData';
+import * as attendanceHooks from './hooks';
 
 export { 
   UserAttendanceTracker,
@@ -12,7 +13,8 @@ export {
   UserHistoryView,
   ErrorMessage,
   TeamLeaderAttendanceTracker,
-  useAttendanceData
+  useAttendanceData,
+  attendanceHooks
 };
 
 export default UserAttendanceTracker;
