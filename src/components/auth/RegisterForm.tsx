@@ -25,8 +25,8 @@ const RegisterForm = () => {
     
     try {
       // Basic validation
-      if (!email || !password || !username) {
-        setError('All fields are required');
+      if (!password || !username) {
+        setError('Username and password are required');
         setIsLoading(false);
         return;
       }
@@ -50,9 +50,12 @@ const RegisterForm = () => {
         return;
       }
       
-      // Create user account using Supabase Auth (secure password handling)
+      // Create user account using Supabase Auth
+      // If email is provided, use email/password signup, otherwise use username as email
+      const emailToUse = email || `${username}@example.com`; // Fallback email if not provided
+      
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: emailToUse,
         password,
         options: {
           data: {
@@ -73,7 +76,7 @@ const RegisterForm = () => {
             { 
               id: data.user.id,
               username,
-              email: data.user.email,
+              email: email || null, // Store email only if provided
             }
           ]);
           
@@ -119,15 +122,17 @@ const RegisterForm = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email (Optional)</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
+              placeholder="Enter your email (optional)"
             />
+            <p className="text-xs text-muted-foreground">
+              Email is optional but recommended for account recovery
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

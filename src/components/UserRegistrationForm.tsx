@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -138,10 +139,13 @@ const UserRegistrationForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      console.log('Registering with username:', username, 'and email:', email);
+      console.log('Registering with username:', username);
+      
+      // Use generated email if not provided
+      const emailToUse = email || `${username}@example.com`;
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: emailToUse,
         password,
         options: {
           data: {
@@ -167,6 +171,7 @@ const UserRegistrationForm: React.FC = () => {
           username: username,
           display_name: displayName || username,
           phone: phone,
+          email: email || null, // Only store email if provided
           points: 0,
           suspended: false,
         });
@@ -306,15 +311,17 @@ const UserRegistrationForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email (Optional)</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              required
+              placeholder="Enter your email address (optional)"
             />
+            <p className="text-xs text-muted-foreground">
+              Providing an email is optional but recommended for account recovery.
+            </p>
           </div>
           
           <div className="space-y-2">

@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 
 const UserLogin: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -21,9 +21,28 @@ const UserLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // First, get the user's profile to check if they have an email
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('username', username)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        throw new Error('Invalid username or password');
+      }
+      
+      if (!userProfile) {
+        throw new Error('User not found');
+      }
+      
+      // Check if user has an email, if not, use the generated one
+      const emailToUse = userProfile.email || `${username}@example.com`;
+      
       // Sign in with email and password using Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailToUse,
         password
       });
       
@@ -94,7 +113,7 @@ const UserLogin: React.FC = () => {
       try {
         // Log failed login
         await supabase.from('login_logs').insert({
-          username: email,
+          username,
           successful: false,
           login_time: new Date().toISOString()
         });
@@ -104,7 +123,7 @@ const UserLogin: React.FC = () => {
       
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid email or password",
+        description: error instanceof Error ? error.message : "Invalid username or password",
         variant: "destructive"
       });
     } finally {
@@ -123,13 +142,13 @@ const UserLogin: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
             />
           </div>
