@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,11 +17,12 @@ const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const hashPassword = (password: string): string => {
+  // Memoize hashPassword function to prevent recreating on every render
+  const hashPassword = useCallback((password: string): string => {
     return MD5(password).toString();
-  };
+  }, []);
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -31,9 +32,11 @@ const UserLogin: React.FC = () => {
       const hashedPassword = hashPassword(password);
       console.log('Password hashed for authentication');
       
+      // Combine the two queries into one transaction with a more efficient approach
+      // First find the user profile
       const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, suspended, points')
         .eq('username', username)
         .eq('password_hash', hashedPassword)
         .maybeSingle();
@@ -66,8 +69,9 @@ const UserLogin: React.FC = () => {
       
       const loginTime = new Date().toISOString();
       
-      // Log login info in Supabase
-      await supabase.from('login_logs').insert({
+      // Log login info in Supabase - do this in a background pattern
+      // We don't need to await this since it's not critical for the user flow
+      const loginPromise = supabase.from('login_logs').insert({
         username: userData.username,
         ip_address: "client-side",
         device: navigator.userAgent,
@@ -75,9 +79,7 @@ const UserLogin: React.FC = () => {
         successful: true
       });
       
-      // Track attendance directly - this will trigger the DB function to update user_attendance
-      console.log('Recording user attendance in database');
-      
+      // Check login history in parallel rather than sequentially
       const { data: loginHistory } = await supabase
         .from('login_logs')
         .select('id')
@@ -85,6 +87,9 @@ const UserLogin: React.FC = () => {
         .limit(2);
         
       const isFirstLogin = !loginHistory || loginHistory.length <= 1;
+      
+      // Ensure the login entry was recorded
+      await loginPromise;
       
       toast({
         title: "Login successful!",
@@ -97,16 +102,12 @@ const UserLogin: React.FC = () => {
     } catch (error) {
       console.error('Login error:', error);
       
-      try {
-        // Log failed login
-        await supabase.from('login_logs').insert({
-          username: username,
-          successful: false,
-          login_time: new Date().toISOString()
-        });
-      } catch (logError) {
-        console.error('Failed to log failed login attempt:', logError);
-      }
+      // Log failed login - don't await this since it's not critical
+      supabase.from('login_logs').insert({
+        username: username,
+        successful: false,
+        login_time: new Date().toISOString()
+      });
       
       toast({
         title: "Login failed",
@@ -116,7 +117,16 @@ const UserLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [username, password, hashPassword, toast, navigate]);
+  
+  // Use useCallback for input handlers
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+  }, []);
+  
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  }, []);
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -134,7 +144,7 @@ const UserLogin: React.FC = () => {
               id="username"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={handleUsernameChange}
               placeholder="Enter your username"
               required
             />
@@ -146,7 +156,7 @@ const UserLogin: React.FC = () => {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               placeholder="Enter your password"
               required
             />

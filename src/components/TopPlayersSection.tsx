@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Trophy, Medal } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -27,17 +27,13 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   const [players, setPlayers] = useState<TopPlayer[]>([]);
   const [currentUserMonthlyPoints, setCurrentUserMonthlyPoints] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-  const currentUsername = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+  
+  // Get current user from localStorage once
+  const currentUserId = useMemo(() => localStorage.getItem(STORAGE_KEYS.USER_ID), []);
+  const currentUsername = useMemo(() => localStorage.getItem(STORAGE_KEYS.USER_NAME), []);
 
-  useEffect(() => {
-    fetchTopPlayers();
-    if (showMonthlyComparison) {
-      fetchCurrentUserMonthlyPoints();
-    }
-  }, [showMonthlyComparison]);
-
-  const fetchTopPlayers = async () => {
+  // Optimize data fetching with useCallback
+  const fetchTopPlayers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -60,9 +56,10 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, currentUserId]);
 
-  const fetchCurrentUserMonthlyPoints = async () => {
+  // Optimize monthly points fetching
+  const fetchCurrentUserMonthlyPoints = useCallback(async () => {
     if (!currentUserId) return;
 
     try {
@@ -84,9 +81,30 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     } catch (error) {
       console.error('Error fetching monthly points:', error);
     }
-  };
+  }, [currentUserId]);
 
-  const getPlayerIcon = (index: number) => {
+  // Only fetch data when needed and use Promise.all for parallel queries
+  useEffect(() => {
+    const fetchData = async () => {
+      const promises = [fetchTopPlayers()];
+      
+      if (showMonthlyComparison) {
+        promises.push(fetchCurrentUserMonthlyPoints());
+      }
+      
+      await Promise.all(promises);
+    };
+    
+    fetchData();
+    
+    // Refresh leaderboard every 5 minutes instead of on every render
+    const intervalId = setInterval(fetchData, 5 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [fetchTopPlayers, fetchCurrentUserMonthlyPoints, showMonthlyComparison]);
+
+  // Memoize player icon function to prevent recreating on each render
+  const getPlayerIcon = useCallback((index: number) => {
     switch (index) {
       case 0:
         return <Trophy className="h-5 w-5 text-yellow-500" />;
@@ -97,7 +115,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       default:
         return <span className="w-5 h-5 inline-flex items-center justify-center">{index + 1}</span>;
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -175,4 +193,5 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   );
 };
 
-export default TopPlayersSection;
+// Memoize the component to prevent unnecessary re-renders
+export default React.memo(TopPlayersSection);

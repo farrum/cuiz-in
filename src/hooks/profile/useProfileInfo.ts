@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -17,6 +17,53 @@ export const useProfileInfo = () => {
   
   const isMountedRef = useRef(true);
   
+  // Optimized fetch profile function
+  const fetchUserProfile = useCallback(async (storedUserId: string) => {
+    try {
+      // Select only the fields we need in a single query
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, suspended, upi_id, profile_picture, display_name')
+        .eq('id', storedUserId)
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data && isMountedRef.current) {
+        setUsername(data.display_name || data.username);
+        setSuspended(data.suspended);
+        setUserUpi(data.upi_id || '');
+        
+        if (data.profile_picture) {
+          console.log("Profile picture from DB:", data.profile_picture);
+          setProfilePicture(data.profile_picture);
+          localStorage.setItem('quiz_app_user_avatar', data.profile_picture);
+        } else {
+          const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
+          if (storedAvatar) {
+            console.log("Profile picture from localStorage:", storedAvatar);
+            setProfilePicture(storedAvatar);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      if (isMountedRef.current) {
+        toast({
+          title: "Error",
+          description: "Failed to load profile data.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
+    }
+  }, [toast]);
+  
   // Load user profile data
   useEffect(() => {
     isMountedRef.current = true;
@@ -28,60 +75,14 @@ export const useProfileInfo = () => {
     }
     
     setUserId(storedUserId);
-    
-    const fetchUserProfile = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, suspended, upi_id, profile_picture, display_name')
-          .eq('id', storedUserId)
-          .single();
-          
-        if (error) {
-          throw error;
-        }
-        
-        if (data && isMountedRef.current) {
-          setUsername(data.display_name || data.username);
-          setSuspended(data.suspended);
-          setUserUpi(data.upi_id || '');
-          
-          if (data.profile_picture) {
-            console.log("Profile picture from DB:", data.profile_picture);
-            setProfilePicture(data.profile_picture);
-            localStorage.setItem('quiz_app_user_avatar', data.profile_picture);
-          } else {
-            const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
-            if (storedAvatar) {
-              console.log("Profile picture from localStorage:", storedAvatar);
-              setProfilePicture(storedAvatar);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        if (isMountedRef.current) {
-          toast({
-            title: "Error",
-            description: "Failed to load profile data.",
-            variant: "destructive"
-          });
-        }
-      } finally {
-        if (isMountedRef.current) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchUserProfile();
+    fetchUserProfile(storedUserId);
     
     return () => {
       isMountedRef.current = false;
     };
-  }, [navigate, toast]);
+  }, [navigate, fetchUserProfile]);
   
-  const handleProfileUpdate = (data: {
+  const handleProfileUpdate = useCallback((data: {
     displayName?: string;
     upiId?: string;
     profilePicture?: string;
@@ -98,15 +99,15 @@ export const useProfileInfo = () => {
       console.log("Profile picture updated:", data.profilePicture);
       setProfilePicture(data.profilePicture);
     }
-  };
+  }, []);
   
-  const handleReactivated = () => {
+  const handleReactivated = useCallback(() => {
     setSuspended(false);
     toast({
       title: "Account Reactivated",
       description: "Your account has been successfully reactivated."
     });
-  };
+  }, [toast]);
   
   return {
     isLoading,

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { IndianRupee } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,9 +15,12 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
 }) => {
   const [points, setPoints] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [cashAmount, setCashAmount] = useState(0);
   
-  const fetchUserPoints = async () => {
+  // Use useMemo to calculate cash amount only when points change
+  const cashAmount = useMemo(() => calculateCashAmount(points), [points]);
+  
+  // Optimize fetch user points function with useCallback
+  const fetchUserPoints = useCallback(async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
     
@@ -42,40 +45,39 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         }
         
         setPoints(newPoints);
-        setCashAmount(calculateCashAmount(newPoints));
-        
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
       }
     } catch (error) {
       console.error('Error fetching user points:', error);
     }
-  };
+  }, [animateUpdate, points]);
+  
+  // Handle points updates more efficiently
+  const handlePointsUpdate = useCallback(() => {
+    console.log('Points update event received in PointsDisplay');
+    fetchUserPoints();
+  }, [fetchUserPoints]);
   
   useEffect(() => {
     // Load initial points from localStorage
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setPoints(savedPoints);
-    setCashAmount(calculateCashAmount(savedPoints));
     
-    // Fetch user points from the database
+    // Fetch user points from the database - once on initial load
     fetchUserPoints();
     
     // Set up listener for point updates
-    const handlePointsUpdate = () => {
-      console.log('Points update event received in PointsDisplay');
-      fetchUserPoints();
-    };
-    
     window.addEventListener('pointsUpdated', handlePointsUpdate);
     
-    // Refresh points every 10 seconds
-    const intervalId = setInterval(fetchUserPoints, 10000);
+    // Use a more efficient interval to prevent excessive database calls
+    // 10 seconds is quite frequent for point updates, increasing to 30 seconds
+    const intervalId = setInterval(fetchUserPoints, 30000);
     
     return () => {
       window.removeEventListener('pointsUpdated', handlePointsUpdate);
       clearInterval(intervalId);
     };
-  }, [animateUpdate]);
+  }, [fetchUserPoints, handlePointsUpdate]);
 
   return (
     <div className={`glass rounded-2xl p-4 ${className}`}>
@@ -98,4 +100,4 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
   );
 };
 
-export default PointsDisplay;
+export default React.memo(PointsDisplay);
