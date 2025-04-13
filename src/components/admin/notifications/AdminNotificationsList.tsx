@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -20,7 +20,7 @@ const AdminNotificationsList: React.FC = () => {
     fetchNotifications
   } = useAdminNotifications();
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
       case 'reactivation_request':
       case 'reactivation_approved':
@@ -39,9 +39,9 @@ const AdminNotificationsList: React.FC = () => {
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
-  };
+  }, []);
 
-  const handleNotificationAction = async (notification: AdminNotification) => {
+  const handleNotificationAction = useCallback(async (notification: AdminNotification) => {
     await markAsRead(notification.id);
     
     switch (notification.type) {
@@ -62,7 +62,7 @@ const AdminNotificationsList: React.FC = () => {
       default:
         break;
     }
-  };
+  }, [markAsRead]);
   
   // Use useMemo to prevent unnecessary re-renders
   const unreadNotifications = useMemo(() => 

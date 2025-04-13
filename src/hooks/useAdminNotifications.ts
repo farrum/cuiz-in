@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 import { adminNotificationsApi } from '@/utils/supabaseUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -12,8 +12,9 @@ export const useAdminNotifications = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const isMounted = useRef(true);
+  const channelRef = useRef<any>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!isMounted.current) return;
     
     setIsLoading(true);
@@ -43,39 +44,49 @@ export const useAdminNotifications = () => {
         setIsLoading(false);
       }
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    isMounted.current = true;
-    fetchNotifications();
-    
-    try {
-      // Subscribe to realtime updates
-      const channel = adminNotificationsApi.subscribeToNotifications((newNotification) => {
-        console.log('New notification received:', newNotification);
-        if (isMounted.current) {
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // Show a toast notification
-          toast({
-            title: 'New Notification',
-            description: newNotification.message,
-            variant: 'default',
-          });
-        }
+  const handleNewNotification = useCallback((newNotification: AdminNotification) => {
+    console.log('New notification received:', newNotification);
+    if (isMounted.current) {
+      setNotifications(prev => [newNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      
+      // Show a toast notification
+      toast({
+        title: 'New Notification',
+        description: newNotification.message,
+        variant: 'default',
       });
-
-      return () => {
-        isMounted.current = false;
-        supabase.removeChannel(channel);
-      };
-    } catch (error) {
-      console.error('Error setting up realtime subscription:', error);
     }
   }, [toast]);
 
-  const markAsRead = async (id: string) => {
+  useEffect(() => {
+    isMounted.current = true;
+    
+    // Initial fetch
+    fetchNotifications();
+    
+    // Setup realtime subscription
+    try {
+      // Store the channel reference for cleanup
+      channelRef.current = adminNotificationsApi.subscribeToNotifications(handleNewNotification);
+    } catch (error) {
+      console.error('Error setting up realtime subscription:', error);
+    }
+    
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+      // Clean up the subscription if it exists
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [fetchNotifications, handleNewNotification]); // Stable dependencies
+
+  const markAsRead = useCallback(async (id: string) => {
     try {
       const { error } = await adminNotificationsApi.markAsRead(id);
         
@@ -93,9 +104,9 @@ export const useAdminNotifications = () => {
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
-  };
+  }, []);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       const { error } = await adminNotificationsApi.markAllAsRead();
         
@@ -116,9 +127,9 @@ export const useAdminNotifications = () => {
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
-  };
+  }, [toast]);
 
-  const createNotification = async (
+  const createNotification = useCallback(async (
     type: AdminNotificationInsert['type'], 
     message: string, 
     userId?: string | null, 
@@ -145,7 +156,7 @@ export const useAdminNotifications = () => {
       console.error('Error creating notification:', error);
       return false;
     }
-  };
+  }, []);
 
   return {
     notifications,
