@@ -13,7 +13,8 @@ export const useAdminNotifications = () => {
   const { toast } = useToast();
   const isMounted = useRef(true);
   const channelRef = useRef<any>(null);
-
+  
+  // Memoize fetchNotifications to prevent it being recreated on each render
   const fetchNotifications = useCallback(async () => {
     if (!isMounted.current) return;
     
@@ -52,7 +53,6 @@ export const useAdminNotifications = () => {
       setNotifications(prev => [newNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
       
-      // Show a toast notification
       toast({
         title: 'New Notification',
         description: newNotification.message,
@@ -84,7 +84,7 @@ export const useAdminNotifications = () => {
         channelRef.current = null;
       }
     };
-  }, [fetchNotifications, handleNewNotification]); // Stable dependencies
+  }, [fetchNotifications, handleNewNotification]); 
 
   const markAsRead = useCallback(async (id: string) => {
     try {
