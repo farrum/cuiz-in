@@ -141,11 +141,9 @@ const UserRegistrationForm: React.FC = () => {
     try {
       console.log('Registering with username:', username);
       
-      // Use generated email if not provided
-      const emailToUse = email || `${username}@example.com`;
-      
+      // Sign up using username directly, not email
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: emailToUse,
+        email: username, // Using username as the unique identifier
         password,
         options: {
           data: {
@@ -171,7 +169,7 @@ const UserRegistrationForm: React.FC = () => {
           username: username,
           display_name: displayName || username,
           phone: phone,
-          email: email || null, // Only store email if provided
+          email: email || null, // Store email as optional field
           points: 0,
           suspended: false,
         });

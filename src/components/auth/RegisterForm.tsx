@@ -50,12 +50,9 @@ const RegisterForm = () => {
         return;
       }
       
-      // Create user account using Supabase Auth
-      // If email is provided, use email/password signup, otherwise use username as email
-      const emailToUse = email || `${username}@example.com`; // Fallback email if not provided
-      
+      // Create user account using Supabase Auth with username as unique identifier
       const { data, error } = await supabase.auth.signUp({
-        email: emailToUse,
+        email: username, // Use username as the unique identifier
         password,
         options: {
           data: {
@@ -76,7 +73,7 @@ const RegisterForm = () => {
             { 
               id: data.user.id,
               username,
-              email: email || null, // Store email only if provided
+              email: email || null, // Store optional email
             }
           ]);
           

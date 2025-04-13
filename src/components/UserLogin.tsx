@@ -21,28 +21,9 @@ const UserLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // First, get the user's profile to check if they have an email
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('username', username)
-        .maybeSingle();
-      
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        throw new Error('Invalid username or password');
-      }
-      
-      if (!userProfile) {
-        throw new Error('User not found');
-      }
-      
-      // Check if user has an email, if not, use the generated one
-      const emailToUse = userProfile.email || `${username}@example.com`;
-      
-      // Sign in with email and password using Supabase Auth
+      // Sign in with username directly, without using email fallbacks
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailToUse,
+        email: username, // Use username as the unique identifier for authentication
         password
       });
       
