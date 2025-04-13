@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
 import { adminNotificationsApi } from '@/utils/supabaseUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -11,14 +11,19 @@ export const useAdminNotifications = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const isMounted = useRef(true);
 
   const fetchNotifications = async () => {
+    if (!isMounted.current) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
       const { data, error } = await adminNotificationsApi.getAll();
         
+      if (!isMounted.current) return;
+      
       if (error) {
         console.error('Error fetching notifications:', error);
         setError('Failed to load notifications. Please try again.');
@@ -29,32 +34,40 @@ export const useAdminNotifications = () => {
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
-      setError('An unexpected error occurred while loading notifications.');
-      setNotifications([]);
+      if (isMounted.current) {
+        setError('An unexpected error occurred while loading notifications.');
+        setNotifications([]);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
+    isMounted.current = true;
     fetchNotifications();
     
     try {
       // Subscribe to realtime updates
       const channel = adminNotificationsApi.subscribeToNotifications((newNotification) => {
         console.log('New notification received:', newNotification);
-        setNotifications(prev => [newNotification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-        
-        // Show a toast notification
-        toast({
-          title: 'New Notification',
-          description: newNotification.message,
-          variant: 'default',
-        });
+        if (isMounted.current) {
+          setNotifications(prev => [newNotification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+          
+          // Show a toast notification
+          toast({
+            title: 'New Notification',
+            description: newNotification.message,
+            variant: 'default',
+          });
+        }
       });
 
       return () => {
+        isMounted.current = false;
         supabase.removeChannel(channel);
       };
     } catch (error) {
@@ -68,7 +81,10 @@ export const useAdminNotifications = () => {
         
       if (error) {
         console.error('Error marking notification as read:', error);
-      } else {
+        return;
+      }
+      
+      if (isMounted.current) {
         setNotifications(prev => 
           prev.map(n => (n.id === id ? { ...n, read: true } : n))
         );
@@ -85,7 +101,10 @@ export const useAdminNotifications = () => {
         
       if (error) {
         console.error('Error marking all notifications as read:', error);
-      } else {
+        return;
+      }
+      
+      if (isMounted.current) {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
         

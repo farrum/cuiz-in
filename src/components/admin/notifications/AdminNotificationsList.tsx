@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Bell, CheckCircle, UserCheck, AlertCircle, Wallet, Activity } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { AdminNotification } from '@/types/adminNotification';
 import { useAdminNotifications } from '@/hooks/useAdminNotifications';
 
@@ -63,6 +63,10 @@ const AdminNotificationsList: React.FC = () => {
         break;
     }
   };
+  
+  // Use useMemo to prevent unnecessary re-renders
+  const unreadNotifications = useMemo(() => 
+    notifications.filter(n => !n.read), [notifications]);
 
   return (
     <Card>
@@ -173,7 +177,7 @@ const AdminNotificationsList: React.FC = () => {
               <div className="flex justify-center py-6">
                 <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
               </div>
-            ) : notifications.filter(n => !n.read).length === 0 ? (
+            ) : unreadNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
                 <CheckCircle className="h-10 w-10 mb-2" />
                 <h3 className="font-medium">No unread notifications</h3>
@@ -181,32 +185,30 @@ const AdminNotificationsList: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {notifications
-                  .filter(notification => !notification.read)
-                  .map((notification) => (
-                    <div 
-                      key={notification.id}
-                      className="p-3 rounded-lg border border-primary/20 bg-muted/20 flex items-start gap-3 cursor-pointer"
-                      onClick={() => handleNotificationAction(notification)}
-                    >
-                      <div className="mt-0.5">
-                        {getNotificationIcon(notification.type)}
+                {unreadNotifications.map((notification) => (
+                  <div 
+                    key={notification.id}
+                    className="p-3 rounded-lg border border-primary/20 bg-muted/20 flex items-start gap-3 cursor-pointer"
+                    onClick={() => handleNotificationAction(notification)}
+                  >
+                    <div className="mt-0.5">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">
+                          {notification.message}
+                        </div>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          New
+                        </Badge>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
-                            {notification.message}
-                          </div>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            New
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                        </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>
