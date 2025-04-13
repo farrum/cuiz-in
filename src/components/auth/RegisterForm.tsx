@@ -25,15 +25,13 @@ const RegisterForm = () => {
     
     try {
       // Basic validation
-      if (!password || !username) {
-        setError('Username and password are required');
-        setIsLoading(false);
+      if (!email || !password || !username) {
+        setError('All fields are required');
         return;
       }
       
       if (password.length < 6) {
         setError('Password must be at least 6 characters long');
-        setIsLoading(false);
         return;
       }
       
@@ -46,13 +44,12 @@ const RegisterForm = () => {
         
       if (!usernameError && existingUser) {
         setError('Username is already taken');
-        setIsLoading(false);
         return;
       }
       
-      // Create user account using Supabase Auth with username as unique identifier
+      // Create user account
       const { data, error } = await supabase.auth.signUp({
-        email: username, // Use username as the unique identifier
+        email,
         password,
         options: {
           data: {
@@ -73,7 +70,7 @@ const RegisterForm = () => {
             { 
               id: data.user.id,
               username,
-              email: email || null, // Store optional email
+              email: data.user.email,
             }
           ]);
           
@@ -119,17 +116,15 @@ const RegisterForm = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email (Optional)</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email (optional)"
+              placeholder="Enter your email"
+              required
             />
-            <p className="text-xs text-muted-foreground">
-              Email is optional but recommended for account recovery
-            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
