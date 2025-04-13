@@ -27,11 +27,13 @@ const RegisterForm = () => {
       // Basic validation
       if (!email || !password || !username) {
         setError('All fields are required');
+        setIsLoading(false);
         return;
       }
       
       if (password.length < 6) {
         setError('Password must be at least 6 characters long');
+        setIsLoading(false);
         return;
       }
       
@@ -44,10 +46,11 @@ const RegisterForm = () => {
         
       if (!usernameError && existingUser) {
         setError('Username is already taken');
+        setIsLoading(false);
         return;
       }
       
-      // Create user account
+      // Create user account using Supabase Auth (secure password handling)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import MD5 from 'crypto-js/md5';
-import { v4 as uuidv4 } from 'uuid';
 import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
@@ -27,19 +24,16 @@ const UserRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Extract referral code from URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const refCode = params.get('ref');
     
     if (refCode) {
       setReferralCode(refCode);
-      // Check if referrer exists in the system
       checkReferrer(refCode);
     }
   }, [location]);
   
-  // Function to check if referrer exists
   const checkReferrer = async (referrerUsername: string) => {
     try {
       const { data: referrerData, error } = await supabase
@@ -65,14 +59,12 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
-  // Auto-fill display name based on username
   useEffect(() => {
     if (username && !displayName) {
       setDisplayName(username);
     }
   }, [username, displayName]);
   
-  // Check username availability with debounce
   useEffect(() => {
     if (!username) return;
     
@@ -113,11 +105,6 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
-  // Function to hash password with MD5
-  const hashPassword = (password: string): string => {
-    return MD5(password).toString();
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -151,47 +138,37 @@ const UserRegistrationForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      console.log('Registering with username:', username);
+      console.log('Registering with username:', username, 'and email:', email);
       
-      // Check if username already exists
-      const { data: existingUser, error: userCheckError } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-        .maybeSingle();
-        
-      if (userCheckError) {
-        console.error('User check error:', userCheckError);
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            display_name: displayName || username,
+            phone,
+          }
+        }
+      });
+      
+      if (authError) {
+        throw authError;
       }
       
-      if (existingUser) {
-        toast({
-          title: "Username already taken",
-          description: "Please choose a different username.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
+      if (!authData.user) {
+        throw new Error("Failed to create user");
       }
       
-      // Hash the password
-      const hashedPassword = hashPassword(password);
-      console.log('Password hashed for storage');
-      
-      // Generate a UUID for the user
-      const userId = uuidv4();
-      
-      // Create profile directly in profiles table with hashed password
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: userId,
+          id: authData.user.id,
           username: username,
-          display_name: displayName || username, // Use the display name, default to username if empty
+          display_name: displayName || username,
           phone: phone,
           points: 0,
           suspended: false,
-          password_hash: hashedPassword
         });
       
       if (profileError) {
@@ -205,11 +182,10 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
-      // Set user role as player by default
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userId,
+          user_id: authData.user.id,
           role: 'player'
         });
         
@@ -218,7 +194,6 @@ const UserRegistrationForm: React.FC = () => {
         // Continue anyway as this is not critical
       }
       
-      // Handle referral code if provided
       if (referralCode) {
         try {
           const { data: referrerData, error: referrerError } = await supabase
@@ -235,7 +210,7 @@ const UserRegistrationForm: React.FC = () => {
               .insert({
                 referrer_id: referrerData.id,
                 referrer_name: referrerData.username,
-                referred_id: userId,
+                referred_id: authData.user.id,
                 referred_name: username,
                 referred_email: email || undefined,
                 date: currentDate,
@@ -252,17 +227,13 @@ const UserRegistrationForm: React.FC = () => {
         }
       }
       
-      // Store user auth status in localStorage
-      localStorage.setItem('quiz_app_user_auth', 'true');
-      localStorage.setItem('quiz_app_user_id', userId);
-      localStorage.setItem('quiz_app_user_name', displayName || username);
-      
       toast({
         title: "Registration successful!",
         description: "Your account has been created. You will be redirected to login.",
       });
       
-      // Redirect to login page after successful registration
+      await supabase.auth.signOut();
+      
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
@@ -335,13 +306,14 @@ const UserRegistrationForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email (Optional)</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
+              required
             />
           </div>
           
