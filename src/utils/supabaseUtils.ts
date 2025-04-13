@@ -124,3 +124,48 @@ export const adminNotificationsApi = {
     return channel;
   }
 };
+
+// Add the missing safeSupabaseOperation object
+export const safeSupabaseOperation = {
+  /**
+   * Safe wrapper for admin notifications operations
+   */
+  adminNotifications: {
+    /**
+     * Insert a new admin notification
+     */
+    insert: async (notification: AdminNotificationInsert) => {
+      console.log('Safely inserting admin notification:', notification);
+      try {
+        return await adminNotificationsApi.create(notification);
+      } catch (error) {
+        console.error('Error in safeSupabaseOperation.adminNotifications.insert:', error);
+        return { data: null, error };
+      }
+    },
+    
+    /**
+     * Mark a notification as read
+     */
+    markAsRead: async (id: string) => {
+      try {
+        return await adminNotificationsApi.markAsRead(id);
+      } catch (error) {
+        console.error('Error in safeSupabaseOperation.adminNotifications.markAsRead:', error);
+        return { data: null, error };
+      }
+    },
+    
+    /**
+     * Mark all notifications as read
+     */
+    markAllAsRead: async () => {
+      try {
+        return await adminNotificationsApi.markAllAsRead();
+      } catch (error) {
+        console.error('Error in safeSupabaseOperation.adminNotifications.markAllAsRead:', error);
+        return { data: null, error };
+      }
+    }
+  }
+};
