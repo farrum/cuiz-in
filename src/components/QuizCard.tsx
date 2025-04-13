@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
-import { Sparkles, Brain, ZapIcon, Timer, Award, Flame, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
 
 interface QuizCardProps {
@@ -212,10 +212,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
     }
   };
   
-  // Skip rendering if it's an image-based question
-  if (question.questionType === 'image') {
-    return null;
-  }
+  // Don't skip rendering even if it's an image-based question
+  // The ImageQuizContent component will handle image-based questions separately
   
   return (
     <Card className="quiz-card fun-card">
