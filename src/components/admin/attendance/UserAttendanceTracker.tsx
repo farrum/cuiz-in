@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { addMonths, subMonths, format } from 'date-fns';
 import { 
   Card, 
@@ -25,6 +26,9 @@ const UserAttendanceTracker: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Memoize users array to prevent unnecessary re-renders
+  const memoizedUsers = useMemo(() => users, [users]);
+  
   // Use the shared attendance data hook
   const { 
     attendance,
@@ -38,7 +42,7 @@ const UserAttendanceTracker: React.FC = () => {
     formatAttendanceDate,
     getUserAttendanceStats,
     fetchAttendanceData
-  } = useAttendanceData(currentMonth, users);
+  } = useAttendanceData(currentMonth, memoizedUsers);
 
   // Fetch users on component mount
   useEffect(() => {
@@ -58,7 +62,7 @@ const UserAttendanceTracker: React.FC = () => {
     }
   }, [searchTerm, users]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -89,24 +93,24 @@ const UserAttendanceTracker: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setError]);
 
   // Handle month navigation
-  const handleMonthChange = (direction: 'prev' | 'next') => {
+  const handleMonthChange = useCallback((direction: 'prev' | 'next') => {
     if (direction === 'prev') {
       setCurrentMonth(prevMonth => subMonths(prevMonth, 1));
     } else {
       setCurrentMonth(prevMonth => addMonths(prevMonth, 1));
     }
-  };
+  }, []);
 
-  const handleUserSelect = (userId: string) => {
+  const handleUserSelect = useCallback((userId: string) => {
     setSelectedUser(userId);
     fetchUserHistory(userId);
-  };
+  }, [fetchUserHistory]);
 
   // Create and download CSV file with attendance data
-  const exportAttendance = () => {
+  const exportAttendance = useCallback(() => {
     // Create CSV content
     let csvContent = "Username,";
     
@@ -141,7 +145,7 @@ const UserAttendanceTracker: React.FC = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  };
+  }, [attendance, daysInMonth, currentMonth]);
 
   return (
     <Card className="max-w-full overflow-hidden">
