@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   useAttendanceRecords, 
   useUserAttendanceHistory, 
@@ -30,10 +30,12 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
 
   const { daysInMonth } = useDaysInMonth(currentMonth);
 
-  // Run the fetch automatically when users or month changes
-  if (users.length > 0) {
-    fetchAttendanceData();
-  }
+  // Use useEffect to run the fetch when dependencies change
+  useEffect(() => {
+    if (users.length > 0) {
+      fetchAttendanceData();
+    }
+  }, [currentMonth, users, fetchAttendanceData]);
 
   return {
     attendance,

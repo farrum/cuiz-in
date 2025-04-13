@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -19,7 +19,7 @@ export const useAttendanceRecords = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAttendanceData = async () => {
+  const fetchAttendanceData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -89,7 +89,7 @@ export const useAttendanceRecords = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth, users]);
 
   return {
     attendance,
