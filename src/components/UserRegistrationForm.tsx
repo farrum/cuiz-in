@@ -7,8 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import MD5 from 'crypto-js/md5';
-import { v4 as uuidv4 } from 'uuid';
 import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
@@ -113,11 +111,6 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
-  // Function to hash password with MD5
-  const hashPassword = (password: string): string => {
-    return MD5(password).toString();
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -174,24 +167,50 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
       
-      // Hash the password
-      const hashedPassword = hashPassword(password);
-      console.log('Password hashed for storage');
+      // Create user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: email || `${username}@example.com`, // Use username as email if not provided
+        password: password,
+        options: {
+          data: {
+            username: username,
+            display_name: displayName || username,
+          }
+        }
+      });
       
-      // Generate a UUID for the user
-      const userId = uuidv4();
+      if (error) {
+        console.error('Registration error:', error);
+        toast({
+          title: "Registration failed",
+          description: error.message || "Failed to register",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
       
-      // Create profile directly in profiles table with hashed password
+      if (!data.user) {
+        toast({
+          title: "Registration failed",
+          description: "Failed to create user",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Create profile in profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: userId,
+          id: data.user.id,
           username: username,
-          display_name: displayName || username, // Use the display name, default to username if empty
+          display_name: displayName || username,
           phone: phone,
           points: 0,
           suspended: false,
-          password_hash: hashedPassword
+          email: email || null // Store email only if provided
         });
       
       if (profileError) {
@@ -209,7 +228,7 @@ const UserRegistrationForm: React.FC = () => {
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userId,
+          user_id: data.user.id,
           role: 'player'
         });
         
@@ -235,7 +254,7 @@ const UserRegistrationForm: React.FC = () => {
               .insert({
                 referrer_id: referrerData.id,
                 referrer_name: referrerData.username,
-                referred_id: userId,
+                referred_id: data.user.id,
                 referred_name: username,
                 referred_email: email || undefined,
                 date: currentDate,
@@ -254,7 +273,7 @@ const UserRegistrationForm: React.FC = () => {
       
       // Store user auth status in localStorage
       localStorage.setItem('quiz_app_user_auth', 'true');
-      localStorage.setItem('quiz_app_user_id', userId);
+      localStorage.setItem('quiz_app_user_id', data.user.id);
       localStorage.setItem('quiz_app_user_name', displayName || username);
       
       toast({
