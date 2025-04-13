@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Award, Image as ImageIcon } from "lucide-react";
@@ -37,15 +38,18 @@ interface ImageQuizContentProps {
   question: QuizQuestion;
   onComplete: (isCorrect: boolean, selectedAnswer: string) => void;
   isLoading?: boolean;
+  isChallenge?: boolean;
 }
 
 const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
   question,
   onComplete,
-  isLoading = false
+  isLoading = false,
+  isChallenge = false
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
@@ -54,8 +58,14 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
   const handleSubmit = () => {
     if (!selectedOption || isSubmitting) return;
     setIsSubmitting(true);
+    
     const isCorrect = selectedOption === question.correctAnswer;
     onComplete(isCorrect, selectedOption);
+    
+    // If this is not a challenge question, navigate to the answer page
+    if (!isChallenge) {
+      navigate(`/answer/${question.id}/${selectedOption}`);
+    }
   };
 
   if (isLoading) {

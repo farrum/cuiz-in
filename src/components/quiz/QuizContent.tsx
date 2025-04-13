@@ -12,6 +12,7 @@ interface QuizContentProps {
   showMotivation: boolean;
   motivationMessage: string;
   onQuestionComplete: (isCorrect: boolean, selectedAnswer: string) => void;
+  isChallenge?: boolean;
 }
 
 const QuizContent: React.FC<QuizContentProps> = ({
@@ -19,7 +20,8 @@ const QuizContent: React.FC<QuizContentProps> = ({
   currentQuestion,
   showMotivation,
   motivationMessage,
-  onQuestionComplete
+  onQuestionComplete,
+  isChallenge = false
 }) => {
   if (isLoading) {
     return (
@@ -64,11 +66,13 @@ const QuizContent: React.FC<QuizContentProps> = ({
           <ImageQuizContent
             question={currentQuestion}
             onComplete={onQuestionComplete}
+            isChallenge={isChallenge}
           />
         ) : (
           <QuizCard
             question={currentQuestion}
             onComplete={onQuestionComplete}
+            isChallenge={isChallenge}
           />
         )}
       </div>
