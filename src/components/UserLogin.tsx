@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import MD5 from 'crypto-js/md5';
 
 const UserLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -16,6 +17,10 @@ const UserLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  const hashPassword = (password: string): string => {
+    return MD5(password).toString();
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -23,27 +28,23 @@ const UserLogin: React.FC = () => {
     try {
       console.log(`Attempting to sign in with username: ${username}`);
       
-      // First, find the user by username to get their auth account
+      const hashedPassword = hashPassword(password);
+      console.log('Password hashed for authentication');
+      
       const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select('id, username, suspended')
+        .select('*')
         .eq('username', username)
+        .eq('password_hash', hashedPassword)
         .maybeSingle();
       
-      if (userError || !userData) {
-        console.error('Login error:', userError || 'User not found');
-        throw new Error('Invalid username or password');
+      if (userError) {
+        console.error('Login error:', userError);
+        throw new Error('Authentication failed');
       }
       
-      // Now use Supabase Auth to sign in
-      // We need to provide the email from the profiles table to auth.signInWithPassword
-      const { data: sessionData, error: loginError } = await supabase.auth.signInWithPassword({
-        email: `${username}@example.com`, // Use the placeholder email format
-        password: password,
-      });
-      
-      if (loginError) {
-        console.error('Login error:', loginError);
+      if (!userData) {
+        console.error('Invalid credentials');
         throw new Error('Invalid username or password');
       }
       
@@ -61,7 +62,7 @@ const UserLogin: React.FC = () => {
       // Store essential user data only
       localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, '0'); // Default to 0 until we fetch points
+      localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points ? userData.points.toString() : '0');
       
       const loginTime = new Date().toISOString();
       

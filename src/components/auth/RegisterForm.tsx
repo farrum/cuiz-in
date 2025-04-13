@@ -25,15 +25,13 @@ const RegisterForm = () => {
     
     try {
       // Basic validation
-      if (!password || !username) {
-        setError('Username and password are required');
-        setIsLoading(false);
+      if (!email || !password || !username) {
+        setError('All fields are required');
         return;
       }
       
       if (password.length < 6) {
         setError('Password must be at least 6 characters long');
-        setIsLoading(false);
         return;
       }
       
@@ -46,14 +44,12 @@ const RegisterForm = () => {
         
       if (!usernameError && existingUser) {
         setError('Username is already taken');
-        setIsLoading(false);
         return;
       }
       
-      // Create user account with Supabase Auth
-      // Use username as identifier if no email provided
+      // Create user account
       const { data, error } = await supabase.auth.signUp({
-        email: email || `${username}@example.com`, // Placeholder email if not provided
+        email,
         password,
         options: {
           data: {
@@ -74,7 +70,7 @@ const RegisterForm = () => {
             { 
               id: data.user.id,
               username,
-              email: email || null, // Store email only if provided
+              email: data.user.email,
             }
           ]);
           
@@ -120,13 +116,14 @@ const RegisterForm = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email (Optional)</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
+              required
             />
           </div>
           <div className="space-y-2">
