@@ -26,7 +26,7 @@ export interface QuizAnswer {
   selected_answer: string;
   correct: boolean;
   answered_at: string;
-  quiz_questions: QuizQuestion | null;
+  quiz_questions: QuizQuestion | QuizQuestion[] | null;
 }
 
 export interface RecentlyAnsweredQuestionsProps {

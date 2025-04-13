@@ -80,14 +80,18 @@ export const useQuizHistory = (userId: string, page: number, limit: number) => {
       }
 
       // Transform data to AnsweredQuestion format
-      const formattedData: AnsweredQuestion[] = data.map((item: QuizAnswer) => {
+      const formattedData: AnsweredQuestion[] = data.map((item: any) => {
         // Convert options to string array regardless of what format it comes in
         let parsedOptions: string[] = [];
         
-        // Check if quiz_questions exists and is an object (not an array)
-        if (item.quiz_questions && typeof item.quiz_questions === 'object' && !Array.isArray(item.quiz_questions)) {
-          // Handle different possible formats
-          const options = item.quiz_questions.options;
+        // Access the first quiz_questions item if it's an array
+        const quizQuestion = Array.isArray(item.quiz_questions) 
+          ? item.quiz_questions[0] 
+          : item.quiz_questions;
+        
+        // Only process if quizQuestion exists and is an object
+        if (quizQuestion && typeof quizQuestion === 'object') {
+          const options = quizQuestion.options;
           
           if (Array.isArray(options)) {
             // If it's already an array, make sure all elements are strings
@@ -111,20 +115,21 @@ export const useQuizHistory = (userId: string, page: number, limit: number) => {
           }
         }
 
-        // Access quiz_questions safely, ensuring it's a single object not an array
-        const quizQuestions = item.quiz_questions && typeof item.quiz_questions === 'object' && !Array.isArray(item.quiz_questions) 
-          ? item.quiz_questions 
-          : { question: 'Question not available', correct_answer: '', explanation: 'No explanation available', category: 'General' };
+        // Set default values for when quiz_questions is null or undefined
+        const questionText = quizQuestion?.question || 'Question not available';
+        const correctAnswer = quizQuestion?.correct_answer || '';
+        const explanation = quizQuestion?.explanation || 'No explanation available';
+        const category = quizQuestion?.category || 'General';
 
         return {
           id: item.id,
-          question: quizQuestions.question || 'Question not available',
+          question: questionText,
           options: parsedOptions,
-          correct_answer: quizQuestions.correct_answer || '',
+          correct_answer: correctAnswer,
           selected_answer: item.selected_answer,
           answered_at: item.answered_at,
-          explanation: quizQuestions.explanation || 'No explanation available',
-          category: quizQuestions.category || 'General',
+          explanation: explanation,
+          category: category,
           correct: item.correct
         };
       });

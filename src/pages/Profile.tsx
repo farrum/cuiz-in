@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getUserLoginStreak, resetLoginBonusSession } from '@/services/loginStreakService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ProfileEditor from '@/components/profile/editor';
-import RecentlyAnsweredQuestions from '@/components/RecentlyAnsweredQuestions';
+import RecentlyAnsweredQuestions from '@/components/quiz-history';
 
 interface Achievement {
   id: string;

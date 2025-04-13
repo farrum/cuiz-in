@@ -1,25 +1,29 @@
 
 import React, { useState } from 'react';
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from '@/components/ui/pagination';
-import { RecentlyAnsweredQuestionsProps } from './types';
-import { useQuizHistory } from './useQuizHistory';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import QuestionItem from './QuestionItem';
 import LoadingState from './LoadingState';
 import EmptyState from './EmptyState';
+import { useQuizHistory } from './useQuizHistory';
+import { RecentlyAnsweredQuestionsProps } from './types';
 
 const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({ 
-  userId, 
-  limit = 5 
+  userId,
+  limit = 5
 }) => {
-  const [page, setPage] = useState(1);
-  const { answeredQuestions, isLoading, totalPages } = useQuizHistory(userId, page, limit);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { 
+    answeredQuestions, 
+    isLoading, 
+    totalPages 
+  } = useQuizHistory(userId, currentPage, limit);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   if (isLoading) {
     return <LoadingState />;
@@ -35,40 +39,33 @@ const RecentlyAnsweredQuestions: React.FC<RecentlyAnsweredQuestionsProps> = ({
         <QuestionItem key={question.id} question={question} />
       ))}
       
-      {/* Pagination controls */}
       {totalPages > 1 && (
-        <Pagination className="mt-4">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink 
-                  isActive={page === i + 1} 
-                  onClick={() => setPage(i + 1)}
-                  className="cursor-pointer"
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        <div className="flex justify-between items-center mt-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+          </Button>
+          
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
       )}
     </div>
   );
 };
 
-export default React.memo(RecentlyAnsweredQuestions);
+export default RecentlyAnsweredQuestions;
