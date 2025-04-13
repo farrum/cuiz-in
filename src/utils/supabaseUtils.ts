@@ -1,141 +1,126 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AdminNotification, AdminNotificationInsert } from '@/types/adminNotification';
+import { AdminNotificationInsert } from '@/types/adminNotification';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-/**
- * Direct API functions for admin notifications to avoid TypeScript errors
- * This approach completely bypasses the TypeScript type checking for this table
- */
 export const adminNotificationsApi = {
+  /**
+   * Get all admin notifications
+   */
   getAll: async () => {
+    console.log('Fetching all admin notifications');
     try {
-      // Use raw query with explicit type casting to avoid TypeScript errors
       const { data, error } = await supabase
         .from('admin_notifications')
         .select('*')
-        .order('created_at', { ascending: false }) as unknown as { 
-          data: AdminNotification[] | null, 
-          error: any 
-        };
-      
-      return { 
-        data: data || [], 
-        error 
-      };
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-      return { data: [], error: err };
-    }
-  },
-  
-  markAsRead: async (id: string) => {
-    try {
-      // Use raw query with explicit type casting to avoid TypeScript errors
-      const { error } = await supabase
-        .from('admin_notifications')
-        .update({ read: true })
-        .eq('id', id) as unknown as { error: any };
+        .order('created_at', { ascending: false });
         
-      return { error };
-    } catch (err) {
-      console.error('Error marking notification as read:', err);
-      return { error: err };
+      console.log('Fetched admin notifications:', data?.length || 0);
+      return { data, error };
+    } catch (error) {
+      console.error('Error in adminNotificationsApi.getAll:', error);
+      return { data: null, error };
     }
   },
   
-  markAllAsRead: async () => {
-    try {
-      // Use raw query with explicit type casting to avoid TypeScript errors
-      const { error } = await supabase
-        .from('admin_notifications')
-        .update({ read: true })
-        .eq('read', false) as unknown as { error: any };
-        
-      return { error };
-    } catch (err) {
-      console.error('Error marking all notifications as read:', err);
-      return { error: err };
-    }
-  },
-  
+  /**
+   * Create a new notification
+   */
   create: async (notification: AdminNotificationInsert) => {
+    console.log('Creating admin notification:', notification);
     try {
-      // Validate notification data
-      if (!notification.type || !notification.message) {
-        console.error('Invalid notification data:', notification);
-        return { data: null, error: new Error('Invalid notification data') };
-      }
-      
-      // Use raw query with explicit type casting to avoid TypeScript errors
       const { data, error } = await supabase
         .from('admin_notifications')
-        .insert([notification])
-        .select() as unknown as { data: any, error: any };
+        .insert(notification)
+        .select()
+        .single();
         
       if (error) {
         console.error('Error creating notification:', error);
       } else {
-        console.log('Notification created successfully:', data);
+        console.log('Created notification:', data);
       }
       
       return { data, error };
-    } catch (err) {
-      console.error('Error creating notification:', err);
-      return { data: null, error: err };
+    } catch (error) {
+      console.error('Error in adminNotificationsApi.create:', error);
+      return { data: null, error };
     }
   },
-
-  // Add a channel subscription for notifications
-  subscribeToNotifications: (callback: (notification: AdminNotification) => void) => {
+  
+  /**
+   * Mark a notification as read
+   */
+  markAsRead: async (id: string) => {
+    console.log('Marking notification as read:', id);
     try {
-      const channel = supabase.channel('admin_notification_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'admin_notifications',
-          },
-          (payload) => {
-            console.log('Real-time notification received:', payload);
-            callback(payload.new as AdminNotification);
-          }
-        )
-        .subscribe((status) => {
-          console.log('Admin notification subscription status:', status);
-        });
+      const { data, error } = await supabase
+        .from('admin_notifications')
+        .update({ read: true })
+        .eq('id', id);
         
-      return channel;
-    } catch (error) {
-      console.error('Error setting up real-time notification subscription:', error);
-      throw error;
-    }
-  }
-};
-
-/**
- * A legacy compatibility layer to maintain backward compatibility
- * with existing code that uses safeSupabaseOperation
- */
-export const safeSupabaseOperation = {
-  adminNotifications: {
-    insert: async (notification: AdminNotificationInsert) => {
-      return adminNotificationsApi.create(notification);
-    },
-    
-    update: async (id: string, data: any) => {
-      try {
-        console.log('Updating notification:', id, data);
-        const { error } = await supabase
-          .from('admin_notifications')
-          .update(data)
-          .eq('id', id) as unknown as { error: any };
-          
-        return { error };
-      } catch (err) {
-        console.error('Error in adminNotifications.update:', err);
-        return { error: err };
+      if (error) {
+        console.error('Error marking notification as read:', error);
+      } else {
+        console.log('Notification marked as read:', id);
       }
+      
+      return { data, error };
+    } catch (error) {
+      console.error('Error in adminNotificationsApi.markAsRead:', error);
+      return { data: null, error };
     }
+  },
+  
+  /**
+   * Mark all notifications as read
+   */
+  markAllAsRead: async () => {
+    console.log('Marking all notifications as read');
+    try {
+      const { data, error } = await supabase
+        .from('admin_notifications')
+        .update({ read: true })
+        .eq('read', false);
+        
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+      } else {
+        console.log('All notifications marked as read');
+      }
+      
+      return { data, error };
+    } catch (error) {
+      console.error('Error in adminNotificationsApi.markAllAsRead:', error);
+      return { data: null, error };
+    }
+  },
+  
+  /**
+   * Subscribe to new notifications
+   */
+  subscribeToNotifications: (callback: (notification: any) => void): RealtimeChannel => {
+    console.log('Setting up realtime subscription for admin_notifications');
+    
+    // Create a channel to listen for database changes
+    const channel = supabase
+      .channel('admin_notification_changes')
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'admin_notifications' 
+        },
+        (payload) => {
+          console.log('New notification received via realtime:', payload.new);
+          callback(payload.new);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
+      
+    return channel;
   }
 };

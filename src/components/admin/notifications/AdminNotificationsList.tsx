@@ -182,11 +182,11 @@ const AdminNotificationsList: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 {notifications
-                  .filter(n => !n.read)
+                  .filter(notification => !notification.read)
                   .map((notification) => (
                     <div 
                       key={notification.id}
-                      className="p-3 rounded-lg border border-primary/20 bg-muted/20 flex items-start gap-3 cursor-pointer transition-colors"
+                      className="p-3 rounded-lg border border-primary/20 bg-muted/20 flex items-start gap-3 cursor-pointer"
                       onClick={() => handleNotificationAction(notification)}
                     >
                       <div className="mt-0.5">
