@@ -4,7 +4,7 @@ import PointsDisplay from '@/components/PointsDisplay';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
-import RecentlyAnsweredQuestions from '@/components/RecentlyAnsweredQuestions';
+import RecentlyAnsweredQuestions from '@/components/quiz-history';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import AccountReactivation from '@/components/AccountReactivation';
 import ProfileHeader from './ProfileHeader';
