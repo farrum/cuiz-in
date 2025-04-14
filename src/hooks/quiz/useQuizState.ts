@@ -43,7 +43,8 @@ export const useQuizState = () => {
   
   const {
     adsSynced,
-    handleAdSlotsUpdated: handleAdSlotsUpdatedHook
+    handleAdSlotsUpdated: handleAdSlotsUpdatedHook,
+    syncAdSlots
   } = useQuizAdSync(setForceReloadAds);
   
   const {
@@ -66,8 +67,8 @@ export const useQuizState = () => {
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
     
-    // Load initial ad data
-    await useQuizAdSync().syncAdSlots(setForceReloadAds);
+    // Load initial ad data - fixed to use the imported function
+    await syncAdSlots();
     
     loadNewQuestion();
     fetchPoints();

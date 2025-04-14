@@ -1,14 +1,11 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { syncAdSlotsToLocal } from '@/utils/quizData';
 
 export const useQuizAdSync = (setForceReloadAds?: React.Dispatch<React.SetStateAction<number>>) => {
   const [adsSynced, setAdsSynced] = useState(false);
-
-  const syncAdSlots = async (reloadSetter?: React.Dispatch<React.SetStateAction<number>>) => {
-    const setter = reloadSetter || setForceReloadAds;
-    
+  
+  const syncAdSlots = async () => {
     try {
       console.log('Syncing ad slots from server...');
       const { data: adSlots, error } = await supabase
@@ -21,32 +18,29 @@ export const useQuizAdSync = (setForceReloadAds?: React.Dispatch<React.SetStateA
         localStorage.setItem('quiz_app_ad_slots', JSON.stringify(adSlots));
         setAdsSynced(true);
         
-        if (setter) {
-          setter(prev => prev + 1);
+        if (setForceReloadAds) {
+          setForceReloadAds(prev => prev + 1);
         }
         
         window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: adSlots }));
+        return true;
       } else {
         console.error('Error fetching ad slots:', error);
-        await syncAdSlotsToLocal();
-        setAdsSynced(true);
+        return false;
       }
     } catch (err) {
       console.error('Error syncing ad slots:', err);
-      await syncAdSlotsToLocal();
-      setAdsSynced(true);
+      return false;
     }
-    
-    return true;
   };
-
+  
   const handleAdSlotsUpdated = () => {
-    console.log('Ad slots updated, refreshing ad display...');
+    console.log('Ad slots updated, triggering refresh...');
     if (setForceReloadAds) {
       setForceReloadAds(prev => prev + 1);
     }
   };
-
+  
   return {
     adsSynced,
     syncAdSlots,
