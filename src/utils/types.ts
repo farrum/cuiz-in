@@ -9,5 +9,16 @@ export interface QuizQuestion {
   points: number;
   explanation: string;
   imageUrl?: string; // URL for image-based questions
-  questionType?: 'text' | 'image'; // Type of question (default is text)
+  questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false'; // Type of question (default is text)
+}
+
+export type GameMode = 'normal' | 'time-attack' | 'team-quiz' | 'streak';
+
+export interface GameModeConfig {
+  name: string;
+  description: string;
+  icon: string;
+  timeLimit?: number; // in seconds, for time attack mode
+  streakMultiplier?: number; // point multiplier for streak mode
+  teamSize?: number; // for team mode
 }

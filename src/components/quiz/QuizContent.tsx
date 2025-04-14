@@ -5,6 +5,8 @@ import LoadingCard from '@/components/LoadingCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { QuizQuestion } from '@/utils/quizData';
 import ImageQuizContent from './ImageQuizContent';
+import TimeAttackTimer from './TimeAttackTimer';
+import { GameMode } from '@/utils/types';
 
 interface QuizContentProps {
   isLoading: boolean;
@@ -13,6 +15,11 @@ interface QuizContentProps {
   motivationMessage: string;
   onQuestionComplete: (isCorrect: boolean, selectedAnswer: string) => void;
   isChallenge?: boolean;
+  currentMode: GameMode;
+  timeRemaining: number | null;
+  isGameActive: boolean;
+  handleTimeUp: () => void;
+  streak: number;
 }
 
 const QuizContent: React.FC<QuizContentProps> = ({
@@ -21,7 +28,12 @@ const QuizContent: React.FC<QuizContentProps> = ({
   showMotivation,
   motivationMessage,
   onQuestionComplete,
-  isChallenge = false
+  isChallenge = false,
+  currentMode,
+  timeRemaining,
+  isGameActive,
+  handleTimeUp,
+  streak
 }) => {
   if (isLoading) {
     return (
@@ -42,6 +54,21 @@ const QuizContent: React.FC<QuizContentProps> = ({
     );
   }
 
+  // Show streak indicator for streak mode
+  const renderStreak = () => {
+    if (currentMode === 'streak' && streak > 0) {
+      return (
+        <div className="absolute top-2 right-2">
+          <div className="bg-primary/10 text-primary px-3 py-1 rounded-full flex items-center space-x-2">
+            <span className="text-lg font-bold">{streak}</span>
+            <span className="text-sm">🔥</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       {showMotivation && (
@@ -54,6 +81,14 @@ const QuizContent: React.FC<QuizContentProps> = ({
         </div>
       )}
       
+      {currentMode === 'time-attack' && timeRemaining !== null && (
+        <TimeAttackTimer 
+          initialTime={timeRemaining} 
+          isActive={isGameActive} 
+          onTimeUp={handleTimeUp} 
+        />
+      )}
+      
       <div className="relative">
         <div className="absolute -top-16 -right-10 z-10 transform scale-75">
           <MotivationalCharacter 
@@ -61,6 +96,8 @@ const QuizContent: React.FC<QuizContentProps> = ({
             showMessage={false}
           />
         </div>
+        
+        {renderStreak()}
         
         {currentQuestion.questionType === 'image' ? (
           <ImageQuizContent

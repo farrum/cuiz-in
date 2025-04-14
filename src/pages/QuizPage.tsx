@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -9,10 +9,15 @@ import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
+import GameModeSelector from '@/components/quiz/GameModeSelector';
 import { clearAdCache } from '@/services/adCacheService';
 import AdDebugger from '@/components/ads/AdDebugger';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 const QuizPage: React.FC = () => {
+  const [showGameModeSelector, setShowGameModeSelector] = useState(false);
+  
   const {
     currentQuestion,
     streak,
@@ -25,12 +30,19 @@ const QuizPage: React.FC = () => {
     nextBadgeThreshold,
     isSuspended,
     forceReloadAds,
+    currentMode,
+    config,
+    timeRemaining,
+    isGameActive,
     checkSuspensionStatus,
     loadInitialData,
     handleAdSlotsUpdated,
     handleQuestionComplete,
     showMotivationalMessage,
-    setForceReloadAds
+    setForceReloadAds,
+    changeGameMode,
+    handleTimeUp,
+    resetGame
   } = useQuizState();
   
   useMonthlyReset();
@@ -81,6 +93,39 @@ const QuizPage: React.FC = () => {
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
         <AdvertisementBanner key={`top-ad-${forceReloadAds}`} position="top" slotId="quiz-top" pageSection="quiz-page" />
         
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">
+            {config.name}
+            {currentMode === 'streak' && streak > 0 && (
+              <span className="ml-2 text-primary">🔥 {streak}</span>
+            )}
+          </h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowGameModeSelector(prev => !prev)}
+          >
+            Change Mode
+          </Button>
+        </div>
+        
+        {showGameModeSelector && (
+          <div className="mb-6">
+            <GameModeSelector />
+          </div>
+        )}
+        
+        {!isGameActive && currentMode === 'time-attack' && (
+          <div className="bg-muted p-6 rounded-lg mb-6 text-center">
+            <h2 className="text-xl font-bold mb-2">Time's Up!</h2>
+            <p className="mb-4">You answered {questionsAnswered} questions in {config.timeLimit} seconds!</p>
+            <Button onClick={resetGame} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Play Again
+            </Button>
+          </div>
+        )}
+        
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex-1">
             <PointsAndProgress 
@@ -95,13 +140,20 @@ const QuizPage: React.FC = () => {
           
             <AdvertisementBanner key={`middle-ad-${forceReloadAds}`} position="middle" slotId="quiz-middle" pageSection="quiz-page" />
           
-            <QuizContent 
-              isLoading={isLoading}
-              currentQuestion={currentQuestion}
-              showMotivation={showMotivation}
-              motivationMessage={motivationMessage}
-              onQuestionComplete={handleQuestionComplete}
-            />
+            {isGameActive && (
+              <QuizContent 
+                isLoading={isLoading}
+                currentQuestion={currentQuestion}
+                showMotivation={showMotivation}
+                motivationMessage={motivationMessage}
+                onQuestionComplete={handleQuestionComplete}
+                currentMode={currentMode}
+                timeRemaining={timeRemaining}
+                isGameActive={isGameActive}
+                handleTimeUp={handleTimeUp}
+                streak={streak}
+              />
+            )}
           
             <DailyChallenges />
           </div>
