@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useAdState } from './useAdState';
-import { getSessionId, getAdPositionKey, getAdFromCache } from '@/services/adCacheService';
+import { getSessionId, getAdPositionKey, getAdFromCache, debugAvailableAds } from '@/services/adCacheService';
 import { trackAdImpression, trackAdClick } from '@/services/adTrackingService';
 import { 
   fetchAdsFromLocalStorage, 
@@ -41,6 +41,14 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
   const fetchAds = useCallback(async (force = false) => {
     if (!isMountedRef.current) return;
     
+    // Additional debugging for bottom position
+    const isBottomPosition = position === 'bottom';
+    if (isBottomPosition) {
+      console.log(`🔍 Fetching ads for BOTTOM position - slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
+      // Debug all available ads
+      debugAvailableAds();
+    }
+    
     // Check if we should use the cache
     const cachedAd = getAdFromCache(adPositionKey, force);
     
@@ -73,9 +81,18 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       const localStorageAds = fetchAdsFromLocalStorage(position);
       
       if (localStorageAds) {
+        if (isBottomPosition) {
+          console.log(`🔍 BOTTOM position: Found ${localStorageAds.length} matching ads in localStorage`);
+          console.log('Matching ads:', localStorageAds);
+        }
+        
         const selectedAd = selectAdFromMatching(localStorageAds, position, slotId, pageSection);
         
         if (selectedAd) {
+          if (isBottomPosition) {
+            console.log(`🔍 BOTTOM position: Selected ad: ${selectedAd.name || selectedAd.id}`);
+          }
+          
           const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
           
           updateAdState(content, id, version, debug);
@@ -87,13 +104,21 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
           }, 300);
           
           return;
+        } else if (isBottomPosition) {
+          console.log(`🔍 BOTTOM position: No ad was selected from matching ads`);
         }
+      } else if (isBottomPosition) {
+        console.log(`🔍 BOTTOM position: No ads found in localStorage`);
       }
       
       // If no local storage ads, try Supabase
       const supabaseAds = await fetchAdsFromSupabase(position);
       
       if (supabaseAds && supabaseAds.length > 0 && isMountedRef.current) {
+        if (isBottomPosition) {
+          console.log(`🔍 BOTTOM position: Found ${supabaseAds.length} ads from Supabase`);
+        }
+        
         // For Supabase ads, we want to randomly select one
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
@@ -111,7 +136,10 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
           trackAdImpression(id, position, slotId, pageSection);
         }
       } else {
-        console.log('No active ads found for position:', position);
+        console.log(`No active ads found for position: ${position}`);
+        if (isBottomPosition) {
+          console.log(`🔍 BOTTOM position: No active ads found in Supabase`);
+        }
         updateAdState('', null, '', null, false, `No active ads for position: ${position}`);
       }
     } catch (err) {
@@ -147,10 +175,28 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
+    // Debug logging specifically for bottom ads
+    if (position === 'bottom') {
+      console.log(`🔍 BOTTOM ad component mounted - key: ${adPositionKey}`);
+      
+      // Force fetch after a short delay to ensure initialization
+      const initTimer = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.log('🔍 BOTTOM ad forced refresh after initialization');
+          fetchAds(true);
+        }
+      }, 2000);
+      
+      return () => {
+        window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+        clearTimeout(initTimer);
+      };
+    }
+    
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     };
-  }, [fetchAds, position, adState.instanceId]);
+  }, [fetchAds, position, adState.instanceId, adPositionKey]);
   
   return {
     ...adState,

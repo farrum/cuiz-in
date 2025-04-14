@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useHomePageState } from '@/hooks/useHomePageState';
+import AdDebugger from '@/components/ads/AdDebugger';
 import {
   HeroSection,
   NameInputForm,
@@ -31,6 +32,8 @@ const Index: React.FC = () => {
     navigateToProfile,
     handleNameSubmit
   } = useHomePageState();
+  
+  const isDevelopment = process.env.NODE_ENV === 'development';
   
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
@@ -79,7 +82,17 @@ const Index: React.FC = () => {
         
         <CallToAction />
         
+        {/* Bottom ad with debugger */}
         <AdvertisementBanner position="bottom" slotId="home-bottom" pageSection="home-page-footer" className="mt-12" />
+        
+        {isDevelopment && (
+          <AdDebugger 
+            position="bottom" 
+            slotId="home-bottom" 
+            pageSection="home-page-footer" 
+            className="mt-4 max-w-3xl w-full"
+          />
+        )}
       </div>
       
       <Footer />
