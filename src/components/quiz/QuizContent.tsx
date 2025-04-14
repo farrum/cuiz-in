@@ -3,12 +3,8 @@ import React from 'react';
 import QuizCard from '@/components/QuizCard';
 import LoadingCard from '@/components/LoadingCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
-import { QuizQuestion } from '@/utils/types';
+import { QuizQuestion } from '@/utils/quizData';
 import ImageQuizContent from './ImageQuizContent';
-import DragAndDropQuizContent from './DragAndDropQuizContent';
-import { isDragAndDropQuestion } from '@/utils/dragAndDropQuizUtils';
-import { GameModeBanner } from './GameModeBanner';
-import { useQuizTypes } from '@/hooks/quiz/useQuizTypes';
 
 interface QuizContentProps {
   isLoading: boolean;
@@ -27,8 +23,6 @@ const QuizContent: React.FC<QuizContentProps> = ({
   onQuestionComplete,
   isChallenge = false
 }) => {
-  const { currentMode, timeRemaining } = useQuizTypes();
-
   if (isLoading) {
     return (
       <div className="quiz-card animate-pulse flex items-center justify-center min-h-[400px]">
@@ -50,10 +44,6 @@ const QuizContent: React.FC<QuizContentProps> = ({
 
   return (
     <>
-      {currentMode !== 'standard' && (
-        <GameModeBanner mode={currentMode} timeRemaining={timeRemaining} />
-      )}
-
       {showMotivation && (
         <div className="flex justify-center my-4">
           <MotivationalCharacter 
@@ -72,13 +62,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
           />
         </div>
         
-        {isDragAndDropQuestion(currentQuestion) ? (
-          <DragAndDropQuizContent
-            question={currentQuestion}
-            onComplete={onQuestionComplete}
-            isChallenge={isChallenge}
-          />
-        ) : currentQuestion.questionType === 'image' ? (
+        {currentQuestion.questionType === 'image' ? (
           <ImageQuizContent
             question={currentQuestion}
             onComplete={onQuestionComplete}
