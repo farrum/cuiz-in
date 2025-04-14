@@ -35,13 +35,15 @@ export const useQuizState = () => {
   
   const { 
     showMotivation, 
-    motivationMessage, 
-    showMotivationalMessage 
+    motivationMessage,
+    setShowMotivation,
+    setMotivationMessage,
+    showMotivationalMessage: showMotivationalMessageHook
   } = useQuizMotivation(questionsAnswered);
   
   const {
     adsSynced,
-    handleAdSlotsUpdated
+    handleAdSlotsUpdated: handleAdSlotsUpdatedHook
   } = useQuizAdSync(setForceReloadAds);
   
   const {
@@ -73,6 +75,7 @@ export const useQuizState = () => {
     setIsGameActive(true);
   };
   
+  // Using our local version instead of the imported one to avoid conflicts
   const handleAdSlotsUpdated = () => {
     console.log('Ad slots updated, refreshing ad display...');
     setForceReloadAds(prev => prev + 1);
@@ -144,24 +147,9 @@ export const useQuizState = () => {
     loadNewQuestion();
   };
   
-  const showMotivationalMessage = () => {
-    if (questionsAnswered > 0 && questionsAnswered % 3 === 0) {
-      const motivationalMessages = [
-        "You're doing great! Keep going!",
-        "Your brain is getting stronger with every question!",
-        "You're on a roll! Can you answer a few more?",
-        "Learning is an adventure, and you're acing it!",
-        "Keep up this momentum! You're amazing!"
-      ];
-      
-      const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-      setMotivationMessage(randomMessage);
-      setShowMotivation(true);
-      
-      setTimeout(() => {
-        setShowMotivation(false);
-      }, 5000);
-    }
+  // Using our hook's implementation instead of redefining it
+  const displayMotivationalMessage = () => {
+    showMotivationalMessageHook();
   };
   
   // Reset game for time attack mode
@@ -199,7 +187,7 @@ export const useQuizState = () => {
     fetchPoints,
     loadNewQuestion,
     handleQuestionComplete,
-    showMotivationalMessage,
+    showMotivationalMessage: displayMotivationalMessage,
     setForceReloadAds,
     changeGameMode,
     handleTimeUp,

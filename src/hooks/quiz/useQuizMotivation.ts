@@ -40,6 +40,8 @@ export const useQuizMotivation = (questionsAnswered: number) => {
   return {
     showMotivation,
     motivationMessage,
+    setShowMotivation,
+    setMotivationMessage,
     showMotivationalMessage
   };
 };

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface TimeAttackTimerProps {
   initialTime: number;
@@ -63,8 +64,7 @@ const TimeAttackTimer: React.FC<TimeAttackTimerProps> = ({ initialTime, isActive
       </div>
       <Progress 
         value={percentRemaining} 
-        className="h-2 transition-all" 
-        indicatorClassName={progressColor} 
+        className={cn("h-2 transition-all", progressColor)} 
       />
     </div>
   );
