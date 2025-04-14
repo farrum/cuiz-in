@@ -1,4 +1,3 @@
-
 import { QuizQuestion } from './types';
 
 // List of placeholder image URLs for our image-based quizzes
@@ -71,8 +70,10 @@ const imageQuizQuestions: Partial<QuizQuestion>[] = [
 
 // Create a complete image quiz question with an assigned image
 export const createImageQuizQuestion = (baseQuestion: Partial<QuizQuestion>, imageUrl: string): QuizQuestion => {
+  const questionId = `image-${crypto.randomUUID()}`;
+  
   return {
-    id: crypto.randomUUID(),
+    id: questionId,
     question: baseQuestion.question || "",
     options: baseQuestion.options || [],
     correctAnswer: baseQuestion.correctAnswer || "",
@@ -104,8 +105,15 @@ export const getRandomImageQuizQuestion = (): QuizQuestion => {
   }
   
   const imageUrl = placeholderImages[imageIndex];
+  const question = createImageQuizQuestion(baseQuestion, imageUrl);
   
-  return createImageQuizQuestion(baseQuestion, imageUrl);
+  // Cache the question in localStorage for later retrieval
+  const cachedQuestions = localStorage.getItem('image_quiz_questions') || '[]';
+  const imageQuestions = JSON.parse(cachedQuestions);
+  imageQuestions.push(question);
+  localStorage.setItem('image_quiz_questions', JSON.stringify(imageQuestions));
+  
+  return question;
 };
 
 // Check if it's time to show an image question (roughly 1 in 5 questions)

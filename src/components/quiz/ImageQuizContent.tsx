@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,6 +51,22 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Store image question in local storage for answer page retrieval
+  useEffect(() => {
+    if (question && question.questionType === 'image') {
+      // Cache the image questions for answer page retrieval
+      const cachedQuestions = localStorage.getItem('image_quiz_questions') || '[]';
+      const imageQuestions = JSON.parse(cachedQuestions);
+      
+      // Check if this question is already cached
+      const existingQuestion = imageQuestions.find((q: QuizQuestion) => q.id === question.id);
+      if (!existingQuestion) {
+        imageQuestions.push(question);
+        localStorage.setItem('image_quiz_questions', JSON.stringify(imageQuestions));
+      }
+    }
+  }, [question]);
+
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
   };
@@ -64,7 +80,7 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
     
     // If this is not a challenge question, navigate to the answer page
     if (!isChallenge) {
-      navigate(`/answer/${question.id}/${selectedOption}`);
+      navigate(`/answer/${question.id}/${encodeURIComponent(selectedOption)}`);
     }
   };
 
