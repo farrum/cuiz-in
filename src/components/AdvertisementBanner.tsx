@@ -1,6 +1,6 @@
 
 import React, { useId } from 'react';
-import { useAdvertisement } from '@/hooks/useAdvertisement';
+import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
 
