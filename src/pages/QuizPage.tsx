@@ -9,6 +9,8 @@ import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useQuizState } from '@/hooks/useQuizState';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
+import { clearAdCache } from '@/services/adCacheService';
+import AdDebugger from '@/components/ads/AdDebugger';
 
 const QuizPage: React.FC = () => {
   const {
@@ -39,6 +41,18 @@ const QuizPage: React.FC = () => {
         loadInitialData();
       }
     });
+    
+    // Clear ad cache when component mounts to force fresh ads
+    clearAdCache();
+    
+    // Force reload ads after 500ms to ensure ads load properly
+    const initialLoadTimer = setTimeout(() => {
+      setForceReloadAds(prev => prev + 1);
+    }, 500);
+    
+    return () => {
+      clearTimeout(initialLoadTimer);
+    };
   }, []);
   
   useEffect(() => {
@@ -56,6 +70,8 @@ const QuizPage: React.FC = () => {
   if (isSuspended) {
     return null;
   }
+  
+  const isDevelopment = process.env.NODE_ENV === 'development';
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -103,6 +119,15 @@ const QuizPage: React.FC = () => {
         </div>
         
         <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
+        
+        {isDevelopment && (
+          <AdDebugger 
+            position="bottom" 
+            slotId="quiz-bottom" 
+            pageSection="quiz-page" 
+            className="mt-4 max-w-3xl w-full mx-auto"
+          />
+        )}
       </main>
       
       <Footer />

@@ -151,6 +151,7 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
   
   // Initial ad fetch and event listener setup
   useEffect(() => {
+    // Initial fetch for all ad positions
     fetchAds();
     
     const handleAdSlotsUpdated = (event: Event) => {
@@ -175,26 +176,17 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
-    // Debug logging specifically for bottom ads
-    if (position === 'bottom') {
-      console.log(`🔍 BOTTOM ad component mounted - key: ${adPositionKey}`);
-      
-      // Force fetch after a short delay to ensure initialization
-      const initTimer = setTimeout(() => {
-        if (isMountedRef.current) {
-          console.log('🔍 BOTTOM ad forced refresh after initialization');
-          fetchAds(true);
-        }
-      }, 2000);
-      
-      return () => {
-        window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-        clearTimeout(initTimer);
-      };
-    }
+    // Force refresh after initialization for ALL ad positions
+    const initTimer = setTimeout(() => {
+      if (isMountedRef.current) {
+        console.log(`Forced refresh after initialization for ad position: ${position}`);
+        fetchAds(true);
+      }
+    }, 2000);
     
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      clearTimeout(initTimer);
     };
   }, [fetchAds, position, adState.instanceId, adPositionKey]);
   

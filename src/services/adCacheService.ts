@@ -31,7 +31,10 @@ export const getAdFromCache = (adPositionKey: string, force = false): CachedAd |
   const now = Date.now();
   const cachedAd = adContentCache.get(adPositionKey);
   
-  if (!force && cachedAd && now - cachedAd.timestamp < 300000) {
+  // Shorter cache time for better refreshing (150 seconds = 2.5 minutes)
+  const cacheTimeoutMs = 150000; 
+  
+  if (!force && cachedAd && now - cachedAd.timestamp < cacheTimeoutMs) {
     console.log(`Using cached ad for ${adPositionKey} (${(now - cachedAd.timestamp) / 1000}s old)`);
     return cachedAd;
   }
@@ -49,6 +52,25 @@ export const setAdInCache = (adPositionKey: string, content: string, id: string,
     version,
     timestamp: Date.now()
   });
+};
+
+// Clear cache for a specific position
+export const clearAdCache = (position?: string): void => {
+  if (position) {
+    // Clear only for specified position
+    const keysToRemove: string[] = [];
+    adContentCache.forEach((_, key) => {
+      if (key.startsWith(position)) {
+        keysToRemove.push(key);
+      }
+    });
+    keysToRemove.forEach(key => adContentCache.delete(key));
+    console.log(`Cleared ad cache for position: ${position}`);
+  } else {
+    // Clear all cache
+    adContentCache.clear();
+    console.log('Cleared all ad cache');
+  }
 };
 
 // Debug function to check all ads in localStorage
@@ -100,3 +122,15 @@ export const debugAvailableAds = (): void => {
   }
 };
 
+// Debug function to inspect the current cache state
+export const debugAdCache = (): void => {
+  console.group('Ad Cache Status');
+  console.log(`Total cached ads: ${adContentCache.size}`);
+  
+  adContentCache.forEach((cachedAd, key) => {
+    const ageInSeconds = (Date.now() - cachedAd.timestamp) / 1000;
+    console.log(`${key}: ID ${cachedAd.id.substring(0, 8)}... (${ageInSeconds.toFixed(1)}s old)`);
+  });
+  
+  console.groupEnd();
+};
