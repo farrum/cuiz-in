@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PaginatedDataTable } from '@/components/ui/paginated-data-table';
 import { 
@@ -17,6 +18,7 @@ import TeamQuizManagement from './team-quiz/TeamQuizManagement';
 
 const QuizManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('text');
+  const [activeTeamQuizTab, setActiveTeamQuizTab] = useState<string>('challenges');
   
   // Data fetching and state management hooks
   const { 
