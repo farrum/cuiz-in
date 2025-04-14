@@ -2,10 +2,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useGameMode, GAME_MODE_CONFIGS } from '@/hooks/quiz/useGameMode';
 import { GameMode } from '@/utils/types';
-import { Brain, Timer, Users, Zap } from 'lucide-react';
+import { Brain, Timer, Users, Zap, Minus, Plus } from 'lucide-react';
 
 const ModeIcon = ({ mode }: { mode: GameMode }) => {
   switch (mode) {
@@ -23,7 +23,7 @@ const ModeIcon = ({ mode }: { mode: GameMode }) => {
 };
 
 const GameModeSelector: React.FC = () => {
-  const { currentMode, changeGameMode, allModes, modeConfigs } = useGameMode();
+  const { currentMode, changeGameMode, allModes, modeConfigs, teamSize, updateTeamSize } = useGameMode();
   
   return (
     <Card className="w-full">
@@ -60,9 +60,46 @@ const GameModeSelector: React.FC = () => {
                     <p>You have {modeConfigs[mode].timeLimit} seconds to answer as many questions as possible.</p>
                   )}
                   {mode === 'team-quiz' && (
-                    <p>Team up with friends to tackle challenges together and earn shared rewards.</p>
+                    <div className="space-y-4">
+                      <p>Team up with friends to tackle challenges together and earn shared rewards.</p>
+                      <div className="flex items-center justify-between">
+                        <span>Team Size:</span>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => updateTeamSize(teamSize - 1)}
+                            disabled={teamSize <= 2}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center">{teamSize}</span>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => updateTeamSize(teamSize + 1)}
+                            disabled={teamSize >= 4}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Team members share points and achievements. Larger teams get higher point multipliers.
+                      </div>
+                    </div>
                   )}
                 </CardContent>
+                {mode === 'team-quiz' && (
+                  <CardFooter className="flex justify-between">
+                    <div className="text-sm">
+                      <span className="font-medium">Point Multiplier:</span> {teamSize * 0.5}x
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-medium">Max Team Size:</span> 4
+                    </div>
+                  </CardFooter>
+                )}
               </Card>
             </TabsContent>
           ))}

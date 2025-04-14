@@ -36,6 +36,7 @@ export const useGameMode = () => {
   const [currentMode, setCurrentMode] = useState<GameMode>('normal');
   const [config, setConfig] = useState<GameModeConfig>(GAME_MODE_CONFIGS['normal']);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [teamSize, setTeamSize] = useState<number>(2);
   const { toast } = useToast();
 
   // Initialize from storage
@@ -48,6 +49,11 @@ export const useGameMode = () => {
       // Initialize timer for time-attack mode
       if (storedMode === 'time-attack' && GAME_MODE_CONFIGS[storedMode].timeLimit) {
         setTimeRemaining(GAME_MODE_CONFIGS[storedMode].timeLimit);
+      }
+      
+      // Initialize team size for team-quiz mode
+      if (storedMode === 'team-quiz' && GAME_MODE_CONFIGS[storedMode].teamSize) {
+        setTeamSize(GAME_MODE_CONFIGS[storedMode].teamSize);
       }
     }
   }, []);
@@ -66,10 +72,28 @@ export const useGameMode = () => {
         setTimeRemaining(null);
       }
       
+      // Initialize team size for team-quiz mode
+      if (mode === 'team-quiz' && GAME_MODE_CONFIGS[mode].teamSize) {
+        setTeamSize(GAME_MODE_CONFIGS[mode].teamSize);
+      }
+      
       toast({
         title: `Switched to ${GAME_MODE_CONFIGS[mode].name}`,
         description: GAME_MODE_CONFIGS[mode].description,
       });
+    }
+  };
+
+  // Update team size
+  const updateTeamSize = (size: number) => {
+    if (size >= 2 && size <= 4) {
+      setTeamSize(size);
+      const updatedConfig = {...config, teamSize: size};
+      setConfig(updatedConfig);
+      
+      if (currentMode === 'team-quiz') {
+        GAME_MODE_CONFIGS['team-quiz'].teamSize = size;
+      }
     }
   };
 
@@ -85,6 +109,12 @@ export const useGameMode = () => {
       finalPoints += streakBonus;
     }
     
+    // In team quiz mode, add bonus for team collaboration
+    if (currentMode === 'team-quiz') {
+      const teamBonus = Math.max(1, teamSize * 0.5);
+      finalPoints = finalPoints * teamBonus;
+    }
+    
     // In time attack mode, faster answers get more points (implemented elsewhere with timer)
     
     return finalPoints;
@@ -95,6 +125,8 @@ export const useGameMode = () => {
     config,
     timeRemaining,
     setTimeRemaining,
+    teamSize,
+    updateTeamSize,
     changeGameMode,
     calculatePoints,
     allModes: Object.keys(GAME_MODE_CONFIGS) as GameMode[],

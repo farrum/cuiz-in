@@ -6,6 +6,7 @@ import MotivationalCharacter from '@/components/MotivationalCharacter';
 import { QuizQuestion } from '@/utils/quizData';
 import ImageQuizContent from './ImageQuizContent';
 import TimeAttackTimer from './TimeAttackTimer';
+import TeamQuizContent from './team-quiz/TeamQuizContent';
 import { GameMode } from '@/utils/types';
 
 interface QuizContentProps {
@@ -90,16 +91,25 @@ const QuizContent: React.FC<QuizContentProps> = ({
       )}
       
       <div className="relative">
-        <div className="absolute -top-16 -right-10 z-10 transform scale-75">
-          <MotivationalCharacter 
-            mood="neutral"
-            showMessage={false}
-          />
-        </div>
+        {currentMode !== 'team-quiz' && (
+          <div className="absolute -top-16 -right-10 z-10 transform scale-75">
+            <MotivationalCharacter 
+              mood="neutral"
+              showMessage={false}
+            />
+          </div>
+        )}
         
         {renderStreak()}
         
-        {currentQuestion.questionType === 'image' ? (
+        {currentMode === 'team-quiz' ? (
+          <TeamQuizContent
+            question={currentQuestion}
+            isLoading={isLoading}
+            onQuestionComplete={onQuestionComplete}
+            teamSize={2}
+          />
+        ) : currentQuestion.questionType === 'image' ? (
           <ImageQuizContent
             question={currentQuestion}
             onComplete={onQuestionComplete}
