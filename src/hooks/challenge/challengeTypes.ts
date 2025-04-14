@@ -36,7 +36,7 @@ export interface QuestionExplanation {
   explanation: string;
   correctAnswer: string;
   imageUrl?: string; // Add support for image URLs
-  questionType?: 'text' | 'image';
+  questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false';
 }
 
 // Use simple indexed types to avoid deep type instantiation
@@ -55,5 +55,5 @@ export interface QuizQuestion {
   difficulty: 'easy' | 'medium' | 'hard';
   points: number;
   imageUrl?: string;
-  questionType?: 'text' | 'image';
+  questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false';
 }
