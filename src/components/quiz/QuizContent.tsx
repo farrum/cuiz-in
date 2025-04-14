@@ -55,6 +55,38 @@ const QuizContent: React.FC<QuizContentProps> = ({
     );
   }
 
+  // Get team size from local storage or default to the current game mode's config
+  const getTeamSize = () => {
+    // Check if we're playing a team challenge with a specific size
+    const storedTeamChallenges = localStorage.getItem('team_challenges');
+    if (storedTeamChallenges) {
+      try {
+        const challenges = JSON.parse(storedTeamChallenges);
+        const activeChallenge = challenges.find((c: any) => c.isActive === true);
+        if (activeChallenge && activeChallenge.teamSize) {
+          return activeChallenge.teamSize;
+        }
+      } catch (e) {
+        console.error("Error parsing team challenges:", e);
+      }
+    }
+    
+    // Get team size from game mode config
+    const gameSettings = localStorage.getItem('quiz_game_mode_settings');
+    if (gameSettings) {
+      try {
+        const settings = JSON.parse(gameSettings);
+        if (settings && settings.teamSize) {
+          return settings.teamSize;
+        }
+      } catch (e) {
+        console.error("Error parsing game mode settings:", e);
+      }
+    }
+    
+    return 4; // Default fallback
+  };
+
   // Show streak indicator for streak mode
   const renderStreak = () => {
     if (currentMode === 'streak' && streak > 0) {
@@ -107,7 +139,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
             question={currentQuestion}
             isLoading={isLoading}
             onQuestionComplete={onQuestionComplete}
-            teamSize={2}
+            teamSize={getTeamSize()}
           />
         ) : currentQuestion.questionType === 'image' ? (
           <ImageQuizContent

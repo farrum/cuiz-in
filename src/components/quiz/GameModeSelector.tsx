@@ -78,7 +78,7 @@ const GameModeSelector: React.FC = () => {
                             size="sm" 
                             variant="outline" 
                             onClick={() => updateTeamSize(teamSize + 1)}
-                            disabled={teamSize >= 4}
+                            disabled={teamSize >= 10}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -96,7 +96,7 @@ const GameModeSelector: React.FC = () => {
                       <span className="font-medium">Point Multiplier:</span> {teamSize * 0.5}x
                     </div>
                     <div className="text-sm">
-                      <span className="font-medium">Max Team Size:</span> 4
+                      <span className="font-medium">Max Team Size:</span> 10
                     </div>
                   </CardFooter>
                 )}

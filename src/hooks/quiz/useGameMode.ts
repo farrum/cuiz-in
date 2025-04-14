@@ -86,7 +86,7 @@ export const useGameMode = () => {
 
   // Update team size
   const updateTeamSize = (size: number) => {
-    if (size >= 2 && size <= 4) {
+    if (size >= 2 && size <= 10) {
       setTeamSize(size);
       const updatedConfig = {...config, teamSize: size};
       setConfig(updatedConfig);
