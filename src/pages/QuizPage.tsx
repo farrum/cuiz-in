@@ -6,7 +6,7 @@ import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
-import { useQuizState } from '@/hooks/useQuizState';
+import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import { clearAdCache } from '@/services/adCacheService';
