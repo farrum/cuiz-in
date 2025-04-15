@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client'; 
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +36,25 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
       setError(null);
       
       try {
-        if (!teamLeaderId) {
+        // Get the current user ID (team leader)
+        const userId = teamLeaderId || localStorage.getItem(STORAGE_KEYS.USER_ID);
+        
+        if (!userId) {
+          setError('User ID not found');
+          setIsLoading(false);
+          return;
+        }
+
+        // For admin users only, fetch all profiles
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        const isAdmin = userRole?.role === 'admin';
+        
+        if (isAdmin) {
           const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
             .select('*');
@@ -85,14 +104,8 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
             return;
           }
         }
-        
-        const userId = teamLeaderId || localStorage.getItem(STORAGE_KEYS.USER_ID);
-        
-        if (!userId) {
-          setError('User ID not found');
-          return;
-        }
 
+        // For team leaders, fetch only their referred members
         const { data: referrals, error } = await supabase
           .from('user_referrals')
           .select('*')
@@ -100,7 +113,7 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
 
         if (error) throw error;
         
-        if (referrals) {
+        if (referrals && referrals.length > 0) {
           const membersPromises = referrals.map(async (r) => {
             const isActive = await isUserActive(r.referred_id);
             
@@ -141,6 +154,9 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
                 .eq('referred_id', member.id);
             }
           }
+        } else {
+          // No referred members for this team leader
+          setTeamMembers([]);
         }
       } catch (err) {
         console.error('Error fetching team members:', err);

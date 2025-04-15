@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TeamMember } from './types';
 import { notifySuspensionRequest } from '@/utils/notificationUtils';
+import { AdminNotificationInsert } from '@/types/adminNotification';
 
-// Hook for team member status management actions
 export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>) => {
   const [actionInProgress, setActionInProgress] = useState<boolean>(false);
   const { toast } = useToast();
@@ -98,33 +98,38 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         
       if (memberError) throw memberError;
       
-      // Create notification for the appropriate action
-      if (action === 'suspend') {
-        await notifySuspensionRequest(
-          leaderData.username,
-          memberData.username,
-          memberId,
-          'Team leader requested suspension'
-        );
-      } else {
-        // Use notificationUtils or direct admin notification creation for reactivation
-        await supabase.from('admin_notifications').insert({
-          type: 'account_reactivate_request',
-          message: `Team leader ${leaderData.username} requested reactivation for ${memberData.username}`,
-          read: false,
-          user_id: userId,
-          data: { 
-            requesterUsername: leaderData.username, 
-            targetUsername: memberData.username, 
-            targetUserId: memberId 
-          }
-        });
-      }
+      // Create admin notification
+      const notificationType = action === 'suspend' 
+        ? 'account_suspend_request' as const
+        : 'account_reactivate_request' as const;
+      
+      const notification: AdminNotificationInsert = {
+        type: notificationType,
+        message: `Team leader ${leaderData.username} requested ${action === 'suspend' ? 'suspension' : 'reactivation'} for ${memberData.username}`,
+        read: false,
+        user_id: memberId,
+        data: {
+          requesterUsername: leaderData.username,
+          targetUsername: memberData.username,
+          targetUserId: memberId,
+          requesterId: userId,
+          action: action
+        }
+      };
+      
+      const { error: notificationError } = await supabase
+        .from('admin_notifications')
+        .insert(notification);
+        
+      if (notificationError) throw notificationError;
       
       toast({
         title: "Request Submitted",
         description: `Your request to ${action} this account has been submitted for admin review.`,
       });
+      
+      console.log(`Successfully submitted ${action} request for user ${memberId} by team leader ${userId}`);
+      
     } catch (err) {
       console.error(`Error requesting account ${action}:`, err);
       toast({

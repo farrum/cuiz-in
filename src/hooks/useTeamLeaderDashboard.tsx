@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTeamMembers } from '@/hooks/team-members';
 import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
 import { AdminNotificationInsert } from '@/types/adminNotification';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 export const useTeamLeaderDashboard = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export const useTeamLeaderDashboard = () => {
     suspendedMembers, 
     isLoading: membersLoading,
     handleStatusChange,
-    requestAccountAction: teamMemberRequestAction // Renamed to avoid conflict
+    requestAccountAction: teamMemberRequestAction
   } = useTeamMembers();
   
   const {
