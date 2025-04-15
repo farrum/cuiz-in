@@ -7,6 +7,7 @@ import { IndianRupee, ArrowUpCircle, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { safeSupabaseOperation } from '@/utils/supabaseUtils';
 import { AdminNotification } from '@/types/adminNotification';
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 
 interface WithdrawalRequest {
   id: string;
@@ -37,7 +38,8 @@ const WithdrawalSection: React.FC = () => {
   const { toast } = useToast();
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
-  
+  const currencyDisplay = useCurrencyDisplay();
+
   useEffect(() => {
     const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setCashAvailable(calculateCashAmount(savedPoints));
@@ -134,11 +136,13 @@ const WithdrawalSection: React.FC = () => {
       return;
     }
     
+    const amountInINR = amount / currencyDisplay.exchangeRate;
+    
     const transactionId = Date.now().toString();
     
     const newWithdrawal: WithdrawalRequest = {
       id: transactionId,
-      amount,
+      amount: amountInINR,
       date: new Date().toISOString(),
       status: 'pending',
       type: 'regular'
@@ -154,7 +158,7 @@ const WithdrawalSection: React.FC = () => {
         .insert({
           user_id: userId,
           username: userName,
-          amount: amount,
+          amount: amountInINR,
           method: paymentMethod,
           type: 'withdrawal',
           status: 'pending',
@@ -325,10 +329,12 @@ const WithdrawalSection: React.FC = () => {
       <div className="bg-secondary p-4 rounded-xl mb-6">
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">Available for withdrawal</span>
-          <span className="text-2xl font-bold">₹{cashAvailable.toFixed(2)}</span>
+          <span className="text-2xl font-bold">
+            {currencyDisplay.symbol}{(cashAvailable * currencyDisplay.exchangeRate).toFixed(2)}
+          </span>
         </div>
         <div className="text-xs text-muted-foreground mt-1">
-          2 points = ₹1.00
+          2 points = {currencyDisplay.symbol}{(1 * currencyDisplay.exchangeRate).toFixed(2)}
         </div>
       </div>
       

@@ -1,8 +1,10 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
-import { IndianRupee } from 'lucide-react';
+import { IndianRupee, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 
 interface PointsDisplayProps {
   animateUpdate?: boolean;
@@ -15,11 +17,9 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
 }) => {
   const [points, setPoints] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const navigate = useNavigate();
+  const currencyDisplay = useCurrencyDisplay();
   
-  // Use useMemo to calculate cash amount only when points change
-  const cashAmount = useMemo(() => calculateCashAmount(points), [points]);
-  
-  // Optimize fetch user points function with useCallback
   const fetchUserPoints = useCallback(async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
@@ -52,25 +52,19 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
     }
   }, [animateUpdate, points]);
   
-  // Handle points updates more efficiently
   const handlePointsUpdate = useCallback(() => {
     console.log('Points update event received in PointsDisplay');
     fetchUserPoints();
   }, [fetchUserPoints]);
   
   useEffect(() => {
-    // Load initial points from localStorage
     const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
     setPoints(savedPoints);
     
-    // Fetch user points from the database - once on initial load
     fetchUserPoints();
     
-    // Set up listener for point updates
     window.addEventListener('pointsUpdated', handlePointsUpdate);
     
-    // Use a more efficient interval to prevent excessive database calls
-    // 10 seconds is quite frequent for point updates, increasing to 30 seconds
     const intervalId = setInterval(fetchUserPoints, 30000);
     
     return () => {
@@ -78,6 +72,11 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
       clearInterval(intervalId);
     };
   }, [fetchUserPoints, handlePointsUpdate]);
+
+  const cashAmount = useMemo(() => {
+    const inrAmount = calculateCashAmount(points);
+    return inrAmount * currencyDisplay.exchangeRate;
+  }, [points, currencyDisplay.exchangeRate]);
 
   return (
     <div className={`glass rounded-2xl p-4 ${className}`}>
@@ -92,9 +91,24 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         </div>
         
         <div className="mt-2 flex items-center text-sm text-muted-foreground">
-          <IndianRupee className="w-4 h-4 mr-1" />
-          <span>₹{cashAmount.toFixed(2)} available</span>
+          {currencyDisplay.symbol === '₹' ? (
+            <IndianRupee className="w-4 h-4 mr-1" />
+          ) : (
+            <DollarSign className="w-4 h-4 mr-1" />
+          )}
+          <span>{currencyDisplay.symbol}{cashAmount.toFixed(2)} available</span>
         </div>
+
+        {!currencyDisplay.isIndian && !localStorage.getItem(STORAGE_KEYS.USER_ID) && (
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="mt-4 bg-primary text-white hover:bg-primary/90"
+            onClick={() => navigate('/register')}
+          >
+            Register to Start Earning
+          </Button>
+        )}
       </div>
     </div>
   );
