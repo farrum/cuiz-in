@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client'; 
 import { useToast } from '@/hooks/use-toast';
 import { TeamMember } from './types';
-import { notifySuspensionRequest } from '@/utils/notificationUtils';
 import { AdminNotificationInsert } from '@/types/adminNotification';
 
 export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>) => {
@@ -85,7 +83,7 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         .from('profiles')
         .select('username')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
       if (leaderError) throw leaderError;
       
@@ -94,7 +92,7 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         .from('profiles')
         .select('username')
         .eq('id', memberId)
-        .single();
+        .maybeSingle();
         
       if (memberError) throw memberError;
       
@@ -117,7 +115,7 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         }
       };
       
-      // Use direct insert with supabase client instead of adminNotificationsApi
+      // Use direct insert with supabase client
       const { error: notificationError } = await supabase
         .from('admin_notifications')
         .insert(notification);

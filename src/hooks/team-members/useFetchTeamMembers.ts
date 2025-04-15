@@ -45,67 +45,7 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
           return;
         }
 
-        // For admin users only, fetch all profiles
-        const { data: userRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle();
-          
-        const isAdmin = userRole?.role === 'admin';
-        
-        if (isAdmin) {
-          const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('*');
-            
-          if (profilesError) throw profilesError;
-          
-          if (profiles) {
-            const { data: attendance, error: attendanceError } = await supabase
-              .from('user_attendance')
-              .select('user_id, attendance_date, login_time')
-              .order('attendance_date', { ascending: false });
-              
-            if (attendanceError) console.error("Error fetching attendance:", attendanceError);
-            
-            const lastActiveMap = new Map();
-            if (attendance) {
-              attendance.forEach(record => {
-                if (!lastActiveMap.has(record.user_id)) {
-                  lastActiveMap.set(record.user_id, {
-                    date: record.attendance_date,
-                    time: record.login_time
-                  });
-                }
-              });
-            }
-            
-            const members = profiles.map(profile => {
-              const lastActive = lastActiveMap.get(profile.id);
-              const lastActiveDate = lastActive 
-                ? new Date(lastActive.date).toLocaleDateString() + ' ' + new Date(lastActive.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : '-';
-              
-              return {
-                id: profile.id,
-                name: profile.username || 'Unknown',
-                email: profile.phone || '-',
-                status: profile.suspended ? 'suspended' as const : 'active' as const,
-                lastActive: lastActiveDate,
-                daysActive: profile.suspended ? 'N/A' : 'Active',
-                joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-',
-                totalEarned: 0
-              };
-            });
-            
-            setTeamMembers(members);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // For team leaders, fetch only their referred members
+        // Fetch only the referred members for this team leader
         const { data: referrals, error } = await supabase
           .from('user_referrals')
           .select('*')
@@ -127,12 +67,10 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
               
             if (profile?.suspended) {
               status = 'suspended';
-            } else {
-              status = 'active';
             }
             
             return {
-              id: r.referred_id || r.id,
+              id: r.referred_id,
               name: r.referred_name,
               email: r.referred_email || '',
               status: status as 'active' | 'inactive' | 'suspended',
@@ -145,15 +83,6 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
           
           const members = await Promise.all(membersPromises);
           setTeamMembers(members);
-          
-          for (const member of members) {
-            if (member.status !== referrals.find(r => r.referred_id === member.id)?.status) {
-              await supabase
-                .from('user_referrals')
-                .update({ status: member.status })
-                .eq('referred_id', member.id);
-            }
-          }
         } else {
           // No referred members for this team leader
           setTeamMembers([]);
