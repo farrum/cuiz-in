@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +5,8 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useTeamMembers } from '@/hooks/team-members';
 import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
+import { AdminNotificationInsert } from '@/types/adminNotification';
+import { adminNotificationsApi } from '@/utils/supabaseUtils';
 
 export const useTeamLeaderDashboard = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const useTeamLeaderDashboard = () => {
     suspendedMembers, 
     isLoading: membersLoading,
     handleStatusChange,
-    requestAccountAction
+    requestAccountAction: teamMemberRequestAction // Renamed to avoid conflict
   } = useTeamMembers();
   
   const {
@@ -77,47 +78,8 @@ export const useTeamLeaderDashboard = () => {
     checkTeamLeaderStatus();
   }, [navigate, toast]);
 
-  const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate') => {
-    try {
-      if (!userId) {
-        toast({
-          title: "Error",
-          description: "User ID not found. Please try logging in again.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Use the correct type value with explicit typing
-      const notificationType: AdminNotificationInsert['type'] = action === 'suspend' 
-        ? 'account_suspend_request' 
-        : 'account_reactivate_request';
-      
-      const notificationData: AdminNotificationInsert = {
-        type: notificationType,
-        message: `Team leader requested to ${action} account ${memberId}`,
-        user_id: userId,
-        read: false,
-        data: { team_leader_id: userId, member_id: memberId, action }
-      };
-      
-      const { error } = await adminNotificationsApi.create(notificationData);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Request Submitted",
-        description: `Your request to ${action} this account has been submitted for admin review.`,
-      });
-    } catch (err) {
-      console.error(`Error requesting account ${action}:`, err);
-      toast({
-        title: "Error",
-        description: `Failed to submit ${action} request.`,
-        variant: "destructive",
-      });
-    }
-  };
+  // This function is now redundant as we already have requestAccountAction from useTeamMembers
+  // Using the renamed version from useTeamMembers instead
 
   const memberColumns = [
     {
@@ -199,7 +161,7 @@ export const useTeamLeaderDashboard = () => {
     membersLoading,
     earningsLoading,
     handleStatusChange,
-    requestAccountAction,
+    requestAccountAction: teamMemberRequestAction, // Return the renamed function with the expected name
     memberColumns,
     earningsColumns
   };
