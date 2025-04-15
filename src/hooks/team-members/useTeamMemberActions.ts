@@ -98,7 +98,7 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         
       if (memberError) throw memberError;
       
-      // Create admin notification
+      // Create admin notification using direct insert with supabase client
       const notificationType = action === 'suspend' 
         ? 'account_suspend_request' as const
         : 'account_reactivate_request' as const;
@@ -117,11 +117,15 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
         }
       };
       
+      // Use direct insert with supabase client instead of adminNotificationsApi
       const { error: notificationError } = await supabase
         .from('admin_notifications')
         .insert(notification);
         
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error('Notification error:', notificationError);
+        throw notificationError;
+      }
       
       toast({
         title: "Request Submitted",
