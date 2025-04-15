@@ -1,5 +1,4 @@
 
-// Define shared types for the team members hooks
 export interface TeamMember {
   id: string;
   name: string;
@@ -15,4 +14,10 @@ export interface TeamMemberStats {
   activeMembers: number;
   inactiveMembers: number;
   suspendedMembers: number;
+}
+
+export interface TeamMemberActionsProps {
+  handleStatusChange: (memberId: string, newStatus: 'active' | 'inactive' | 'suspended') => Promise<void>;
+  requestAccountAction: (memberId: string, action: 'suspend' | 'reactivate', teamLeaderId?: string) => Promise<void>;
+  actionInProgress: boolean;
 }

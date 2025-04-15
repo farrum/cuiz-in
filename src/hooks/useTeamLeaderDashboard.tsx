@@ -1,12 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
-import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { useTeamMembers } from '@/hooks/team-members';
 import { useTeamLeaderEarnings } from '@/hooks/useTeamLeaderEarnings';
-import { adminNotificationsApi } from '@/utils/supabaseUtils';
-import { AdminNotificationInsert } from '@/types/adminNotification';
 
 export const useTeamLeaderDashboard = () => {
   const navigate = useNavigate();
@@ -19,7 +18,8 @@ export const useTeamLeaderDashboard = () => {
     inactiveMembers, 
     suspendedMembers, 
     isLoading: membersLoading,
-    handleStatusChange
+    handleStatusChange,
+    requestAccountAction
   } = useTeamMembers();
   
   const {

@@ -19,7 +19,7 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
   const { activeMembers, inactiveMembers, suspendedMembers } = useTeamMemberStats(teamMembers);
   
   // Get actions for team member management
-  const { handleStatusChange, actionInProgress } = useTeamMemberActions(teamMembers, setTeamMembers);
+  const { handleStatusChange, requestAccountAction, actionInProgress } = useTeamMemberActions(teamMembers, setTeamMembers);
 
   return {
     teamMembers,
@@ -29,6 +29,7 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
     isLoading,
     error,
     handleStatusChange,
+    requestAccountAction,
     actionInProgress
   };
 };

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client'; 
 import { useToast } from '@/hooks/use-toast';
 import { TeamMember } from './types';
+import { notifySuspensionRequest } from '@/utils/notificationUtils';
 
 // Hook for team member status management actions
 export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>) => {
@@ -70,8 +71,75 @@ export const useTeamMemberActions = (teamMembers: TeamMember[], setTeamMembers: 
     }
   };
 
+  const requestAccountAction = async (memberId: string, action: 'suspend' | 'reactivate', teamLeaderId?: string) => {
+    setActionInProgress(true);
+    try {
+      // Get the current user ID if not provided
+      const userId = teamLeaderId || localStorage.getItem('quiz_app_user_id');
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
+      // Get team leader username
+      const { data: leaderData, error: leaderError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .single();
+        
+      if (leaderError) throw leaderError;
+      
+      // Get member username
+      const { data: memberData, error: memberError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', memberId)
+        .single();
+        
+      if (memberError) throw memberError;
+      
+      // Create notification for the appropriate action
+      if (action === 'suspend') {
+        await notifySuspensionRequest(
+          leaderData.username,
+          memberData.username,
+          memberId,
+          'Team leader requested suspension'
+        );
+      } else {
+        // Use notificationUtils or direct admin notification creation for reactivation
+        await supabase.from('admin_notifications').insert({
+          type: 'account_reactivate_request',
+          message: `Team leader ${leaderData.username} requested reactivation for ${memberData.username}`,
+          read: false,
+          user_id: userId,
+          data: { 
+            requesterUsername: leaderData.username, 
+            targetUsername: memberData.username, 
+            targetUserId: memberId 
+          }
+        });
+      }
+      
+      toast({
+        title: "Request Submitted",
+        description: `Your request to ${action} this account has been submitted for admin review.`,
+      });
+    } catch (err) {
+      console.error(`Error requesting account ${action}:`, err);
+      toast({
+        title: "Error",
+        description: `Failed to submit ${action} request.`,
+        variant: "destructive",
+      });
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
   return { 
     handleStatusChange,
+    requestAccountAction,
     actionInProgress
   };
 };
