@@ -69,9 +69,6 @@ const AdContent: React.FC<AdContentProps> = ({
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
   }
-
-  // Only show content and debug info if we have actual ad content or in development mode
-  const shouldShowContent = adContent.trim() !== '' || isDevelopment;
   
   // Determine min-height based on position
   const getMinHeight = () => {
@@ -80,16 +77,9 @@ const AdContent: React.FC<AdContentProps> = ({
     return 'min-h-[250px]';
   };
   
-  if (!shouldShowContent) {
-    return null;
-  }
-  
   return (
     <div className="w-full">
-      {(adContent.trim() !== '' || isDevelopment) && (
-        <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-      )}
-      
+      <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
       {isDevelopment && (
         <div className="mb-2 text-center">
           {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
@@ -112,7 +102,7 @@ const AdContent: React.FC<AdContentProps> = ({
           )}
         </div>
       )}
-      
+      {/* Set both id attribute and ref to ensure the container is accessible */}
       <div 
         id={containerId} 
         ref={contentRef}
