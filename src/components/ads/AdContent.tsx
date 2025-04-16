@@ -80,7 +80,7 @@ const AdContent: React.FC<AdContentProps> = ({
   return (
     <div className="w-full">
       <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-      {isDevelopment && (
+      {isDevelopment && false && ( // Conditionally hide debug information
         <div className="mb-2 text-center">
           {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
           <p className="text-xs text-muted-foreground">
@@ -117,3 +117,4 @@ const AdContent: React.FC<AdContentProps> = ({
 };
 
 export default AdContent;
+
