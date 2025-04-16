@@ -19,14 +19,18 @@ export const useScriptExecution = (content: string, containerId: string): string
     
     let executedCount = 0;
     let scriptFound = false;
+    let containerCheckAttempts = 0;
+    const maxAttempts = 20; // Increase max attempts
     
     try {
       // Wait for the container to exist in DOM
       const containerCheck = setInterval(() => {
         const container = document.getElementById(containerId);
+        containerCheckAttempts++;
         
         if (container) {
           clearInterval(containerCheck);
+          console.log(`Container found for ${containerId} after ${containerCheckAttempts} attempts`);
           
           // Two regex patterns to catch both inline and src scripts
           // 1. Match script tags with src attribute
@@ -44,9 +48,17 @@ export const useScriptExecution = (content: string, containerId: string): string
                 const newScript = document.createElement('script');
                 newScript.src = srcUrl;
                 newScript.async = true;
+                // Add event listeners to track script loading status
+                newScript.onload = () => {
+                  console.log(`External script loaded successfully: ${srcUrl}`);
+                  executedCount++;
+                  setExecutionStatus(`${executedCount} scripts executed`);
+                };
+                newScript.onerror = (err) => {
+                  console.error(`Error loading external script: ${srcUrl}`, err);
+                };
                 container.appendChild(newScript);
-                executedCount++;
-                console.log(`External script loaded: ${srcUrl}`);
+                console.log(`External script added to DOM: ${srcUrl}`);
               }
             } catch (srcError) {
               console.error('Error loading external script:', srcError);
@@ -70,6 +82,7 @@ export const useScriptExecution = (content: string, containerId: string): string
                 container.appendChild(script);
                 executedCount++;
                 console.log(`Inline script executed, length: ${scriptContent.length} bytes`);
+                setExecutionStatus(`${executedCount} scripts executed`);
               } catch (execError) {
                 console.error('Error executing inline script:', execError);
               }
@@ -82,16 +95,22 @@ export const useScriptExecution = (content: string, containerId: string): string
             console.log('No script tags found in content');
             setExecutionStatus('No scripts found');
           }
+        } else if (containerCheckAttempts >= maxAttempts) {
+          clearInterval(containerCheck);
+          console.warn(`Container not found after ${maxAttempts} attempts for ID: ${containerId}`);
+          setExecutionStatus('Container not ready');
+        } else {
+          console.log(`Waiting for container ${containerId}, attempt ${containerCheckAttempts}/${maxAttempts}`);
         }
-      }, 50); // Check every 50ms
+      }, 100); // Check every 100ms instead of 50ms
       
-      // Clear interval after 5 seconds to prevent infinite checking
+      // Clear interval after 10 seconds to prevent infinite checking (increased from 5 seconds)
       setTimeout(() => {
         clearInterval(containerCheck);
-        if (!scriptFound) {
-          setExecutionStatus('Container not ready');
+        if (!scriptFound && executionStatus !== 'Container not ready') {
+          setExecutionStatus('Container timeout');
         }
-      }, 5000);
+      }, 10000);
     } catch (error) {
       console.error('Error in script execution:', error);
       setExecutionStatus(`Error: ${error}`);
