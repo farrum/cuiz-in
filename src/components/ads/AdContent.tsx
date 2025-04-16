@@ -29,7 +29,7 @@ const AdContent: React.FC<AdContentProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   
   // Execute scripts in the ad content
-  useScriptExecution(adContent, containerId);
+  const scriptStatus = useScriptExecution(adContent, containerId);
   
   // Effect to ensure container exists in DOM before any script execution
   useEffect(() => {
@@ -38,8 +38,10 @@ const AdContent: React.FC<AdContentProps> = ({
       if (contentRef.current.id !== containerId) {
         contentRef.current.id = containerId;
       }
+      
+      console.log(`Ad container ready for ${position}/${slotId || 'default'}, content length: ${adContent.length}`);
     }
-  }, [adLoaded, adContent, containerId]);
+  }, [adLoaded, adContent, containerId, position, slotId]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
@@ -54,6 +56,7 @@ const AdContent: React.FC<AdContentProps> = ({
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
+          {scriptStatus && <p className="text-xs text-green-500">Scripts executed: {scriptStatus}</p>}
         </div>
       )}
       {/* Set both id attribute and ref to ensure the container is accessible */}
@@ -62,6 +65,7 @@ const AdContent: React.FC<AdContentProps> = ({
         ref={contentRef}
         data-ad-position={position}
         data-ad-slot={slotId || position}
+        className="min-h-[100px] flex items-center justify-center"
         dangerouslySetInnerHTML={{ __html: adContent }}
       ></div>
     </div>

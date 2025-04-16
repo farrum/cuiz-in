@@ -38,13 +38,11 @@ export const useAdFetch = ({
   const fetchAds = useCallback(async (force = false) => {
     if (!isMountedRef.current) return;
     
-    // Additional debugging for bottom position
-    const isBottomPosition = position === 'bottom';
-    if (isBottomPosition) {
-      console.log(`🔍 Fetching ads for BOTTOM position - slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
-      // Debug all available ads
-      debugAvailableAds();
-    }
+    // Print debugging info for this ad request
+    console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}`);
+    
+    // Additional debugging for all positions
+    debugAvailableAds();
     
     // Check if we should use the cache
     const cachedAd = getAdFromCache(adPositionKey, force);
@@ -55,11 +53,12 @@ export const useAdFetch = ({
         return;
       }
       
+      console.log(`Using cached ad for ${position} (id: ${cachedAd.id.substring(0, 8)})`);
       updateAdState(
         cachedAd.content,
         cachedAd.id,
         cachedAd.version,
-        `Cached ad: ${cachedAd.id}`
+        `Cached ad: ${cachedAd.id.substring(0, 8)}`
       );
       
       return;
@@ -72,23 +71,16 @@ export const useAdFetch = ({
     }
     
     try {
-      console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
-      
       // Try to get ads from localStorage first
       const localStorageAds = fetchAdsFromLocalStorage(position);
       
-      if (localStorageAds) {
-        if (isBottomPosition) {
-          console.log(`🔍 BOTTOM position: Found ${localStorageAds.length} matching ads in localStorage`);
-          console.log('Matching ads:', localStorageAds);
-        }
+      if (localStorageAds && localStorageAds.length > 0) {
+        console.log(`Found ${localStorageAds.length} matching ads in localStorage for position ${position}`);
         
         const selectedAd = selectAdFromMatching(localStorageAds, position, slotId, pageSection);
         
-        if (selectedAd) {
-          if (isBottomPosition) {
-            console.log(`🔍 BOTTOM position: Selected ad: ${selectedAd.name || selectedAd.id}`);
-          }
+        if (selectedAd && selectedAd.code) {
+          console.log(`Selected ad from localStorage: ${selectedAd.name || selectedAd.id}`);
           
           const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
           
@@ -101,42 +93,44 @@ export const useAdFetch = ({
           }, 300);
           
           return;
-        } else if (isBottomPosition) {
-          console.log(`🔍 BOTTOM position: No ad was selected from matching ads`);
+        } else {
+          console.log(`No valid ad was selected from matching ads for position ${position}`);
         }
-      } else if (isBottomPosition) {
-        console.log(`🔍 BOTTOM position: No ads found in localStorage`);
+      } else {
+        console.log(`No ads found in localStorage for position ${position}`);
       }
       
       // If no local storage ads, try Supabase
       const supabaseAds = await fetchAdsFromSupabase(position);
       
       if (supabaseAds && supabaseAds.length > 0 && isMountedRef.current) {
-        if (isBottomPosition) {
-          console.log(`🔍 BOTTOM position: Found ${supabaseAds.length} ads from Supabase`);
-        }
+        console.log(`Found ${supabaseAds.length} ads from Supabase for position ${position}`);
         
         // For Supabase ads, we want to randomly select one
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
         
-        const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
-        
-        if (version === adState.adVersion && adState.adLoaded) {
-          console.log(`Ad content unchanged for ${position}, skipping server update`);
-          return;
-        }
-        
-        updateAdState(content, id, version, debug);
-        
-        if (id !== adState.adId) {
-          trackImpression(id, position, slotId, pageSection);
+        if (selectedAd && selectedAd.code) {
+          console.log(`Selected ad from Supabase: ${selectedAd.name || selectedAd.id}`);
+          
+          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
+          
+          if (version === adState.adVersion && adState.adLoaded) {
+            console.log(`Ad content unchanged for ${position}, skipping server update`);
+            return;
+          }
+          
+          updateAdState(content, id, version, debug);
+          
+          if (id !== adState.adId) {
+            trackImpression(id, position, slotId, pageSection);
+          }
+        } else {
+          console.log(`Selected ad has no valid content for position ${position}`);
+          updateAdState('', null, '', null, false, `No valid ad content for position: ${position}`);
         }
       } else {
         console.log(`No active ads found for position: ${position}`);
-        if (isBottomPosition) {
-          console.log(`🔍 BOTTOM position: No active ads found in Supabase`);
-        }
         updateAdState('', null, '', null, false, `No active ads for position: ${position}`);
       }
     } catch (err) {
