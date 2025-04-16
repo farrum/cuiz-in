@@ -40,12 +40,27 @@ const AdContent: React.FC<AdContentProps> = ({
       }
       
       console.log(`Ad container ready for ${position}/${slotId || 'default'}, content length: ${adContent.length}`);
+      // Log the content for debugging, truncated to avoid console overflow
+      if (isDevelopment) {
+        console.log(`Ad content sample: ${adContent.substring(0, 100)}...`);
+        
+        // Check if the content contains script tags
+        const hasScriptTags = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(adContent);
+        console.log(`Content contains script tags: ${hasScriptTags}`);
+      }
     }
-  }, [adLoaded, adContent, containerId, position, slotId]);
+  }, [adLoaded, adContent, containerId, position, slotId, isDevelopment]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
   }
+  
+  // Determine min-height based on position
+  const getMinHeight = () => {
+    if (position === 'sidebar') return 'min-h-[600px]';
+    if (position === 'top' || position === 'bottom') return 'min-h-[120px]';
+    return 'min-h-[250px]';
+  };
   
   return (
     <div className="w-full">
@@ -56,7 +71,11 @@ const AdContent: React.FC<AdContentProps> = ({
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
-          {scriptStatus && <p className="text-xs text-green-500">Scripts executed: {scriptStatus}</p>}
+          {scriptStatus && (
+            <p className={`text-xs ${scriptStatus === 'No scripts found' ? 'text-yellow-500' : 'text-green-500'}`}>
+              Scripts executed: {scriptStatus}
+            </p>
+          )}
         </div>
       )}
       {/* Set both id attribute and ref to ensure the container is accessible */}
@@ -65,7 +84,7 @@ const AdContent: React.FC<AdContentProps> = ({
         ref={contentRef}
         data-ad-position={position}
         data-ad-slot={slotId || position}
-        className="min-h-[100px] flex items-center justify-center"
+        className={`${getMinHeight()} flex items-center justify-center overflow-hidden`}
         dangerouslySetInnerHTML={{ __html: adContent }}
       ></div>
     </div>

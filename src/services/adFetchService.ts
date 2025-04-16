@@ -132,8 +132,11 @@ export const processSelectedAd = (
   const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
   
-  // Clean the ad code to ensure it's valid HTML
-  const cleanedCode = selectedAd.code.replace(/document\.write/g, 'console.log');
+  // Preserve script tags and only replace document.write calls
+  const cleanedCode = selectedAd.code.replace(
+    /document\.write\(/g, 
+    'console.log("document.write call prevented", '
+  );
   
   setAdInCache(adPositionKey, cleanedCode, selectedAd.id, contentVersion);
   
