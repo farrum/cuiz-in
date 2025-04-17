@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield, LogIn, BarChartIcon } from 'lucide-react';
@@ -174,7 +173,7 @@ const Header: React.FC = () => {
           label: 'Admin',
           icon: <Shield className="w-5 h-5" />
         }] : [])
-        ].map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
+        }.map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
           animationDelay: `${index * 50}ms`
         }}>
                 {item.icon}
@@ -191,6 +190,18 @@ const Header: React.FC = () => {
           path: '/register',
           label: 'Register',
           icon: <User className="w-5 h-5" />
+        }, {
+          path: '/faq',
+          label: 'FAQ',
+          icon: <Award className="w-5 h-5" />
+        }, {
+          path: '/blog',
+          label: 'Blog',
+          icon: <Award className="w-5 h-5" />
+        }, {
+          path: '/categories',
+          label: 'Categories',
+          icon: <Award className="w-5 h-5" />
         }].map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
           animationDelay: `${index * 50}ms`
         }}>

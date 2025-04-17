@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -25,6 +26,11 @@ import HowToPlay from '@/pages/HowToPlay';
 import TermsPage from '@/pages/TermsPage';
 import DisclaimerPage from '@/pages/DisclaimerPage';
 import PrivacyPage from '@/pages/PrivacyPage';
+import FaqPage from '@/pages/FaqPage';
+import BlogPage from '@/pages/BlogPage';
+import BlogPostPage from '@/pages/BlogPostPage';
+import CategoriesPage from '@/pages/CategoriesPage';
+import CategoryDetailPage from '@/pages/CategoryDetailPage';
 import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import NotFound from "@/pages/NotFound";
@@ -218,6 +224,13 @@ function App() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/disclaimer" element={<DisclaimerPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
+              
+              {/* New SEO Content Pages */}
+              <Route path="/faq" element={<FaqPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:postSlug" element={<BlogPostPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/categories/:categorySlug" element={<CategoryDetailPage />} />
               
               <Route path="/team-dashboard" element={
                 <ProtectedRoute>

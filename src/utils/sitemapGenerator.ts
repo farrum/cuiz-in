@@ -54,6 +54,57 @@ export const generateSitemapXml = async (): Promise<string> => {
       changefreq: 'monthly',
       priority: '0.6'
     },
+    // New content pages with high SEO value
+    {
+      loc: 'https://cuiz.in/faq',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/blog',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.9'
+    },
+    {
+      loc: 'https://cuiz.in/categories',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.9'
+    },
+    // Sample blog post URLs - in production this would be dynamic
+    {
+      loc: 'https://cuiz.in/blog/how-to-maximize-your-quiz-earnings',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.7'
+    },
+    {
+      loc: 'https://cuiz.in/blog/benefits-of-daily-quiz-challenges',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.7'
+    },
+    {
+      loc: 'https://cuiz.in/blog/science-behind-quiz-learning',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.7'
+    },
+    // Sample category pages - in production this would be dynamic
+    {
+      loc: 'https://cuiz.in/categories/history',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/science',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
     {
       loc: 'https://cuiz.in/terms',
       lastmod: new Date().toISOString().split('T')[0],
