@@ -1,8 +1,6 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { HelmetProvider } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
@@ -232,16 +230,14 @@ function App() {
   return (
     <div className="app-container">
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <HelmetProvider>
-          <Toaster />
-          <Router>
-            <Routes>
-              {routes.map(route => (
-                <Route key={route.path} path={route.path} element={route.element} />
-              ))}
-            </Routes>
-          </Router>
-        </HelmetProvider>
+        <Toaster />
+        <Router>
+          <Routes>
+            {routes.map(route => (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ))}
+          </Routes>
+        </Router>
       </ThemeProvider>
     </div>
   );
