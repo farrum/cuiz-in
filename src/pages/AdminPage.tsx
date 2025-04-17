@@ -23,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { CacheManagement } from '@/components/admin/CacheManagement';
 import AdminNavbar from '@/components/admin/AdminNavbar';
+import BlogManagement from '@/components/admin/blog/BlogManagement';
+import FaqManagement from '@/components/admin/faq/FaqManagement';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
