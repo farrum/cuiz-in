@@ -326,6 +326,18 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              {/* Add missing routes for blog and faq in admin section */}
+              <Route path="/admin/blog" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/faq" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              
               <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
               
               <Route path="*" element={<NotFound />} />
