@@ -1,6 +1,8 @@
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { HelmetProvider } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
@@ -33,6 +35,9 @@ import QuizQuestionPage from "@/pages/QuizQuestionPage";
 import BlogPage from './pages/BlogPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CategoryPage from './pages/CategoryPage';
+import FAQPage from './pages/FAQPage';
+import BlogPostPage from './pages/BlogPostPage';
+import SharePage from './pages/SharePage';
 
 const routes = [
   { path: "/", element: <Index /> },
@@ -49,6 +54,7 @@ const routes = [
   { path: "/terms", element: <TermsPage /> },
   { path: "/disclaimer", element: <DisclaimerPage /> },
   { path: "/privacy", element: <PrivacyPage /> },
+  { path: "/faq", element: <FAQPage /> },
   { path: "/team-dashboard", element: <ProtectedRoute><TeamLeaderDashboardPage /></ProtectedRoute> },
   { path: "/profile", element: <ProtectedRoute><Profile /></ProtectedRoute> },
   { path: "/admin", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
@@ -69,8 +75,10 @@ const routes = [
   { path: "/admin/requests", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
   { path: "/quiz/question/:questionId/:questionSlug", element: <QuizQuestionPage /> },
   { path: "/blog", element: <BlogPage /> },
+  { path: "/blog/:blogSlug", element: <BlogPostPage /> },
   { path: "/categories", element: <CategoriesPage /> },
   { path: "/categories/:categorySlug", element: <CategoryPage /> },
+  { path: "/share/:contentType/:contentId", element: <SharePage /> },
   { path: "*", element: <NotFound /> }
 ];
 
@@ -230,14 +238,16 @@ function App() {
   return (
     <div className="app-container">
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <Toaster />
-        <Router>
-          <Routes>
-            {routes.map(route => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
-          </Routes>
-        </Router>
+        <HelmetProvider>
+          <Toaster />
+          <Router>
+            <Routes>
+              {routes.map(route => (
+                <Route key={route.path} path={route.path} element={route.element} />
+              ))}
+            </Routes>
+          </Router>
+        </HelmetProvider>
       </ThemeProvider>
     </div>
   );

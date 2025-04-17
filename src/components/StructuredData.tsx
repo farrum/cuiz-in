@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
-type StructuredDataProps = {
-  type: 'Organization' | 'FAQPage' | 'Quiz' | 'Article' | 'WebPage' | 'Person' | 'BreadcrumbList';
+type SchemaType = 'Organization' | 'FAQPage' | 'Quiz' | 'Article' | 'WebPage' | 'Person' | 'BreadcrumbList' | 'WebSite';
+
+interface StructuredDataProps {
+  type: SchemaType;
   data: any;
-};
+}
 
 const StructuredData: React.FC<StructuredDataProps> = ({ type, data }) => {
   const getStructuredData = () => {

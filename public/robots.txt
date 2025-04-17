@@ -3,6 +3,15 @@ User-agent: *
 Allow: /
 Disallow: /profile
 Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin/*
 Disallow: /team-dashboard
+
+# Allow important content pages
+Allow: /blog/
+Allow: /categories/
+Allow: /faq
+Allow: /how-to-play
+Allow: /referral-program
 
 Sitemap: https://cuiz.in/sitemap.xml
