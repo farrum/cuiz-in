@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Award, User, Home, UserPlus, Target, Shield, LogIn, BarChartIcon } from 'lucide-react';
@@ -115,7 +116,90 @@ const Header: React.FC = () => {
   const dailyProgress = Math.min(100, todayPoints / DAILY_TARGET * 100);
   const monthlyProgress = Math.min(100, monthlyPoints / MONTHLY_TARGET * 100);
   
-  return <header className={cn("fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300", scrolled ? "glass shadow-sm backdrop-blur-md" : "bg-transparent")}>
+  // Navigation items for logged-in users
+  const loggedInNavItems = [
+    {
+      path: '/',
+      label: 'Home',
+      icon: <Home className="w-5 h-5" />
+    },
+    {
+      path: '/quiz',
+      label: 'Play Quiz',
+      icon: <Award className="w-5 h-5" />
+    },
+    {
+      path: '/referral',
+      label: 'Referrals',
+      icon: <UserPlus className="w-5 h-5" />
+    },
+    {
+      path: '/profile',
+      label: 'Profile',
+      icon: <User className="w-5 h-5" />
+    }
+  ];
+  
+  // Add team dashboard if user is team leader
+  const teamLeaderItems = isTeamLeader ? [
+    {
+      path: '/team-dashboard',
+      label: 'Team Dashboard',
+      icon: <BarChartIcon className="w-5 h-5" />
+    }
+  ] : [];
+  
+  // Add admin links if user is admin
+  const adminItems = isAdmin ? [
+    {
+      path: '/admin',
+      label: 'Admin',
+      icon: <Shield className="w-5 h-5" />
+    }
+  ] : [];
+  
+  // Navigation items for logged-out users
+  const loggedOutNavItems = [
+    {
+      path: '/',
+      label: 'Home',
+      icon: <Home className="w-5 h-5" />
+    },
+    {
+      path: '/login',
+      label: 'Login',
+      icon: <LogIn className="w-5 h-5" />
+    },
+    {
+      path: '/register',
+      label: 'Register',
+      icon: <User className="w-5 h-5" />
+    },
+    {
+      path: '/faq',
+      label: 'FAQ',
+      icon: <Award className="w-5 h-5" />
+    },
+    {
+      path: '/blog',
+      label: 'Blog',
+      icon: <Award className="w-5 h-5" />
+    },
+    {
+      path: '/categories',
+      label: 'Categories',
+      icon: <Award className="w-5 h-5" />
+    }
+  ];
+  
+  // Combine the navigation items
+  const navItems = isLoggedIn
+    ? [...loggedInNavItems, ...teamLeaderItems, ...adminItems]
+    : loggedOutNavItems;
+  
+  return (
+    <header className={cn("fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300", 
+      scrolled ? "glass shadow-sm backdrop-blur-md" : "bg-transparent")}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center space-x-2 animate-fade-in">
@@ -125,7 +209,8 @@ const Header: React.FC = () => {
             </span>
           </Link>
           
-          {isLoggedIn && <div className="hidden md:flex flex-col gap-1 w-44">
+          {isLoggedIn && (
+            <div className="hidden md:flex flex-col gap-1 w-44">
               <div className="flex text-xs items-center gap-1">
                 <Target className="w-3 h-3 text-muted-foreground" />
                 <span className="text-xs whitespace-nowrap">Daily:</span>
@@ -142,74 +227,34 @@ const Header: React.FC = () => {
                 </div>
                 <span className="text-xs text-muted-foreground">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
         
         <nav className="flex items-center space-x-1">
-          {isLoggedIn ? [{
-          path: '/',
-          label: 'Home',
-          icon: <Home className="w-5 h-5" />
-        }, {
-          path: '/quiz',
-          label: 'Play Quiz',
-          icon: <Award className="w-5 h-5" />
-        }, {
-          path: '/referral',
-          label: 'Referrals',
-          icon: <UserPlus className="w-5 h-5" />
-        }, {
-          path: '/profile',
-          label: 'Profile',
-          icon: <User className="w-5 h-5" />
-        }, 
-        ...(isTeamLeader ? [{
-          path: '/team-dashboard',
-          label: 'Team Dashboard',
-          icon: <BarChartIcon className="w-5 h-5" />
-        }] : []),
-        ...(isAdmin ? [{
-          path: '/admin',
-          label: 'Admin',
-          icon: <Shield className="w-5 h-5" />
-        }] : [])
-        }.map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
-          animationDelay: `${index * 50}ms`
-        }}>
-                {item.icon}
-                <span className="hidden sm:inline">{item.label}</span>
-              </Link>) : [{
-          path: '/',
-          label: 'Home',
-          icon: <Home className="w-5 h-5" />
-        }, {
-          path: '/login',
-          label: 'Login',
-          icon: <LogIn className="w-5 h-5" />
-        }, {
-          path: '/register',
-          label: 'Register',
-          icon: <User className="w-5 h-5" />
-        }, {
-          path: '/faq',
-          label: 'FAQ',
-          icon: <Award className="w-5 h-5" />
-        }, {
-          path: '/blog',
-          label: 'Blog',
-          icon: <Award className="w-5 h-5" />
-        }, {
-          path: '/categories',
-          label: 'Categories',
-          icon: <Award className="w-5 h-5" />
-        }].map((item, index) => <Link key={item.path} to={item.path} className={cn("relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", location.pathname === item.path ? "text-primary-foreground bg-primary shadow-md" : "text-foreground hover:bg-secondary", `animate-slide-up delay-[${index * 100}ms]`)} style={{
-          animationDelay: `${index * 50}ms`
-        }}>
-                {item.icon}
-                <span className="hidden sm:inline">{item.label}</span>
-              </Link>)}
+          {navItems.map((item, index) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={cn(
+                "relative flex items-center justify-center gap-1.5 px-4 py-2 rounded-full transition-all duration-300", 
+                location.pathname === item.path 
+                  ? "text-primary-foreground bg-primary shadow-md" 
+                  : "text-foreground hover:bg-secondary",
+                `animate-slide-up delay-[${index * 100}ms]`
+              )}
+              style={{
+                animationDelay: `${index * 50}ms`
+              }}
+            >
+              {item.icon}
+              <span className="hidden sm:inline">{item.label}</span>
+            </Link>
+          ))}
         </nav>
       </div>
-    </header>;
+    </header>
+  );
 };
+
 export default Header;
