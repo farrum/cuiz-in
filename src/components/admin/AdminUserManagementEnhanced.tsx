@@ -81,14 +81,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       cell: (row: any) => (
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={row.row.original.profile_picture} />
+            <AvatarImage src={row.profile_picture} />
             <AvatarFallback>
               <User className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{row.row.original.display_name || row.row.original.username}</div>
-            <div className="text-sm text-muted-foreground">@{row.row.original.username}</div>
+            <div className="font-medium">{row.display_name || row.username}</div>
+            <div className="text-sm text-muted-foreground">@{row.username}</div>
           </div>
         </div>
       )
@@ -96,21 +96,21 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     {
       header: 'Phone',
       accessorKey: 'phone',
-      cell: (row: any) => row.getValue() || '-'
+      cell: (row: any) => row.phone || '-'
     },
     {
       header: 'Points',
       accessorKey: 'points',
       cell: (row: any) => (
-        <Badge variant="secondary">{row.getValue()}</Badge>
+        <Badge variant="secondary">{row.points}</Badge>
       )
     },
     {
       header: 'Status',
       accessorKey: 'suspended',
       cell: (row: any) => (
-        <Badge variant={row.getValue() ? 'destructive' : 'success'}>
-          {row.getValue() ? 'Suspended' : 'Active'}
+        <Badge variant={row.suspended ? 'destructive' : 'success'}>
+          {row.suspended ? 'Suspended' : 'Active'}
         </Badge>
       )
     },
@@ -122,21 +122,21 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onUserSelect(row.getValue())}
+            onClick={() => onUserSelect(row.id)}
           >
             View Details
           </Button>
           <Button
             variant="outline"
             size="icon"
-            onClick={() => toggleUserSuspension(row.getValue(), row.row.original.suspended)}
+            onClick={() => toggleUserSuspension(row.id, row.suspended)}
           >
-            {row.row.original.suspended ? <UserCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+            {row.suspended ? <UserCheck className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
           </Button>
           <Button
             variant="outline"
             size="icon"
-            onClick={() => onResetPassword(row.getValue())}
+            onClick={() => onResetPassword(row.id)}
           >
             <Key className="h-4 w-4" />
           </Button>
