@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { useFaqs } from '@/hooks/useFaqs';
 import { FaqList } from '@/components/faq/FaqList';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const FaqPage: React.FC = () => {
   const { faqs, isLoading } = useFaqs();
@@ -37,10 +38,20 @@ const FaqPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
+        {/* Top Ad Banner */}
+        <div className="mb-8">
+          <AdvertisementBanner position="top" slotId="faq-top" pageSection="faq" />
+        </div>
+        
         <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
         
         <div className="bg-card rounded-lg shadow-sm p-6">
           <FaqList faqs={faqs} isLoading={isLoading} />
+        </div>
+        
+        {/* Middle Ad Banner */}
+        <div className="my-8">
+          <AdvertisementBanner position="middle" slotId="faq-middle" pageSection="faq" />
         </div>
         
         <div className="mt-12 text-center">

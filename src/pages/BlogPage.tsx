@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 // Sample blog data - in a real app, this would come from a database
 const blogPosts = [
@@ -52,6 +53,13 @@ const blogPosts = [
 ];
 
 const BlogPage: React.FC = () => {
+  const navigate = useNavigate();
+  
+  // Function to handle blog post click navigation
+  const handlePostClick = (slug: string) => {
+    navigate(`/blog/${slug}`);
+  };
+
   // Schema.org Blog structured data
   const blogSchema = {
     '@context': 'https://schema.org',
@@ -86,6 +94,11 @@ const BlogPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
+        {/* Top Ad Banner */}
+        <div className="mb-8">
+          <AdvertisementBanner position="top" slotId="blog-top" pageSection="blog" />
+        </div>
+        
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">CuizIN Blog</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -95,13 +108,15 @@ const BlogPage: React.FC = () => {
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {blogPosts.map(post => (
-            <Card key={post.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            <Card 
+              key={post.id} 
+              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" 
+              onClick={() => handlePostClick(post.slug)}
+            >
               <CardHeader className="pb-2">
                 <div className="text-sm text-muted-foreground mb-2">{post.category} • {post.date}</div>
                 <CardTitle className="text-xl">
-                  <Link to={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
-                    {post.title}
-                  </Link>
+                  {post.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -113,6 +128,11 @@ const BlogPage: React.FC = () => {
               </CardFooter>
             </Card>
           ))}
+        </div>
+        
+        {/* Middle Ad Banner */}
+        <div className="my-12">
+          <AdvertisementBanner position="middle" slotId="blog-middle" pageSection="blog" />
         </div>
         
         <div className="mt-12 text-center">
