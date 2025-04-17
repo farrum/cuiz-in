@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useBlogPosts } from '@/hooks/admin/useBlogPosts';
 import { triggerDailyBlogGeneration } from '@/utils/triggerDailyBlog';
-import { Loader2, Plus, RefreshCw, Robot } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Bot } from 'lucide-react';
 
 interface BlogPost {
   id: string;
@@ -15,6 +15,7 @@ interface BlogPost {
   slug?: string;
   author?: string;
   published_at?: string;
+  created_at?: string; // Added this field to the interface
   is_published: boolean;
 }
 
@@ -65,7 +66,7 @@ const BlogManagement = () => {
             {isGenerating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Robot className="mr-2 h-4 w-4" />
+              <Bot className="mr-2 h-4 w-4" />
             )}
             Generate Random Post
           </Button>
@@ -136,7 +137,7 @@ const BlogManagement = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {new Date(post.published_at || post.created_at).toLocaleDateString()}
+                    {new Date(post.published_at || post.created_at || '').toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                     <Button variant="ghost" size="sm">
