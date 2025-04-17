@@ -1,52 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
-
-interface Faq {
-  id: string;
-  question: string;
-  answer: string;
-  category?: string;
-}
+import { useFaqs } from '@/hooks/useFaqs';
+import { FaqList } from '@/components/faq/FaqList';
 
 const FaqPage: React.FC = () => {
-  const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchFaqs = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('faqs')
-          .select('*')
-          .eq('is_published', true)
-          .order('order_index', { ascending: true });
-
-        if (error) throw error;
-
-        setFaqs(data || []);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching FAQs:', error);
-        toast({
-          title: 'Error',
-          description: 'Unable to load FAQs. Please try again later.',
-          variant: 'destructive'
-        });
-        setIsLoading(false);
-      }
-    };
-
-    fetchFaqs();
-  }, []);
+  const { faqs, isLoading } = useFaqs();
 
   // Schema.org FAQ Page structured data
   const faqSchema = {
@@ -78,29 +40,7 @@ const FaqPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
         
         <div className="bg-card rounded-lg shadow-sm p-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5, 6].map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((item) => (
-                <AccordionItem key={item.id} value={`item-${item.id}`}>
-                  <AccordionTrigger className="text-left font-medium">
-                    {item.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
-                    {item.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
+          <FaqList faqs={faqs} isLoading={isLoading} />
         </div>
         
         <div className="mt-12 text-center">
