@@ -28,21 +28,12 @@ export const handleRouteChange = (newRoute: string): boolean => {
     // Update current route
     currentRoute = newRoute;
     
-    const now = Date.now();
-    // Prevent multiple dispatches in quick succession
-    if (now - lastRefreshTime > THROTTLE_TIME) {
-      lastRefreshTime = now;
-      
-      // Dispatch event that global navigation happened
-      window.dispatchEvent(new CustomEvent('navigationOccurred', {
-        detail: { route: newRoute }
-      }));
-      
-      return true;
-    } else {
-      console.log(`Navigation event throttled (${((now - lastRefreshTime) / 1000).toFixed(1)}s < ${THROTTLE_TIME / 1000}s)`);
-      return false;
-    }
+    // Dispatch event that global navigation happened
+    window.dispatchEvent(new CustomEvent('navigationOccurred', {
+      detail: { route: newRoute }
+    }));
+    
+    return true;
   }
   
   return false;
@@ -52,18 +43,9 @@ export const handleRouteChange = (newRoute: string): boolean => {
  * Force reload of all ads on the current page
  */
 export const forceAdRefresh = () => {
-  const now = Date.now();
-  
-  // Prevent multiple refreshes in quick succession
-  if (now - lastRefreshTime > THROTTLE_TIME) {
-    lastRefreshTime = now;
-    clearAdCache();
-    window.dispatchEvent(new CustomEvent('forceAdRefresh', {
-      detail: { timestamp: Date.now() }
-    }));
-    return true;
-  } else {
-    console.log(`Force refresh throttled (${((now - lastRefreshTime) / 1000).toFixed(1)}s < ${THROTTLE_TIME / 1000}s)`);
-    return false;
-  }
+  clearAdCache();
+  window.dispatchEvent(new CustomEvent('forceAdRefresh', {
+    detail: { timestamp: Date.now() }
+  }));
+  return true;
 };

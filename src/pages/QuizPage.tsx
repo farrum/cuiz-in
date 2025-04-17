@@ -6,20 +6,18 @@ import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
-import { useQuizState } from '@/hooks/quiz';
+import { useQuizState } from '@/hooks/quiz/useQuizState';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import { clearAdCache } from '@/services/adCacheService';
 import { forceAdRefresh } from '@/services/adNavigationService';
-import { AdDebugger } from '@/components/ads';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useRouteChangeListener } from '@/hooks/useRouteChangeListener';
 
 const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
-  const [initialAdLoadDone, setInitialAdLoadDone] = useState(false);
   
   const {
     currentQuestion,
@@ -52,13 +50,12 @@ const QuizPage: React.FC = () => {
   
   const handleRouteChange = useCallback((newRoute: string) => {
     console.log('Quiz page detected route change to:', newRoute);
-    if (newRoute === '/quiz' && initialAdLoadDone) {
-      // We're on the quiz page, make sure ads are refreshed, but only after initial load
+    if (newRoute === '/quiz') {
       setTimeout(() => {
         setForceReloadAds(prev => prev + 1);
       }, 100);
     }
-  }, [setForceReloadAds, initialAdLoadDone]);
+  }, [setForceReloadAds]);
 
   useRouteChangeListener(handleRouteChange);
   
@@ -75,31 +72,18 @@ const QuizPage: React.FC = () => {
     // Force reload ads after 500ms to ensure ads load properly
     const initialLoadTimer = setTimeout(() => {
       setForceReloadAds(prev => prev + 1);
-      setInitialAdLoadDone(true);
     }, 500);
     
-    // Set up event listeners for ad-related events with throttling
-    let lastForceRefreshTime = 0;
+    // Set up event listeners for ad-related events
     const handleForceRefresh = () => {
-      const now = Date.now();
-      // Prevent multiple refreshes within 2 seconds
-      if (now - lastForceRefreshTime > 2000) {
-        console.log('Force refresh event received in QuizPage');
-        setForceReloadAds(prev => prev + 1);
-        lastForceRefreshTime = now;
-      }
+      console.log('Force refresh event received in QuizPage');
+      setForceReloadAds(prev => prev + 1);
     };
     
-    let lastNavigationTime = 0;
     const handleNavigation = (event: Event) => {
-      const now = Date.now();
-      // Prevent multiple refreshes within 2 seconds
-      if (now - lastNavigationTime > 2000) {
-        const customEvent = event as CustomEvent;
-        console.log('Navigation occurred:', customEvent.detail?.route);
-        setForceReloadAds(prev => prev + 1);
-        lastNavigationTime = now;
-      }
+      const customEvent = event as CustomEvent;
+      console.log('Navigation occurred:', customEvent.detail?.route);
+      setForceReloadAds(prev => prev + 1);
     };
     
     window.addEventListener('forceAdRefresh', handleForceRefresh);
@@ -113,9 +97,7 @@ const QuizPage: React.FC = () => {
   }, [checkSuspensionStatus, loadInitialData, setForceReloadAds]);
   
   useEffect(() => {
-    // Use a ref to track if the event listener is already attached
     const adSlotsUpdatedHandler = (event: Event) => {
-      // Add throttling to prevent multiple calls in quick succession
       handleAdSlotsUpdated();
     };
     
@@ -237,15 +219,6 @@ const QuizPage: React.FC = () => {
         </div>
         
         <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
-        
-        {isDevelopment && (
-          <AdDebugger 
-            position="bottom" 
-            slotId="quiz-bottom" 
-            pageSection="quiz-page" 
-            className="mt-4 max-w-3xl w-full mx-auto"
-          />
-        )}
       </main>
       
       <Footer />
