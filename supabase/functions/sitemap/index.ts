@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -15,8 +14,8 @@ interface SitemapEntry {
 serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Standard site URLs
+    
+    // Standard URLs including new pages
     const standardUrls: SitemapEntry[] = [
       {
         loc: 'https://cuiz.in/',
@@ -77,10 +76,92 @@ serve(async (req) => {
         lastmod: new Date().toISOString().split('T')[0],
         changefreq: 'yearly',
         priority: '0.5'
+      },
+      
+      // FAQ section
+      {
+        loc: 'https://cuiz.in/faq',
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'weekly',
+        priority: '0.8'
+      },
+      
+      // Blog section
+      {
+        loc: 'https://cuiz.in/blog',
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'daily',
+        priority: '0.9'
+      },
+      {
+        loc: 'https://cuiz.in/blog/categories',
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'weekly',
+        priority: '0.8'
+      },
+      
+      // Categories section
+      {
+        loc: 'https://cuiz.in/categories',
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'weekly',
+        priority: '0.9'
       }
     ];
 
-    // Fetch all quiz questions from the database
+    // Fetch all FAQs
+    const { data: faqs } = await supabase
+      .from('faqs')
+      .select('id, question')
+      .eq('is_published', true);
+
+    if (faqs) {
+      const faqUrls = faqs.map(faq => {
+        const slug = encodeURIComponent(
+          faq.question
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .substring(0, 50)
+        );
+        
+        return {
+          loc: `https://cuiz.in/faq/${faq.id}/${slug}`,
+          lastmod: new Date().toISOString().split('T')[0],
+          changefreq: 'monthly',
+          priority: '0.7'
+        };
+      });
+      standardUrls.push(...faqUrls);
+    }
+
+    // Fetch all blog posts
+    const { data: blogPosts } = await supabase
+      .from('blog_posts')
+      .select('id, title, created_at')
+      .eq('is_published', true);
+
+    if (blogPosts) {
+      const blogUrls = blogPosts.map(post => {
+        const slug = encodeURIComponent(
+          post.title
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .substring(0, 50)
+        );
+        
+        return {
+          loc: `https://cuiz.in/blog/${slug}`,
+          lastmod: new Date(post.created_at).toISOString().split('T')[0],
+          changefreq: 'monthly',
+          priority: '0.8'
+        };
+      });
+      standardUrls.push(...blogUrls);
+    }
+
+    // Fetch quiz questions
     const { data: questions, error } = await supabase
       .from('quiz_questions')
       .select('id, question, options, correct_answer, category, difficulty, created_at');

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
 
@@ -10,7 +9,7 @@ interface SitemapEntry {
 }
 
 export const generateSitemapXml = async (): Promise<string> => {
-  // Standard site URLs
+  // Standard site URLs with updated priorities for new content pages
   const standardUrls: SitemapEntry[] = [
     {
       loc: 'https://cuiz.in/',
@@ -54,18 +53,35 @@ export const generateSitemapXml = async (): Promise<string> => {
       changefreq: 'monthly',
       priority: '0.6'
     },
-    // New content pages with high SEO value
     {
       loc: 'https://cuiz.in/faq',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'monthly',
+      changefreq: 'weekly',
       priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/faq/how-to-play',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.7'
+    },
+    {
+      loc: 'https://cuiz.in/faq/points-system',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'monthly',
+      priority: '0.7'
     },
     {
       loc: 'https://cuiz.in/blog',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
+      changefreq: 'daily',
       priority: '0.9'
+    },
+    {
+      loc: 'https://cuiz.in/blog/categories',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
     },
     {
       loc: 'https://cuiz.in/categories',
@@ -73,26 +89,6 @@ export const generateSitemapXml = async (): Promise<string> => {
       changefreq: 'weekly',
       priority: '0.9'
     },
-    // Sample blog post URLs - in production this would be dynamic
-    {
-      loc: 'https://cuiz.in/blog/how-to-maximize-your-quiz-earnings',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'monthly',
-      priority: '0.7'
-    },
-    {
-      loc: 'https://cuiz.in/blog/benefits-of-daily-quiz-challenges',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'monthly',
-      priority: '0.7'
-    },
-    {
-      loc: 'https://cuiz.in/blog/science-behind-quiz-learning',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'monthly',
-      priority: '0.7'
-    },
-    // Sample category pages - in production this would be dynamic
     {
       loc: 'https://cuiz.in/categories/history',
       lastmod: new Date().toISOString().split('T')[0],
@@ -101,6 +97,42 @@ export const generateSitemapXml = async (): Promise<string> => {
     },
     {
       loc: 'https://cuiz.in/categories/science',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/geography',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/literature',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/entertainment',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/sports',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/technology',
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: '0.8'
+    },
+    {
+      loc: 'https://cuiz.in/categories/general-knowledge',
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: '0.8'
@@ -125,7 +157,59 @@ export const generateSitemapXml = async (): Promise<string> => {
     }
   ];
 
-  // Fetch all quiz questions from the database
+  // Fetch all FAQs to generate individual FAQ URLs
+  const { data: faqs } = await supabase
+    .from('faqs')
+    .select('id, question')
+    .eq('is_published', true);
+
+  if (faqs) {
+    const faqUrls: SitemapEntry[] = faqs.map(faq => {
+      const slug = encodeURIComponent(
+        faq.question
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 50)
+      );
+      
+      return {
+        loc: `https://cuiz.in/faq/${faq.id}/${slug}`,
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'monthly',
+        priority: '0.7'
+      };
+    });
+    standardUrls.push(...faqUrls);
+  }
+
+  // Fetch all blog posts
+  const { data: blogPosts } = await supabase
+    .from('blog_posts')
+    .select('id, title, created_at')
+    .eq('is_published', true);
+
+  if (blogPosts) {
+    const blogUrls: SitemapEntry[] = blogPosts.map(post => {
+      const slug = encodeURIComponent(
+        post.title
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 50)
+      );
+      
+      return {
+        loc: `https://cuiz.in/blog/${slug}`,
+        lastmod: new Date(post.created_at).toISOString().split('T')[0],
+        changefreq: 'monthly',
+        priority: '0.8'
+      };
+    });
+    standardUrls.push(...blogUrls);
+  }
+
+  // Fetch quiz questions and generate answer URLs
   const { data: questions, error } = await supabase
     .from('quiz_questions')
     .select('id, question, options, correct_answer, category, difficulty, created_at');
