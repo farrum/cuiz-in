@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Bookmark, BookOpen, FolderOpen } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="py-8 border-t border-border bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* First Column - Navigation Links */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
@@ -78,7 +78,32 @@ const Footer: React.FC = () => {
             </ul>
           </div>
           
-          {/* Third Column - Summary */}
+          {/* Third Column - Explore */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Explore</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/blog" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link to="/categories" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Categories
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-to-play" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Bookmark className="w-4 h-4 mr-2" />
+                  How To Play
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Fourth Column - Summary */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold mb-4">About CuizIN</h3>
             <p className="text-muted-foreground">
