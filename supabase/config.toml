@@ -25,6 +25,5 @@ enabled = true
 [realtime]
 enabled = true
 
-[functions]
 [functions.daily-blog-generator]
-verify_jwt = true
+verify_jwt = false
