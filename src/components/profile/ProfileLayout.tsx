@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { useRouteChangeListener } from '@/hooks/useRouteChangeListener';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -19,13 +18,6 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
   useEffect(() => {
     console.log(`ProfileLayout rendered with forceReloadAds: ${forceReloadAds}`);
   }, [forceReloadAds]);
-  
-  // Listen for route changes to ensure ads refresh when page changes
-  useRouteChangeListener((newRoute) => {
-    if (newRoute.startsWith('/profile')) {
-      console.log('Profile page detected route change, should refresh ads');
-    }
-  });
 
   if (isSuspended) {
     return <>{children}</>;
