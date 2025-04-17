@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAdState } from './useAdState';
 import { useAdTracking } from './useAdTracking';
 import { useAdFetch } from './useAdFetch';
@@ -14,6 +14,8 @@ interface UseAdvertisementProps {
 export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertisementProps) => {
   // Initialize session ID
   getSessionId();
+  
+  const firstLoadCompleted = useRef(false);
   
   // Use the smaller hooks
   const {
@@ -47,8 +49,12 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
   
   // Initial ad fetch and event listener setup
   useEffect(() => {
+    console.log(`Ad hook mounted for ${position}/${slotId || 'default'} (id: ${adState.instanceId.slice(0,8)})`);
+    isMountedRef.current = true;
+    
     // Initial fetch for all ad positions
     fetchAds();
+    firstLoadCompleted.current = true;
     
     const handleAdSlotsUpdated = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -70,7 +76,14 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       }
     };
     
+    const handleForceRefresh = () => {
+      if (!isMountedRef.current) return;
+      console.log(`Force refresh received for ${position}/${slotId || 'default'}`);
+      fetchAds(true);
+    };
+    
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    window.addEventListener('forceAdRefresh', handleForceRefresh);
     
     // Force refresh after initialization for ALL ad positions
     const initTimer = setTimeout(() => {
@@ -81,10 +94,18 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     }, 2000);
     
     return () => {
+      console.log(`Ad hook unmounting for ${position}/${slotId || 'default'} (id: ${adState.instanceId.slice(0,8)})`);
+      isMountedRef.current = false;
+      
+      if (adRefreshTimeoutRef.current) {
+        clearTimeout(adRefreshTimeoutRef.current);
+      }
+      
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      window.removeEventListener('forceAdRefresh', handleForceRefresh);
       clearTimeout(initTimer);
     };
-  }, [fetchAds, position, adState.instanceId, adPositionKey]);
+  }, [fetchAds, position, slotId, adState.instanceId, adPositionKey]);
   
   return {
     ...adState,
