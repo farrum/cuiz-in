@@ -41,6 +41,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   });
 
   if (!adActive) {
+    // Only show debug info in development mode
     if (isDevelopment) {
       return (
         <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
