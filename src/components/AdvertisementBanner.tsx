@@ -80,3 +80,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       />
     </AdContainer>
   );
+};
+
+export default AdvertisementBanner;
