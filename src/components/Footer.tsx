@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2 } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -47,10 +47,28 @@ const Footer: React.FC = () => {
             </ul>
           </div>
           
-          {/* Second Column - Legal Pages */}
+          {/* Second Column - Content Pages */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold mb-4">Legal</h3>
+            <h3 className="text-lg font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
+              <li>
+                <Link to="/blog" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Book className="w-4 h-4 mr-2" />
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/categories" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Grid2X2 className="w-4 h-4 mr-2" />
+                  Quiz Categories
+                </Link>
+              </li>
               <li>
                 <Link to="/terms" className="text-muted-foreground hover:text-foreground flex items-center">
                   <FileText className="w-4 h-4 mr-2" />

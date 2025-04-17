@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -19,7 +18,7 @@ import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar } from 'lucide-react';
+import { BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { CacheManagement } from '@/components/admin/CacheManagement';
@@ -181,6 +180,14 @@ const AdminPage: React.FC = () => {
               Profile Icons
             </TabsTrigger>
             <TabsTrigger value="sync">Sync</TabsTrigger>
+            <TabsTrigger value="blog">
+              <Book className="w-4 h-4 mr-1" />
+              Blog
+            </TabsTrigger>
+            <TabsTrigger value="faq">
+              <HelpCircle className="w-4 h-4 mr-1" />
+              FAQ
+            </TabsTrigger>
           </TabsList>
           
           <Separator className="my-6" />
@@ -244,6 +251,12 @@ const AdminPage: React.FC = () => {
               <CacheManagement />
               <RealtimeStatus />
             </div>
+          </TabsContent>
+          <TabsContent value="blog">
+            <BlogManagement />
+          </TabsContent>
+          <TabsContent value="faq">
+            <FaqManagement />
           </TabsContent>
         </Tabs>
       </div>
