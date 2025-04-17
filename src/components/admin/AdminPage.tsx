@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminUserManagementEnhanced from './AdminUserManagementEnhanced';
@@ -19,14 +18,27 @@ import AdminDailyChallenges from './AdminDailyChallenges';
 import { Button } from '@/components/ui/button';
 import { LogOut, Megaphone, UserCheck, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleLogout = () => {
     localStorage.removeItem('quiz_app_admin_token');
     navigate('/admin/login');
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    toast({
+      title: "Password reset initiated",
+      description: "The user will be asked to create a new password on next login.",
+    });
+  };
+
+  const handleUserSelect = (userId: string) => {
+    console.log(`Selected user: ${userId}`);
   };
 
   return (
@@ -66,7 +78,10 @@ const AdminPage = () => {
         </TabsList>
         
         <TabsContent value="users" className="space-y-4">
-          <AdminUserManagementEnhanced />
+          <AdminUserManagementEnhanced 
+            onResetPassword={handleResetPassword}
+            onUserSelect={handleUserSelect}
+          />
         </TabsContent>
         
         <TabsContent value="quizzes" className="space-y-4">

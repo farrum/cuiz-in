@@ -69,7 +69,7 @@ const UserManagementWithAttendance: React.FC = () => {
         </Card>
       ) : (
         selectedUserId ? (
-          <UserAttendanceTracker userId={selectedUserId} />
+          <UserAttendanceTracker />
         ) : (
           <div className="text-center p-8 text-muted-foreground">
             Select a user from the table view to see their attendance details

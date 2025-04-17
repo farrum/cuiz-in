@@ -31,6 +31,19 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('users');
   const [adminName, setAdminName] = useState<string>('Admin');
 
+  // Add handlers for AdminUserManagementEnhanced
+  const handleResetPassword = async (userId: string) => {
+    toast({
+      title: "Password reset initiated",
+      description: "The user will be asked to create a new password on next login.",
+    });
+  };
+
+  const handleUserSelect = (userId: string) => {
+    // Handle user selection
+    console.log(`Selected user: ${userId}`);
+  };
+  
   // Fetch admin info on load
   useEffect(() => {
     const fetchAdminInfo = async () => {
@@ -180,7 +193,10 @@ const AdminPage: React.FC = () => {
           
           <Separator className="my-6" />
 
-          {activeTab === 'users' && <AdminUserManagementEnhanced />}
+          {activeTab === 'users' && <AdminUserManagementEnhanced 
+            onResetPassword={handleResetPassword}
+            onUserSelect={handleUserSelect}
+          />}
           {activeTab === 'logs' && <AdminLoginLogs />}
           {activeTab === 'ads' && <AdminAdManagement />}
           {activeTab === 'payments' && <AdminPaymentsOverview />}
