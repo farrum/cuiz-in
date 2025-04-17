@@ -17,6 +17,9 @@ const UserAttendanceTracker: React.FC<UserAttendanceTrackerProps> = ({ userId })
   const [userHistoryLoading, setUserHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'history' | 'calendar'>('history');
+  const [daysInMonth, setDaysInMonth] = useState<Date[]>([]);
+  const [attendance, setAttendance] = useState<Array<{ user_id: string; username: string; dates: Record<string, boolean> }>>([]);
+  const [loading, setLoading] = useState(false);
 
   // Fetch users
   useEffect(() => {
@@ -72,6 +75,52 @@ const UserAttendanceTracker: React.FC<UserAttendanceTrackerProps> = ({ userId })
     }
   };
 
+  // Generate calendar data for the selected month
+  useEffect(() => {
+    if (selectedUser) {
+      generateCalendarData(selectedUser);
+    }
+  }, [selectedUser]);
+
+  const generateCalendarData = async (userId: string) => {
+    setLoading(true);
+    try {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      // Get all days in the current month
+      const days = new Date(year, month + 1, 0).getDate();
+      const daysArray = Array.from({ length: days }, (_, i) => new Date(year, month, i + 1));
+      setDaysInMonth(daysArray);
+      
+      // Get user attendance data
+      if (userId && users.length > 0) {
+        const selectedUserData = users.find(u => u.id === userId);
+        if (selectedUserData) {
+          const userData = userHistory[userId] || [];
+          
+          // Create attendance record by date
+          const userDates: Record<string, boolean> = {};
+          userData.forEach(record => {
+            const dateStr = record.attendance_date.split('T')[0];
+            userDates[dateStr] = true;
+          });
+          
+          setAttendance([{
+            user_id: userId,
+            username: selectedUserData.username,
+            dates: userDates
+          }]);
+        }
+      }
+    } catch (error: any) {
+      setError(`Error generating calendar data: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUserSelect = (userId: string) => {
     setSelectedUser(userId);
     fetchUserHistory(userId);
@@ -98,7 +147,7 @@ const UserAttendanceTracker: React.FC<UserAttendanceTrackerProps> = ({ userId })
   };
 
   if (error) {
-    return <ErrorMessage message={error} />;
+    return <ErrorMessage error={error} />;
   }
 
   return (
@@ -134,9 +183,9 @@ const UserAttendanceTracker: React.FC<UserAttendanceTrackerProps> = ({ userId })
         />
       ) : (
         <AttendanceCalendarView 
-          users={users}
-          selectedUser={selectedUser}
-          onUserSelect={handleUserSelect}
+          attendance={attendance} 
+          daysInMonth={daysInMonth} 
+          loading={loading}
         />
       )}
     </div>
