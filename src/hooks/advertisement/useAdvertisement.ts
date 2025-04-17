@@ -16,6 +16,7 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
   getSessionId();
   
   const firstLoadCompleted = useRef(false);
+  const refreshAttempts = useRef(0);
   
   // Use the smaller hooks
   const {
@@ -56,7 +57,18 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     fetchAds();
     firstLoadCompleted.current = true;
     
+    // Throttled event handler
+    const lastEventTime = { adSlots: 0, forceRefresh: 0 };
+    const THROTTLE_TIME = 3000; // 3 seconds between refreshes
+    
     const handleAdSlotsUpdated = (event: Event) => {
+      const now = Date.now();
+      if (now - lastEventTime.adSlots < THROTTLE_TIME) {
+        console.log(`Ad slots event throttled for ${position}`);
+        return;
+      }
+      
+      lastEventTime.adSlots = now;
       const customEvent = event as CustomEvent;
       
       if (!isMountedRef.current) return;
@@ -77,19 +89,35 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     };
     
     const handleForceRefresh = () => {
+      const now = Date.now();
+      if (now - lastEventTime.forceRefresh < THROTTLE_TIME) {
+        console.log(`Force refresh event throttled for ${position}`);
+        return;
+      }
+      
+      lastEventTime.forceRefresh = now;
+      
       if (!isMountedRef.current) return;
       console.log(`Force refresh received for ${position}/${slotId || 'default'}`);
-      fetchAds(true);
+      
+      // Track refresh attempts to avoid infinite loops
+      refreshAttempts.current += 1;
+      if (refreshAttempts.current <= 3) {
+        fetchAds(true);
+      } else {
+        console.log(`Too many refresh attempts (${refreshAttempts.current}) for ${position}, skipping`);
+      }
     };
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     window.addEventListener('forceAdRefresh', handleForceRefresh);
     
-    // Force refresh after initialization for ALL ad positions
+    // Force refresh after initialization for ALL ad positions, but only once
     const initTimer = setTimeout(() => {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && refreshAttempts.current < 2) {
         console.log(`Forced refresh after initialization for ad position: ${position}`);
         fetchAds(true);
+        refreshAttempts.current += 1;
       }
     }, 2000);
     
@@ -106,6 +134,13 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       clearTimeout(initTimer);
     };
   }, [fetchAds, position, slotId, adState.instanceId, adPositionKey]);
+  
+  // Reset refresh attempts after successful ad load
+  useEffect(() => {
+    if (adState.adLoaded) {
+      refreshAttempts.current = 0;
+    }
+  }, [adState.adLoaded]);
   
   return {
     ...adState,

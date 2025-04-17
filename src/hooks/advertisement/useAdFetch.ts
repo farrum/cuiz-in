@@ -41,9 +41,6 @@ export const useAdFetch = ({
     // Print debugging info for this ad request
     console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}`);
     
-    // Additional debugging for all positions
-    debugAvailableAds();
-    
     // Check if we should use the cache
     const cachedAd = getAdFromCache(adPositionKey, force);
     
@@ -71,6 +68,13 @@ export const useAdFetch = ({
     }
     
     try {
+      console.log(`Fetching ads for position: ${position}, slotId: ${slotId || 'default'}, pageSection: ${pageSection || 'default'}`);
+      
+      // Additional debugging for all positions
+      if (force) {
+        debugAvailableAds();
+      }
+      
       // Try to get ads from localStorage first
       const localStorageAds = fetchAdsFromLocalStorage(position);
       
@@ -79,25 +83,37 @@ export const useAdFetch = ({
         
         const selectedAd = selectAdFromMatching(localStorageAds, position, slotId, pageSection);
         
-        if (selectedAd && selectedAd.code) {
+        if (selectedAd) {
           console.log(`Selected ad from localStorage: ${selectedAd.name || selectedAd.id}`);
           
+          if (!selectedAd.code || selectedAd.code.trim() === '') {
+            console.log(`Selected ad has empty content, skipping`);
+            updateAdState('', null, '', null, false, `Selected ad has no content`);
+            return;
+          }
+          
           const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
+          
+          // Don't update if content hasn't changed - this prevents re-renders
+          if (version === adState.adVersion && adState.adLoaded && adState.adContent === content) {
+            console.log(`Ad content unchanged for ${position}, skipping update`);
+            return;
+          }
           
           updateAdState(content, id, version, debug);
           
           setTimeout(() => {
-            if (isMountedRef.current) {
+            if (isMountedRef.current && id && id !== adState.adId) {
               trackImpression(id, position, slotId, pageSection);
             }
           }, 300);
           
           return;
         } else {
-          console.log(`No valid ad was selected from matching ads for position ${position}`);
+          console.log(`No ad was selected from matching ads for position ${position}`);
         }
       } else {
-        console.log(`No ads found in localStorage for position ${position}`);
+        console.log(`No ads found in localStorage for position ${position}, trying Supabase`);
       }
       
       // If no local storage ads, try Supabase
@@ -110,24 +126,24 @@ export const useAdFetch = ({
         const randomIndex = Math.floor(Math.random() * supabaseAds.length);
         const selectedAd = supabaseAds[randomIndex];
         
-        if (selectedAd && selectedAd.code) {
-          console.log(`Selected ad from Supabase: ${selectedAd.name || selectedAd.id}`);
-          
-          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
-          
-          if (version === adState.adVersion && adState.adLoaded) {
-            console.log(`Ad content unchanged for ${position}, skipping server update`);
-            return;
-          }
-          
-          updateAdState(content, id, version, debug);
-          
-          if (id !== adState.adId) {
-            trackImpression(id, position, slotId, pageSection);
-          }
-        } else {
-          console.log(`Selected ad has no valid content for position ${position}`);
-          updateAdState('', null, '', null, false, `No valid ad content for position: ${position}`);
+        if (!selectedAd || !selectedAd.code || selectedAd.code.trim() === '') {
+          console.log(`Selected Supabase ad has no valid content`);
+          updateAdState('', null, '', null, false, `No valid ad content`);
+          return;
+        }
+        
+        const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
+        
+        // Don't update if content hasn't changed
+        if (version === adState.adVersion && adState.adLoaded && adState.adContent === content) {
+          console.log(`Ad content unchanged for ${position}, skipping server update`);
+          return;
+        }
+        
+        updateAdState(content, id, version, debug);
+        
+        if (id && id !== adState.adId) {
+          trackImpression(id, position, slotId, pageSection);
         }
       } else {
         console.log(`No active ads found for position: ${position}`);

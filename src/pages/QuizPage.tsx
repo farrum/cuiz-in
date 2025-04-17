@@ -19,6 +19,7 @@ import { useRouteChangeListener } from '@/hooks/useRouteChangeListener';
 
 const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
+  const [initialAdLoadDone, setInitialAdLoadDone] = useState(false);
   
   const {
     currentQuestion,
@@ -51,13 +52,13 @@ const QuizPage: React.FC = () => {
   
   const handleRouteChange = useCallback((newRoute: string) => {
     console.log('Quiz page detected route change to:', newRoute);
-    if (newRoute === '/quiz') {
-      // We're on the quiz page, make sure ads are refreshed
+    if (newRoute === '/quiz' && initialAdLoadDone) {
+      // We're on the quiz page, make sure ads are refreshed, but only after initial load
       setTimeout(() => {
         setForceReloadAds(prev => prev + 1);
       }, 100);
     }
-  }, [setForceReloadAds]);
+  }, [setForceReloadAds, initialAdLoadDone]);
 
   useRouteChangeListener(handleRouteChange);
   
@@ -74,18 +75,31 @@ const QuizPage: React.FC = () => {
     // Force reload ads after 500ms to ensure ads load properly
     const initialLoadTimer = setTimeout(() => {
       setForceReloadAds(prev => prev + 1);
+      setInitialAdLoadDone(true);
     }, 500);
     
-    // Set up event listeners for ad-related events
+    // Set up event listeners for ad-related events with throttling
+    let lastForceRefreshTime = 0;
     const handleForceRefresh = () => {
-      console.log('Force refresh event received in QuizPage');
-      setForceReloadAds(prev => prev + 1);
+      const now = Date.now();
+      // Prevent multiple refreshes within 2 seconds
+      if (now - lastForceRefreshTime > 2000) {
+        console.log('Force refresh event received in QuizPage');
+        setForceReloadAds(prev => prev + 1);
+        lastForceRefreshTime = now;
+      }
     };
     
+    let lastNavigationTime = 0;
     const handleNavigation = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log('Navigation occurred:', customEvent.detail?.route);
-      setForceReloadAds(prev => prev + 1);
+      const now = Date.now();
+      // Prevent multiple refreshes within 2 seconds
+      if (now - lastNavigationTime > 2000) {
+        const customEvent = event as CustomEvent;
+        console.log('Navigation occurred:', customEvent.detail?.route);
+        setForceReloadAds(prev => prev + 1);
+        lastNavigationTime = now;
+      }
     };
     
     window.addEventListener('forceAdRefresh', handleForceRefresh);
@@ -99,10 +113,16 @@ const QuizPage: React.FC = () => {
   }, [checkSuspensionStatus, loadInitialData, setForceReloadAds]);
   
   useEffect(() => {
-    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+    // Use a ref to track if the event listener is already attached
+    const adSlotsUpdatedHandler = (event: Event) => {
+      // Add throttling to prevent multiple calls in quick succession
+      handleAdSlotsUpdated();
+    };
+    
+    window.addEventListener('adSlotsUpdated', adSlotsUpdatedHandler);
     
     return () => {
-      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      window.removeEventListener('adSlotsUpdated', adSlotsUpdatedHandler);
     };
   }, [handleAdSlotsUpdated]);
   

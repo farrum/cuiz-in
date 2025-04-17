@@ -51,6 +51,12 @@ export const useAdState = () => {
   ) => {
     if (!isMountedRef.current) return;
     
+    // If content is the same as current and we're already loaded, don't update
+    if (adLoaded && content === adContent && id === adId && version === adVersion) {
+      console.log('Ad content unchanged, skipping state update');
+      return;
+    }
+    
     setAdContent(content);
     setAdId(id);
     setAdVersion(version);
@@ -58,14 +64,18 @@ export const useAdState = () => {
     setAdLoaded(!!content);
     setAdActive(isActive);
     setAdError(error);
-  }, []);
+  }, [adLoaded, adContent, adId, adVersion]);
   
-  // Handle throttling for ad fetches
+  // Handle throttling for ad fetches - more aggressive throttling to prevent loops
   const canFetchAd = useCallback((force = false): boolean => {
     const now = Date.now();
-    if (!force && now - lastFetchTimeRef.current < 5000) {
+    const THROTTLE_TIME = force ? 2000 : 5000; // 2s for force, 5s for regular
+    
+    if (now - lastFetchTimeRef.current < THROTTLE_TIME) {
+      console.log(`Ad fetch throttled (${((now - lastFetchTimeRef.current) / 1000).toFixed(1)}s < ${THROTTLE_TIME / 1000}s)`);
       return false;
     }
+    
     lastFetchTimeRef.current = now;
     return true;
   }, []);
