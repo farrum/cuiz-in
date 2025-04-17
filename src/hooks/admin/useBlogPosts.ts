@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,6 +11,7 @@ interface BlogPost {
   slug?: string;
   author?: string;
   published_at?: string;
+  created_at?: string;
   is_published: boolean;
 }
 
