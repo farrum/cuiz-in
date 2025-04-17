@@ -32,6 +32,16 @@ const UserManagementWithAttendance: React.FC = () => {
     }
   };
 
+  const handleUserSelect = (userId: string) => {
+    console.log('User selected:', userId);
+    setSelectedUserId(userId);
+    
+    // Switch to calendar view when a user is selected
+    if (view === 'table') {
+      setView('calendar');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -63,13 +73,13 @@ const UserManagementWithAttendance: React.FC = () => {
           <CardContent>
             <AdminUserManagementEnhanced
               onResetPassword={handleResetPassword}
-              onUserSelect={(userId) => setSelectedUserId(userId)}
+              onUserSelect={handleUserSelect}
             />
           </CardContent>
         </Card>
       ) : (
         selectedUserId ? (
-          <UserAttendanceTracker />
+          <UserAttendanceTracker userId={selectedUserId} />
         ) : (
           <div className="text-center p-8 text-muted-foreground">
             Select a user from the table view to see their attendance details

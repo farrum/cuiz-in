@@ -1,103 +1,74 @@
 
 import React, { useState, useEffect } from 'react';
-import { addMonths, subMonths, format } from 'date-fns';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader 
-} from "@/components/ui/card";
-import { TabsContent } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
-import ErrorMessage from './ErrorMessage';
-import AttendanceCalendarView from './AttendanceCalendarView';
+import { format, parseISO, isValid } from 'date-fns';
 import UserHistoryView from './UserHistoryView';
-import { useAttendanceData } from './useAttendanceData';
+import AttendanceCalendarView from './AttendanceCalendarView';
+import ErrorMessage from './ErrorMessage';
 
-// Import new components
-import AttendanceHeader from './components/AttendanceHeader';
-import LoadingState from './components/LoadingState';
+interface UserAttendanceTrackerProps {
+  userId?: string;
+}
 
-const UserAttendanceTracker: React.FC = () => {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+const UserAttendanceTracker: React.FC<UserAttendanceTrackerProps> = ({ userId }) => {
   const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'calendar' | 'list'>('calendar');
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Use the shared attendance data hook
-  const { 
-    attendance,
-    daysInMonth,
-    error,
-    setError,
-    userHistory,
-    userHistoryLoading,
-    fetchUserHistory,
-    getLastLoginDate,
-    formatAttendanceDate,
-    getUserAttendanceStats,
-    fetchAttendanceData
-  } = useAttendanceData(currentMonth, users);
+  const [selectedUser, setSelectedUser] = useState<string | null>(userId || null);
+  const [userHistory, setUserHistory] = useState<Record<string, any[]>>({});
+  const [userHistoryLoading, setUserHistoryLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'history' | 'calendar'>('history');
 
-  // Fetch users on component mount
+  // Fetch users
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  // Filter users when search term changes
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredUsers(users);
-    } else {
-      const lowercaseSearch = searchTerm.toLowerCase();
-      const filtered = users.filter(user => 
-        user.username.toLowerCase().includes(lowercaseSearch)
-      );
-      setFilteredUsers(filtered);
-    }
-  }, [searchTerm, users]);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('Fetching users for attendance tracker...');
-      
-      const { data: usersData, error } = await supabase
-        .from('profiles')
-        .select('id, username, suspended')
-        .order('username');
+    const fetchUsers = async () => {
+      try {
+        console.log('Fetching users for attendance tracker...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, suspended')
+          .order('username');
+          
+        if (error) throw error;
+        console.log(`Fetched ${data?.length} users`);
+        setUsers(data || []);
         
-      if (error) {
+        // If userId was passed as prop, select that user automatically
+        if (userId && !selectedUser) {
+          setSelectedUser(userId);
+          fetchUserHistory(userId);
+        }
+      } catch (error: any) {
+        setError(`Error fetching users: ${error.message}`);
         console.error('Error fetching users:', error);
-        throw error;
       }
-      
-      if (usersData) {
-        console.log(`Fetched ${usersData.length} users`);
-        setUsers(usersData);
-        setFilteredUsers(usersData);
-      } else {
-        console.log("No users found");
-        setUsers([]);
-        setFilteredUsers([]);
-      }
-    } catch (error: any) {
-      console.error('Error fetching users:', error);
-      setError(`Failed to load users: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  // Handle month navigation
-  const handleMonthChange = (direction: 'prev' | 'next') => {
-    if (direction === 'prev') {
-      setCurrentMonth(prevMonth => subMonths(prevMonth, 1));
-    } else {
-      setCurrentMonth(prevMonth => addMonths(prevMonth, 1));
+    fetchUsers();
+  }, [userId]);
+
+  const fetchUserHistory = async (userId: string) => {
+    if (!userId) return;
+    
+    setUserHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_attendance')
+        .select('*')
+        .eq('user_id', userId)
+        .order('login_time', { ascending: false });
+        
+      if (error) throw error;
+      
+      // Store the history by user ID
+      setUserHistory(prev => ({
+        ...prev,
+        [userId]: data || []
+      }));
+    } catch (error: any) {
+      setError(`Error fetching attendance history: ${error.message}`);
+      console.error('Error fetching attendance history:', error);
+    } finally {
+      setUserHistoryLoading(false);
     }
   };
 
@@ -106,93 +77,69 @@ const UserAttendanceTracker: React.FC = () => {
     fetchUserHistory(userId);
   };
 
-  // Create and download CSV file with attendance data
-  const exportAttendance = () => {
-    // Create CSV content
-    let csvContent = "Username,";
+  const handleRefresh = (userId: string) => {
+    fetchUserHistory(userId);
+  };
+  
+  const formatAttendanceDate = (dateStr: string) => {
+    try {
+      const date = parseISO(dateStr);
+      return isValid(date) ? format(date, 'MMMM d, yyyy') : dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+  
+  const getLastLoginDate = (userId: string) => {
+    const history = userHistory[userId];
+    if (!history || history.length === 0) return 'No login history';
     
-    // Add headers for each day
-    daysInMonth.forEach(day => {
-      csvContent += format(day, 'dd/MM/yyyy') + ",";
-    });
-    csvContent += "Total Days Present\n";
-    
-    // Add data for each user
-    attendance.forEach(user => {
-      csvContent += user.username + ",";
-      
-      let totalPresent = 0;
-      daysInMonth.forEach(day => {
-        const dateStr = format(day, 'yyyy-MM-dd');
-        const isPresent = user.dates[dateStr] ? true : false;
-        csvContent += (isPresent ? "Present" : "Absent") + ",";
-        if (isPresent) totalPresent++;
-      });
-      
-      csvContent += totalPresent + "\n";
-    });
-    
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `attendance-${format(currentMonth, 'MMM-yyyy')}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    return formatAttendanceDate(history[0].attendance_date);
   };
 
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
   return (
-    <Card className="max-w-full overflow-hidden">
-      <CardHeader>
-        <AttendanceHeader 
-          currentMonth={currentMonth}
-          view={view}
-          searchTerm={searchTerm}
-          loading={loading}
-          attendanceCount={attendance.length}
-          onMonthChange={handleMonthChange}
-          onViewChange={(newView) => setView(newView)}
-          onSearchChange={setSearchTerm}
-          onRefresh={fetchAttendanceData}
-          onExport={exportAttendance}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Attendance Tracker</h2>
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => setView('history')} 
+            className={`px-3 py-1 rounded ${view === 'history' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+          >
+            History View
+          </button>
+          <button 
+            onClick={() => setView('calendar')} 
+            className={`px-3 py-1 rounded ${view === 'calendar' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+          >
+            Calendar View
+          </button>
+        </div>
+      </div>
+
+      {view === 'history' ? (
+        <UserHistoryView 
+          users={users}
+          selectedUser={selectedUser}
+          userHistory={userHistory}
+          userHistoryLoading={userHistoryLoading}
+          onUserSelect={handleUserSelect}
+          onRefresh={handleRefresh}
+          getLastLoginDate={getLastLoginDate}
+          formatAttendanceDate={formatAttendanceDate}
         />
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <ErrorMessage error={error} onDismiss={() => setError(null)} />
-        )}
-        
-        {loading ? (
-          <LoadingState />
-        ) : (
-          <>
-            <TabsContent value="calendar" className="mt-0">
-              <AttendanceCalendarView 
-                attendance={attendance} 
-                daysInMonth={daysInMonth} 
-                loading={loading} 
-              />
-            </TabsContent>
-            
-            <TabsContent value="list" className="mt-0">
-              <UserHistoryView 
-                users={filteredUsers}
-                selectedUser={selectedUser}
-                userHistory={userHistory}
-                userHistoryLoading={userHistoryLoading}
-                onUserSelect={handleUserSelect}
-                onRefresh={fetchUserHistory}
-                getLastLoginDate={getLastLoginDate}
-                formatAttendanceDate={formatAttendanceDate}
-              />
-            </TabsContent>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      ) : (
+        <AttendanceCalendarView 
+          users={users}
+          selectedUser={selectedUser}
+          onUserSelect={handleUserSelect}
+        />
+      )}
+    </div>
   );
 };
 
