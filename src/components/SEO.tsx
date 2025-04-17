@@ -8,7 +8,7 @@ interface SEOProps {
   canonicalUrl?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
-  schemaType?: 'WebPage' | 'Quiz' | 'FAQPage' | 'Organization' | 'Person';
+  schemaType?: 'WebPage' | 'Quiz' | 'FAQPage' | 'Organization' | 'Person' | 'WebSite';
   schemaData?: Record<string, any>;
   noindex?: boolean;
 }
