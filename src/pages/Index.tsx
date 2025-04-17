@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
@@ -9,6 +8,7 @@ import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useHomePageState } from '@/hooks/useHomePageState';
 import SEOMetaTags from '@/components/SEOMetaTags';
 import StructuredData from '@/components/StructuredData';
+import { AdDebugger } from '@/components/ads';
 import {
   HeroSection,
   NameInputForm,
@@ -34,10 +34,8 @@ const Index: React.FC = () => {
     handleNameSubmit
   } = useHomePageState();
   
-  // Use this to only show debug in development
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Schema.org data for the website
   const websiteSchema = {
     name: 'CuizIN',
     url: 'https://cuiz.in',
@@ -57,7 +55,6 @@ const Index: React.FC = () => {
     }
   };
 
-  // Organization schema
   const organizationSchema = {
     name: 'CuizIN',
     url: 'https://cuiz.in',
@@ -111,25 +108,20 @@ const Index: React.FC = () => {
         
         <HelpSection />
         
-        {/* New Ad Slot 1 */}
         <AdvertisementBanner position="middle" slotId="home-middle-1" pageSection="home-page-middle" className="mt-12" />
         
         <HowToEarnSection />
         
-        {/* New Ad Slot 2 */}
         <AdvertisementBanner position="middle" slotId="home-middle-2" pageSection="home-page-bottom" className="mt-12" />
         
-        {/* New SEO Content Section */}
         <InfoSection />
         
         <TestimonialsSection />
         
         <CallToAction />
         
-        {/* Bottom ad without debugger in production */}
         <AdvertisementBanner position="bottom" slotId="home-bottom" pageSection="home-page-footer" className="mt-12" />
         
-        {/* Only show debugger in development mode */}
         {isDevelopment && (
           <AdDebugger 
             position="bottom" 
