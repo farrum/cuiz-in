@@ -3,8 +3,6 @@ import { clearAdCache } from './adCacheService';
 
 // Track the current route to detect real changes
 let currentRoute: string | null = null;
-let lastRefreshTime = 0;
-const THROTTLE_TIME = 3000; // 3 seconds between refreshes
 
 /**
  * Handle navigation events to reset ad caches

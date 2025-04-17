@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -6,12 +5,13 @@ import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
-import { useQuizState } from '@/hooks/quiz/useQuizState';
+import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import { clearAdCache } from '@/services/adCacheService';
 import { forceAdRefresh } from '@/services/adNavigationService';
+import AdDebugger from '@/components/ads/AdDebugger';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useRouteChangeListener } from '@/hooks/useRouteChangeListener';
@@ -51,6 +51,7 @@ const QuizPage: React.FC = () => {
   const handleRouteChange = useCallback((newRoute: string) => {
     console.log('Quiz page detected route change to:', newRoute);
     if (newRoute === '/quiz') {
+      // We're on the quiz page, make sure ads are refreshed
       setTimeout(() => {
         setForceReloadAds(prev => prev + 1);
       }, 100);
@@ -97,14 +98,10 @@ const QuizPage: React.FC = () => {
   }, [checkSuspensionStatus, loadInitialData, setForceReloadAds]);
   
   useEffect(() => {
-    const adSlotsUpdatedHandler = (event: Event) => {
-      handleAdSlotsUpdated();
-    };
-    
-    window.addEventListener('adSlotsUpdated', adSlotsUpdatedHandler);
+    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     
     return () => {
-      window.removeEventListener('adSlotsUpdated', adSlotsUpdatedHandler);
+      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
     };
   }, [handleAdSlotsUpdated]);
   
@@ -219,6 +216,15 @@ const QuizPage: React.FC = () => {
         </div>
         
         <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
+        
+        {isDevelopment && (
+          <AdDebugger 
+            position="bottom" 
+            slotId="quiz-bottom" 
+            pageSection="quiz-page" 
+            className="mt-4 max-w-3xl w-full mx-auto"
+          />
+        )}
       </main>
       
       <Footer />

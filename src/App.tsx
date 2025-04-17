@@ -35,9 +35,6 @@ import QuizQuestionPage from "@/pages/QuizQuestionPage";
 import BlogPage from './pages/BlogPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CategoryPage from './pages/CategoryPage';
-import FAQPage from './pages/FAQPage';
-import BlogPostPage from './pages/BlogPostPage';
-import SharePage from './pages/SharePage';
 
 const routes = [
   { path: "/", element: <Index /> },
@@ -54,7 +51,6 @@ const routes = [
   { path: "/terms", element: <TermsPage /> },
   { path: "/disclaimer", element: <DisclaimerPage /> },
   { path: "/privacy", element: <PrivacyPage /> },
-  { path: "/faq", element: <FAQPage /> },
   { path: "/team-dashboard", element: <ProtectedRoute><TeamLeaderDashboardPage /></ProtectedRoute> },
   { path: "/profile", element: <ProtectedRoute><Profile /></ProtectedRoute> },
   { path: "/admin", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
@@ -75,10 +71,8 @@ const routes = [
   { path: "/admin/requests", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
   { path: "/quiz/question/:questionId/:questionSlug", element: <QuizQuestionPage /> },
   { path: "/blog", element: <BlogPage /> },
-  { path: "/blog/:blogSlug", element: <BlogPostPage /> },
   { path: "/categories", element: <CategoriesPage /> },
   { path: "/categories/:categorySlug", element: <CategoryPage /> },
-  { path: "/share/:contentType/:contentId", element: <SharePage /> },
   { path: "*", element: <NotFound /> }
 ];
 
