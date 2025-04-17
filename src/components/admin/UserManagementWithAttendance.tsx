@@ -2,20 +2,15 @@
 import React, { useState } from 'react';
 import { UserAttendanceTracker } from './attendance';
 import TeamMembersTable from './TeamMembersTable';
-import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import TopPlayersSection from '@/components/TopPlayersSection';
+import AdminUserManagement from '@/components/admin/AdminUserManagement';
 
 const UserManagementWithAttendance: React.FC = () => {
   const [view, setView] = useState<'table' | 'calendar'>('table');
-  const { 
-    teamMembers, 
-    isLoading, 
-    handleStatusChange 
-  } = useTeamMembers();
   const { toast } = useToast();
 
   const handleResetPassword = async (userId: string) => {
@@ -62,16 +57,11 @@ const UserManagementWithAttendance: React.FC = () => {
       {view === 'table' ? (
         <Card>
           <CardHeader>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>Manage your team members and their account status</CardDescription>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>Manage all users and their account status</CardDescription>
           </CardHeader>
           <CardContent>
-            <TeamMembersTable 
-              teamMembers={teamMembers} 
-              isLoading={isLoading} 
-              onStatusChange={handleStatusChange}
-              onResetPassword={handleResetPassword}
-            />
+            <AdminUserManagement />
           </CardContent>
         </Card>
       ) : (
