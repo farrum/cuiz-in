@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { HelmetProvider } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
@@ -186,137 +187,139 @@ function App() {
 
   return (
     <div className="app-container">
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <Toaster />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/quiz" element={<QuizPage />} />
-            <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
-            <Route path="/challenge/:challengeId" element={
-              <ProtectedRoute>
-                <ChallengePlayPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/archived-challenges" element={
-              <ProtectedRoute>
-                <ArchivedChallengesPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/referral" element={
-              <ProtectedRoute>
-                <ReferralPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/referral-program" element={<ReferralProgramPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<Registration />} />
-            <Route path="/admin-login" element={<AdminLoginPage />} />
-            <Route path="/how-to-play" element={<HowToPlay />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/disclaimer" element={<DisclaimerPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            
-            <Route path="/team-dashboard" element={
-              <ProtectedRoute>
-                <TeamLeaderDashboardPage />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin routes - make all admin paths go to the AdminPage */}
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/users" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/logs" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/ads" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/payments" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/referrals" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/quiz" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/quiz/questions" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/quiz/challenges" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/badges" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/reports" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/sync" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/messages" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/ticker" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/icons" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/requests" element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <Toaster />
+          <Router>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/quiz" element={<QuizPage />} />
+              <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
+              <Route path="/challenge/:challengeId" element={
+                <ProtectedRoute>
+                  <ChallengePlayPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/archived-challenges" element={
+                <ProtectedRoute>
+                  <ArchivedChallengesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/referral" element={
+                <ProtectedRoute>
+                  <ReferralPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/referral-program" element={<ReferralProgramPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<Registration />} />
+              <Route path="/admin-login" element={<AdminLoginPage />} />
+              <Route path="/how-to-play" element={<HowToPlay />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/disclaimer" element={<DisclaimerPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              
+              <Route path="/team-dashboard" element={
+                <ProtectedRoute>
+                  <TeamLeaderDashboardPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin routes - make all admin paths go to the AdminPage */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/logs" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/ads" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/payments" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/referrals" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/quiz" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/quiz/questions" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/quiz/challenges" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/badges" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/reports" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/sync" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/messages" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/ticker" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/icons" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/requests" element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </ThemeProvider>
+      </HelmetProvider>
     </div>
   );
 }

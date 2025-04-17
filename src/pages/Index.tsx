@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -35,8 +36,28 @@ const Index: React.FC = () => {
   
   const isDevelopment = process.env.NODE_ENV === 'development';
   
+  // Schema.org structured data for the homepage
+  const homeSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    'url': 'https://cuiz.in',
+    'name': 'CuizIN - Free Quiz Game with Rewards',
+    'description': 'Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play.',
+    'potentialAction': {
+      '@type': 'SearchAction',
+      'target': 'https://cuiz.in/quiz?search={search_term_string}',
+      'query-input': 'required name=search_term_string'
+    }
+  };
+  
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+      <SEO 
+        title="CuizIN - Free Quiz Game with Rewards" 
+        description="Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play."
+        schemaType="WebSite"
+        schemaData={homeSchema}
+      />
       <Header />
       <NewsTicker className="mt-16" />
       

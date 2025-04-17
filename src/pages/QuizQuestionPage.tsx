@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuizCard from '@/components/QuizCard';
@@ -83,8 +84,46 @@ const QuizQuestionPage: React.FC = () => {
     window.location.href = `/answer/${questionId}/${selectedAnswer}`;
   };
 
+  // Generate Schema.org structured data for quiz question
+  const generateQuestionSchema = () => {
+    if (!question) return null;
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Quiz',
+      'name': question.question,
+      'about': question.category,
+      'educationalLevel': question.difficulty,
+      'hasPart': {
+        '@type': 'Question',
+        'name': question.question,
+        'suggestedAnswer': question.options.map(option => ({
+          '@type': 'Answer',
+          'text': option
+        }))
+      }
+    };
+  };
+
+  const pageTitle = question 
+    ? `${question.question} | CuizIN Quiz` 
+    : 'Quiz Question | CuizIN';
+    
+  const pageDescription = question
+    ? `Test your ${question.category} knowledge with this ${question.difficulty} level quiz question. Answer correctly to earn points!`
+    : 'Play our interactive quiz game and challenge yourself with interesting questions across various categories.';
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        canonicalUrl={question ? `https://cuiz.in/quiz/question/${question.id}/${questionSlug}` : undefined}
+        ogType="article"
+        schemaType="Quiz"
+        schemaData={generateQuestionSchema()}
+      />
+      
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">

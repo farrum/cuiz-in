@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -83,10 +84,27 @@ const QuizPage: React.FC = () => {
     return null;
   }
   
+  // Schema.org quiz structured data
+  const quizSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    'name': 'CuizIN Quiz Game',
+    'description': 'Test your knowledge and earn rewards with our interactive quiz game.',
+    'about': 'Quiz game with monetary rewards',
+    'educationalUse': 'assessment'
+  };
+
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Play Quiz and Earn Rewards | CuizIN"
+        description="Play our free quiz game, answer questions correctly to earn points and rewards. Challenge yourself with our daily quiz challenges!"
+        ogType="website"
+        schemaType="Quiz"
+        schemaData={quizSchema}
+      />
       <Header />
       <NewsTicker className="mt-16" />
       
