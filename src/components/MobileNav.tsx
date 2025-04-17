@@ -1,84 +1,299 @@
 
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain, BarChartIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
+import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface MobileNavProps {
-  isLoggedIn: boolean;
-}
+const MobileNav: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const isAuthenticated = localStorage.getItem(STORAGE_KEYS.USER_NAME) !== null;
+  const isAdmin = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  const isTeamLeader = localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' || 
+                      localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'teamleader';
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [todayPoints, setTodayPoints] = useState(0);
+  const [monthlyPoints, setMonthlyPoints] = useState(0);
+  
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+  
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+  
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+    closeMenu();
+    window.location.href = '/';
+  };
+  
+  useEffect(() => {
+    const updatePoints = async () => {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!userId) return;
+      
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+        
+        const { data: dailyData } = await supabase
+          .from('daily_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .maybeSingle();
+          
+        if (dailyData) {
+          setTodayPoints(Number(dailyData.points));
+        } else {
+          setTodayPoints(0);
+        }
+        
+        const { data: monthlyData } = await supabase
+          .from('monthly_points')
+          .select('points')
+          .eq('user_id', userId)
+          .eq('month', currentMonth)
+          .maybeSingle();
+          
+        if (monthlyData) {
+          setMonthlyPoints(Number(monthlyData.points));
+        } else {
+          setMonthlyPoints(0);
+        }
+      } catch (error) {
+        console.error('Error fetching points data:', error);
+      }
+    };
+    
+    if (isAuthenticated) {
+      updatePoints();
+      
+      const handlePointsUpdate = () => {
+        updatePoints();
+      };
+      
+      window.addEventListener('pointsUpdated', handlePointsUpdate);
+      
+      const intervalId = setInterval(updatePoints, 10000);
+      
+      return () => {
+        window.removeEventListener('pointsUpdated', handlePointsUpdate);
+        clearInterval(intervalId);
+      };
+    }
+  }, [isAuthenticated]);
 
-const MobileNav = ({ isLoggedIn }: MobileNavProps) => {
+  // Listen for role updates
+  useEffect(() => {
+    const handleRoleUpdate = () => {
+      console.log('Role update received in MobileNav');
+      // Force re-render by setting state
+      setIsOpen(isOpen);
+    };
+    
+    window.addEventListener('userRoleUpdated', handleRoleUpdate);
+    window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleRoleUpdate);
+      window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
+    };
+  }, [isOpen]);
+  
+  if (!isMobile) return null;
+  
+  const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
+  const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
+  
+  const menuGradient = "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950";
+  
   return (
-    <div className="md:hidden bg-background border-b">
-      <div className="container px-4 py-3">
-        <nav className="flex flex-col space-y-3">
-          <Link
-            to="/"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            Home
-          </Link>
-          <Link
-            to="/quiz"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            Quiz
-          </Link>
-          <Link
-            to="/categories"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            Categories
-          </Link>
-          <Link
-            to="/blog"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            Blog
-          </Link>
-          <Link
-            to="/faq"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            FAQ
-          </Link>
-          <Link
-            to="/how-to-play"
-            className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-          >
-            How To Play
-          </Link>
+    <div className="md:hidden">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={toggleMenu} 
+        className="z-50 relative"
+        aria-label="Toggle menu"
+      >
+        {isOpen ? <X size={24} className="text-primary" /> : <Menu size={24} />}
+      </Button>
+      
+      <div 
+        className={`fixed inset-0 ${menuGradient} z-40 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } shadow-xl`}
+      >
+        <div className="flex flex-col h-full pt-16 px-6">
+          <div className="space-y-1 flex-1">
+            <div className="mb-6 text-center">
+              <PartyPopper className="h-12 w-12 mx-auto text-primary mb-2" />
+              <h2 className="text-xl font-bold text-primary">
+                Cuiz<span className="text-green-500">IN</span>
+              </h2>
+              <p className="text-sm text-muted-foreground">Play, Learn & Earn!</p>
+            </div>
+            
+            <Link 
+              to="/" 
+              className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                location.pathname === '/' ? 'bg-primary text-primary-foreground' : ''
+              }`}
+              onClick={closeMenu}
+            >
+              <Home className="mr-3 h-5 w-5" />
+              Home
+            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  to="/quiz" 
+                  className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                    location.pathname === '/quiz' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={closeMenu}
+                >
+                  <Brain className="mr-3 h-5 w-5" />
+                  Quiz
+                  <Sparkles className="ml-2 h-4 w-4 text-yellow-500" />
+                </Link>
+                
+                <Link 
+                  to="/profile" 
+                  className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                    location.pathname === '/profile' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={closeMenu}
+                >
+                  <User className="mr-3 h-5 w-5" />
+                  Profile
+                </Link>
+                
+                <Link 
+                  to="/referral" 
+                  className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                    location.pathname === '/referral' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={closeMenu}
+                >
+                  <Gift className="mr-3 h-5 w-5" />
+                  Referrals
+                </Link>
 
-          {isLoggedIn ? (
-            <>
-              <Link
-                to="/referral"
-                className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-              >
-                Referral
-              </Link>
-              <Link
-                to="/profile"
-                className="px-2 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-center"
-              >
-                Profile
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="px-2 py-1 rounded-md hover:bg-muted transition-colors duration-200"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="px-2 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-center"
-              >
-                Register
-              </Link>
-            </>
-          )}
-        </nav>
+                {isTeamLeader && (
+                  <Link 
+                    to="/team-dashboard" 
+                    className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                      location.pathname === '/team-dashboard' ? 'bg-primary text-primary-foreground' : ''
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    <BarChartIcon className="mr-3 h-5 w-5" />
+                    Team Dashboard
+                  </Link>
+                )}
+                
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                      location.pathname === '/admin' ? 'bg-primary text-primary-foreground' : ''
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    <Settings className="mr-3 h-5 w-5" />
+                    Admin
+                  </Link>
+                )}
+                
+                <div className="mt-6 space-y-4 p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl shadow-sm backdrop-blur-sm">
+                  <h3 className="flex items-center text-sm font-medium mb-2">
+                    <Target className="w-4 h-4 mr-2 text-primary" />
+                    Progress Targets
+                  </h3>
+                  
+                  <div className="space-y-1">
+                    <div className="flex text-xs items-center justify-between mb-1">
+                      <span className="font-medium">Daily Target:</span>
+                      <span className="font-bold">{todayPoints.toFixed(1)}/{DAILY_TARGET}</span>
+                    </div>
+                    <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                      <Progress value={dailyProgress} className="h-full" />
+                      {dailyProgress > 15 && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {dailyProgress.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex text-xs items-center justify-between mb-1">
+                      <span className="font-medium">Monthly Target:</span>
+                      <span className="font-bold">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
+                    </div>
+                    <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                      <Progress value={monthlyProgress} className="h-full" />
+                      {monthlyProgress > 15 && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {monthlyProgress.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center w-full text-left p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors text-red-500 mt-4"
+                >
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                    location.pathname === '/login' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={closeMenu}
+                >
+                  <LogIn className="mr-3 h-5 w-5" />
+                  Login
+                </Link>
+                
+                <Link 
+                  to="/register" 
+                  className={`flex items-center p-3 text-lg rounded-md hover:bg-secondary/50 transition-colors ${
+                    location.pathname === '/register' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  onClick={closeMenu}
+                >
+                  <User className="mr-3 h-5 w-5" />
+                  Register
+                  <Sparkles className="ml-2 h-4 w-4 text-yellow-500" />
+                </Link>
+              </>
+            )}
+          </div>
+          
+          <div className="py-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-center text-muted-foreground">© 2023 Cuiz<span className="text-green-500">IN</span></p>
+          </div>
+        </div>
       </div>
     </div>
   );

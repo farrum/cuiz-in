@@ -1,69 +1,129 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Bookmark, BookOpen, FolderOpen } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="py-6 border-t border-border mt-auto">
-      <div className="container max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <h3 className="font-bold mb-4">About CuizIN</h3>
-            <p className="text-sm text-muted-foreground">
-              A free quiz platform where users can earn fixed monthly income by completing quizzes,
-              challenges, and referring friends. No payment required to start.
+    <footer className="py-8 border-t border-border bg-background">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* First Column - Navigation Links */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/quiz" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Play className="w-4 h-4 mr-2" />
+                  Play Quiz
+                </Link>
+              </li>
+              <li>
+                <Link to="/referral" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Users className="w-4 h-4 mr-2" />
+                  Referral Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/referral-program" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Referral Program
+                </Link>
+              </li>
+              <li>
+                <Link to="/profile" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Second Column - Legal Pages */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/terms" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/disclaimer" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Game Disclaimer
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Lock className="w-4 h-4 mr-2" />
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Map className="w-4 h-4 mr-2" />
+                  Sitemap
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Third Column - Explore */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Explore</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/blog" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link to="/categories" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Categories
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-to-play" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Bookmark className="w-4 h-4 mr-2" />
+                  How To Play
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Fourth Column - Summary */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">About CuizIN</h3>
+            <p className="text-muted-foreground">
+              CuizIN is a completely free quiz platform. Players can earn a fixed monthly income 
+              by completing assigned tasks and maintaining active play. No payment is required to start 
+              playing and earning rewards.
             </p>
-          </div>
-          
-          <div>
-            <h3 className="font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="text-muted-foreground hover:text-foreground">Home</Link></li>
-              <li><Link to="/quiz" className="text-muted-foreground hover:text-foreground">Quiz</Link></li>
-              <li><Link to="/referral-program" className="text-muted-foreground hover:text-foreground">Referral Program</Link></li>
-              <li><Link to="/how-to-play" className="text-muted-foreground hover:text-foreground">How to Play</Link></li>
-              <li><Link to="/login" className="text-muted-foreground hover:text-foreground">Login</Link></li>
-              <li><Link to="/register" className="text-muted-foreground hover:text-foreground">Register</Link></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="font-bold mb-4">Content</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
-              <li><Link to="/categories" className="text-muted-foreground hover:text-foreground">Categories</Link></li>
-              <li><Link to="/faq" className="text-muted-foreground hover:text-foreground">FAQ</Link></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="font-bold mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
-              <li><Link to="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link to="/disclaimer" className="text-muted-foreground hover:text-foreground">Disclaimer</Link></li>
-            </ul>
+            <p className="text-muted-foreground">
+              <Link to="/referral-program" className="text-primary hover:underline">
+                Refer friends and build your team
+              </Link> to increase your monthly earnings.
+            </p>
           </div>
         </div>
         
-        <div className="border-t border-border pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Copyright */}
+        <div className="mt-8 pt-4 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
             © {currentYear} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
           </p>
-          
-          <div className="flex space-x-4">
-            <a href="https://facebook.com/cuizin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-              Facebook
-            </a>
-            <a href="https://twitter.com/cuizin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-              Twitter
-            </a>
-            <a href="https://instagram.com/cuizin" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-              Instagram
-            </a>
-          </div>
         </div>
       </div>
     </footer>
