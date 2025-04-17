@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -11,7 +12,7 @@ import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import { clearAdCache } from '@/services/adCacheService';
 import { forceAdRefresh } from '@/services/adNavigationService';
-import AdDebugger from '@/components/ads/AdDebugger';
+import { AdDebugger } from '@/components/ads';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useRouteChangeListener } from '@/hooks/useRouteChangeListener';
