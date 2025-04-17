@@ -41,6 +41,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   });
 
   if (!adActive) {
+    // Only show debug info in development mode
     if (isDevelopment) {
       return (
         <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
@@ -69,8 +70,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       <AdContent
         adLoaded={adLoaded}
         adContent={adContent}
-        adDebug={adDebug}
-        adError={adError}
+        adDebug={isDevelopment ? adDebug : null} // Only pass debug info in development
+        adError={isDevelopment ? adError : null} // Only pass error info in development
         isDevelopment={isDevelopment}
         position={position}
         slotId={slotId}

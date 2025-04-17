@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useHomePageState } from '@/hooks/useHomePageState';
-import AdDebugger from '@/components/ads/AdDebugger';
 import SEOMetaTags from '@/components/SEOMetaTags';
 import StructuredData from '@/components/StructuredData';
 import {
@@ -35,6 +34,7 @@ const Index: React.FC = () => {
     handleNameSubmit
   } = useHomePageState();
   
+  // Use this to only show debug in development
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Schema.org data for the website
@@ -126,9 +126,10 @@ const Index: React.FC = () => {
         
         <CallToAction />
         
-        {/* Bottom ad with debugger */}
+        {/* Bottom ad without debugger in production */}
         <AdvertisementBanner position="bottom" slotId="home-bottom" pageSection="home-page-footer" className="mt-12" />
         
+        {/* Only show debugger in development mode */}
         {isDevelopment && (
           <AdDebugger 
             position="bottom" 
