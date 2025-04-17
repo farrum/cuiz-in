@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -10,6 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, RefreshCw, Calendar, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface UserHistoryViewProps {
   users: any[];
@@ -63,6 +64,34 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
     
     return streak;
   };
+
+  // Add function to fetch quiz activity
+  const [quizActivity, setQuizActivity] = useState<any[]>([]);
+  const [loadingQuizActivity, setLoadingQuizActivity] = useState(false);
+
+  useEffect(() => {
+    const fetchQuizActivity = async () => {
+      if (!selectedUser) return;
+      
+      setLoadingQuizActivity(true);
+      try {
+        const { data, error } = await supabase
+          .from('quiz_answers')
+          .select('*')
+          .eq('user_id', selectedUser)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        setQuizActivity(data || []);
+      } catch (error) {
+        console.error('Error fetching quiz activity:', error);
+      } finally {
+        setLoadingQuizActivity(false);
+      }
+    };
+
+    fetchQuizActivity();
+  }, [selectedUser]);
 
   return (
     <div className="space-y-6">
@@ -139,39 +168,106 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
             </Card>
           </div>
           
-          <div className="border rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                    Login Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {userHistory[selectedUser] && userHistory[selectedUser].length > 0 ? (
-                  userHistory[selectedUser].map((record) => (
-                    <tr key={record.id} className="hover:bg-muted/50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {formatAttendanceDate(record.attendance_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {new Date(record.login_time).toLocaleTimeString()}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border rounded-lg overflow-hidden">
+              <h3 className="text-lg font-semibold p-4 bg-muted">Login History</h3>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Login Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {userHistory[selectedUser] && userHistory[selectedUser].length > 0 ? (
+                    userHistory[selectedUser].map((record) => (
+                      <tr key={record.id} className="hover:bg-muted/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {formatAttendanceDate(record.attendance_date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {new Date(record.login_time).toLocaleTimeString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
+                        No login history found for this user.
                       </td>
                     </tr>
-                  ))
-                ) : (
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+              <h3 className="text-lg font-semibold p-4 bg-muted">Quiz Activity</h3>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-muted">
                   <tr>
-                    <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
-                      No login history found for this user.
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Questions Attempted
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Points Earned
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loadingQuizActivity ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-4 text-center">
+                        <div className="flex justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : quizActivity.length > 0 ? (
+                    // Group quiz activity by date
+                    Object.entries(
+                      quizActivity.reduce((acc: any, curr) => {
+                        const date = new Date(curr.created_at).toLocaleDateString();
+                        if (!acc[date]) {
+                          acc[date] = {
+                            count: 0,
+                            points: 0
+                          };
+                        }
+                        acc[date].count++;
+                        acc[date].points += curr.points_earned || 0;
+                        return acc;
+                      }, {})
+                    ).map(([date, stats]: [string, any]) => (
+                      <tr key={date} className="hover:bg-muted/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {date}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {stats.count}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {stats.points}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                        No quiz activity found for this user.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
 import { UserAttendanceTracker } from './attendance';
-import TeamMembersTable from './TeamMembersTable';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import TopPlayersSection from '@/components/TopPlayersSection';
-import AdminUserManagement from '@/components/admin/AdminUserManagement';
+import AdminUserManagementEnhanced from '@/components/admin/AdminUserManagementEnhanced';
 
 const UserManagementWithAttendance: React.FC = () => {
   const [view, setView] = useState<'table' | 'calendar'>('table');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleResetPassword = async (userId: string) => {
@@ -61,11 +61,20 @@ const UserManagementWithAttendance: React.FC = () => {
             <CardDescription>Manage all users and their account status</CardDescription>
           </CardHeader>
           <CardContent>
-            <AdminUserManagement />
+            <AdminUserManagementEnhanced
+              onResetPassword={handleResetPassword}
+              onUserSelect={(userId) => setSelectedUserId(userId)}
+            />
           </CardContent>
         </Card>
       ) : (
-        <UserAttendanceTracker />
+        selectedUserId ? (
+          <UserAttendanceTracker userId={selectedUserId} />
+        ) : (
+          <div className="text-center p-8 text-muted-foreground">
+            Select a user from the table view to see their attendance details
+          </div>
+        )
       )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
