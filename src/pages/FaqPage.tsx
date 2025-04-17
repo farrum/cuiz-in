@@ -1,52 +1,58 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+
+interface Faq {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+}
 
 const FaqPage: React.FC = () => {
-  const faqItems = [
-    {
-      question: "How does CuizIN work?",
-      answer: "CuizIN is a free quiz platform where users can earn rewards by answering questions correctly and building streaks. You play quizzes, earn points based on your performance, and can redeem these points for rewards."
-    },
-    {
-      question: "Is CuizIN completely free to use?",
-      answer: "Yes, CuizIN is 100% free to use. We don't charge any subscription fees. Our platform is supported by advertisements, which allow us to offer monetary rewards to active players."
-    },
-    {
-      question: "How do I earn points on CuizIN?",
-      answer: "You earn points by answering quiz questions correctly, completing daily challenges, maintaining answer streaks, and referring new users. The more you play and the better you perform, the more points you'll accumulate."
-    },
-    {
-      question: "How can I withdraw my earnings?",
-      answer: "Once you've accumulated enough points, you can request a withdrawal through your profile page. We support various payment methods including PayPal, bank transfers, and mobile payment services depending on your region."
-    },
-    {
-      question: "What are daily challenges?",
-      answer: "Daily challenges are special quizzes that refresh every day. They offer bonus points and are a great way to increase your earnings. Make sure to complete them regularly to maximize your rewards."
-    },
-    {
-      question: "How does the referral program work?",
-      answer: "You can earn additional points by inviting friends to join CuizIN. When someone signs up using your referral link and starts playing quizzes, you'll receive referral bonuses based on their activity."
-    },
-    {
-      question: "What happens if I miss a day of playing?",
-      answer: "Missing a day won't negatively impact your account. However, maintaining a daily login streak can provide bonus points, so regular participation is encouraged for maximum earnings."
-    },
-    {
-      question: "Are there different difficulty levels for quizzes?",
-      answer: "Yes, we offer quizzes across various difficulty levels from easy to hard. More difficult questions generally award more points, allowing you to challenge yourself while earning more."
-    }
-  ];
-  
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('faqs')
+          .select('*')
+          .eq('is_published', true)
+          .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        setFaqs(data || []);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching FAQs:', error);
+        toast({
+          title: 'Error',
+          description: 'Unable to load FAQs. Please try again later.',
+          variant: 'destructive'
+        });
+        setIsLoading(false);
+      }
+    };
+
+    fetchFaqs();
+  }, []);
+
   // Schema.org FAQ Page structured data
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    'mainEntity': faqItems.map(item => ({
+    'mainEntity': faqs.map(item => ({
       '@type': 'Question',
       'name': item.question,
       'acceptedAnswer': {
@@ -72,14 +78,29 @@ const FaqPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
         
         <div className="bg-card rounded-lg shadow-sm p-6">
-          <Accordion type="single" collapsible className="w-full">
-            {faqItems.map((item, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left font-medium">{item.question}</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5, 6].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Accordion type="single" collapsible className="w-full">
+              {faqs.map((item) => (
+                <AccordionItem key={item.id} value={`item-${item.id}`}>
+                  <AccordionTrigger className="text-left font-medium">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </div>
         
         <div className="mt-12 text-center">
