@@ -42,13 +42,27 @@ const AdContent: React.FC<AdContentProps> = ({
     );
   }
   
+  // Check if ad content is just a debug message (typically containing the word "Local" or "ad:")
+  const isDebugText = typeof adContent === 'string' && 
+    (adContent.includes('Local ad:') || 
+     adContent.trim().length < 50 && adContent.includes(':'));
+  
+  // In production, don't show debug text as ad content
+  if (!isDevelopment && isDebugText) {
+    return (
+      <div className="flex items-center justify-center p-4 h-full w-full">
+        <div className="bg-gradient-to-r from-primary/20 to-secondary/20 w-full h-16 rounded-md animate-pulse"></div>
+      </div>
+    );
+  }
+  
   return (
     <>
       {/* Render the ad content */}
       <div 
         id={containerId} 
-        dangerouslySetInnerHTML={{ __html: adContent }}
-        className="ad-content"
+        dangerouslySetInnerHTML={{ __html: isDebugText && isDevelopment ? `<div class="p-2 text-xs">${adContent}</div>` : adContent }}
+        className="ad-content w-full h-full flex items-center justify-center"
       />
       
       {/* Show debug info only in development */}

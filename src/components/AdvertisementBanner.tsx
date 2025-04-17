@@ -70,8 +70,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       <AdContent
         adLoaded={adLoaded}
         adContent={adContent}
-        adDebug={isDevelopment ? adDebug : null} // Only pass debug info in development
-        adError={isDevelopment ? adError : null} // Only pass error info in development
+        adDebug={adDebug}
+        adError={adError}
         isDevelopment={isDevelopment}
         position={position}
         slotId={slotId}
@@ -80,6 +80,3 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       />
     </AdContainer>
   );
-};
-
-export default AdvertisementBanner;
