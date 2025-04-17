@@ -15,25 +15,25 @@ export const generateSitemapXml = async (): Promise<string> => {
     {
       loc: 'https://cuiz.in/',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'daily',
+      changefreq: 'monthly',
       priority: '1.0'
     },
     {
       loc: 'https://cuiz.in/quiz',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'daily',
+      changefreq: 'weekly',
       priority: '0.9'
     },
     {
       loc: 'https://cuiz.in/referral',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
+      changefreq: 'monthly',
       priority: '0.8'
     },
     {
       loc: 'https://cuiz.in/profile',
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
+      changefreq: 'monthly',
       priority: '0.8'
     },
     {
@@ -71,18 +71,6 @@ export const generateSitemapXml = async (): Promise<string> => {
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'yearly',
       priority: '0.5'
-    },
-    {
-      loc: 'https://cuiz.in/blog',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
-      priority: '0.8'
-    },
-    {
-      loc: 'https://cuiz.in/categories',
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
-      priority: '0.7'
     }
   ];
 
@@ -114,30 +102,10 @@ export const generateSitemapXml = async (): Promise<string> => {
     return {
       loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
       lastmod: lastmod,
-      changefreq: 'weekly',
+      changefreq: 'monthly',
       priority: '0.7'
     };
   });
-
-  // Create category pages URLs
-  const categories = [...new Set(questions.map((q: any) => q.category))];
-  const categoryUrls: SitemapEntry[] = categories.map(category => {
-    if (!category) return null;
-    
-    const slug = encodeURIComponent(
-      String(category)
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-    );
-    
-    return {
-      loc: `https://cuiz.in/categories/${slug}`,
-      lastmod: new Date().toISOString().split('T')[0],
-      changefreq: 'weekly',
-      priority: '0.7'
-    };
-  }).filter(Boolean) as SitemapEntry[];
 
   // Create answer URLs for each question
   const answerUrls: SitemapEntry[] = questions.flatMap((question: any) => {
@@ -173,7 +141,7 @@ export const generateSitemapXml = async (): Promise<string> => {
   });
 
   // Combine all URLs
-  const allUrls = [...standardUrls, ...categoryUrls, ...questionUrls, ...answerUrls];
+  const allUrls = [...standardUrls, ...questionUrls, ...answerUrls];
   
   // Generate XML
   return generateXml(allUrls);
