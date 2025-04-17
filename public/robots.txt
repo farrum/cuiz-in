@@ -3,6 +3,8 @@ User-agent: *
 Allow: /
 Disallow: /profile
 Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin/*
 Disallow: /team-dashboard
 
 Sitemap: https://cuiz.in/sitemap.xml
