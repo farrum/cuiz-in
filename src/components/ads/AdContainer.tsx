@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { getSizeClasses, getPositionClasses } from './adStyles';
 
 interface AdContainerProps {
@@ -27,31 +27,6 @@ const AdContainer: React.FC<AdContainerProps> = ({
   adData
 }) => {
   const { slotId, pageSection, adVersion, instanceId } = adData;
-  
-  // Add effect to notify parent components when this container is mounted/unmounted
-  useEffect(() => {
-    // Dispatch an event when the ad container mounts
-    window.dispatchEvent(new CustomEvent('adContainerMounted', {
-      detail: {
-        position,
-        slotId,
-        pageSection,
-        instanceId
-      }
-    }));
-    
-    return () => {
-      // Dispatch an event when the ad container unmounts
-      window.dispatchEvent(new CustomEvent('adContainerUnmounted', {
-        detail: {
-          position,
-          slotId,
-          pageSection,
-          instanceId
-        }
-      }));
-    };
-  }, [position, slotId, pageSection, instanceId]);
   
   return (
     <div 

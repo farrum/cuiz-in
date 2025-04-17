@@ -8,8 +8,6 @@ import NewsTicker from '@/components/NewsTicker';
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useHomePageState } from '@/hooks/useHomePageState';
 import AdDebugger from '@/components/ads/AdDebugger';
-import SEOMetaTags from '@/components/SEOMetaTags';
-import StructuredData from '@/components/StructuredData';
 import {
   HeroSection,
   NameInputForm,
@@ -36,51 +34,9 @@ const Index: React.FC = () => {
   } = useHomePageState();
   
   const isDevelopment = process.env.NODE_ENV === 'development';
-
-  // Schema.org data for the website
-  const websiteSchema = {
-    name: 'CuizIN',
-    url: 'https://cuiz.in',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://cuiz.in/search?q={search_term_string}',
-      'query-input': 'required name=search_term_string'
-    },
-    description: 'Free quiz platform where users can earn fixed monthly income by completing quizzes, challenges, and referring friends.',
-    publisher: {
-      '@type': 'Organization',
-      name: 'CuizIN',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://cuiz.in/og-image.png'
-      }
-    }
-  };
-
-  // Organization schema
-  const organizationSchema = {
-    name: 'CuizIN',
-    url: 'https://cuiz.in',
-    logo: 'https://cuiz.in/og-image.png',
-    sameAs: [
-      'https://facebook.com/cuizin',
-      'https://twitter.com/cuizin',
-      'https://instagram.com/cuizin'
-    ]
-  };
   
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
-      <SEOMetaTags 
-        title="CuizIN - Play Quizzes, Earn Rewards"
-        description="Join CuizIN's free quiz platform and earn a fixed monthly income by completing quizzes, daily challenges, and referring friends. No payment required to start."
-        keywords="quiz app, earn money online, free quiz platform, referral program, quiz rewards, online income, knowledge games, trivia rewards"
-        ogImage="/og-image.png"
-      />
-      
-      <StructuredData type="WebSite" data={websiteSchema} />
-      <StructuredData type="Organization" data={organizationSchema} />
-      
       <Header />
       <NewsTicker className="mt-16" />
       

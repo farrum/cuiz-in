@@ -1,8 +1,6 @@
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { HelmetProvider } from 'react-helmet-async';
 import { useEffect, useState } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
@@ -32,49 +30,6 @@ import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
 import QuizQuestionPage from "@/pages/QuizQuestionPage";
-import BlogPage from './pages/BlogPage';
-import CategoriesPage from './pages/CategoriesPage';
-import CategoryPage from './pages/CategoryPage';
-
-const routes = [
-  { path: "/", element: <Index /> },
-  { path: "/quiz", element: <QuizPage /> },
-  { path: "/answer/:questionId/:selectedOption", element: <AnswerPage /> },
-  { path: "/challenge/:challengeId", element: <ProtectedRoute><ChallengePlayPage /></ProtectedRoute> },
-  { path: "/archived-challenges", element: <ProtectedRoute><ArchivedChallengesPage /></ProtectedRoute> },
-  { path: "/referral", element: <ProtectedRoute><ReferralPage /></ProtectedRoute> },
-  { path: "/referral-program", element: <ReferralProgramPage /> },
-  { path: "/login", element: <LoginPage /> },
-  { path: "/register", element: <Registration /> },
-  { path: "/admin-login", element: <AdminLoginPage /> },
-  { path: "/how-to-play", element: <HowToPlay /> },
-  { path: "/terms", element: <TermsPage /> },
-  { path: "/disclaimer", element: <DisclaimerPage /> },
-  { path: "/privacy", element: <PrivacyPage /> },
-  { path: "/team-dashboard", element: <ProtectedRoute><TeamLeaderDashboardPage /></ProtectedRoute> },
-  { path: "/profile", element: <ProtectedRoute><Profile /></ProtectedRoute> },
-  { path: "/admin", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/users", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/logs", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/ads", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/payments", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/referrals", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/quiz", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/quiz/questions", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/quiz/challenges", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/badges", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/reports", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/sync", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/messages", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/ticker", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/icons", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/admin/requests", element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
-  { path: "/quiz/question/:questionId/:questionSlug", element: <QuizQuestionPage /> },
-  { path: "/blog", element: <BlogPage /> },
-  { path: "/categories", element: <CategoriesPage /> },
-  { path: "/categories/:categorySlug", element: <CategoryPage /> },
-  { path: "*", element: <NotFound /> }
-];
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -232,16 +187,135 @@ function App() {
   return (
     <div className="app-container">
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <HelmetProvider>
-          <Toaster />
-          <Router>
-            <Routes>
-              {routes.map(route => (
-                <Route key={route.path} path={route.path} element={route.element} />
-              ))}
-            </Routes>
-          </Router>
-        </HelmetProvider>
+        <Toaster />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/quiz" element={<QuizPage />} />
+            <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
+            <Route path="/challenge/:challengeId" element={
+              <ProtectedRoute>
+                <ChallengePlayPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/archived-challenges" element={
+              <ProtectedRoute>
+                <ArchivedChallengesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/referral" element={
+              <ProtectedRoute>
+                <ReferralPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/referral-program" element={<ReferralProgramPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<Registration />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
+            <Route path="/how-to-play" element={<HowToPlay />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/disclaimer" element={<DisclaimerPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            
+            <Route path="/team-dashboard" element={
+              <ProtectedRoute>
+                <TeamLeaderDashboardPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin routes - make all admin paths go to the AdminPage */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logs" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/ads" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payments" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/referrals" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/quiz" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/quiz/questions" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/quiz/challenges" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/badges" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/sync" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/messages" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/ticker" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/icons" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/requests" element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
       </ThemeProvider>
     </div>
   );

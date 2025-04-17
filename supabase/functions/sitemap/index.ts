@@ -14,18 +14,6 @@ interface SitemapEntry {
 
 serve(async (req) => {
   try {
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      'Content-Type': 'application/xml; charset=UTF-8',
-      'Cache-Control': 'max-age=3600'
-    };
-    
-    // Handle CORS preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Standard site URLs
@@ -33,25 +21,25 @@ serve(async (req) => {
       {
         loc: 'https://cuiz.in/',
         lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'daily',
+        changefreq: 'monthly',
         priority: '1.0'
       },
       {
         loc: 'https://cuiz.in/quiz',
         lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'daily',
+        changefreq: 'weekly',
         priority: '0.9'
       },
       {
         loc: 'https://cuiz.in/referral',
         lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
+        changefreq: 'monthly',
         priority: '0.8'
       },
       {
         loc: 'https://cuiz.in/profile',
         lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
+        changefreq: 'monthly',
         priority: '0.8'
       },
       {
@@ -89,18 +77,6 @@ serve(async (req) => {
         lastmod: new Date().toISOString().split('T')[0],
         changefreq: 'yearly',
         priority: '0.5'
-      },
-      {
-        loc: 'https://cuiz.in/blog',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.8'
-      },
-      {
-        loc: 'https://cuiz.in/categories',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.7'
       }
     ];
 
@@ -112,7 +88,7 @@ serve(async (req) => {
     if (error) {
       console.error('Error fetching quiz questions for sitemap:', error);
       return new Response(generateXml(standardUrls), {
-        headers: corsHeaders
+        headers: { 'Content-Type': 'application/xml; charset=UTF-8' },
       });
     }
 
@@ -134,30 +110,10 @@ serve(async (req) => {
       return {
         loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
         lastmod: lastmod,
-        changefreq: 'weekly',
+        changefreq: 'monthly',
         priority: '0.7'
       };
     });
-
-    // Create category pages URLs
-    const categories = [...new Set(questions.map((q: any) => q.category))];
-    const categoryUrls: SitemapEntry[] = categories.map(category => {
-      if (!category) return null;
-      
-      const slug = encodeURIComponent(
-        String(category)
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-      );
-      
-      return {
-        loc: `https://cuiz.in/categories/${slug}`,
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.7'
-      };
-    }).filter(Boolean) as SitemapEntry[];
 
     // Create answer URLs for each question
     const answerUrls: SitemapEntry[] = questions.flatMap((question: any) => {
@@ -193,22 +149,21 @@ serve(async (req) => {
     });
 
     // Combine all URLs
-    const allUrls = [...standardUrls, ...categoryUrls, ...questionUrls, ...answerUrls];
+    const allUrls = [...standardUrls, ...questionUrls, ...answerUrls];
     
     // Generate XML
     const xml = generateXml(allUrls);
 
     // Return the XML with appropriate headers
-    return new Response(xml, { headers: corsHeaders });
+    return new Response(xml, {
+      headers: { 
+        'Content-Type': 'application/xml; charset=UTF-8',
+        'Cache-Control': 'max-age=3600'
+      },
+    });
   } catch (error) {
     console.error('Error generating sitemap:', error);
-    return new Response('Error generating sitemap', { 
-      status: 500,
-      headers: {
-        'Content-Type': 'text/plain',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return new Response('Error generating sitemap', { status: 500 });
   }
 });
 
