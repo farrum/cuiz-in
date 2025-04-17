@@ -116,7 +116,7 @@ export const useFaqs = () => {
             {
               id: '15',
               question: 'Can I play CuizIN on multiple devices?',
-              answer: 'Yes, you can log into your CuizIN account on multiple devices. Your progress and points will sync across all devices where you're logged in.',
+              answer: "Yes, you can log into your CuizIN account on multiple devices. Your progress and points will sync across all devices where you're logged in.",
               category: 'Account Management'
             }
           ];
