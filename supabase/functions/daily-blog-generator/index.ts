@@ -58,8 +58,19 @@ Stay curious, stay learning!
 The CuizIN Team
       `
 
+      // Generate a unique slug from the title
+      const generateSlug = (title: string) => {
+        return title
+          .toLowerCase()
+          .replace(/[^\w\s]/gi, '') // Remove special characters
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .substring(0, 100) // Limit length
+          + '-' + new Date().getTime().toString().slice(-4); // Add timestamp for uniqueness
+      }
+
       const category = categories[Math.floor(Math.random() * categories.length)]
       const title = titles[Math.floor(Math.random() * titles.length)]
+      const slug = generateSlug(title)
 
       return {
         title,
@@ -67,6 +78,7 @@ The CuizIN Team
         category,
         excerpt: title.substring(0, 100),
         is_published: true,
+        slug: slug, // Add the generated slug
         author: 'CuizIN Team'
       }
     }

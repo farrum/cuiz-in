@@ -1,9 +1,14 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useBlogPosts } from '@/hooks/admin/useBlogPosts';
 import { triggerDailyBlogGeneration } from '@/utils/triggerDailyBlog';
 import { Loader2, Plus, RefreshCw, Bot } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface BlogPost {
   id: string;
@@ -14,7 +19,7 @@ interface BlogPost {
   slug?: string;
   author?: string;
   published_at?: string;
-  created_at?: string; // Added this field to the interface
+  created_at?: string;
   is_published: boolean;
 }
 
@@ -22,7 +27,25 @@ const BlogManagement = () => {
   const { toast } = useToast();
   const { posts, isLoading, addPost, updatePost, deletePost, refreshPosts } = useBlogPosts();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newPost, setNewPost] = useState<Partial<BlogPost>>({
+    title: '',
+    content: '',
+    excerpt: '',
+    category: 'General',
+    author: 'CuizIN Team',
+    is_published: true
+  });
   
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^\w\s]/gi, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .substring(0, 100) // Limit length
+      + '-' + new Date().getTime().toString().slice(-4); // Add timestamp for uniqueness
+  };
+
   const handleGenerateRandomPost = async () => {
     setIsGenerating(true);
     try {
@@ -52,6 +75,58 @@ const BlogManagement = () => {
     }
   };
 
+  const handleAddPost = async () => {
+    if (!newPost.title || !newPost.content) {
+      toast({
+        title: "Error",
+        description: "Title and content are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Generate slug from title
+    const slug = generateSlug(newPost.title);
+    
+    try {
+      const result = await addPost({
+        ...newPost,
+        slug,
+        is_published: newPost.is_published ?? true
+      } as BlogPost);
+      
+      if (result) {
+        setIsAddDialogOpen(false);
+        setNewPost({
+          title: '',
+          content: '',
+          excerpt: '',
+          category: 'General',
+          author: 'CuizIN Team',
+          is_published: true
+        });
+        refreshPosts();
+      }
+    } catch (error) {
+      console.error('Error adding blog post:', error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewPost(prev => ({ ...prev, [name]: value }));
+    
+    // Auto-generate excerpt from title if excerpt is empty and title is being changed
+    if (name === 'title' && (!newPost.excerpt || newPost.excerpt === '')) {
+      setNewPost(prev => ({ ...prev, excerpt: value.substring(0, 100) }));
+    }
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setNewPost(prev => ({ ...prev, [name]: checked }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -73,7 +148,7 @@ const BlogManagement = () => {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button size="sm">
+          <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Post
           </Button>
@@ -152,6 +227,106 @@ const BlogManagement = () => {
           </table>
         </div>
       )}
+
+      {/* Add New Blog Post Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Blog Post</DialogTitle>
+            <DialogDescription>
+              Create a new blog post to share with your readers.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">Title</Label>
+              <Input
+                id="title"
+                name="title"
+                value={newPost.title}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Enter blog post title"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">Category</Label>
+              <Input
+                id="category"
+                name="category"
+                value={newPost.category}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="E.g., Quiz Tips, Learning, Updates"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="author" className="text-right">Author</Label>
+              <Input
+                id="author"
+                name="author"
+                value={newPost.author}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Author name"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="excerpt" className="text-right pt-2">Excerpt</Label>
+              <Textarea
+                id="excerpt"
+                name="excerpt"
+                value={newPost.excerpt}
+                onChange={handleInputChange}
+                className="col-span-3 h-20"
+                placeholder="Short description for blog listings (automatically generated from title if left empty)"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="content" className="text-right pt-2">Content</Label>
+              <Textarea
+                id="content"
+                name="content"
+                value={newPost.content}
+                onChange={handleInputChange}
+                className="col-span-3 h-40"
+                placeholder="Write your blog content here (Markdown supported)"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Status</Label>
+              <div className="flex items-center gap-2 col-span-3">
+                <input
+                  type="checkbox"
+                  id="is_published"
+                  name="is_published"
+                  checked={newPost.is_published}
+                  onChange={handleCheckboxChange}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="is_published" className="text-sm font-normal">
+                  Publish immediately
+                </Label>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddPost}>
+              Add Post
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
