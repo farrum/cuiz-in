@@ -18,13 +18,14 @@ import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, HelpCircle } from 'lucide-react';
+import { BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, HelpCircle, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { CacheManagement } from '@/components/admin/CacheManagement';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
+import { ContentPartnerships } from '@/components/admin/partnerships';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -190,6 +191,10 @@ const AdminPage: React.FC = () => {
               <HelpCircle className="w-4 h-4 mr-1" />
               FAQ
             </TabsTrigger>
+            <TabsTrigger value="partnerships">
+              <Link2 className="w-4 h-4 mr-1" />
+              Partnerships
+            </TabsTrigger>
           </TabsList>
           
           <Separator className="my-6" />
@@ -259,6 +264,9 @@ const AdminPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="faq">
             <FaqManagement />
+          </TabsContent>
+          <TabsContent value="partnerships">
+            <ContentPartnerships />
           </TabsContent>
         </Tabs>
       </div>
