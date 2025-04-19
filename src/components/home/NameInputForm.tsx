@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 
 interface NameInputFormProps {
   userName: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit?: (e: React.FormEvent) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: (e: React.FormEvent) => void;
 }
 
 const NameInputForm: React.FC<NameInputFormProps> = ({ 
   userName, 
-  onChange = () => {}, 
-  onSubmit = () => {} 
+  onChange, 
+  onSubmit 
 }) => {
   return (
     <form onSubmit={onSubmit} className="max-w-md mx-auto glass p-6 rounded-2xl animate-scale-in">

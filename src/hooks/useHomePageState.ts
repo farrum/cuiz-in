@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizAdSync } from './quiz/useQuizAdSync';
 
@@ -32,6 +32,11 @@ export const useHomePageState = () => {
     }
   };
 
+  // Add this event handler to properly handle input changes
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setUserName(e.target.value);
+  };
+
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (userName.trim()) {
@@ -57,7 +62,7 @@ export const useHomePageState = () => {
     hasStarted,
     showNameInput,
     forceReloadAds,
-    setUserName,
+    setUserName: handleNameChange, // Return the event handler function instead of the raw setter
     handleStartClick,
     navigateToRegister,
     navigateToLogin,
