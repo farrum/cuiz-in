@@ -1,40 +1,31 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
-import { useHomePageState } from '@/hooks/useHomePageState';
-import AdDebugger from '@/components/ads/AdDebugger';
 import {
   HeroSection,
-  NameInputForm,
   FeatureSection,
   HowToEarnSection,
   InfoSection,
   TestimonialsSection,
   CallToAction,
   HelpSection,
-  AnimatedBackgrounds
+  AnimatedBackgrounds,
+  PartnershipSection,
+  AdDebugPanel
 } from '@/components/home';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useQuizAdSync } from '@/hooks/quiz/useQuizAdSync';
+import { useHomePageState } from '@/hooks/useHomePageState';
 
 const Index: React.FC = () => {
-  const {
-    userName,
-    hasStarted,
-    showNameInput,
-    setUserName,
-    handleStartClick,
-    navigateToRegister,
-    navigateToLogin,
-    navigateToProfile,
-    handleNameSubmit
-  } = useHomePageState();
-  
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const [forceReloadAds, setForceReloadAds] = useState(0);
+  const [isAdmin] = useLocalStorage('user_role', '');
+  const { syncAdSlots } = useQuizAdSync(setForceReloadAds);
+  const homePageState = useHomePageState();
   
   // Schema.org structured data for the homepage
   const homeSchema = {
@@ -50,74 +41,89 @@ const Index: React.FC = () => {
     }
   };
   
+  // Ensure ads are loaded on page load
+  useEffect(() => {
+    syncAdSlots();
+  }, []);
+  
   return (
-    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+    <div className="min-h-screen flex flex-col bg-background">
       <SEO 
         title="CuizIN - Free Quiz Game with Rewards" 
         description="Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play."
         schemaType="WebSite"
         schemaData={homeSchema}
       />
-      <Header />
-      <NewsTicker className="mt-16" />
       
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
-        <AnimatedBackgrounds />
+      <Header />
+      
+      <AnimatedBackgrounds />
+      
+      <main className="flex-1 container max-w-7xl mx-auto px-4">
+        <HeroSection 
+          userName={homePageState.userName}
+          hasStarted={homePageState.hasStarted}
+          showNameInput={homePageState.showNameInput}
+          handleStartClick={homePageState.handleStartClick}
+          navigateToRegister={homePageState.navigateToRegister}
+          navigateToLogin={homePageState.navigateToLogin}
+          navigateToProfile={homePageState.navigateToProfile}
+        />
         
-        {showNameInput ? (
-          <NameInputForm 
-            userName={userName} 
-            onChange={setUserName} 
-            onSubmit={handleNameSubmit} 
-          />
-        ) : (
-          <HeroSection 
-            userName={userName}
-            hasStarted={hasStarted}
-            showNameInput={showNameInput}
-            handleStartClick={handleStartClick}
-            navigateToRegister={navigateToRegister}
-            navigateToLogin={navigateToLogin}
-            navigateToProfile={navigateToProfile}
-          />
-        )}
+        <AdvertisementBanner 
+          position="top" 
+          slotId="home-top" 
+          pageSection="home-page" 
+          key={`top-${forceReloadAds}`} 
+        />
         
-        <AdvertisementBanner position="middle" slotId="home-ad" pageSection="home-page" />
+        <InfoSection />
         
         <FeatureSection />
         
-        <HelpSection />
-        
-        {/* New Ad Slot 1 */}
-        <AdvertisementBanner position="middle" slotId="home-middle-1" pageSection="home-page-middle" className="mt-12" />
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-ad" 
+          pageSection="home-page" 
+          key={`middle-${forceReloadAds}`} 
+        />
         
         <HowToEarnSection />
         
-        {/* New Ad Slot 2 */}
-        <AdvertisementBanner position="middle" slotId="home-middle-2" pageSection="home-page-bottom" className="mt-12" />
-        
-        {/* New SEO Content Section */}
-        <InfoSection />
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-1" 
+          pageSection="home-page-middle" 
+          key={`middle1-${forceReloadAds}`} 
+        />
         
         <TestimonialsSection />
         
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-2" 
+          pageSection="home-page-bottom" 
+          key={`middle2-${forceReloadAds}`} 
+        />
+        
         <CallToAction />
         
-        {/* Bottom ad with debugger */}
-        <AdvertisementBanner position="bottom" slotId="home-bottom" pageSection="home-page-footer" className="mt-12" />
+        <HelpSection />
         
-        {isDevelopment && (
-          <AdDebugger 
-            position="bottom" 
-            slotId="home-bottom" 
-            pageSection="home-page-footer" 
-            className="mt-4 max-w-3xl w-full"
-          />
-        )}
-      </div>
+        <PartnershipSection />
+        
+        <AdvertisementBanner 
+          position="bottom" 
+          slotId="home-bottom" 
+          pageSection="home-page-footer" 
+          key={`bottom-${forceReloadAds}`} 
+        />
+      </main>
       
       <Footer />
-    </main>
+      
+      {isAdmin === 'admin' && <AdDebugPanel />}
+    </div>
   );
 };
 

@@ -4,6 +4,7 @@ export * from './useSupabaseRealtime'
 export * from './useRealtimeUpdates'
 export * from './useTeamLeaderDashboard'
 export * from './advertisement'
+export * from './useLocalStorage'
 
 export * from './team-members';
 export * from './challenge';

@@ -581,6 +581,48 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_sites: {
+        Row: {
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          domain_authority: number | null
+          id: number
+          name: string
+          notes: string | null
+          partnership_status: string
+          referral_traffic: number | null
+          updated_at: string
+          website: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          domain_authority?: number | null
+          id?: number
+          name: string
+          notes?: string | null
+          partnership_status?: string
+          referral_traffic?: number | null
+          updated_at?: string
+          website: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          domain_authority?: number | null
+          id?: number
+          name?: string
+          notes?: string | null
+          partnership_status?: string
+          referral_traffic?: number | null
+          updated_at?: string
+          website?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
