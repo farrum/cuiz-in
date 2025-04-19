@@ -13,6 +13,8 @@ interface HeroSectionProps {
   navigateToRegister: () => void;
   navigateToLogin: () => void;
   navigateToProfile: () => void;
+  handleNameSubmit: (e: React.FormEvent) => void;
+  setUserName: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
@@ -22,7 +24,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   handleStartClick,
   navigateToRegister,
   navigateToLogin,
-  navigateToProfile
+  navigateToProfile,
+  handleNameSubmit,
+  setUserName
 }) => {
   return (
     <div className="max-w-3xl w-full mx-auto text-center z-10">
@@ -47,7 +51,11 @@ Invite friends to earn even more!</p>
       </div>
       
       {showNameInput ? (
-        <NameInputForm userName={userName} />
+        <NameInputForm 
+          userName={userName} 
+          onChange={setUserName}
+          onSubmit={handleNameSubmit}
+        />
       ) : (
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12 animate-fade-in">
           {hasStarted ? (

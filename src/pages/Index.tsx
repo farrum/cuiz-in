@@ -80,6 +80,8 @@ const Index: React.FC = () => {
             navigateToRegister={navigateToRegister}
             navigateToLogin={navigateToLogin}
             navigateToProfile={navigateToProfile}
+            handleNameSubmit={handleNameSubmit}
+            setUserName={setUserName}
           />
         )}
         
