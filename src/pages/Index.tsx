@@ -26,6 +26,7 @@ const Index: React.FC = () => {
     userName,
     hasStarted,
     showNameInput,
+    forceReloadAds,
     setUserName,
     handleStartClick,
     navigateToRegister,
