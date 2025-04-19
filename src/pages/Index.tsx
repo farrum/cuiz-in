@@ -18,22 +18,11 @@ import {
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useQuizAdSync } from '@/hooks/quiz/useQuizAdSync';
-import { useHomePageState } from '@/hooks/useHomePageState';
 
 const Index: React.FC = () => {
   const [forceReloadAds, setForceReloadAds] = useState<number>(0);
   const [isAdmin] = useLocalStorage('user_role', '');
   const { syncAdSlots } = useQuizAdSync(setForceReloadAds);
-  
-  const { 
-    userName,
-    hasStarted,
-    showNameInput,
-    handleStartClick,
-    navigateToRegister,
-    navigateToLogin,
-    navigateToProfile,
-  } = useHomePageState();
   
   // Ensure ads are loaded on page load
   useEffect(() => {
@@ -41,7 +30,7 @@ const Index: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background container max-w-6xl mx-auto px-4">
+    <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
         <title>CuizIN - Fun Quizzes with Rewards</title>
         <meta name="description" content="Play fun quizzes, earn points, and redeem rewards with CuizIN - the ultimate quiz platform." />
@@ -54,16 +43,8 @@ const Index: React.FC = () => {
       
       <AnimatedBackgrounds />
       
-      <main className="flex-1 space-y-8">
-        <HeroSection 
-          userName={userName}
-          hasStarted={hasStarted}
-          showNameInput={showNameInput}
-          handleStartClick={handleStartClick}
-          navigateToRegister={navigateToRegister}
-          navigateToLogin={navigateToLogin}
-          navigateToProfile={navigateToProfile}
-        />
+      <main className="flex-1">
+        <HeroSection />
         
         <AdvertisementBanner 
           key={`top-${forceReloadAds}`}
@@ -73,6 +54,7 @@ const Index: React.FC = () => {
         />
         
         <InfoSection />
+        
         <FeatureSection />
         
         <AdvertisementBanner 
@@ -83,7 +65,28 @@ const Index: React.FC = () => {
         />
         
         <HowToEarnSection />
+        
+        <AdvertisementBanner 
+          key={`middle1-${forceReloadAds}`}
+          position="middle" 
+          slotId="home-middle-1" 
+          pageSection="home-page-middle"
+        />
+        
         <TestimonialsSection />
+        
+        <AdvertisementBanner 
+          key={`middle2-${forceReloadAds}`}
+          position="middle" 
+          slotId="home-middle-2" 
+          pageSection="home-page-bottom"
+        />
+        
+        <CallToAction />
+        
+        <HelpSection />
+        
+        <PartnershipSection />
         
         <AdvertisementBanner 
           key={`bottom-${forceReloadAds}`}
@@ -91,14 +94,11 @@ const Index: React.FC = () => {
           slotId="home-bottom" 
           pageSection="home-page-footer"
         />
-        
-        <CallToAction />
-        <HelpSection />
-        <PartnershipSection />
       </main>
       
       <Footer />
       
+      {/* Only show debug panel for admins */}
       {isAdmin === 'admin' && <AdDebugPanel />}
     </div>
   );

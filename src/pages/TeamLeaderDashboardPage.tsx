@@ -30,9 +30,9 @@ const TeamLeaderDashboardPage = () => {
   } = useTeamLeaderDashboard();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background container max-w-6xl mx-auto px-4 pt-8 pb-12">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 space-y-8">
+      <main className="flex-1 container max-w-6xl pt-8 pb-12 px-4">
         <AdvertisementBanner position="top" slotId="team-leader-top" pageSection="team-leader-dashboard" />
         
         <TeamLeaderAccessCheck 
@@ -42,7 +42,7 @@ const TeamLeaderDashboardPage = () => {
         
         {isTeamLeader && !isLoading && (
           <>
-            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Team Leader Dashboard</h1>
                 <p className="text-muted-foreground mt-1">
