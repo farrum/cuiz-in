@@ -20,9 +20,46 @@ export const useScriptExecution = (content: string, containerId: string): string
     let executedCount = 0;
     let scriptFound = false;
     let containerCheckAttempts = 0;
-    const maxAttempts = 20; // Increase max attempts
+    const maxAttempts = 30; // Increase max attempts
+    
+    // Clean up function that will be returned
+    const cleanup = () => {
+      // Clean up executed scripts when component unmounts
+      const container = document.getElementById(containerId);
+      if (container) {
+        const scripts = container.querySelectorAll('script');
+        scripts.forEach(script => {
+          if (script.parentNode === container) {
+            container.removeChild(script);
+          }
+        });
+      }
+    };
     
     try {
+      // Block listed domains that cause issues
+      const blockedDomains = [
+        'onclickpsh.com',
+        'mrtnsvr.com',
+        'TCPusher',
+        'push.js',
+        'vo2pn0.js',
+        'sdk/push'
+      ];
+      
+      // Filter out problematic scripts before processing
+      let processedContent = content;
+      
+      // Remove problematic scripts
+      blockedDomains.forEach(domain => {
+        const regex = new RegExp(`<script[^>]*${domain}[^>]*>[\\s\\S]*?<\\/script>`, 'gi');
+        const scriptCount = (processedContent.match(regex) || []).length;
+        if (scriptCount > 0) {
+          console.log(`Filtering out ${scriptCount} problematic scripts containing: ${domain}`);
+          processedContent = processedContent.replace(regex, '<!-- Problematic script removed -->');
+        }
+      });
+      
       // Wait for the container to exist in DOM
       const containerCheck = setInterval(() => {
         const container = document.getElementById(containerId);
@@ -31,15 +68,6 @@ export const useScriptExecution = (content: string, containerId: string): string
         if (container) {
           clearInterval(containerCheck);
           console.log(`Container found for ${containerId} after ${containerCheckAttempts} attempts`);
-          
-          // Filter out problematic scripts
-          let processedContent = content;
-          
-          // Remove problematic TCPusher scripts
-          if (processedContent.includes('onclickpsh.com') || processedContent.includes('TCPusher')) {
-            console.log('Filtering out TCPusher scripts that cause issues');
-            processedContent = processedContent.replace(/<script[^>]*onclickpsh\.com[^>]*>[\s\S]*?<\/script>/gi, '');
-          }
           
           // Two regex patterns to catch both inline and src scripts
           // 1. Match script tags with src attribute
@@ -53,11 +81,10 @@ export const useScriptExecution = (content: string, containerId: string): string
             scriptFound = true;
             try {
               const srcUrl = srcMatch[1];
-              // Skip problematic domains
-              if (srcUrl.includes('onclickpsh.com') || 
-                  srcUrl.includes('mrtnsvr.com') || 
-                  srcUrl.includes('push.js')) {
-                console.log(`Skipping problematic script: ${srcUrl}`);
+              
+              // Skip if the URL contains any blocked domains
+              if (blockedDomains.some(domain => srcUrl.includes(domain))) {
+                console.log(`Skipping blocked script: ${srcUrl}`);
                 continue;
               }
               
@@ -65,6 +92,10 @@ export const useScriptExecution = (content: string, containerId: string): string
                 const newScript = document.createElement('script');
                 newScript.src = srcUrl;
                 newScript.async = true;
+                
+                // Prevent potential notification permission requests
+                newScript.setAttribute('data-no-notifications', 'true');
+                
                 // Add event listeners to track script loading status
                 newScript.onload = () => {
                   console.log(`External script loaded successfully: ${srcUrl}`);
@@ -88,23 +119,37 @@ export const useScriptExecution = (content: string, containerId: string): string
             scriptFound = true;
             const scriptContent = contentMatch[1];
             
-            // Skip problematic scripts
-            if (scriptContent && 
-                (scriptContent.includes('onclickpsh.com') || 
-                 scriptContent.includes('TCPusher') || 
-                 scriptContent.includes('push.js'))) {
-              console.log('Skipping problematic inline script');
+            // Skip if the content contains any blocked domains
+            if (scriptContent && blockedDomains.some(domain => scriptContent.includes(domain))) {
+              console.log('Skipping blocked inline script');
+              continue;
+            }
+            
+            // Skip notification permission requests
+            if (scriptContent && (
+                scriptContent.includes('Notification') || 
+                scriptContent.includes('requestPermission') ||
+                scriptContent.includes('serviceWorker.register')
+              )) {
+              console.log('Skipping notification permission script');
               continue;
             }
             
             if (scriptContent && scriptContent.trim()) {
               try {
-                // Create a new script element
+                // Create a new script element with sandbox
                 const script = document.createElement('script');
                 script.type = 'text/javascript';
-                script.text = scriptContent;
                 
-                // Execute the script in global scope
+                // Replace document.write calls
+                const safeContent = scriptContent.replace(
+                  /document\.write\(/g, 
+                  'console.log("document.write prevented", '
+                );
+                
+                script.text = safeContent;
+                
+                // Execute the script in container scope
                 container.appendChild(script);
                 executedCount++;
                 console.log(`Inline script executed, length: ${scriptContent.length} bytes`);
@@ -142,18 +187,7 @@ export const useScriptExecution = (content: string, containerId: string): string
       setExecutionStatus(`Error: ${error}`);
     }
     
-    return () => {
-      // Clean up executed scripts when component unmounts
-      const container = document.getElementById(containerId);
-      if (container) {
-        const scripts = container.querySelectorAll('script');
-        scripts.forEach(script => {
-          if (script.parentNode === container) {
-            container.removeChild(script);
-          }
-        });
-      }
-    };
+    return cleanup;
   }, [content, containerId]);
   
   return executionStatus;

@@ -13,6 +13,7 @@ interface AdContentProps {
   slotId?: string;
   pageSection?: string;
   containerId: string;
+  adBlockDetected?: boolean;
 }
 
 const AdContent: React.FC<AdContentProps> = ({
@@ -24,10 +25,12 @@ const AdContent: React.FC<AdContentProps> = ({
   position,
   slotId,
   pageSection,
-  containerId
+  containerId,
+  adBlockDetected = false
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
+  const [scriptError, setScriptError] = useState<string | null>(null);
   
   // Set up container before executing scripts
   useEffect(() => {
@@ -41,30 +44,81 @@ const AdContent: React.FC<AdContentProps> = ({
     }
   }, [containerId]);
   
+  // Clean content of problematic scripts
+  const cleanedContent = React.useMemo(() => {
+    if (!adContent) return '';
+    
+    // Remove TCPusher and problematic scripts
+    const blockedScripts = [
+      'onclickpsh.com',
+      'mrtnsvr.com',
+      'TCPusher',
+      'push.js',
+      'vo2pn0.js'
+    ];
+    
+    let content = adContent;
+    
+    // Remove script tags containing blocked domains
+    blockedScripts.forEach(domain => {
+      const regex = new RegExp(`<script[^>]*${domain}[^>]*>[\\s\\S]*?<\\/script>`, 'gi');
+      content = content.replace(regex, '<!-- Problematic script removed -->');
+    });
+    
+    // Remove service worker registrations
+    content = content.replace(/navigator\.serviceWorker\.register\([^)]+\)/g, 
+                              "console.log('Service worker registration blocked')");
+    
+    // Remove notification requests
+    content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
+                              "console.log('Notification permission request blocked')");
+    
+    return content;
+  }, [adContent]);
+  
   // Execute scripts in the ad content only after container is ready
-  const scriptStatus = useScriptExecution(containerReady ? adContent : '', containerId);
+  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId);
+  
+  // Effect to monitor script errors
+  useEffect(() => {
+    const handleScriptError = (event: ErrorEvent) => {
+      // Only capture errors from this container
+      const container = document.getElementById(containerId);
+      if (container && event.target && container.contains(event.target as Node)) {
+        console.error(`Script error in ${position} ad:`, event.message);
+        setScriptError(event.message);
+        event.preventDefault();
+      }
+    };
+    
+    window.addEventListener('error', handleScriptError);
+    
+    return () => {
+      window.removeEventListener('error', handleScriptError);
+    };
+  }, [containerId, position]);
   
   // Effect to monitor content changes and container status
   useEffect(() => {
-    if (adLoaded && adContent && containerReady && contentRef.current) {
-      console.log(`Ad container ready for ${position}/${slotId || 'default'}, content length: ${adContent.length}`);
+    if (adLoaded && cleanedContent && containerReady && contentRef.current) {
+      console.log(`Ad container ready for ${position}/${slotId || 'default'}, content length: ${cleanedContent.length}`);
       
       // Log the content for debugging, truncated to avoid console overflow
       if (isDevelopment) {
-        console.log(`Ad content sample: ${adContent.substring(0, 100)}...`);
+        console.log(`Ad content sample: ${cleanedContent.substring(0, 100)}...`);
         
         // Check if the content contains script tags
-        const hasScriptTags = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(adContent);
+        const hasScriptTags = /<script[\s\S]*?>[\s\S]*?<\/script>/i.test(cleanedContent);
         console.log(`Content contains script tags: ${hasScriptTags}`);
         
         // Add data attributes for easier debugging
         if (contentRef.current) {
           contentRef.current.setAttribute('data-has-scripts', hasScriptTags.toString());
-          contentRef.current.setAttribute('data-content-length', adContent.length.toString());
+          contentRef.current.setAttribute('data-content-length', cleanedContent.length.toString());
         }
       }
     }
-  }, [adLoaded, adContent, containerReady, containerId, position, slotId, isDevelopment]);
+  }, [adLoaded, cleanedContent, containerReady, containerId, position, slotId, isDevelopment]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
@@ -80,9 +134,11 @@ const AdContent: React.FC<AdContentProps> = ({
   return (
     <div className="w-full">
       <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-      {isDevelopment && false && ( // Conditionally hide debug information
+      {isDevelopment && (adDebug || scriptError || adBlockDetected) && (
         <div className="mb-2 text-center">
           {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
+          {scriptError && <p className="text-xs text-red-500">Script error: {scriptError}</p>}
+          {adBlockDetected && <p className="text-xs text-amber-500">Ad blocker detected</p>}
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
@@ -109,7 +165,7 @@ const AdContent: React.FC<AdContentProps> = ({
         data-ad-slot={slotId || position}
         data-ad-ready={containerReady.toString()}
         className={`${getMinHeight()} flex items-center justify-center overflow-hidden`}
-        dangerouslySetInnerHTML={{ __html: adContent }}
+        dangerouslySetInnerHTML={{ __html: cleanedContent }}
       ></div>
     </div>
   );

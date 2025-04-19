@@ -1,8 +1,9 @@
 
-import React, { useId, useEffect } from 'react';
+import React, { useId, useEffect, useState } from 'react';
 import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
+import { toast } from 'sonner';
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle' | 'sidebar';
@@ -23,6 +24,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const uniqueId = useId().replace(/:/g, '-');
   const containerId = `${uniqueId}-ad-container`;
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const [adBlockDetected, setAdBlockDetected] = useState(false);
   
   const {
     adLoaded,
@@ -44,13 +46,39 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   useEffect(() => {
     // Attempt to detect if scripts are being blocked
     const testScript = document.createElement('script');
-    testScript.src = "https://example.com/test-script.js";
+    testScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
     testScript.onerror = () => {
       console.log("Ad scripts might be blocked by browser extensions");
+      setAdBlockDetected(true);
+      if (isDevelopment) {
+        toast.warning("Ad blocker detected", {
+          description: "This may affect the functionality of advertisements"
+        });
+      }
     };
     document.body.appendChild(testScript);
-    document.body.removeChild(testScript);
-  }, []);
+    setTimeout(() => document.body.removeChild(testScript), 1000);
+    
+    // Function to handle uncaught errors
+    const handleUncaughtError = (event: ErrorEvent) => {
+      // Only handle errors related to this position
+      if (event.message && (
+          event.message.includes('TCPusher') || 
+          event.message.includes('onclickpsh')
+      )) {
+        console.error(`Ad error intercepted (${position}):`, event.message);
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    
+    // Add global error handlers specifically for ad-related errors
+    window.addEventListener('error', handleUncaughtError);
+    
+    return () => {
+      window.removeEventListener('error', handleUncaughtError);
+    };
+  }, [position, isDevelopment]);
 
   if (!adActive) {
     if (isDevelopment) {
@@ -58,6 +86,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
           Ad slot inactive: {position} / {slotId}
           {adError && <div className="text-destructive mt-1">{adError}</div>}
+          {adBlockDetected && <div className="text-amber-500 mt-1">Ad blocker detected</div>}
         </div>
       );
     }
@@ -88,6 +117,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         slotId={slotId}
         pageSection={pageSection}
         containerId={containerId}
+        adBlockDetected={adBlockDetected}
       />
     </AdContainer>
   );

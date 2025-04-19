@@ -33,9 +33,36 @@ self.addEventListener('push', function(event) {
   console.log('Push received: ', event);
 });
 
-// Use the sw import script if it's available
-try {
-  importScripts('/sw.js');
-} catch(e) {
-  console.log('Optional SW script not found');
+// IMPORTANT: Block problematic scripts
+self.addEventListener('fetch', event => {
+  const url = event.request.url;
+  
+  // Block TCPusher and problematic scripts
+  if (url.includes('onclickpsh.com') || 
+      url.includes('TCPusher') || 
+      url.includes('push.js') ||
+      url.includes('mrtnsvr.com')) {
+    
+    console.log('Blocking problematic script request:', url);
+    event.respondWith(new Response('// Script blocked by service worker', {
+      status: 200,
+      headers: new Headers({'Content-Type': 'application/javascript'})
+    }));
+    return;
+  }
+  
+  // Let all other requests pass through
+});
+
+// Create a flag to prevent loading sw.js twice
+if (!self.swLoaded) {
+  self.swLoaded = true;
+  
+  // Try to load optional sw.js - but suppress errors
+  try {
+    importScripts('/sw.js');
+    console.log('Successfully loaded optional SW script');
+  } catch(e) {
+    console.log('Optional SW script not found or failed to load');
+  }
 }
