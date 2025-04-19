@@ -18,11 +18,26 @@ import {
 import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useQuizAdSync } from '@/hooks/quiz/useQuizAdSync';
+import { useHomePageState } from '@/hooks/useHomePageState';
 
 const Index: React.FC = () => {
   const [forceReloadAds, setForceReloadAds] = useState<number>(0);
   const [isAdmin] = useLocalStorage('user_role', '');
   const { syncAdSlots } = useQuizAdSync(setForceReloadAds);
+  
+  // Get homepage state for hero section
+  const { 
+    userName,
+    hasStarted,
+    showNameInput,
+    setUserName,
+    setShowNameInput,
+    handleStartClick,
+    navigateToRegister,
+    navigateToLogin,
+    navigateToProfile,
+    handleNameSubmit
+  } = useHomePageState();
   
   // Ensure ads are loaded on page load
   useEffect(() => {
@@ -44,7 +59,15 @@ const Index: React.FC = () => {
       <AnimatedBackgrounds />
       
       <main className="flex-1">
-        <HeroSection />
+        <HeroSection 
+          userName={userName}
+          hasStarted={hasStarted}
+          showNameInput={showNameInput}
+          handleStartClick={handleStartClick}
+          navigateToRegister={navigateToRegister}
+          navigateToLogin={navigateToLogin}
+          navigateToProfile={navigateToProfile}
+        />
         
         <AdvertisementBanner 
           key={`top-${forceReloadAds}`}
