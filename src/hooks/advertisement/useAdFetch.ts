@@ -34,12 +34,12 @@ export const useAdFetch = ({
   
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
   
-  // Fetch ads
-  const fetchAds = useCallback(async (force = false) => {
+  // Fetch ads with retry logic
+  const fetchAds = useCallback(async (force = false, retryCount = 0) => {
     if (!isMountedRef.current) return;
     
     // Print debugging info for this ad request
-    console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}`);
+    console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}, retry=${retryCount}`);
     
     // Additional debugging for all positions
     debugAvailableAds();
@@ -88,7 +88,9 @@ export const useAdFetch = ({
           
           setTimeout(() => {
             if (isMountedRef.current) {
-              trackImpression(id, position, slotId, pageSection);
+              trackImpression(id, position, slotId, pageSection).catch(err => {
+                console.warn(`Failed to track impression for ${id}:`, err);
+              });
             }
           }, 300);
           
@@ -97,7 +99,7 @@ export const useAdFetch = ({
           console.log(`No valid ad was selected from matching ads for position ${position}`);
         }
       } else {
-        console.log(`No ads found in localStorage for position ${position}`);
+        console.log(`No ads found in localStorage for position ${position}, trying Supabase...`);
       }
       
       // If no local storage ads, try Supabase
@@ -123,20 +125,56 @@ export const useAdFetch = ({
           updateAdState(content, id, version, debug);
           
           if (id !== adState.adId) {
-            trackImpression(id, position, slotId, pageSection);
+            trackImpression(id, position, slotId, pageSection).catch(err => {
+              console.warn(`Failed to track impression for ${id}:`, err);
+            });
           }
         } else {
           console.log(`Selected ad has no valid content for position ${position}`);
           updateAdState('', null, '', null, false, `No valid ad content for position: ${position}`);
+          
+          // If we run out of retries, show fallback content
+          if (retryCount >= 2) {
+            const fallbackContent = `<div style="text-align:center;padding:10px;font-size:12px;">Ad content unavailable</div>`;
+            updateAdState(
+              fallbackContent, 
+              'fallback', 
+              'fallback-' + Date.now(), 
+              'Using fallback content',
+              true,
+              null
+            );
+          }
         }
+      } else if (retryCount < 2) {
+        // Retry logic - try again after a delay if no ads found
+        console.log(`No active ads found for position: ${position}, will retry (${retryCount + 1}/2)`);
+        
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            fetchAds(true, retryCount + 1);
+          }
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+        
       } else {
-        console.log(`No active ads found for position: ${position}`);
-        updateAdState('', null, '', null, false, `No active ads for position: ${position}`);
+        // Final failure after retries
+        console.log(`Failed to fetch ads for position: ${position} after ${retryCount} retries`);
+        updateAdState('', null, '', null, false, `No active ads for position: ${position} after retries`);
       }
     } catch (err) {
       console.error('Error in ad fetching:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       updateAdState('', null, '', null, false, `Fetch error: ${errorMessage}`);
+      
+      // Retry on error if we haven't exceeded retry count
+      if (retryCount < 2) {
+        console.log(`Will retry ad fetch due to error for ${position} (${retryCount + 1}/2)`);
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            fetchAds(true, retryCount + 1);
+          }
+        }, 3000 * (retryCount + 1)); // Exponential backoff
+      }
     }
   }, [position, slotId, pageSection, adState, updateAdState, adPositionKey, canFetchAd, trackImpression, isMountedRef, lastFetchTimeRef]);
   
