@@ -9,11 +9,11 @@ import MotivationalCharacter from '@/components/MotivationalCharacter';
 
 const HowToPlay: React.FC = () => {
   return (
-    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+    <div className="min-h-screen flex flex-col bg-background container max-w-6xl mx-auto px-4 pt-8 pb-12">
       <Header />
       
-      <div className="container max-w-4xl mx-auto px-4 py-12 flex-1">
-        <div className="mb-8 text-center">
+      <main className="flex-1 space-y-8">
+        <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
             How to Play Cuiz<span className="text-green-500">IN</span>
           </h1>
@@ -138,10 +138,10 @@ const HowToPlay: React.FC = () => {
             </Link>
           </Button>
         </div>
-      </div>
+      </main>
       
       <Footer />
-    </main>
+    </div>
   );
 };
 
