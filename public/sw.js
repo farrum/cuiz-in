@@ -13,36 +13,76 @@ const BLOCKED_DOMAINS = [
   'vo2pn0.js',
   'mrtnsvr.com',
   'sdk/push',
-  'swpushnotification'
+  'swpushnotification',
+  'Va3pn0.js',
+  'push.m.js',
+  'ServiceWorker'
 ];
 
 // Block problematic fetch requests
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
-  // Handle AAB requests specifically
-  if (url.includes('AAB') || url.includes('aab.min.js')) {
-    console.log('SW: Intercepting AAB request:', url);
-    event.respondWith(new Response('// AAB request intercepted by service worker', {
-      status: 200,
-      headers: new Headers({'Content-Type': 'application/javascript'})
-    }));
-    return;
-  }
-  
-  // Block other problematic scripts
-  for (const domain of BLOCKED_DOMAINS) {
-    if (url.includes(domain)) {
-      console.log('SW: Blocking problematic script request:', url);
-      event.respondWith(new Response('// Script blocked by service worker', {
+  try {
+    // Handle AAB requests specifically
+    if (url.includes('AAB') || url.includes('aab.min.js')) {
+      console.log('SW: Intercepting AAB request:', url);
+      event.respondWith(new Response('// AAB request intercepted by service worker', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
+    
+    // Specifically block TCPusher and service worker registration
+    if (url.includes('TCPusher') || 
+        url.includes('ServiceWorker') || 
+        url.includes('register')) {
+      console.log('SW: Blocking service worker registration attempt:', url);
+      event.respondWith(new Response('// Service worker registration blocked', {
+        status: 200,
+        headers: new Headers({'Content-Type': 'application/javascript'})
+      }));
+      return;
+    }
+    
+    // Block other problematic scripts
+    for (const domain of BLOCKED_DOMAINS) {
+      if (url.toLowerCase().includes(domain.toLowerCase())) {
+        console.log('SW: Blocking problematic script request:', url);
+        event.respondWith(new Response('// Script blocked by service worker', {
+          status: 200,
+          headers: new Headers({'Content-Type': 'application/javascript'})
+        }));
+        return;
+      }
+    }
+  } catch (e) {
+    console.error('Error in SW fetch handler:', e);
+    event.respondWith(new Response('// Error handling request in service worker', {
+      status: 200, 
+      headers: new Headers({'Content-Type': 'application/javascript'})
+    }));
   }
   
   // Let all other requests pass through
+});
+
+// Intercept any attempts to register additional service workers
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  // Block any register attempts
+  if (event.data && (
+      event.data.type === 'REGISTER_SW' || 
+      (typeof event.data === 'string' && event.data.includes('register'))
+  )) {
+    console.log('SW: Blocked attempt to register additional service worker');
+    // Don't pass this message along
+    return;
+  }
 });
 
 // Original code - wrapped in try/catch to prevent errors
@@ -54,3 +94,4 @@ try {
 
 // Signal that this service worker is modified
 console.log('Ad-safe service worker initialized');
+

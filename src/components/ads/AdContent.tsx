@@ -57,7 +57,10 @@ const AdContent: React.FC<AdContentProps> = ({
       'vo2pn0.js',
       'sdk/push',
       'serviceWorker.register',
-      'Notification.requestPermission'
+      'ServiceWorker.register',
+      'Notification.requestPermission',
+      'Va3pn0.js',
+      'push.m.js'
     ];
     
     let content = adContent;
@@ -68,9 +71,9 @@ const AdContent: React.FC<AdContentProps> = ({
       content = content.replace(regex, '<!-- Problematic script removed -->');
     });
     
-    // Remove service worker registrations
-    content = content.replace(/navigator\.serviceWorker\.register\([^)]+\)/g, 
-                              "console.log('Service worker registration blocked')");
+    // Remove service worker registrations more aggressively
+    const swRegex = /<script[^>]*>[^<]*(serviceWorker|ServiceWorker)[^<]*(register)[^<]*<\/script>/gi;
+    content = content.replace(swRegex, '<!-- Service worker registration removed -->');
     
     // Remove notification requests
     content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
@@ -83,6 +86,13 @@ const AdContent: React.FC<AdContentProps> = ({
     // Safe-guard AAB requests
     content = content.replace(/(fetch|XMLHttpRequest)([^;]*AAB[^;]*)/gi, 
                               "console.log('AAB request blocked',$2)");
+    
+    // Block service worker registration
+    content = content.replace(/navigator\.serviceWorker\.register\([^)]*\)/g,
+                             "console.log('Service worker registration blocked')");
+                             
+    // Block Va3pn0.js script which causes TCPusher error
+    content = content.replace(/Va3pn0\.js/g, "blocked-script.js");
     
     return content;
   }, [adContent]);
@@ -105,8 +115,45 @@ const AdContent: React.FC<AdContentProps> = ({
     
     window.addEventListener('error', handleScriptError, true);
     
+    // Add a global error handler for TCPusher errors
+    const handleGlobalError = (event: ErrorEvent) => {
+      if (event.message && (
+        event.message.includes('TCPusher') || 
+        event.message.includes('ServiceWorker') ||
+        event.message.includes('register')
+      )) {
+        console.warn('Intercepted problematic global error:', event.message);
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    
+    window.addEventListener('error', handleGlobalError, true);
+    
+    // Handle unhandled promise rejections
+    const handlePromiseRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && 
+          (typeof event.reason === 'string' || event.reason.message) && 
+          ((typeof event.reason === 'string' && 
+            (event.reason.includes('TCPusher') || 
+             event.reason.includes('ServiceWorker') || 
+             event.reason.includes('register'))) || 
+           (event.reason.message && 
+            (event.reason.message.includes('TCPusher') || 
+             event.reason.message.includes('ServiceWorker') || 
+             event.reason.message.includes('register'))))) {
+        console.warn('Intercepted unhandled promise rejection:', 
+                    typeof event.reason === 'string' ? event.reason : event.reason.message);
+        event.preventDefault();
+      }
+    };
+    
+    window.addEventListener('unhandledrejection', handlePromiseRejection);
+    
     return () => {
       window.removeEventListener('error', handleScriptError, true);
+      window.removeEventListener('error', handleGlobalError, true);
+      window.removeEventListener('unhandledrejection', handlePromiseRejection);
     };
   }, [containerId, position]);
   

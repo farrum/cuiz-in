@@ -37,7 +37,7 @@ export const useScriptExecution = (content: string, containerId: string): string
     };
     
     try {
-      // Block listed domains that cause issues
+      // Expanded block list for problematic domains
       const blockedDomains = [
         'onclickpsh.com',
         'mrtnsvr.com',
@@ -48,7 +48,11 @@ export const useScriptExecution = (content: string, containerId: string): string
         'AAB',
         'aab.min.js',
         'swpushnotification',
-        'notification'
+        'notification',
+        'Va3pn0.js',
+        'push.m.js',
+        'ServiceWorker',
+        'register'
       ];
       
       // Filter out problematic scripts before processing
@@ -63,6 +67,10 @@ export const useScriptExecution = (content: string, containerId: string): string
           processedContent = processedContent.replace(regex, '<!-- Problematic script removed -->');
         }
       });
+      
+      // Specifically remove TCPusher service worker registration scripts
+      const tcpusherRegex = /<script[^>]*>[^<]*ServiceWorker[^<]*register[^<]*<\/script>/gi;
+      processedContent = processedContent.replace(tcpusherRegex, '<!-- ServiceWorker registration script removed -->');
       
       // Wait for the container to exist in DOM
       const containerCheck = setInterval(() => {
@@ -141,15 +149,15 @@ export const useScriptExecution = (content: string, containerId: string): string
               continue;
             }
             
-            // Skip notification permission requests and service worker registrations
+            // Skip service worker registration scripts explicitly
             if (scriptContent && (
-                scriptContent.includes('Notification') || 
-                scriptContent.includes('requestPermission') ||
-                scriptContent.includes('serviceWorker.register') ||
+                scriptContent.includes('serviceWorker') || 
+                scriptContent.includes('ServiceWorker') ||
+                scriptContent.includes('register') ||
                 scriptContent.includes('TCPusher') ||
                 scriptContent.includes('registerSW')
               )) {
-              console.log('Skipping potentially harmful script');
+              console.log('Skipping potentially harmful service worker registration script');
               continue;
             }
             
@@ -167,8 +175,15 @@ export const useScriptExecution = (content: string, containerId: string): string
                 .replace(/Notification\.requestPermission/g, "console.log")
                 // Replace service worker registration
                 .replace(/serviceWorker\.register/g, "console.log")
+                .replace(/ServiceWorker\.register/g, "console.log")
+                .replace(/navigator\.serviceWorker\.register/g, "console.log")
+                .replace(/window\.navigator\.serviceWorker\.register/g, "console.log")
                 // Replace window.open calls
-                .replace(/window\.open\(/g, "console.log('window.open prevented', ");
+                .replace(/window\.open\(/g, "console.log('window.open prevented', ")
+                // Replace any TCPusher initialization
+                .replace(/new\s+TCPusher/g, "console.log('TCPusher initialization prevented'")
+                // Block registration functions
+                .replace(/\.register\(/g, ".log(");
               
               script.text = safeContent;
               

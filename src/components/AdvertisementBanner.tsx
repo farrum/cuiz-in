@@ -57,7 +57,11 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       }
     };
     document.body.appendChild(testScript);
-    setTimeout(() => document.body.removeChild(testScript), 1000);
+    setTimeout(() => {
+      if (document.body.contains(testScript)) {
+        document.body.removeChild(testScript);
+      }
+    }, 1000);
     
     // Function to handle uncaught errors
     const handleUncaughtError = (event: ErrorEvent) => {
@@ -68,7 +72,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           event.message.includes('AAB') ||
           event.message.includes('push') ||
           event.message.includes('Notification') ||
-          event.message.includes('mrtnsvr')
+          event.message.includes('mrtnsvr') ||
+          event.message.includes('ServiceWorker') ||
+          event.message.includes('register')
       )) {
         console.error(`Ad error intercepted (${position}):`, event.message);
         event.preventDefault();
@@ -80,15 +86,23 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     // Handle unhandled promise rejections related to ads
     const handlePromiseRejection = (event: PromiseRejectionEvent) => {
-      if (event.reason && typeof event.reason === 'string' && (
-          event.reason.includes('TCPusher') || 
-          event.reason.includes('onclickpsh') ||
-          event.reason.includes('AAB') ||
-          event.reason.includes('push') ||
-          event.reason.includes('Notification') ||
-          event.reason.includes('mrtnsvr')
+      const reason = event.reason;
+      const reasonStr = typeof reason === 'string' 
+          ? reason 
+          : (reason && reason.message ? reason.message : String(reason));
+      
+      if (reasonStr && (
+          reasonStr.includes('TCPusher') || 
+          reasonStr.includes('onclickpsh') ||
+          reasonStr.includes('AAB') ||
+          reasonStr.includes('push') ||
+          reasonStr.includes('Notification') ||
+          reasonStr.includes('mrtnsvr') ||
+          reasonStr.includes('ServiceWorker') ||
+          reasonStr.includes('register') ||
+          reasonStr.includes('Va3pn0.js')
       )) {
-        console.error(`Ad promise rejection intercepted (${position}):`, event.reason);
+        console.error(`Ad promise rejection intercepted (${position}):`, reasonStr);
         event.preventDefault();
         return true;
       }
@@ -99,9 +113,25 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     window.addEventListener('error', handleUncaughtError, true);
     window.addEventListener('unhandledrejection', handlePromiseRejection);
     
+    // Add event listener for specific TCPusher service worker errors
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && 
+          typeof event.data === 'object' && 
+          event.data.type === 'ERROR' && 
+          event.data.message && 
+          (event.data.message.includes('TCPusher') || 
+           event.data.message.includes('ServiceWorker'))) {
+        console.log('Intercepted TCPusher message:', event.data);
+        event.stopPropagation();
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
     return () => {
       window.removeEventListener('error', handleUncaughtError, true);
       window.removeEventListener('unhandledrejection', handlePromiseRejection);
+      window.removeEventListener('message', handleMessage);
     };
   }, [position, isDevelopment]);
 

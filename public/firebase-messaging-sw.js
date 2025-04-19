@@ -33,40 +33,64 @@ self.addEventListener('push', function(event) {
   console.log('Push received: ', event);
 });
 
-// Block list for problematic domains
+// Expanded block list for problematic domains
 const BLOCKED_DOMAINS = [
   'onclickpsh.com', 
   'mrtnsvr.com', 
   'TCPusher',
   'push.js',
   'vo2pn0.js',
-  'sdk/push'
+  'sdk/push',
+  'Va3pn0.js',
+  'push.m.js',
+  'ServiceWorker',
+  'notification',
+  'register'
 ];
 
 // IMPORTANT: Block problematic scripts
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
-  // Check for AAB requests, which are often part of problematic ad requests
-  if (url.includes('AAB') || url.includes('aab.min.js')) {
-    console.log('Intercepting AAB request:', url);
-    event.respondWith(new Response('// AAB request intercepted', {
-      status: 200,
-      headers: new Headers({'Content-Type': 'application/javascript'})
-    }));
-    return;
-  }
-  
-  // Block TCPusher and other problematic scripts
-  for (const domain of BLOCKED_DOMAINS) {
-    if (url.includes(domain)) {
-      console.log('Blocking problematic script request:', url);
-      event.respondWith(new Response('// Script blocked by service worker', {
+  try {
+    // Check for AAB requests, which are often part of problematic ad requests
+    if (url.includes('AAB') || url.includes('aab.min.js')) {
+      console.log('Intercepting AAB request:', url);
+      event.respondWith(new Response('// AAB request intercepted', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
+    
+    // Specifically block TCPusher service worker registration
+    if (url.includes('TCPusher') || url.includes('ServiceWorker')) {
+      console.log('Blocking TCPusher service worker request:', url);
+      event.respondWith(new Response('// TCPusher service worker registration blocked', {
+        status: 200,
+        headers: new Headers({'Content-Type': 'application/javascript'})
+      }));
+      return;
+    }
+    
+    // Block other problematic domains
+    for (const domain of BLOCKED_DOMAINS) {
+      if (url.toLowerCase().includes(domain.toLowerCase())) {
+        console.log('Blocking problematic script request:', url);
+        event.respondWith(new Response('// Script blocked by service worker', {
+          status: 200,
+          headers: new Headers({'Content-Type': 'application/javascript'})
+        }));
+        return;
+      }
+    }
+  } catch (e) {
+    console.error('Error in service worker fetch handler:', e);
+    // Provide a safe response instead of failing
+    event.respondWith(new Response('// Error in service worker, request safely intercepted', {
+      status: 200,
+      headers: new Headers({'Content-Type': 'application/javascript'})
+    }));
   }
   
   // Let all other requests pass through
@@ -84,3 +108,31 @@ if (!self.swLoaded) {
     console.log('Optional SW script not found or failed to load');
   }
 }
+
+// Add specific handler for serviceworker registration errors
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  // Intercept any attempts to register additional service workers
+  if (event.data && (event.data.type === 'REGISTER_SW' || 
+      (typeof event.data === 'string' && event.data.includes('register')))) {
+    console.log('Intercepted attempt to register additional service worker');
+    // Don't pass this message along
+    return;
+  }
+});
+
+// Prevent common error patterns
+self.addEventListener('error', event => {
+  if (event.message && (
+      event.message.includes('TCPusher') || 
+      event.message.includes('ServiceWorker') ||
+      event.message.includes('register')
+  )) {
+    console.log('Intercepted error in service worker:', event.message);
+    event.preventDefault();
+  }
+});
+
