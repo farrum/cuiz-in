@@ -54,7 +54,10 @@ const AdContent: React.FC<AdContentProps> = ({
       'mrtnsvr.com',
       'TCPusher',
       'push.js',
-      'vo2pn0.js'
+      'vo2pn0.js',
+      'sdk/push',
+      'serviceWorker.register',
+      'Notification.requestPermission'
     ];
     
     let content = adContent;
@@ -73,6 +76,14 @@ const AdContent: React.FC<AdContentProps> = ({
     content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
                               "console.log('Notification permission request blocked')");
     
+    // Remove TCPusher specific code snippets
+    content = content.replace(/new\s+TCPusher\([^)]*\)/g, 
+                              "console.log('TCPusher initialization blocked')");
+    
+    // Safe-guard AAB requests
+    content = content.replace(/(fetch|XMLHttpRequest)([^;]*AAB[^;]*)/gi, 
+                              "console.log('AAB request blocked',$2)");
+    
     return content;
   }, [adContent]);
   
@@ -88,13 +99,14 @@ const AdContent: React.FC<AdContentProps> = ({
         console.error(`Script error in ${position} ad:`, event.message);
         setScriptError(event.message);
         event.preventDefault();
+        event.stopPropagation();
       }
     };
     
-    window.addEventListener('error', handleScriptError);
+    window.addEventListener('error', handleScriptError, true);
     
     return () => {
-      window.removeEventListener('error', handleScriptError);
+      window.removeEventListener('error', handleScriptError, true);
     };
   }, [containerId, position]);
   
@@ -115,6 +127,7 @@ const AdContent: React.FC<AdContentProps> = ({
         if (contentRef.current) {
           contentRef.current.setAttribute('data-has-scripts', hasScriptTags.toString());
           contentRef.current.setAttribute('data-content-length', cleanedContent.length.toString());
+          contentRef.current.setAttribute('data-position', position);
         }
       }
     }
@@ -164,7 +177,7 @@ const AdContent: React.FC<AdContentProps> = ({
         data-ad-position={position}
         data-ad-slot={slotId || position}
         data-ad-ready={containerReady.toString()}
-        className={`${getMinHeight()} flex items-center justify-center overflow-hidden`}
+        className={`${getMinHeight()} flex items-center justify-center overflow-hidden bg-secondary/10`}
         dangerouslySetInnerHTML={{ __html: cleanedContent }}
       ></div>
     </div>

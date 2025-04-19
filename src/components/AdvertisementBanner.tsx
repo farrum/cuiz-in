@@ -61,22 +61,47 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     
     // Function to handle uncaught errors
     const handleUncaughtError = (event: ErrorEvent) => {
-      // Only handle errors related to this position
+      // Only handle errors related to ads
       if (event.message && (
           event.message.includes('TCPusher') || 
-          event.message.includes('onclickpsh')
+          event.message.includes('onclickpsh') ||
+          event.message.includes('AAB') ||
+          event.message.includes('push') ||
+          event.message.includes('Notification') ||
+          event.message.includes('mrtnsvr')
       )) {
         console.error(`Ad error intercepted (${position}):`, event.message);
         event.preventDefault();
         event.stopPropagation();
+        return true; // Signal that we handled this error
       }
+      return false;
+    };
+    
+    // Handle unhandled promise rejections related to ads
+    const handlePromiseRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && typeof event.reason === 'string' && (
+          event.reason.includes('TCPusher') || 
+          event.reason.includes('onclickpsh') ||
+          event.reason.includes('AAB') ||
+          event.reason.includes('push') ||
+          event.reason.includes('Notification') ||
+          event.reason.includes('mrtnsvr')
+      )) {
+        console.error(`Ad promise rejection intercepted (${position}):`, event.reason);
+        event.preventDefault();
+        return true;
+      }
+      return false;
     };
     
     // Add global error handlers specifically for ad-related errors
-    window.addEventListener('error', handleUncaughtError);
+    window.addEventListener('error', handleUncaughtError, true);
+    window.addEventListener('unhandledrejection', handlePromiseRejection);
     
     return () => {
-      window.removeEventListener('error', handleUncaughtError);
+      window.removeEventListener('error', handleUncaughtError, true);
+      window.removeEventListener('unhandledrejection', handlePromiseRejection);
     };
   }, [position, isDevelopment]);
 

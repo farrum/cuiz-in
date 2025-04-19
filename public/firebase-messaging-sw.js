@@ -33,22 +33,40 @@ self.addEventListener('push', function(event) {
   console.log('Push received: ', event);
 });
 
+// Block list for problematic domains
+const BLOCKED_DOMAINS = [
+  'onclickpsh.com', 
+  'mrtnsvr.com', 
+  'TCPusher',
+  'push.js',
+  'vo2pn0.js',
+  'sdk/push'
+];
+
 // IMPORTANT: Block problematic scripts
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
-  // Block TCPusher and problematic scripts
-  if (url.includes('onclickpsh.com') || 
-      url.includes('TCPusher') || 
-      url.includes('push.js') ||
-      url.includes('mrtnsvr.com')) {
-    
-    console.log('Blocking problematic script request:', url);
-    event.respondWith(new Response('// Script blocked by service worker', {
+  // Check for AAB requests, which are often part of problematic ad requests
+  if (url.includes('AAB') || url.includes('aab.min.js')) {
+    console.log('Intercepting AAB request:', url);
+    event.respondWith(new Response('// AAB request intercepted', {
       status: 200,
       headers: new Headers({'Content-Type': 'application/javascript'})
     }));
     return;
+  }
+  
+  // Block TCPusher and other problematic scripts
+  for (const domain of BLOCKED_DOMAINS) {
+    if (url.includes(domain)) {
+      console.log('Blocking problematic script request:', url);
+      event.respondWith(new Response('// Script blocked by service worker', {
+        status: 200,
+        headers: new Headers({'Content-Type': 'application/javascript'})
+      }));
+      return;
+    }
   }
   
   // Let all other requests pass through

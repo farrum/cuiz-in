@@ -44,7 +44,11 @@ export const useScriptExecution = (content: string, containerId: string): string
         'TCPusher',
         'push.js',
         'vo2pn0.js',
-        'sdk/push'
+        'sdk/push',
+        'AAB',
+        'aab.min.js',
+        'swpushnotification',
+        'notification'
       ];
       
       // Filter out problematic scripts before processing
@@ -83,7 +87,7 @@ export const useScriptExecution = (content: string, containerId: string): string
               const srcUrl = srcMatch[1];
               
               // Skip if the URL contains any blocked domains
-              if (blockedDomains.some(domain => srcUrl.includes(domain))) {
+              if (blockedDomains.some(domain => srcUrl.toLowerCase().includes(domain.toLowerCase()))) {
                 console.log(`Skipping blocked script: ${srcUrl}`);
                 continue;
               }
@@ -93,8 +97,16 @@ export const useScriptExecution = (content: string, containerId: string): string
                 newScript.src = srcUrl;
                 newScript.async = true;
                 
-                // Prevent potential notification permission requests
+                // Add safety attributes
+                newScript.setAttribute('data-ad-script', 'true');
                 newScript.setAttribute('data-no-notifications', 'true');
+                
+                // Create isolated error handler for this script
+                newScript.onerror = (err) => {
+                  console.error(`Error loading external script: ${srcUrl}`, err);
+                  // Don't propagate the error
+                  return true;
+                };
                 
                 // Add event listeners to track script loading status
                 newScript.onload = () => {
@@ -102,9 +114,7 @@ export const useScriptExecution = (content: string, containerId: string): string
                   executedCount++;
                   setExecutionStatus(`${executedCount} scripts executed`);
                 };
-                newScript.onerror = (err) => {
-                  console.error(`Error loading external script: ${srcUrl}`, err);
-                };
+                
                 container.appendChild(newScript);
                 console.log(`External script added to DOM: ${srcUrl}`);
               }
@@ -119,44 +129,56 @@ export const useScriptExecution = (content: string, containerId: string): string
             scriptFound = true;
             const scriptContent = contentMatch[1];
             
-            // Skip if the content contains any blocked domains
-            if (scriptContent && blockedDomains.some(domain => scriptContent.includes(domain))) {
+            if (!scriptContent || !scriptContent.trim()) {
+              console.log('Skipping empty inline script');
+              continue;
+            }
+            
+            // Skip if the content contains any blocked domains or patterns
+            if (blockedDomains.some(domain => 
+              scriptContent.toLowerCase().includes(domain.toLowerCase()))) {
               console.log('Skipping blocked inline script');
               continue;
             }
             
-            // Skip notification permission requests
+            // Skip notification permission requests and service worker registrations
             if (scriptContent && (
                 scriptContent.includes('Notification') || 
                 scriptContent.includes('requestPermission') ||
-                scriptContent.includes('serviceWorker.register')
+                scriptContent.includes('serviceWorker.register') ||
+                scriptContent.includes('TCPusher') ||
+                scriptContent.includes('registerSW')
               )) {
-              console.log('Skipping notification permission script');
+              console.log('Skipping potentially harmful script');
               continue;
             }
             
-            if (scriptContent && scriptContent.trim()) {
-              try {
-                // Create a new script element with sandbox
-                const script = document.createElement('script');
-                script.type = 'text/javascript';
-                
+            try {
+              // Create a new script element with sandbox
+              const script = document.createElement('script');
+              script.type = 'text/javascript';
+              script.setAttribute('data-ad-script', 'true');
+              
+              // Replace potentially harmful functions
+              let safeContent = scriptContent
                 // Replace document.write calls
-                const safeContent = scriptContent.replace(
-                  /document\.write\(/g, 
-                  'console.log("document.write prevented", '
-                );
-                
-                script.text = safeContent;
-                
-                // Execute the script in container scope
-                container.appendChild(script);
-                executedCount++;
-                console.log(`Inline script executed, length: ${scriptContent.length} bytes`);
-                setExecutionStatus(`${executedCount} scripts executed`);
-              } catch (execError) {
-                console.error('Error executing inline script:', execError);
-              }
+                .replace(/document\.write\(/g, "console.log('document.write prevented', ")
+                // Replace notification requests
+                .replace(/Notification\.requestPermission/g, "console.log")
+                // Replace service worker registration
+                .replace(/serviceWorker\.register/g, "console.log")
+                // Replace window.open calls
+                .replace(/window\.open\(/g, "console.log('window.open prevented', ");
+              
+              script.text = safeContent;
+              
+              // Execute the script in container scope
+              container.appendChild(script);
+              executedCount++;
+              console.log(`Inline script executed, length: ${safeContent.length} bytes`);
+              setExecutionStatus(`${executedCount} scripts executed`);
+            } catch (execError) {
+              console.error('Error executing inline script:', execError);
             }
           }
           
