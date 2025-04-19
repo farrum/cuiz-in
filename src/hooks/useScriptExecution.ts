@@ -32,6 +32,15 @@ export const useScriptExecution = (content: string, containerId: string): string
           clearInterval(containerCheck);
           console.log(`Container found for ${containerId} after ${containerCheckAttempts} attempts`);
           
+          // Filter out problematic scripts
+          let processedContent = content;
+          
+          // Remove problematic TCPusher scripts
+          if (processedContent.includes('onclickpsh.com') || processedContent.includes('TCPusher')) {
+            console.log('Filtering out TCPusher scripts that cause issues');
+            processedContent = processedContent.replace(/<script[^>]*onclickpsh\.com[^>]*>[\s\S]*?<\/script>/gi, '');
+          }
+          
           // Two regex patterns to catch both inline and src scripts
           // 1. Match script tags with src attribute
           const scriptSrcRegex = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -40,10 +49,18 @@ export const useScriptExecution = (content: string, containerId: string): string
           
           // Process scripts with src attribute
           let srcMatch;
-          while ((srcMatch = scriptSrcRegex.exec(content)) !== null) {
+          while ((srcMatch = scriptSrcRegex.exec(processedContent)) !== null) {
             scriptFound = true;
             try {
               const srcUrl = srcMatch[1];
+              // Skip problematic domains
+              if (srcUrl.includes('onclickpsh.com') || 
+                  srcUrl.includes('mrtnsvr.com') || 
+                  srcUrl.includes('push.js')) {
+                console.log(`Skipping problematic script: ${srcUrl}`);
+                continue;
+              }
+              
               if (srcUrl) {
                 const newScript = document.createElement('script');
                 newScript.src = srcUrl;
@@ -67,9 +84,18 @@ export const useScriptExecution = (content: string, containerId: string): string
           
           // Process inline scripts
           let contentMatch;
-          while ((contentMatch = scriptContentRegex.exec(content)) !== null) {
+          while ((contentMatch = scriptContentRegex.exec(processedContent)) !== null) {
             scriptFound = true;
             const scriptContent = contentMatch[1];
+            
+            // Skip problematic scripts
+            if (scriptContent && 
+                (scriptContent.includes('onclickpsh.com') || 
+                 scriptContent.includes('TCPusher') || 
+                 scriptContent.includes('push.js'))) {
+              console.log('Skipping problematic inline script');
+              continue;
+            }
             
             if (scriptContent && scriptContent.trim()) {
               try {
@@ -102,9 +128,9 @@ export const useScriptExecution = (content: string, containerId: string): string
         } else {
           console.log(`Waiting for container ${containerId}, attempt ${containerCheckAttempts}/${maxAttempts}`);
         }
-      }, 100); // Check every 100ms instead of 50ms
+      }, 100); // Check every 100ms
       
-      // Clear interval after 10 seconds to prevent infinite checking (increased from 5 seconds)
+      // Clear interval after 10 seconds to prevent infinite checking
       setTimeout(() => {
         clearInterval(containerCheck);
         if (!scriptFound && executionStatus !== 'Container not ready') {

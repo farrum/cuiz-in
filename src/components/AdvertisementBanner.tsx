@@ -1,5 +1,5 @@
 
-import React, { useId } from 'react';
+import React, { useId, useEffect } from 'react';
 import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
@@ -39,6 +39,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     slotId,
     pageSection
   });
+
+  // Detect ad blockers and handle script errors
+  useEffect(() => {
+    // Attempt to detect if scripts are being blocked
+    const testScript = document.createElement('script');
+    testScript.src = "https://example.com/test-script.js";
+    testScript.onerror = () => {
+      console.log("Ad scripts might be blocked by browser extensions");
+    };
+    document.body.appendChild(testScript);
+    document.body.removeChild(testScript);
+  }, []);
 
   if (!adActive) {
     if (isDevelopment) {

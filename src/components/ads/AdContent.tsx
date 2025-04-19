@@ -102,7 +102,6 @@ const AdContent: React.FC<AdContentProps> = ({
           )}
         </div>
       )}
-      {/* Set both id attribute and ref to ensure the container is accessible */}
       <div 
         id={containerId} 
         ref={contentRef}
@@ -117,4 +116,3 @@ const AdContent: React.FC<AdContentProps> = ({
 };
 
 export default AdContent;
-
