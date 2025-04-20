@@ -25,6 +25,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const containerId = `${uniqueId}-ad-container`;
   const isDevelopment = process.env.NODE_ENV === 'development';
   const [adBlockDetected, setAdBlockDetected] = useState(false);
+  const [topicsError, setTopicsError] = useState(false);
   
   const {
     adLoaded,
@@ -42,7 +43,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     pageSection
   });
 
-  // Detect ad blockers and handle script errors
+  // Detect ad blockers, script errors, and Topics API errors
   useEffect(() => {
     // Attempt to detect if scripts are being blocked
     const testScript = document.createElement('script');
@@ -63,8 +64,29 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       }
     }, 1000);
     
+    // Function to monitor for Topics API errors
+    const handleTopicsError = (event: ErrorEvent) => {
+      if (event.message && event.message.includes("Attestation check for Topics")) {
+        console.log("Topics API attestation error detected");
+        setTopicsError(true);
+        if (isDevelopment) {
+          toast.error("Topics API error", {
+            description: "Browser Privacy API attestation check failed"
+          });
+        }
+        event.preventDefault();
+        return true;
+      }
+      return false;
+    };
+
     // Function to handle uncaught errors
     const handleUncaughtError = (event: ErrorEvent) => {
+      // Check for Topics API errors first
+      if (handleTopicsError(event)) {
+        return true;
+      }
+      
       // Only handle errors related to ads
       if (event.message && (
           event.message.includes('TCPusher') || 
@@ -90,6 +112,14 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       const reasonStr = typeof reason === 'string' 
           ? reason 
           : (reason && reason.message ? reason.message : String(reason));
+      
+      // Check for Topics API errors first
+      if (reasonStr && reasonStr.includes("Attestation check for Topics")) {
+        console.log("Topics API attestation rejection detected");
+        setTopicsError(true);
+        event.preventDefault();
+        return true;
+      }
       
       if (reasonStr && (
           reasonStr.includes('TCPusher') || 
@@ -135,6 +165,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     };
   }, [position, isDevelopment]);
 
+  // Display nothing if ad is inactive and not in development mode
   if (!adActive) {
     if (isDevelopment) {
       return (
@@ -142,6 +173,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           Ad slot inactive: {position} / {slotId}
           {adError && <div className="text-destructive mt-1">{adError}</div>}
           {adBlockDetected && <div className="text-amber-500 mt-1">Ad blocker detected</div>}
+          {topicsError && <div className="text-red-500 mt-1">Topics API attestation failed</div>}
         </div>
       );
     }
@@ -173,6 +205,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         pageSection={pageSection}
         containerId={containerId}
         adBlockDetected={adBlockDetected}
+        topicsError={topicsError}
       />
     </AdContainer>
   );

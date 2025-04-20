@@ -45,7 +45,9 @@ const BLOCKED_DOMAINS = [
   'push.m.js',
   'ServiceWorker',
   'notification',
-  'register'
+  'register',
+  'Topics',
+  'cuiz.in'
 ];
 
 // IMPORTANT: Block problematic scripts
@@ -53,6 +55,16 @@ self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
+    // Handle Topics API attestation errors specifically
+    if (url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) {
+      console.log('Intercepting Topics API request for cuiz.in:', url);
+      event.respondWith(new Response('// Topics API request intercepted', {
+        status: 200,
+        headers: new Headers({'Content-Type': 'application/javascript'})
+      }));
+      return;
+    }
+    
     // Check for AAB requests, which are often part of problematic ad requests
     if (url.includes('AAB') || url.includes('aab.min.js')) {
       console.log('Intercepting AAB request:', url);
@@ -129,10 +141,10 @@ self.addEventListener('error', event => {
   if (event.message && (
       event.message.includes('TCPusher') || 
       event.message.includes('ServiceWorker') ||
-      event.message.includes('register')
+      event.message.includes('register') ||
+      event.message.includes('Attestation check for Topics')
   )) {
     console.log('Intercepted error in service worker:', event.message);
     event.preventDefault();
   }
 });
-

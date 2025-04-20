@@ -14,6 +14,7 @@ interface AdContentProps {
   pageSection?: string;
   containerId: string;
   adBlockDetected?: boolean;
+  topicsError?: boolean;
 }
 
 const AdContent: React.FC<AdContentProps> = ({
@@ -26,7 +27,8 @@ const AdContent: React.FC<AdContentProps> = ({
   slotId,
   pageSection,
   containerId,
-  adBlockDetected = false
+  adBlockDetected = false,
+  topicsError = false
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
@@ -60,7 +62,9 @@ const AdContent: React.FC<AdContentProps> = ({
       'ServiceWorker.register',
       'Notification.requestPermission',
       'Va3pn0.js',
-      'push.m.js'
+      'push.m.js',
+      'document.browsingTopics',
+      'navigator.runAdAuction'
     ];
     
     let content = adContent;
@@ -74,6 +78,10 @@ const AdContent: React.FC<AdContentProps> = ({
     // Remove service worker registrations more aggressively
     const swRegex = /<script[^>]*>[^<]*(serviceWorker|ServiceWorker)[^<]*(register)[^<]*<\/script>/gi;
     content = content.replace(swRegex, '<!-- Service worker registration removed -->');
+    
+    // Remove Topics API-related code
+    content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
+                             "console.log('Topics API call blocked')");
     
     // Remove notification requests
     content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
@@ -93,6 +101,9 @@ const AdContent: React.FC<AdContentProps> = ({
                              
     // Block Va3pn0.js script which causes TCPusher error
     content = content.replace(/Va3pn0\.js/g, "blocked-script.js");
+    
+    // Block Privacy Sandbox / Topics API calls
+    content = content.replace(/navigator\.runAdAuction/g, "console.log");
     
     return content;
   }, [adContent]);
@@ -120,7 +131,8 @@ const AdContent: React.FC<AdContentProps> = ({
       if (event.message && (
         event.message.includes('TCPusher') || 
         event.message.includes('ServiceWorker') ||
-        event.message.includes('register')
+        event.message.includes('register') ||
+        event.message.includes('Attestation check for Topics')
       )) {
         console.warn('Intercepted problematic global error:', event.message);
         event.preventDefault();
@@ -137,11 +149,15 @@ const AdContent: React.FC<AdContentProps> = ({
           ((typeof event.reason === 'string' && 
             (event.reason.includes('TCPusher') || 
              event.reason.includes('ServiceWorker') || 
-             event.reason.includes('register'))) || 
+             event.reason.includes('register') ||
+             event.reason.includes('Topics') ||
+             event.reason.includes('Attestation'))) || 
            (event.reason.message && 
             (event.reason.message.includes('TCPusher') || 
              event.reason.message.includes('ServiceWorker') || 
-             event.reason.message.includes('register'))))) {
+             event.reason.message.includes('register') ||
+             event.reason.message.includes('Topics') ||
+             event.reason.message.includes('Attestation'))))) {
         console.warn('Intercepted unhandled promise rejection:', 
                     typeof event.reason === 'string' ? event.reason : event.reason.message);
         event.preventDefault();
@@ -194,11 +210,12 @@ const AdContent: React.FC<AdContentProps> = ({
   return (
     <div className="w-full">
       <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
-      {isDevelopment && (adDebug || scriptError || adBlockDetected) && (
+      {isDevelopment && (adDebug || scriptError || adBlockDetected || topicsError) && (
         <div className="mb-2 text-center">
           {adDebug && <p className="text-xs text-blue-500">{adDebug}</p>}
           {scriptError && <p className="text-xs text-red-500">Script error: {scriptError}</p>}
           {adBlockDetected && <p className="text-xs text-amber-500">Ad blocker detected</p>}
+          {topicsError && <p className="text-xs text-red-500">Topics API attestation failed</p>}
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
