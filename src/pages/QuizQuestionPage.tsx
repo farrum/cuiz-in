@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, BookOpen } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
+import SEOKeywords from '@/components/SEOKeywords';
+import { getQuestionKeywords } from '@/services/keywordService';
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -23,7 +24,6 @@ const QuizQuestionPage: React.FC = () => {
       setIsLoading(true);
       
       try {
-        // Fetch the current question
         const { data, error } = await supabase
           .from('quiz_questions')
           .select('*')
@@ -46,7 +46,6 @@ const QuizQuestionPage: React.FC = () => {
           
           setQuestion(formattedQuestion);
           
-          // Fetch related questions from the same category
           const { data: relatedData, error: relatedError } = await supabase
             .from('quiz_questions')
             .select('*')
@@ -80,13 +79,13 @@ const QuizQuestionPage: React.FC = () => {
   }, [questionId, questionSlug]);
 
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
-    // Just navigate to the answer page
     window.location.href = `/answer/${questionId}/${selectedAnswer}`;
   };
 
-  // Generate Schema.org structured data for quiz question
   const generateQuestionSchema = () => {
     if (!question) return null;
+    
+    const keywords = getQuestionKeywords(question);
     
     return {
       '@context': 'https://schema.org',
@@ -94,6 +93,7 @@ const QuizQuestionPage: React.FC = () => {
       'name': question.question,
       'about': question.category,
       'educationalLevel': question.difficulty,
+      'keywords': keywords.join(', '),
       'hasPart': {
         '@type': 'Question',
         'name': question.question,
@@ -115,15 +115,7 @@ const QuizQuestionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <SEO
-        title={pageTitle}
-        description={pageDescription}
-        canonicalUrl={question ? `https://cuiz.in/quiz/question/${question.id}/${questionSlug}` : undefined}
-        ogType="article"
-        schemaType="Quiz"
-        schemaData={generateQuestionSchema()}
-      />
-      
+      <SEOKeywords />
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
@@ -138,7 +130,6 @@ const QuizQuestionPage: React.FC = () => {
           <LoadingCard />
         ) : question ? (
           <div className="space-y-6">
-            {/* SEO Metadata - helps search engines */}
             <div className="hidden">
               <h1>{question.question}</h1>
               <p>Category: {question.category}</p>
@@ -155,7 +146,6 @@ const QuizQuestionPage: React.FC = () => {
               onComplete={handleQuizComplete} 
             />
             
-            {/* Structured Data for SEO */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
