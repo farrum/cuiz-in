@@ -47,7 +47,9 @@ const BLOCKED_DOMAINS = [
   'notification',
   'register',
   'Topics',
-  'cuiz.in'
+  'cuiz.in',
+  'adspector.io',
+  'attestation'
 ];
 
 // IMPORTANT: Block problematic scripts
@@ -55,10 +57,12 @@ self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
-    // Handle Topics API attestation errors specifically
-    if (url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) {
-      console.log('Intercepting Topics API request for cuiz.in:', url);
-      event.respondWith(new Response('// Topics API request intercepted', {
+    // Handle Topics API attestation errors more aggressively
+    if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) || 
+        url.includes('adspector.io') || 
+        url.includes('attestation')) {
+      console.log('Intercepting Topics API or attestation request:', url);
+      event.respondWith(new Response('// Topics API or attestation request intercepted', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));

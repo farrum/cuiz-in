@@ -18,6 +18,7 @@ interface UseAdFetchProps {
   isMountedRef: React.MutableRefObject<boolean>;
   lastFetchTimeRef: React.MutableRefObject<number>;
   trackImpression: (id: string, position: string, slotId?: string, pageSection?: string) => Promise<void>;
+  skipTopics?: boolean;
 }
 
 export const useAdFetch = ({
@@ -29,7 +30,8 @@ export const useAdFetch = ({
   canFetchAd,
   isMountedRef,
   lastFetchTimeRef,
-  trackImpression
+  trackImpression,
+  skipTopics = false
 }: UseAdFetchProps) => {
   
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
@@ -39,7 +41,7 @@ export const useAdFetch = ({
     if (!isMountedRef.current) return;
     
     // Print debugging info for this ad request
-    console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}`);
+    console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}, skipTopics=${skipTopics}`);
     
     // Additional debugging for all positions
     debugAvailableAds();
@@ -82,7 +84,7 @@ export const useAdFetch = ({
         if (selectedAd && selectedAd.code) {
           console.log(`Selected ad from localStorage: ${selectedAd.name || selectedAd.id}`);
           
-          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
+          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection, skipTopics);
           
           updateAdState(content, id, version, debug);
           
@@ -113,7 +115,7 @@ export const useAdFetch = ({
         if (selectedAd && selectedAd.code) {
           console.log(`Selected ad from Supabase: ${selectedAd.name || selectedAd.id}`);
           
-          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
+          const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection, skipTopics);
           
           if (version === adState.adVersion && adState.adLoaded) {
             console.log(`Ad content unchanged for ${position}, skipping server update`);
@@ -138,7 +140,7 @@ export const useAdFetch = ({
       const errorMessage = err instanceof Error ? err.message : String(err);
       updateAdState('', null, '', null, false, `Fetch error: ${errorMessage}`);
     }
-  }, [position, slotId, pageSection, adState, updateAdState, adPositionKey, canFetchAd, trackImpression, isMountedRef, lastFetchTimeRef]);
+  }, [position, slotId, pageSection, adState, updateAdState, adPositionKey, canFetchAd, trackImpression, isMountedRef, lastFetchTimeRef, skipTopics]);
   
   return {
     fetchAds,

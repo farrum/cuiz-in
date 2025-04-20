@@ -18,7 +18,9 @@ const BLOCKED_DOMAINS = [
   'push.m.js',
   'ServiceWorker',
   'cuiz.in/topics',
-  'Topics'
+  'Topics',
+  'adspector.io',
+  'attestation'
 ];
 
 // Block problematic fetch requests
@@ -27,9 +29,11 @@ self.addEventListener('fetch', event => {
   
   try {
     // Handle Topics API attestation errors specifically
-    if (url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) {
-      console.log('SW: Intercepting Topics API request for cuiz.in:', url);
-      event.respondWith(new Response('// Topics API request intercepted by service worker', {
+    if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) ||
+        url.includes('adspector.io') ||
+        url.includes('attestation')) {
+      console.log('SW: Intercepting Topics API or attestation request:', url);
+      event.respondWith(new Response('// Topics API or attestation request intercepted by service worker', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
@@ -99,8 +103,12 @@ self.addEventListener('message', event => {
 
 // Handle Topics API errors
 self.addEventListener('error', event => {
-  if (event.message && event.message.includes('Attestation check for Topics')) {
-    console.log('SW: Intercepted Topics API error:', event.message);
+  if (event.message && (
+      event.message.includes('Attestation check for Topics') ||
+      event.message.includes('adspector.io') ||
+      event.message.includes('cuiz.in/topics')
+  )) {
+    console.log('SW: Intercepted Topics API or related error:', event.message);
     event.preventDefault();
     return;
   }
@@ -114,4 +122,4 @@ try {
 }
 
 // Signal that this service worker is modified
-console.log('Ad-safe service worker initialized');
+console.log('Ad-safe service worker initialized with Topics API blocking');

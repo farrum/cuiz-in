@@ -9,9 +9,10 @@ interface UseAdvertisementProps {
   position: string;
   slotId?: string;
   pageSection?: string;
+  skipTopics?: boolean;
 }
 
-export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertisementProps) => {
+export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = false }: UseAdvertisementProps) => {
   // Initialize session ID
   getSessionId();
   
@@ -36,7 +37,8 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     canFetchAd,
     isMountedRef,
     lastFetchTimeRef,
-    trackImpression
+    trackImpression,
+    skipTopics
   });
   
   // Handle ad click using tracking hook

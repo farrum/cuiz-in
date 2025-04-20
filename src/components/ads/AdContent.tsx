@@ -15,6 +15,7 @@ interface AdContentProps {
   containerId: string;
   adBlockDetected?: boolean;
   topicsError?: boolean;
+  skipTopics?: boolean;
 }
 
 const AdContent: React.FC<AdContentProps> = ({
@@ -28,7 +29,8 @@ const AdContent: React.FC<AdContentProps> = ({
   pageSection,
   containerId,
   adBlockDetected = false,
-  topicsError = false
+  topicsError = false,
+  skipTopics = false
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
@@ -62,10 +64,19 @@ const AdContent: React.FC<AdContentProps> = ({
       'ServiceWorker.register',
       'Notification.requestPermission',
       'Va3pn0.js',
-      'push.m.js',
-      'document.browsingTopics',
-      'navigator.runAdAuction'
+      'push.m.js'
     ];
+
+    // If skipTopics is true, add Topics-related entries to blocked scripts
+    if (skipTopics) {
+      blockedScripts.push(
+        'document.browsingTopics',
+        'navigator.runAdAuction',
+        'adspector.io',
+        'cuiz.in/topics',
+        'Topics'
+      );
+    }
     
     let content = adContent;
     
@@ -79,9 +90,23 @@ const AdContent: React.FC<AdContentProps> = ({
     const swRegex = /<script[^>]*>[^<]*(serviceWorker|ServiceWorker)[^<]*(register)[^<]*<\/script>/gi;
     content = content.replace(swRegex, '<!-- Service worker registration removed -->');
     
-    // Remove Topics API-related code
-    content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
-                             "console.log('Topics API call blocked')");
+    // If skipTopics is true, remove all Topics API-related code
+    if (skipTopics) {
+      // Remove Topics API-related code
+      content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
+                               "console.log('Topics API call blocked')");
+      
+      // Remove Privacy Sandbox / Topics API calls
+      content = content.replace(/navigator\.runAdAuction/g, "console.log");
+      
+      // Remove adspector.io scripts completely
+      content = content.replace(/<script[^>]*adspector\.io[^>]*>[^<]*<\/script>/gi, 
+                               '<!-- adspector.io script removed -->');
+                               
+      // Remove cuiz.in/topics requests
+      content = content.replace(/<script[^>]*cuiz\.in\/topics[^>]*>[^<]*<\/script>/gi, 
+                               '<!-- Topics API script removed -->');
+    }
     
     // Remove notification requests
     content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
@@ -102,14 +127,11 @@ const AdContent: React.FC<AdContentProps> = ({
     // Block Va3pn0.js script which causes TCPusher error
     content = content.replace(/Va3pn0\.js/g, "blocked-script.js");
     
-    // Block Privacy Sandbox / Topics API calls
-    content = content.replace(/navigator\.runAdAuction/g, "console.log");
-    
     return content;
-  }, [adContent]);
+  }, [adContent, skipTopics]);
   
   // Execute scripts in the ad content only after container is ready
-  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId);
+  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId, skipTopics);
   
   // Effect to monitor script errors
   useEffect(() => {
@@ -132,7 +154,7 @@ const AdContent: React.FC<AdContentProps> = ({
         event.message.includes('TCPusher') || 
         event.message.includes('ServiceWorker') ||
         event.message.includes('register') ||
-        event.message.includes('Attestation check for Topics')
+        (skipTopics && event.message.includes('Attestation check for Topics'))
       )) {
         console.warn('Intercepted problematic global error:', event.message);
         event.preventDefault();
@@ -150,14 +172,20 @@ const AdContent: React.FC<AdContentProps> = ({
             (event.reason.includes('TCPusher') || 
              event.reason.includes('ServiceWorker') || 
              event.reason.includes('register') ||
-             event.reason.includes('Topics') ||
-             event.reason.includes('Attestation'))) || 
+             (skipTopics && (
+               event.reason.includes('Topics') ||
+               event.reason.includes('Attestation')
+             ))
+            )) || 
            (event.reason.message && 
             (event.reason.message.includes('TCPusher') || 
              event.reason.message.includes('ServiceWorker') || 
              event.reason.message.includes('register') ||
-             event.reason.message.includes('Topics') ||
-             event.reason.message.includes('Attestation'))))) {
+             (skipTopics && (
+               event.reason.message.includes('Topics') ||
+               event.reason.message.includes('Attestation')
+             ))
+            )))) {
         console.warn('Intercepted unhandled promise rejection:', 
                     typeof event.reason === 'string' ? event.reason : event.reason.message);
         event.preventDefault();
@@ -171,7 +199,7 @@ const AdContent: React.FC<AdContentProps> = ({
       window.removeEventListener('error', handleGlobalError, true);
       window.removeEventListener('unhandledrejection', handlePromiseRejection);
     };
-  }, [containerId, position]);
+  }, [containerId, position, skipTopics]);
   
   // Effect to monitor content changes and container status
   useEffect(() => {
@@ -191,10 +219,13 @@ const AdContent: React.FC<AdContentProps> = ({
           contentRef.current.setAttribute('data-has-scripts', hasScriptTags.toString());
           contentRef.current.setAttribute('data-content-length', cleanedContent.length.toString());
           contentRef.current.setAttribute('data-position', position);
+          if (skipTopics) {
+            contentRef.current.setAttribute('data-skip-topics', 'true');
+          }
         }
       }
     }
-  }, [adLoaded, cleanedContent, containerReady, containerId, position, slotId, isDevelopment]);
+  }, [adLoaded, cleanedContent, containerReady, containerId, position, slotId, isDevelopment, skipTopics]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
@@ -216,6 +247,7 @@ const AdContent: React.FC<AdContentProps> = ({
           {scriptError && <p className="text-xs text-red-500">Script error: {scriptError}</p>}
           {adBlockDetected && <p className="text-xs text-amber-500">Ad blocker detected</p>}
           {topicsError && <p className="text-xs text-red-500">Topics API attestation failed</p>}
+          {skipTopics && <p className="text-xs text-green-500">Topics API skipped</p>}
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
@@ -241,6 +273,7 @@ const AdContent: React.FC<AdContentProps> = ({
         data-ad-position={position}
         data-ad-slot={slotId || position}
         data-ad-ready={containerReady.toString()}
+        data-skip-topics={skipTopics.toString()}
         className={`${getMinHeight()} flex items-center justify-center overflow-hidden bg-secondary/10`}
         dangerouslySetInnerHTML={{ __html: cleanedContent }}
       ></div>

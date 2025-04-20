@@ -23,11 +23,23 @@ const LoginPage: React.FC = () => {
               Back to Home
             </Link>
             
-            <AdvertisementBanner position="top" slotId="login-top" pageSection="login-page" className="mb-8" />
+            <AdvertisementBanner 
+              position="top" 
+              slotId="login-top" 
+              pageSection="login-page" 
+              className="mb-8"
+              skipTopics={true}
+            />
             
             <UserLogin />
             
-            <AdvertisementBanner position="bottom" slotId="login-bottom" pageSection="login-page" className="mt-8" />
+            <AdvertisementBanner 
+              position="bottom" 
+              slotId="login-bottom" 
+              pageSection="login-page" 
+              className="mt-8"
+              skipTopics={true}
+            />
           </div>
         </div>
       </div>

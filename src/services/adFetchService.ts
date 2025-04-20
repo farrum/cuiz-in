@@ -118,7 +118,8 @@ export const processSelectedAd = (
   selectedAd: AdSlot, 
   position: string, 
   slotId?: string, 
-  pageSection?: string
+  pageSection?: string,
+  skipTopics: boolean = false
 ): { 
   content: string;
   id: string;
@@ -132,16 +133,48 @@ export const processSelectedAd = (
   const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
   
+  // Process the ad code to remove problematic scripts
+  let cleanedCode = selectedAd.code;
+  
   // Preserve script tags and only replace document.write calls
-  const cleanedCode = selectedAd.code.replace(
+  cleanedCode = cleanedCode.replace(
     /document\.write\(/g, 
     'console.log("document.write call prevented", '
   );
   
+  // If skipTopics is true, remove Topics API related code
+  if (skipTopics) {
+    // Remove Topics API calls
+    cleanedCode = cleanedCode.replace(
+      /document\.browsingTopics\([^)]*\)/g, 
+      'console.log("Topics API call blocked")'
+    );
+    
+    // Remove adspector.io scripts
+    cleanedCode = cleanedCode.replace(
+      /<script[^>]*adspector\.io[^>]*>[^<]*<\/script>/gi,
+      '<!-- adspector.io script removed -->'
+    );
+    
+    // Remove cuiz.in/topics scripts
+    cleanedCode = cleanedCode.replace(
+      /<script[^>]*cuiz\.in\/topics[^>]*>[^<]*<\/script>/gi,
+      '<!-- Topics API script removed -->'
+    );
+    
+    // Add a data attribute to indicate Topics API is disabled
+    cleanedCode = cleanedCode.replace(
+      /<script/g,
+      '<script data-skip-topics="true"'
+    );
+    
+    console.log(`Topics API skipped for ad in position ${position}`);
+  }
+  
   setAdInCache(adPositionKey, cleanedCode, selectedAd.id, contentVersion);
   
   const source = localStorage.getItem('quiz_app_ad_slots') ? 'Local' : 'Server';
-  const debug = `${source} ad: ${selectedAd.name} (${selectedAd.position})`;
+  const debug = `${source} ad: ${selectedAd.name} (${selectedAd.position})${skipTopics ? ' [Topics API disabled]' : ''}`;
   
   return {
     content: cleanedCode,

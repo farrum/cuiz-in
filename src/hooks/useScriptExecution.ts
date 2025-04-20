@@ -5,9 +5,14 @@ import { useEffect, useState } from 'react';
  * Hook to safely execute scripts from ad content
  * @param content HTML content that may include script tags
  * @param containerId ID of the container element where the scripts should execute
+ * @param skipTopics Whether to skip Topics API related code
  * @returns status of script execution
  */
-export const useScriptExecution = (content: string, containerId: string): string => {
+export const useScriptExecution = (
+  content: string, 
+  containerId: string, 
+  skipTopics: boolean = false
+): string => {
   const [executionStatus, setExecutionStatus] = useState<string>('');
   
   useEffect(() => {
@@ -55,6 +60,17 @@ export const useScriptExecution = (content: string, containerId: string): string
         'register'
       ];
       
+      // Add Topics API domains to block list if skipTopics is true
+      if (skipTopics) {
+        blockedDomains.push(
+          'adspector.io',
+          'cuiz.in/topics',
+          'Topics',
+          'browsingTopics',
+          'runAdAuction'
+        );
+      }
+      
       // Filter out problematic scripts before processing
       let processedContent = content;
       
@@ -71,6 +87,12 @@ export const useScriptExecution = (content: string, containerId: string): string
       // Specifically remove TCPusher service worker registration scripts
       const tcpusherRegex = /<script[^>]*>[^<]*ServiceWorker[^<]*register[^<]*<\/script>/gi;
       processedContent = processedContent.replace(tcpusherRegex, '<!-- ServiceWorker registration script removed -->');
+      
+      // If skipTopics is true, remove all Topics API-related scripts
+      if (skipTopics) {
+        const topicsRegex = /<script[^>]*>[^<]*(browsingTopics|Topics|attestation)[^<]*<\/script>/gi;
+        processedContent = processedContent.replace(topicsRegex, '<!-- Topics API script removed -->');
+      }
       
       // Wait for the container to exist in DOM
       const containerCheck = setInterval(() => {
@@ -100,6 +122,15 @@ export const useScriptExecution = (content: string, containerId: string): string
                 continue;
               }
               
+              // Skip adspector.io related URLs if skipTopics is true
+              if (skipTopics && (
+                srcUrl.includes('adspector.io') || 
+                srcUrl.includes('cuiz.in/topics')
+              )) {
+                console.log(`Skipping Topics API related script: ${srcUrl}`);
+                continue;
+              }
+              
               if (srcUrl) {
                 const newScript = document.createElement('script');
                 newScript.src = srcUrl;
@@ -108,6 +139,9 @@ export const useScriptExecution = (content: string, containerId: string): string
                 // Add safety attributes
                 newScript.setAttribute('data-ad-script', 'true');
                 newScript.setAttribute('data-no-notifications', 'true');
+                if (skipTopics) {
+                  newScript.setAttribute('data-skip-topics', 'true');
+                }
                 
                 // Create isolated error handler for this script
                 newScript.onerror = (err) => {
@@ -161,11 +195,25 @@ export const useScriptExecution = (content: string, containerId: string): string
               continue;
             }
             
+            // Skip Topics API related scripts if skipTopics is true
+            if (skipTopics && (
+              scriptContent.includes('browsingTopics') ||
+              scriptContent.includes('Topics') ||
+              scriptContent.includes('attestation') ||
+              scriptContent.includes('runAdAuction')
+            )) {
+              console.log('Skipping Topics API related inline script');
+              continue;
+            }
+            
             try {
               // Create a new script element with sandbox
               const script = document.createElement('script');
               script.type = 'text/javascript';
               script.setAttribute('data-ad-script', 'true');
+              if (skipTopics) {
+                script.setAttribute('data-skip-topics', 'true');
+              }
               
               // Replace potentially harmful functions
               let safeContent = scriptContent
@@ -184,6 +232,15 @@ export const useScriptExecution = (content: string, containerId: string): string
                 .replace(/new\s+TCPusher/g, "console.log('TCPusher initialization prevented'")
                 // Block registration functions
                 .replace(/\.register\(/g, ".log(");
+                
+              // Add extra safety for Topics API if skipTopics is true
+              if (skipTopics) {
+                safeContent = safeContent
+                  // Replace Topics API calls
+                  .replace(/document\.browsingTopics/g, "console.log")
+                  .replace(/navigator\.runAdAuction/g, "console.log")
+                  .replace(/attestation/g, "console.log");
+              }
               
               script.text = safeContent;
               
@@ -225,7 +282,7 @@ export const useScriptExecution = (content: string, containerId: string): string
     }
     
     return cleanup;
-  }, [content, containerId]);
+  }, [content, containerId, skipTopics]);
   
   return executionStatus;
 };
