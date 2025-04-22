@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getAdPositionKey, setAdInCache } from './adCacheService';
 
@@ -133,18 +132,11 @@ export const processSelectedAd = (
   const contentVersion = btoa(selectedAd.id + (selectedAd.last_updated || ''));
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
   
-  // Process the ad code to remove problematic scripts
+  // Process the ad code to work within an iframe
   let cleanedCode = selectedAd.code;
-  
-  // Preserve script tags and only replace document.write calls
-  cleanedCode = cleanedCode.replace(
-    /document\.write\(/g, 
-    'console.log("document.write call prevented", '
-  );
   
   // If skipTopics is true, remove Topics API related code
   if (skipTopics) {
-    // Remove Topics API calls
     cleanedCode = cleanedCode.replace(
       /document\.browsingTopics\([^)]*\)/g, 
       'console.log("Topics API call blocked")'
@@ -156,20 +148,18 @@ export const processSelectedAd = (
       '<!-- adspector.io script removed -->'
     );
     
-    // Remove cuiz.in/topics scripts
+    // Remove Topics API scripts
     cleanedCode = cleanedCode.replace(
-      /<script[^>]*cuiz\.in\/topics[^>]*>[^<]*<\/script>/gi,
+      /<script[^>]*topics[^>]*>[^<]*<\/script>/gi,
       '<!-- Topics API script removed -->'
     );
-    
-    // Add a data attribute to indicate Topics API is disabled
-    cleanedCode = cleanedCode.replace(
-      /<script/g,
-      '<script data-skip-topics="true"'
-    );
-    
-    console.log(`Topics API skipped for ad in position ${position}`);
   }
+  
+  // Ensure scripts are loaded with proper attributes for iframe context
+  cleanedCode = cleanedCode.replace(
+    /<script/g,
+    '<script async crossorigin="anonymous"'
+  );
   
   setAdInCache(adPositionKey, cleanedCode, selectedAd.id, contentVersion);
   
@@ -182,4 +172,17 @@ export const processSelectedAd = (
     version: contentVersion,
     debug
   };
+};
+
+// Clear cache for a specific position
+export const clearAdCache = (position?: string): void => {
+  if (position) {
+    // Clear only for specified position
+    localStorage.removeItem(`ad_index_${position}`);
+    console.log(`Cleared ad index for position: ${position}`);
+  } else {
+    // Clear all cache
+    localStorage.clear();
+    console.log('Cleared all ad cache');
+  }
 };
