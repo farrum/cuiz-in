@@ -43,37 +43,36 @@ export const useAdFetch = ({
     // Print debugging info for this ad request
     console.log(`📢 Ad fetch request: position=${position}, slotId=${slotId || 'default'}, section=${pageSection || 'default'}, force=${force}, skipTopics=${skipTopics}`);
     
+    // Additional debugging for all positions
+    debugAvailableAds();
+    
+    // Check if we should use the cache
+    const cachedAd = getAdFromCache(adPositionKey, force);
+    
+    if (cachedAd) {
+      if (cachedAd.version === adState.adVersion && adState.adLoaded && adState.adContent === cachedAd.content) {
+        console.log(`Ad content unchanged for ${position}, skipping update`);
+        return;
+      }
+      
+      console.log(`Using cached ad for ${position} (id: ${cachedAd.id.substring(0, 8)})`);
+      updateAdState(
+        cachedAd.content,
+        cachedAd.id,
+        cachedAd.version,
+        `Cached ad: ${cachedAd.id.substring(0, 8)}`
+      );
+      
+      return;
+    }
+    
+    // Check if we should throttle the fetch
+    if (!canFetchAd(force)) {
+      console.log(`Skipping ad fetch for ${position}, throttled (last fetch ${Date.now() - lastFetchTimeRef.current}ms ago)`);
+      return;
+    }
+    
     try {
-      // Check if we should use the cache
-      const cachedAd = getAdFromCache(adPositionKey, force);
-      
-      if (cachedAd) {
-        if (cachedAd.version === adState.adVersion && adState.adLoaded && adState.adContent === cachedAd.content) {
-          console.log(`Ad content unchanged for ${position}/${slotId || 'default'}, skipping update`);
-          return;
-        }
-        
-        console.log(`Using cached ad for ${position}/${slotId || 'default'} (id: ${cachedAd.id.substring(0, 8)})`);
-        updateAdState(
-          cachedAd.content,
-          cachedAd.id,
-          cachedAd.version,
-          `Cached ad: ${cachedAd.id.substring(0, 8)}`
-        );
-        
-        return;
-      }
-      
-      // Check if we should throttle the fetch
-      if (!canFetchAd(force)) {
-        console.log(`Skipping ad fetch for ${position}/${slotId || 'default'}, throttled (last fetch ${Date.now() - lastFetchTimeRef.current}ms ago)`);
-        return;
-      }
-      
-      // Additional debugging info
-      console.log(`Starting fresh ad fetch for ${position}/${slotId || 'default'}`);
-      debugAvailableAds();
-      
       // Try to get ads from localStorage first
       const localStorageAds = fetchAdsFromLocalStorage(position);
       
@@ -119,17 +118,11 @@ export const useAdFetch = ({
           const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection, skipTopics);
           
           if (version === adState.adVersion && adState.adLoaded) {
-            console.log(`Ad content unchanged for ${position}/${slotId || 'default'}, skipping server update`);
+            console.log(`Ad content unchanged for ${position}, skipping server update`);
             return;
           }
           
-          // Validate content before updating state
-          if (!content || content.trim() === '') {
-            console.warn(`Empty ad content after processing for ${position}/${slotId || 'default'}`);
-            updateAdState('', id, version, debug, true, 'Empty ad content after processing');
-          } else {
-            updateAdState(content, id, version, debug);
-          }
+          updateAdState(content, id, version, debug);
           
           if (id !== adState.adId) {
             trackImpression(id, position, slotId, pageSection);

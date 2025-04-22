@@ -10,16 +10,9 @@ interface UseAdvertisementProps {
   slotId?: string;
   pageSection?: string;
   skipTopics?: boolean;
-  refreshTrigger?: number;
 }
 
-export const useAdvertisement = ({ 
-  position, 
-  slotId, 
-  pageSection, 
-  skipTopics = false,
-  refreshTrigger = 0
-}: UseAdvertisementProps) => {
+export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = false }: UseAdvertisementProps) => {
   // Initialize session ID
   getSessionId();
   
@@ -53,12 +46,6 @@ export const useAdvertisement = ({
     if (!adState.adId || !isMountedRef.current) return;
     await trackClick(adState.adId, position, slotId, pageSection, isMountedRef.current);
   }, [adState.adId, position, slotId, pageSection, trackClick, isMountedRef]);
-  
-  // Expose refresh function
-  const refreshAd = useCallback((force: boolean = false) => {
-    console.log(`Manual refresh requested for ad: ${position}/${slotId || 'default'}`);
-    fetchAds(force);
-  }, [fetchAds, position, slotId]);
   
   // Initial ad fetch and event listener setup
   useEffect(() => {
@@ -101,17 +88,8 @@ export const useAdvertisement = ({
     };
   }, [fetchAds, position, adState.instanceId, adPositionKey]);
   
-  // Effect for manual refresh trigger
-  useEffect(() => {
-    if (refreshTrigger > 0) {
-      console.log(`Refresh trigger activated (${refreshTrigger}) for ${position}/${slotId || 'default'}`);
-      fetchAds(true);
-    }
-  }, [refreshTrigger, fetchAds, position, slotId]);
-  
   return {
     ...adState,
-    handleAdClick,
-    refreshAd
+    handleAdClick
   };
 };
