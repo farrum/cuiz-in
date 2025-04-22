@@ -40,6 +40,7 @@ export const fetchAdsFromLocalStorage = (position: string): AdSlot[] | null => {
 // Select ad from matching ads
 export const selectAdFromMatching = (matchingAds: AdSlot[], position: string, slotId?: string, pageSection?: string): AdSlot | null => {
   if (!matchingAds || matchingAds.length === 0) {
+    console.log(`No matching ads to select from for ${position}/${slotId || 'default'}`);
     return null;
   }
   
@@ -47,13 +48,17 @@ export const selectAdFromMatching = (matchingAds: AdSlot[], position: string, sl
   const positionKey = getAdPositionKey(position, slotId, pageSection);
   const consistencyKey = `${dayKey}-${positionKey}`;
   
+  console.log(`Using consistency key for ad selection: ${consistencyKey}`);
+  
   let index = 0;
   const savedIndex = localStorage.getItem(`ad_index_${consistencyKey}`);
   
   if (savedIndex) {
     index = parseInt(savedIndex);
+    console.log(`Found saved index ${index} for ${consistencyKey}`);
   } else {
     index = Math.floor(Math.random() * matchingAds.length);
+    console.log(`Generated new random index ${index} for ${consistencyKey}`);
     localStorage.setItem(`ad_index_${consistencyKey}`, index.toString());
   }
   
@@ -69,6 +74,8 @@ export const selectAdFromMatching = (matchingAds: AdSlot[], position: string, sl
 // Fetch ads from Supabase
 export const fetchAdsFromSupabase = async (position: string): Promise<AdSlot[] | null> => {
   try {
+    console.log(`Fetching ads from Supabase for position: ${position}`);
+    
     const { data: supabaseAds, error } = await supabase
       .from('ad_slots')
       .select('*')
@@ -96,7 +103,9 @@ export const fetchAdsFromSupabase = async (position: string): Promise<AdSlot[] |
           // Remove old ads for this position
           const otherPositionAds = parsedAds.filter((ad: any) => ad.position !== position);
           allAds = [...otherPositionAds, ...validAds];
+          console.log(`Merged ${otherPositionAds.length} existing ads with ${validAds.length} new ads`);
         } catch (e) {
+          console.error('Error parsing existing ads:', e);
           allAds = validAds;
         }
       } else {
@@ -138,6 +147,7 @@ export const processSelectedAd = (
   
   // If skipTopics is true, remove Topics API related code
   if (skipTopics) {
+    // Remove Topics API method calls
     cleanedCode = cleanedCode.replace(
       /document\.browsingTopics\([^)]*\)/g, 
       'console.log("Topics API call blocked")'
@@ -162,10 +172,21 @@ export const processSelectedAd = (
     '<script async crossorigin="anonymous"'
   );
   
+  // Fix common issues with ad code
+  cleanedCode = cleanedCode
+    // Remove document.write calls which won't work in iframe
+    .replace(/document\.write\(([^)]+)\)/g, 'console.log("document.write blocked:", $1)')
+    // Prevent automatic window.open calls
+    .replace(/window\.open\(([^)]+)\)/g, 'console.log("window.open blocked:", $1)')
+    // Replace hardcoded heights/widths with responsive values
+    .replace(/width=(["'])(\d+)\1/gi, 'width="100%"')
+    .replace(/height=(["'])(\d+)\1/gi, 'height="auto"')
+    .replace(/style=(["'])([^"']*)(width|height):\s*\d+px([^"']*)\1/gi, 'style="$2$3:auto$4"');
+  
   setAdInCache(adPositionKey, cleanedCode, selectedAd.id, contentVersion);
   
   const source = localStorage.getItem('quiz_app_ad_slots') ? 'Local' : 'Server';
-  const debug = `${source} ad: ${selectedAd.name} (${selectedAd.position})${skipTopics ? ' [Topics API disabled]' : ''}`;
+  const debug = `${source} ad: ${selectedAd.name || selectedAd.id} (${selectedAd.position})${skipTopics ? ' [Topics API disabled]' : ''}`;
   
   return {
     content: cleanedCode,

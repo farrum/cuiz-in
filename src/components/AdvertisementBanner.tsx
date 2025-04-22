@@ -4,6 +4,8 @@ import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
 import { toast } from 'sonner';
+import { ReloadIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle' | 'sidebar';
@@ -11,7 +13,7 @@ interface AdvertisementBannerProps {
   size?: 'small' | 'medium' | 'large';
   slotId?: string;
   pageSection?: string;
-  skipTopics?: boolean; // Add this prop to skip Topics API usage
+  skipTopics?: boolean;
 }
 
 const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({ 
@@ -20,7 +22,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   size = 'medium',
   slotId,
   pageSection,
-  skipTopics = false // Default to false for backward compatibility
+  skipTopics = false
 }) => {
   // Generate a stable unique ID for this ad container
   const uniqueId = useId().replace(/:/g, '-');
@@ -28,6 +30,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const isDevelopment = process.env.NODE_ENV === 'development';
   const [adBlockDetected, setAdBlockDetected] = useState(false);
   const [topicsError, setTopicsError] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const {
     adLoaded,
@@ -38,13 +41,27 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     instanceId,
     adId,
     adVersion,
-    handleAdClick
+    handleAdClick,
+    refreshAd
   } = useAdvertisement({
     position,
     slotId,
     pageSection,
-    skipTopics
+    skipTopics,
+    refreshTrigger
   });
+
+  // Force refresh ads function for development
+  const forceRefreshAd = () => {
+    if (isDevelopment) {
+      setRefreshTrigger(prev => prev + 1);
+      toast.info(`Refreshing ad: ${position}/${slotId || 'default'}`);
+      
+      if (refreshAd) {
+        refreshAd(true);
+      }
+    }
+  };
 
   // Detect ad blockers, script errors, and Topics API errors
   useEffect(() => {
@@ -104,7 +121,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         console.error(`Ad error intercepted (${position}):`, event.message);
         event.preventDefault();
         event.stopPropagation();
-        return true; // Signal that we handled this error
+        return true;
       }
       return false;
     };
@@ -177,6 +194,18 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           {adError && <div className="text-destructive mt-1">{adError}</div>}
           {adBlockDetected && <div className="text-amber-500 mt-1">Ad blocker detected</div>}
           {topicsError && <div className="text-red-500 mt-1">Topics API attestation failed</div>}
+          
+          {isDevelopment && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={forceRefreshAd} 
+              className="mt-2"
+            >
+              <ReloadIcon className="h-3 w-3 mr-1" />
+              Retry Ad Load
+            </Button>
+          )}
         </div>
       );
     }
@@ -211,6 +240,22 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
         topicsError={topicsError}
         skipTopics={skipTopics}
       />
+      
+      {isDevelopment && (
+        <div className="absolute bottom-1 right-1 opacity-50 hover:opacity-100">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={(e) => {
+              e.stopPropagation();
+              forceRefreshAd();
+            }}
+            className="h-6 w-6 bg-secondary/50"
+          >
+            <ReloadIcon className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
     </AdContainer>
   );
 };

@@ -30,8 +30,35 @@ const AdContent: React.FC<AdContentProps> = ({
   adBlockDetected = false,
   topicsError = false
 }) => {
+  // Log for debugging
+  if (isDevelopment) {
+    console.log(`AdContent rendering for ${position}/${slotId || position}:`, {
+      adLoaded,
+      contentLength: adContent ? adContent.length : 0,
+      hasError: !!adError,
+      hasDebug: !!adDebug,
+      adBlockDetected,
+      topicsError,
+      skipTopics
+    });
+  }
+  
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
+  }
+
+  // Check if ad content is empty or invalid
+  const hasValidContent = adContent && adContent.trim().length > 0;
+  if (!hasValidContent && isDevelopment) {
+    return (
+      <div className="w-full">
+        <p className="text-xs text-muted-foreground mb-2 text-center">Advertisement</p>
+        <div className="p-4 border border-red-300 rounded bg-red-50 text-red-700 text-xs">
+          <p>Empty or invalid ad content for {position}/{slotId || position}</p>
+          {adError && <p className="mt-1">Error: {adError}</p>}
+        </div>
+      </div>
+    );
   }
 
   return (
