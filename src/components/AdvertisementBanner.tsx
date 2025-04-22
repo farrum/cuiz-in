@@ -1,10 +1,9 @@
-
 import React, { useId, useEffect, useState } from 'react';
 import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
 import { toast } from 'sonner';
-import { ReloadIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AdvertisementBannerProps {
@@ -24,7 +23,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   pageSection,
   skipTopics = false
 }) => {
-  // Generate a stable unique ID for this ad container
   const uniqueId = useId().replace(/:/g, '-');
   const containerId = `${uniqueId}-ad-container`;
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -51,7 +49,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     refreshTrigger
   });
 
-  // Force refresh ads function for development
   const forceRefreshAd = () => {
     if (isDevelopment) {
       setRefreshTrigger(prev => prev + 1);
@@ -63,9 +60,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     }
   };
 
-  // Detect ad blockers, script errors, and Topics API errors
   useEffect(() => {
-    // Attempt to detect if scripts are being blocked
     const testScript = document.createElement('script');
     testScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
     testScript.onerror = () => {
@@ -84,7 +79,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       }
     }, 1000);
     
-    // Function to monitor for Topics API errors
     const handleTopicsError = (event: ErrorEvent) => {
       if (event.message && event.message.includes("Attestation check for Topics")) {
         console.log("Topics API attestation error detected");
@@ -100,14 +94,11 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       return false;
     };
 
-    // Function to handle uncaught errors
     const handleUncaughtError = (event: ErrorEvent) => {
-      // Check for Topics API errors first
       if (handleTopicsError(event)) {
         return true;
       }
       
-      // Only handle errors related to ads
       if (event.message && (
           event.message.includes('TCPusher') || 
           event.message.includes('onclickpsh') ||
@@ -126,14 +117,12 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       return false;
     };
     
-    // Handle unhandled promise rejections related to ads
     const handlePromiseRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason;
       const reasonStr = typeof reason === 'string' 
           ? reason 
           : (reason && reason.message ? reason.message : String(reason));
       
-      // Check for Topics API errors first
       if (reasonStr && reasonStr.includes("Attestation check for Topics")) {
         console.log("Topics API attestation rejection detected");
         setTopicsError(true);
@@ -159,11 +148,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
       return false;
     };
     
-    // Add global error handlers specifically for ad-related errors
     window.addEventListener('error', handleUncaughtError, true);
     window.addEventListener('unhandledrejection', handlePromiseRejection);
     
-    // Add event listener for specific TCPusher service worker errors
     const handleMessage = (event: MessageEvent) => {
       if (event.data && 
           typeof event.data === 'object' && 
@@ -185,7 +172,6 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     };
   }, [position, isDevelopment]);
 
-  // Display nothing if ad is inactive and not in development mode
   if (!adActive) {
     if (isDevelopment) {
       return (
@@ -202,7 +188,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
               onClick={forceRefreshAd} 
               className="mt-2"
             >
-              <ReloadIcon className="h-3 w-3 mr-1" />
+              <Loader2 className="h-3 w-3 mr-1" />
               Retry Ad Load
             </Button>
           )}
@@ -252,7 +238,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
             }}
             className="h-6 w-6 bg-secondary/50"
           >
-            <ReloadIcon className="h-3 w-3" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           </Button>
         </div>
       )}
