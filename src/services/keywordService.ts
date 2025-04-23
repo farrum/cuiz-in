@@ -1,6 +1,5 @@
 
 import { QuizQuestion } from '@/utils/types';
-import { supabase } from '@/integrations/supabase/client';
 
 export const extractKeywords = (text: string): string[] => {
   // Remove special characters and split into words
