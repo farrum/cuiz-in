@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useBlogPosts } from '@/hooks/admin/useBlogPosts';
-import { triggerDailyBlogGeneration } from '@/utils/triggerDailyBlog';
-import { Loader2, Plus, RefreshCw, Bot } from 'lucide-react';
+import { triggerDailyBlogGeneration, checkCronJobStatus, testDatabaseConnectivity } from '@/utils/triggerDailyBlog';
+import { Loader2, Plus, RefreshCw, Bot, Database, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +26,8 @@ const BlogManagement = () => {
   const { toast } = useToast();
   const { posts, isLoading, addPost, updatePost, deletePost, refreshPosts } = useBlogPosts();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCheckingCron, setIsCheckingCron] = useState(false);
+  const [isCheckingDB, setIsCheckingDB] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newPost, setNewPost] = useState<Partial<BlogPost>>({
     title: '',
@@ -72,6 +73,62 @@ const BlogManagement = () => {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleCheckCronJob = async () => {
+    setIsCheckingCron(true);
+    try {
+      const result = await checkCronJobStatus();
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Cron job status checked successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error?.message || "Failed to check cron job status",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingCron(false);
+    }
+  };
+
+  const handleCheckDBConnectivity = async () => {
+    setIsCheckingDB(true);
+    try {
+      const result = await testDatabaseConnectivity();
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Database connectivity test passed.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error?.message || "Failed to connect to database",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingDB(false);
     }
   };
 
@@ -132,6 +189,32 @@ const BlogManagement = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold">Blog Management</h2>
         <div className="flex gap-2">
+          <Button 
+            onClick={handleCheckCronJob} 
+            disabled={isCheckingCron}
+            size="sm"
+            variant="outline"
+          >
+            {isCheckingCron ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Clock className="mr-2 h-4 w-4" />
+            )}
+            Check Cron Job
+          </Button>
+          <Button 
+            onClick={handleCheckDBConnectivity} 
+            disabled={isCheckingDB}
+            size="sm"
+            variant="outline"
+          >
+            {isCheckingDB ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Database className="mr-2 h-4 w-4" />
+            )}
+            Test DB
+          </Button>
           <Button 
             onClick={handleGenerateRandomPost} 
             disabled={isGenerating}
@@ -228,7 +311,6 @@ const BlogManagement = () => {
         </div>
       )}
 
-      {/* Add New Blog Post Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
