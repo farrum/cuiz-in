@@ -95,7 +95,7 @@ const BlogPage: React.FC = () => {
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-8">
-          <SimpleAdBanner position="top" slotId="blog-top" pageSection="blog" />
+          <SimpleAdBanner position="header" />
         </div>
         
         <div className="text-center mb-12">
@@ -131,7 +131,7 @@ const BlogPage: React.FC = () => {
         
         {/* Middle Ad Banner */}
         <div className="my-12">
-          <SimpleAdBanner position="middle" slotId="blog-middle" pageSection="blog" />
+          <SimpleAdBanner position="content" />
         </div>
         
         <div className="mt-12 text-center">

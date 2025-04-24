@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -107,7 +108,7 @@ const CategoriesPage: React.FC = () => {
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-8">
-          <SimpleAdBanner position="top" slotId="categories-top" pageSection="categories" />
+          <SimpleAdBanner position="header" />
         </div>
         
         <div className="text-center mb-12">
@@ -142,7 +143,7 @@ const CategoriesPage: React.FC = () => {
         
         {/* Bottom Ad Banner */}
         <div className="mt-12">
-          <SimpleAdBanner position="bottom" slotId="categories-bottom" pageSection="categories" />
+          <SimpleAdBanner position="footer" />
         </div>
       </main>
       

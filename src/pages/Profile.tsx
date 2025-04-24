@@ -5,7 +5,6 @@ import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
 import BadgesSection from '@/components/BadgesSection';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
 import NewsTicker from '@/components/NewsTicker';
 import { STORAGE_KEYS, DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 import { checkAndAwardBadges } from '@/utils/badgeData';
@@ -20,6 +19,7 @@ import { getUserLoginStreak, resetLoginBonusSession } from '@/services/loginStre
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ProfileEditor from '@/components/profile/editor';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 interface Achievement {
   id: string;
@@ -348,13 +348,7 @@ const Profile: React.FC = () => {
           </div>
         ) : (
           <>
-            <AdvertisementBanner 
-              position="top" 
-              size="medium" 
-              className="mb-6" 
-              slotId="profile-top-ad"
-              pageSection="profile-header"
-            />
+            <SimpleAdBanner position="header" className="mb-6" />
             
             <div className="glass p-6 rounded-2xl mb-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start relative">
               {renderProfileAvatar()}
@@ -487,6 +481,8 @@ const Profile: React.FC = () => {
               </div>
             </div>
             
+            <SimpleAdBanner position="content" className="mb-8" />
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <PointsDisplay animateUpdate />
               
@@ -525,24 +521,14 @@ const Profile: React.FC = () => {
               </div>
             </div>
             
-            <AdvertisementBanner 
-              position="middle" 
-              size="large" 
-              className="mb-8" 
-              slotId="profile-middle-ad"
-              pageSection="profile-content"
-            />
-            
-            <div className="glass rounded-2xl p-6 mb-8">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="font-medium">Recently Answered Questions</h3>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <BookOpen className="w-5 h-5 text-primary" />
               </div>
-              
-              <RecentlyAnsweredQuestions userId={userId} limit={5} />
+              <h3 className="font-medium">Recently Answered Questions</h3>
             </div>
+            
+            <RecentlyAnsweredQuestions userId={userId} limit={5} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <LeaderboardSection />

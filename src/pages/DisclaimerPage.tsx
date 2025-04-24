@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -9,7 +10,7 @@ const DisclaimerPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
-        <SimpleAdBanner position="top" slotId="disclaimer-top" pageSection="disclaimer-page" className="mb-6" />
+        <SimpleAdBanner position="header" className="mb-6" />
         
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Game Disclaimer</h1>
@@ -29,7 +30,7 @@ const DisclaimerPage: React.FC = () => {
               </p>
             </section>
             
-            <SimpleAdBanner position="middle" slotId="disclaimer-middle" pageSection="disclaimer-page" className="my-6" />
+            <SimpleAdBanner position="content" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">No Guarantee of Income</h2>
@@ -52,7 +53,7 @@ const DisclaimerPage: React.FC = () => {
               </p>
             </section>
             
-            <SimpleAdBanner position="middle" slotId="disclaimer-middle-2" pageSection="disclaimer-page" className="my-6" />
+            <SimpleAdBanner position="content" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">Technical Issues</h2>
@@ -69,7 +70,7 @@ const DisclaimerPage: React.FC = () => {
             </section>
           </div>
           
-          <SimpleAdBanner position="bottom" slotId="disclaimer-bottom" pageSection="disclaimer-page" className="mt-8" />
+          <SimpleAdBanner position="footer" className="mt-8" />
         </div>
       </main>
       

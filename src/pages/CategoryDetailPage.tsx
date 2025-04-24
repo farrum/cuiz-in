@@ -199,7 +199,7 @@ const CategoryDetailPage: React.FC = () => {
           </div>
         </div>
         
-        <SimpleAdBanner position="middle" slotId={`category-${categorySlug}`} pageSection="category-page" />
+        <SimpleAdBanner position="content" />
         
         <div className="grid gap-8 md:grid-cols-3 mt-8">
           <div className="md:col-span-2">
