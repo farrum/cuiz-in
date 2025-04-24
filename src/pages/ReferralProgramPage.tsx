@@ -1,11 +1,10 @@
-
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ReferralSection from '@/components/ReferralSection';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Users, Award, DollarSign, Percent, HelpCircle } from 'lucide-react';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const ReferralProgramPage: React.FC = () => {
   return (
@@ -21,7 +20,7 @@ const ReferralProgramPage: React.FC = () => {
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">CuizIN Referral Program</h1>
           
-          <AdvertisementBanner position="top" slotId="referral-program-top" pageSection="referral-program-page" className="mb-8" />
+          <SimpleAdBanner position="top" slotId="referral-program-top" pageSection="referral-program-page" className="mb-8" />
           
           <div className="space-y-8">
             <section>
@@ -146,7 +145,7 @@ const ReferralProgramPage: React.FC = () => {
             </section>
           </div>
           
-          <AdvertisementBanner position="bottom" slotId="referral-program-bottom" pageSection="referral-program-page" className="mt-8" />
+          <SimpleAdBanner position="bottom" slotId="referral-program-bottom" pageSection="referral-program-page" className="mt-8" />
         </div>
       </main>
       

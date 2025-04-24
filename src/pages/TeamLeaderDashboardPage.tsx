@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import TeamLeaderAccessCheck from '@/components/team-leader/TeamLeaderAccessCheck';
 import StatsCards from '@/components/team-leader/StatsCards';
@@ -33,7 +32,7 @@ const TeamLeaderDashboardPage = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container max-w-6xl pt-8 pb-12 px-4">
-        <AdvertisementBanner position="top" slotId="team-leader-top" pageSection="team-leader-dashboard" />
+        <SimpleAdBanner position="header" className="mb-6" />
         
         <TeamLeaderAccessCheck 
           isTeamLeader={isTeamLeader} 
@@ -74,7 +73,7 @@ const TeamLeaderDashboardPage = () => {
           </>
         )}
         
-        <AdvertisementBanner position="bottom" slotId="team-leader-bottom" pageSection="team-leader-dashboard" />
+        <SimpleAdBanner position="footer" className="mt-6" />
       </main>
       <Footer />
     </div>

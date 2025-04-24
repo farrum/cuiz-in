@@ -1,11 +1,10 @@
-
 import React from 'react';
 import PointsDisplay from '@/components/PointsDisplay';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import AccountReactivation from '@/components/AccountReactivation';
 import ProfileHeader from './ProfileHeader';
 
@@ -46,12 +45,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         />
       </div>
       
-      <AdvertisementBanner 
-        key={`profile-middle-${forceReloadAds}`} 
-        position="middle" 
-        slotId="profile-middle" 
-        pageSection="profile-page" 
-      />
+      <SimpleAdBanner position="content" className="my-8" />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {userId && <BadgesSection userId={userId} />}

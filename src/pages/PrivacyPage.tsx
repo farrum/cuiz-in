@@ -1,8 +1,7 @@
-
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const PrivacyPage: React.FC = () => {
   return (
@@ -10,7 +9,7 @@ const PrivacyPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
-        <AdvertisementBanner position="top" slotId="privacy-top" pageSection="privacy-page" className="mb-6" />
+        <SimpleAdBanner position="header" className="mb-6" />
         
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
@@ -26,7 +25,7 @@ const PrivacyPage: React.FC = () => {
               </p>
             </section>
             
-            <AdvertisementBanner position="middle" slotId="privacy-middle" pageSection="privacy-page" className="my-6" />
+            <SimpleAdBanner position="content" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">2. How We Use Your Information</h2>
@@ -68,7 +67,7 @@ const PrivacyPage: React.FC = () => {
               </p>
             </section>
             
-            <AdvertisementBanner position="middle" slotId="privacy-middle-2" pageSection="privacy-page" className="my-6" />
+            <SimpleAdBanner position="content" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Your Choices</h2>
@@ -99,7 +98,7 @@ const PrivacyPage: React.FC = () => {
             </section>
           </div>
           
-          <AdvertisementBanner position="bottom" slotId="privacy-bottom" pageSection="privacy-page" className="mt-8" />
+          <SimpleAdBanner position="footer" className="mt-8" />
         </div>
       </main>
       

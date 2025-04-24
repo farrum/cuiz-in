@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Trophy, CheckCircle2, XCircle, ArrowLeft, AlertCircle } from 'lucide-re
 import { Challenge, Answer } from '@/hooks/challenge/challengeTypes';
 import { QuizQuestion } from '@/utils/quizData';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -90,7 +89,6 @@ const ChallengeComplete: React.FC<ChallengeCompleteProps> = ({
             <div className="space-y-3 mb-6 max-w-md mx-auto">
               <h4 className="font-medium text-left mb-2">Question Summary</h4>
               {answers.map((answer, index) => {
-                // Find the corresponding question
                 const question = questions.find(q => q.id === answer.questionId);
                 
                 return (
@@ -137,7 +135,7 @@ const ChallengeComplete: React.FC<ChallengeCompleteProps> = ({
           </CardContent>
         </Card>
         
-        <AdvertisementBanner position="bottom" slotId="challenge-bottom" pageSection="challenge-page" />
+        <SimpleAdBanner position="footer" className="mt-8" />
       </main>
       <Footer />
     </div>
