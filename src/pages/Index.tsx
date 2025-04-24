@@ -85,19 +85,36 @@ const Index: React.FC = () => {
           />
         )}
         
-        <AdvertisementBanner position="middle" slotId="home-ad" pageSection="home-page" />
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-ad" 
+          pageSection="home-page" 
+          skipTopics={true} 
+        />
         
         <FeatureSection />
         
         <HelpSection />
         
-        {/* New Ad Slot 1 */}
-        <AdvertisementBanner position="middle" slotId="home-middle-1" pageSection="home-page-middle" className="mt-12" />
+        {/* Ad Slot 1 with skipTopics=true */}
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-1" 
+          pageSection="home-page-middle" 
+          className="mt-12"
+          skipTopics={true}
+        />
         
         <HowToEarnSection />
         
-        {/* New Ad Slot 2 */}
-        <AdvertisementBanner position="middle" slotId="home-middle-2" pageSection="home-page-bottom" className="mt-12" />
+        {/* Ad Slot 2 with skipTopics=true */}
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-2" 
+          pageSection="home-page-bottom" 
+          className="mt-12"
+          skipTopics={true}
+        />
         
         {/* New SEO Content Section */}
         <InfoSection />
@@ -107,7 +124,13 @@ const Index: React.FC = () => {
         <CallToAction />
         
         {/* Bottom ad with debugger */}
-        <AdvertisementBanner position="bottom" slotId="home-bottom" pageSection="home-page-footer" className="mt-12" />
+        <AdvertisementBanner 
+          position="bottom" 
+          slotId="home-bottom" 
+          pageSection="home-page-footer" 
+          className="mt-12"
+          skipTopics={true}
+        />
         
         {isDevelopment && (
           <AdDebugger 

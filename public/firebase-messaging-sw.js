@@ -49,10 +49,11 @@ const BLOCKED_DOMAINS = [
   'Topics',
   'cuiz.in',
   'adspector.io',
-  'attestation'
+  'attestation',
+  'facebook.com'
 ];
 
-// IMPORTANT: Block problematic scripts
+// IMPORTANT: Block problematic scripts including Topics API and Facebook
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
@@ -60,9 +61,10 @@ self.addEventListener('fetch', event => {
     // Handle Topics API attestation errors more aggressively
     if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) || 
         url.includes('adspector.io') || 
-        url.includes('attestation')) {
-      console.log('Intercepting Topics API or attestation request:', url);
-      event.respondWith(new Response('// Topics API or attestation request intercepted', {
+        url.includes('attestation') ||
+        url.includes('facebook.com')) {
+      console.log('Intercepting Topics API, attestation or Facebook request:', url);
+      event.respondWith(new Response('// Request intercepted by service worker', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
@@ -125,16 +127,20 @@ if (!self.swLoaded) {
   }
 }
 
-// Add specific handler for serviceworker registration errors
+// Add specific handler for Topics API errors
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   
-  // Intercept any attempts to register additional service workers
+  // Intercept any attempts to register additional service workers or Topics API requests
   if (event.data && (event.data.type === 'REGISTER_SW' || 
-      (typeof event.data === 'string' && event.data.includes('register')))) {
-    console.log('Intercepted attempt to register additional service worker');
+      event.data.type === 'TOPICS_API' ||
+      (typeof event.data === 'string' && (
+        event.data.includes('register') || 
+        event.data.includes('Topics') ||
+        event.data.includes('attestation'))))) {
+    console.log('Intercepted attempt to register additional service worker or use Topics API');
     // Don't pass this message along
     return;
   }
@@ -146,7 +152,8 @@ self.addEventListener('error', event => {
       event.message.includes('TCPusher') || 
       event.message.includes('ServiceWorker') ||
       event.message.includes('register') ||
-      event.message.includes('Attestation check for Topics')
+      event.message.includes('Attestation check for Topics') ||
+      event.message.includes('facebook.com')
   )) {
     console.log('Intercepted error in service worker:', event.message);
     event.preventDefault();

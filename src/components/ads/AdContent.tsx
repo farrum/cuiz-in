@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useScriptExecution } from '@/hooks/useScriptExecution';
 import AdLoader from './AdLoader';
@@ -30,7 +29,7 @@ const AdContent: React.FC<AdContentProps> = ({
   containerId,
   adBlockDetected = false,
   topicsError = false,
-  skipTopics = false
+  skipTopics = true
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
@@ -67,16 +66,14 @@ const AdContent: React.FC<AdContentProps> = ({
       'push.m.js'
     ];
 
-    // If skipTopics is true, add Topics-related entries to blocked scripts
-    if (skipTopics) {
-      blockedScripts.push(
-        'document.browsingTopics',
-        'navigator.runAdAuction',
-        'adspector.io',
-        'cuiz.in/topics',
-        'Topics'
-      );
-    }
+    // Always include Topics-related entries in blocked scripts since we're defaulting to skipTopics=true
+    blockedScripts.push(
+      'document.browsingTopics',
+      'navigator.runAdAuction',
+      'adspector.io',
+      'cuiz.in/topics',
+      'Topics'
+    );
     
     let content = adContent;
     
@@ -90,23 +87,21 @@ const AdContent: React.FC<AdContentProps> = ({
     const swRegex = /<script[^>]*>[^<]*(serviceWorker|ServiceWorker)[^<]*(register)[^<]*<\/script>/gi;
     content = content.replace(swRegex, '<!-- Service worker registration removed -->');
     
-    // If skipTopics is true, remove all Topics API-related code
-    if (skipTopics) {
-      // Remove Topics API-related code
-      content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
-                               "console.log('Topics API call blocked')");
-      
-      // Remove Privacy Sandbox / Topics API calls
-      content = content.replace(/navigator\.runAdAuction/g, "console.log");
-      
-      // Remove adspector.io scripts completely
-      content = content.replace(/<script[^>]*adspector\.io[^>]*>[^<]*<\/script>/gi, 
-                               '<!-- adspector.io script removed -->');
-                               
-      // Remove cuiz.in/topics requests
-      content = content.replace(/<script[^>]*cuiz\.in\/topics[^>]*>[^<]*<\/script>/gi, 
-                               '<!-- Topics API script removed -->');
-    }
+    // Always remove Topics API-related code to prevent errors
+    // Remove Topics API-related code
+    content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
+                            "console.log('Topics API call blocked')");
+    
+    // Remove Privacy Sandbox / Topics API calls
+    content = content.replace(/navigator\.runAdAuction/g, "console.log");
+    
+    // Remove adspector.io scripts completely
+    content = content.replace(/<script[^>]*adspector\.io[^>]*>[^<]*<\/script>/gi, 
+                            '<!-- adspector.io script removed -->');
+                            
+    // Remove cuiz.in/topics requests
+    content = content.replace(/<script[^>]*cuiz\.in\/topics[^>]*>[^<]*<\/script>/gi, 
+                            '<!-- Topics API script removed -->');
     
     // Remove notification requests
     content = content.replace(/Notification\.requestPermission\([^)]*\)/g, 
@@ -127,11 +122,15 @@ const AdContent: React.FC<AdContentProps> = ({
     // Block Va3pn0.js script which causes TCPusher error
     content = content.replace(/Va3pn0\.js/g, "blocked-script.js");
     
+    // Remove Facebook scripts causing errors
+    content = content.replace(/<script[^>]*facebook\.com[^>]*>[^<]*<\/script>/gi,
+                             '<!-- Facebook script removed -->');
+    
     return content;
-  }, [adContent, skipTopics]);
+  }, [adContent]);
   
   // Execute scripts in the ad content only after container is ready
-  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId, skipTopics);
+  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId, true);
   
   // Effect to monitor script errors
   useEffect(() => {
@@ -273,7 +272,7 @@ const AdContent: React.FC<AdContentProps> = ({
         data-ad-position={position}
         data-ad-slot={slotId || position}
         data-ad-ready={containerReady.toString()}
-        data-skip-topics={skipTopics.toString()}
+        data-skip-topics="true"
         className={`${getMinHeight()} flex items-center justify-center overflow-hidden bg-secondary/10`}
         dangerouslySetInnerHTML={{ __html: cleanedContent }}
       ></div>

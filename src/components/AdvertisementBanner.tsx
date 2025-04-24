@@ -11,7 +11,7 @@ interface AdvertisementBannerProps {
   size?: 'small' | 'medium' | 'large';
   slotId?: string;
   pageSection?: string;
-  skipTopics?: boolean; // Add this prop to skip Topics API usage
+  skipTopics?: boolean;
 }
 
 const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({ 
@@ -20,7 +20,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   size = 'medium',
   slotId,
   pageSection,
-  skipTopics = false // Default to false for backward compatibility
+  skipTopics = true  // Default to true to avoid Topics API errors
 }) => {
   // Generate a stable unique ID for this ad container
   const uniqueId = useId().replace(/:/g, '-');

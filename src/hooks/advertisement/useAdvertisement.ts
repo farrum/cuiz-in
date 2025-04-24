@@ -38,7 +38,7 @@ export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = f
     isMountedRef,
     lastFetchTimeRef,
     trackImpression,
-    skipTopics
+    skipTopics  // Pass this parameter to the fetchAds function
   });
   
   // Handle ad click using tracking hook
