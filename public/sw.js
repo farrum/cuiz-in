@@ -20,7 +20,9 @@ const BLOCKED_DOMAINS = [
   'cuiz.in/topics',
   'Topics',
   'adspector.io',
-  'attestation'
+  'attestation',
+  'pageadsodar',
+  'sodar2'
 ];
 
 // Block problematic fetch requests
@@ -28,6 +30,16 @@ self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
+    // Handle sodar requests (Google ad tracking)
+    if (url.includes('sodar') || url.includes('pageadsodar')) {
+      console.log('SW: Intercepting sodar request:', url);
+      event.respondWith(new Response('// Sodar request intercepted', {
+        status: 200,
+        headers: new Headers({'Content-Type': 'application/javascript'})
+      }));
+      return;
+    }
+    
     // Handle Topics API attestation errors specifically
     if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) ||
         url.includes('adspector.io') ||
@@ -106,7 +118,9 @@ self.addEventListener('error', event => {
   if (event.message && (
       event.message.includes('Attestation check for Topics') ||
       event.message.includes('adspector.io') ||
-      event.message.includes('cuiz.in/topics')
+      event.message.includes('cuiz.in/topics') ||
+      event.message.includes('sodar') ||
+      event.message.includes('pageadsodar')
   )) {
     console.log('SW: Intercepted Topics API or related error:', event.message);
     event.preventDefault();
