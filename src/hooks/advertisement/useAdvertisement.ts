@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAdState } from './useAdState';
 import { useAdTracking } from './useAdTracking';
 import { useAdFetch } from './useAdFetch';
@@ -10,11 +10,21 @@ interface UseAdvertisementProps {
   slotId?: string;
   pageSection?: string;
   skipTopics?: boolean;
+  retryCount?: number;
 }
 
-export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = false }: UseAdvertisementProps) => {
+export const useAdvertisement = ({ 
+  position, 
+  slotId, 
+  pageSection, 
+  skipTopics = true,
+  retryCount = 2
+}: UseAdvertisementProps) => {
   // Initialize session ID
   getSessionId();
+  
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   // Use the smaller hooks
   const {
@@ -47,6 +57,34 @@ export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = f
     await trackClick(adState.adId, position, slotId, pageSection, isMountedRef.current);
   }, [adState.adId, position, slotId, pageSection, trackClick, isMountedRef]);
   
+  // Retry mechanism for ad loading failures
+  const retryFetchAds = useCallback(() => {
+    if (retryAttempts < retryCount && !adState.adLoaded && isMountedRef.current) {
+      console.log(`Retrying ad fetch for ${position} (attempt ${retryAttempts + 1}/${retryCount})`);
+      setIsRetrying(true);
+      
+      // Small delay before retry
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          fetchAds(true);
+          setRetryAttempts(prev => prev + 1);
+          setIsRetrying(false);
+        }
+      }, 1000 * (retryAttempts + 1)); // Increasing backoff delay
+    }
+  }, [fetchAds, position, retryAttempts, retryCount, adState.adLoaded, isMountedRef]);
+  
+  // Effect to handle retry if initial load fails
+  useEffect(() => {
+    if (!adState.adLoaded && !isRetrying && retryAttempts < retryCount && isMountedRef.current) {
+      const retryTimer = setTimeout(() => {
+        retryFetchAds();
+      }, 2000); // Wait 2 seconds after initial failure before first retry
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [adState.adLoaded, retryFetchAds, isRetrying, retryAttempts, retryCount, isMountedRef]);
+  
   // Initial ad fetch and event listener setup
   useEffect(() => {
     // Initial fetch for all ad positions
@@ -67,6 +105,8 @@ export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = f
       if (isRelevant) {
         console.log(`Relevant ad slots updated for instance ${adState.instanceId.slice(0,8)}, refreshing ad for ${position}...`);
         fetchAds(true);
+        // Reset retry counter on manual refresh
+        setRetryAttempts(0);
       } else {
         console.log(`Ad slots updated but not relevant for position ${position}, skipping refresh`);
       }
@@ -90,6 +130,9 @@ export const useAdvertisement = ({ position, slotId, pageSection, skipTopics = f
   
   return {
     ...adState,
-    handleAdClick
+    handleAdClick,
+    isRetrying,
+    retryAttempts,
+    retryFetch: retryFetchAds
   };
 };

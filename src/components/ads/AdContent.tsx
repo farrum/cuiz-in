@@ -1,6 +1,8 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useScriptExecution } from '@/hooks/useScriptExecution';
 import AdLoader from './AdLoader';
+import { toast } from 'sonner';
 
 interface AdContentProps {
   adLoaded: boolean;
@@ -34,18 +36,62 @@ const AdContent: React.FC<AdContentProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [containerReady, setContainerReady] = useState(false);
   const [scriptError, setScriptError] = useState<string | null>(null);
+  const [contentVersion, setContentVersion] = useState<number>(0);
+  const [containerRecoveryAttempt, setContainerRecoveryAttempt] = useState(0);
   
   // Set up container before executing scripts
   useEffect(() => {
-    if (contentRef.current) {
-      // Ensure the container has an ID attribute
-      if (contentRef.current.id !== containerId) {
-        contentRef.current.id = containerId;
+    const initContainer = () => {
+      if (contentRef.current) {
+        // Ensure the container has an ID attribute
+        if (contentRef.current.id !== containerId) {
+          contentRef.current.id = containerId;
+        }
+        
+        // Set a data attribute to mark the container as initialized
+        contentRef.current.setAttribute('data-initialized', 'true');
+        contentRef.current.setAttribute('data-position', position);
+        contentRef.current.setAttribute('data-slot-id', slotId || 'default');
+        contentRef.current.setAttribute('data-skip-topics', String(skipTopics));
+        
+        // Set container as ready
+        setContainerReady(true);
+        console.log(`Container initialized with ID: ${containerId}`);
+        return true;
       }
-      setContainerReady(true);
-      console.log(`Container initialized with ID: ${containerId}`);
+      return false;
+    };
+    
+    // Try to initialize container
+    const initialized = initContainer();
+    
+    // If initialization failed, try again in 100ms
+    if (!initialized) {
+      const timer = setTimeout(() => {
+        const retrySucceeded = initContainer();
+        if (!retrySucceeded) {
+          console.error(`Failed to initialize container for ${position} after retry`);
+          setContainerRecoveryAttempt(prev => prev + 1);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [containerId]);
+  }, [containerId, position, slotId, skipTopics, containerRecoveryAttempt]);
+  
+  // Attempt container recovery if it failed to initialize
+  useEffect(() => {
+    if (containerRecoveryAttempt > 0 && containerRecoveryAttempt < 5 && !containerReady) {
+      console.log(`Attempting container recovery for ${position}, attempt ${containerRecoveryAttempt}`);
+      
+      const recoveryTimer = setTimeout(() => {
+        // Force DOM refresh by incrementing content version
+        setContentVersion(prev => prev + 1);
+      }, 500 * containerRecoveryAttempt); // Increasing backoff
+      
+      return () => clearTimeout(recoveryTimer);
+    }
+  }, [containerRecoveryAttempt, containerReady, position]);
   
   // Clean content of problematic scripts
   const cleanedContent = React.useMemo(() => {
@@ -63,16 +109,18 @@ const AdContent: React.FC<AdContentProps> = ({
       'ServiceWorker.register',
       'Notification.requestPermission',
       'Va3pn0.js',
-      'push.m.js'
+      'push.m.js',
+      'facebook.com'
     ];
 
-    // Always include Topics-related entries in blocked scripts since we're defaulting to skipTopics=true
+    // Always block Topics API related things
     blockedScripts.push(
       'document.browsingTopics',
       'navigator.runAdAuction',
       'adspector.io',
       'cuiz.in/topics',
-      'Topics'
+      'Topics',
+      'attestation'
     );
     
     let content = adContent;
@@ -87,7 +135,6 @@ const AdContent: React.FC<AdContentProps> = ({
     const swRegex = /<script[^>]*>[^<]*(serviceWorker|ServiceWorker)[^<]*(register)[^<]*<\/script>/gi;
     content = content.replace(swRegex, '<!-- Service worker registration removed -->');
     
-    // Always remove Topics API-related code to prevent errors
     // Remove Topics API-related code
     content = content.replace(/document\.browsingTopics\([^)]*\)/g, 
                             "console.log('Topics API call blocked')");
@@ -125,12 +172,19 @@ const AdContent: React.FC<AdContentProps> = ({
     // Remove Facebook scripts causing errors
     content = content.replace(/<script[^>]*facebook\.com[^>]*>[^<]*<\/script>/gi,
                              '<!-- Facebook script removed -->');
+
+    // Flag the container with data attributes to help with debugging
+    content = `<div data-ad-content="true" data-position="${position}" data-slot="${slotId || position}" data-cleaned="true">${content}</div>`;
     
     return content;
-  }, [adContent]);
+  }, [adContent, position, slotId]);
   
   // Execute scripts in the ad content only after container is ready
-  const scriptStatus = useScriptExecution(containerReady ? cleanedContent : '', containerId, true);
+  const scriptStatus = useScriptExecution(
+    containerReady ? cleanedContent : '', 
+    containerId, 
+    true // Always skip Topics API
+  );
   
   // Effect to monitor script errors
   useEffect(() => {
@@ -153,7 +207,7 @@ const AdContent: React.FC<AdContentProps> = ({
         event.message.includes('TCPusher') || 
         event.message.includes('ServiceWorker') ||
         event.message.includes('register') ||
-        (skipTopics && event.message.includes('Attestation check for Topics'))
+        event.message.includes('Attestation check for Topics')
       )) {
         console.warn('Intercepted problematic global error:', event.message);
         event.preventDefault();
@@ -171,19 +225,15 @@ const AdContent: React.FC<AdContentProps> = ({
             (event.reason.includes('TCPusher') || 
              event.reason.includes('ServiceWorker') || 
              event.reason.includes('register') ||
-             (skipTopics && (
-               event.reason.includes('Topics') ||
-               event.reason.includes('Attestation')
-             ))
+             event.reason.includes('Topics') ||
+             event.reason.includes('Attestation')
             )) || 
            (event.reason.message && 
             (event.reason.message.includes('TCPusher') || 
              event.reason.message.includes('ServiceWorker') || 
              event.reason.message.includes('register') ||
-             (skipTopics && (
-               event.reason.message.includes('Topics') ||
-               event.reason.message.includes('Attestation')
-             ))
+             event.reason.message.includes('Topics') ||
+             event.reason.message.includes('Attestation')
             )))) {
         console.warn('Intercepted unhandled promise rejection:', 
                     typeof event.reason === 'string' ? event.reason : event.reason.message);
@@ -198,7 +248,7 @@ const AdContent: React.FC<AdContentProps> = ({
       window.removeEventListener('error', handleGlobalError, true);
       window.removeEventListener('unhandledrejection', handlePromiseRejection);
     };
-  }, [containerId, position, skipTopics]);
+  }, [containerId, position]);
   
   // Effect to monitor content changes and container status
   useEffect(() => {
@@ -218,13 +268,22 @@ const AdContent: React.FC<AdContentProps> = ({
           contentRef.current.setAttribute('data-has-scripts', hasScriptTags.toString());
           contentRef.current.setAttribute('data-content-length', cleanedContent.length.toString());
           contentRef.current.setAttribute('data-position', position);
-          if (skipTopics) {
-            contentRef.current.setAttribute('data-skip-topics', 'true');
-          }
+          contentRef.current.setAttribute('data-skip-topics', 'true');
+          contentRef.current.setAttribute('data-container-version', contentVersion.toString());
         }
       }
+    } else if (adLoaded && cleanedContent && !containerReady && isDevelopment) {
+      // Warning for development environment when container isn't ready
+      console.warn(`Container not ready yet for ${position}/${slotId || 'default'}`);
+      
+      // After 5 seconds, if container is still not ready, show a toast warning in dev mode
+      if (containerRecoveryAttempt >= 3 && isDevelopment) {
+        toast.warning(`Ad container not initializing properly for ${position}`, {
+          description: "Check the DOM structure and container references"
+        });
+      }
     }
-  }, [adLoaded, cleanedContent, containerReady, containerId, position, slotId, isDevelopment, skipTopics]);
+  }, [adLoaded, cleanedContent, containerReady, containerId, position, slotId, isDevelopment, contentVersion, containerRecoveryAttempt]);
   
   if (!adLoaded) {
     return <AdLoader error={adError} isDevelopment={isDevelopment} />;
@@ -246,7 +305,7 @@ const AdContent: React.FC<AdContentProps> = ({
           {scriptError && <p className="text-xs text-red-500">Script error: {scriptError}</p>}
           {adBlockDetected && <p className="text-xs text-amber-500">Ad blocker detected</p>}
           {topicsError && <p className="text-xs text-red-500">Topics API attestation failed</p>}
-          {skipTopics && <p className="text-xs text-green-500">Topics API skipped</p>}
+          <p className="text-xs text-green-500">Topics API skipped (forced)</p>
           <p className="text-xs text-muted-foreground">
             Position: {position} / Slot: {slotId || position} / Section: {pageSection || 'default'}
           </p>
@@ -260,9 +319,9 @@ const AdContent: React.FC<AdContentProps> = ({
             </p>
           )}
           {containerReady ? (
-            <p className="text-xs text-green-500">Container initialized: Yes</p>
+            <p className="text-xs text-green-500">Container initialized: Yes (v{contentVersion})</p>
           ) : (
-            <p className="text-xs text-red-500">Container initialized: No</p>
+            <p className="text-xs text-red-500">Container initialized: No (recovery attempt: {containerRecoveryAttempt})</p>
           )}
         </div>
       )}
@@ -273,6 +332,7 @@ const AdContent: React.FC<AdContentProps> = ({
         data-ad-slot={slotId || position}
         data-ad-ready={containerReady.toString()}
         data-skip-topics="true"
+        data-content-version={contentVersion}
         className={`${getMinHeight()} flex items-center justify-center overflow-hidden bg-secondary/10`}
         dangerouslySetInnerHTML={{ __html: cleanedContent }}
       ></div>

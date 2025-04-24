@@ -1,9 +1,11 @@
 
-import React, { useId, useEffect, useState } from 'react';
+import React, { useId, useEffect, useState, useCallback } from 'react';
 import { useAdvertisement } from '@/hooks/advertisement';
 import AdContainer from './ads/AdContainer';
 import AdContent from './ads/AdContent';
 import { toast } from 'sonner';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AdvertisementBannerProps {
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle' | 'sidebar';
@@ -28,6 +30,8 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
   const isDevelopment = process.env.NODE_ENV === 'development';
   const [adBlockDetected, setAdBlockDetected] = useState(false);
   const [topicsError, setTopicsError] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   
   const {
     adLoaded,
@@ -38,13 +42,37 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     instanceId,
     adId,
     adVersion,
-    handleAdClick
+    handleAdClick,
+    isRetrying,
+    retryAttempts,
+    retryFetch
   } = useAdvertisement({
     position,
     slotId,
     pageSection,
-    skipTopics
+    skipTopics,
+    retryCount: 3  // Allow up to 3 retry attempts
   });
+
+  // Manual refresh function
+  const handleManualRefresh = useCallback(() => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    console.log(`Manual refresh triggered for ${position} ad`);
+    
+    // Dispatch custom event to refresh ads
+    window.dispatchEvent(new CustomEvent('adSlotsUpdated', {
+      detail: { slots: [{ position }] }
+    }));
+    
+    // Reset error count on manual refresh
+    setErrorCount(0);
+    
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 2000);
+  }, [position, isRefreshing]);
 
   // Detect ad blockers, script errors, and Topics API errors
   useEffect(() => {
@@ -102,6 +130,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           event.message.includes('register')
       )) {
         console.error(`Ad error intercepted (${position}):`, event.message);
+        setErrorCount(prev => prev + 1);
         event.preventDefault();
         event.stopPropagation();
         return true; // Signal that we handled this error
@@ -136,6 +165,7 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           reasonStr.includes('Va3pn0.js')
       )) {
         console.error(`Ad promise rejection intercepted (${position}):`, reasonStr);
+        setErrorCount(prev => prev + 1);
         event.preventDefault();
         return true;
       }
@@ -168,50 +198,101 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
     };
   }, [position, isDevelopment]);
 
+  // Effect to retry loading when error count gets high
+  useEffect(() => {
+    if (errorCount > 3 && !isRetrying && !isRefreshing) {
+      console.log(`High error count (${errorCount}) detected for ${position} ad, triggering retry`);
+      retryFetch();
+    }
+  }, [errorCount, isRetrying, isRefreshing, position, retryFetch]);
+
   // Display nothing if ad is inactive and not in development mode
   if (!adActive) {
     if (isDevelopment) {
       return (
         <div className={`w-full bg-muted/30 border border-muted rounded-lg p-4 ${className} text-center text-xs text-muted-foreground`}>
-          Ad slot inactive: {position} / {slotId}
-          {adError && <div className="text-destructive mt-1">{adError}</div>}
-          {adBlockDetected && <div className="text-amber-500 mt-1">Ad blocker detected</div>}
-          {topicsError && <div className="text-red-500 mt-1">Topics API attestation failed</div>}
+          <div className="flex flex-col items-center">
+            <p>Ad slot inactive: {position} / {slotId}</p>
+            {adError && <p className="text-destructive mt-1">{adError}</p>}
+            {adBlockDetected && <p className="text-amber-500 mt-1">Ad blocker detected</p>}
+            {topicsError && <p className="text-red-500 mt-1">Topics API attestation failed</p>}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Try Again'}
+            </Button>
+          </div>
         </div>
       );
     }
     return null;
   }
 
+  // Show retry UI in development mode
+  const showDevRetryUI = isDevelopment && (isRetrying || retryAttempts > 0);
+
   return (
-    <AdContainer
-      position={position}
-      size={size}
-      className={className}
-      adLoaded={adLoaded}
-      onClick={handleAdClick}
-      adData={{
-        slotId,
-        pageSection,
-        adVersion,
-        instanceId: instanceId.slice(0, 8)
-      }}
-    >
-      <AdContent
-        adLoaded={adLoaded}
-        adContent={adContent}
-        adDebug={adDebug}
-        adError={adError}
-        isDevelopment={isDevelopment}
+    <div className={`w-full ${className}`}>
+      {showDevRetryUI && (
+        <div className="text-xs text-center mb-1">
+          <span className={isRetrying ? "text-amber-500" : "text-green-500"}>
+            {isRetrying ? 
+              `Retrying ad (attempt ${retryAttempts + 1}/3)...` : 
+              `Ad loaded after ${retryAttempts} ${retryAttempts === 1 ? 'retry' : 'retries'}`
+            }
+          </span>
+        </div>
+      )}
+      
+      <AdContainer
         position={position}
-        slotId={slotId}
-        pageSection={pageSection}
-        containerId={containerId}
-        adBlockDetected={adBlockDetected}
-        topicsError={topicsError}
-        skipTopics={skipTopics}
-      />
-    </AdContainer>
+        size={size}
+        className=""
+        adLoaded={adLoaded}
+        onClick={handleAdClick}
+        adData={{
+          slotId,
+          pageSection,
+          adVersion,
+          instanceId: instanceId.slice(0, 8)
+        }}
+      >
+        <AdContent
+          adLoaded={adLoaded}
+          adContent={adContent}
+          adDebug={adDebug}
+          adError={adError}
+          isDevelopment={isDevelopment}
+          position={position}
+          slotId={slotId}
+          pageSection={pageSection}
+          containerId={containerId}
+          adBlockDetected={adBlockDetected}
+          topicsError={topicsError}
+          skipTopics={skipTopics}
+        />
+      </AdContainer>
+      
+      {isDevelopment && !adLoaded && !isRetrying && retryAttempts >= 3 && (
+        <div className="flex justify-center mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Manual Refresh'}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
