@@ -1,5 +1,6 @@
 
 import { QuizQuestion } from '@/utils/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export const extractKeywords = (text: string): string[] => {
   // Remove special characters and split into words
@@ -67,4 +68,3 @@ export const getCachedKeywords = (): string[] => {
   const cached = localStorage.getItem('quiz_keywords');
   return cached ? JSON.parse(cached) : [];
 };
-
