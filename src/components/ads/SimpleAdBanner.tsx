@@ -9,7 +9,7 @@ interface SimpleAdBannerProps {
 }
 
 const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '' }) => {
-  const { content, isLoading } = useSimpleAd(position);
+  const { content, isLoading, error } = useSimpleAd(position);
   const { adBlockerDetected } = useAdBlockerDetection();
   const [hasError, setHasError] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,8 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
                     .replace(/document\.browsingTopics/g, 'console.log')
                     .replace(/navigator\.serviceWorker\.register/g, 'console.log')
                     .replace(/new\s+TCPusher/g, 'console.log')
-                    .replace(/Notification\.requestPermission/g, 'console.log');
+                    .replace(/Notification\.requestPermission/g, 'console.log')
+                    .replace(/runAdAuction/g, 'console.log');
                     
                   newScript.innerHTML = safeScriptContent;
                 }
@@ -102,7 +103,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
     );
   }
   
-  if (!content || hasError || adBlockerDetected) {
+  if (!content || hasError || adBlockerDetected || error) {
     // Return an empty placeholder with proper styling
     return (
       <div className={`w-full ${getPositionClasses(position)} ${className}`}>
@@ -113,6 +114,10 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
         ) : hasError ? (
           <div className="ad-container flex items-center justify-center h-full">
             <p className="text-sm text-muted-foreground">Error loading advertisement</p>
+          </div>
+        ) : error ? (
+          <div className="ad-container flex items-center justify-center h-full">
+            <p className="text-sm text-muted-foreground">Advertisement unavailable</p>
           </div>
         ) : (
           <div className="ad-container flex items-center justify-center h-full">
@@ -150,3 +155,4 @@ const getPositionClasses = (position: string) => {
 };
 
 export default SimpleAdBanner;
+
