@@ -39,7 +39,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         />
       </div>
       
-      <SimpleAdBanner position="content" className="my-8" />
+      <SimpleAdBanner position="middle" className="my-8" />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {userId && <BadgesSection userId={userId} />}

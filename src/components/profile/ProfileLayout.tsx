@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -23,7 +22,6 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
     console.log(`ProfileLayout rendered with forceReloadAds: ${forceReloadAds}, isSuspended: ${isSuspended}`);
   }, [forceReloadAds, isSuspended]);
 
-  // Handle the suspended account separately through SuspendedAccountHandler
   return (
     <SuspendedAccountHandler
       isAuthenticated={isAuthenticated}
@@ -35,7 +33,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
         <Header />
         <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
           <SimpleAdBanner 
-            position="header" 
+            position="top" 
             className="mb-6" 
           />
           
@@ -53,7 +51,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({
           </div>
           
           <SimpleAdBanner 
-            position="footer" 
+            position="bottom" 
             className="mt-6" 
           />
         </main>

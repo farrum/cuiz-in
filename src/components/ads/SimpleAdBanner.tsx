@@ -1,10 +1,9 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useSimpleAd } from '@/hooks/ads/useSimpleAd';
 import { useAdBlockerDetection } from '@/hooks/ads/useAdBlockerDetection';
 
 interface SimpleAdBannerProps {
-  position: 'header' | 'sidebar' | 'content' | 'footer';
+  position: 'top' | 'middle' | 'bottom' | 'sidebar';
   className?: string;
 }
 
@@ -16,24 +15,17 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   const adId = `ad-container-${position}-${Math.random().toString(36).substring(2, 9)}`;
   
   useEffect(() => {
-    // Only try to run scripts if we have content and a container
     if (content && containerRef.current) {
       try {
-        // Handle Topics API and other problematic scripts
         const safeContent = content
-          // Remove Topics API calls
           .replace(/document\.browsingTopics\([^)]*\)/g, "console.log('Topics API call blocked')")
-          // Disable service worker registration
           .replace(/navigator\.serviceWorker\.register/g, "console.log")
-          // Block other problematic patterns
           .replace(/TCPusher/g, "console.log")
           .replace(/new\s+Notification/g, "console.log");
 
-        // Set the sanitized content
         if (containerRef.current) {
           containerRef.current.innerHTML = safeContent;
 
-          // Execute scripts safely
           setTimeout(() => {
             try {
               const scripts = containerRef.current?.querySelectorAll('script');
@@ -46,7 +38,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
                   oldScript.src.includes('notification')
                 )) {
                   console.log('Blocked problematic script:', oldScript.src);
-                  return; // Skip this script
+                  return;
                 }
                 
                 const newScript = document.createElement('script');
@@ -54,15 +46,12 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
                   newScript.setAttribute(attr.name, attr.value);
                 });
                 
-                // Add safety attributes
                 newScript.setAttribute('data-safe-script', 'true');
                 newScript.setAttribute('data-no-sw', 'true');
                 
-                // Set either src or inline content
                 if (oldScript.src) {
                   newScript.src = oldScript.src;
                 } else {
-                  // Sanitize the content
                   let safeScriptContent = oldScript.innerHTML
                     .replace(/document\.browsingTopics/g, 'console.log')
                     .replace(/navigator\.serviceWorker\.register/g, 'console.log')
@@ -87,7 +76,6 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
       }
     }
     
-    // Cleanup
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
@@ -103,51 +91,38 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
     );
   }
   
-  if (!content || hasError || adBlockerDetected || error) {
-    // Return an empty placeholder with proper styling
-    return (
-      <div className={`w-full ${getPositionClasses(position)} ${className}`}>
-        {adBlockerDetected ? (
-          <div className="ad-container flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground">Advertisement content blocked</p>
-          </div>
-        ) : hasError ? (
-          <div className="ad-container flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground">Error loading advertisement</p>
-          </div>
-        ) : error ? (
-          <div className="ad-container flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground">Advertisement unavailable</p>
-          </div>
-        ) : (
-          <div className="ad-container flex items-center justify-center h-full">
-            <p className="text-sm text-muted-foreground">Advertisement</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-  
   return (
     <div className={`w-full ${getPositionClasses(position)} ${className}`}>
-      <div 
-        id={adId}
-        ref={containerRef}
-        className="ad-container"
-      />
+      {adBlockerDetected ? (
+        <div className="ad-container flex items-center justify-center h-full">
+          <p className="text-sm text-muted-foreground">Advertisement content blocked</p>
+        </div>
+      ) : hasError ? (
+        <div className="ad-container flex items-center justify-center h-full">
+          <p className="text-sm text-muted-foreground">Error loading advertisement</p>
+        </div>
+      ) : error ? (
+        <div className="ad-container flex items-center justify-center h-full">
+          <p className="text-sm text-muted-foreground">Advertisement unavailable</p>
+        </div>
+      ) : (
+        <div className="ad-container flex items-center justify-center h-full">
+          <p className="text-sm text-muted-foreground">Advertisement</p>
+        </div>
+      )}
     </div>
   );
 };
 
 const getPositionClasses = (position: string) => {
   switch (position) {
-    case 'header':
+    case 'top':
       return 'min-h-[90px] bg-secondary/10 rounded-lg';
     case 'sidebar':
       return 'min-h-[600px] bg-secondary/10 rounded-lg';
-    case 'content':
+    case 'middle':
       return 'min-h-[250px] bg-secondary/10 rounded-lg';
-    case 'footer':
+    case 'bottom':
       return 'min-h-[90px] bg-secondary/10 rounded-lg';
     default:
       return '';
@@ -155,4 +130,3 @@ const getPositionClasses = (position: string) => {
 };
 
 export default SimpleAdBanner;
-

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -23,18 +22,14 @@ const Profile: React.FC = () => {
     handleReactivated,
   } = useProfileData();
   
-  // Use either the URL param or the logged-in user's ID
   const displayUserId = urlUserId || userId;
-  
-  // Don't show the suspended account component in the main content area
-  // ProfileLayout will handle conditional rendering based on suspension status
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       
       <div className="flex-1 container max-w-6xl py-10 px-4">
-        <SimpleAdBanner position="header" className="mb-6" />
+        <SimpleAdBanner position="top" className="mb-6" />
         
         <ProfileLayout forceReloadAds={forceReloadAds} isSuspended={suspended}>
           <ProfileContent 
@@ -47,7 +42,7 @@ const Profile: React.FC = () => {
           />
         </ProfileLayout>
         
-        <SimpleAdBanner position="footer" className="mt-8" />
+        <SimpleAdBanner position="bottom" className="mt-8" />
       </div>
       
       <Footer />

@@ -23,11 +23,11 @@ const LoginPage: React.FC = () => {
               Back to Home
             </Link>
             
-            <SimpleAdBanner position="header" className="mb-8" />
+            <SimpleAdBanner position="top" className="mb-8" />
             
             <UserLogin />
             
-            <SimpleAdBanner position="footer" className="mt-8" />
+            <SimpleAdBanner position="bottom" className="mt-8" />
           </div>
         </div>
       </div>
