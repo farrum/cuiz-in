@@ -21,6 +21,7 @@ export const useDailyChallenges = () => {
 
     try {
       setIsLoading(true);
+      console.log('Fetching active challenges...');
 
       const { data: challengesData, error: challengesError } = await supabase
         .from('daily_challenges')
@@ -30,6 +31,8 @@ export const useDailyChallenges = () => {
 
       if (challengesError) throw challengesError;
 
+      console.log('Challenges data from server:', challengesData);
+      
       const now = new Date();
       let filteredChallenges: Challenge[] = [];
       
@@ -42,6 +45,8 @@ export const useDailyChallenges = () => {
 
         if (progressError) throw progressError;
         
+        console.log('User progress data:', progressData);
+        
         const progressLookup: {[key: string]: ChallengeProgress} = {};
         if (progressData) {
           progressData.forEach(p => {
@@ -52,21 +57,26 @@ export const useDailyChallenges = () => {
         setProgress(progressLookup);
         
         // Filter challenges:
-        // 1. Keep active challenges that haven't ended yet
+        // 1. Keep active challenges that are within their date range
         // 2. Remove challenges that have been completed by the user
         filteredChallenges = challengesData.filter(challenge => {
+          const startDate = new Date(challenge.start_date);
           const endDate = new Date(challenge.end_date);
-          const hasEnded = endDate < now;
+          const isActive = startDate <= now && endDate >= now;
           const userCompleted = progressLookup[challenge.id]?.completed;
           
+          console.log(`Challenge ${challenge.title}: isActive=${isActive}, startDate=${startDate}, endDate=${endDate}, now=${now}, userCompleted=${userCompleted}`);
+          
           // Only keep challenges that:
-          // 1. Haven't ended yet, AND
+          // 1. Are currently active (between start and end date), AND
           // 2. User hasn't completed them yet
-          return !hasEnded && !userCompleted;
+          return isActive && !userCompleted;
         });
         
+        console.log('Filtered challenges to show:', filteredChallenges);
         setChallenges(filteredChallenges);
       } else {
+        console.log('No active challenges found in database');
         setChallenges([]);
       }
     } catch (error) {
@@ -138,7 +148,8 @@ export const useDailyChallenges = () => {
     challenges,
     progress,
     isLoading,
-    handleStartChallenge
+    handleStartChallenge,
+    fetchActiveChallenges
   };
 };
 

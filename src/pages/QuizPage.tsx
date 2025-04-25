@@ -144,6 +144,9 @@ const QuizPage: React.FC = () => {
           
             <DailyChallenges />
             
+            {/* New ad banner specifically below Daily Challenges */}
+            <SimpleAdBanner position="challenges-footer" className="mt-8" />
+            
             <SimpleAdBanner position="bottom" className="mt-6" />
           </div>
           

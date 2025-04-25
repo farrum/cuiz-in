@@ -1,13 +1,20 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDailyChallenges } from '@/hooks/useDailyChallenges';
 import ChallengeCard from './ChallengeCard';
 import NoChallengesDisplay from './NoChallengesDisplay';
 import ChallengesHeader from './ChallengesHeader';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 const DailyChallenges: React.FC = () => {
-  const { challenges, progress, isLoading, handleStartChallenge } = useDailyChallenges();
+  const { challenges, progress, isLoading, handleStartChallenge, fetchActiveChallenges } = useDailyChallenges();
+
+  useEffect(() => {
+    // Log the challenges whenever they change
+    console.log('Current challenges in component:', challenges);
+  }, [challenges]);
 
   if (isLoading) {
     return (
@@ -21,9 +28,18 @@ const DailyChallenges: React.FC = () => {
     );
   }
 
+  const handleRefresh = () => {
+    fetchActiveChallenges();
+  };
+
   return (
     <div className="mt-8">
-      <ChallengesHeader title="Daily Challenges" />
+      <div className="flex justify-between items-center mb-4">
+        <ChallengesHeader title="Daily Challenges" />
+        <Button variant="outline" size="sm" onClick={handleRefresh} className="flex items-center gap-1">
+          <RefreshCw className="h-4 w-4" /> Refresh
+        </Button>
+      </div>
       
       {!challenges.length ? (
         <NoChallengesDisplay />

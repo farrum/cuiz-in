@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Trophy, Clock, ChevronRight, Award } from 'lucide-react';
-import { formatDistanceToNow, isPast, isFuture } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { Challenge, ChallengeProgress } from './types';
 
 interface ChallengeCardProps {
@@ -18,9 +18,14 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   userProgress, 
   onStartChallenge 
 }) => {
-  const hasStarted = isPast(new Date(challenge.start_date));
-  const hasEnded = isPast(new Date(challenge.end_date));
-  const isUpcoming = isFuture(new Date(challenge.start_date));
+  // Check if the challenge is active (between start and end date)
+  const now = new Date();
+  const startDate = new Date(challenge.start_date);
+  const endDate = new Date(challenge.end_date);
+  
+  const isActive = startDate <= now && endDate >= now;
+  const isUpcoming = startDate > now;
+  const hasEnded = endDate < now;
   const isCompleted = userProgress?.completed;
   
   return (
@@ -36,6 +41,11 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
           {isUpcoming && (
             <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/30">
               <Clock className="h-3 w-3 mr-1" /> Upcoming
+            </Badge>
+          )}
+          {isActive && !isCompleted && (
+            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+              <Clock className="h-3 w-3 mr-1" /> Active
             </Badge>
           )}
           {hasEnded && !isCompleted && (
@@ -57,16 +67,16 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
           <div className="flex items-center text-muted-foreground">
             <Calendar className="h-4 w-4 mr-1" />
             {isUpcoming 
-              ? `Starts ${formatDistanceToNow(new Date(challenge.start_date), { addSuffix: true })}`
+              ? `Starts ${formatDistanceToNow(startDate, { addSuffix: true })}`
               : hasEnded 
-                ? `Ended ${formatDistanceToNow(new Date(challenge.end_date), { addSuffix: true })}`
-                : `Ends ${formatDistanceToNow(new Date(challenge.end_date), { addSuffix: true })}`
+                ? `Ended ${formatDistanceToNow(endDate, { addSuffix: true })}`
+                : `Ends ${formatDistanceToNow(endDate, { addSuffix: true })}`
             }
           </div>
-          {isCompleted && (
+          {isCompleted && userProgress && (
             <div className="flex items-center text-primary">
               <Trophy className="h-4 w-4 mr-1" />
-              Score: {userProgress?.score || 0} points
+              Score: {userProgress.score || 0} points
             </div>
           )}
         </div>
