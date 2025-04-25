@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Award } from 'lucide-react';
 import { useQuizAnswer } from '@/hooks/useQuizAnswer';
 import CountdownButton from '@/components/CountdownButton';
@@ -30,7 +29,7 @@ const AnswerPage: React.FC = () => {
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
         {/* First Advertisement */}
-        <AdvertisementBanner position="top" />
+        <SimpleAdBanner position="header" className="mb-8" />
         
         {isLoading ? (
           <LoadingCard />
@@ -45,7 +44,7 @@ const AnswerPage: React.FC = () => {
             />
             
             {/* Third Advertisement */}
-            <AdvertisementBanner position="middle" size="small" />
+            <SimpleAdBanner position="content" className="my-8" />
             
             <div className="mt-6 flex justify-end relative z-10">
               <CountdownButton 
@@ -68,7 +67,7 @@ const AnswerPage: React.FC = () => {
         )}
         
         {/* Fourth Advertisement */}
-        <AdvertisementBanner position="bottom" />
+        <SimpleAdBanner position="footer" className="mt-8" />
       </main>
       
       <Footer />

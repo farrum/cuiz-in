@@ -4,15 +4,13 @@ import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
-import AdvertisementBanner from '@/components/AdvertisementBanner';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
-import { clearAdCache } from '@/services/adCacheService';
-import AdDebugger from '@/components/ads/AdDebugger';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
@@ -37,7 +35,6 @@ const QuizPage: React.FC = () => {
     isGameActive,
     checkSuspensionStatus,
     loadInitialData,
-    handleAdSlotsUpdated,
     handleQuestionComplete,
     showMotivationalMessage,
     setForceReloadAds,
@@ -54,31 +51,7 @@ const QuizPage: React.FC = () => {
         loadInitialData();
       }
     });
-    
-    // Clear ad cache when component mounts to force fresh ads
-    clearAdCache();
-    
-    // Force reload ads after 500ms to ensure ads load properly
-    const initialLoadTimer = setTimeout(() => {
-      setForceReloadAds(prev => prev + 1);
-    }, 500);
-    
-    return () => {
-      clearTimeout(initialLoadTimer);
-    };
   }, []);
-  
-  useEffect(() => {
-    window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-    
-    return () => {
-      window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
-    };
-  }, []);
-  
-  useEffect(() => {
-    showMotivationalMessage();
-  }, [questionsAnswered]);
   
   if (isSuspended) {
     return null;
@@ -94,8 +67,6 @@ const QuizPage: React.FC = () => {
     'educationalUse': 'assessment'
   };
 
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
@@ -109,7 +80,7 @@ const QuizPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
-        <AdvertisementBanner key={`top-ad-${forceReloadAds}`} position="top" slotId="quiz-top" pageSection="quiz-page" />
+        <SimpleAdBanner position="header" className="mb-6" />
         
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">
@@ -154,9 +125,7 @@ const QuizPage: React.FC = () => {
               nextBadgeThreshold={nextBadgeThreshold}
             />
           
-            <AdvertisementBanner key={`middle-small-ad-${forceReloadAds}`} position="middle" size="small" slotId="quiz-middle-small" pageSection="quiz-page" />
-          
-            <AdvertisementBanner key={`middle-ad-${forceReloadAds}`} position="middle" slotId="quiz-middle" pageSection="quiz-page" />
+            <SimpleAdBanner position="content" className="my-6" />
           
             {isGameActive && (
               <QuizContent 
@@ -178,26 +147,14 @@ const QuizPage: React.FC = () => {
           
           {/* Sidebar Ads */}
           <div className="w-full md:w-64">
-            <AdvertisementBanner 
-              key={`sidebar-ad-${forceReloadAds}`} 
+            <SimpleAdBanner 
               position="sidebar" 
-              slotId="quiz-sidebar" 
-              pageSection="quiz-page" 
               className="sticky top-20"
             />
           </div>
         </div>
         
-        <AdvertisementBanner key={`bottom-ad-${forceReloadAds}`} position="bottom" slotId="quiz-bottom" pageSection="quiz-page" />
-        
-        {isDevelopment && (
-          <AdDebugger 
-            position="bottom" 
-            slotId="quiz-bottom" 
-            pageSection="quiz-page" 
-            className="mt-4 max-w-3xl w-full mx-auto"
-          />
-        )}
+        <SimpleAdBanner position="footer" className="mt-6" />
       </main>
       
       <Footer />
