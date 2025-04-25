@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PointsDisplay from '@/components/PointsDisplay';
 import BadgesSection from '@/components/BadgesSection';
@@ -5,7 +6,6 @@ import ReferralSection from '@/components/ReferralSection';
 import WithdrawalSection from '@/components/WithdrawalSection';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-import AccountReactivation from '@/components/AccountReactivation';
 import ProfileHeader from './ProfileHeader';
 
 interface ProfileContentProps {
@@ -34,8 +34,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       <PointsDisplay animateUpdate className="mb-6" />
       
       <div className="grid grid-cols-1 gap-6 mb-6">
-        <AccountReactivation />
-        
         <ProfileHeader
           username={username}
           userUpi={userUpi}

@@ -18,16 +18,25 @@ export const useSimpleAd = (position: string) => {
         if (cachedAdsString) {
           try {
             const cachedAds = JSON.parse(cachedAdsString);
-            const matchingAd = cachedAds.find((ad: any) => 
+            const matchingAds = cachedAds.filter((ad: any) => 
               ad.position === position && ad.active && ad.code
             );
             
-            if (matchingAd?.code) {
-              console.log(`Using cached ad for position: ${position}`);
-              const sanitizedCode = sanitizeAdCode(matchingAd.code);
-              setContent(sanitizedCode);
-              setIsLoading(false);
-              return;
+            // If we have matching ads, select one randomly
+            if (matchingAds && matchingAds.length > 0) {
+              // Select a random ad from matching ads
+              const randomIndex = Math.floor(Math.random() * matchingAds.length);
+              const selectedAd = matchingAds[randomIndex];
+              
+              if (selectedAd?.code) {
+                console.log(`Using cached ad for position: ${position} (${selectedAd.name || 'Unnamed ad'})`);
+                const sanitizedCode = sanitizeAdCode(selectedAd.code);
+                setContent(sanitizedCode);
+                setIsLoading(false);
+                return;
+              }
+            } else {
+              console.log(`No matching cached ads found for position: ${position}`);
             }
           } catch (cacheErr) {
             console.warn('Error parsing cached ads:', cacheErr);
@@ -36,31 +45,58 @@ export const useSimpleAd = (position: string) => {
         
         // If no cached ad, try fetching from Supabase
         try {
-          // Request as array instead of single object to avoid 406 errors
+          console.log(`Fetching ads from Supabase for position: ${position}`);
+          // Get all active ads for the position, not just one
           const { data, error } = await supabase
             .from('ad_slots')
-            .select('code')
+            .select('*')
             .eq('position', position)
             .eq('active', true);
             
           if (error) {
-            console.error('Error fetching ad:', error);
+            console.error('Error fetching ads:', error);
             setContent(null);
-            setError(`Failed to fetch ad: ${error.message}`);
+            setError(`Failed to fetch ads: ${error.message}`);
             return;
           }
           
           if (data && data.length > 0) {
-            const adData = data[0];
-            if (adData?.code) {
+            // Store the fetched ads in localStorage cache
+            const existingAdsStr = localStorage.getItem('quiz_app_ad_slots');
+            let allAds = [];
+            
+            if (existingAdsStr) {
+              try {
+                const existingAds = JSON.parse(existingAdsStr);
+                // Remove old ads for this position
+                const otherPositionAds = existingAds.filter((ad: any) => ad.position !== position);
+                allAds = [...otherPositionAds, ...data];
+              } catch (e) {
+                allAds = data;
+              }
+            } else {
+              allAds = data;
+            }
+            
+            localStorage.setItem('quiz_app_ad_slots', JSON.stringify(allAds));
+            console.log(`Stored ${data.length} ads in cache for position: ${position}`);
+            
+            // Select a random ad from the fetched ads
+            const randomIndex = Math.floor(Math.random() * data.length);
+            const selectedAd = data[randomIndex];
+            
+            if (selectedAd?.code) {
+              console.log(`Selected ad: ${selectedAd.name || selectedAd.id} for position: ${position}`);
               // Sanitize ad code to prevent common issues
-              const sanitizedCode = sanitizeAdCode(adData.code);
+              const sanitizedCode = sanitizeAdCode(selectedAd.code);
               setContent(sanitizedCode);
             } else {
+              console.log('Selected ad has no code content');
               setContent(null);
               setError('No ad content available');
             }
           } else {
+            console.log(`No ads available for position: ${position}`);
             setContent(null);
             setError(`No ads available for position: ${position}`);
           }
@@ -96,7 +132,8 @@ function sanitizeAdCode(code: string): string {
     .replace(/Notification\.requestPermission/g, "console.log('Notification blocked')")
     // Block problematic scripting
     .replace(/new\s+TCPusher/g, "console.log('TCPusher blocked')")
+    // Block document.write calls
+    .replace(/document\.write\(/g, "console.log('document.write blocked:', ")
     // Ensure data attributes for safety
     .replace(/<script/g, "<script data-safe=\"true\" data-skip-topics=\"true\"");
 }
-

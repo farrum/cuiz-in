@@ -26,6 +26,9 @@ const Profile: React.FC = () => {
   // Use either the URL param or the logged-in user's ID
   const displayUserId = urlUserId || userId;
   
+  // Don't show the suspended account component in the main content area
+  // ProfileLayout will handle conditional rendering based on suspension status
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -53,4 +56,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-
