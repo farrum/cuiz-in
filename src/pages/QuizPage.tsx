@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
@@ -144,13 +143,11 @@ const QuizPage: React.FC = () => {
           
             <DailyChallenges />
             
-            {/* New ad banner specifically below Daily Challenges */}
-            <SimpleAdBanner position="challenges-footer" className="mt-8" />
+            <SimpleAdBanner position="bottom" className="mt-8" />
             
             <SimpleAdBanner position="bottom" className="mt-6" />
           </div>
           
-          {/* Sidebar Ads */}
           <div className="w-full md:w-64">
             <SimpleAdBanner 
               position="sidebar" 
