@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -5,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 // Sample blog data - in a real app, this would come from a database
 const blogPosts = [
@@ -95,7 +96,7 @@ const BlogPage: React.FC = () => {
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-8">
-          <SimpleAdBanner position="header" />
+          <AdvertisementBanner position="top" slotId="blog-top" pageSection="blog" />
         </div>
         
         <div className="text-center mb-12">
@@ -131,7 +132,7 @@ const BlogPage: React.FC = () => {
         
         {/* Middle Ad Banner */}
         <div className="my-12">
-          <SimpleAdBanner position="content" />
+          <AdvertisementBanner position="middle" slotId="blog-middle" pageSection="blog" />
         </div>
         
         <div className="mt-12 text-center">

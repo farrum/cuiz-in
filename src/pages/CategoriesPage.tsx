@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 // Quiz categories with descriptions, counts, and SEO-friendly slugs
 const categories = [
@@ -108,7 +108,7 @@ const CategoriesPage: React.FC = () => {
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-8">
-          <SimpleAdBanner position="header" />
+          <AdvertisementBanner position="top" slotId="categories-top" pageSection="categories" />
         </div>
         
         <div className="text-center mb-12">
@@ -143,7 +143,7 @@ const CategoriesPage: React.FC = () => {
         
         {/* Bottom Ad Banner */}
         <div className="mt-12">
-          <SimpleAdBanner position="footer" />
+          <AdvertisementBanner position="bottom" slotId="categories-bottom" pageSection="categories" />
         </div>
       </main>
       

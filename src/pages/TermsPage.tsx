@@ -1,7 +1,8 @@
+
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const TermsPage: React.FC = () => {
   return (
@@ -9,7 +10,7 @@ const TermsPage: React.FC = () => {
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
-        <SimpleAdBanner position="header" className="mb-6" />
+        <AdvertisementBanner position="top" slotId="terms-top" pageSection="terms-page" className="mb-6" />
         
         <div className="quiz-card">
           <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
@@ -29,7 +30,7 @@ const TermsPage: React.FC = () => {
               </p>
             </section>
             
-            <SimpleAdBanner position="content" className="my-6" />
+            <AdvertisementBanner position="middle" slotId="terms-middle" pageSection="terms-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">3. User Accounts</h2>
@@ -62,7 +63,7 @@ const TermsPage: React.FC = () => {
               </p>
             </section>
             
-            <SimpleAdBanner position="content" className="my-6" />
+            <AdvertisementBanner position="middle" slotId="terms-middle-2" pageSection="terms-page" className="my-6" />
             
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Rewards and Payments</h2>
@@ -103,7 +104,7 @@ const TermsPage: React.FC = () => {
             </section>
           </div>
           
-          <SimpleAdBanner position="footer" className="mt-8" />
+          <AdvertisementBanner position="bottom" slotId="terms-bottom" pageSection="terms-page" className="mt-8" />
         </div>
       </main>
       

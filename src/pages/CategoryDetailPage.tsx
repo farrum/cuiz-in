@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -10,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, Search, Filter, Trophy } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 // Sample quiz categories data
 const categoryData = {
@@ -199,7 +200,7 @@ const CategoryDetailPage: React.FC = () => {
           </div>
         </div>
         
-        <SimpleAdBanner position="content" />
+        <AdvertisementBanner position="middle" slotId={`category-${categorySlug}`} pageSection="category-page" />
         
         <div className="grid gap-8 md:grid-cols-3 mt-8">
           <div className="md:col-span-2">

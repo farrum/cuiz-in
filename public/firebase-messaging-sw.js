@@ -50,8 +50,7 @@ const BLOCKED_DOMAINS = [
   'cuiz.in',
   'adspector.io',
   'attestation',
-  'facebook.com',
-  'pageadsodar'
+  'facebook.com'
 ];
 
 // IMPORTANT: Block problematic scripts including Topics API and Facebook
@@ -59,16 +58,6 @@ self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
-    // Always intercept problematic requests
-    if (url.includes('pageadsodar') || url.includes('sodar2')) {
-      console.log('Intercepting sodar request:', url);
-      event.respondWith(new Response('// Request intercepted by service worker', {
-        status: 200,
-        headers: new Headers({'Content-Type': 'application/javascript'})
-      }));
-      return;
-    }
-    
     // Handle Topics API attestation errors more aggressively
     if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) || 
         url.includes('adspector.io') || 

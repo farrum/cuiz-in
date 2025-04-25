@@ -1,3 +1,4 @@
+
 import React from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
@@ -5,7 +6,7 @@ import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { useFaqs } from '@/hooks/useFaqs';
 import { FaqList } from '@/components/faq/FaqList';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const FaqPage: React.FC = () => {
   const { faqs, isLoading } = useFaqs();
@@ -39,7 +40,7 @@ const FaqPage: React.FC = () => {
       <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-8">
-          <SimpleAdBanner position="header" />
+          <AdvertisementBanner position="top" slotId="faq-top" pageSection="faq" />
         </div>
         
         <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
@@ -50,7 +51,7 @@ const FaqPage: React.FC = () => {
         
         {/* Middle Ad Banner */}
         <div className="my-8">
-          <SimpleAdBanner position="content" />
+          <AdvertisementBanner position="middle" slotId="faq-middle" pageSection="faq" />
         </div>
         
         <div className="mt-12 text-center">

@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import UserLogin from '@/components/UserLogin';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 const LoginPage: React.FC = () => {
   return (
@@ -23,11 +23,23 @@ const LoginPage: React.FC = () => {
               Back to Home
             </Link>
             
-            <SimpleAdBanner position="header" className="mb-8" />
+            <AdvertisementBanner 
+              position="top" 
+              slotId="login-top" 
+              pageSection="login-page" 
+              className="mb-8"
+              skipTopics={true}
+            />
             
             <UserLogin />
             
-            <SimpleAdBanner position="footer" className="mt-8" />
+            <AdvertisementBanner 
+              position="bottom" 
+              slotId="login-bottom" 
+              pageSection="login-page" 
+              className="mt-8"
+              skipTopics={true}
+            />
           </div>
         </div>
       </div>

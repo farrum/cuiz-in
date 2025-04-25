@@ -33,12 +33,7 @@ export const useProfileInfo = () => {
       
       if (data && isMountedRef.current) {
         setUsername(data.display_name || data.username);
-        
-        // Only set suspended to true if the field is explicitly true
-        // This ensures we don't show suspended UI for active accounts
-        setSuspended(data.suspended === true);
-        console.log("Account suspension status:", data.suspended);
-        
+        setSuspended(data.suspended);
         setUserUpi(data.upi_id || '');
         
         if (data.profile_picture) {

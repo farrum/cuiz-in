@@ -52,9 +52,7 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
       }
     };
     
-    if (isSuspended) {
-      checkReactivationStatus();
-    }
+    checkReactivationStatus();
   }, [isAuthenticated, isSuspended, userId, onReactivated]);
 
   const handleRequestReactivation = async () => {
@@ -137,7 +135,6 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
     }
   }, [isAuthenticated, isSuspended, location.pathname, navigate, userRole, toast]);
 
-  // Only show the suspended account handler when the account is actually suspended
   if (isAuthenticated && isSuspended) {
     if (location.pathname.startsWith('/admin') && (userRole === 'admin' || userRole === 'team_leader')) {
       return <>{children}</>;
@@ -151,14 +148,12 @@ const SuspendedAccountHandler: React.FC<SuspendedAccountHandlerProps> = ({
             reactivationApproved={reactivationApproved}
             requestDate={requestDate}
             onReactivationRequest={handleRequestReactivation}
-            isSuspended={isSuspended}
           />
         </div>
       </div>
     );
   }
 
-  // If not suspended, just render the children normally
   return <>{children}</>;
 };
 

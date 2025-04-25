@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
@@ -13,7 +13,6 @@ interface AccountReactivationProps {
   reactivationApproved?: boolean;
   requestDate?: string | null;
   onReactivationRequest?: () => Promise<void>;
-  isSuspended?: boolean;
 }
 
 const AccountReactivation: React.FC<AccountReactivationProps> = ({ 
@@ -21,18 +20,12 @@ const AccountReactivation: React.FC<AccountReactivationProps> = ({
   reactivationRequested = false,
   reactivationApproved = false,
   requestDate = null,
-  onReactivationRequest,
-  isSuspended = false
+  onReactivationRequest
 }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [requestSent, setRequestSent] = useState(reactivationRequested);
   const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-  
-  // If the account is not suspended, don't render anything
-  if (!isSuspended) {
-    return null;
-  }
   
   const handleRequestReactivation = async () => {
     if (onReactivationRequest) {

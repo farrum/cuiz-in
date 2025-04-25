@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -6,7 +7,7 @@ import { Challenge } from '@/hooks/challenge/challengeTypes';
 import { QuizQuestion } from '@/utils/quizData';
 import QuizCard from '@/components/QuizCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -131,7 +132,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
           </Alert>
         )}
         
-        <SimpleAdBanner position="content" className="mb-6" />
+        <AdvertisementBanner position="middle" slotId="challenge-middle" pageSection="challenge-page" />
         
         {questions.length > currentQuestionIndex ? (
           <div className="relative mb-8">
@@ -204,7 +205,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
           </div>
         )}
         
-        <SimpleAdBanner position="footer" className="mt-8" />
+        <AdvertisementBanner position="bottom" slotId="challenge-bottom" pageSection="challenge-page" />
       </main>
       <Footer />
 

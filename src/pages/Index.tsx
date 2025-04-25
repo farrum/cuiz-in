@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
@@ -5,6 +6,7 @@ import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import { useHomePageState } from '@/hooks/useHomePageState';
 import AdDebugger from '@/components/ads/AdDebugger';
 import {
@@ -18,7 +20,6 @@ import {
   HelpSection,
   AnimatedBackgrounds
 } from '@/components/home';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const Index: React.FC = () => {
   const {
@@ -64,9 +65,6 @@ const Index: React.FC = () => {
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
         <AnimatedBackgrounds />
         
-        {/* Header Ad */}
-        <SimpleAdBanner position="header" className="mb-8" />
-        
         {showNameInput ? (
           <NameInputForm 
             userName={userName} 
@@ -87,28 +85,61 @@ const Index: React.FC = () => {
           />
         )}
         
-        {/* Content Ad */}
-        <SimpleAdBanner position="content" className="my-8" />
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-ad" 
+          pageSection="home-page" 
+          skipTopics={true} 
+        />
         
         <FeatureSection />
         
         <HelpSection />
         
-        {/* Sidebar Ad */}
-        <div className="hidden lg:block fixed right-4 top-24">
-          <SimpleAdBanner position="sidebar" />
-        </div>
+        {/* Ad Slot 1 with skipTopics=true */}
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-1" 
+          pageSection="home-page-middle" 
+          className="mt-12"
+          skipTopics={true}
+        />
         
         <HowToEarnSection />
         
-        {/* Footer Ad */}
-        <SimpleAdBanner position="footer" className="mt-8" />
+        {/* Ad Slot 2 with skipTopics=true */}
+        <AdvertisementBanner 
+          position="middle" 
+          slotId="home-middle-2" 
+          pageSection="home-page-bottom" 
+          className="mt-12"
+          skipTopics={true}
+        />
         
+        {/* New SEO Content Section */}
         <InfoSection />
         
         <TestimonialsSection />
         
         <CallToAction />
+        
+        {/* Bottom ad with debugger */}
+        <AdvertisementBanner 
+          position="bottom" 
+          slotId="home-bottom" 
+          pageSection="home-page-footer" 
+          className="mt-12"
+          skipTopics={true}
+        />
+        
+        {isDevelopment && (
+          <AdDebugger 
+            position="bottom" 
+            slotId="home-bottom" 
+            pageSection="home-page-footer" 
+            className="mt-4 max-w-3xl w-full"
+          />
+        )}
       </div>
       
       <Footer />

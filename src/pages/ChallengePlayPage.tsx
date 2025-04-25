@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 import useChallengeData from '@/hooks/challenge/useChallengeData';
 import ChallengeInProgress from '@/components/challenge/ChallengeInProgress';
 import ChallengeComplete from '@/components/challenge/ChallengeComplete';

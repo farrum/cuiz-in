@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -8,7 +9,7 @@ import { Calendar, Clock, User, Share2, ChevronLeft, Facebook, Twitter, Linkedin
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdvertisementBanner from '@/components/AdvertisementBanner';
 
 // Sample blog posts data - in a real app, this would come from a database
 const blogPosts = [
@@ -223,7 +224,7 @@ const BlogPostPage: React.FC = () => {
       <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
         {/* Top Ad Banner */}
         <div className="mb-6">
-          <SimpleAdBanner position="header" />
+          <AdvertisementBanner position="top" slotId="blog-post-top" pageSection="blog-post" />
         </div>
         
         <Link to="/blog" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
@@ -259,7 +260,7 @@ const BlogPostPage: React.FC = () => {
           
           {/* Middle Ad Banner */}
           <div className="my-8">
-            <SimpleAdBanner position="content" />
+            <AdvertisementBanner position="middle" slotId="blog-post-middle" pageSection="blog-post" />
           </div>
           
           <Separator className="my-8" />
@@ -315,7 +316,7 @@ const BlogPostPage: React.FC = () => {
         
         {/* Bottom Ad Banner */}
         <div className="mt-12">
-          <SimpleAdBanner position="footer" />
+          <AdvertisementBanner position="bottom" slotId="blog-post-bottom" pageSection="blog-post" />
         </div>
       </main>
       
