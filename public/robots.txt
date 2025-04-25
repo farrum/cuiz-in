@@ -8,3 +8,7 @@ Allow: /
 
 # Allow search engines to access the sitemap
 Sitemap: https://cuiz.in/sitemap.xml
+Sitemap: https://cuiz.in/api/sitemap
+
+# Crawl delay
+Crawl-delay: 1

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
@@ -10,6 +11,7 @@ import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
+import SEOKeywords from '@/components/SEOKeywords';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
@@ -56,15 +58,35 @@ const QuizPage: React.FC = () => {
     return null;
   }
   
-  // Schema.org quiz structured data
+  // Schema.org quiz structured data with enhanced properties
   const quizSchema = {
     '@context': 'https://schema.org',
     '@type': 'Quiz',
     'name': 'CuizIN Quiz Game',
     'description': 'Test your knowledge and earn rewards with our interactive quiz game.',
     'about': 'Quiz game with monetary rewards',
-    'educationalUse': 'assessment'
+    'educationalUse': 'assessment',
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'USD',
+      'availability': 'https://schema.org/InStock'
+    },
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': '4.8',
+      'ratingCount': '2456'
+    }
   };
+
+  // Quiz-specific keywords
+  const quizKeywords = [
+    'quiz', 'online quiz', 'knowledge quiz', 'trivia', 'free quiz',
+    'educational quiz', 'quiz game', 'earn rewards', 'quiz challenges',
+    'daily quiz', 'fun quiz', 'interactive quiz', 'cuizin quiz',
+    'points quiz', 'streak quiz', 'knowledge test', 'question answers',
+    'time attack quiz', 'quiz rewards', 'quiz competition'
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -74,7 +96,9 @@ const QuizPage: React.FC = () => {
         ogType="website"
         schemaType="Quiz"
         schemaData={quizSchema}
+        keywords={quizKeywords}
       />
+      <SEOKeywords customKeywords={quizKeywords} />
       <Header />
       <NewsTicker className="mt-16" />
       

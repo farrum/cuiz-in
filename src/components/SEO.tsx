@@ -8,9 +8,10 @@ interface SEOProps {
   canonicalUrl?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
-  schemaType?: 'WebPage' | 'Quiz' | 'FAQPage' | 'Organization' | 'Person' | 'WebSite';
+  schemaType?: 'WebPage' | 'Quiz' | 'FAQPage' | 'Organization' | 'Person' | 'WebSite' | 'Question';
   schemaData?: Record<string, any>;
   noindex?: boolean;
+  keywords?: string[];
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -22,6 +23,7 @@ const SEO: React.FC<SEOProps> = ({
   schemaType = 'WebPage',
   schemaData = {},
   noindex = false,
+  keywords = [],
 }) => {
   const siteName = 'CuizIN';
   const siteUrl = 'https://cuiz.in';
@@ -48,11 +50,16 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="description" content={description} />
       <link rel="canonical" href={pageUrl} />
       
+      {/* Keywords Meta Tag */}
+      {keywords && keywords.length > 0 && (
+        <meta name="keywords" content={keywords.join(', ')} />
+      )}
+      
       {/* Robots Control */}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
       )}
       
       {/* Open Graph Tags */}
