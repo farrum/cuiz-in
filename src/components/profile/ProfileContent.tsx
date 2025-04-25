@@ -11,23 +11,13 @@ import ProfileHeader from './ProfileHeader';
 interface ProfileContentProps {
   userId: string | null;
   username: string | null;
-  userUpi: string;
   profilePicture: string;
-  forceReloadAds: number;
-  onProfileUpdate: (data: {
-    displayName?: string;
-    upiId?: string;
-    profilePicture?: string;
-  }) => void;
 }
 
 const ProfileContent: React.FC<ProfileContentProps> = ({
   userId,
   username,
-  userUpi,
   profilePicture,
-  forceReloadAds,
-  onProfileUpdate
 }) => {
   return (
     <>
@@ -36,10 +26,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       <div className="grid grid-cols-1 gap-6 mb-6">
         <ProfileHeader
           username={username}
-          userUpi={userUpi}
-          userId={userId}
           profilePicture={profilePicture}
-          onProfileUpdate={onProfileUpdate}
         />
       </div>
       

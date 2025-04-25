@@ -1,122 +1,59 @@
 
 import React from 'react';
-import ProfileEditor from '@/components/profile/editor';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserRound } from 'lucide-react';
 
 interface ProfileHeaderProps {
   username: string | null;
-  userUpi: string;
-  userId: string | null;
   profilePicture: string;
-  onProfileUpdate: (data: {
-    displayName?: string;
-    upiId?: string;
-    profilePicture?: string;
-  }) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   username,
-  userUpi,
-  userId,
   profilePicture,
-  onProfileUpdate,
 }) => {
-  const renderProfileAvatar = () => {
-    if (profilePicture) {
-      if (profilePicture.startsWith('http') || profilePicture.startsWith('data:')) {
-        return (
-          <Avatar className="w-20 h-20 border-4 border-primary/10">
+  const joinedDate = new Date().toLocaleDateString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+  return (
+    <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar className="w-16 h-16">
             <AvatarImage src={profilePicture} alt={username || 'User'} />
-            <AvatarFallback className="bg-primary/10 text-xl font-semibold">
+            <AvatarFallback>
               {username ? username.charAt(0).toUpperCase() : 'U'}
             </AvatarFallback>
           </Avatar>
-        );
-      } else {
-        switch (profilePicture) {
-          case 'user-round':
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10">
-                  <UserRound className="h-12 w-12 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-            );
-          case 'smile':
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-3xl">
-                  😊
-                </AvatarFallback>
-              </Avatar>
-            );
-          case 'robot':
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-3xl">
-                  🤖
-                </AvatarFallback>
-              </Avatar>
-            );
-          case 'graduation-cap':
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-3xl">
-                  🎓
-                </AvatarFallback>
-              </Avatar>
-            );
-          case 'award':
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-3xl">
-                  🏆
-                </AvatarFallback>
-              </Avatar>
-            );
-          default:
-            return (
-              <Avatar className="w-20 h-20 border-4 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-2xl font-semibold">
-                  {username ? username.charAt(0).toUpperCase() : 'U'}
-                </AvatarFallback>
-              </Avatar>
-            );
-        }
-      }
-    }
-    
-    return (
-      <Avatar className="w-20 h-20 border-4 border-primary/10">
-        <AvatarFallback className="bg-primary/10 text-2xl font-semibold">
-          {username ? username.charAt(0).toUpperCase() : 'U'}
-        </AvatarFallback>
-      </Avatar>
-    );
-  };
-
-  return (
-    <div className="glass p-6 rounded-xl shadow-md flex items-center gap-4">
-      {renderProfileAvatar()}
-      
-      <div className="flex-1">
-        <div className="flex items-center space-x-2">
-          <h2 className="text-xl font-bold">{username || 'User'}</h2>
-          <ProfileEditor 
-            userName={username || ''}
-            userUpi={userUpi}
-            userId={userId || ''}
-            profilePicture={profilePicture}
-            onProfileUpdate={onProfileUpdate}
-          />
+          
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">{username}</h2>
+              <Button variant="ghost" size="sm" className="h-8">
+                Edit
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">Joined {joinedDate}</p>
+          </div>
         </div>
-        {userUpi && (
-          <p className="text-sm text-muted-foreground">
-            UPI ID: {userUpi}
-          </p>
-        )}
+
+        <Button variant="outline" className="gap-2">
+          <LogOut className="h-4 w-4" />
+          Log Out
+        </Button>
+      </div>
+
+      <div className="flex gap-4 mt-4">
+        <div className="bg-blue-50 rounded-md px-4 py-1 text-sm">
+          29 questions answered
+        </div>
+        <div className="bg-blue-50 text-blue-600 rounded-md px-4 py-1 text-sm">
+          Active Player
+        </div>
       </div>
     </div>
   );
