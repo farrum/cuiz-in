@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
@@ -80,7 +79,7 @@ const QuizPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
-        <SimpleAdBanner position="header" className="mb-6" />
+        <SimpleAdBanner position="top" className="mb-6" />
         
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">
@@ -125,7 +124,7 @@ const QuizPage: React.FC = () => {
               nextBadgeThreshold={nextBadgeThreshold}
             />
           
-            <SimpleAdBanner position="content" className="my-6" />
+            <SimpleAdBanner position="middle" className="my-6" />
           
             {isGameActive && (
               <QuizContent 
@@ -143,6 +142,8 @@ const QuizPage: React.FC = () => {
             )}
           
             <DailyChallenges />
+            
+            <SimpleAdBanner position="bottom" className="mt-6" />
           </div>
           
           {/* Sidebar Ads */}
@@ -153,8 +154,6 @@ const QuizPage: React.FC = () => {
             />
           </div>
         </div>
-        
-        <SimpleAdBanner position="footer" className="mt-6" />
       </main>
       
       <Footer />
