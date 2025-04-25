@@ -12,12 +12,21 @@ interface ProfileContentProps {
   userId: string | null;
   username: string | null;
   profilePicture: string;
+  userUpi?: string; // Added the missing userUpi property
+  forceReloadAds?: number;
+  onProfileUpdate?: (data: {
+    displayName?: string;
+    upiId?: string;
+    profilePicture?: string;
+  }) => void;
 }
 
 const ProfileContent: React.FC<ProfileContentProps> = ({
   userId,
   username,
   profilePicture,
+  userUpi,
+  onProfileUpdate,
 }) => {
   return (
     <>
