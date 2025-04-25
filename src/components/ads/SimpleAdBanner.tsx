@@ -1,14 +1,19 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useSimpleAd } from '@/hooks/ads/useSimpleAd';
 import { useAdBlockerDetection } from '@/hooks/ads/useAdBlockerDetection';
 
+// Updated interface to support both old and new position values
 interface SimpleAdBannerProps {
-  position: 'top' | 'middle' | 'bottom' | 'sidebar';
+  position: 'top' | 'middle' | 'bottom' | 'sidebar' | 'header' | 'content' | 'footer';
   className?: string;
 }
 
 const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '' }) => {
-  const { content, isLoading, error } = useSimpleAd(position);
+  // Map old position names to new ones for database consistency
+  const normalizedPosition = mapPosition(position);
+  
+  const { content, isLoading, error } = useSimpleAd(normalizedPosition);
   const { adBlockerDetected } = useAdBlockerDetection();
   const [hasError, setHasError] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,7 +97,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   }
   
   return (
-    <div className={`w-full ${getPositionClasses(position)} ${className}`}>
+    <div className={`w-full ${getPositionClasses(position)} ${className}`} ref={containerRef}>
       {adBlockerDetected ? (
         <div className="ad-container flex items-center justify-center h-full">
           <p className="text-sm text-muted-foreground">Advertisement content blocked</p>
@@ -114,15 +119,32 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   );
 };
 
+// Function to map old position names to normalized ones for database query
+function mapPosition(position: string): string {
+  switch (position) {
+    case 'header':
+      return 'top';
+    case 'content':
+      return 'middle';
+    case 'footer':
+      return 'bottom';
+    default:
+      return position;
+  }
+}
+
 const getPositionClasses = (position: string) => {
   switch (position) {
     case 'top':
+    case 'header':
       return 'min-h-[90px] bg-secondary/10 rounded-lg';
     case 'sidebar':
       return 'min-h-[600px] bg-secondary/10 rounded-lg';
     case 'middle':
+    case 'content':
       return 'min-h-[250px] bg-secondary/10 rounded-lg';
     case 'bottom':
+    case 'footer':
       return 'min-h-[90px] bg-secondary/10 rounded-lg';
     default:
       return '';
@@ -130,3 +152,4 @@ const getPositionClasses = (position: string) => {
 };
 
 export default SimpleAdBanner;
+
