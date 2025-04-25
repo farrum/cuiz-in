@@ -12,7 +12,7 @@ interface ProfileContentProps {
   userId: string | null;
   username: string | null;
   profilePicture: string;
-  userUpi?: string; // Added the missing userUpi property
+  userUpi?: string;
   forceReloadAds?: number;
   onProfileUpdate?: (data: {
     displayName?: string;

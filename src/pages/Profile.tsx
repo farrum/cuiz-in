@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ProfileLayout from '@/components/profile/ProfileLayout';
 import ProfileContent from '@/components/profile/ProfileContent';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { useProfileData } from '@/hooks/profile';
@@ -31,16 +31,25 @@ const Profile: React.FC = () => {
       <div className="flex-1 container max-w-6xl py-10 px-4">
         <SimpleAdBanner position="top" className="mb-6" />
         
-        <ProfileLayout forceReloadAds={forceReloadAds} isSuspended={suspended}>
-          <ProfileContent 
-            userId={displayUserId}
-            username={username}
-            userUpi={userUpi}
-            profilePicture={profilePicture}
-            forceReloadAds={forceReloadAds}
-            onProfileUpdate={handleProfileUpdate}
-          />
-        </ProfileLayout>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-9">
+            <ProfileContent 
+              userId={displayUserId}
+              username={username}
+              userUpi={userUpi}
+              profilePicture={profilePicture}
+              forceReloadAds={forceReloadAds}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </div>
+          
+          <div className="md:col-span-3">
+            <SimpleAdBanner 
+              position="sidebar" 
+              className="sticky top-20"
+            />
+          </div>
+        </div>
         
         <SimpleAdBanner position="bottom" className="mt-8" />
       </div>

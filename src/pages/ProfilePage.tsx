@@ -5,6 +5,9 @@ import ProfileLayout from '@/components/profile/ProfileLayout';
 import ProfileContent from '@/components/profile/ProfileContent';
 import { useProfileData } from '@/hooks/profile';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const ProfilePage: React.FC = () => {
   const {
@@ -35,16 +38,37 @@ const ProfilePage: React.FC = () => {
   }
   
   return (
-    <ProfileLayout forceReloadAds={forceReloadAds} isSuspended={suspended}>
-      <ProfileContent
-        userId={userId}
-        username={username}
-        userUpi={userUpi}
-        profilePicture={profilePicture}
-        forceReloadAds={forceReloadAds}
-        onProfileUpdate={handleProfileUpdate}
-      />
-    </ProfileLayout>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      
+      <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        <SimpleAdBanner position="top" className="mb-6" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-9">
+            <ProfileContent
+              userId={userId}
+              username={username}
+              userUpi={userUpi}
+              profilePicture={profilePicture}
+              forceReloadAds={forceReloadAds}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </div>
+          
+          <div className="md:col-span-3">
+            <SimpleAdBanner 
+              position="sidebar" 
+              className="sticky top-20"
+            />
+          </div>
+        </div>
+        
+        <SimpleAdBanner position="bottom" className="mt-6" />
+      </main>
+      
+      <Footer />
+    </div>
   );
 };
 

@@ -13,14 +13,25 @@ export const useSimpleAd = (position: string) => {
         setIsLoading(true);
         setError(null);
         
+        console.log(`Fetching ad for position: ${position}`);
+        
         // First try to get from local storage cache
         const cachedAdsString = localStorage.getItem('quiz_app_ad_slots');
         if (cachedAdsString) {
           try {
             const cachedAds = JSON.parse(cachedAdsString);
+            if (!Array.isArray(cachedAds)) {
+              console.warn('Cached ads is not an array:', cachedAds);
+              throw new Error('Invalid cached ads format');
+            }
+            
+            console.log(`Found ${cachedAds.length} total cached ads`);
+            
             const matchingAds = cachedAds.filter((ad: any) => 
               ad.position === position && ad.active && ad.code
             );
+            
+            console.log(`Found ${matchingAds.length} matching ads for position: ${position}`);
             
             // If we have matching ads, select one randomly
             if (matchingAds && matchingAds.length > 0) {
@@ -41,6 +52,8 @@ export const useSimpleAd = (position: string) => {
           } catch (cacheErr) {
             console.warn('Error parsing cached ads:', cacheErr);
           }
+        } else {
+          console.log('No ad slots found in localStorage');
         }
         
         // If no cached ad, try fetching from Supabase
@@ -61,6 +74,7 @@ export const useSimpleAd = (position: string) => {
           }
           
           if (data && data.length > 0) {
+            console.log(`Found ${data.length} ads from Supabase for position: ${position}`);
             // Store the fetched ads in localStorage cache
             const existingAdsStr = localStorage.getItem('quiz_app_ad_slots');
             let allAds = [];
@@ -68,10 +82,16 @@ export const useSimpleAd = (position: string) => {
             if (existingAdsStr) {
               try {
                 const existingAds = JSON.parse(existingAdsStr);
-                // Remove old ads for this position
-                const otherPositionAds = existingAds.filter((ad: any) => ad.position !== position);
-                allAds = [...otherPositionAds, ...data];
+                if (Array.isArray(existingAds)) {
+                  // Remove old ads for this position
+                  const otherPositionAds = existingAds.filter((ad: any) => ad.position !== position);
+                  allAds = [...otherPositionAds, ...data];
+                } else {
+                  console.warn('Existing ads is not an array', existingAdsStr);
+                  allAds = data;
+                }
               } catch (e) {
+                console.warn('Error parsing existing ads:', e);
                 allAds = data;
               }
             } else {
@@ -114,6 +134,13 @@ export const useSimpleAd = (position: string) => {
     };
 
     fetchAd();
+    
+    // Refresh ads every 5 minutes
+    const refreshInterval = setInterval(fetchAd, 5 * 60 * 1000);
+    
+    return () => {
+      clearInterval(refreshInterval);
+    };
   }, [position]);
 
   return { content, isLoading, error };

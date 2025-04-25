@@ -20,8 +20,11 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   const adId = `ad-container-${position}-${Math.random().toString(36).substring(2, 9)}`;
   
   useEffect(() => {
+    console.log(`SimpleAdBanner mounted for position: ${position} (normalized: ${normalizedPosition})`);
+    
     if (content && containerRef.current) {
       try {
+        console.log(`Setting ad content for position: ${position}. Content length: ${content.length}`);
         const safeContent = content
           .replace(/document\.browsingTopics\([^)]*\)/g, "console.log('Topics API call blocked')")
           .replace(/navigator\.serviceWorker\.register/g, "console.log")
@@ -79,6 +82,8 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
         console.error('Error setting ad content:', err);
         setHasError(true);
       }
+    } else if (!content) {
+      console.log(`No content available for ad position: ${position} (normalized: ${normalizedPosition})`);
     }
     
     return () => {
@@ -86,7 +91,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
         containerRef.current.innerHTML = '';
       }
     };
-  }, [content, position]);
+  }, [content, position, normalizedPosition]);
   
   if (isLoading) {
     return (
@@ -152,4 +157,3 @@ const getPositionClasses = (position: string) => {
 };
 
 export default SimpleAdBanner;
-
