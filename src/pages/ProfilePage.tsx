@@ -1,7 +1,6 @@
 
 import React from 'react';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
-import ProfileLayout from '@/components/profile/ProfileLayout';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { useProfileData } from '@/hooks/profile';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
