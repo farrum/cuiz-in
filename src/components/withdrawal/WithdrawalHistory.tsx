@@ -31,7 +31,7 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals }) =>
               </div>
             </div>
             <div>
-              {withdrawal.status === 'completed' ? (
+              {withdrawal.status === 'completed' || withdrawal.status === 'approved' ? (
                 <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
                   Completed
                 </span>

@@ -22,7 +22,7 @@ interface PaymentData {
   userName: string;
   amount: number;
   type: 'quiz' | 'referral';
-  status: 'paid' | 'pending';
+  status: 'paid' | 'pending' | 'approved';
   date: string;
   method?: string;
   transactionId?: string;
@@ -75,7 +75,7 @@ const AdminPaymentsOverview: React.FC = () => {
           userName: payment.username,
           amount: Number(payment.amount),
           type: payment.type as 'quiz' | 'referral',
-          status: payment.status as 'paid' | 'pending',
+          status: payment.status as 'paid' | 'pending' | 'approved',
           date: payment.date,
           method: payment.method,
           transactionId: payment.transaction_id
@@ -218,7 +218,7 @@ const AdminPaymentsOverview: React.FC = () => {
       const { error } = await supabase
         .from('payments')
         .update({
-          status: 'paid',
+          status: 'approved',
           transaction_id: transactionId
         })
         .eq('id', paymentId);
@@ -237,7 +237,7 @@ const AdminPaymentsOverview: React.FC = () => {
         if (payment.id === paymentId) {
           return {
             ...payment,
-            status: 'paid' as const,
+            status: 'approved' as const,
             transactionId
           };
         }
@@ -250,7 +250,7 @@ const AdminPaymentsOverview: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Payment marked as paid",
+        description: "Payment marked as approved",
       });
     } catch (err) {
       console.error('Failed to mark payment as paid:', err);
@@ -309,6 +309,17 @@ const AdminPaymentsOverview: React.FC = () => {
     } catch (err) {
       console.error('Failed to send notification:', err);
     }
+  };
+
+  const viewPaymentDetails = (payment: PaymentData) => {
+    toast({
+      title: "Payment Details",
+      description: `Transaction ID: ${payment.transactionId || 'N/A'}
+                   Amount: ₹${payment.amount}
+                   Status: ${payment.status}
+                   Method: ${payment.method || 'N/A'}
+                   User: ${payment.userName}`,
+    });
   };
 
   useEffect(() => {
@@ -429,12 +440,12 @@ const AdminPaymentsOverview: React.FC = () => {
                   <TableCell className="font-medium">₹{payment.amount}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${payment.status === 'paid' 
+                      ${payment.status === 'paid' || payment.status === 'approved' 
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                       }`}
                     >
-                      {payment.status === 'paid' ? (
+                      {payment.status === 'paid' || payment.status === 'approved' ? (
                         <>
                           <Check className="mr-1 h-3 w-3" />
                           Paid
@@ -462,6 +473,7 @@ const AdminPaymentsOverview: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => viewPaymentDetails(payment)}
                       >
                         View Details
                       </Button>

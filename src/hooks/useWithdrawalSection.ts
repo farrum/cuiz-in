@@ -7,6 +7,9 @@ import { safeSupabaseOperation } from '@/utils/supabaseUtils';
 import { WithdrawalRequest } from '@/types/withdrawal';
 import { Achievement } from '@/types/achievement';
 
+// Minimum withdrawal amount in INR
+const MINIMUM_WITHDRAWAL_AMOUNT = 5000;
+
 export const useWithdrawalSection = () => {
   const [cashAvailable, setCashAvailable] = useState(0);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
@@ -70,7 +73,7 @@ export const useWithdrawalSection = () => {
           if (matchingPayment) {
             return {
               ...withdrawal,
-              status: matchingPayment.status as 'pending' | 'completed' | 'rejected'
+              status: matchingPayment.status as 'pending' | 'completed' | 'rejected' | 'approved'
             };
           }
           return withdrawal;
@@ -93,6 +96,15 @@ export const useWithdrawalSection = () => {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid withdrawal amount",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (amount < MINIMUM_WITHDRAWAL_AMOUNT) {
+      toast({
+        title: "Minimum Withdrawal Amount",
+        description: `Minimum withdrawal amount is ₹${MINIMUM_WITHDRAWAL_AMOUNT}`,
         variant: "destructive",
       });
       return;

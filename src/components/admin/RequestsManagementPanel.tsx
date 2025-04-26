@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -206,7 +205,7 @@ const RequestsManagementPanel: React.FC = () => {
       
       // Create admin notification for payment approval
       await adminNotificationsApi.create({
-        type: 'system',
+        type: 'payment_approved',
         message: 'Payment request has been approved',
         read: false,
         data: { paymentId }

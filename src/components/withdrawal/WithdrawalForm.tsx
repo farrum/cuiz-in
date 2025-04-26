@@ -25,6 +25,16 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
   onPaymentMethodChange,
   onSubmit
 }) => {
+  // Calculate minimum withdrawal amount in display currency (Rs. 5000 in INR)
+  const minWithdrawalAmount = 5000;
+  const isAmountValid = withdrawalAmount && 
+    !isNaN(parseFloat(withdrawalAmount)) && 
+    parseFloat(withdrawalAmount) >= minWithdrawalAmount;
+  
+  const isInsufficientFunds = withdrawalAmount && 
+    !isNaN(parseFloat(withdrawalAmount)) && 
+    parseFloat(withdrawalAmount) > cashAvailable;
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -34,15 +44,20 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
         <Input
           id="amount"
           type="number"
-          min="0.01"
+          min={minWithdrawalAmount.toString()}
           step="0.01"
-          placeholder="0.00"
+          placeholder={`${minWithdrawalAmount.toFixed(2)} minimum`}
           value={withdrawalAmount}
           onChange={(e) => onAmountChange(e.target.value)}
         />
+        
         {withdrawalAmount && !isNaN(parseFloat(withdrawalAmount)) && (
           <div className="text-xs text-muted-foreground mt-1">
-            {(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted
+            {parseFloat(withdrawalAmount) < minWithdrawalAmount ? (
+              <span className="text-red-500">Minimum withdrawal amount is ₹{minWithdrawalAmount}</span>
+            ) : (
+              <span>{(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted</span>
+            )}
           </div>
         )}
       </div>
@@ -62,7 +77,7 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
       <Button 
         type="submit" 
         className="w-full btn-shine"
-        disabled={!withdrawalAmount || !paymentMethod || cashAvailable <= 0}
+        disabled={!withdrawalAmount || !paymentMethod || isInsufficientFunds || !isAmountValid}
       >
         <ArrowUpCircle className="w-4 h-4 mr-2" />
         Request Withdrawal
