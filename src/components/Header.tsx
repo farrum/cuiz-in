@@ -34,9 +34,16 @@ const Header: React.FC = () => {
       const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
       
-      setIsLoggedIn(!!userName && !!userId);
+      const userLoggedIn = !!userName && !!userId;
+      setIsLoggedIn(userLoggedIn);
       setIsAdmin(userName === 'admin' || userName === 'quizadmin' || userRole === 'admin');
       setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
+      
+      // Reset points to 0 if user is not logged in
+      if (!userLoggedIn) {
+        setTodayPoints(0);
+        setMonthlyPoints(0);
+      }
       
       console.log('Current user role:', userRole);
       console.log('Is team leader:', userRole === 'team_leader' || userRole === 'teamleader');
@@ -62,42 +69,64 @@ const Header: React.FC = () => {
   useEffect(() => {
     const updatePoints = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      if (!userId) return;
+      if (!userId) {
+        setTodayPoints(0);
+        setMonthlyPoints(0);
+        return;
+      }
+      
       try {
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         console.log("Fetching points for:", today, currentMonth);
-        const {
-          data: dailyData,
-          error: dailyError
-        } = await supabase.from('daily_points').select('points').eq('user_id', userId).eq('date', today).maybeSingle();
-        console.log("Daily points response:", {
-          dailyData,
-          dailyError
-        });
-        if (dailyData) {
-          setTodayPoints(Number(dailyData.points));
+        
+        // Use Promise.all to fetch both daily and monthly points simultaneously
+        const [dailyResponse, monthlyResponse] = await Promise.all([
+          supabase
+            .from('daily_points')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .maybeSingle(),
+            
+          supabase
+            .from('monthly_points')
+            .select('points')
+            .eq('user_id', userId)
+            .eq('month', currentMonth)
+            .maybeSingle()
+        ]);
+        
+        // Process daily points
+        if (dailyResponse.data) {
+          setTodayPoints(Number(dailyResponse.data.points));
         } else {
           setTodayPoints(0);
         }
-        const {
-          data: monthlyData,
-          error: monthlyError
-        } = await supabase.from('monthly_points').select('points').eq('user_id', userId).eq('month', currentMonth).maybeSingle();
-        console.log("Monthly points response:", {
-          monthlyData,
-          monthlyError
-        });
-        if (monthlyData) {
-          setMonthlyPoints(Number(monthlyData.points));
+        
+        // Process monthly points
+        if (monthlyResponse.data) {
+          setMonthlyPoints(Number(monthlyResponse.data.points));
         } else {
           setMonthlyPoints(0);
         }
+        
+        // Update local storage for other components to use
+        if (dailyResponse.data) {
+          localStorage.setItem(`daily_points_${today}`, dailyResponse.data.points.toString());
+        }
+        
+        if (monthlyResponse.data) {
+          localStorage.setItem(`monthly_points_${now.getFullYear()}_${now.getMonth()}`, 
+            monthlyResponse.data.points.toString());
+        }
+        
       } catch (error) {
         console.error('Error fetching points data:', error);
       }
     };
+    
     if (isLoggedIn) {
       updatePoints();
       const handlePointsUpdate = () => {
@@ -105,11 +134,15 @@ const Header: React.FC = () => {
         updatePoints();
       };
       window.addEventListener('pointsUpdated', handlePointsUpdate);
-      const intervalId = setInterval(updatePoints, 10000);
+      const intervalId = setInterval(updatePoints, 30000);
       return () => {
         window.removeEventListener('pointsUpdated', handlePointsUpdate);
         clearInterval(intervalId);
       };
+    } else {
+      // Reset points to 0 if not logged in
+      setTodayPoints(0);
+      setMonthlyPoints(0);
     }
   }, [isLoggedIn]);
   

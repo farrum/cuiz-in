@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { STORAGE_KEYS } from './constants';
+import { STORAGE_KEYS } from './quizData';
 
 // Function to check and reset daily points if necessary
 export const checkDailyPointsReset = async (userId?: string | null) => {
@@ -38,6 +38,9 @@ export const checkDailyPointsReset = async (userId?: string | null) => {
         // Also reset in localStorage
         localStorage.setItem(`daily_points_${today}`, '0');
         localStorage.setItem(lastDailyResetKey, today);
+        
+        // Notify other components about the update
+        window.dispatchEvent(new CustomEvent('pointsUpdated'));
       }
     } catch (error) {
       console.error('Error in daily points reset:', error);
@@ -83,6 +86,9 @@ export const checkMonthlyPointsReset = async (userId?: string | null) => {
           // Also reset in localStorage
           localStorage.setItem(`monthly_points_${now.getFullYear()}_${now.getMonth()}`, '0');
           localStorage.setItem(lastMonthlyResetKey, currentMonth);
+          
+          // Notify other components about the update
+          window.dispatchEvent(new CustomEvent('pointsUpdated'));
         }
       }
     } catch (error) {
@@ -93,6 +99,8 @@ export const checkMonthlyPointsReset = async (userId?: string | null) => {
 
 // Log points for daily tracking
 export const logPointsForDay = async (points: number, userId?: string | null) => {
+  if (!userId) return;
+
   // Check if the daily points should be reset
   await checkDailyPointsReset(userId);
 
@@ -103,46 +111,48 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
   dailyPoints += points;
   localStorage.setItem(key, dailyPoints.toString());
   
-  // If userId is provided, update the database
-  if (userId) {
-    try {
-      // Check if there's already a record for today for this user
-      const { data, error } = await supabase
-        .from('daily_points')
-        .select('points')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .single();
-      
-      if (error && error.code !== 'PGSQL_ERROR') {
-        console.error('Error checking daily points:', error);
-        return;
-      }
-      
-      if (data) {
-        // Update existing record
-        await supabase
-          .from('daily_points')
-          .update({ points: Number(data.points) + points })
-          .eq('user_id', userId)
-          .eq('date', today);
-      } else {
-        // Create new record
-        await supabase
-          .from('daily_points')
-          .insert({ user_id: userId, date: today, points });
-      }
-      
-      // Also log this in quiz_answers for detailed tracking (already done in QuizCard)
-      console.log(`Logged ${points} points for user ${userId} on ${today}`);
-    } catch (error) {
-      console.error('Error updating daily points:', error);
+  try {
+    // Check if there's already a record for today for this user
+    const { data, error } = await supabase
+      .from('daily_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+    
+    if (error && error.code !== 'PGSQL_ERROR') {
+      console.error('Error checking daily points:', error);
+      return;
     }
+    
+    if (data) {
+      // Update existing record
+      await supabase
+        .from('daily_points')
+        .update({ points: Number(data.points) + points })
+        .eq('user_id', userId)
+        .eq('date', today);
+    } else {
+      // Create new record
+      await supabase
+        .from('daily_points')
+        .insert({ user_id: userId, date: today, points });
+    }
+    
+    // Also log this in quiz_answers for detailed tracking (already done in QuizCard)
+    console.log(`Logged ${points} points for user ${userId} on ${today}`);
+    
+    // Notify other components about the update
+    window.dispatchEvent(new CustomEvent('pointsUpdated'));
+  } catch (error) {
+    console.error('Error updating daily points:', error);
   }
 };
 
 // Log points for monthly tracking
 export const logPointsForMonth = async (points: number, userId?: string | null) => {
+  if (!userId) return;
+
   // Check if the monthly points should be reset
   await checkMonthlyPointsReset(userId);
 
@@ -156,41 +166,41 @@ export const logPointsForMonth = async (points: number, userId?: string | null) 
   monthlyPoints += points;
   localStorage.setItem(key, monthlyPoints.toString());
   
-  // If userId is provided, update the database
-  if (userId) {
-    try {
-      // Check if there's already a record for this month for this user
-      const { data, error } = await supabase
-        .from('monthly_points')
-        .select('points')
-        .eq('user_id', userId)
-        .eq('month', monthKey)
-        .single();
-      
-      if (error && error.code !== 'PGSQL_ERROR') {
-        console.error('Error checking monthly points:', error);
-        return;
-      }
-      
-      if (data) {
-        // Update existing record
-        await supabase
-          .from('monthly_points')
-          .update({ points: Number(data.points) + points })
-          .eq('user_id', userId)
-          .eq('month', monthKey);
-      } else {
-        // Create new record
-        await supabase
-          .from('monthly_points')
-          .insert({ user_id: userId, month: monthKey, points });
-      }
-      
-      // Also update the user's total points in profiles (already handled in QuizCard)
-      console.log(`Logged ${points} points for user ${userId} for month ${monthKey}`);
-    } catch (error) {
-      console.error('Error updating monthly points:', error);
+  try {
+    // Check if there's already a record for this month for this user
+    const { data, error } = await supabase
+      .from('monthly_points')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('month', monthKey)
+      .single();
+    
+    if (error && error.code !== 'PGSQL_ERROR') {
+      console.error('Error checking monthly points:', error);
+      return;
     }
+    
+    if (data) {
+      // Update existing record
+      await supabase
+        .from('monthly_points')
+        .update({ points: Number(data.points) + points })
+        .eq('user_id', userId)
+        .eq('month', monthKey);
+    } else {
+      // Create new record
+      await supabase
+        .from('monthly_points')
+        .insert({ user_id: userId, month: monthKey, points });
+    }
+    
+    // Also update the user's total points in profiles (already handled in QuizCard)
+    console.log(`Logged ${points} points for user ${userId} for month ${monthKey}`);
+    
+    // Notify other components about the update
+    window.dispatchEvent(new CustomEvent('pointsUpdated'));
+  } catch (error) {
+    console.error('Error updating monthly points:', error);
   }
 };
 

@@ -27,10 +27,16 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   const [players, setPlayers] = useState<TopPlayer[]>([]);
   const [currentUserMonthlyPoints, setCurrentUserMonthlyPoints] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Get current user from localStorage once
   const currentUserId = useMemo(() => localStorage.getItem(STORAGE_KEYS.USER_ID), []);
   const currentUsername = useMemo(() => localStorage.getItem(STORAGE_KEYS.USER_NAME), []);
+
+  // Check if user is logged in
+  useEffect(() => {
+    setIsLoggedIn(!!currentUserId && !!currentUsername);
+  }, [currentUserId, currentUsername]);
 
   // Optimize data fetching with useCallback
   const fetchTopPlayers = useCallback(async () => {
@@ -60,7 +66,10 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
 
   // Optimize monthly points fetching
   const fetchCurrentUserMonthlyPoints = useCallback(async () => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setCurrentUserMonthlyPoints(null);
+      return;
+    }
 
     try {
       const now = new Date();
@@ -76,10 +85,18 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       if (error) throw error;
       
       if (data) {
-        setCurrentUserMonthlyPoints(Number(data.points));
+        const pointsValue = Number(data.points);
+        setCurrentUserMonthlyPoints(pointsValue);
+        
+        // Update localStorage for consistency across components
+        const monthKey = `monthly_points_${now.getFullYear()}_${now.getMonth()}`;
+        localStorage.setItem(monthKey, pointsValue.toString());
+      } else {
+        setCurrentUserMonthlyPoints(0);
       }
     } catch (error) {
       console.error('Error fetching monthly points:', error);
+      setCurrentUserMonthlyPoints(0);
     }
   }, [currentUserId]);
 
@@ -88,7 +105,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     const fetchData = async () => {
       const promises = [fetchTopPlayers()];
       
-      if (showMonthlyComparison) {
+      if (showMonthlyComparison && isLoggedIn) {
         promises.push(fetchCurrentUserMonthlyPoints());
       }
       
@@ -97,11 +114,22 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     
     fetchData();
     
+    // Listen for points updates to refresh data
+    const handlePointsUpdate = () => {
+      console.log('Points update detected in TopPlayersSection');
+      fetchData();
+    };
+    
+    window.addEventListener('pointsUpdated', handlePointsUpdate);
+    
     // Refresh leaderboard every 5 minutes instead of on every render
     const intervalId = setInterval(fetchData, 5 * 60 * 1000);
     
-    return () => clearInterval(intervalId);
-  }, [fetchTopPlayers, fetchCurrentUserMonthlyPoints, showMonthlyComparison]);
+    return () => {
+      window.removeEventListener('pointsUpdated', handlePointsUpdate);
+      clearInterval(intervalId);
+    };
+  }, [fetchTopPlayers, fetchCurrentUserMonthlyPoints, showMonthlyComparison, isLoggedIn]);
 
   // Memoize player icon function to prevent recreating on each render
   const getPlayerIcon = useCallback((index: number) => {
@@ -115,6 +143,18 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       default:
         return <span className="w-5 h-5 inline-flex items-center justify-center">{index + 1}</span>;
     }
+  }, []);
+
+  // Calculate the next month for the monthly reset message
+  const getNextMonthReset = useCallback(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const nextMonth = (currentMonth + 1) % 12;
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return `${monthNames[nextMonth]} 1`;
   }, []);
 
   if (loading) {
@@ -144,7 +184,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
           <Trophy className="mr-2 h-4 w-4" />
           <span>Top Players</span>
           {showMonthlyComparison && (
-            <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: {new Date().getMonth() === 3 ? 'May 1' : 'Next Month'}</Badge>
+            <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: {getNextMonthReset()}</Badge>
           )}
         </CardTitle>
       </CardHeader>
@@ -173,7 +213,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
               </div>
             ))}
 
-            {showMonthlyComparison && currentUserMonthlyPoints !== null && !players.find(p => p.isCurrentUser) && (
+            {showMonthlyComparison && isLoggedIn && currentUserMonthlyPoints !== null && !players.find(p => p.isCurrentUser) && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center justify-between">
                   <div className="text-sm">Your monthly points:</div>
