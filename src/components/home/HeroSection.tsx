@@ -9,6 +9,7 @@ interface HeroSectionProps {
   userName: string;
   hasStarted: boolean;
   showNameInput: boolean;
+  isLoggedIn: boolean;
   handleStartClick: () => void;
   navigateToRegister: () => void;
   navigateToLogin: () => void;
@@ -21,6 +22,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   userName,
   hasStarted,
   showNameInput,
+  isLoggedIn,
   handleStartClick,
   navigateToRegister,
   navigateToLogin,
@@ -58,7 +60,7 @@ Invite friends to earn even more!</p>
         />
       ) : (
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12 animate-fade-in">
-          {hasStarted ? (
+          {isLoggedIn || hasStarted ? (
             <Button size="lg" onClick={handleStartClick} className="fun-button text-lg group relative overflow-hidden">
               Continue Playing
               <Rocket className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -77,7 +79,7 @@ Invite friends to earn even more!</p>
             </>
           )}
           
-          {hasStarted && (
+          {isLoggedIn && (
             <Button variant="outline" size="lg" onClick={navigateToProfile} className="text-lg hover:shadow-md transition-all">
               View Profile
             </Button>

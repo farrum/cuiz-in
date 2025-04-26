@@ -2,20 +2,29 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizAdSync } from './quiz/useQuizAdSync';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 export const useHomePageState = () => {
   const [userName, setUserName] = useState('');
   const [hasStarted, setHasStarted] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
   const [forceReloadAds, setForceReloadAds] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
   
   const { syncAdSlots } = useQuizAdSync(setForceReloadAds);
 
   useEffect(() => {
-    // Load user name from localStorage if exists
-    const storedName = localStorage.getItem('quiz_app_user_name');
-    if (storedName) {
+    // Check if user is logged in from localStorage
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const storedName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    
+    if (userId && storedName) {
+      setUserName(storedName);
+      setIsLoggedIn(true);
+      setHasStarted(true);
+    } else if (storedName) {
+      // For backwards compatibility with old storage key
       setUserName(storedName);
     }
     
@@ -25,7 +34,7 @@ export const useHomePageState = () => {
 
   const handleStartClick = () => {
     setHasStarted(true);
-    if (!userName) {
+    if (!userName && !isLoggedIn) {
       setShowNameInput(true);
     } else {
       navigateToRegister();
@@ -46,7 +55,11 @@ export const useHomePageState = () => {
   };
 
   const navigateToRegister = () => {
-    navigate('/register');
+    if (isLoggedIn) {
+      navigate('/quiz');
+    } else {
+      navigate('/register');
+    }
   };
 
   const navigateToLogin = () => {
@@ -62,6 +75,7 @@ export const useHomePageState = () => {
     hasStarted,
     showNameInput,
     forceReloadAds,
+    isLoggedIn,
     setUserName: handleNameChange, // Return the event handler function instead of the raw setter
     handleStartClick,
     navigateToRegister,

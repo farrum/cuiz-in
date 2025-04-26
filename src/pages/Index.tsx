@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
@@ -26,6 +27,7 @@ const Index: React.FC = () => {
     hasStarted,
     showNameInput,
     forceReloadAds,
+    isLoggedIn,
     setUserName,
     handleStartClick,
     navigateToRegister,
@@ -78,6 +80,7 @@ const Index: React.FC = () => {
             userName={userName}
             hasStarted={hasStarted}
             showNameInput={showNameInput}
+            isLoggedIn={isLoggedIn}
             handleStartClick={handleStartClick}
             navigateToRegister={navigateToRegister}
             navigateToLogin={navigateToLogin}
