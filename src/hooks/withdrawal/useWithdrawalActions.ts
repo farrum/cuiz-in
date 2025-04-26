@@ -70,6 +70,7 @@ export const useWithdrawalActions = (
         type: 'withdrawal_request',
         message: `New withdrawal request for ₹${amount.toFixed(2)}`,
         user_id: userId,
+        read: false, // Add the required read property
         data: { 
           transaction_id: transactionId,
           amount: amount,
@@ -134,6 +135,7 @@ export const useWithdrawalActions = (
         type: 'achievement_claim',
         message: `Achievement reward claim for ₹${achievement.reward.toFixed(2)}`,
         user_id: userId,
+        read: false, // Add the required read property
         data: { 
           transaction_id: transactionId,
           amount: achievement.reward,
