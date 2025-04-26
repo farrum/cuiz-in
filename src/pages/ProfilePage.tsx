@@ -2,7 +2,7 @@
 import React from 'react';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import ProfileLayout from '@/components/profile/ProfileLayout';
-import ProfileContent from '@/components/profile/ProfileContent';
+import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { useProfileData } from '@/hooks/profile';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
@@ -46,7 +46,7 @@ const ProfilePage: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="md:col-span-9">
-            <ProfileContent
+            <ProfileTabs
               userId={userId}
               username={username}
               userUpi={userUpi}
