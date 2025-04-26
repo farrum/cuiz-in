@@ -69,11 +69,15 @@ export const useWithdrawalSection = () => {
         const localWithdrawals = JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]');
         
         const updatedWithdrawals = localWithdrawals.map((withdrawal: WithdrawalRequest) => {
+          // Make sure all withdrawals have the userId
+          withdrawal.userId = userId;
+          
           const matchingPayment = data.find(p => p.transaction_id === withdrawal.id);
           if (matchingPayment) {
             return {
               ...withdrawal,
-              status: matchingPayment.status as 'pending' | 'completed' | 'rejected' | 'approved'
+              userId: userId,
+              status: matchingPayment.status as 'pending' | 'completed' | 'rejected' | 'approved' | 'paid'
             };
           }
           return withdrawal;
@@ -135,7 +139,8 @@ export const useWithdrawalSection = () => {
       amount: amount,
       date: new Date().toISOString(),
       status: 'pending',
-      type: 'regular'
+      type: 'regular',
+      userId: userId
     };
     
     const updatedWithdrawals = [...withdrawals, newWithdrawal];
@@ -207,7 +212,8 @@ export const useWithdrawalSection = () => {
       amount: achievement.reward,
       date: new Date().toISOString(),
       status: 'pending',
-      type: 'achievement'
+      type: 'achievement',
+      userId: userId
     };
     
     const updatedWithdrawals = [...withdrawals, newWithdrawal];
@@ -271,6 +277,7 @@ export const useWithdrawalSection = () => {
     withdrawals,
     achievements,
     handleWithdrawalRequest,
-    handleClaimAchievement
+    handleClaimAchievement,
+    userId
   };
 };

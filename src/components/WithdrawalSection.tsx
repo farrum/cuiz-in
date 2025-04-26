@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
 import { useToast } from "@/hooks/use-toast";
@@ -72,11 +73,14 @@ const WithdrawalSection: React.FC = () => {
         const localWithdrawals = JSON.parse(localStorage.getItem('quiz_app_withdrawals') || '[]');
         
         const updatedWithdrawals = localWithdrawals.map((withdrawal: WithdrawalRequest) => {
+          withdrawal.userId = userId; // Ensure userId is set
+          
           const matchingPayment = data.find(p => p.transaction_id === withdrawal.id);
           if (matchingPayment) {
             return {
               ...withdrawal,
-              status: matchingPayment.status as 'pending' | 'completed' | 'rejected'
+              userId: userId,
+              status: matchingPayment.status as 'pending' | 'completed' | 'rejected' | 'approved' | 'paid'
             };
           }
           return withdrawal;
@@ -305,7 +309,7 @@ const WithdrawalSection: React.FC = () => {
         onSubmit={handleWithdrawalRequest}
       />
       
-      <WithdrawalHistory withdrawals={withdrawals} />
+      <WithdrawalHistory withdrawals={withdrawals} userId={userId} />
     </div>
   );
 };

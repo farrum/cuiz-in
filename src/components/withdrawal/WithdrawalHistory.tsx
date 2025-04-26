@@ -4,10 +4,16 @@ import { WithdrawalRequest } from '@/types/withdrawal';
 
 interface WithdrawalHistoryProps {
   withdrawals: WithdrawalRequest[];
+  userId?: string;
 }
 
-const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals }) => {
-  if (withdrawals.length === 0) return null;
+const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals, userId }) => {
+  // Filter withdrawals by user ID if provided
+  const filteredWithdrawals = userId 
+    ? withdrawals.filter(withdrawal => withdrawal.userId === userId) 
+    : withdrawals;
+
+  if (filteredWithdrawals.length === 0) return null;
 
   // Map withdrawal types to display names
   const getTypeLabel = (type?: string) => {
@@ -28,7 +34,7 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals }) =>
       <h4 className="font-medium mb-3">Recent Withdrawals</h4>
       
       <div className="space-y-3">
-        {withdrawals.map((withdrawal) => (
+        {filteredWithdrawals.map((withdrawal) => (
           <div 
             key={withdrawal.id} 
             className="flex items-center justify-between p-3 rounded-lg bg-secondary"

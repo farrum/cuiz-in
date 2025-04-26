@@ -17,7 +17,8 @@ const WithdrawalSection: React.FC = () => {
     withdrawals,
     achievements,
     handleWithdrawalRequest,
-    handleClaimAchievement
+    handleClaimAchievement,
+    userId
   } = useWithdrawalSection();
   
   const currencyDisplay = useCurrencyDisplay();
@@ -61,7 +62,7 @@ const WithdrawalSection: React.FC = () => {
         onSubmit={handleWithdrawalRequest}
       />
       
-      <WithdrawalHistory withdrawals={withdrawals} />
+      <WithdrawalHistory withdrawals={withdrawals} userId={userId} />
     </div>
   );
 };
