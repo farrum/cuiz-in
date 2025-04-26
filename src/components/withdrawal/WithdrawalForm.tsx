@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpCircle } from 'lucide-react';
 import { CurrencyDisplay } from '@/hooks/useCurrencyDisplay';
-import { convertToDisplayCurrency } from '@/utils/currencyUtils';
 
 interface WithdrawalFormProps {
   cashAvailable: number;
   withdrawalAmount: string;
   paymentMethod: string;
   currencyDisplay: CurrencyDisplay;
+  minimumAmount: number;
   onAmountChange: (value: string) => void;
   onPaymentMethodChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -21,15 +21,14 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
   withdrawalAmount,
   paymentMethod,
   currencyDisplay,
+  minimumAmount,
   onAmountChange,
   onPaymentMethodChange,
   onSubmit
 }) => {
-  // Calculate minimum withdrawal amount in display currency (Rs. 5000 in INR)
-  const minWithdrawalAmount = 5000;
   const isAmountValid = withdrawalAmount && 
     !isNaN(parseFloat(withdrawalAmount)) && 
-    parseFloat(withdrawalAmount) >= minWithdrawalAmount;
+    parseFloat(withdrawalAmount) >= minimumAmount;
   
   const isInsufficientFunds = withdrawalAmount && 
     !isNaN(parseFloat(withdrawalAmount)) && 
@@ -44,17 +43,17 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
         <Input
           id="amount"
           type="number"
-          min={minWithdrawalAmount.toString()}
+          min={minimumAmount.toString()}
           step="0.01"
-          placeholder={`${minWithdrawalAmount.toFixed(2)} minimum`}
+          placeholder={`${minimumAmount.toFixed(2)} minimum`}
           value={withdrawalAmount}
           onChange={(e) => onAmountChange(e.target.value)}
         />
         
         {withdrawalAmount && !isNaN(parseFloat(withdrawalAmount)) && (
           <div className="text-xs text-muted-foreground mt-1">
-            {parseFloat(withdrawalAmount) < minWithdrawalAmount ? (
-              <span className="text-red-500">Minimum withdrawal amount is ₹{minWithdrawalAmount}</span>
+            {parseFloat(withdrawalAmount) < minimumAmount ? (
+              <span className="text-red-500">Minimum withdrawal amount is ₹{minimumAmount}</span>
             ) : (
               <span>{(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted</span>
             )}

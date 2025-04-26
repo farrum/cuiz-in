@@ -52,7 +52,7 @@ export const useWithdrawalSection = () => {
     
     return () => clearInterval(intervalId);
   }, []);
-
+  
   const fetchPaymentUpdates = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -278,6 +278,7 @@ export const useWithdrawalSection = () => {
     achievements,
     handleWithdrawalRequest,
     handleClaimAchievement,
-    userId
+    userId,
+    MINIMUM_WITHDRAWAL_AMOUNT
   };
 };

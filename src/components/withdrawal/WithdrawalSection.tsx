@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { IndianRupee } from 'lucide-react';
 import { useWithdrawalSection } from '@/hooks/useWithdrawalSection';
-import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
+import WithdrawalHeader from './WithdrawalHeader';
+import AvailableBalance from './AvailableBalance';
 import WithdrawalForm from './WithdrawalForm';
 import WithdrawalHistory from './WithdrawalHistory';
 import AchievementsList from './AchievementsList';
+import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 
 const WithdrawalSection: React.FC = () => {
   const {
@@ -18,39 +19,22 @@ const WithdrawalSection: React.FC = () => {
     achievements,
     handleWithdrawalRequest,
     handleClaimAchievement,
-    userId
+    userId,
+    MINIMUM_WITHDRAWAL_AMOUNT
   } = useWithdrawalSection();
   
   const currencyDisplay = useCurrencyDisplay();
 
   return (
     <div className="quiz-card">
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="bg-primary/10 p-3 rounded-full">
-          <IndianRupee className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-xl font-medium">Cash Withdrawal</h3>
-          <p className="text-sm text-muted-foreground">Convert your points to cash</p>
-        </div>
-      </div>
+      <WithdrawalHeader />
       
       <AchievementsList 
         achievements={achievements}
         onClaimAchievement={handleClaimAchievement}
       />
       
-      <div className="bg-secondary p-4 rounded-xl mb-6">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Available for withdrawal</span>
-          <span className="text-2xl font-bold">
-            {currencyDisplay.symbol}{(cashAvailable * currencyDisplay.exchangeRate).toFixed(2)} {currencyDisplay.code}
-          </span>
-        </div>
-        <div className="text-xs text-muted-foreground mt-1">
-          2 points = {currencyDisplay.symbol}{currencyDisplay.exchangeRate.toFixed(2)} {currencyDisplay.code}
-        </div>
-      </div>
+      <AvailableBalance cashAvailable={cashAvailable} />
       
       <WithdrawalForm
         cashAvailable={cashAvailable}
@@ -60,6 +44,7 @@ const WithdrawalSection: React.FC = () => {
         onAmountChange={setWithdrawalAmount}
         onPaymentMethodChange={setPaymentMethod}
         onSubmit={handleWithdrawalRequest}
+        minimumAmount={MINIMUM_WITHDRAWAL_AMOUNT}
       />
       
       <WithdrawalHistory withdrawals={withdrawals} userId={userId} />
