@@ -12,14 +12,18 @@ const ReferralPage = () => {
         
         <h1 className="text-3xl font-bold mb-8 animate-fade-in">Referral Program</h1>
         
-        <ReferralSection />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-9">
+            <ReferralSection />
+          </div>
+          
+          <div className="md:col-span-3">
+            <SimpleAdBanner position="sidebar" className="sticky top-20" />
+          </div>
+        </div>
         
-        <SimpleAdBanner position="middle" className="mt-8" />
+        <SimpleAdBanner position="bottom" className="mt-8" />
       </main>
-      
-      <div className="hidden md:block fixed right-4 top-24 w-64">
-        <SimpleAdBanner position="sidebar" className="sticky top-24" />
-      </div>
     </PageLayout>
   );
 };
