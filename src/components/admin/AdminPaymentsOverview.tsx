@@ -446,12 +446,12 @@ const AdminPaymentsOverview: React.FC = () => {
                   <TableCell className="font-medium">₹{payment.amount}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${payment.status === 'paid' || payment.status === 'approved' || payment.status === 'completed'
+                      ${payment.status === 'paid' || payment.status === 'approved'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                       }`}
                     >
-                      {payment.status === 'paid' || payment.status === 'approved' || payment.status === 'completed' ? (
+                      {payment.status === 'paid' || payment.status === 'approved' ? (
                         <>
                           <Check className="mr-1 h-3 w-3" />
                           Paid
