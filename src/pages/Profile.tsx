@@ -21,7 +21,7 @@ const Profile: React.FC = () => {
   const displayUserId = urlUserId || userId;
   
   return (
-    <PageLayout>
+    <PageLayout hidePreFooterAd={true}>
       <div className="flex-1 container max-w-4xl py-10 px-4">
         <SimpleAdBanner position="top" className="mb-6" />
         

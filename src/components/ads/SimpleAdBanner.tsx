@@ -102,24 +102,29 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   }
   
   return (
-    <div className={`w-full ${getPositionClasses(position)} ${className}`} ref={containerRef}>
+    <div 
+      id={adId} 
+      className={`w-full ad-container ${getPositionClasses(position)} ${className}`} 
+      ref={containerRef}
+      data-position={normalizedPosition}
+    >
       {adBlockerDetected ? (
-        <div className="ad-container flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full">
           <p className="text-sm text-muted-foreground">Advertisement content blocked</p>
         </div>
       ) : hasError ? (
-        <div className="ad-container flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full">
           <p className="text-sm text-muted-foreground">Error loading advertisement</p>
         </div>
       ) : error ? (
-        <div className="ad-container flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full">
           <p className="text-sm text-muted-foreground">Advertisement unavailable</p>
         </div>
-      ) : (
-        <div className="ad-container flex items-center justify-center h-full">
+      ) : !content ? (
+        <div className="flex items-center justify-center h-full">
           <p className="text-sm text-muted-foreground">Advertisement</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

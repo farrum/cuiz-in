@@ -6,7 +6,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const ReferralPage = () => {
   return (
-    <PageLayout>
+    <PageLayout hidePreFooterAd={true}>
       <main className="flex-1 container mx-auto px-4 py-24 md:py-24 max-w-4xl">
         <SimpleAdBanner position="top" className="mb-6" />
         
