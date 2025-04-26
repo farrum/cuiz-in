@@ -1,6 +1,6 @@
-
 import { QuizQuestion } from '@/utils/types';
 import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 
 // Common English stop words that aren't useful for SEO
 const STOP_WORDS = [
