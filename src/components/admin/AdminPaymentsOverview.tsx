@@ -213,12 +213,12 @@ const AdminPaymentsOverview: React.FC = () => {
   
   const markAsPaid = async (paymentId: string) => {
     try {
-      const transactionId = Math.random().toString(36).substring(7).toUpperCase();
+      const transactionId = `TXN-${Date.now().toString().substring(7).toUpperCase()}`;
       
       const { error } = await supabase
         .from('payments')
         .update({
-          status: 'approved',
+          status: 'paid',
           transaction_id: transactionId
         })
         .eq('id', paymentId);
@@ -237,7 +237,7 @@ const AdminPaymentsOverview: React.FC = () => {
         if (payment.id === paymentId) {
           return {
             ...payment,
-            status: 'approved' as const,
+            status: 'paid' as const,
             transactionId
           };
         }
@@ -250,7 +250,7 @@ const AdminPaymentsOverview: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Payment marked as approved",
+        description: "Payment marked as paid",
       });
     } catch (err) {
       console.error('Failed to mark payment as paid:', err);
@@ -318,7 +318,9 @@ const AdminPaymentsOverview: React.FC = () => {
                    Amount: ₹${payment.amount}
                    Status: ${payment.status}
                    Method: ${payment.method || 'N/A'}
-                   User: ${payment.userName}`,
+                   User: ${payment.userName}
+                   Type: ${payment.type}`,
+      duration: 5000,
     });
   };
 
@@ -433,19 +435,23 @@ const AdminPaymentsOverview: React.FC = () => {
                         : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                       }`}
                     >
-                      {payment.type === 'quiz' ? 'Quiz Reward' : 'Referral Bonus'}
+                      {payment.type === 'quiz' ? 'Quiz Reward' : 
+                       payment.type === 'referral' ? 'Referral Bonus' : 
+                       payment.type === 'withdrawal' ? 'Withdrawal' : 
+                       payment.type === 'achievement' ? 'Achievement' : 
+                       payment.type}
                     </span>
                   </TableCell>
                   <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
                   <TableCell className="font-medium">₹{payment.amount}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${payment.status === 'paid' || payment.status === 'approved' 
+                      ${payment.status === 'paid' || payment.status === 'approved' || payment.status === 'completed'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                         : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                       }`}
                     >
-                      {payment.status === 'paid' || payment.status === 'approved' ? (
+                      {payment.status === 'paid' || payment.status === 'approved' || payment.status === 'completed' ? (
                         <>
                           <Check className="mr-1 h-3 w-3" />
                           Paid

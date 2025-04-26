@@ -9,6 +9,20 @@ interface WithdrawalHistoryProps {
 const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals }) => {
   if (withdrawals.length === 0) return null;
 
+  // Map withdrawal types to display names
+  const getTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'achievement':
+        return 'Reward';
+      case 'quiz':
+        return 'Quiz Earnings';
+      case 'referral':
+        return 'Referral Bonus';
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="mt-8">
       <h4 className="font-medium mb-3">Recent Withdrawals</h4>
@@ -23,15 +37,15 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals }) =>
               <div className="font-medium">₹{withdrawal.amount.toFixed(2)}</div>
               <div className="text-xs text-muted-foreground">
                 {new Date(withdrawal.date).toLocaleDateString()}
-                {withdrawal.type === 'achievement' && (
+                {getTypeLabel(withdrawal.type) && (
                   <span className="ml-2 px-1 bg-primary/10 text-primary rounded text-xs">
-                    Reward
+                    {getTypeLabel(withdrawal.type)}
                   </span>
                 )}
               </div>
             </div>
             <div>
-              {withdrawal.status === 'completed' || withdrawal.status === 'approved' ? (
+              {withdrawal.status === 'completed' || withdrawal.status === 'approved' || withdrawal.status === 'paid' ? (
                 <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
                   Completed
                 </span>

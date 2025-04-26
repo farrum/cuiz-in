@@ -3,6 +3,6 @@ export interface WithdrawalRequest {
   id: string;
   amount: number;
   date: string;
-  status: 'pending' | 'completed' | 'rejected' | 'approved';
-  type?: 'regular' | 'achievement';
+  status: 'pending' | 'completed' | 'rejected' | 'approved' | 'paid';
+  type?: 'regular' | 'achievement' | 'quiz' | 'referral';
 }

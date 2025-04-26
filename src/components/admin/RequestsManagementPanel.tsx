@@ -50,12 +50,10 @@ const RequestsManagementPanel: React.FC = () => {
   const [pendingPayments, setPendingPayments] = useState<PaymentRequest[]>([]);
   const { toast } = useToast();
   
-  // Load all requests
   const loadAllRequests = async () => {
     setIsLoading(true);
     
     try {
-      // Fetch reactivation requests
       const { data: reactivationData, error: reactivationError } = await supabase
         .from('profiles')
         .select('id, username, display_name, reactivation_requested_at, reactivation_approved')
@@ -64,7 +62,6 @@ const RequestsManagementPanel: React.FC = () => {
         
       if (reactivationError) throw reactivationError;
       
-      // Fetch pending payment requests
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .select('*')
@@ -76,7 +73,6 @@ const RequestsManagementPanel: React.FC = () => {
       setReactivationRequests(reactivationData || []);
       setPendingPayments(paymentData || []);
       
-      // Mark related notifications as read
       await adminNotificationsApi.markAllAsRead();
     } catch (error) {
       console.error('Error loading requests:', error);
@@ -94,7 +90,6 @@ const RequestsManagementPanel: React.FC = () => {
     loadAllRequests();
   }, []);
   
-  // Handle reactivation requests
   const handleApproveReactivation = async (userId: string) => {
     try {
       const result = await approveReactivationRequest(userId);
@@ -105,7 +100,6 @@ const RequestsManagementPanel: React.FC = () => {
           description: 'Reactivation request approved',
         });
         
-        // Create admin notification for approval
         await adminNotificationsApi.create({
           type: 'system',
           message: 'Reactivation request has been approved',
@@ -185,14 +179,14 @@ const RequestsManagementPanel: React.FC = () => {
     }
   };
   
-  // Handle payment requests
   const handleApprovePayment = async (paymentId: string) => {
     try {
+      const transactionId = `TXN-${Date.now()}`;
       const { error } = await supabase
         .from('payments')
         .update({ 
-          status: 'approved',
-          transaction_id: `TXN-${Date.now()}`
+          status: 'paid',
+          transaction_id: transactionId
         })
         .eq('id', paymentId);
         
@@ -203,12 +197,11 @@ const RequestsManagementPanel: React.FC = () => {
         description: 'Payment request approved',
       });
       
-      // Create admin notification for payment approval
       await adminNotificationsApi.create({
         type: 'payment_approved',
         message: 'Payment request has been approved',
         read: false,
-        data: { paymentId }
+        data: { paymentId, transactionId }
       });
       
       loadAllRequests();
@@ -246,7 +239,6 @@ const RequestsManagementPanel: React.FC = () => {
     }
   };
   
-  // Reactivation request columns
   const reactivationColumns = [
     {
       header: 'User',
@@ -327,7 +319,6 @@ const RequestsManagementPanel: React.FC = () => {
     }
   ];
   
-  // Payment request columns
   const paymentColumns = [
     {
       header: 'User',
