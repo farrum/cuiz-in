@@ -9,10 +9,10 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useGameMode } from './useGameMode';
 import { useToast } from '@/hooks/use-toast';
 import { confetti } from '@/utils/animations';
+import { logPointsEarned } from '@/utils/pointsService';
 
 export const useQuizState = () => {
   const [streak, setStreak] = useState(0);
-  const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const [isGameActive, setIsGameActive] = useState(true);
@@ -22,7 +22,8 @@ export const useQuizState = () => {
   const { 
     userPoints, 
     dailyPoints, 
-    monthlyPoints, 
+    monthlyPoints,
+    questionsAnswered,
     fetchPoints, 
     updateNextBadgeThreshold 
   } = useQuizPoints(setNextBadgeThreshold);
@@ -62,17 +63,15 @@ export const useQuizState = () => {
   } = useGameMode();
   
   const loadInitialData = async () => {
-    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
+    // Explicitly fetch points which includes questions answered
+    await fetchPoints();
     
-    const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-    setQuestionsAnswered(completedQuestions.length);
-    
-    // Load initial ad data - fixed to use the imported function
+    // Load initial ad data
     await syncAdSlots();
     
-    loadNewQuestion();
-    fetchPoints();
-    updateNextBadgeThreshold(completedQuestions.length);
+    // Load the first question
+    await loadNewQuestion();
+    
     setIsGameActive(true);
   };
   
@@ -91,12 +90,8 @@ export const useQuizState = () => {
     });
   };
   
-  const handleQuestionComplete = (isCorrect: boolean) => {
+  const handleQuestionComplete = async (isCorrect: boolean) => {
     if (!currentQuestion || !isGameActive) return;
-    
-    const newQuestionsAnswered = questionsAnswered + 1;
-    setQuestionsAnswered(newQuestionsAnswered);
-    updateNextBadgeThreshold(newQuestionsAnswered);
     
     // Update streak counter based on correctness
     let newStreak = 0;
@@ -107,6 +102,13 @@ export const useQuizState = () => {
       // Calculate points based on game mode
       const basePoints = currentQuestion.points || 10;
       const earnedPoints = calculatePoints(basePoints, isCorrect, newStreak);
+      
+      // Log points earned (consistently through our utility)
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (userId) {
+        console.log(`User ${userId} earned ${earnedPoints} points in ${currentMode} mode`);
+        await logPointsEarned(earnedPoints, userId);
+      }
       
       // Show streak milestone messages
       if (newStreak > 0 && newStreak % 5 === 0) {
@@ -140,12 +142,11 @@ export const useQuizState = () => {
       }
     }
     
-    setTimeout(() => {
-      fetchPoints();
-      window.dispatchEvent(new Event('pointsUpdated'));
-    }, 1000);
+    // Update points data
+    await fetchPoints();
     
-    loadNewQuestion();
+    // Load the next question
+    await loadNewQuestion();
   };
   
   // Using our hook's implementation instead of redefining it
@@ -155,7 +156,6 @@ export const useQuizState = () => {
   
   // Reset game for time attack mode
   const resetGame = () => {
-    setQuestionsAnswered(0);
     setStreak(0);
     setIsGameActive(true);
     if (currentMode === 'time-attack' && config.timeLimit) {

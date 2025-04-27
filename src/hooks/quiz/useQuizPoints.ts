@@ -11,6 +11,7 @@ export const useQuizPoints = (
   const [dailyPoints, setDailyPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
   
   useEffect(() => {
     // Check if user is logged in
@@ -45,6 +46,7 @@ export const useQuizPoints = (
       setUserPoints(0);
       setDailyPoints(0);
       setMonthlyPoints(0);
+      setQuestionsAnswered(0);
       return;
     }
     
@@ -53,8 +55,11 @@ export const useQuizPoints = (
     const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     
     try {
+      console.log('Fetching points data for user:', userId);
+      
       // Use Promise.all to make parallel requests for better performance
-      const [dailyResult, monthlyResult, profileResult] = await Promise.all([
+      const [dailyResult, monthlyResult, profileResult, answersResult] = await Promise.all([
+        // Get daily points
         supabase
           .from('daily_points')
           .select('points')
@@ -62,6 +67,7 @@ export const useQuizPoints = (
           .eq('date', today)
           .maybeSingle(),
           
+        // Get monthly points  
         supabase
           .from('monthly_points')
           .select('points')
@@ -69,12 +75,27 @@ export const useQuizPoints = (
           .eq('month', currentMonth)
           .maybeSingle(),
           
+        // Get total user points
         supabase
           .from('profiles')
           .select('points')
           .eq('id', userId)
-          .single()
+          .single(),
+          
+        // Get count of unique questions answered (for accurate question count)
+        supabase
+          .from('quiz_answers')
+          .select('question_id', { count: 'exact', head: false })
+          .eq('user_id', userId)
+          .is('challenge_id', null) // Only count regular quiz answers, not challenges
       ]);
+      
+      console.log('Data fetched:', {
+        dailyResult, 
+        monthlyResult, 
+        profileResult, 
+        answersResult
+      });
         
       // Process daily points
       if (dailyResult.data) {
@@ -82,8 +103,10 @@ export const useQuizPoints = (
         setDailyPoints(pointsValue);
         // Update localStorage for consistency
         localStorage.setItem(`daily_points_${today}`, pointsValue.toString());
+        console.log('Daily points set to:', pointsValue);
       } else {
         setDailyPoints(0);
+        console.log('No daily points found, set to 0');
       }
       
       // Process monthly points
@@ -92,8 +115,10 @@ export const useQuizPoints = (
         setMonthlyPoints(pointsValue);
         // Update localStorage for consistency
         localStorage.setItem(`monthly_points_${now.getFullYear()}_${now.getMonth()}`, pointsValue.toString());
+        console.log('Monthly points set to:', pointsValue);
       } else {
         setMonthlyPoints(0);
+        console.log('No monthly points found, set to 0');
       }
       
       // Process user total points
@@ -101,6 +126,15 @@ export const useQuizPoints = (
         const pointsValue = Number(profileResult.data.points);
         setUserPoints(pointsValue);
         localStorage.setItem(STORAGE_KEYS.USER_POINTS, pointsValue.toString());
+        console.log('User total points set to:', pointsValue);
+      }
+
+      // Set questions answered count from database instead of local storage
+      if (answersResult.count !== null) {
+        const count = answersResult.count;
+        setQuestionsAnswered(count);
+        console.log('Questions answered count from DB:', count);
+        updateNextBadgeThreshold(count);
       }
 
       // Dispatch an event to notify other components about the updated points
@@ -109,7 +143,7 @@ export const useQuizPoints = (
     } catch (error) {
       console.error('Error fetching points:', error);
     }
-  }, []);
+  }, [updateNextBadgeThreshold]);
   
   // Set up listeners for points updates
   useEffect(() => {
@@ -132,6 +166,7 @@ export const useQuizPoints = (
     userPoints,
     dailyPoints,
     monthlyPoints,
+    questionsAnswered,
     fetchPoints,
     updateNextBadgeThreshold
   };

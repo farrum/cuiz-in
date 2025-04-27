@@ -19,6 +19,22 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
   monthlyPoints,
   nextBadgeThreshold
 }) => {
+  // Ensure progress values are capped at 100%
+  const dailyProgressPercentage = Math.min((dailyPoints / DAILY_TARGET) * 100, 100);
+  const monthlyProgressPercentage = Math.min((monthlyPoints / MONTHLY_TARGET) * 100, 100);
+  
+  // Calculate questions until next badge with proper handling
+  const questionsUntilNextBadge = Math.max(
+    nextBadgeThreshold - (questionsAnswered % nextBadgeThreshold),
+    0
+  );
+  
+  // Calculate progress to next badge (capped at 100%)
+  const badgeProgressPercentage = Math.min(
+    ((questionsAnswered % nextBadgeThreshold) / nextBadgeThreshold) * 100, 
+    100
+  );
+  
   return (
     <>
       <div className="flex flex-col md:flex-row gap-6 mb-8">
@@ -40,10 +56,10 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
       
       <div className="glass rounded-2xl p-4 mb-8">
         <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
-        <Progress value={(dailyPoints / DAILY_TARGET) * 100} className="h-2 mb-4" />
+        <Progress value={dailyProgressPercentage} className="h-2 mb-4" />
         
         <h4 className="text-sm font-medium mb-3">Monthly Target: {monthlyPoints.toFixed(1)} / {MONTHLY_TARGET} points</h4>
-        <Progress value={(monthlyPoints / MONTHLY_TARGET) * 100} className="h-2" />
+        <Progress value={monthlyProgressPercentage} className="h-2" />
         
         <div className="mt-3 text-xs text-muted-foreground">
           Complete the monthly target to earn ₹8,000 reward!
@@ -54,11 +70,11 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
         <div className="relative h-1.5 rounded-full bg-muted overflow-hidden mb-2">
           <div 
             className="absolute inset-y-0 left-0 bg-primary transition-all duration-1000"
-            style={{ width: `${Math.min(((questionsAnswered % nextBadgeThreshold) / nextBadgeThreshold) * 100, 100)}%` }}
+            style={{ width: `${badgeProgressPercentage}%` }}
           />
         </div>
         <div className="text-xs text-muted-foreground text-right">
-          {nextBadgeThreshold - (questionsAnswered % nextBadgeThreshold)} more questions until next milestone
+          {questionsUntilNextBadge} more questions until next milestone
         </div>
       </div>
     </>

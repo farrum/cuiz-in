@@ -15,6 +15,8 @@ export const checkDailyPointsReset = async (userId?: string | null) => {
   // If no reset has happened yet or it's a different day, reset the points
   if (!lastReset || lastReset !== today) {
     try {
+      console.log('Resetting daily points for user', userId);
+      
       // Get the current date at midnight
       const currentDate = new Date();
       currentDate.setHours(0, 0, 0, 0);
@@ -62,11 +64,15 @@ export const checkMonthlyPointsReset = async (userId?: string | null) => {
   // If no reset has happened yet or it's a different month, reset the points
   if (!lastReset || lastReset !== currentMonth) {
     try {
+      console.log('Checking monthly points reset for user', userId, 'current month:', currentMonth, 'last reset:', lastReset);
+      
       // Get the current month's first day
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
       // If the last reset date is more than 30 days ago, reset the monthly points
       if (!lastReset || new Date(lastReset).getTime() < new Date(firstDayOfMonth).getTime()) {
+        console.log('Resetting monthly points for user', userId);
+        
         // Reset in database - update this month's record to zero or create a new one
         const { data, error } = await supabase
           .from('monthly_points')
@@ -97,19 +103,16 @@ export const checkMonthlyPointsReset = async (userId?: string | null) => {
   }
 };
 
-// Log points for daily tracking
+// Log points for daily tracking in a consistent manner
 export const logPointsForDay = async (points: number, userId?: string | null) => {
   if (!userId) return;
+  console.log(`Logging ${points} points for user ${userId} for today`);
 
   // Check if the daily points should be reset
   await checkDailyPointsReset(userId);
 
-  // Store in localStorage for client-side tracking
+  // Get today's date in ISO format
   const today = new Date().toISOString().split('T')[0];
-  const key = `daily_points_${today}`;
-  let dailyPoints = parseFloat(localStorage.getItem(key) || '0');
-  dailyPoints += points;
-  localStorage.setItem(key, dailyPoints.toString());
   
   try {
     // Check if there's already a record for today for this user
@@ -125,22 +128,40 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
       return;
     }
     
+    let dailyPoints = 0;
+    
     if (data) {
       // Update existing record
-      await supabase
+      dailyPoints = Number(data.points) + points;
+      
+      const { error: updateError } = await supabase
         .from('daily_points')
-        .update({ points: Number(data.points) + points })
+        .update({ points: dailyPoints })
         .eq('user_id', userId)
         .eq('date', today);
+        
+      if (updateError) {
+        console.error('Error updating daily points:', updateError);
+        return;
+      }
     } else {
       // Create new record
-      await supabase
+      dailyPoints = points;
+      
+      const { error: insertError } = await supabase
         .from('daily_points')
         .insert({ user_id: userId, date: today, points });
+        
+      if (insertError) {
+        console.error('Error inserting daily points:', insertError);
+        return;
+      }
     }
     
-    // Also log this in quiz_answers for detailed tracking (already done in QuizCard)
-    console.log(`Logged ${points} points for user ${userId} on ${today}`);
+    // Store in localStorage for client-side tracking
+    localStorage.setItem(`daily_points_${today}`, dailyPoints.toString());
+    
+    console.log(`Updated daily points for user ${userId} to ${dailyPoints}`);
     
     // Notify other components about the update
     window.dispatchEvent(new CustomEvent('pointsUpdated'));
@@ -149,22 +170,19 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
   }
 };
 
-// Log points for monthly tracking
+// Log points for monthly tracking in a consistent manner
 export const logPointsForMonth = async (points: number, userId?: string | null) => {
   if (!userId) return;
+  console.log(`Logging ${points} points for user ${userId} for this month`);
 
   // Check if the monthly points should be reset
   await checkMonthlyPointsReset(userId);
 
-  // Store in localStorage for client-side tracking
+  // Get current year and month
   const today = new Date();
-  const month = today.getMonth();
   const year = today.getFullYear();
+  const month = today.getMonth();
   const monthKey = `${year}-${(month + 1).toString().padStart(2, '0')}`;
-  const key = `monthly_points_${year}_${month}`;
-  let monthlyPoints = parseFloat(localStorage.getItem(key) || '0');
-  monthlyPoints += points;
-  localStorage.setItem(key, monthlyPoints.toString());
   
   try {
     // Check if there's already a record for this month for this user
@@ -180,27 +198,109 @@ export const logPointsForMonth = async (points: number, userId?: string | null) 
       return;
     }
     
+    let monthlyPoints = 0;
+    
     if (data) {
       // Update existing record
-      await supabase
+      monthlyPoints = Number(data.points) + points;
+      
+      const { error: updateError } = await supabase
         .from('monthly_points')
-        .update({ points: Number(data.points) + points })
+        .update({ points: monthlyPoints })
         .eq('user_id', userId)
         .eq('month', monthKey);
+        
+      if (updateError) {
+        console.error('Error updating monthly points:', updateError);
+        return;
+      }
     } else {
       // Create new record
-      await supabase
+      monthlyPoints = points;
+      
+      const { error: insertError } = await supabase
         .from('monthly_points')
         .insert({ user_id: userId, month: monthKey, points });
+        
+      if (insertError) {
+        console.error('Error inserting monthly points:', insertError);
+        return;
+      }
     }
     
-    // Also update the user's total points in profiles (already handled in QuizCard)
-    console.log(`Logged ${points} points for user ${userId} for month ${monthKey}`);
+    // Store in localStorage for client-side tracking
+    localStorage.setItem(`monthly_points_${year}_${month}`, monthlyPoints.toString());
+    
+    console.log(`Updated monthly points for user ${userId} to ${monthlyPoints}`);
     
     // Notify other components about the update
     window.dispatchEvent(new CustomEvent('pointsUpdated'));
   } catch (error) {
     console.error('Error updating monthly points:', error);
+  }
+};
+
+// Update total user points in a consistent manner
+export const updateTotalPoints = async (points: number, userId?: string | null) => {
+  if (!userId) return;
+  console.log(`Adding ${points} to total points for user ${userId}`);
+  
+  try {
+    // Get current points
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('points')
+      .eq('id', userId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching total points:', error);
+      return;
+    }
+    
+    const currentPoints = data?.points || 0;
+    const newTotal = Number(currentPoints) + points;
+    
+    // Update points in database
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ points: newTotal })
+      .eq('id', userId);
+      
+    if (updateError) {
+      console.error('Error updating total points:', updateError);
+      return;
+    }
+    
+    // Update local storage
+    localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
+    
+    console.log(`Updated total points for user ${userId} from ${currentPoints} to ${newTotal}`);
+    
+    // Notify other components about the update
+    window.dispatchEvent(new CustomEvent('pointsUpdated'));
+  } catch (error) {
+    console.error('Error updating total points:', error);
+  }
+};
+
+// Log points across all tracking systems consistently
+export const logPointsEarned = async (points: number, userId?: string | null) => {
+  if (!userId || points <= 0) return;
+  
+  console.log(`Logging ${points} points earned for user ${userId} across all systems`);
+  
+  try {
+    // Update all points tracking systems
+    await Promise.all([
+      logPointsForDay(points, userId),
+      logPointsForMonth(points, userId),
+      updateTotalPoints(points, userId)
+    ]);
+    
+    console.log(`Successfully logged ${points} points for user ${userId}`);
+  } catch (error) {
+    console.error('Error in logPointsEarned:', error);
   }
 };
 
@@ -218,4 +318,9 @@ export const getPointsForMonth = (): number => {
   const year = today.getFullYear();
   const key = `monthly_points_${year}_${month}`;
   return parseFloat(localStorage.getItem(key) || '0');
+};
+
+// Get total user points from localStorage
+export const getTotalPoints = (): number => {
+  return parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
 };

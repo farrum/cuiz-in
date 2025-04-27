@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -8,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
+import { logPointsEarned } from '@/utils/pointsService';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -47,8 +47,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
       // Track completed question in local storage - only for non-challenge questions
       if (!isChallenge) {
         const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-        completedQuestions.push(question.id);
-        localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
+        if (!completedQuestions.includes(question.id)) {
+          completedQuestions.push(question.id);
+          localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
+        }
         
         // Show a fun welcome message (only for regular quiz, not challenge)
         const welcomeMessage = getRandomMessage('welcome');
@@ -61,6 +63,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
       
       // Record answer in Supabase if user is logged in
       if (userId) {
+        console.log(`Recording answer for question ${question.id}, correct: ${isCorrect}`);
         // Calculate points based on difficulty
         let pointsEarned = 0;
         if (isCorrect) {
@@ -78,105 +81,22 @@ const QuizCard: React.FC<QuizCardProps> = ({
           pointsEarned = 0.5 * pointsMultiplier;
         }
         
-        // Get current date for tracking daily/monthly stats
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
-        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-
-        // Save answer to Supabase
+        // For non-challenge questions, update points across all systems
+        if (!isChallenge) {
+          console.log(`User earned ${pointsEarned} points for this answer`);
+          await logPointsEarned(pointsEarned, userId);
+        }
+        
+        // Save answer to the quiz_answers table regardless of challenge type
         await supabase.from('quiz_answers').insert({
           user_id: userId,
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: now.toISOString(), // Add timestamp to help with filtering by day/month
-          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null // Add challenge ID if in challenge
+          answered_at: new Date().toISOString(),
+          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null
         });
-        
-        console.log(`Answer saved with ${pointsEarned} points`);
-        
-        // Don't update daily/monthly/total points for challenge questions
-        // Those will be handled by the challenge component
-        if (!isChallenge) {
-          // Update daily points
-          const { data: dailyData, error: dailyError } = await supabase
-            .from('daily_points')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('date', today)
-            .maybeSingle();
-            
-          console.log('Daily points check:', { dailyData, dailyError });
-          
-          if (dailyData) {
-            // Update existing record
-            const updatedPoints = Number(dailyData.points) + pointsEarned;
-            await supabase
-              .from('daily_points')
-              .update({ points: updatedPoints })
-              .eq('user_id', userId)
-              .eq('date', today);
-            console.log(`Updated daily points to ${updatedPoints}`);
-          } else {
-            // Create new record
-            await supabase
-              .from('daily_points')
-              .insert({ user_id: userId, date: today, points: pointsEarned });
-            console.log(`Created new daily points record with ${pointsEarned} points`);
-          }
-          
-          // Update monthly points
-          const { data: monthlyData, error: monthlyError } = await supabase
-            .from('monthly_points')
-            .select('points')
-            .eq('user_id', userId)
-            .eq('month', currentMonth)
-            .maybeSingle();
-            
-          console.log('Monthly points check:', { monthlyData, monthlyError });
-          
-          if (monthlyData) {
-            // Update existing record
-            const updatedPoints = Number(monthlyData.points) + pointsEarned;
-            await supabase
-              .from('monthly_points')
-              .update({ points: updatedPoints })
-              .eq('user_id', userId)
-              .eq('month', currentMonth);
-            console.log(`Updated monthly points to ${updatedPoints}`);
-          } else {
-            // Create new record
-            await supabase
-              .from('monthly_points')
-              .insert({ user_id: userId, month: currentMonth, points: pointsEarned });
-            console.log(`Created new monthly points record with ${pointsEarned} points`);
-          }
-          
-          // Update user's points in the profiles table
-          const { data } = await supabase
-            .from('profiles')
-            .select('points')
-            .eq('id', userId)
-            .single();
-              
-          if (data) {
-            const currentPoints = data.points || 0;
-            const newTotal = Number(currentPoints) + pointsEarned;
-            await supabase
-              .from('profiles')
-              .update({ points: newTotal })
-              .eq('id', userId);
-              
-            console.log(`Updated total points from ${currentPoints} to ${newTotal}`);
-            
-            // Update local storage with new total points
-            localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotal.toString());
-          }
-          
-          // Dispatch point update event
-          window.dispatchEvent(new Event('pointsUpdated'));
-        }
       }
       
       // Call the onComplete callback
