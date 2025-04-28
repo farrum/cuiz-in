@@ -90,6 +90,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
           await logPointsEarned(pointsEarned, userId);
         }
         
+        // Get challenge ID if this is a challenge question
+        let challengeId = null;
+        if (isChallenge) {
+          // Extract challenge ID from the URL if in challenge mode
+          challengeId = window.location.pathname.split('/').pop();
+          console.log(`Recording answer for challenge: ${challengeId}`);
+        }
+        
         // Save answer to the quiz_answers table
         const answerData = {
           user_id: userId,
@@ -97,14 +105,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: new Date().toISOString()
+          answered_at: new Date().toISOString(),
+          challenge_id: isChallenge ? challengeId : null // Only set challenge_id for challenges
         };
-        
-        // Log if this is a challenge question
-        if (isChallenge) {
-          const challengeId = window.location.pathname.split('/').pop();
-          console.log(`Recording answer for challenge: ${challengeId}`);
-        }
         
         // Insert the answer data into the database
         const { error } = await supabase.from('quiz_answers').insert(answerData);

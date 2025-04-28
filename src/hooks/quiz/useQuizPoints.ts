@@ -83,7 +83,7 @@ export const useQuizPoints = (
           .maybeSingle()
       ]);
       
-      // Get count of user's answers (for question count)
+      // Get count of user's answers (for question count) - without filtering on challenge_id
       const { count } = await supabase
         .from('quiz_answers')
         .select('*', { count: 'exact', head: true })
