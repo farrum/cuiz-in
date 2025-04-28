@@ -91,7 +91,7 @@ export const useAnswerManagement = (
         selected_answer: selectedOption,
         correct: isCorrect,
         points_earned: earnedPoints,
-        challenge_id: challengeId // Ensure challenge_id is properly set
+        challenge_id: challengeId
       });
       
       if (answerError) {

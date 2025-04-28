@@ -58,7 +58,7 @@ export const useQuizPoints = (
       console.log('Fetching points data for user:', userId);
       
       // Use Promise.all to make parallel requests for better performance
-      const [dailyResult, monthlyResult, profileResult] = await Promise.all([
+      const [dailyResult, monthlyResult, profileResult, answersResult] = await Promise.all([
         // Get daily points
         supabase
           .from('daily_points')
@@ -80,20 +80,21 @@ export const useQuizPoints = (
           .from('profiles')
           .select('points')
           .eq('id', userId)
-          .maybeSingle()
+          .single(),
+          
+        // Get count of unique questions answered (for accurate question count)
+        supabase
+          .from('quiz_answers')
+          .select('question_id', { count: 'exact', head: false })
+          .eq('user_id', userId)
+          .is('challenge_id', null) // Only count regular quiz answers, not challenges
       ]);
-      
-      // Get count of user's answers (for question count) - without filtering on challenge_id
-      const { count } = await supabase
-        .from('quiz_answers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
       
       console.log('Data fetched:', {
         dailyResult, 
         monthlyResult, 
-        profileResult,
-        answersCount: count
+        profileResult, 
+        answersResult
       });
         
       // Process daily points
@@ -128,16 +129,12 @@ export const useQuizPoints = (
         console.log('User total points set to:', pointsValue);
       }
 
-      // Set questions answered count from database
-      if (count !== null) {
+      // Set questions answered count from database instead of local storage
+      if (answersResult.count !== null) {
+        const count = answersResult.count;
         setQuestionsAnswered(count);
         console.log('Questions answered count from DB:', count);
         updateNextBadgeThreshold(count);
-      } else {
-        // Fallback to local storage if database count isn't available
-        const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-        setQuestionsAnswered(completedQuestions.length);
-        updateNextBadgeThreshold(completedQuestions.length);
       }
 
       // Dispatch an event to notify other components about the updated points
@@ -145,14 +142,6 @@ export const useQuizPoints = (
       
     } catch (error) {
       console.error('Error fetching points:', error);
-      
-      // Fallback to local storage values in case of error
-      const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
-      setQuestionsAnswered(completedQuestions.length);
-      updateNextBadgeThreshold(completedQuestions.length);
-      
-      const userPointsValue = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-      setUserPoints(userPointsValue);
     }
   }, [updateNextBadgeThreshold]);
   
