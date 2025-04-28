@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
@@ -38,6 +39,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
     if (!selectedOption) return;
     
     try {
+      setIsSubmitting(true);
+      
       // Get user ID from local storage
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       
@@ -87,16 +90,32 @@ const QuizCard: React.FC<QuizCardProps> = ({
           await logPointsEarned(pointsEarned, userId);
         }
         
-        // Save answer to the quiz_answers table regardless of challenge type
-        await supabase.from('quiz_answers').insert({
+        // Save answer to the quiz_answers table
+        const answerData = {
           user_id: userId,
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: new Date().toISOString(),
-          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null
-        });
+          answered_at: new Date().toISOString()
+        };
+        
+        // Log if this is a challenge question
+        if (isChallenge) {
+          const challengeId = window.location.pathname.split('/').pop();
+          console.log(`Recording answer for challenge: ${challengeId}`);
+        }
+        
+        // Insert the answer data into the database
+        const { error } = await supabase.from('quiz_answers').insert(answerData);
+        if (error) {
+          console.error("Error saving answer:", error);
+          toast({
+            title: "Error saving answer",
+            description: "Your answer was processed but couldn't be saved to your history",
+            variant: "destructive"
+          });
+        }
       }
       
       // Call the onComplete callback
