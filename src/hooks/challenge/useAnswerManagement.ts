@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -37,30 +36,8 @@ export const useAnswerManagement = (
       return;
     }
     
-    // Validate current question index
-    if (currentQuestionIndex >= questions.length) {
-      console.error("Invalid question index:", currentQuestionIndex, "questions length:", questions.length);
-      toast({
-        title: "Error",
-        description: "Invalid question. Please refresh and try again.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       const currentQuestion = questions[currentQuestionIndex];
-      
-      // Ensure we have valid question data
-      if (!currentQuestion || !currentQuestion.id) {
-        console.error("Invalid question data:", currentQuestion);
-        toast({
-          title: "Error",
-          description: "Invalid question data. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
       
       // Calculate points for this answer
       const pointsForQuestion = currentQuestion.points || 10;
@@ -84,15 +61,17 @@ export const useAnswerManagement = (
       const updatedAnswers = [...answers, newAnswer];
       setAnswers(updatedAnswers);
       
-      // Store answer in database
-      const { error: answerError } = await supabase.from('quiz_answers').insert({
-        user_id: userId,
-        question_id: currentQuestion.id,
-        selected_answer: selectedOption,
-        correct: isCorrect,
-        points_earned: earnedPoints,
-        challenge_id: challengeId
-      });
+      // Store answer in database with challenge_id
+      const { error: answerError } = await supabase
+        .from('quiz_answers')
+        .insert({
+          user_id: userId,
+          question_id: currentQuestion.id,
+          selected_answer: selectedOption,
+          correct: isCorrect,
+          points_earned: earnedPoints,
+          challenge_id: challengeId
+        });
       
       if (answerError) {
         console.error("Error saving answer to database:", answerError);

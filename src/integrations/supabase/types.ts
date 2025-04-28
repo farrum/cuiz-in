@@ -1038,6 +1038,29 @@ export type Database = {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
       }
+      get_ad_performance_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          ad_id: string
+          ad_name: string
+          ad_position: string
+          page_section: string
+          slot_id: string
+          impressions: number
+          clicks: number
+          ctr: number
+        }[]
+      }
+      get_daily_ad_reports: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          ad_id: string
+          ad_position: string
+          report_date: string
+          impressions: number
+          unique_views: number
+        }[]
+      }
       has_user_been_active_in_days: {
         Args: { p_user_id: string; p_days: number }
         Returns: boolean

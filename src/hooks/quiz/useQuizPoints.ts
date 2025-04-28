@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getAllBadges } from '@/utils/badgeData';
@@ -14,7 +13,6 @@ export const useQuizPoints = (
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   
   useEffect(() => {
-    // Check if user is logged in
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     const username = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     setIsLoggedIn(!!userId && !!username);
@@ -42,7 +40,6 @@ export const useQuizPoints = (
   const fetchPoints = useCallback(async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) {
-      // Reset points if not logged in
       setUserPoints(0);
       setDailyPoints(0);
       setMonthlyPoints(0);
@@ -50,78 +47,57 @@ export const useQuizPoints = (
       return;
     }
     
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    
     try {
       console.log('Fetching points data for user:', userId);
       
-      // Use Promise.all to make parallel requests for better performance
       const [dailyResult, monthlyResult, profileResult, answersResult] = await Promise.all([
-        // Get daily points
         supabase
           .from('daily_points')
           .select('points')
           .eq('user_id', userId)
-          .eq('date', today)
+          .eq('date', new Date().toISOString().split('T')[0])
           .maybeSingle(),
           
-        // Get monthly points  
         supabase
           .from('monthly_points')
           .select('points')
           .eq('user_id', userId)
-          .eq('month', currentMonth)
+          .eq('month', `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`)
           .maybeSingle(),
           
-        // Get total user points
         supabase
           .from('profiles')
           .select('points')
           .eq('id', userId)
           .single(),
           
-        // Get count of unique questions answered (for accurate question count)
         supabase
           .from('quiz_answers')
           .select('question_id', { count: 'exact', head: false })
           .eq('user_id', userId)
-          .is('challenge_id', null) // Only count regular quiz answers, not challenges
+          .is('challenge_id', null)
       ]);
       
-      console.log('Data fetched:', {
-        dailyResult, 
-        monthlyResult, 
-        profileResult, 
-        answersResult
-      });
-        
-      // Process daily points
       if (dailyResult.data) {
         const pointsValue = Number(dailyResult.data.points);
         setDailyPoints(pointsValue);
-        // Update localStorage for consistency
-        localStorage.setItem(`daily_points_${today}`, pointsValue.toString());
+        localStorage.setItem(`daily_points_${new Date().toISOString().split('T')[0]}`, pointsValue.toString());
         console.log('Daily points set to:', pointsValue);
       } else {
         setDailyPoints(0);
         console.log('No daily points found, set to 0');
       }
       
-      // Process monthly points
       if (monthlyResult.data) {
         const pointsValue = Number(monthlyResult.data.points);
         setMonthlyPoints(pointsValue);
-        // Update localStorage for consistency
-        localStorage.setItem(`monthly_points_${now.getFullYear()}_${now.getMonth()}`, pointsValue.toString());
+        localStorage.setItem(`monthly_points_${new Date().getFullYear()}_${new Date().getMonth()}`, pointsValue.toString());
         console.log('Monthly points set to:', pointsValue);
       } else {
         setMonthlyPoints(0);
         console.log('No monthly points found, set to 0');
       }
       
-      // Process user total points
       if (profileResult.data) {
         const pointsValue = Number(profileResult.data.points);
         setUserPoints(pointsValue);
@@ -129,7 +105,6 @@ export const useQuizPoints = (
         console.log('User total points set to:', pointsValue);
       }
 
-      // Set questions answered count from database instead of local storage
       if (answersResult.count !== null) {
         const count = answersResult.count;
         setQuestionsAnswered(count);
@@ -137,7 +112,6 @@ export const useQuizPoints = (
         updateNextBadgeThreshold(count);
       }
 
-      // Dispatch an event to notify other components about the updated points
       window.dispatchEvent(new CustomEvent('pointsUpdated'));
       
     } catch (error) {
@@ -145,15 +119,11 @@ export const useQuizPoints = (
     }
   }, [updateNextBadgeThreshold]);
   
-  // Set up listeners for points updates
   useEffect(() => {
-    // Initial fetch
     fetchPoints();
     
-    // Listen for point updates
     window.addEventListener('pointsUpdated', fetchPoints);
     
-    // Refresh every minute
     const intervalId = setInterval(fetchPoints, 60000);
     
     return () => {
