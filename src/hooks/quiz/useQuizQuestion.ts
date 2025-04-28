@@ -11,6 +11,7 @@ export const useQuizQuestion = () => {
     setIsLoading(true);
     
     try {
+      console.log('Fetching random question from quiz_questions table');
       // Fetch a random question with proper RLS considerations
       const { data, error } = await supabase
         .from('quiz_questions')
@@ -25,6 +26,7 @@ export const useQuizQuestion = () => {
       }
       
       if (!data) {
+        console.error('No question data returned from the database');
         throw new Error('No question data returned');
       }
       
