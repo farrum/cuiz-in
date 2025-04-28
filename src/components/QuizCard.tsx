@@ -88,15 +88,26 @@ const QuizCard: React.FC<QuizCardProps> = ({
         }
         
         // Save answer to the quiz_answers table regardless of challenge type
-        await supabase.from('quiz_answers').insert({
+        const answerData = {
           user_id: userId,
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: new Date().toISOString(),
-          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null
-        });
+          answered_at: new Date().toISOString()
+        };
+        
+        // Add challenge_id only if this is a challenge question
+        if (isChallenge) {
+          const challengeId = window.location.pathname.split('/').pop();
+          console.log(`Recording answer for challenge: ${challengeId}`);
+          // We don't add challenge_id field here since it doesn't exist in the table
+        }
+        
+        const { error } = await supabase.from('quiz_answers').insert(answerData);
+        if (error) {
+          console.error("Error saving answer:", error);
+        }
       }
       
       // Call the onComplete callback

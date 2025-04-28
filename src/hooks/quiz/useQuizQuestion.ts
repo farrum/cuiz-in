@@ -24,6 +24,12 @@ export const useQuizQuestion = () => {
         throw error;
       }
       
+      if (!data) {
+        throw new Error('No question data returned');
+      }
+      
+      console.log('Successfully fetched question data:', data);
+      
       // Transform the question to match QuizQuestion interface
       const question: QuizQuestion = {
         id: data.id,
@@ -36,7 +42,8 @@ export const useQuizQuestion = () => {
         category: data.category,
         points: data.points || 10,
         explanation: data.explanation || '',
-        imageUrl: data.image_url
+        imageUrl: data.image_url,
+        questionType: data.question_type || 'text'
       };
       
       setCurrentQuestion(question);
