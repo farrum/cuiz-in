@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
@@ -11,108 +12,61 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, Search, Filter, Trophy } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-
-// Sample quiz categories data
-const categoryData = {
-  'history': {
-    name: 'History',
-    description: 'Test your knowledge of world history, important events, and historical figures.',
-    longDescription: 'Dive into the fascinating world of history with our comprehensive quiz collection. From ancient civilizations to modern events, our history quizzes cover a wide range of topics that will challenge your knowledge about the past. Learn about important historical figures, pivotal moments, and the evolution of human society through engaging questions.',
-    questionCount: 153,
-    icon: '📜',
-    difficultyDistribution: {
-      easy: 40,
-      medium: 35,
-      hard: 25
-    },
-    subcategories: [
-      'Ancient History', 'Medieval Period', 'World Wars', 'American History', 'Asian History', 'European History'
-    ],
-    featuredQuestions: [
-      {
-        id: 'hist-001',
-        question: 'In which year did Christopher Columbus first reach the Americas?',
-        difficulty: 'medium'
-      },
-      {
-        id: 'hist-002',
-        question: 'Who was the first Emperor of Rome?',
-        difficulty: 'medium'
-      },
-      {
-        id: 'hist-003',
-        question: 'Which civilization built the ancient city of Machu Picchu?',
-        difficulty: 'hard'
-      },
-      {
-        id: 'hist-004',
-        question: 'During which century did the Black Death primarily spread across Europe?',
-        difficulty: 'medium'
-      }
-    ],
-    topPerformers: [
-      { username: 'HistoryBuff42', points: 1250, rank: 1 },
-      { username: 'TimeTraveler', points: 1150, rank: 2 },
-      { username: 'AncientScholar', points: 1050, rank: 3 }
-    ]
-  },
-  'science': {
-    name: 'Science',
-    description: 'Challenge yourself with questions about physics, chemistry, biology, and scientific discoveries.',
-    longDescription: 'Explore the wonders of science through our diverse collection of quizzes. From the fundamental laws of physics to cutting-edge discoveries in genetics, our science category offers a stimulating challenge for both science enthusiasts and curious minds. Test your knowledge about the natural world, scientific principles, and the brilliant minds who shaped our understanding of the universe.',
-    questionCount: 178,
-    icon: '🔬',
-    difficultyDistribution: {
-      easy: 35,
-      medium: 40,
-      hard: 25
-    },
-    subcategories: [
-      'Physics', 'Chemistry', 'Biology', 'Astronomy', 'Earth Science', 'Scientific Discoveries'
-    ],
-    featuredQuestions: [
-      {
-        id: 'sci-001',
-        question: 'What is the chemical symbol for gold?',
-        difficulty: 'easy'
-      },
-      {
-        id: 'sci-002',
-        question: 'Which planet in our solar system has the most moons?',
-        difficulty: 'medium'
-      },
-      {
-        id: 'sci-003',
-        question: 'What is the smallest unit of life that can replicate independently?',
-        difficulty: 'medium'
-      },
-      {
-        id: 'sci-004',
-        question: 'What particle has the same mass as an electron but positive charge?',
-        difficulty: 'hard'
-      }
-    ],
-    topPerformers: [
-      { username: 'QuantumThinker', points: 1350, rank: 1 },
-      { username: 'MolecularMaster', points: 1200, rank: 2 },
-      { username: 'StarGazer', points: 1100, rank: 3 }
-    ]
-  }
-  // More categories would be defined here in a real implementation
-};
+import { getCategoryData, categoriesArray } from '@/utils/categoryData';
+import { createSlug } from '@/utils/urlUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const CategoryDetailPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [realQuestions, setRealQuestions] = useState<any[]>([]);
   
   // Get category data by slug
-  const category = categorySlug ? categoryData[categorySlug as keyof typeof categoryData] : null;
+  const category = categorySlug ? getCategoryData(categorySlug) : null;
+  
+  useEffect(() => {
+    const fetchCategoryQuestions = async () => {
+      if (!categorySlug) return;
+      
+      try {
+        setLoading(true);
+        // Load real questions from the database for this category
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .eq('category', category.name)
+          .limit(10); // Limit to 10 questions initially
+          
+        if (error) {
+          console.error("Error fetching category questions:", error);
+        } else if (data) {
+          setRealQuestions(data.map(q => ({
+            id: q.id,
+            question: q.question,
+            difficulty: q.difficulty
+          })));
+        }
+      } catch (e) {
+        console.error("Error in fetchCategoryQuestions:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCategoryQuestions();
+  }, [categorySlug, category?.name]);
   
   // If category not found, redirect to categories page
   if (!category) {
     return <Navigate to="/categories" replace />;
   }
+  
+  // Use real questions if available, otherwise use featured questions from category data
+  const displayQuestions = realQuestions.length > 0 
+    ? realQuestions 
+    : category.featuredQuestions;
   
   // Generate schema.org structured data for this category
   const categorySchema = {
@@ -121,7 +75,7 @@ const CategoryDetailPage: React.FC = () => {
     'name': `${category.name} Quizzes`,
     'description': category.description,
     'numberOfItems': category.questionCount,
-    'itemListElement': category.featuredQuestions.map((question, index) => ({
+    'itemListElement': displayQuestions.map((question, index) => ({
       '@type': 'ListItem',
       'position': index + 1,
       'item': {
@@ -190,11 +144,15 @@ const CategoryDetailPage: React.FC = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <Button>
-              Start {category.name} Quiz
+            <Button asChild>
+              <Link to={`/quiz?category=${encodeURIComponent(category.name)}`}>
+                Start {category.name} Quiz
+              </Link>
             </Button>
-            <Button variant="outline">
-              View All Questions
+            <Button variant="outline" asChild>
+              <Link to="/quiz">
+                View All Questions
+              </Link>
             </Button>
           </div>
         </div>
@@ -228,7 +186,12 @@ const CategoryDetailPage: React.FC = () => {
             </Tabs>
             
             <div className="space-y-4">
-              {category.featuredQuestions
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="inline-block w-8 h-8 border-4 border-t-primary border-primary/30 rounded-full animate-spin"></div>
+                  <p className="mt-4 text-muted-foreground">Loading questions...</p>
+                </div>
+              ) : displayQuestions
                 .filter(q => activeTab === 'all' || q.difficulty === activeTab)
                 .filter(q => q.question.toLowerCase().includes(searchTerm.toLowerCase()))
                 .map(question => (
@@ -242,7 +205,7 @@ const CategoryDetailPage: React.FC = () => {
                       </div>
                       <div className="mt-3">
                         <Link 
-                          to={`/quiz/question/${question.id}/${encodeURIComponent(question.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 50))}`}
+                          to={`/quiz/question/${question.id}/${createSlug(question.question, 50)}`}
                           className="text-sm text-primary hover:underline"
                         >
                           Answer this question
@@ -252,7 +215,7 @@ const CategoryDetailPage: React.FC = () => {
                   </Card>
                 ))}
                 
-              {category.featuredQuestions
+              {!loading && displayQuestions
                 .filter(q => activeTab === 'all' || q.difficulty === activeTab)
                 .filter(q => q.question.toLowerCase().includes(searchTerm.toLowerCase()))
                 .length === 0 && (
@@ -262,9 +225,9 @@ const CategoryDetailPage: React.FC = () => {
               )}
             </div>
             
-            {category.featuredQuestions.length > 4 && (
+            {displayQuestions.length > 4 && (
               <div className="mt-6 text-center">
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => console.log('Load more clicked')}>
                   Load More Questions
                 </Button>
               </div>

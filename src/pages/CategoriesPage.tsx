@@ -7,81 +7,14 @@ import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-
-// Quiz categories with descriptions, counts, and SEO-friendly slugs
-const categories = [
-  {
-    id: 1,
-    name: 'History',
-    slug: 'history',
-    description: 'Test your knowledge of world history, important events, and historical figures.',
-    questionCount: 153,
-    icon: '📜'
-  },
-  {
-    id: 2,
-    name: 'Science',
-    slug: 'science',
-    description: 'Challenge yourself with questions about physics, chemistry, biology, and scientific discoveries.',
-    questionCount: 178,
-    icon: '🔬'
-  },
-  {
-    id: 3,
-    name: 'Geography',
-    slug: 'geography',
-    description: 'Explore your knowledge of countries, capitals, landmarks, and geographical features.',
-    questionCount: 124,
-    icon: '🌍'
-  },
-  {
-    id: 4,
-    name: 'Literature',
-    slug: 'literature',
-    description: 'Test your familiarity with famous authors, books, literary characters, and quotes.',
-    questionCount: 98,
-    icon: '📚'
-  },
-  {
-    id: 5,
-    name: 'Entertainment',
-    slug: 'entertainment',
-    description: 'Questions about movies, TV shows, music, celebrities, and pop culture.',
-    questionCount: 210,
-    icon: '🎬'
-  },
-  {
-    id: 6,
-    name: 'Sports',
-    slug: 'sports',
-    description: 'Challenge your knowledge of sports events, rules, athletes, and championships.',
-    questionCount: 132,
-    icon: '⚽'
-  },
-  {
-    id: 7,
-    name: 'Technology',
-    slug: 'technology',
-    description: 'Test what you know about computers, gadgets, the internet, and technological innovations.',
-    questionCount: 116,
-    icon: '💻'
-  },
-  {
-    id: 8,
-    name: 'General Knowledge',
-    slug: 'general-knowledge',
-    description: 'A mix of questions covering various topics for a broad knowledge challenge.',
-    questionCount: 225,
-    icon: '🧠'
-  }
-];
+import { categoriesArray } from '@/utils/categoryData';
 
 const CategoriesPage: React.FC = () => {
   // Generate schema.org structured data
   const categorySchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    'itemListElement': categories.map((category, index) => ({
+    'itemListElement': categoriesArray.map((category, index) => ({
       '@type': 'ListItem',
       'position': index + 1,
       'item': {
@@ -119,7 +52,7 @@ const CategoriesPage: React.FC = () => {
         </div>
         
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {categories.map(category => (
+          {categoriesArray.map(category => (
             <Card key={category.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="text-4xl mb-2">{category.icon}</div>
