@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdminAdManagement from './AdminAdManagement';
-import AdminQuizManagement from './AdminQuizManagement';
-import AdminBlogManagement from './AdminBlogManagement';
-import AdminFaqManagement from './AdminFaqManagement';
+import { QuizManagement } from './quiz-management';
+import BlogManagement from './blog/BlogManagement';
+import FaqManagement from './faq/FaqManagement';
 import AdminUserManagement from './AdminUserManagement';
 import SitemapManagement from './SitemapManagement';
 
@@ -22,13 +23,13 @@ const AdminPage: React.FC = () => {
           <TabsTrigger value="sitemap">Sitemap</TabsTrigger>
         </TabsList>
         <TabsContent value="quiz-management">
-          <AdminQuizManagement />
+          <QuizManagement />
         </TabsContent>
         <TabsContent value="blog-management">
-          <AdminBlogManagement />
+          <BlogManagement />
         </TabsContent>
         <TabsContent value="faq-management">
-          <AdminFaqManagement />
+          <FaqManagement />
         </TabsContent>
         <TabsContent value="user-management">
           <AdminUserManagement />
