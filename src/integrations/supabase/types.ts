@@ -1065,6 +1065,10 @@ export type Database = {
         Args: { p_user_id: string; p_days: number }
         Returns: boolean
       }
+      regenerate_sitemap: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
