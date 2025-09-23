@@ -36,6 +36,7 @@ import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
 import QuizQuestionPage from "@/pages/QuizQuestionPage";
+import ScrollToTop from "@/components/ScrollToTop";
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -196,6 +197,7 @@ function App() {
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <Toaster />
           <Router>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/quiz" element={<QuizPage />} />
