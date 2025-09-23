@@ -30,6 +30,7 @@ self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
+    // Only block very specific problematic requests
     // Handle sodar requests (Google ad tracking)
     if (url.includes('sodar') || url.includes('pageadsodar')) {
       console.log('SW: Intercepting sodar request:', url);
@@ -52,33 +53,31 @@ self.addEventListener('fetch', event => {
       return;
     }
     
-    // Handle AAB requests specifically
-    if (url.includes('AAB') || url.includes('aab.min.js')) {
-      console.log('SW: Intercepting AAB request:', url);
-      event.respondWith(new Response('// AAB request intercepted by service worker', {
-        status: 200,
-        headers: new Headers({'Content-Type': 'application/javascript'})
-      }));
-      return;
-    }
-    
-    // Specifically block TCPusher and service worker registration
+    // Only block specific problematic push notification scripts
     if (url.includes('TCPusher') || 
-        url.includes('ServiceWorker') || 
-        url.includes('register')) {
-      console.log('SW: Blocking service worker registration attempt:', url);
-      event.respondWith(new Response('// Service worker registration blocked', {
+        url.includes('push.js') ||
+        url.includes('vo2pn0.js') ||
+        url.includes('Va3pn0.js') ||
+        url.includes('push.m.js') ||
+        url.includes('swpushnotification')) {
+      console.log('SW: Blocking push notification script:', url);
+      event.respondWith(new Response('// Push notification script blocked', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
     
-    // Block other problematic scripts
-    for (const domain of BLOCKED_DOMAINS) {
+    // Block only very specific malicious domains
+    const maliciousDomains = [
+      'onclickpsh.com',
+      'mrtnsvr.com'
+    ];
+    
+    for (const domain of maliciousDomains) {
       if (url.toLowerCase().includes(domain.toLowerCase())) {
-        console.log('SW: Blocking problematic script request:', url);
-        event.respondWith(new Response('// Script blocked by service worker', {
+        console.log('SW: Blocking malicious domain request:', url);
+        event.respondWith(new Response('// Malicious domain blocked by service worker', {
           status: 200,
           headers: new Headers({'Content-Type': 'application/javascript'})
         }));
@@ -87,13 +86,10 @@ self.addEventListener('fetch', event => {
     }
   } catch (e) {
     console.error('Error in SW fetch handler:', e);
-    event.respondWith(new Response('// Error handling request in service worker', {
-      status: 200, 
-      headers: new Headers({'Content-Type': 'application/javascript'})
-    }));
+    // Don't interfere with requests if there's an error
   }
   
-  // Let all other requests pass through
+  // Let all other requests pass through normally
 });
 
 // Intercept any attempts to register additional service workers
