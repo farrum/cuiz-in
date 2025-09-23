@@ -1043,6 +1043,10 @@ export type Database = {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
       }
+      check_admin_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       get_ad_performance_data: {
         Args: Record<PropertyKey, never>
         Returns: {
