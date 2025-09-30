@@ -29,16 +29,64 @@ export const useAuthCheck = () => {
   // Extract path pattern for more efficient checks
   const isAdminPath = useMemo(() => location.pathname.startsWith('/admin'), [location.pathname]);
 
-  // Optimize the auth check with useCallback
   const checkAuth = useCallback(async () => {
+    // PHASE 1: Check Supabase Auth first
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      // User is authenticated via Supabase Auth
+      const userId = session.user.id;
+      
+      // Fetch profile data
+      const [profileResult, roleResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('username, suspended')
+          .eq('id', userId)
+          .maybeSingle(),
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle()
+      ]);
+      
+      const profile = profileResult.data;
+      const isSuspended = profile?.suspended || false;
+      const userRole = roleResult.data?.role || 'player';
+      const isTeamLeader = userRole === 'team_leader';
+      const isAdmin = userRole === 'admin';
+      
+      // Store in localStorage for consistency
+      localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+      if (profile?.username) {
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, profile.username);
+      }
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
+      
+      if (isAdmin) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      }
+      
+      setAuthState({
+        isAuthenticated: true,
+        userRole,
+        isSuspended,
+        userId,
+        userName: profile?.username || null,
+        isAdminAuth: isAdmin,
+        isTeamLeader
+      });
+      return;
+    }
+    
+    // PHASE 2: Fall back to legacy custom auth
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
     const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
     const storedRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
     
-    // First check if admin auth is present in localStorage
     if (isAdminAuth && isAdminPath) {
-      console.log('Admin authenticated via localStorage');
       setAuthState({
         isAuthenticated: true,
         userRole: 'admin',
@@ -51,20 +99,20 @@ export const useAuthCheck = () => {
       return;
     }
     
-    // Check if we have a userId (custom auth)
     if (userId && userName) {
-      console.log('User authenticated via custom auth:', userName);
+      // Set user context for legacy auth
+      try {
+        await supabase.rpc('set_user_context', { user_id: userId });
+      } catch (err) {
+        console.error('Failed to set user context:', err);
+      }
       
-      // Make a single query to get both suspension status and role
-      // Use Promise.all to run queries in parallel for better performance
       const [profileResult, roleResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('suspended')
           .eq('id', userId)
           .maybeSingle(),
-          
-        // Only fetch role if not already in localStorage
         !storedRole ? 
           supabase
             .from('user_roles')
@@ -77,27 +125,15 @@ export const useAuthCheck = () => {
       const isSuspended = !profileResult.error && profileResult.data ? 
         (profileResult.data.suspended || false) : false;
       
-      if (isSuspended) {
-        console.log('User account is suspended:', userName);
-      }
-      
-      // Use stored role if available, otherwise use database result
       let userRole = storedRole || 
         (!roleResult.error && roleResult.data ? roleResult.data.role : 'player');
       
-      // Log the role for debugging
-      console.log('User role:', userRole);
-      
-      // Check if user is a team leader
       const isTeamLeader = userRole === 'team_leader' || userRole === 'teamleader';
       
       if (isTeamLeader) {
-        // Normalize the role name to 'team_leader'
         userRole = 'team_leader';
-        console.log('User is a team leader');
       }
       
-      // Store the user role in localStorage for easy access
       if (!storedRole) {
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole || 'player');
       }
@@ -112,7 +148,6 @@ export const useAuthCheck = () => {
         isTeamLeader
       });
     } else {
-      console.log('User not authenticated');
       setAuthState({
         isAuthenticated: false,
         userRole: null,
@@ -128,10 +163,17 @@ export const useAuthCheck = () => {
   useEffect(() => {
     checkAuth();
     
+    // Listen for auth state changes from Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        checkAuth();
+      }
+    });
+    
     // Add listener for role updates
     const handleRoleUpdate = () => {
       console.log('Role update event received, rechecking auth...');
-      // Remove the stored role so we fetch a fresh one
       localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
       checkAuth();
     };
@@ -140,6 +182,7 @@ export const useAuthCheck = () => {
     window.addEventListener('userRoleUpdated', handleRoleUpdate);
     
     return () => {
+      subscription.unsubscribe();
       window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
       window.removeEventListener('userRoleUpdated', handleRoleUpdate);
     };

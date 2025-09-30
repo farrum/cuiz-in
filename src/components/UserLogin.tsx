@@ -1,133 +1,209 @@
-
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { useToast } from '@/hooks/use-toast';
-import MD5 from 'crypto-js/md5';
+import { setUserContext } from '@/utils/authContext';
+import CryptoJS from 'crypto-js';
 
 const UserLogin: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
   const navigate = useNavigate();
-  
-  // Memoize hashPassword function to prevent recreating on every render
-  const hashPassword = useCallback((password: string): string => {
-    return MD5(password).toString();
-  }, []);
-  
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const { toast } = useToast();
+
+  const hashPassword = React.useMemo(
+    () => (password: string): string => CryptoJS.MD5(password).toString(),
+    []
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      console.log(`Attempting to sign in with username: ${username}`);
+      // PHASE 1: Try Supabase Auth first
+      let supabaseAuthAttempt = null;
       
+      // If input looks like email, try email login
+      if (username.includes('@')) {
+        supabaseAuthAttempt = await supabase.auth.signInWithPassword({
+          email: username,
+          password: password
+        });
+      } else {
+        // Try with temp email format for migrated users
+        supabaseAuthAttempt = await supabase.auth.signInWithPassword({
+          email: `${username}@temp.local`,
+          password: password
+        });
+      }
+
+      // If Supabase auth succeeded
+      if (supabaseAuthAttempt?.data?.user) {
+        const user = supabaseAuthAttempt.data.user;
+        
+        // Fetch profile data
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username, suspended')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileData?.suspended) {
+          await supabase.auth.signOut();
+          toast({
+            title: "Account Suspended",
+            description: "Your account has been suspended. Please contact support.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // Store user data
+        localStorage.setItem(STORAGE_KEYS.USER_ID, user.id);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData?.username || username);
+        
+        // Log successful login
+        await supabase
+          .from('login_logs')
+          .insert({
+            username: profileData?.username || username,
+            ip_address: 'client-side',
+            device: navigator.userAgent,
+            login_time: new Date().toISOString(),
+            successful: true
+          });
+
+        toast({
+          title: "Login Successful",
+          description: `Welcome back!`
+        });
+
+        // Check role for redirection
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (roleData?.role === 'admin') {
+          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+          navigate('/admin');
+        } else {
+          navigate('/quiz');
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+
+      // PHASE 2: Fall back to legacy auth if Supabase auth failed
       const hashedPassword = hashPassword(password);
-      console.log('Password hashed for authentication');
-      
-      // Combine the two queries into one transaction with a more efficient approach
-      // First find the user profile
+
       const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select('id, username, suspended, points')
+        .select('id, username, suspended, email')
         .eq('username', username)
         .eq('password_hash', hashedPassword)
         .maybeSingle();
-      
-      if (userError) {
-        console.error('Login error:', userError);
-        throw new Error('Authentication failed');
-      }
-      
-      if (!userData) {
-        console.error('Invalid credentials');
-        throw new Error('Invalid username or password');
-      }
-      
-      console.log('User authenticated successfully:', userData.id);
 
-      if (userData.suspended) {
-        console.warn('User account is suspended:', userData.id);
+      if (userError || !userData) {
+        // Log failed login attempt
+        await supabase
+          .from('login_logs')
+          .insert({
+            username,
+            ip_address: 'client-side',
+            device: navigator.userAgent,
+            login_time: new Date().toISOString(),
+            successful: false
+          });
+
         toast({
-          title: "Account Suspended",
-          description: "Your account has been suspended due to inactivity. You'll need to reactivate it.",
+          title: "Login Failed",
+          description: "Invalid username or password",
           variant: "destructive"
         });
+        setIsLoading(false);
+        return;
+      }
+
+      if (userData.suspended) {
+        toast({
+          title: "Account Suspended",
+          description: "Your account has been suspended. Please contact support.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Set user context for legacy auth
+      await setUserContext(userData.id);
+
+      // Store user data in localStorage
+      localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+      
+      // Log successful login
+      await supabase
+        .from('login_logs')
+        .insert({
+          username,
+          ip_address: 'client-side',
+          device: navigator.userAgent,
+          login_time: new Date().toISOString(),
+          successful: true
+        });
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${username}!`
+      });
+
+      // Check role for redirection
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.id)
+        .maybeSingle();
+
+      if (roleData?.role === 'admin') {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        navigate('/admin');
+      } else {
+        navigate('/quiz');
       }
       
-      // Store essential user data only
-      localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, userData.points ? userData.points.toString() : '0');
-      
-      const loginTime = new Date().toISOString();
-      
-      // Log login info in Supabase - do this in a background pattern
-      // We don't need to await this since it's not critical for the user flow
-      const loginPromise = supabase.from('login_logs').insert({
-        username: userData.username,
-        ip_address: "client-side",
-        device: navigator.userAgent,
-        login_time: loginTime,
-        successful: true
-      });
-      
-      // Check login history in parallel rather than sequentially
-      const { data: loginHistory } = await supabase
-        .from('login_logs')
-        .select('id')
-        .eq('username', userData.username)
-        .limit(2);
-        
-      const isFirstLogin = !loginHistory || loginHistory.length <= 1;
-      
-      // Ensure the login entry was recorded
-      await loginPromise;
-      
-      toast({
-        title: "Login successful!",
-        description: `Welcome ${isFirstLogin ? 'to Cuizin' : 'back'}, ${userData.username}!`,
-      });
-      
-      window.dispatchEvent(new Event('pointsUpdated'));
-      
-      navigate(isFirstLogin ? '/profile' : '/quiz');
     } catch (error) {
       console.error('Login error:', error);
-      
-      // Log failed login - don't await this since it's not critical
-      supabase.from('login_logs').insert({
-        username: username,
-        successful: false,
-        login_time: new Date().toISOString()
-      });
-      
       toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid username or password",
+        title: "Error",
+        description: "An error occurred during login. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
-  }, [username, password, hashPassword, toast, navigate]);
-  
-  // Use useCallback for input handlers
-  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
-  }, []);
-  
-  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  }, []);
-  
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -139,13 +215,13 @@ const UserLogin: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Username or Email</Label>
             <Input
               id="username"
               type="text"
               value={username}
-              onChange={handleUsernameChange}
-              placeholder="Enter your username"
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username or email"
               required
             />
           </div>
@@ -156,7 +232,7 @@ const UserLogin: React.FC = () => {
               id="password"
               type="password"
               value={password}
-              onChange={handlePasswordChange}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
             />

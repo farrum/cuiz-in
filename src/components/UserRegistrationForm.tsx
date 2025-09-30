@@ -6,9 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
-import MD5 from 'crypto-js/md5';
-import { v4 as uuidv4 } from 'uuid';
 import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
@@ -35,33 +34,57 @@ const UserRegistrationForm: React.FC = () => {
     if (refCode) {
       setReferralCode(refCode);
       // Check if referrer exists in the system
-      checkReferrer(refCode);
+      (async () => {
+        const referrerData = await getReferrerInfo(refCode);
+        if (referrerData) {
+          setReferrerName(referrerData.username);
+          toast({
+            title: "Referral Applied",
+            description: `You were referred by ${referrerData.username}`,
+          });
+        }
+      })();
     }
   }, [location]);
   
-  // Function to check if referrer exists
-  const checkReferrer = async (referrerUsername: string) => {
+  // Function to get referrer info for display
+  const getReferrerInfo = async (referrerUsername: string) => {
     try {
-      const { data: referrerData, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('username')
         .eq('username', referrerUsername)
-        .single();
+        .maybeSingle();
         
-      if (error) {
+      if (error || !data) {
         console.error("Error checking referrer:", error);
-        return;
+        return null;
       }
       
-      if (referrerData) {
-        setReferrerName(referrerData.username);
-        toast({
-          title: "Referral Applied",
-          description: `You were referred by ${referrerData.username}`,
-        });
-      }
+      return data;
     } catch (err) {
       console.error("Failed to check referrer:", err);
+      return null;
+    }
+  };
+
+  // Function to get referrer ID for insertion
+  const getReferrerId = async (referrerUsername: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', referrerUsername)
+        .maybeSingle();
+      
+      if (error || !data) {
+        return null;
+      }
+      
+      return data.id;
+    } catch (error) {
+      console.error('Error checking referrer:', error);
+      return null;
     }
   };
   
@@ -113,164 +136,131 @@ const UserRegistrationForm: React.FC = () => {
     }
   };
   
-  // Function to hash password with MD5
-  const hashPassword = (password: string): string => {
-    return MD5(password).toString();
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (usernameError) {
-      toast({
-        title: "Username Error",
-        description: usernameError,
-        variant: "destructive"
-      });
-      return;
-    }
-    
+    // Validate fields
     if (password !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please ensure both passwords match.",
+        title: "Error",
+        description: "Passwords do not match",
         variant: "destructive"
       });
       return;
     }
-    
+
     if (password.length < 6) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
+        title: "Error",
+        description: "Password must be at least 6 characters long",
         variant: "destructive"
       });
       return;
     }
-    
+
+    if (!email.includes('@')) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      console.log('Registering with username:', username);
-      
       // Check if username already exists
-      const { data: existingUser, error: userCheckError } = await supabase
+      const { data: existingUser } = await supabase
         .from('profiles')
         .select('username')
         .eq('username', username)
         .maybeSingle();
-        
-      if (userCheckError) {
-        console.error('User check error:', userCheckError);
-      }
-      
+
       if (existingUser) {
         toast({
-          title: "Username already taken",
-          description: "Please choose a different username.",
+          title: "Error",
+          description: "Username already exists. Please choose a different one.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
-      
-      // Hash the password
-      const hashedPassword = hashPassword(password);
-      console.log('Password hashed for storage');
-      
-      // Generate a UUID for the user
-      const userId = uuidv4();
-      
-      // Create profile directly in profiles table with hashed password
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          username: username,
-          display_name: displayName || username, // Use the display name, default to username if empty
-          phone: phone,
-          points: 0,
-          suspended: false,
-          password_hash: hashedPassword
-        });
-      
-      if (profileError) {
-        console.error('Profile error:', profileError);
+
+      // Use Supabase Auth for registration
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            username: username,
+            display_name: displayName,
+            phone: phone
+          },
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (authError) {
+        console.error('Registration error:', authError);
         toast({
-          title: "Profile creation failed",
-          description: profileError.message || "Failed to create user profile",
+          title: "Registration Failed",
+          description: authError.message || "Failed to create account. Please try again.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
-      
-      // Set user role as player by default
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'player'
+
+      if (!authData.user) {
+        toast({
+          title: "Registration Failed",
+          description: "Failed to create account. Please try again.",
+          variant: "destructive"
         });
-        
-      if (roleError) {
-        console.error('Role error:', roleError);
-        // Continue anyway as this is not critical
+        setIsLoading(false);
+        return;
       }
-      
-      // Handle referral code if provided
+
+      // Profile will be auto-created via trigger
+      // Handle referral if present
       if (referralCode) {
-        try {
-          const { data: referrerData, error: referrerError } = await supabase
-            .from('profiles')
-            .select('id, username')
-            .eq('username', referralCode)
-            .maybeSingle();
-            
-          if (!referrerError && referrerData) {
-            const currentDate = new Date().toISOString().split('T')[0];
-            
-            await supabase
-              .from('user_referrals')
-              .insert({
-                referrer_id: referrerData.id,
-                referrer_name: referrerData.username,
-                referred_id: userId,
-                referred_name: username,
-                referred_email: email || undefined,
-                date: currentDate,
-                active_this_month: true,
-                last_active_date: currentDate,
-                status: 'active'
-              });
-              
-            console.log('Referral recorded successfully');
-          }
-        } catch (referralErr) {
-          console.error('Referral processing error:', referralErr);
-          // Don't stop registration for referral errors
+        const referrerUsername = referralCode.toLowerCase();
+        const referrerId = await getReferrerId(referrerUsername);
+        
+        if (referrerId) {
+          await supabase
+            .from('user_referrals')
+            .insert({
+              referrer_id: referrerId,
+              referrer_name: referrerUsername,
+              referred_id: authData.user.id,
+              referred_name: username,
+              referred_email: email,
+              date: new Date().toISOString().split('T')[0],
+              status: 'active'
+            });
         }
       }
-      
-      // Store user auth status in localStorage
-      localStorage.setItem('quiz_app_user_auth', 'true');
-      localStorage.setItem('quiz_app_user_id', userId);
-      localStorage.setItem('quiz_app_user_name', displayName || username);
-      
+
       toast({
-        title: "Registration successful!",
-        description: "Your account has been created. You will be redirected to login.",
+        title: "Registration Successful!",
+        description: "Your account has been created. Please check your email to verify your account.",
       });
+
+      // Store user data
+      localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
       
-      // Redirect to login page after successful registration
-      navigate('/login');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      
     } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      console.log('Error details:', errorMessage);
       toast({
-        title: "Registration failed",
-        description: errorMessage,
+        title: "Error",
+        description: "An error occurred during registration. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -335,13 +325,14 @@ const UserRegistrationForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email (Optional)</Label>
+            <Label htmlFor="email">Email (Required)</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
+              required
             />
           </div>
           
