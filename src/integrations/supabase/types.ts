@@ -693,8 +693,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_migrated: boolean | null
           created_at: string | null
           display_name: string | null
+          email: string | null
           id: string
           is_admin: boolean | null
           password_hash: string | null
@@ -710,8 +712,10 @@ export type Database = {
           username: string
         }
         Insert: {
+          auth_migrated?: boolean | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           is_admin?: boolean | null
           password_hash?: string | null
@@ -727,8 +731,10 @@ export type Database = {
           username: string
         }
         Update: {
+          auth_migrated?: boolean | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           is_admin?: boolean | null
           password_hash?: string | null
@@ -1060,6 +1066,10 @@ export type Database = {
           slot_id: string
         }[]
       }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1084,6 +1094,10 @@ export type Database = {
       }
       regenerate_sitemap: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      set_user_context: {
+        Args: { user_id: string }
         Returns: undefined
       }
     }
