@@ -27,6 +27,8 @@ const NewsTicker: React.FC<NewsTickerProps> = ({
 
   // Fetch messages when component mounts or lastUpdate changes
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
@@ -40,27 +42,40 @@ const NewsTicker: React.FC<NewsTickerProps> = ({
           console.error('Error fetching news ticker messages:', error);
           return;
         }
-        if (data && data.length > 0) {
+        if (isMounted && data && data.length > 0) {
           console.log('News ticker messages loaded:', data.length);
           setMessages(data as NewsMessage[]);
-        } else {
+        } else if (isMounted) {
           console.log('No active news ticker messages found');
         }
       } catch (err) {
         console.error('Failed to fetch news ticker messages:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     fetchMessages();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [lastUpdate]); // Re-fetch when lastUpdate changes
 
   useEffect(() => {
     if (messages.length <= 1) return;
-    const interval = setInterval(() => {
+    let interval: number | undefined;
+    
+    interval = window.setInterval(() => {
       setCurrentIndex(prevIndex => (prevIndex + 1) % messages.length);
     }, 8000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [messages]);
   if (isLoading) return null;
   if (messages.length === 0) return null;

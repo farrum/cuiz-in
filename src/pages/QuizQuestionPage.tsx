@@ -146,7 +146,7 @@ const QuizQuestionPage: React.FC = () => {
               question: prevData[0].question,
               options: Array.isArray(prevData[0].options) ? prevData[0].options : Object.values(prevData[0].options || {}),
               correctAnswer: prevData[0].correct_answer,
-              difficulty: prevData[0].difficulty,
+              difficulty: (prevData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: prevData[0].category,
               points: prevData[0].points || 10,
               explanation: prevData[0].explanation || ''
@@ -159,7 +159,7 @@ const QuizQuestionPage: React.FC = () => {
               question: nextData[0].question,
               options: Array.isArray(nextData[0].options) ? nextData[0].options : Object.values(nextData[0].options || {}),
               correctAnswer: nextData[0].correct_answer,
-              difficulty: nextData[0].difficulty,
+              difficulty: (nextData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: nextData[0].category,
               points: nextData[0].points || 10,
               explanation: nextData[0].explanation || ''

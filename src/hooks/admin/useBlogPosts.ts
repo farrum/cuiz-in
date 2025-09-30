@@ -46,7 +46,7 @@ export const useBlogPosts = () => {
     try {
       const { data, error } = await supabase
         .from('blog_posts')
-        .insert([post])
+        .insert([post as any])
         .select();
 
       if (error) throw error;

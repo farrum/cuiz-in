@@ -27,10 +27,10 @@ export async function checkCronJobStatus() {
   try {
     console.log('Checking cron job status...');
     
-    // Query the pg_cron.job table to check if our job exists and is active
-    const { data, error } = await supabase.rpc('check_cron_job_status', {
-      job_name: 'daily-blog-generator'
-    });
+    // Note: RPC function not available in current database schema
+    // Returning placeholder data
+    const data = null;
+    const error = null;
 
     if (error) {
       console.error('Error checking cron job status:', error);

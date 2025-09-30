@@ -78,56 +78,74 @@ export const useQuizPoints = (
           .is('challenge_id', null)
       ]);
       
+      let hasChanges = false;
+      
       if (dailyResult.data) {
         const pointsValue = Number(dailyResult.data.points);
-        setDailyPoints(pointsValue);
-        localStorage.setItem(`daily_points_${new Date().toISOString().split('T')[0]}`, pointsValue.toString());
-        console.log('Daily points set to:', pointsValue);
-      } else {
+        if (pointsValue !== dailyPoints) {
+          setDailyPoints(pointsValue);
+          localStorage.setItem(`daily_points_${new Date().toISOString().split('T')[0]}`, pointsValue.toString());
+          console.log('Daily points set to:', pointsValue);
+          hasChanges = true;
+        }
+      } else if (dailyPoints !== 0) {
         setDailyPoints(0);
         console.log('No daily points found, set to 0');
+        hasChanges = true;
       }
       
       if (monthlyResult.data) {
         const pointsValue = Number(monthlyResult.data.points);
-        setMonthlyPoints(pointsValue);
-        localStorage.setItem(`monthly_points_${new Date().getFullYear()}_${new Date().getMonth()}`, pointsValue.toString());
-        console.log('Monthly points set to:', pointsValue);
-      } else {
+        if (pointsValue !== monthlyPoints) {
+          setMonthlyPoints(pointsValue);
+          localStorage.setItem(`monthly_points_${new Date().getFullYear()}_${new Date().getMonth()}`, pointsValue.toString());
+          console.log('Monthly points set to:', pointsValue);
+          hasChanges = true;
+        }
+      } else if (monthlyPoints !== 0) {
         setMonthlyPoints(0);
         console.log('No monthly points found, set to 0');
+        hasChanges = true;
       }
       
       if (profileResult.data) {
         const pointsValue = Number(profileResult.data.points);
-        setUserPoints(pointsValue);
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, pointsValue.toString());
-        console.log('User total points set to:', pointsValue);
+        if (pointsValue !== userPoints) {
+          setUserPoints(pointsValue);
+          localStorage.setItem(STORAGE_KEYS.USER_POINTS, pointsValue.toString());
+          console.log('User total points set to:', pointsValue);
+          hasChanges = true;
+        }
       }
 
       if (answersResult.count !== null) {
         const count = answersResult.count;
-        setQuestionsAnswered(count);
-        console.log('Questions answered count from DB:', count);
-        updateNextBadgeThreshold(count);
+        if (count !== questionsAnswered) {
+          setQuestionsAnswered(count);
+          console.log('Questions answered count from DB:', count);
+          updateNextBadgeThreshold(count);
+          hasChanges = true;
+        }
       }
 
-      window.dispatchEvent(new CustomEvent('pointsUpdated'));
+      // Only dispatch event if there were actual changes
+      if (hasChanges) {
+        window.dispatchEvent(new CustomEvent('pointsUpdated'));
+      }
       
     } catch (error) {
       console.error('Error fetching points:', error);
     }
-  }, [updateNextBadgeThreshold]);
+  }, [updateNextBadgeThreshold, dailyPoints, monthlyPoints, userPoints, questionsAnswered]);
   
   useEffect(() => {
+    // Initial fetch only
     fetchPoints();
     
-    window.addEventListener('pointsUpdated', fetchPoints);
-    
+    // Poll for updates every minute
     const intervalId = setInterval(fetchPoints, 60000);
     
     return () => {
-      window.removeEventListener('pointsUpdated', fetchPoints);
       clearInterval(intervalId);
     };
   }, [fetchPoints, isLoggedIn]);

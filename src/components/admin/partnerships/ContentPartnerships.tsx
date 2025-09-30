@@ -68,7 +68,7 @@ const ContentPartnerships: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPartnerSites(data || []);
+      setPartnerSites((data || []) as any);
     } catch (error: any) {
       console.error('Error fetching partner sites:', error);
       toast({
@@ -103,7 +103,7 @@ const ContentPartnerships: React.FC = () => {
         // Insert new record
         response = await supabase
           .from('partner_sites')
-          .insert(siteData)
+          .insert(siteData as any)
           .select();
       }
 
