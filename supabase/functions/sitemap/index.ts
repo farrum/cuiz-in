@@ -10,7 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Content-Type': 'application/xml; charset=UTF-8',
-  'Cache-Control': 'public, max-age=3600'
+  'Content-Encoding': 'gzip',
+  'Cache-Control': 'public, max-age=3600',
+  'Vary': 'Accept-Encoding'
 };
 
 interface SitemapEntry {
@@ -249,8 +251,11 @@ serve(async (req) => {
     // Generate XML
     const xml = generateXml(allUrls);
 
-    // Return the XML with appropriate headers
-    return new Response(xml, { headers: corsHeaders });
+    // Compress with gzip
+    const compressedXml = await compressGzip(xml);
+
+    // Return the compressed XML with appropriate headers
+    return new Response(compressedXml, { headers: corsHeaders });
   } catch (error) {
     console.error('Error generating sitemap:', error);
     return new Response('Error generating sitemap', { status: 500, headers: corsHeaders });
@@ -270,6 +275,40 @@ function extractKeywords(text: string): string[] {
   // Remove common stop words
   const stopWords = ['this', 'that', 'these', 'those', 'with', 'from', 'about', 'have', 'what', 'which'];
   return words.filter(word => !stopWords.includes(word));
+}
+
+// Function to compress content with gzip
+async function compressGzip(content: string): Promise<Uint8Array> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(content);
+  
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(data);
+      controller.close();
+    }
+  });
+  
+  const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
+  const reader = compressedStream.getReader();
+  const chunks: Uint8Array[] = [];
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  
+  // Combine all chunks into a single Uint8Array
+  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  
+  return result;
 }
 
 function generateXml(entries: SitemapEntry[]): string {
