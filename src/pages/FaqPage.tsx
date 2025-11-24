@@ -10,8 +10,8 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 const FaqPage: React.FC = () => {
   const { faqs, isLoading } = useFaqs();
 
-  // Schema.org FAQ Page structured data
-  const faqSchema = {
+  // Schema.org FAQ Page structured data - only generate when FAQs are loaded
+  const faqSchema = faqs.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     'mainEntity': faqs.map(item => ({
@@ -22,7 +22,7 @@ const FaqPage: React.FC = () => {
         'text': item.answer
       }
     }))
-  };
+  } : undefined;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -32,6 +32,7 @@ const FaqPage: React.FC = () => {
         canonicalUrl="https://cuiz.in/faq"
         schemaType="FAQPage"
         schemaData={faqSchema}
+        keywords={['FAQ', 'quiz game help', 'CuizIN questions', 'rewards system', 'how to play quiz', 'earn money online']}
       />
       <Header />
       <NewsTicker className="mt-16" />
