@@ -3,33 +3,40 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSimpleAd } from '@/hooks/ads/useSimpleAd';
 import { useAdBlockerDetection } from '@/hooks/ads/useAdBlockerDetection';
 
-// Updated interface to support both old and new position values
 interface SimpleAdBannerProps {
   position: 'top' | 'middle' | 'bottom' | 'sidebar' | 'header' | 'content' | 'footer';
   className?: string;
 }
 
 const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '' }) => {
-  // Map old position names to new ones for database consistency
   const normalizedPosition = mapPosition(position);
-  
   const { content, isLoading, error } = useSimpleAd(normalizedPosition);
   const { adBlockerDetected } = useAdBlockerDetection();
   const [hasError, setHasError] = useState<boolean>(false);
+  const [hasRendered, setHasRendered] = useState<boolean>(false);
+  const [shouldCollapse, setShouldCollapse] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const adId = `ad-container-${position}-${Math.random().toString(36).substring(2, 9)}`;
   
   useEffect(() => {
-    console.log(`SimpleAdBanner mounted for position: ${position} (normalized: ${normalizedPosition})`);
-    
     if (content && containerRef.current) {
       try {
         console.log(`Setting ad content for position: ${position}. Content length: ${content.length}`);
+        
+        // Set a timeout to collapse if ad doesn't render in 3 seconds
+        const renderTimeout = setTimeout(() => {
+          if (!hasRendered && containerRef.current) {
+            const hasVisibleContent = containerRef.current.offsetHeight > 50;
+            if (!hasVisibleContent) {
+              console.log(`Ad at ${position} didn't render, collapsing...`);
+              setShouldCollapse(true);
+            }
+          }
+        }, 3000);
+        
         const safeContent = content
           .replace(/document\.browsingTopics\([^)]*\)/g, "console.log('Topics API call blocked')")
-          .replace(/navigator\.serviceWorker\.register/g, "console.log")
-          .replace(/TCPusher/g, "console.log")
-          .replace(/new\s+Notification/g, "console.log");
+          .replace(/navigator\.serviceWorker\.register/g, "console.log");
 
         if (containerRef.current) {
           containerRef.current.innerHTML = safeContent;
@@ -41,9 +48,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
                 if (oldScript.src && (
                   oldScript.src.includes('push.js') || 
                   oldScript.src.includes('sdk/push') ||
-                  oldScript.src.includes('ServiceWorker') ||
-                  oldScript.src.includes('TCPusher') ||
-                  oldScript.src.includes('notification')
+                  oldScript.src.includes('ServiceWorker')
                 )) {
                   console.log('Blocked problematic script:', oldScript.src);
                   return;
@@ -54,20 +59,20 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
                   newScript.setAttribute(attr.name, attr.value);
                 });
                 
-                newScript.setAttribute('data-safe-script', 'true');
-                newScript.setAttribute('data-no-sw', 'true');
-                
                 if (oldScript.src) {
                   newScript.src = oldScript.src;
+                  newScript.onload = () => {
+                    setHasRendered(true);
+                    clearTimeout(renderTimeout);
+                  };
+                  newScript.onerror = () => {
+                    console.error('Ad script failed to load:', oldScript.src);
+                    setHasError(true);
+                    setShouldCollapse(true);
+                  };
                 } else {
-                  let safeScriptContent = oldScript.innerHTML
-                    .replace(/document\.browsingTopics/g, 'console.log')
-                    .replace(/navigator\.serviceWorker\.register/g, 'console.log')
-                    .replace(/new\s+TCPusher/g, 'console.log')
-                    .replace(/Notification\.requestPermission/g, 'console.log')
-                    .replace(/runAdAuction/g, 'console.log');
-                    
-                  newScript.innerHTML = safeScriptContent;
+                  newScript.innerHTML = oldScript.innerHTML;
+                  setHasRendered(true);
                 }
                 
                 oldScript.parentNode?.replaceChild(newScript, oldScript);
@@ -75,15 +80,19 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
             } catch (error) {
               console.error('Error executing ad scripts:', error);
               setHasError(true);
+              setShouldCollapse(true);
             }
           }, 0);
         }
+        
+        return () => {
+          clearTimeout(renderTimeout);
+        };
       } catch (err) {
         console.error('Error setting ad content:', err);
         setHasError(true);
+        setShouldCollapse(true);
       }
-    } else if (!content) {
-      console.log(`No content available for ad position: ${position} (normalized: ${normalizedPosition})`);
     }
     
     return () => {
@@ -93,10 +102,17 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
     };
   }, [content, position, normalizedPosition]);
   
+  // Don't render anything if should collapse or has error/no content
+  if (shouldCollapse || (!isLoading && (error || !content || hasError || adBlockerDetected))) {
+    return null;
+  }
+  
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center p-4 ${getPositionClasses(position)} ${className}`}>
-        <p className="text-sm text-muted-foreground">Loading advertisement...</p>
+      <div className={`w-full overflow-hidden transition-all duration-300 ${className}`}>
+        <div className={`flex items-center justify-center p-4 bg-secondary/5 rounded-lg ${getLoadingHeight(position)}`}>
+          <p className="text-xs text-muted-foreground">Loading ad...</p>
+        </div>
       </div>
     );
   }
@@ -104,32 +120,13 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = '
   return (
     <div 
       id={adId} 
-      className={`w-full ad-container ${getPositionClasses(position)} ${className}`} 
+      className={`w-full ad-container overflow-hidden transition-all duration-300 ${getContainerClasses(position, hasRendered)} ${className}`} 
       ref={containerRef}
       data-position={normalizedPosition}
-    >
-      {adBlockerDetected ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">Advertisement content blocked</p>
-        </div>
-      ) : hasError ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">Error loading advertisement</p>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">Advertisement unavailable</p>
-        </div>
-      ) : !content ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">Advertisement</p>
-        </div>
-      ) : null}
-    </div>
+    />
   );
 };
 
-// Function to map old position names to normalized ones for database query
 function mapPosition(position: string): string {
   switch (position) {
     case 'header':
@@ -143,21 +140,36 @@ function mapPosition(position: string): string {
   }
 }
 
-const getPositionClasses = (position: string) => {
+const getLoadingHeight = (position: string) => {
+  switch (position) {
+    case 'sidebar':
+      return 'h-24';
+    default:
+      return 'h-16';
+  }
+};
+
+const getContainerClasses = (position: string, hasRendered: boolean) => {
+  const baseClasses = 'bg-transparent rounded-lg';
+  
+  if (!hasRendered) {
+    return baseClasses;
+  }
+  
+  // Only add min-height after content has rendered
   switch (position) {
     case 'top':
     case 'header':
-      return 'min-h-[90px] bg-secondary/10 rounded-lg';
-    case 'sidebar':
-      return 'min-h-[600px] bg-secondary/10 rounded-lg';
-    case 'middle':
-    case 'content':
-      return 'min-h-[250px] bg-secondary/10 rounded-lg';
     case 'bottom':
     case 'footer':
-      return 'min-h-[90px] bg-secondary/10 rounded-lg';
+      return `${baseClasses} min-h-[90px]`;
+    case 'middle':
+    case 'content':
+      return `${baseClasses} min-h-[250px]`;
+    case 'sidebar':
+      return `${baseClasses} min-h-[600px]`;
     default:
-      return '';
+      return baseClasses;
   }
 };
 
