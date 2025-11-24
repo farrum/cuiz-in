@@ -61,7 +61,7 @@ export const useAnswerManagement = (
       const updatedAnswers = [...answers, newAnswer];
       setAnswers(updatedAnswers);
       
-      // Store answer in database with challenge_id
+      // Store answer in database
       const { error: answerError } = await supabase
         .from('quiz_answers')
         .insert({
@@ -69,8 +69,7 @@ export const useAnswerManagement = (
           question_id: currentQuestion.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          points_earned: earnedPoints,
-          challenge_id: challengeId
+          points_earned: earnedPoints
         });
       
       if (answerError) {

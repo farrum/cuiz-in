@@ -155,12 +155,12 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      // Set user context for legacy auth
-      await setUserContext(userData.id);
-
       // Store user data in localStorage
       localStorage.setItem(STORAGE_KEYS.USER_ID, userData.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+      
+      // Set user context for legacy auth RLS
+      await setUserContext(userData.id);
       
       // Log successful login
       await supabase

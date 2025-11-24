@@ -94,8 +94,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: pointsEarned,
-          answered_at: new Date().toISOString(),
-          challenge_id: isChallenge ? window.location.pathname.split('/').pop() : null
+          answered_at: new Date().toISOString()
         });
       }
       

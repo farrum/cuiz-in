@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { setUserContext } from '@/utils/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 
@@ -251,6 +252,9 @@ const UserRegistrationForm: React.FC = () => {
       // Store user data
       localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
+      
+      // Set user context for RLS
+      await setUserContext(authData.user.id);
       
       setTimeout(() => {
         navigate('/login');

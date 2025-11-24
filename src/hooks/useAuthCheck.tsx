@@ -100,7 +100,7 @@ export const useAuthCheck = () => {
     }
     
     if (userId && userName) {
-      // Set user context for legacy auth
+      // Set user context for legacy auth before ANY queries
       try {
         await supabase.rpc('set_user_context', { user_id: userId });
       } catch (err) {
