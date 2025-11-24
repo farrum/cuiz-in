@@ -31,17 +31,32 @@ const SEO: React.FC<SEOProps> = ({
   // Build the page URL
   const pageUrl = canonicalUrl || siteUrl;
   
-  // Build basic schema
-  let schema = {
-    '@context': 'https://schema.org',
-    '@type': schemaType,
-    name: title,
-    description: description,
-    url: pageUrl,
-  };
+  // Build schema based on type
+  let schema;
   
-  // Merge with custom schema data
-  schema = { ...schema, ...schemaData };
+  // For FAQPage, use the provided schema directly (it's already complete)
+  if (schemaType === 'FAQPage' && schemaData && schemaData['@context']) {
+    schema = schemaData;
+  } else if (schemaData && Object.keys(schemaData).length > 0) {
+    // For other types with custom data, build basic schema and merge
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': schemaType,
+      name: title,
+      description: description,
+      url: pageUrl,
+      ...schemaData
+    };
+  } else {
+    // Default schema
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': schemaType,
+      name: title,
+      description: description,
+      url: pageUrl,
+    };
+  }
 
   return (
     <Helmet>
