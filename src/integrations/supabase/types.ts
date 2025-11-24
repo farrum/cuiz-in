@@ -1049,12 +1049,9 @@ export type Database = {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
       }
-      check_admin_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      check_admin_access: { Args: never; Returns: boolean }
       get_ad_performance_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           ad_id: string
           ad_name: string
@@ -1066,16 +1063,10 @@ export type Database = {
           slot_id: string
         }[]
       }
-      get_current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_id: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_daily_ad_reports: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           ad_id: string
           ad_position: string
@@ -1088,18 +1079,9 @@ export type Database = {
         Args: { p_days: number; p_user_id: string }
         Returns: boolean
       }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      regenerate_sitemap: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      set_user_context: {
-        Args: { user_id: string }
-        Returns: undefined
-      }
+      is_current_user_admin: { Args: never; Returns: boolean }
+      regenerate_sitemap: { Args: never; Returns: undefined }
+      set_user_context: { Args: { user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
