@@ -69,7 +69,7 @@ export const useQuizPoints = (
           .from('profiles')
           .select('points')
           .eq('id', userId)
-          .single(),
+          .maybeSingle(),
           
         supabase
           .from('quiz_answers')
@@ -114,6 +114,16 @@ export const useQuizPoints = (
           localStorage.setItem(STORAGE_KEYS.USER_POINTS, pointsValue.toString());
           console.log('User total points set to:', pointsValue);
           hasChanges = true;
+        }
+      } else {
+        // Fallback to localStorage if profile data is not accessible
+        const cachedPoints = localStorage.getItem(STORAGE_KEYS.USER_POINTS);
+        if (cachedPoints) {
+          const pointsValue = Number(cachedPoints);
+          if (pointsValue !== userPoints) {
+            setUserPoints(pointsValue);
+            console.log('Using cached points:', pointsValue);
+          }
         }
       }
 
