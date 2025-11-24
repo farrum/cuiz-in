@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
+import { setUserContext } from '@/utils/authContext';
 
 export const useProfileInfo = () => {
   const navigate = useNavigate();
@@ -20,47 +21,64 @@ export const useProfileInfo = () => {
   // Optimized fetch profile function
   const fetchUserProfile = useCallback(async (storedUserId: string) => {
     try {
+      // Set user context for RLS policies
+      await setUserContext(storedUserId);
+      
       // Select only the fields we need in a single query
       const { data, error } = await supabase
         .from('profiles')
         .select('username, suspended, upi_id, profile_picture, display_name')
         .eq('id', storedUserId)
-        .single();
+        .maybeSingle();
         
       if (error) {
-        throw error;
+        console.error('Error fetching profile:', error);
+        // Don't show error toast, fall back to localStorage
       }
       
       if (data && isMountedRef.current) {
         setUsername(data.display_name || data.username);
-        
-        // Only set suspended to true if the field is explicitly true
-        // This ensures we don't show suspended UI for active accounts
         setSuspended(data.suspended === true);
-        console.log("Account suspension status:", data.suspended);
-        
         setUserUpi(data.upi_id || '');
         
         if (data.profile_picture) {
-          console.log("Profile picture from DB:", data.profile_picture);
           setProfilePicture(data.profile_picture);
           localStorage.setItem('quiz_app_user_avatar', data.profile_picture);
         } else {
           const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
           if (storedAvatar) {
-            console.log("Profile picture from localStorage:", storedAvatar);
             setProfilePicture(storedAvatar);
           }
         }
+      } else if (isMountedRef.current) {
+        // No profile found - fall back to localStorage for legacy users
+        const storedUsername = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+        const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
+        
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
+        if (storedAvatar) {
+          setProfilePicture(storedAvatar);
+        }
+        
+        // Assume not suspended if no profile data
+        setSuspended(false);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Unexpected error fetching user profile:', error);
+      // Fall back to localStorage
       if (isMountedRef.current) {
-        toast({
-          title: "Error",
-          description: "Failed to load profile data.",
-          variant: "destructive"
-        });
+        const storedUsername = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+        const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
+        
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
+        if (storedAvatar) {
+          setProfilePicture(storedAvatar);
+        }
+        setSuspended(false);
       }
     } finally {
       if (isMountedRef.current) {
