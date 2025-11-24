@@ -75,7 +75,6 @@ export const useQuizPoints = (
           .from('quiz_answers')
           .select('question_id', { count: 'exact', head: false })
           .eq('user_id', userId)
-          .is('challenge_id', null)
       ]);
       
       let hasChanges = false;
