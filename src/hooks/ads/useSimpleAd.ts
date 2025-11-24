@@ -9,6 +9,12 @@ export const useSimpleAd = (position: string) => {
 
   useEffect(() => {
     const fetchAd = async () => {
+      const timeoutId = setTimeout(() => {
+        console.log(`Ad fetch timeout for position: ${position}`);
+        setIsLoading(false);
+        setError('Ad loading timeout');
+      }, 5000);
+      
       try {
         setIsLoading(true);
         setError(null);
@@ -43,6 +49,7 @@ export const useSimpleAd = (position: string) => {
                 console.log(`Using cached ad for position: ${position} (${selectedAd.name || 'Unnamed ad'})`);
                 const sanitizedCode = sanitizeAdCode(selectedAd.code);
                 setContent(sanitizedCode);
+                clearTimeout(timeoutId);
                 setIsLoading(false);
                 return;
               }
@@ -107,13 +114,14 @@ export const useSimpleAd = (position: string) => {
             
             if (selectedAd?.code) {
               console.log(`Selected ad: ${selectedAd.name || selectedAd.id} for position: ${position}`);
-              // Sanitize ad code to prevent common issues
               const sanitizedCode = sanitizeAdCode(selectedAd.code);
               setContent(sanitizedCode);
+              clearTimeout(timeoutId);
             } else {
               console.log('Selected ad has no code content');
               setContent(null);
               setError('No ad content available');
+              clearTimeout(timeoutId);
             }
           } else {
             console.log(`No ads available for position: ${position}`);
@@ -128,6 +136,7 @@ export const useSimpleAd = (position: string) => {
         console.error('Error in ad fetch:', err);
         setContent(null);
         setError(`Unexpected error: ${err}`);
+        clearTimeout(timeoutId);
       } finally {
         setIsLoading(false);
       }
