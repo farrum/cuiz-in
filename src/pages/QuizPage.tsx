@@ -47,11 +47,22 @@ const QuizPage: React.FC = () => {
   useMonthlyReset();
   
   useEffect(() => {
-    checkSuspensionStatus().then(success => {
+    const initializeQuiz = async () => {
+      // First, set user context for legacy users
+      const userId = localStorage.getItem('cuizin_user_id');
+      if (userId) {
+        const { setUserContext } = await import('@/utils/authContext');
+        await setUserContext(userId);
+      }
+      
+      // Then check suspension and load data
+      const success = await checkSuspensionStatus();
       if (success) {
         loadInitialData();
       }
-    });
+    };
+    
+    initializeQuiz();
   }, []);
   
   if (isSuspended) {

@@ -22,14 +22,22 @@ export const useQuizSuspension = () => {
         .from('profiles')
         .select('suspended')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
+      // If no profile data or error, assume NOT suspended (allow quiz to continue)
       if (error) {
         console.error('Error checking suspension status:', error);
-        return false;
+        setIsSuspended(false);
+        return true; // Allow quiz to continue
       }
       
-      if (data && data.suspended) {
+      if (!data) {
+        console.log('No profile data found, assuming not suspended');
+        setIsSuspended(false);
+        return true; // Allow quiz to continue
+      }
+      
+      if (data.suspended) {
         setIsSuspended(true);
         navigate('/profile', { replace: true });
         toast({
@@ -44,7 +52,8 @@ export const useQuizSuspension = () => {
       return true;
     } catch (error) {
       console.error('Failed to check suspension status:', error);
-      return false;
+      setIsSuspended(false);
+      return true; // Allow quiz to continue on error
     }
   };
   
