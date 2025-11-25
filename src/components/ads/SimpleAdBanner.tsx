@@ -118,12 +118,12 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
   }
 
   return (
-    /*  <div 
-      id={adId} 
-      className={`w-full ad-container overflow-hidden transition-all duration-300 ${getContainerClasses(position, hasRendered)} ${className}`} 
+    <div
+      id={adId}
+      className={`w-full ad-container overflow-hidden transition-all duration-300 ${getContainerClasses(position, hasRendered)} ${className}`}
       ref={containerRef}
       data-position={normalizedPosition}
-    /> */
+    />
   );
 };
 
