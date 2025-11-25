@@ -43,6 +43,15 @@ const AdminPage: React.FC = () => {
       
       if (isAdminAuth) {
         const adminUserId = '066otqbbqac7'; // Existing admin user
+        
+        // Ensure user ID is set in localStorage for edge function calls
+        const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (!storedUserId) {
+          localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
+          localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
+          console.log('Set admin user ID in localStorage:', adminUserId);
+        }
+        
         await setUserContext(adminUserId);
         console.log('Admin context initialized for user:', adminUserId);
       }

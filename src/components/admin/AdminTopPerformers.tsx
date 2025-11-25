@@ -31,106 +31,37 @@ const AdminTopPerformers: React.FC = () => {
     console.log("Fetching top performers...");
 
     try {
-      // Get current date info
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+      const adminUserId = localStorage.getItem('quiz_app_user_id');
       
-      console.log("Today:", today, "Current month:", currentMonth);
-      
-      // Fetch daily top performers
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_points')
-        .select('user_id, points')
-        .eq('date', today)
-        .order('points', { ascending: false })
-        .limit(10);
-        
-      if (dailyError) {
-        console.error('Error fetching daily top performers:', dailyError);
-        throw dailyError;
+      if (!adminUserId) {
+        throw new Error('Admin user ID not found');
       }
-      
-      console.log("Daily data:", dailyData);
-      
-      // Fetch monthly top performers
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .from('monthly_points')
-        .select('user_id, points')
-        .eq('month', currentMonth)
-        .order('points', { ascending: false })
-        .limit(10);
-        
-      if (monthlyError) {
-        console.error('Error fetching monthly top performers:', monthlyError);
-        throw monthlyError;
-      }
-      
-      console.log("Monthly data:", monthlyData);
-      
-      // If both are empty, no need to query usernames
-      if ((!dailyData || dailyData.length === 0) && (!monthlyData || monthlyData.length === 0)) {
-        setDailyTopUsers([]);
-        setMonthlyTopUsers([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Get all unique user IDs
-      const allUserIds = [...new Set([
-        ...(dailyData?.map(item => item.user_id) || []),
-        ...(monthlyData?.map(item => item.user_id) || [])
-      ])];
-      
-      console.log("All user IDs:", allUserIds);
-      
-      if (allUserIds.length === 0) {
-        setDailyTopUsers([]);
-        setMonthlyTopUsers([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Fetch all usernames in one query
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .in('id', allUserIds);
-        
-      if (profilesError) {
-        console.error('Error fetching profile data:', profilesError);
-        throw profilesError;
-      }
-      
-      console.log("Profiles data:", profiles);
-      
-      // Create a map of user IDs to usernames
-      const usernameMap: Record<string, string> = {};
-      profiles?.forEach(profile => {
-        usernameMap[profile.id] = profile.username;
+
+      // Fetch daily performers
+      const { data: dailyData, error: dailyError } = await supabase.functions.invoke('admin-get-reports', {
+        body: { 
+          adminUserId,
+          reportType: 'daily-top-performers'
+        }
       });
+
+      if (dailyError) throw dailyError;
       
-      // Transform daily data
-      const transformedDailyData = dailyData?.map((item, index) => ({
-        userId: item.user_id,
-        username: usernameMap[item.user_id] || 'Unknown User',
-        points: Number(item.points),
-        rank: index + 1
-      })) || [];
+      // Fetch monthly performers
+      const { data: monthlyData, error: monthlyError } = await supabase.functions.invoke('admin-get-reports', {
+        body: { 
+          adminUserId,
+          reportType: 'monthly-top-performers'
+        }
+      });
+
+      if (monthlyError) throw monthlyError;
+
+      console.log("Daily performers:", dailyData?.performers);
+      console.log("Monthly performers:", monthlyData?.performers);
       
-      // Transform monthly data
-      const transformedMonthlyData = monthlyData?.map((item, index) => ({
-        userId: item.user_id,
-        username: usernameMap[item.user_id] || 'Unknown User',
-        points: Number(item.points),
-        rank: index + 1
-      })) || [];
-      
-      console.log("Transformed daily data:", transformedDailyData);
-      console.log("Transformed monthly data:", transformedMonthlyData);
-      
-      setDailyTopUsers(transformedDailyData);
-      setMonthlyTopUsers(transformedMonthlyData);
+      setDailyTopUsers(dailyData?.performers || []);
+      setMonthlyTopUsers(monthlyData?.performers || []);
     } catch (error) {
       console.error('Error in fetchTopPerformers:', error);
       toast({
