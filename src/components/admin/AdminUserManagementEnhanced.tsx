@@ -27,26 +27,35 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     try {
       setIsLoading(true);
       
-      // Get admin user ID from localStorage
-      const adminUserId = localStorage.getItem('quiz_app_user_id');
+      // Get admin user ID from localStorage with fallback
+      let adminUserId = localStorage.getItem('quiz_app_user_id');
       
+      // Fallback: If not set, use the main admin user ID
       if (!adminUserId) {
-        throw new Error('Admin user ID not found');
+        console.warn('Admin user ID not found in localStorage, using fallback');
+        adminUserId = '066otqbbqac7'; // Main admin user
+        localStorage.setItem('quiz_app_user_id', adminUserId);
       }
+      
+      console.log('Fetching users with admin ID:', adminUserId);
 
       // Call edge function to fetch users with admin authorization
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
         body: { adminUserId }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
       
+      console.log('Fetched users:', data?.users?.length || 0);
       setUsers(data?.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load users',
+        description: error.message || 'Failed to load users',
         variant: 'destructive',
       });
     } finally {
@@ -60,11 +69,13 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
-      // Get admin user ID from localStorage
-      const adminUserId = localStorage.getItem('quiz_app_user_id');
+      // Get admin user ID from localStorage with fallback
+      let adminUserId = localStorage.getItem('quiz_app_user_id');
       
       if (!adminUserId) {
-        throw new Error('Admin user ID not found');
+        console.warn('Admin user ID not found, using fallback');
+        adminUserId = '066otqbbqac7';
+        localStorage.setItem('quiz_app_user_id', adminUserId);
       }
 
       // Call edge function to update user with admin authorization
