@@ -26,13 +26,22 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Get admin user ID from localStorage
+      const adminUserId = localStorage.getItem('quiz_app_user_id');
+      
+      if (!adminUserId) {
+        throw new Error('Admin user ID not found');
+      }
+
+      // Call edge function to fetch users with admin authorization
+      const { data, error } = await supabase.functions.invoke('admin-get-users', {
+        body: { adminUserId }
+      });
 
       if (error) throw error;
-      setUsers(data || []);
+      
+      setUsers(data?.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -51,10 +60,21 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ suspended: !currentStatus })
-        .eq('id', userId);
+      // Get admin user ID from localStorage
+      const adminUserId = localStorage.getItem('quiz_app_user_id');
+      
+      if (!adminUserId) {
+        throw new Error('Admin user ID not found');
+      }
+
+      // Call edge function to update user with admin authorization
+      const { error } = await supabase.functions.invoke('admin-update-user', {
+        body: { 
+          adminUserId,
+          userId,
+          updates: { suspended: !currentStatus }
+        }
+      });
 
       if (error) throw error;
 
