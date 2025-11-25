@@ -42,21 +42,48 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   const fetchTopPlayers = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, points')
-        .order('points', { ascending: false })
-        .limit(limit);
+      
+      // Check if user is admin
+      const isAdmin = localStorage.getItem('quiz_app_admin_auth') === 'true';
+      
+      if (isAdmin) {
+        // Use edge function for admins
+        const adminUserId = localStorage.getItem('quiz_app_user_id');
+        const { data, error } = await supabase.functions.invoke('admin-get-reports', {
+          body: { 
+            adminUserId,
+            reportType: 'top-players',
+            limit 
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const formattedPlayers = data.map(player => ({
-        username: player.username,
-        points: Number(player.points || 0),
-        isCurrentUser: player.id === currentUserId
-      }));
+        const formattedPlayers = (data?.players || []).map((player: any) => ({
+          username: player.username,
+          points: Number(player.points || 0),
+          isCurrentUser: player.id === currentUserId
+        }));
 
-      setPlayers(formattedPlayers);
+        setPlayers(formattedPlayers);
+      } else {
+        // Regular user query (RLS should handle access)
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, points')
+          .order('points', { ascending: false })
+          .limit(limit);
+
+        if (error) throw error;
+
+        const formattedPlayers = data.map(player => ({
+          username: player.username,
+          points: Number(player.points || 0),
+          isCurrentUser: player.id === currentUserId
+        }));
+
+        setPlayers(formattedPlayers);
+      }
     } catch (error) {
       console.error('Error fetching top players:', error);
     } finally {

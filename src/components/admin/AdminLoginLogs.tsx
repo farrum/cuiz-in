@@ -32,49 +32,48 @@ const AdminLoginLogs: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load login logs from Supabase
     const fetchLoginLogs = async () => {
       setIsLoading(true);
       try {
-        // Get login logs from Supabase
-        const { data, error } = await supabase
-          .from('login_logs')
-          .select('*')
-          .order('login_time', { ascending: false });
-          
-        if (error) {
-          console.error('Error fetching login logs:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load login logs from database",
-            variant: "destructive"
-          });
-          
-          // Fall back to localStorage if Supabase fails
-          const savedLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
-          setLoginLogs(savedLogs);
-          setFilteredLogs(savedLogs);
-        } else if (data) {
-          // Transform Supabase data to match our interface
-          const transformedLogs: LoginLog[] = data.map(log => ({
-            id: log.id,
-            username: log.username,
-            date: log.login_time,
-            successful: log.successful !== undefined ? log.successful : true,
-            ip: log.ip_address || '',
-            userAgent: log.device || ''
-          }));
-          
-          setLoginLogs(transformedLogs);
-          setFilteredLogs(transformedLogs);
-          
-          // Also sync with localStorage for backward compatibility
-          localStorage.setItem('quiz_app_login_log', JSON.stringify(transformedLogs));
+        const adminUserId = localStorage.getItem('quiz_app_user_id');
+        
+        if (!adminUserId) {
+          throw new Error('Admin user ID not found');
         }
+
+        // Call edge function to fetch logs with admin authorization
+        const { data, error } = await supabase.functions.invoke('admin-get-login-logs', {
+          body: { adminUserId }
+        });
+
+        if (error) throw error;
+        
+        const logs = data?.logs || [];
+        
+        // Transform to match our interface
+        const transformedLogs: LoginLog[] = logs.map((log: any) => ({
+          id: log.id,
+          username: log.username,
+          date: log.login_time,
+          successful: log.successful !== undefined ? log.successful : true,
+          ip: log.ip_address || '',
+          userAgent: log.device || ''
+        }));
+        
+        setLoginLogs(transformedLogs);
+        setFilteredLogs(transformedLogs);
+        
+        // Sync with localStorage for backward compatibility
+        localStorage.setItem('quiz_app_login_log', JSON.stringify(transformedLogs));
       } catch (err) {
         console.error('Failed to fetch login logs:', err);
+        toast({
+          title: "Error",
+          description: "Failed to load login logs",
+          variant: "destructive"
+        });
         
-        // Fall back to localStorage if Supabase fails
+        // Fall back to localStorage if edge function fails
         const savedLogs = JSON.parse(localStorage.getItem('quiz_app_login_log') || '[]');
         setLoginLogs(savedLogs);
         setFilteredLogs(savedLogs);

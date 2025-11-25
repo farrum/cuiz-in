@@ -92,6 +92,8 @@ const AdminLogin: React.FC = () => {
         
         // Store only essential admin data in localStorage - minimize caching
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
         
         // Log the successful login
         try {
@@ -142,6 +144,8 @@ const AdminLogin: React.FC = () => {
         
         // Store only essential admin data in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        localStorage.setItem(STORAGE_KEYS.USER_ID, data.user.id);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
         
         // Log the successful login
         try {

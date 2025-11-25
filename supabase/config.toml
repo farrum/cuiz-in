@@ -6,6 +6,12 @@ verify_jwt = false
 [functions.admin-update-user]
 verify_jwt = false
 
+[functions.admin-get-login-logs]
+verify_jwt = false
+
+[functions.admin-get-reports]
+verify_jwt = false
+
 [functions.daily-blog-generator]
 verify_jwt = false
 
