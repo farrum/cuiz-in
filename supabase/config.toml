@@ -1,1 +1,13 @@
 project_id = "pgywvtphfidouakypdno"
+
+[functions.admin-get-users]
+verify_jwt = false
+
+[functions.admin-update-user]
+verify_jwt = false
+
+[functions.daily-blog-generator]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
