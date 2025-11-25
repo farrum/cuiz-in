@@ -86,14 +86,21 @@ const AdminLogin: React.FC = () => {
         }
         
         // Set user context for RLS policies using existing admin user
-        const adminUserId = '066otqbbqac7'; // Existing admin user in database
+        const adminUserId = '066otqbbqac7'; // Main admin user (player) in database
         await setUserContext(adminUserId);
         console.log('User context set for admin:', adminUserId);
         
-        // Store only essential admin data in localStorage - minimize caching
+        // Store admin data in localStorage
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, ADMIN_CREDENTIALS.username);
         localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'player');
+        
+        console.log('Admin localStorage set:', {
+          adminAuth: 'true',
+          userId: adminUserId,
+          username: 'player'
+        });
         
         // Log the successful login
         try {

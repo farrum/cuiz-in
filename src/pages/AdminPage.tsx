@@ -38,17 +38,16 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     const initializeAdmin = async () => {
-      // Set user context for RLS policies if admin auth is active
       const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
       
       if (isAdminAuth) {
-        const adminUserId = '066otqbbqac7'; // Existing admin user
+        const adminUserId = '066otqbbqac7'; // Main admin user
         
-        // Ensure user ID is set in localStorage for edge function calls
+        // Ensure user ID is always set in localStorage
         const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (!storedUserId) {
+        if (!storedUserId || storedUserId !== adminUserId) {
           localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
-          localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
+          localStorage.setItem(STORAGE_KEYS.USER_NAME, 'player');
           console.log('Set admin user ID in localStorage:', adminUserId);
         }
         
