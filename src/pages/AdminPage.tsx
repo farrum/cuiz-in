@@ -26,6 +26,7 @@ import AdminNavbar from '@/components/admin/AdminNavbar';
 import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
 import { ContentPartnerships } from '@/components/admin/partnerships';
+import { setUserContext } from '@/utils/authContext';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -36,7 +37,16 @@ const AdminPage: React.FC = () => {
   const [adminName, setAdminName] = useState<string>('Admin');
 
   useEffect(() => {
-    const fetchAdminInfo = async () => {
+    const initializeAdmin = async () => {
+      // Set user context for RLS policies if admin auth is active
+      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+      
+      if (isAdminAuth) {
+        const adminUserId = '066otqbbqac7'; // Existing admin user
+        await setUserContext(adminUserId);
+        console.log('Admin context initialized for user:', adminUserId);
+      }
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const { data } = await supabase
@@ -51,7 +61,7 @@ const AdminPage: React.FC = () => {
       }
     };
     
-    fetchAdminInfo();
+    initializeAdmin();
   }, []);
 
   useEffect(() => {

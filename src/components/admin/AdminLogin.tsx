@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { setUserContext } from '@/utils/authContext';
 
 // Admin credentials
 const ADMIN_CREDENTIALS = {
@@ -83,6 +84,11 @@ const AdminLogin: React.FC = () => {
           console.error('Error updating Supabase admin status:', err);
           // Continue with local auth
         }
+        
+        // Set user context for RLS policies using existing admin user
+        const adminUserId = '066otqbbqac7'; // Existing admin user in database
+        await setUserContext(adminUserId);
+        console.log('User context set for admin:', adminUserId);
         
         // Store only essential admin data in localStorage - minimize caching
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
