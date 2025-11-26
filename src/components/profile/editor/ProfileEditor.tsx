@@ -72,7 +72,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
-          <Button type="submit" onClick={() => document.querySelector('form')?.requestSubmit()}>
+          <Button type="submit" form="profile-edit-form">
             <Save className="h-4 w-4 mr-2" />
             Save Changes
           </Button>

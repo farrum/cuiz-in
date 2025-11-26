@@ -50,7 +50,7 @@ export const ProfileEditorForm: React.FC<ProfileEditorFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form id="profile-edit-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-col items-center">
           <ProfilePictureSelector 
             currentAvatar={selectedAvatar || profilePicture} 
