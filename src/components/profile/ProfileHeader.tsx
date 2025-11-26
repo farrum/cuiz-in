@@ -7,15 +7,26 @@ import { useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ProfileEditor from './editor/ProfileEditor';
 
 interface ProfileHeaderProps {
   username: string | null;
   profilePicture: string;
+  userId: string | null;
+  userUpi?: string;
+  onProfileUpdate?: (data: {
+    displayName?: string;
+    upiId?: string;
+    profilePicture?: string;
+  }) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   username,
   profilePicture,
+  userId,
+  userUpi = '',
+  onProfileUpdate,
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,9 +81,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold">{username}</h2>
-              <Button variant="ghost" size="sm" className="h-8">
-                Edit
-              </Button>
+              {userId && onProfileUpdate && (
+                <ProfileEditor
+                  userName={username || ''}
+                  userUpi={userUpi}
+                  userId={userId}
+                  profilePicture={profilePicture}
+                  onProfileUpdate={onProfileUpdate}
+                />
+              )}
             </div>
             <p className="text-sm text-muted-foreground">Joined {joinedDate}</p>
           </div>

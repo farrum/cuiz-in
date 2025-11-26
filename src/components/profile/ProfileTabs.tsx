@@ -35,6 +35,9 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
       <ProfileHeader
         username={username}
         profilePicture={profilePicture}
+        userId={userId}
+        userUpi={userUpi}
+        onProfileUpdate={onProfileUpdate}
       />
       
       <PointsDisplay animateUpdate className="mb-6" />
