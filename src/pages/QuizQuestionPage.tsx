@@ -221,13 +221,18 @@ const QuizQuestionPage: React.FC = () => {
     : 'Play our interactive quiz game and challenge yourself with interesting questions across various categories.';
 
   const categorySlug = question ? question.category.toLowerCase().replace(/\s+/g, '-') : '';
+  
+  // Create consistent slug for canonical URL (matches sitemap generation)
+  const canonicalSlug = question 
+    ? question.question.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 80)
+    : '';
 
   return (
     <PageLayout>
       <SEO
         title={pageTitle}
         description={pageDescription}
-        canonicalUrl={question ? `https://cuiz.in/quiz/question/${questionId}/${questionSlug}` : undefined}
+        canonicalUrl={question && canonicalSlug ? `https://cuiz.in/quiz/question/${questionId}/${canonicalSlug}` : undefined}
         schemaType="Quiz"
         schemaData={generateQuestionSchema()}
         keywords={keywords}

@@ -118,13 +118,18 @@ const AnswerPage: React.FC = () => {
 
   const categorySlug = question ? question.category.toLowerCase().replace(/\s+/g, '-') : '';
   const questionSlug = question ? question.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') : '';
+  
+  // Create consistent slug for canonical URL
+  const answerSlug = selectedOption 
+    ? selectedOption.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 50)
+    : '';
 
   return (
     <PageLayout>
       <SEO
         title={pageTitle}
         description={pageDescription}
-        canonicalUrl={question ? `https://cuiz.in/answer/${questionId}/${selectedOption}` : undefined}
+        canonicalUrl={question && answerSlug ? `https://cuiz.in/answer/${questionId}/${answerSlug}` : undefined}
         schemaType="QAPage"
         schemaData={generateAnswerSchema()}
         keywords={keywords}
