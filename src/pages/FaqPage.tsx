@@ -1,11 +1,21 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import { useFaqs } from '@/hooks/useFaqs';
 import { FaqList } from '@/components/faq/FaqList';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const FaqPage: React.FC = () => {
   const { faqs, isLoading } = useFaqs();
@@ -24,6 +34,11 @@ const FaqPage: React.FC = () => {
     }))
   } : undefined;
 
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.faq()
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
@@ -34,10 +49,26 @@ const FaqPage: React.FC = () => {
         schemaData={faqSchema}
         keywords={['FAQ', 'quiz game help', 'CuizIN questions', 'rewards system', 'how to play quiz', 'earn money online']}
       />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>FAQ</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Top Ad Banner */}
         <div className="mb-8">
           <SimpleAdBanner position="header" />

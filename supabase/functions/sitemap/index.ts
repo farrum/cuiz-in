@@ -107,8 +107,31 @@ serve(async (req) => {
       });
     }
 
-    // NOTE: Individual FAQ pages don't exist (only /faq), so we don't generate FAQ URLs
-    // This prevents soft 404 errors
+    // Fetch all published FAQs for individual FAQ pages
+    const { data: faqs } = await supabase
+      .from('faqs')
+      .select('id, question, updated_at, created_at')
+      .eq('is_published', true);
+
+    if (faqs) {
+      faqs.forEach(faq => {
+        const slug = createSlug(faq.question, 60);
+        if (slug) {
+          const lastMod = faq.updated_at 
+            ? new Date(faq.updated_at).toISOString().split('T')[0]
+            : faq.created_at 
+              ? new Date(faq.created_at).toISOString().split('T')[0]
+              : today;
+              
+          standardUrls.push({
+            loc: `https://cuiz.in/faq/${faq.id}/${slug}`,
+            lastmod: lastMod,
+            changefreq: 'monthly',
+            priority: '0.7'
+          });
+        }
+      });
+    }
 
     // Fetch quiz questions for question pages
     const { data: questions, error } = await supabase

@@ -26,6 +26,7 @@ import TermsPage from '@/pages/TermsPage';
 import DisclaimerPage from '@/pages/DisclaimerPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import FaqPage from '@/pages/FaqPage';
+import FaqDetailPage from '@/pages/FaqDetailPage';
 import BlogPage from '@/pages/BlogPage';
 import BlogPostPage from '@/pages/BlogPostPage';
 import CategoriesPage from '@/pages/CategoriesPage';
@@ -228,6 +229,7 @@ function App() {
               
               {/* New SEO Content Pages */}
               <Route path="/faq" element={<FaqPage />} />
+              <Route path="/faq/:id/:slug" element={<FaqDetailPage />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:postSlug" element={<BlogPostPage />} />
               <Route path="/categories" element={<CategoriesPage />} />

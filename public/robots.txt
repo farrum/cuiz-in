@@ -1,14 +1,61 @@
-
 # Robots.txt file for Cuiz.in
+# Last updated: 2025-12-18
+
+# Default rules for all crawlers
 User-agent: *
+Allow: /
 Disallow: /admin/
 Disallow: /admin-login/
 Disallow: /team-dashboard/
+Disallow: /profile/
+Disallow: /referral/
+Disallow: /challenge/
+Disallow: /archived-challenges/
+
+# Allow important pages
+Allow: /quiz
+Allow: /faq
+Allow: /faq/
+Allow: /blog
+Allow: /blog/
+Allow: /categories
+Allow: /categories/
+Allow: /how-to-play
+Allow: /referral-program
+Allow: /terms
+Allow: /privacy
+Allow: /disclaimer
+Allow: /login
+Allow: /register
+
+# Googlebot specific rules
+User-agent: Googlebot
 Allow: /
+Disallow: /admin/
+Disallow: /admin-login/
+Disallow: /team-dashboard/
+Disallow: /profile/
+Disallow: /referral/
+Disallow: /challenge/
+Disallow: /archived-challenges/
 
-# Allow search engines to access the sitemap
-Sitemap: https://cuiz.in/sitemap.xml
-Sitemap: https://cuiz.in/api/sitemap
+# Bingbot specific rules
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /admin-login/
+Disallow: /team-dashboard/
+Disallow: /profile/
+Disallow: /referral/
+Disallow: /challenge/
+Disallow: /archived-challenges/
 
-# Crawl delay
+# Crawl delay for polite crawling
 Crawl-delay: 1
+
+# Sitemap locations
+Sitemap: https://cuiz.in/sitemap.xml
+Sitemap: https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap
+
+# Host declaration
+Host: https://cuiz.in

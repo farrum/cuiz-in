@@ -1,6 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -14,6 +15,14 @@ import GameModeSelector from '@/components/quiz/GameModeSelector';
 import SEOKeywords from '@/components/SEOKeywords';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
@@ -99,6 +108,11 @@ const QuizPage: React.FC = () => {
     'time attack quiz', 'quiz rewards', 'quiz competition'
   ];
 
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.quiz()
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
@@ -109,11 +123,27 @@ const QuizPage: React.FC = () => {
         schemaData={quizSchema}
         keywords={quizKeywords}
       />
+      <BreadcrumbSchema items={breadcrumbs} />
       <SEOKeywords customKeywords={quizKeywords} />
       <Header />
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Quiz</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        
         <SimpleAdBanner position="top" className="mb-6" />
         
         <div className="flex justify-between items-center mb-6">
