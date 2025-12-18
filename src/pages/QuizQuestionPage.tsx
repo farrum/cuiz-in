@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import { extractKeywords } from '@/services/keywordService';
 import PageLayout from '@/components/layout/PageLayout';
 import QuizCard from '@/components/QuizCard';
@@ -227,6 +228,14 @@ const QuizQuestionPage: React.FC = () => {
     ? question.question.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 80)
     : '';
 
+  // JSON-LD breadcrumbs
+  const breadcrumbs = question ? [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.quiz(),
+    createBreadcrumbs.custom(question.category, `/categories/${categorySlug}`),
+    createBreadcrumbs.custom('Question', `/quiz/question/${questionId}/${canonicalSlug}`)
+  ] : [];
+
   return (
     <PageLayout>
       <SEO
@@ -237,6 +246,7 @@ const QuizQuestionPage: React.FC = () => {
         schemaData={generateQuestionSchema()}
         keywords={keywords}
       />
+      {question && <BreadcrumbSchema items={breadcrumbs} />}
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
         {/* Breadcrumb Navigation */}

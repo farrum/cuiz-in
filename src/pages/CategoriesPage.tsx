@@ -2,11 +2,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import PageLayout from '@/components/layout/PageLayout';
 import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { categoriesArray } from '@/utils/categoryData';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const CategoriesPage: React.FC = () => {
   // Generate schema.org structured data
@@ -25,6 +34,11 @@ const CategoriesPage: React.FC = () => {
     }))
   };
 
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.categories()
+  ];
+
   return (
     <>
       <SEO
@@ -34,10 +48,26 @@ const CategoriesPage: React.FC = () => {
         schemaType="WebPage"
         schemaData={categorySchema}
       />
+      <BreadcrumbSchema items={breadcrumbs} />
       <PageLayout>
         <NewsTicker className="mt-16" />
         
         <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
+          {/* Visual Breadcrumb */}
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Categories</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
           {/* Top Ad Banner */}
           <div className="mb-8">
             <SimpleAdBanner position="header" />
