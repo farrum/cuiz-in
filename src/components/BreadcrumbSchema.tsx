@@ -53,6 +53,10 @@ export const createBreadcrumbs = {
   
   categories: (): BreadcrumbItem => ({ name: 'Categories', url: 'https://cuiz.in/categories' }),
   
+  howToPlay: (): BreadcrumbItem => ({ name: 'How to Play', url: 'https://cuiz.in/how-to-play' }),
+  
+  referral: (): BreadcrumbItem => ({ name: 'Referral Program', url: 'https://cuiz.in/referral-program' }),
+  
   custom: (name: string, path: string): BreadcrumbItem => ({ 
     name, 
     url: `https://cuiz.in${path}` 

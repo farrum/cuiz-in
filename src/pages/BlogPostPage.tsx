@@ -349,6 +349,25 @@ const BlogPostPage: React.FC = () => {
               ))}
           </div>
         </div>
+
+        {/* Internal Links Section */}
+        <section className="mt-12 p-6 bg-muted/30 rounded-lg">
+          <h2 className="text-lg font-semibold mb-4">Explore CuizIN</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Link to="/quiz" className="block p-4 bg-card rounded-lg border hover:border-primary/50 transition-colors">
+              <h3 className="font-medium text-primary mb-1">Play Quiz</h3>
+              <p className="text-sm text-muted-foreground">Test your knowledge now</p>
+            </Link>
+            <Link to="/categories" className="block p-4 bg-card rounded-lg border hover:border-primary/50 transition-colors">
+              <h3 className="font-medium text-primary mb-1">Browse Categories</h3>
+              <p className="text-sm text-muted-foreground">Find quizzes by topic</p>
+            </Link>
+            <Link to="/faq" className="block p-4 bg-card rounded-lg border hover:border-primary/50 transition-colors">
+              <h3 className="font-medium text-primary mb-1">FAQ</h3>
+              <p className="text-sm text-muted-foreground">Get answers to your questions</p>
+            </Link>
+          </div>
+        </section>
         
         {/* Bottom Ad Banner */}
         <div className="mt-12">

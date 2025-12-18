@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -15,6 +16,14 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const CategoryDetailPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -92,6 +101,12 @@ const CategoryDetailPage: React.FC = () => {
     hard: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
   };
 
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.categories(),
+    createBreadcrumbs.custom(category.name, `/categories/${categorySlug}`)
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
@@ -101,14 +116,31 @@ const CategoryDetailPage: React.FC = () => {
         schemaType="WebPage"
         schemaData={categorySchema}
       />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
-        <Link to="/categories" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Categories
-        </Link>
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/categories">Categories</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{category.name}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         
         <div className="flex items-center gap-4 mb-6">
           <div className="text-4xl">{category.icon}</div>
