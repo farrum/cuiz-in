@@ -51,6 +51,10 @@ export const sitemapService = {
     const blogUrls = await sitemapService.generateBlogUrls();
     standardUrls.push(...blogUrls);
 
+    // Generate FAQ URLs
+    const faqUrls = await sitemapService.generateFaqUrls();
+    standardUrls.push(...faqUrls);
+
     // Generate question URLs
     const questionUrls = await sitemapService.generateQuestionUrls();
     standardUrls.push(...questionUrls);
@@ -128,6 +132,44 @@ export const sitemapService = {
         });
     } catch (error) {
       console.error('Error generating blog URLs:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Generate FAQ page URLs from database
+   */
+  generateFaqUrls: async (): Promise<SitemapEntry[]> => {
+    try {
+      const { data: faqs } = await supabase
+        .from('faqs')
+        .select('id, question, created_at, updated_at')
+        .eq('is_published', true);
+
+      if (!faqs) return [];
+      const today = new Date().toISOString().split('T')[0];
+
+      return faqs
+        .map(faq => {
+          const slug = createSlug(faq.question, 60);
+          if (!slug) return null;
+          
+          const lastMod = faq.updated_at 
+            ? new Date(faq.updated_at).toISOString().split('T')[0]
+            : faq.created_at 
+              ? new Date(faq.created_at).toISOString().split('T')[0]
+              : today;
+              
+          return {
+            loc: `https://cuiz.in/faq/${faq.id}/${slug}`,
+            lastmod: lastMod,
+            changefreq: 'monthly',
+            priority: '0.7'
+          };
+        })
+        .filter((url): url is SitemapEntry => url !== null);
+    } catch (error) {
+      console.error('Error generating FAQ URLs:', error);
       return [];
     }
   },

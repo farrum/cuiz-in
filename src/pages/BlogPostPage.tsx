@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
@@ -9,6 +10,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 // Sample blog posts data - in a real app, this would come from a database
 const blogPosts = [
@@ -207,6 +216,12 @@ const BlogPostPage: React.FC = () => {
     }
   };
 
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.blog(),
+    createBreadcrumbs.custom(post.title.substring(0, 40) + (post.title.length > 40 ? '...' : ''), `/blog/${post.slug}`)
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
@@ -217,10 +232,32 @@ const BlogPostPage: React.FC = () => {
         schemaType="WebPage"
         schemaData={blogPostSchema}
       />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       <NewsTicker className="mt-16" />
       
       <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/blog">Blog</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{post.title.substring(0, 30)}...</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Top Ad Banner */}
         <div className="mb-6">
           <SimpleAdBanner position="header" />

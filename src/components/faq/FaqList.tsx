@@ -1,6 +1,7 @@
-
+import { Link } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ExternalLink } from 'lucide-react';
 
 interface Faq {
   id: string;
@@ -13,6 +14,17 @@ interface FaqListProps {
   faqs: Faq[];
   isLoading: boolean;
 }
+
+const createSlug = (text: string): string => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 60);
+};
 
 export const FaqList = ({ faqs, isLoading }: FaqListProps) => {
   if (isLoading) {
@@ -36,7 +48,13 @@ export const FaqList = ({ faqs, isLoading }: FaqListProps) => {
             {item.question}
           </AccordionTrigger>
           <AccordionContent className="text-muted-foreground">
-            {item.answer}
+            <p className="mb-3">{item.answer}</p>
+            <Link 
+              to={`/faq/${item.id}/${createSlug(item.question)}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              Read more <ExternalLink className="h-3 w-3" />
+            </Link>
           </AccordionContent>
         </AccordionItem>
       ))}
