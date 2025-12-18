@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 interface SitemapEntry {
@@ -8,101 +7,45 @@ interface SitemapEntry {
   priority: string;
 }
 
+// Consistent slug generation function - matches edge function
+function createSlug(text: string, maxLength: number = 80): string {
+  if (!text) return '';
+  
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove non-word chars
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+    .substring(0, maxLength);
+}
+
 export const sitemapService = {
   /**
    * Generate a complete sitemap with all current content
    */
   generateCompleteSitemap: async (): Promise<string> => {
     console.log('Generating complete sitemap...');
+    const today = new Date().toISOString().split('T')[0];
     
     const standardUrls: SitemapEntry[] = [
-      {
-        loc: 'https://cuiz.in/',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '1.0'
-      },
-      {
-        loc: 'https://cuiz.in/quiz',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.9'
-      },
-      {
-        loc: 'https://cuiz.in/categories',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.9'
-      },
-      {
-        loc: 'https://cuiz.in/blog',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'daily',
-        priority: '0.9'
-      },
-      {
-        loc: 'https://cuiz.in/faq',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'weekly',
-        priority: '0.8'
-      },
-      {
-        loc: 'https://cuiz.in/referral',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.8'
-      },
-      {
-        loc: 'https://cuiz.in/profile',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.8'
-      },
-      {
-        loc: 'https://cuiz.in/login',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.7'
-      },
-      {
-        loc: 'https://cuiz.in/register',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.7'
-      },
-      {
-        loc: 'https://cuiz.in/how-to-play',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.6'
-      },
-      {
-        loc: 'https://cuiz.in/terms',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'yearly',
-        priority: '0.5'
-      },
-      {
-        loc: 'https://cuiz.in/disclaimer',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'yearly',
-        priority: '0.5'
-      },
-      {
-        loc: 'https://cuiz.in/privacy',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'yearly',
-        priority: '0.5'
-      }
+      { loc: 'https://cuiz.in/', lastmod: today, changefreq: 'daily', priority: '1.0' },
+      { loc: 'https://cuiz.in/quiz', lastmod: today, changefreq: 'daily', priority: '0.9' },
+      { loc: 'https://cuiz.in/categories', lastmod: today, changefreq: 'weekly', priority: '0.9' },
+      { loc: 'https://cuiz.in/blog', lastmod: today, changefreq: 'weekly', priority: '0.8' },
+      { loc: 'https://cuiz.in/faq', lastmod: today, changefreq: 'weekly', priority: '0.8' },
+      { loc: 'https://cuiz.in/referral-program', lastmod: today, changefreq: 'monthly', priority: '0.7' },
+      { loc: 'https://cuiz.in/how-to-play', lastmod: today, changefreq: 'monthly', priority: '0.7' },
+      { loc: 'https://cuiz.in/login', lastmod: today, changefreq: 'yearly', priority: '0.5' },
+      { loc: 'https://cuiz.in/register', lastmod: today, changefreq: 'yearly', priority: '0.5' },
+      { loc: 'https://cuiz.in/terms', lastmod: today, changefreq: 'yearly', priority: '0.3' },
+      { loc: 'https://cuiz.in/disclaimer', lastmod: today, changefreq: 'yearly', priority: '0.3' },
+      { loc: 'https://cuiz.in/privacy', lastmod: today, changefreq: 'yearly', priority: '0.3' }
     ];
 
     // Generate category URLs
     const categoryUrls = await sitemapService.generateCategoryUrls();
     standardUrls.push(...categoryUrls);
-
-    // Generate FAQ URLs
-    const faqUrls = await sitemapService.generateFaqUrls();
-    standardUrls.push(...faqUrls);
 
     // Generate blog URLs
     const blogUrls = await sitemapService.generateBlogUrls();
@@ -112,7 +55,7 @@ export const sitemapService = {
     const questionUrls = await sitemapService.generateQuestionUrls();
     standardUrls.push(...questionUrls);
 
-    // Generate answer URLs
+    // Generate answer URLs (only correct answers)
     const answerUrls = await sitemapService.generateAnswerUrls();
     standardUrls.push(...answerUrls);
 
@@ -132,23 +75,22 @@ export const sitemapService = {
 
       if (!questions) return [];
 
-      // Get unique categories
       const uniqueCategories = [...new Set(questions.map(q => q.category))];
+      const today = new Date().toISOString().split('T')[0];
       
-      return uniqueCategories.map(category => {
-        const slug = encodeURIComponent(
-          category.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-        );
-        
-        return {
-          loc: `https://cuiz.in/categories/${slug}`,
-          lastmod: new Date().toISOString().split('T')[0],
-          changefreq: 'weekly',
-          priority: '0.8'
-        };
-      });
+      return uniqueCategories
+        .map(category => {
+          const slug = createSlug(category);
+          if (!slug) return null;
+          
+          return {
+            loc: `https://cuiz.in/categories/${slug}`,
+            lastmod: today,
+            changefreq: 'weekly',
+            priority: '0.8'
+          };
+        })
+        .filter((url): url is SitemapEntry => url !== null);
     } catch (error) {
       console.error('Error generating category URLs:', error);
       return [];
@@ -156,75 +98,34 @@ export const sitemapService = {
   },
 
   /**
-   * Generate FAQ page URLs from database
-   */
-  generateFaqUrls: async (): Promise<SitemapEntry[]> => {
-    try {
-      const { data: faqs } = await supabase
-        .from('faqs')
-        .select('id, question, updated_at')
-        .eq('is_published', true);
-
-      if (!faqs) return [];
-
-      return faqs.map(faq => {
-        const slug = encodeURIComponent(
-          faq.question
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .substring(0, 100)
-        );
-        
-        const lastMod = faq.updated_at 
-          ? new Date(faq.updated_at).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
-          
-        return {
-          loc: `https://cuiz.in/faq/${faq.id}/${slug}`,
-          lastmod: lastMod,
-          changefreq: 'monthly',
-          priority: '0.7'
-        };
-      });
-    } catch (error) {
-      console.error('Error generating FAQ URLs:', error);
-      return [];
-    }
-  },
-
-  /**
-   * Generate blog post URLs from database
+   * Generate blog post URLs from database - using slug field
    */
   generateBlogUrls: async (): Promise<SitemapEntry[]> => {
     try {
       const { data: blogPosts } = await supabase
         .from('blog_posts')
-        .select('id, title, created_at, updated_at')
+        .select('slug, created_at, updated_at')
         .eq('is_published', true);
 
       if (!blogPosts) return [];
+      const today = new Date().toISOString().split('T')[0];
 
-      return blogPosts.map(post => {
-        const slug = encodeURIComponent(
-          post.title
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .substring(0, 100)
-        );
-        
-        const lastMod = post.updated_at 
-          ? new Date(post.updated_at).toISOString().split('T')[0]
-          : new Date(post.created_at).toISOString().split('T')[0];
-          
-        return {
-          loc: `https://cuiz.in/blog/${post.id}/${slug}`,
-          lastmod: lastMod,
-          changefreq: 'monthly',
-          priority: '0.8'
-        };
-      });
+      return blogPosts
+        .filter(post => post.slug)
+        .map(post => {
+          const lastMod = post.updated_at 
+            ? new Date(post.updated_at).toISOString().split('T')[0]
+            : post.created_at 
+              ? new Date(post.created_at).toISOString().split('T')[0]
+              : today;
+              
+          return {
+            loc: `https://cuiz.in/blog/${post.slug}`,
+            lastmod: lastMod,
+            changefreq: 'monthly',
+            priority: '0.8'
+          };
+        });
     } catch (error) {
       console.error('Error generating blog URLs:', error);
       return [];
@@ -241,27 +142,25 @@ export const sitemapService = {
         .select('id, question, created_at');
 
       if (!questions) return [];
+      const today = new Date().toISOString().split('T')[0];
 
-      return questions.map(question => {
-        const lastmod = question.created_at 
-          ? new Date(question.created_at).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
+      return questions
+        .map(question => {
+          const slug = createSlug(question.question);
+          if (!slug) return null;
           
-        const slug = encodeURIComponent(
-          question.question
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .substring(0, 50)
-        );
-        
-        return {
-          loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
-          lastmod: lastmod,
-          changefreq: 'monthly',
-          priority: '0.7'
-        };
-      });
+          const lastmod = question.created_at 
+            ? new Date(question.created_at).toISOString().split('T')[0]
+            : today;
+          
+          return {
+            loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
+            lastmod: lastmod,
+            changefreq: 'monthly',
+            priority: '0.7'
+          };
+        })
+        .filter((url): url is SitemapEntry => url !== null);
     } catch (error) {
       console.error('Error generating question URLs:', error);
       return [];
@@ -269,44 +168,35 @@ export const sitemapService = {
   },
 
   /**
-   * Generate answer page URLs from database
+   * Generate answer page URLs from database - ONLY correct answers to avoid duplicate content
    */
   generateAnswerUrls: async (): Promise<SitemapEntry[]> => {
     try {
       const { data: questions } = await supabase
         .from('quiz_questions')
-        .select('id, question, options, created_at');
+        .select('id, correct_answer, created_at');
 
       if (!questions) return [];
+      const today = new Date().toISOString().split('T')[0];
 
-      const answerUrls: SitemapEntry[] = [];
-      
-      questions.forEach(question => {
-        const lastmod = question.created_at 
-          ? new Date(question.created_at).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
-
-        if (question.options && Array.isArray(question.options)) {
-          question.options.forEach((option: string) => {
-            const optionSlug = encodeURIComponent(
-              option
-                .toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .substring(0, 30)
-            );
+      return questions
+        .filter(q => q.correct_answer)
+        .map(question => {
+          const answerSlug = createSlug(question.correct_answer, 50);
+          if (!answerSlug) return null;
+          
+          const lastmod = question.created_at 
+            ? new Date(question.created_at).toISOString().split('T')[0]
+            : today;
             
-            answerUrls.push({
-              loc: `https://cuiz.in/answer/${question.id}/${optionSlug}`,
-              lastmod: lastmod,
-              changefreq: 'monthly',
-              priority: '0.6'
-            });
-          });
-        }
-      });
-
-      return answerUrls;
+          return {
+            loc: `https://cuiz.in/answer/${question.id}/${answerSlug}`,
+            lastmod: lastmod,
+            changefreq: 'monthly',
+            priority: '0.6'
+          };
+        })
+        .filter((url): url is SitemapEntry => url !== null);
     } catch (error) {
       console.error('Error generating answer URLs:', error);
       return [];
@@ -318,14 +208,11 @@ export const sitemapService = {
    */
   generateXml: (entries: SitemapEntry[]): string => {
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
-    xml += '        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"\n';
-    xml += '        xmlns:xhtml="http://www.w3.org/1999/xhtml"\n';
-    xml += '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     
     entries.forEach(entry => {
       xml += '  <url>\n';
-      xml += `    <loc>${entry.loc}</loc>\n`;
+      xml += `    <loc>${sitemapService.escapeXml(entry.loc)}</loc>\n`;
       xml += `    <lastmod>${entry.lastmod}</lastmod>\n`;
       xml += `    <changefreq>${entry.changefreq}</changefreq>\n`;
       xml += `    <priority>${entry.priority}</priority>\n`;
@@ -337,15 +224,24 @@ export const sitemapService = {
   },
 
   /**
+   * Escape special XML characters
+   */
+  escapeXml: (str: string): string => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  },
+
+  /**
    * Update the static sitemap file
    */
   updateStaticSitemap: async (): Promise<void> => {
     try {
       const sitemapXml = await sitemapService.generateCompleteSitemap();
       console.log('Generated sitemap XML, length:', sitemapXml.length);
-      
-      // In a real implementation, you would save this to your static files
-      // For now, we'll log that it's been generated
       console.log('Sitemap updated successfully');
     } catch (error) {
       console.error('Error updating static sitemap:', error);
