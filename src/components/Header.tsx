@@ -6,6 +6,7 @@ import { cn } from "@/utils/animations";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import GuestPointsDisplay from './GuestPointsDisplay';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -242,7 +243,7 @@ const Header: React.FC = () => {
             </span>
           </Link>
           
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <div className="hidden md:flex flex-col gap-1 w-44">
               <div className="flex text-xs items-center gap-1">
                 <Target className="w-3 h-3 text-muted-foreground" />
@@ -261,6 +262,8 @@ const Header: React.FC = () => {
                 <span className="text-xs text-muted-foreground">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
               </div>
             </div>
+          ) : (
+            <GuestPointsDisplay className="hidden md:flex" />
           )}
         </div>
         

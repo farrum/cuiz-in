@@ -178,9 +178,8 @@ serve(async (req) => {
       });
     }
 
-    // Create sitemap entries for each question
+    // Create sitemap entries for each question (exclude answers - they have noindex)
     const questionUrls: SitemapEntry[] = [];
-    const answerUrls: SitemapEntry[] = [];
     
     if (questions) {
       questions.forEach((question: any) => {
@@ -191,33 +190,20 @@ serve(async (req) => {
         const questionSlug = createSlug(question.question);
         
         if (questionSlug) {
-          // Question page URL
+          // Question page URL only - Answer pages have noindex meta tags
+          // to focus Google's crawl budget on high-value question pages
           questionUrls.push({
             loc: `https://cuiz.in/quiz/question/${question.id}/${questionSlug}`,
             lastmod: lastmod,
             changefreq: 'monthly',
             priority: '0.7'
           });
-          
-          // Only create answer URL for the CORRECT answer to avoid duplicate content
-          // This ensures each answer page has unique, valuable content
-          if (question.correct_answer) {
-            const answerSlug = createSlug(question.correct_answer, 50);
-            if (answerSlug) {
-              answerUrls.push({
-                loc: `https://cuiz.in/answer/${question.id}/${answerSlug}`,
-                lastmod: lastmod,
-                changefreq: 'monthly',
-                priority: '0.6'
-              });
-            }
-          }
         }
       });
     }
 
-    // Combine all URLs
-    const allUrls = [...standardUrls, ...questionUrls, ...answerUrls];
+    // Combine all URLs (no answer URLs - they have noindex)
+    const allUrls = [...standardUrls, ...questionUrls];
     
     console.log(`Generated sitemap with ${allUrls.length} URLs`);
     
