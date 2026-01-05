@@ -14,6 +14,7 @@ import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import GuestPlayProgressBar from '@/components/quiz/GuestPlayProgressBar';
 import GuestPointsBanner from '@/components/quiz/GuestPointsBanner';
+import MilestoneCelebration from '@/components/quiz/MilestoneCelebration';
 import SEOKeywords from '@/components/SEOKeywords';
 import TopPlayersSection from '@/components/TopPlayersSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
@@ -31,6 +32,7 @@ import {
 
 const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
+  const [milestoneCheckTrigger, setMilestoneCheckTrigger] = useState(0);
   
   const {
     currentQuestion,
@@ -50,13 +52,22 @@ const QuizPage: React.FC = () => {
     isGameActive,
     checkSuspensionStatus,
     loadInitialData,
-    handleQuestionComplete,
+    handleQuestionComplete: originalHandleQuestionComplete,
     showMotivationalMessage,
     setForceReloadAds,
     changeGameMode,
     handleTimeUp,
     resetGame
   } = useQuizState();
+
+  // Wrap handleQuestionComplete to trigger milestone check
+  const handleQuestionComplete = (isCorrect: boolean) => {
+    originalHandleQuestionComplete(isCorrect);
+    // Trigger milestone check after points are updated
+    setTimeout(() => {
+      setMilestoneCheckTrigger(prev => prev + 1);
+    }, 500);
+  };
   
   useMonthlyReset();
   
@@ -132,6 +143,9 @@ const QuizPage: React.FC = () => {
       <SEOKeywords customKeywords={quizKeywords} />
       <Header />
       <NewsTicker className="mt-16" />
+      
+      {/* Milestone Celebration Modal */}
+      <MilestoneCelebration triggerCheck={milestoneCheckTrigger} />
       
       <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
         {/* Visual Breadcrumb */}
