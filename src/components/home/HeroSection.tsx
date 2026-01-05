@@ -2,7 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, LogIn, Rocket, Trophy, Sparkles, Check } from 'lucide-react';
+import { UserPlus, LogIn, Rocket, Trophy, Sparkles, Check, Play } from 'lucide-react';
+import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayService';
 import NameInputForm from './NameInputForm';
 
 interface HeroSectionProps {
@@ -30,6 +31,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   handleNameSubmit,
   setUserName
 }) => {
+  const navigate = useNavigate();
+  const remainingPlays = getRemainingGuestPlays();
+  const maxQuestions = getMaxGuestQuestions();
+
+  const handlePlayFree = () => {
+    navigate('/quiz');
+  };
   return (
     <div className="max-w-3xl w-full mx-auto text-center z-10">
       <div className="mb-8 animate-fade-in">
@@ -67,16 +75,30 @@ Invite friends to earn even more!</p>
             </Button>
           ) : (
             <>
-              <Button size="lg" onClick={navigateToRegister} className="fun-button text-lg group relative overflow-hidden">
+              <Button size="lg" onClick={handlePlayFree} className="fun-button text-lg group relative overflow-hidden bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+                Play Free
+                <Play className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+              
+              <Button size="lg" onClick={navigateToRegister} variant="outline" className="text-lg group hover:shadow-md transition-all border-primary text-primary hover:bg-primary/10">
                 Register
                 <UserPlus className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
               
-              <Button variant="outline" size="lg" onClick={navigateToLogin} className="text-lg group hover:shadow-md transition-all">
+              <Button variant="ghost" size="lg" onClick={navigateToLogin} className="text-lg group hover:shadow-md transition-all">
                 Login
                 <LogIn className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </>
+          )}
+          
+          {/* Guest play info badge */}
+          {!isLoggedIn && remainingPlays > 0 && (
+            <div className="w-full sm:w-auto text-center mt-2 sm:mt-0">
+              <span className="text-sm text-muted-foreground">
+                {remainingPlays}/{maxQuestions} free plays remaining
+              </span>
+            </div>
           )}
           
           {isLoggedIn && (
