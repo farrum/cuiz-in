@@ -60,8 +60,8 @@ export const generateCanonicalUrl = (options: CanonicalUrlOptions): string => {
 };
 
 /**
- * Generate Open Graph image URL for a question
- * Uses a dynamic OG image generation pattern
+ * Generate dynamic Open Graph image URL for a question
+ * Uses edge function to create custom images with category, difficulty, and question text
  */
 export const generateOgImageUrl = (options: {
   type: 'question' | 'category' | 'blog' | 'default';
@@ -71,21 +71,29 @@ export const generateOgImageUrl = (options: {
 }): string => {
   const { type, title, category, difficulty } = options;
 
-  // For now, use the default OG image
-  // In the future, this could generate dynamic OG images via an edge function
+  const OG_FUNCTION_URL = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/og-image';
   const baseOgUrl = `${SITE_URL}/og-image.png`;
 
-  // Return category-specific or dynamic OG image if available
-  if (type === 'question' && category) {
-    // Use URL-encoded parameters for potential future dynamic OG generation
+  // Generate dynamic OG image for questions
+  if (type === 'question' && title && category) {
     const categorySlug = getCategorySlug(category);
-    // For now, return default - can be extended to dynamic OG images
-    return baseOgUrl;
+    const params = new URLSearchParams({
+      title: title.substring(0, 120),
+      category: categorySlug,
+      difficulty: difficulty || 'medium'
+    });
+    return `${OG_FUNCTION_URL}?${params.toString()}`;
   }
 
+  // Generate dynamic OG image for categories
   if (type === 'category' && category) {
     const categorySlug = getCategorySlug(category);
-    return baseOgUrl;
+    const params = new URLSearchParams({
+      title: `${category} Quiz - Test Your Knowledge`,
+      category: categorySlug,
+      difficulty: 'mixed'
+    });
+    return `${OG_FUNCTION_URL}?${params.toString()}`;
   }
 
   return baseOgUrl;
