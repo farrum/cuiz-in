@@ -62,6 +62,10 @@ Disallow: /answer/
 Crawl-delay: 1
 
 # Sitemap locations - Primary sitemap with all URLs
+# Sitemap Index (split by category for better crawl management)
+Sitemap: https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index
+
+# Legacy sitemaps (for backward compatibility)
 Sitemap: https://cuiz.in/sitemap.xml
 Sitemap: https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap
 

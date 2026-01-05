@@ -7,11 +7,9 @@ import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSche
 import { extractKeywords } from '@/services/keywordService';
 import PageLayout from '@/components/layout/PageLayout';
 import QuizCard from '@/components/QuizCard';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   ChevronLeft, 
-  BookOpen, 
   ChevronRight, 
   Tag,
   Home,
@@ -32,6 +30,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
+import RelatedQuestions from '@/components/RelatedQuestions';
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -394,42 +393,12 @@ const QuizQuestionPage: React.FC = () => {
               </div>
             )}
             
-            {relatedQuestions.length > 0 && (
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  Related Questions
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {relatedQuestions.map(relatedQ => (
-                    <Card key={relatedQ.id} className="p-4 hover:shadow-md transition-shadow">
-                      <h3 className="font-medium">{relatedQ.question}</h3>
-                      <div className="flex gap-2 mt-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
-                          {relatedQ.category}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                          relatedQ.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                          relatedQ.difficulty === 'medium' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {relatedQ.difficulty}
-                        </span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-3"
-                        asChild
-                      >
-                        <Link to={`/quiz/question/${relatedQ.id}/${createSlug(relatedQ.question, 50)}`}>
-                          View Question
-                        </Link>
-                      </Button>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+            {relatedQuestions.length > 0 && question && (
+              <RelatedQuestions 
+                questions={relatedQuestions}
+                currentCategory={question.category}
+                title="Related Questions"
+              />
             )}
           </div>
         ) : (

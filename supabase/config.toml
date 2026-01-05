@@ -20,3 +20,15 @@ verify_jwt = false
 
 [functions.ping-sitemap]
 verify_jwt = false
+
+[functions.og-image]
+verify_jwt = false
+
+[functions.sitemap-index]
+verify_jwt = false
+
+[functions.sitemap-main]
+verify_jwt = false
+
+[functions.sitemap-category]
+verify_jwt = false
