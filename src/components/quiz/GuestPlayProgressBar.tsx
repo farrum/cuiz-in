@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
-import { Gift, UserPlus, RefreshCw } from 'lucide-react';
+import { Gift, UserPlus } from 'lucide-react';
 import { 
   getRemainingGuestPlays, 
   getMaxGuestQuestions, 
   getGuestSessionPoints,
   isUserLoggedIn 
 } from '@/utils/guestPlayService';
+import ResetCountdown from './ResetCountdown';
 
 interface GuestPlayProgressBarProps {
   className?: string;
@@ -26,15 +27,12 @@ const GuestPlayProgressBar: React.FC<GuestPlayProgressBarProps> = ({ className =
   return (
     <div className={`bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-4 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <Gift className="w-5 h-5 text-primary" />
           <span className="font-semibold text-foreground">Free Play Progress</span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Resets daily</span>
-        </div>
+        <ResetCountdown compact />
       </div>
       
       {/* Progress Bar */}

@@ -5,6 +5,7 @@
  */
 
 const GUEST_PLAY_KEY = 'cuizin_guest_play';
+const GUEST_MILESTONES_KEY = 'cuizin_guest_milestones';
 const MAX_GUEST_QUESTIONS = 15;
 
 interface GuestPlayData {
@@ -13,10 +14,18 @@ interface GuestPlayData {
   lastReset: string;
 }
 
+interface GuestMilestones {
+  celebratedMilestones: number[];
+}
+
 const getDefaultGuestData = (): GuestPlayData => ({
   questionsPlayed: 0,
   sessionPoints: 0,
   lastReset: new Date().toISOString(),
+});
+
+const getDefaultMilestones = (): GuestMilestones => ({
+  celebratedMilestones: [],
 });
 
 /**
@@ -114,4 +123,78 @@ export const getMaxGuestQuestions = (): number => {
 export const getGuestQuestionsPlayed = (): number => {
   const data = getGuestPlayData();
   return data.questionsPlayed;
+};
+
+/**
+ * Get time until next reset (in milliseconds)
+ */
+export const getTimeUntilReset = (): number => {
+  const data = getGuestPlayData();
+  const lastReset = new Date(data.lastReset);
+  const resetTime = new Date(lastReset.getTime() + 24 * 60 * 60 * 1000);
+  const now = new Date();
+  return Math.max(0, resetTime.getTime() - now.getTime());
+};
+
+/**
+ * Get the next reset date/time
+ */
+export const getNextResetTime = (): Date => {
+  const data = getGuestPlayData();
+  const lastReset = new Date(data.lastReset);
+  return new Date(lastReset.getTime() + 24 * 60 * 60 * 1000);
+};
+
+/**
+ * Point milestones for celebrations
+ */
+export const POINT_MILESTONES = [50, 100, 200, 500] as const;
+
+/**
+ * Get celebrated milestones from localStorage
+ */
+export const getCelebratedMilestones = (): number[] => {
+  try {
+    const stored = localStorage.getItem(GUEST_MILESTONES_KEY);
+    if (!stored) return [];
+    const data = JSON.parse(stored) as GuestMilestones;
+    return data.celebratedMilestones;
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Mark a milestone as celebrated
+ */
+export const markMilestoneCelebrated = (milestone: number): void => {
+  const celebrated = getCelebratedMilestones();
+  if (!celebrated.includes(milestone)) {
+    celebrated.push(milestone);
+    localStorage.setItem(GUEST_MILESTONES_KEY, JSON.stringify({ celebratedMilestones: celebrated }));
+  }
+};
+
+/**
+ * Check if there's a new milestone to celebrate
+ */
+export const getUncelabratedMilestone = (): number | null => {
+  if (isUserLoggedIn()) return null;
+  
+  const sessionPoints = getGuestSessionPoints();
+  const celebrated = getCelebratedMilestones();
+  
+  for (const milestone of POINT_MILESTONES) {
+    if (sessionPoints >= milestone && !celebrated.includes(milestone)) {
+      return milestone;
+    }
+  }
+  return null;
+};
+
+/**
+ * Reset milestones (e.g., after registration or daily reset)
+ */
+export const resetMilestones = (): void => {
+  localStorage.removeItem(GUEST_MILESTONES_KEY);
 };

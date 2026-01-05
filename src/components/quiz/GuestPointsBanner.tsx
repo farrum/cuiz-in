@@ -8,6 +8,8 @@ import {
   getMaxGuestQuestions,
   isUserLoggedIn 
 } from '@/utils/guestPlayService';
+import SocialShareButtons from './SocialShareButtons';
+import ResetCountdown from './ResetCountdown';
 
 interface GuestPointsBannerProps {
   className?: string;
@@ -60,7 +62,7 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
               </div>
             </div>
             
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex flex-wrap items-center gap-4 mt-3">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-yellow-500" />
                 <span className="text-lg font-bold text-foreground">{sessionPoints.toFixed(1)}</span>
@@ -74,6 +76,13 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
                 </div>
               )}
             </div>
+
+            {/* Social Sharing */}
+            {sessionPoints >= 10 && (
+              <div className="mt-3">
+                <SocialShareButtons />
+              </div>
+            )}
           </div>
           
           {/* CTA Button */}
@@ -89,8 +98,11 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
         
         {/* Warning message when low on plays */}
         {isLowOnPlays && !isOutOfPlays && (
-          <div className="mt-3 pt-3 border-t border-orange-500/20 text-sm text-orange-600 dark:text-orange-400">
-            ⚠️ Running low on free plays! Register now to keep playing unlimited.
+          <div className="mt-3 pt-3 border-t border-orange-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span className="text-sm text-orange-600 dark:text-orange-400">
+              ⚠️ Running low on free plays! Register now to keep playing unlimited.
+            </span>
+            <ResetCountdown compact />
           </div>
         )}
       </div>
