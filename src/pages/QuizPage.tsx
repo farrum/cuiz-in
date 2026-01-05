@@ -15,6 +15,7 @@ import GameModeSelector from '@/components/quiz/GameModeSelector';
 import SEOKeywords from '@/components/SEOKeywords';
 import TopPlayersSection from '@/components/TopPlayersSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
+import MonthlyWinnersSection from '@/components/MonthlyWinnersSection';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import {
@@ -211,10 +212,26 @@ const QuizPage: React.FC = () => {
             <DailyChallenges />
             
             {/* Top Players & Leaderboard Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              <TopPlayersSection limit={10} />
-              <LeaderboardSection />
-            </div>
+            <section className="mt-10 space-y-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                🏆 Leaderboards
+              </h2>
+              
+              {/* Monthly Winners - Full Width with Animation */}
+              <div className="animate-fade-in">
+                <MonthlyWinnersSection className="hover-scale" limit={5} />
+              </div>
+              
+              {/* Top Players & All-Time Leaderboard - Side by Side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+                  <TopPlayersSection className="h-full hover-scale" limit={10} />
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                  <LeaderboardSection />
+                </div>
+              </div>
+            </section>
             
             <SimpleAdBanner position="bottom" className="mt-6" />
           </div>
