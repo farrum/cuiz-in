@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, Navigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Search, Filter, Trophy } from 'lucide-react';
+import { ChevronLeft, Search, Filter, Trophy, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,31 +32,49 @@ const CategoryDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [realQuestions, setRealQuestions] = useState<any[]>([]);
+  const [categoryNotFound, setCategoryNotFound] = useState(false);
+  
+  // Check if slug is valid
+  const isValidSlug = categorySlug ? isValidCategorySlug(categorySlug) : false;
   
   // Get category data by slug
-  const category = categorySlug ? getCategoryData(categorySlug) : null;
+  const category = categorySlug && isValidSlug ? getCategoryData(categorySlug) : null;
   
   useEffect(() => {
     const fetchCategoryQuestions = async () => {
       if (!categorySlug) return;
       
+      // If invalid slug, mark as not found
+      if (!isValidSlug) {
+        setCategoryNotFound(true);
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
-        // Load real questions from the database for this category
+        
+        // Get all database categories that map to this slug
+        const dbCategories = getCategoriesForSlug(categorySlug);
+        
+        // Load real questions from the database for these categories
         const { data, error } = await supabase
           .from('quiz_questions')
           .select('*')
-          .eq('category', category.name)
-          .limit(10); // Limit to 10 questions initially
+          .in('category', dbCategories)
+          .limit(20);
           
         if (error) {
           console.error("Error fetching category questions:", error);
-        } else if (data) {
+        } else if (data && data.length > 0) {
           setRealQuestions(data.map(q => ({
             id: q.id,
             question: q.question,
-            difficulty: q.difficulty
+            difficulty: q.difficulty || 'medium'
           })));
+        } else {
+          // No questions found for this category
+          setRealQuestions([]);
         }
       } catch (e) {
         console.error("Error in fetchCategoryQuestions:", e);
@@ -65,11 +84,47 @@ const CategoryDetailPage: React.FC = () => {
     };
     
     fetchCategoryQuestions();
-  }, [categorySlug, category?.name]);
+  }, [categorySlug, isValidSlug]);
   
-  // If category not found, redirect to categories page
-  if (!category) {
-    return <Navigate to="/categories" replace />;
+  // Handle category not found - show helpful page instead of redirect
+  if (categoryNotFound || (!loading && !category)) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <SEO
+          title="Category Not Found | CuizIN"
+          description="The quiz category you're looking for doesn't exist. Browse our available categories to find exciting quizzes."
+          noindex={true}
+        />
+        <Header />
+        <NewsTicker className="mt-16" />
+        
+        <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
+          <div className="text-center py-12">
+            <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Category Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              The category "{categorySlug}" doesn't exist or has been moved.
+            </p>
+            
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Browse Available Categories:</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {categoriesArray.map(cat => (
+                  <Button key={cat.slug} variant="outline" asChild>
+                    <Link to={`/categories/${cat.slug}`}>
+                      <span className="mr-2">{cat.icon}</span>
+                      {cat.name}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        <Footer />
+      </div>
+    );
   }
   
   // Use real questions if available, otherwise use featured questions from category data

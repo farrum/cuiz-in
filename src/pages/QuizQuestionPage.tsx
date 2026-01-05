@@ -14,7 +14,9 @@ import {
   BookOpen, 
   ChevronRight, 
   Tag,
-  Home 
+  Home,
+  Brain,
+  AlertCircle
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
 import { 
@@ -27,6 +29,8 @@ import {
 } from '@/components/ui/breadcrumb';
 import { QuizQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -178,7 +182,9 @@ const QuizQuestionPage: React.FC = () => {
   }, [questionId, questionSlug]);
 
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
-    navigate(`/answer/${questionId}/${encodeURIComponent(selectedAnswer)}`);
+    // Use consistent slug generation
+    const answerSlug = createSlug(selectedAnswer, 50);
+    navigate(`/answer/${questionId}/${answerSlug}`);
   };
 
   const generateQuestionSchema = () => {
@@ -221,12 +227,11 @@ const QuizQuestionPage: React.FC = () => {
     ? `Test your ${question.category} knowledge with this ${question.difficulty} level question: ${question.question}. Answer correctly to earn points!`
     : 'Play our interactive quiz game and challenge yourself with interesting questions across various categories.';
 
-  const categorySlug = question ? question.category.toLowerCase().replace(/\s+/g, '-') : '';
+  // Use consistent slug generation from urlUtils
+  const categorySlug = question ? getCategorySlug(question.category) : '';
   
   // Create consistent slug for canonical URL (matches sitemap generation)
-  const canonicalSlug = question 
-    ? question.question.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 80)
-    : '';
+  const canonicalSlug = question ? createSlug(question.question, 80) : '';
 
   // JSON-LD breadcrumbs
   const breadcrumbs = question ? [
@@ -280,10 +285,37 @@ const QuizQuestionPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
-        <h1 className="text-3xl font-bold mb-2">Quiz Question</h1>
+        {/* Static SEO-friendly heading that renders immediately */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Brain className="h-7 w-7 text-primary" />
+            Quiz Question
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Test your knowledge and earn points by answering correctly!
+          </p>
+        </div>
         
         {isLoading ? (
-          <LoadingCard />
+          <div className="space-y-4">
+            {/* SEO-friendly loading state with static content */}
+            <div className="bg-card rounded-lg p-6 border">
+              <p className="text-muted-foreground text-center">
+                Loading quiz question... Answer correctly to earn points and compete on the leaderboard!
+              </p>
+              <LoadingCard />
+            </div>
+            
+            {/* Static helpful content while loading */}
+            <div className="bg-muted/50 rounded-lg p-4">
+              <h2 className="font-semibold mb-2">How to Play</h2>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Select the correct answer from the options</li>
+                <li>• Earn 2-4 points based on difficulty</li>
+                <li>• Build streaks for bonus rewards</li>
+              </ul>
+            </div>
+          </div>
         ) : question ? (
           <div className="space-y-6">
             {/* Hidden SEO content for search engines */}
@@ -315,9 +347,7 @@ const QuizQuestionPage: React.FC = () => {
                   className="flex items-center gap-2"
                   asChild
                 >
-                  <Link 
-                    to={`/quiz/question/${prevQuestion.id}/${encodeURIComponent(prevQuestion.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'))}`}
-                  >
+                  <Link to={`/quiz/question/${prevQuestion.id}/${createSlug(prevQuestion.question, 50)}`}>
                     <ChevronLeft className="h-4 w-4" /> Previous Question
                   </Link>
                 </Button>
@@ -331,9 +361,7 @@ const QuizQuestionPage: React.FC = () => {
                   className="flex items-center gap-2"
                   asChild
                 >
-                  <Link 
-                    to={`/quiz/question/${nextQuestion.id}/${encodeURIComponent(nextQuestion.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'))}`}
-                  >
+                  <Link to={`/quiz/question/${nextQuestion.id}/${createSlug(nextQuestion.question, 50)}`}>
                     Next Question <ChevronRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -386,7 +414,7 @@ const QuizQuestionPage: React.FC = () => {
                         className="mt-3"
                         asChild
                       >
-                        <Link to={`/quiz/question/${relatedQ.id}/${encodeURIComponent(relatedQ.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'))}`}>
+                        <Link to={`/quiz/question/${relatedQ.id}/${createSlug(relatedQ.question, 50)}`}>
                           View Question
                         </Link>
                       </Button>
@@ -397,14 +425,21 @@ const QuizQuestionPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="p-6 text-center">
+          <div className="p-8 text-center bg-card rounded-lg border">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-bold">Question Not Found</h2>
-            <p className="mt-2 text-muted-foreground">
-              The quiz question you are looking for doesn't exist or has been removed.
+            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+              The quiz question you are looking for doesn't exist or has been removed. 
+              Try browsing our categories or play a random quiz!
             </p>
-            <Button asChild className="mt-4">
-              <Link to="/quiz">Go to Quiz Page</Link>
-            </Button>
+            <div className="flex gap-3 justify-center mt-6">
+              <Button asChild>
+                <Link to="/quiz">Play Quiz</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/categories">Browse Categories</Link>
+              </Button>
+            </div>
           </div>
         )}
       </main>
