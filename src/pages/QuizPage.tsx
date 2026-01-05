@@ -12,6 +12,8 @@ import { useQuizState } from '@/hooks/quiz';
 import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
+import GuestPlayProgressBar from '@/components/quiz/GuestPlayProgressBar';
+import GuestPointsBanner from '@/components/quiz/GuestPointsBanner';
 import SEOKeywords from '@/components/SEOKeywords';
 import TopPlayersSection from '@/components/TopPlayersSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
@@ -147,6 +149,9 @@ const QuizPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
+        {/* Guest Play Progress Bar - shows for guests only */}
+        <GuestPlayProgressBar className="mb-6" />
+        
         <SimpleAdBanner position="top" className="mb-6" />
         
         <div className="flex justify-between items-center mb-6">
@@ -209,6 +214,9 @@ const QuizPage: React.FC = () => {
               />
             )}
           
+            {/* Guest Points Banner - prompts registration */}
+            <GuestPointsBanner className="my-6" />
+            
             <DailyChallenges />
             
             {/* Top Players & Leaderboard Section */}
