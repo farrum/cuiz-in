@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
 import { logPointsEarned } from '@/utils/pointsService';
+import { createSlug } from '@/utils/urlUtils';
+import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
+import GuestPlayLimitModal from './GuestPlayLimitModal';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -25,8 +28,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Check if guest can play
+  const guestCanPlay = canGuestPlay();
+  const remainingPlays = getRemainingGuestPlays();
+  const isLoggedIn = isUserLoggedIn();
   
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
@@ -37,12 +46,33 @@ const QuizCard: React.FC<QuizCardProps> = ({
   const proceedToAnswerPage = async () => {
     if (!selectedOption) return;
     
+    // Check if guest limit reached
+    if (!isLoggedIn && !guestCanPlay) {
+      setShowGuestLimitModal(true);
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
       // Get user ID from local storage
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       
       // Check if the selected answer is correct
       const isCorrect = selectedOption === question.correctAnswer;
+      
+      // Calculate points based on difficulty
+      let pointsEarned = 0;
+      if (isCorrect) {
+        switch (question.difficulty) {
+          case "easy": pointsEarned = 2; break;
+          case "medium": pointsEarned = 3; break;
+          case "hard": pointsEarned = 4; break;
+          default: pointsEarned = 2;
+        }
+        pointsEarned = pointsEarned * pointsMultiplier;
+      } else {
+        pointsEarned = 0.5 * pointsMultiplier;
+      }
       
       // Track completed question in local storage - only for non-challenge questions
       if (!isChallenge) {
@@ -61,25 +91,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
         });
       }
       
-      // Record answer in Supabase if user is logged in
+      // Handle logged-in users
       if (userId) {
         console.log(`Recording answer for question ${question.id}, correct: ${isCorrect}`);
-        // Calculate points based on difficulty
-        let pointsEarned = 0;
-        if (isCorrect) {
-          switch (question.difficulty) {
-            case "easy": pointsEarned = 2; break;
-            case "medium": pointsEarned = 3; break;
-            case "hard": pointsEarned = 4; break;
-            default: pointsEarned = 2;
-          }
-          
-          // Apply points multiplier (used for challenges)
-          pointsEarned = pointsEarned * pointsMultiplier;
-        } else {
-          // Wrong answer always gives 0.5 points (but still apply multiplier for challenges)
-          pointsEarned = 0.5 * pointsMultiplier;
-        }
         
         // For non-challenge questions, update points across all systems
         if (!isChallenge) {
@@ -96,6 +110,19 @@ const QuizCard: React.FC<QuizCardProps> = ({
           points_earned: pointsEarned,
           answered_at: new Date().toISOString()
         });
+      } else {
+        // Guest user - track session points
+        incrementGuestPlay(pointsEarned);
+        
+        // Show remaining plays for guests
+        const remaining = getRemainingGuestPlays();
+        if (remaining > 0 && remaining <= 3) {
+          toast({
+            title: `${remaining} free questions left!`,
+            description: "Register to save your points and play unlimited quizzes.",
+            variant: "default",
+          });
+        }
       }
       
       // Call the onComplete callback
@@ -103,7 +130,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
       
       // Navigate to the answer page (only for regular quiz, not challenges)
       if (!isChallenge) {
-        navigate(`/answer/${question.id}/${selectedOption}`);
+        // Use consistent slug generation
+        const answerSlug = createSlug(selectedOption, 50);
+        navigate(`/answer/${question.id}/${answerSlug}`);
       }
       
     } catch (error) {
@@ -189,7 +218,12 @@ const QuizCard: React.FC<QuizCardProps> = ({
           ))}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col gap-2">
+        {!isLoggedIn && remainingPlays > 0 && remainingPlays <= 5 && (
+          <p className="text-xs text-muted-foreground text-center w-full">
+            {remainingPlays} free {remainingPlays === 1 ? 'question' : 'questions'} remaining • <Link to="/register" className="text-primary hover:underline">Register to save points</Link>
+          </p>
+        )}
         <CountdownButton
           onCountdownComplete={proceedToAnswerPage}
           initialSeconds={5}
@@ -200,6 +234,12 @@ const QuizCard: React.FC<QuizCardProps> = ({
           Submit Answer
         </CountdownButton>
       </CardFooter>
+      
+      {/* Guest Play Limit Modal */}
+      <GuestPlayLimitModal 
+        isOpen={showGuestLimitModal} 
+        onClose={() => setShowGuestLimitModal(false)} 
+      />
     </Card>
   );
 };

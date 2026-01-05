@@ -21,7 +21,7 @@ interface SitemapEntry {
   priority: string;
 }
 
-// Consistent slug generation function
+// Consistent slug generation function (must match frontend createSlug exactly)
 function createSlug(text: string, maxLength: number = 80): string {
   if (!text) return '';
   
@@ -33,6 +33,50 @@ function createSlug(text: string, maxLength: number = 80): string {
     .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
     .substring(0, maxLength);
 }
+
+// Map database category names to valid frontend slugs
+// This MUST match the categoryMapping.ts in the frontend
+const categoryToSlugMap: Record<string, string> = {
+  'History': 'history',
+  'Science': 'science',
+  'Science & Nature': 'science',
+  'Science &amp; Nature': 'science',
+  'Nature': 'science',
+  'Science: Computers': 'technology',
+  'Science: Gadgets': 'technology',
+  'Science: Mathematics': 'science',
+  'Science and Technology': 'technology',
+  'Science & Technology': 'technology',
+  'Geography': 'geography',
+  'Arts & Literature': 'literature',
+  'Arts and Literature': 'literature',
+  'Entertainment: Books': 'literature',
+  'Entertainment': 'entertainment',
+  'Entertainment: Video Games': 'entertainment',
+  'Entertainment: Music': 'entertainment',
+  'Entertainment: Film': 'entertainment',
+  'Entertainment: Television': 'entertainment',
+  'Entertainment: Board Games': 'entertainment',
+  'Entertainment: Musicals &amp; Theatres': 'entertainment',
+  'Entertainment: Japanese Anime &amp; Manga': 'entertainment',
+  'Entertainment: Cartoon &amp; Animations': 'entertainment',
+  'Entertainment: Comics': 'entertainment',
+  'Celebrities': 'entertainment',
+  'Art': 'entertainment',
+  'Sports': 'sports',
+  'Cricket': 'sports',
+  'Vehicles': 'technology',
+  'General Knowledge': 'general-knowledge',
+  'Culture': 'general-knowledge',
+  'Animals': 'general-knowledge',
+  'Food & Drink': 'general-knowledge',
+  'Food and Drinks': 'general-knowledge',
+  'Mythology': 'general-knowledge',
+  'Politics': 'general-knowledge',
+};
+
+// Valid frontend category slugs (only these will be included in sitemap)
+const validCategorySlugs = ['history', 'science', 'geography', 'literature', 'entertainment', 'sports', 'technology', 'general-knowledge'];
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -60,27 +104,16 @@ serve(async (req) => {
       { loc: 'https://cuiz.in/privacy', lastmod: today, changefreq: 'yearly', priority: '0.3' }
     ];
 
-    // Fetch all unique categories
-    const { data: categories } = await supabase
-      .from('quiz_questions')
-      .select('category')
-      .not('category', 'is', null);
-    
-    if (categories) {
-      const uniqueCategories = [...new Set(categories.map(item => item.category))];
-      
-      uniqueCategories.forEach(category => {
-        const slug = createSlug(category);
-        if (slug) {
-          standardUrls.push({
-            loc: `https://cuiz.in/categories/${slug}`,
-            lastmod: today,
-            changefreq: 'weekly',
-            priority: '0.8'
-          });
-        }
+    // Add ONLY valid frontend category slugs (not raw DB categories)
+    // This ensures no soft 404s from categories that don't have frontend pages
+    validCategorySlugs.forEach(slug => {
+      standardUrls.push({
+        loc: `https://cuiz.in/categories/${slug}`,
+        lastmod: today,
+        changefreq: 'weekly',
+        priority: '0.8'
       });
-    }
+    });
 
     // Fetch all published blog posts - using slug field which matches route
     const { data: blogPosts } = await supabase

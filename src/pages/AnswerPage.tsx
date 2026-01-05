@@ -17,6 +17,8 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { extractKeywords } from '@/services/keywordService';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
+import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
@@ -116,13 +118,12 @@ const AnswerPage: React.FC = () => {
     ? `${isCorrect ? 'Correct' : 'Incorrect'} answer to the ${question.difficulty} level question "${question.question}". ${question.explanation || 'Learn more about this quiz question.'}`
     : 'View the answer to this quiz question and learn more about the topic.';
 
-  const categorySlug = question ? question.category.toLowerCase().replace(/\s+/g, '-') : '';
-  const questionSlug = question ? question.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') : '';
+  // Use consistent slug generation from urlUtils
+  const categorySlug = question ? createSlug(question.category) : '';
+  const questionSlug = question ? createSlug(question.question, 50) : '';
   
-  // Create consistent slug for canonical URL
-  const answerSlug = selectedOption 
-    ? selectedOption.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 50)
-    : '';
+  // Create consistent slug for canonical URL using the same createSlug function
+  const answerSlug = selectedOption ? createSlug(selectedOption, 50) : '';
 
   return (
     <PageLayout>
@@ -155,7 +156,7 @@ const AnswerPage: React.FC = () => {
               <>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/categories/${categorySlug}`}>{question.category}</Link>
+                    <Link to={`/categories/${getCategorySlug(question.category)}`}>{question.category}</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -260,7 +261,7 @@ const AnswerPage: React.FC = () => {
                         className="mt-3"
                         asChild
                       >
-                        <Link to={`/quiz/question/${q.id}/${encodeURIComponent(q.question.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'))}`}>
+                        <Link to={`/quiz/question/${q.id}/${createSlug(q.question, 50)}`}>
                           <ArrowRight className="h-4 w-4 mr-1" /> Try This Question
                         </Link>
                       </Button>
