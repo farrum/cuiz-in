@@ -1,10 +1,11 @@
 /**
  * Guest play service - tracks anonymous users' quiz attempts
- * Allows 10 free questions before requiring registration
+ * Allows 15 free questions per day before requiring registration
+ * Resets daily for returning guests
  */
 
 const GUEST_PLAY_KEY = 'cuizin_guest_play';
-const MAX_GUEST_QUESTIONS = 10;
+const MAX_GUEST_QUESTIONS = 15;
 
 interface GuestPlayData {
   questionsPlayed: number;
