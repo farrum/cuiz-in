@@ -13,6 +13,8 @@ import PointsAndProgress from '@/components/quiz/PointsAndProgress';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import SEOKeywords from '@/components/SEOKeywords';
+import TopPlayersSection from '@/components/TopPlayersSection';
+import LeaderboardSection from '@/components/LeaderboardSection';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import {
@@ -207,6 +209,12 @@ const QuizPage: React.FC = () => {
             )}
           
             <DailyChallenges />
+            
+            {/* Top Players & Leaderboard Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+              <TopPlayersSection limit={10} />
+              <LeaderboardSection />
+            </div>
             
             <SimpleAdBanner position="bottom" className="mt-6" />
           </div>
