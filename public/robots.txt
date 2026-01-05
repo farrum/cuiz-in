@@ -1,9 +1,11 @@
 # Robots.txt file for Cuiz.in
-# Last updated: 2025-12-18
+# Last updated: 2025-01-05
 
 # Default rules for all crawlers
 User-agent: *
 Allow: /
+
+# Block admin and user-specific pages
 Disallow: /admin/
 Disallow: /admin-login/
 Disallow: /team-dashboard/
@@ -12,8 +14,12 @@ Disallow: /referral/
 Disallow: /challenge/
 Disallow: /archived-challenges/
 
-# Allow important pages
+# Block answer pages (noindex via meta tags, but also block crawling to save budget)
+Disallow: /answer/
+
+# Allow important public pages
 Allow: /quiz
+Allow: /quiz/question/
 Allow: /faq
 Allow: /faq/
 Allow: /blog
@@ -38,6 +44,7 @@ Disallow: /profile/
 Disallow: /referral/
 Disallow: /challenge/
 Disallow: /archived-challenges/
+Disallow: /answer/
 
 # Bingbot specific rules
 User-agent: Bingbot
@@ -49,11 +56,12 @@ Disallow: /profile/
 Disallow: /referral/
 Disallow: /challenge/
 Disallow: /archived-challenges/
+Disallow: /answer/
 
-# Crawl delay for polite crawling
+# Crawl delay for polite crawling (1 second between requests)
 Crawl-delay: 1
 
-# Sitemap locations
+# Sitemap locations - Primary sitemap with all URLs
 Sitemap: https://cuiz.in/sitemap.xml
 Sitemap: https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap
 

@@ -31,6 +31,7 @@ import { QuizQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
+import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -219,13 +220,18 @@ const QuizQuestionPage: React.FC = () => {
     };
   };
 
-  const pageTitle = question 
-    ? `${question.question} | ${question.category} Quiz` 
-    : 'Quiz Question | CuizIN';
-    
-  const pageDescription = question
-    ? `Test your ${question.category} knowledge with this ${question.difficulty} level question: ${question.question}. Answer correctly to earn points!`
-    : 'Play our interactive quiz game and challenge yourself with interesting questions across various categories.';
+  // Generate social metadata using canonical URL utility
+  const socialMeta = question ? generateQuestionSocialMeta({
+    id: question.id,
+    question: question.question,
+    category: question.category,
+    difficulty: question.difficulty,
+    options: question.options
+  }) : null;
+
+  const pageTitle = socialMeta?.title || 'Quiz Question | CuizIN';
+  const pageDescription = socialMeta?.description || 
+    'Play our interactive quiz game and challenge yourself with interesting questions across various categories.';
 
   // Use consistent slug generation from urlUtils
   const categorySlug = question ? getCategorySlug(question.category) : '';
@@ -246,10 +252,12 @@ const QuizQuestionPage: React.FC = () => {
       <SEO
         title={pageTitle}
         description={pageDescription}
-        canonicalUrl={question && canonicalSlug ? `https://cuiz.in/quiz/question/${questionId}/${canonicalSlug}` : undefined}
+        canonicalUrl={socialMeta?.canonicalUrl}
+        ogType={socialMeta?.ogType || 'website'}
+        ogImage={socialMeta?.ogImage}
         schemaType="Quiz"
         schemaData={generateQuestionSchema()}
-        keywords={keywords}
+        keywords={socialMeta?.keywords || keywords}
       />
       {question && <BreadcrumbSchema items={breadcrumbs} />}
       
