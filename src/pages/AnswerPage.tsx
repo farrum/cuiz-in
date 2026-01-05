@@ -134,6 +134,7 @@ const AnswerPage: React.FC = () => {
         schemaType="QAPage"
         schemaData={generateAnswerSchema()}
         keywords={keywords}
+        noindex={true}
       />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
