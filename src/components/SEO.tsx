@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
 
 interface SEOProps {
   title?: string;
@@ -25,11 +26,29 @@ const SEO: React.FC<SEOProps> = ({
   noindex = false,
   keywords = [],
 }) => {
+  const location = useLocation();
   const siteName = 'CuizIN';
   const siteUrl = 'https://cuiz.in';
   
-  // Build the page URL
-  const pageUrl = canonicalUrl || siteUrl;
+  // Generate dynamic canonical URL if not provided
+  // This prevents duplicate content issues from URL variations
+  const generateCanonicalUrl = (): string => {
+    if (canonicalUrl) return canonicalUrl;
+    
+    // Get clean path without query params or hash
+    const cleanPath = location.pathname
+      .replace(/\/+$/, '') // Remove trailing slashes
+      .replace(/\/+/g, '/'); // Remove duplicate slashes
+    
+    // Handle root path
+    if (cleanPath === '' || cleanPath === '/') {
+      return siteUrl;
+    }
+    
+    return `${siteUrl}${cleanPath}`;
+  };
+  
+  const pageUrl = generateCanonicalUrl();
   
   // Build schema based on type
   let schema;
@@ -58,16 +77,20 @@ const SEO: React.FC<SEOProps> = ({
     };
   }
 
+  // Truncate title and description for optimal SEO
+  const seoTitle = title.length > 60 ? `${title.substring(0, 57)}...` : title;
+  const seoDescription = description.length > 160 ? `${description.substring(0, 157)}...` : description;
+
   return (
     <Helmet>
       {/* Basic Meta Tags */}
-      <title>{title}</title>
-      <meta name="description" content={description} />
+      <title>{seoTitle}</title>
+      <meta name="description" content={seoDescription} />
       <link rel="canonical" href={pageUrl} />
       
       {/* Keywords Meta Tag */}
       {keywords && keywords.length > 0 && (
-        <meta name="keywords" content={keywords.join(', ')} />
+        <meta name="keywords" content={keywords.slice(0, 10).join(', ')} />
       )}
       
       {/* Robots Control */}
@@ -79,17 +102,27 @@ const SEO: React.FC<SEOProps> = ({
       
       {/* Open Graph Tags */}
       <meta property="og:site_name" content={siteName} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
+      <meta property="og:title" content={seoTitle} />
+      <meta property="og:description" content={seoDescription} />
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={seoTitle} />
+      <meta property="og:locale" content="en_US" />
       
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:site" content="@cuizin" />
+      <meta name="twitter:title" content={seoTitle} />
+      <meta name="twitter:description" content={seoDescription} />
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={seoTitle} />
+      
+      {/* Additional SEO Tags */}
+      <meta name="author" content="CuizIN" />
+      <meta name="publisher" content="CuizIN" />
       
       {/* Schema.org Structured Data */}
       <script type="application/ld+json">

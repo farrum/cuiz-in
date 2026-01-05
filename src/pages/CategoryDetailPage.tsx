@@ -17,6 +17,7 @@ import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
+import { generateCategorySocialMeta } from '@/utils/canonicalUrl';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -162,14 +163,20 @@ const CategoryDetailPage: React.FC = () => {
     createBreadcrumbs.custom(category.name, `/categories/${categorySlug}`)
   ];
 
+  // Generate social metadata for the category
+  const socialMeta = generateCategorySocialMeta(category.name, categorySlug || '');
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
-        title={`${category.name} Quizzes | CuizIN`}
-        description={category.description}
-        canonicalUrl={`https://cuiz.in/categories/${categorySlug}`}
+        title={socialMeta.title}
+        description={socialMeta.description}
+        canonicalUrl={socialMeta.canonicalUrl}
+        ogType={socialMeta.ogType}
+        ogImage={socialMeta.ogImage}
         schemaType="WebPage"
         schemaData={categorySchema}
+        keywords={socialMeta.keywords}
       />
       <BreadcrumbSchema items={breadcrumbs} />
       <Header />
