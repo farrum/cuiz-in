@@ -9,12 +9,6 @@ import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { setUserContext } from '@/utils/authContext';
 
-// Admin credentials
-const ADMIN_CREDENTIALS = {
-  username: 'quizadmin',
-  password: '!Quizzer123'
-};
-
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -49,159 +43,55 @@ const AdminLogin: React.FC = () => {
         return;
       }
 
-      console.log(`Attempting admin login with username: ${username}`);
+      console.log('Attempting admin login via secure edge function');
 
-      // Check credentials against hardcoded values first for simplicity
-      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-        console.log("Local admin authentication successful");
-        
-        try {
-          // First, sign in with Supabase auth
-          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email: 'quizadmin@example.com', // Using the email we set in our SQL migration
-            password: password
-          });
-          
-          if (authError) {
-            console.error('Supabase auth error:', authError);
-            // Continue with local auth if Supabase auth fails
-          } else if (authData.user) {
-            console.log('Supabase auth successful, user ID:', authData.user.id);
-            
-            // Update the profiles table to set this user as an admin
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ is_admin: true })
-              .eq('id', authData.user.id);
-              
-            if (updateError) {
-              console.error('Failed to update admin status:', updateError);
-            } else {
-              console.log('Updated admin status in profiles table');
-            }
-          }
-        } catch (err) {
-          console.error('Error updating Supabase admin status:', err);
-          // Continue with local auth
-        }
-        
-        // Set user context for RLS policies using existing admin user
-        const adminUserId = '066otqbbqac7'; // Main admin user (player) in database
-        await setUserContext(adminUserId);
-        console.log('User context set for admin:', adminUserId);
-        
-        // Store admin data in localStorage
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-        localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, ADMIN_CREDENTIALS.username);
-        localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'player');
-        
-        console.log('Admin localStorage set:', {
-          adminAuth: 'true',
-          userId: adminUserId,
-          username: 'player'
-        });
-        
-        // Log the successful login
-        try {
-          await supabase
-            .from('login_logs')
-            .insert({
-              username: username,
-              ip_address: '127.0.0.1',
-              device: navigator.userAgent,
-              login_time: new Date().toISOString(),
-              successful: true
-            });
-        } catch (logError) {
-          console.error('Failed to log admin login:', logError);
-        }
-        
-        toast({
-          title: "Success",
-          description: "You have successfully logged in as admin",
-        });
-        
-        navigate('/admin');
-        setIsLoggingIn(false);
-        return;
-      }
-      
-      // Try Supabase authentication as fallback
-      console.log("Attempting Supabase authentication");
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'quizadmin@example.com',
-        password: password
+      // Call the secure admin-auth edge function
+      const { data, error } = await supabase.functions.invoke('admin-auth', {
+        body: { username, password }
       });
-      
-      if (!error && data.user) {
-        console.log("Supabase authentication successful");
-        
-        // Update the profiles table to set this user as an admin
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ is_admin: true })
-          .eq('id', data.user.id);
-          
-        if (updateError) {
-          console.error('Failed to update admin status:', updateError);
-        } else {
-          console.log('Updated user as admin in profiles table');
-        }
-        
-        // Store only essential admin data in localStorage
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-        localStorage.setItem(STORAGE_KEYS.USER_ID, data.user.id);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, 'quizadmin');
-        
-        // Log the successful login
-        try {
-          await supabase
-            .from('login_logs')
-            .insert({
-              username: username,
-              ip_address: '127.0.0.1',
-              device: navigator.userAgent,
-              login_time: new Date().toISOString(),
-              successful: true
-            });
-        } catch (logError) {
-          console.error('Failed to log admin login:', logError);
-        }
-        
+
+      if (error) {
+        console.error('Admin auth error:', error);
         toast({
-          title: "Success",
-          description: "You have successfully logged in as admin",
+          title: "Authentication Failed",
+          description: "Unable to verify credentials",
+          variant: "destructive"
         });
-        
-        navigate('/admin');
         setIsLoggingIn(false);
         return;
-      } else {
-        console.error('Supabase auth error:', error);
       }
 
-      // If we reach here, authentication failed
+      if (!data?.success) {
+        console.log('Admin authentication failed:', data?.error);
+        toast({
+          title: "Authentication Failed",
+          description: data?.error || "Invalid username or password",
+          variant: "destructive"
+        });
+        setIsLoggingIn(false);
+        return;
+      }
+
+      console.log('Admin authentication successful');
+
+      // Set user context for RLS policies
+      const adminUserId = data.adminUserId;
+      await setUserContext(adminUserId);
+      console.log('User context set for admin:', adminUserId);
+      
+      // Store admin data in localStorage
+      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, data.adminUsername);
+      localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, data.adminUsername);
+      
       toast({
-        title: "Authentication Failed",
-        description: "Invalid username or password",
-        variant: "destructive"
+        title: "Success",
+        description: "You have successfully logged in as admin",
       });
       
-      // Log the failed login attempt
-      try {
-        await supabase
-          .from('login_logs')
-          .insert({
-            username: username,
-            ip_address: '127.0.0.1',
-            device: navigator.userAgent,
-            login_time: new Date().toISOString(),
-            successful: false
-          });
-      } catch (logError) {
-        console.error('Failed to log failed login attempt:', logError);
-      }
+      navigate('/admin');
+      setIsLoggingIn(false);
     } catch (error) {
       console.error('Login error:', error);
       toast({
