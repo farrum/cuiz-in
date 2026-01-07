@@ -16,3 +16,5 @@ export { default as CategoryPreviewSection } from './CategoryPreviewSection';
 export { default as LiveQuizPreview } from './LiveQuizPreview';
 export { default as SocialProofStats } from './SocialProofStats';
 export { default as MobileBottomNav } from './MobileBottomNav';
+export { default as TryQuestionSection } from './TryQuestionSection';
+export { default as RegistrationIncentiveModal } from './RegistrationIncentiveModal';
