@@ -2,7 +2,13 @@
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
 /sitemap-index.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
 /sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200
+/sitemap-category.xml category=:category https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=:category 200
+
+# API sitemap paths (legacy/alternative submissions)
 /api/sitemap https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
+/api/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
+/api/sitemap-index.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
+/api/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200
 
 # SPA fallback - must be last
 /* /index.html 200
