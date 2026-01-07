@@ -13,25 +13,29 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
   const { adBlockerDetected } = useAdBlockerDetection();
   const [hasError, setHasError] = useState<boolean>(false);
   const [hasRendered, setHasRendered] = useState<boolean>(false);
-  const [shouldCollapse, setShouldCollapse] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const adId = `ad-container-${position}-${Math.random().toString(36).substring(2, 9)}`;
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
     if (content && containerRef.current) {
       try {
         console.log(`Setting ad content for position: ${position}. Content length: ${content.length}`);
 
-        // Set a timeout to collapse if ad doesn't render in 3 seconds
+        // Extended timeout for slower ad networks (5 seconds)
         const renderTimeout = setTimeout(() => {
           if (!hasRendered && containerRef.current) {
             const hasVisibleContent = containerRef.current.offsetHeight > 50;
             if (!hasVisibleContent) {
-              console.log(`Ad at ${position} didn't render, collapsing...`);
-              setShouldCollapse(true);
+              console.log(`Ad at ${position} didn't render within timeout`);
+              // Try one more time before giving up
+              if (retryCountRef.current < 1) {
+                retryCountRef.current++;
+                console.log(`Retrying ad render for ${position}...`);
+              }
             }
           }
-        }, 3000);
+        }, 5000);
 
         const safeContent = content
           .replace(/document\.browsingTopics\([^)]*\)/g, "console.log('Topics API call blocked')")
@@ -68,7 +72,6 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
                   newScript.onerror = () => {
                     console.error("Ad script failed to load:", oldScript.src);
                     setHasError(true);
-                    setShouldCollapse(true);
                   };
                 } else {
                   newScript.innerHTML = oldScript.innerHTML;
@@ -80,7 +83,6 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
             } catch (error) {
               console.error("Error executing ad scripts:", error);
               setHasError(true);
-              setShouldCollapse(true);
             }
           }, 0);
         }
@@ -91,7 +93,6 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
       } catch (err) {
         console.error("Error setting ad content:", err);
         setHasError(true);
-        setShouldCollapse(true);
       }
     }
 
@@ -102,25 +103,20 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
     };
   }, [content, position, normalizedPosition]);
 
-  // Don't render anything if should collapse or has error/no content
-  if (shouldCollapse || (!isLoading && (error || !content || hasError || adBlockerDetected))) {
+  // Return null immediately for error states - no empty space
+  if (!isLoading && (error || !content || hasError || adBlockerDetected)) {
     return null;
   }
 
+  // Show minimal loading state
   if (isLoading) {
-    return (
-      <div className={`w-full overflow-hidden transition-all duration-300 ${className}`}>
-        <div className={`flex items-center justify-center p-4 bg-secondary/5 rounded-lg ${getLoadingHeight(position)}`}>
-          <p className="text-xs text-muted-foreground">Loading ad...</p>
-        </div>
-      </div>
-    );
+    return null; // Don't show loading skeleton to avoid layout shift
   }
 
   return (
     <div
       id={adId}
-      className={`w-full ad-container overflow-hidden transition-all duration-300 ${getContainerClasses(position, hasRendered)} `}
+      className={`w-full ad-container overflow-hidden ${className}`}
       ref={containerRef}
       data-position={normalizedPosition}
     />
@@ -139,38 +135,5 @@ function mapPosition(position: string): string {
       return position;
   }
 }
-
-const getLoadingHeight = (position: string) => {
-  switch (position) {
-    case "sidebar":
-      return "h-24";
-    default:
-      return "h-16";
-  }
-};
-
-const getContainerClasses = (position: string, hasRendered: boolean) => {
-  const baseClasses = "bg-transparent rounded-lg";
-
-  if (!hasRendered) {
-    return baseClasses;
-  }
-
-  // Only add min-height after content has rendered
-  switch (position) {
-    case "top":
-    case "header":
-    case "bottom":
-    case "footer":
-      return `${baseClasses} min-h-[90px]`;
-    case "middle":
-    case "content":
-      return `${baseClasses} min-h-[250px]`;
-    case "sidebar":
-      return `${baseClasses} min-h-[600px]`;
-    default:
-      return baseClasses;
-  }
-};
 
 export default SimpleAdBanner;

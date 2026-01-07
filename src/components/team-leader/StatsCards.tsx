@@ -23,7 +23,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
           <CardTitle className="text-xl">Total Earnings</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">₹{totalEarnings}</p>
+          <p className="text-3xl font-bold">${Math.round(totalEarnings * 0.012)}</p>
           <p className="text-muted-foreground text-sm">Lifetime earnings</p>
         </CardContent>
       </Card>

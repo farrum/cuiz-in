@@ -9,11 +9,12 @@ export type CurrencyDisplay = {
 };
 
 export const useCurrencyDisplay = () => {
+  // Default to USD for international users
   const [currencyDisplay, setCurrencyDisplay] = useState<CurrencyDisplay>({
-    symbol: '₹',
-    code: 'INR',
-    exchangeRate: 1,
-    isIndian: true
+    symbol: '$',
+    code: 'USD',
+    exchangeRate: 0.012, // INR to USD rate
+    isIndian: false
   });
   
   useEffect(() => {
@@ -22,17 +23,17 @@ export const useCurrencyDisplay = () => {
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         
-        const isIndian = data.country === 'IN';
-        
-        if (!isIndian) {
+        // Only switch to INR for Indian users
+        if (data.country === 'IN') {
           setCurrencyDisplay({
-            symbol: '$',
-            code: 'USD',
-            exchangeRate: 0.012, // Approximate INR to USD rate
-            isIndian: false
+            symbol: '₹',
+            code: 'INR',
+            exchangeRate: 1,
+            isIndian: true
           });
         }
       } catch (error) {
+        // Keep USD as default on error
         console.error('Error fetching location:', error);
       }
     };
