@@ -61,8 +61,8 @@ Disallow: /answer/
 # Crawl delay for polite crawling (1 second between requests)
 Crawl-delay: 1
 
-# Sitemap location (cache-busted)
-Sitemap: https://cuiz.in/sitemap-2026.xml
+# Sitemap location (dynamic from edge function)
+Sitemap: https://cuiz.in/sitemap.xml
 
 # Host declaration
 Host: https://cuiz.in

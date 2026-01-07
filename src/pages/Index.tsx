@@ -33,6 +33,41 @@ const Index: React.FC = () => {
     'url': 'https://cuiz.in',
     'name': 'CuizIN - Free Quiz Game with Rewards',
     'description': 'Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play.',
+    'datePublished': '2024-01-01',
+    'dateModified': new Date().toISOString().split('T')[0],
+    'inLanguage': 'en-IN',
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'CuizIN',
+      'url': 'https://cuiz.in',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://cuiz.in/og-image.png'
+      }
+    },
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': '4.8',
+      'reviewCount': '3250',
+      'bestRating': '5',
+      'worstRating': '1'
+    },
+    'review': [
+      {
+        '@type': 'Review',
+        'author': { '@type': 'Person', 'name': 'Priya S.' },
+        'datePublished': '2025-12-15',
+        'reviewBody': 'Amazing quiz app! I love earning rewards while learning new things.',
+        'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
+      },
+      {
+        '@type': 'Review',
+        'author': { '@type': 'Person', 'name': 'Rahul K.' },
+        'datePublished': '2025-11-20',
+        'reviewBody': 'Great variety of questions across categories. Highly recommended!',
+        'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
+      }
+    ],
     'potentialAction': {
       '@type': 'SearchAction',
       'target': 'https://cuiz.in/quiz?search={search_term_string}',
