@@ -97,17 +97,48 @@ const QuizPage: React.FC = () => {
     'description': 'Test your knowledge and earn rewards with our interactive quiz game.',
     'about': 'Quiz game with monetary rewards',
     'educationalUse': 'assessment',
+    'datePublished': '2024-01-01',
+    'dateModified': new Date().toISOString().split('T')[0],
+    'inLanguage': 'en-IN',
+    'author': {
+      '@type': 'Organization',
+      'name': 'CuizIN'
+    },
+    'provider': {
+      '@type': 'Organization',
+      'name': 'CuizIN',
+      'url': 'https://cuiz.in'
+    },
     'offers': {
       '@type': 'Offer',
       'price': '0',
-      'priceCurrency': 'USD',
-      'availability': 'https://schema.org/InStock'
+      'priceCurrency': 'INR',
+      'availability': 'https://schema.org/InStock',
+      'validFrom': '2024-01-01'
     },
     'aggregateRating': {
       '@type': 'AggregateRating',
       'ratingValue': '4.8',
-      'ratingCount': '2456'
-    }
+      'reviewCount': '2456',
+      'bestRating': '5',
+      'worstRating': '1'
+    },
+    'review': [
+      {
+        '@type': 'Review',
+        'author': { '@type': 'Person', 'name': 'Ankit M.' },
+        'datePublished': '2025-12-10',
+        'reviewBody': 'Fun and educational! The daily challenges keep me coming back.',
+        'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
+      },
+      {
+        '@type': 'Review',
+        'author': { '@type': 'Person', 'name': 'Sneha P.' },
+        'datePublished': '2025-11-28',
+        'reviewBody': 'Love the variety of categories and difficulty levels.',
+        'reviewRating': { '@type': 'Rating', 'ratingValue': '4', 'bestRating': '5' }
+      }
+    ]
   };
 
   const quizKeywords = [

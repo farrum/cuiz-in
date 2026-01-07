@@ -1,75 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://cuiz.in/</loc>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-main.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-history.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/categories</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-science.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/blog</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-geography.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/faq</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-literature.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/how-to-play</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-entertainment.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/referral-program</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-sports.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/login</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-technology.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/register</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-category-general-knowledge.xml</loc>
     <lastmod>2026-01-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/privacy</loc>
-    <lastmod>2026-01-07</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/terms</loc>
-    <lastmod>2026-01-07</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/disclaimer</loc>
-    <lastmod>2026-01-07</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>
+  </sitemap>
+</sitemapindex>
