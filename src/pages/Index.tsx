@@ -1,42 +1,26 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
 import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import NewsTicker from '@/components/NewsTicker';
 import { useHomePageState } from '@/hooks/useHomePageState';
-import AdDebugger from '@/components/ads/AdDebugger';
 import {
-  HeroSection,
-  NameInputForm,
-  FeatureSection,
-  HowToEarnSection,
-  InfoSection,
+  HeroSectionEnhanced,
+  HowItWorksSection,
+  CategoryPreviewSection,
   TestimonialsSection,
   CallToAction,
-  HelpSection,
-  AnimatedBackgrounds
+  MobileBottomNav
 } from '@/components/home';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const Index: React.FC = () => {
   const {
-    userName,
     hasStarted,
-    showNameInput,
-    forceReloadAds,
     isLoggedIn,
-    setUserName,
-    handleStartClick,
     navigateToRegister,
     navigateToLogin,
-    navigateToProfile,
-    handleNameSubmit
   } = useHomePageState();
-  
-  const isDevelopment = process.env.NODE_ENV === 'development';
   
   // Schema.org structured data for the homepage
   const homeSchema = {
@@ -53,7 +37,7 @@ const Index: React.FC = () => {
   };
   
   return (
-    <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+    <main className="min-h-screen flex flex-col gradient-hero">
       <SEO 
         title="CuizIN - Free Quiz Game with Rewards" 
         description="Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play."
@@ -61,60 +45,48 @@ const Index: React.FC = () => {
         schemaData={homeSchema}
       />
       <Header />
-      <NewsTicker className="mt-16" />
       
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
-        <AnimatedBackgrounds />
-        
-        {/* Header Ad */}
-        <SimpleAdBanner position="header" className="mb-8" />
-        
-        {showNameInput ? (
-          <NameInputForm 
-            userName={userName} 
-            onChange={setUserName} 
-            onSubmit={handleNameSubmit} 
-          />
-        ) : (
-          <HeroSection 
-            userName={userName}
-            hasStarted={hasStarted}
-            showNameInput={showNameInput}
+      <div className="flex-1 flex flex-col pt-20 pb-24 md:pb-12">
+        {/* Hero Section */}
+        <section className="py-12 md:py-20">
+          <HeroSectionEnhanced 
             isLoggedIn={isLoggedIn}
-            handleStartClick={handleStartClick}
+            hasStarted={hasStarted}
             navigateToRegister={navigateToRegister}
             navigateToLogin={navigateToLogin}
-            navigateToProfile={navigateToProfile}
-            handleNameSubmit={handleNameSubmit}
-            setUserName={setUserName}
           />
-        )}
+        </section>
         
-        {/* Content Ad */}
-        <SimpleAdBanner position="content" className="my-8" />
-        
-        <FeatureSection />
-        
-        <HelpSection />
-        
-        {/* Sidebar Ad */}
-        <div className="hidden lg:block fixed right-4 top-24">
-          <SimpleAdBanner position="sidebar" />
+        {/* Ad placement - less intrusive */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+          <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
         </div>
-        
-        <HowToEarnSection />
-        
-        {/* Footer Ad */}
-        <SimpleAdBanner position="footer" className="mt-8" />
-        
-        <InfoSection />
-        
-        <TestimonialsSection />
-        
-        <CallToAction />
+
+        {/* Category Preview Section */}
+        <section className="py-12 md:py-16">
+          <CategoryPreviewSection />
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-12 md:py-16 bg-muted/30">
+          <HowItWorksSection />
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-12 md:py-16">
+          <TestimonialsSection />
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-12 md:py-16">
+          <CallToAction />
+        </section>
       </div>
       
       <Footer />
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </main>
   );
 };
