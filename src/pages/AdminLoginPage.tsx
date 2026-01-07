@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
@@ -91,6 +92,9 @@ const AdminLoginPage: React.FC = () => {
 
   return (
     <main className="min-h-screen flex flex-col">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Header />
       
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
