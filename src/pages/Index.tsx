@@ -12,7 +12,10 @@ import {
   CallToAction,
   MobileBottomNav,
   TryQuestionSection,
-  RegistrationIncentiveModal
+  RegistrationIncentiveModal,
+  DailyStreakTracker,
+  ReferralPreview,
+  RecentWinnersSection
 } from '@/components/home';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
@@ -64,6 +67,19 @@ const Index: React.FC = () => {
         
         {/* Try a Question Section */}
         <TryQuestionSection />
+
+        {/* Engagement Section - Streak & Referral */}
+        <section className="py-12 md:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DailyStreakTracker />
+              <ReferralPreview />
+            </div>
+          </div>
+        </section>
+
+        {/* Recent Winners Section */}
+        <RecentWinnersSection />
 
         {/* Category Preview Section */}
         <section className="py-12 md:py-16">
