@@ -1,5 +1,5 @@
 # Robots.txt file for Cuiz.in
-# Last updated: 2025-01-05
+# Last updated: 2026-01-07
 
 # Default rules for all crawlers
 User-agent: *
@@ -61,8 +61,8 @@ Disallow: /answer/
 # Crawl delay for polite crawling (1 second between requests)
 Crawl-delay: 1
 
-# Sitemap location - canonical URL that proxies to edge function
-Sitemap: https://cuiz.in/sitemap.xml
+# Sitemap location (cache-busted)
+Sitemap: https://cuiz.in/sitemap-2026.xml
 
 # Host declaration
 Host: https://cuiz.in
