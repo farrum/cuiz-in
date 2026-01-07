@@ -200,6 +200,15 @@ const QuizQuestionPage: React.FC = () => {
       'educationalLevel': question.difficulty,
       'keywords': keywords.join(', '),
       'datePublished': new Date().toISOString().split('T')[0],
+      'learningResourceType': 'Quiz',
+      'typicalAgeRange': '13+',
+      'educationalAlignment': {
+        '@type': 'AlignmentObject',
+        'alignmentType': 'educationalSubject',
+        'targetName': question.category,
+        'educationalFramework': 'General Knowledge'
+      },
+      'assesses': question.category,
       'author': {
         '@type': 'Organization',
         'name': 'CuizIN'
@@ -209,6 +218,20 @@ const QuizQuestionPage: React.FC = () => {
         'name': question.question,
         'text': question.question,
         'eduQuestionType': 'Multiple choice',
+        'encodingFormat': 'text/html',
+        'learningResourceType': 'Quiz',
+        'typicalAgeRange': '13+',
+        'educationalAlignment': {
+          '@type': 'AlignmentObject',
+          'alignmentType': 'educationalSubject',
+          'targetName': question.category,
+          'educationalFramework': 'General Knowledge'
+        },
+        'assesses': question.category,
+        'comment': {
+          '@type': 'Comment',
+          'text': question.explanation || `This is a ${question.difficulty} level question about ${question.category}.`
+        },
         'dateCreated': new Date().toISOString().split('T')[0],
         'author': {
           '@type': 'Organization',
@@ -221,15 +244,25 @@ const QuizQuestionPage: React.FC = () => {
           'encodingFormat': 'text/html',
           'dateCreated': new Date().toISOString().split('T')[0],
           'upvoteCount': 0,
+          'position': 1,
+          'comment': {
+            '@type': 'Comment',
+            'text': question.explanation || 'This is the correct answer.'
+          },
           'author': {
             '@type': 'Organization',
             'name': 'CuizIN'
           }
         },
-        'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map(option => ({
+        'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map((option, index) => ({
           '@type': 'Answer',
           'text': option,
-          'encodingFormat': 'text/html'
+          'encodingFormat': 'text/html',
+          'position': index + 2,
+          'comment': {
+            '@type': 'Comment',
+            'text': 'This is an incorrect answer option.'
+          }
         }))
       },
       'isPartOf': {

@@ -97,9 +97,23 @@ const QuizPage: React.FC = () => {
     'description': 'Test your knowledge and earn rewards with our interactive quiz game.',
     'about': 'Quiz game with monetary rewards',
     'educationalUse': 'assessment',
+    'learningResourceType': 'Quiz',
+    'typicalAgeRange': '13+',
+    'educationalAlignment': {
+      '@type': 'AlignmentObject',
+      'alignmentType': 'educationalSubject',
+      'targetName': 'General Knowledge',
+      'educationalFramework': 'General Education'
+    },
+    'assesses': 'General Knowledge, Trivia, Current Affairs',
     'datePublished': '2024-01-01',
     'dateModified': new Date().toISOString().split('T')[0],
     'inLanguage': 'en-IN',
+    'encodingFormat': 'text/html',
+    'comment': {
+      '@type': 'Comment',
+      'text': 'Interactive quiz game with multiple categories including Science, History, Geography, Sports, Entertainment, and more. Earn points and compete on leaderboards.'
+    },
     'author': {
       '@type': 'Organization',
       'name': 'CuizIN'
