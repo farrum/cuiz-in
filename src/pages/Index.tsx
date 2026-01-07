@@ -10,7 +10,9 @@ import {
   CategoryPreviewSection,
   TestimonialsSection,
   CallToAction,
-  MobileBottomNav
+  MobileBottomNav,
+  TryQuestionSection,
+  RegistrationIncentiveModal
 } from '@/components/home';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
@@ -46,6 +48,9 @@ const Index: React.FC = () => {
       />
       <Header />
       
+      {/* Registration incentive modal for guests */}
+      {!isLoggedIn && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
+      
       <div className="flex-1 flex flex-col pt-20 pb-24 md:pb-12">
         {/* Hero Section */}
         <section className="py-12 md:py-20">
@@ -57,15 +62,18 @@ const Index: React.FC = () => {
           />
         </section>
         
-        {/* Ad placement - less intrusive */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-          <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
-        </div>
+        {/* Try a Question Section */}
+        <TryQuestionSection />
 
         {/* Category Preview Section */}
         <section className="py-12 md:py-16">
           <CategoryPreviewSection />
         </section>
+        
+        {/* Ad placement - less intrusive */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+          <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
+        </div>
 
         {/* How It Works Section */}
         <section className="py-12 md:py-16 bg-muted/30">

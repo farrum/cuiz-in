@@ -101,6 +101,11 @@ export const incrementGuestPlay = (pointsEarned: number = 0): void => {
   data.sessionPoints += pointsEarned;
   
   localStorage.setItem(GUEST_PLAY_KEY, JSON.stringify(data));
+  
+  // Dispatch event for registration incentive modal
+  window.dispatchEvent(new CustomEvent('guestQuestionCompleted', {
+    detail: { questionsPlayed: data.questionsPlayed, sessionPoints: data.sessionPoints }
+  }));
 };
 
 /**
