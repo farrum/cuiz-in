@@ -1,6 +1,7 @@
 
 import React from 'react';
 import SEO from '@/components/SEO';
+import OrganizationSchema from '@/components/OrganizationSchema';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useHomePageState } from '@/hooks/useHomePageState';
@@ -83,6 +84,7 @@ const Index: React.FC = () => {
         schemaType="WebSite"
         schemaData={homeSchema}
       />
+      <OrganizationSchema />
       <Header />
       
       {!isLoggedIn && <RegistrationIncentiveModal triggerAfterQuestions={3} />}

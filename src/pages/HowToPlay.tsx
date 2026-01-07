@@ -1,18 +1,86 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift } from 'lucide-react';
+import { ArrowRight, CreditCard, Trophy, IndianRupee, Check, Calendar, HelpCircle, Gift, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
+import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const HowToPlay: React.FC = () => {
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.howToPlay()
+  ];
+
+  const howToPlaySchema = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    'name': 'How to Play CuizIN and Earn Rewards',
+    'description': 'Easy steps to start earning rewards by playing quizzes on CuizIN',
+    'step': [
+      {
+        '@type': 'HowToStep',
+        'name': 'No Deposits Required',
+        'text': 'CuizIN is completely free to play. You never need to deposit any money to start earning rewards.'
+      },
+      {
+        '@type': 'HowToStep',
+        'name': 'Answer Quiz Questions',
+        'text': 'Play daily quizzes and answer questions correctly to earn points. Each correct answer gives you points!'
+      },
+      {
+        '@type': 'HowToStep',
+        'name': 'Refer Friends',
+        'text': 'Invite your friends to join CuizIN and earn ₹500 for each friend that signs up and plays.'
+      },
+      {
+        '@type': 'HowToStep',
+        'name': 'Convert Points to Cash',
+        'text': '2 points = ₹1.00. Convert your points to real money and withdraw it to your bank account or UPI.'
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+      <SEO
+        title="How to Play CuizIN | Earn Rewards Playing Quizzes"
+        description="Learn how to play CuizIN and earn real money rewards. Easy steps to start earning through quiz participation, referrals, and more."
+        canonicalUrl="https://cuiz.in/how-to-play"
+        schemaType="WebPage"
+        schemaData={howToPlaySchema}
+        keywords={['how to play', 'earn money', 'quiz rewards', 'CuizIN tutorial', 'free quiz game']}
+      />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       
       <div className="container max-w-4xl mx-auto px-4 py-12 flex-1">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6 pt-16">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/"><Home className="h-4 w-4" /></Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>How to Play</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <div className="mb-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
             How to Play Cuiz<span className="text-green-500">IN</span>
