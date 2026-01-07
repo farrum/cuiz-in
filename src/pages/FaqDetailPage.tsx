@@ -136,10 +136,21 @@ const FaqDetailPage: React.FC = () => {
       'name': faq.question,
       'text': faq.question,
       'answerCount': 1,
+      'dateCreated': new Date().toISOString().split('T')[0],
+      'author': {
+        '@type': 'Organization',
+        'name': 'CuizIN'
+      },
       'acceptedAnswer': {
         '@type': 'Answer',
         'text': faq.answer,
-        'url': canonicalUrl
+        'url': canonicalUrl,
+        'dateCreated': new Date().toISOString().split('T')[0],
+        'upvoteCount': 0,
+        'author': {
+          '@type': 'Organization',
+          'name': 'CuizIN'
+        }
       }
     }
   };
