@@ -3,12 +3,10 @@ RewriteEngine On
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Sitemap redirects to Supabase edge function (for dynamic content)
-RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
-RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=302,L]
-RewriteRule ^sitemap-category-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=302,L]
-RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
-RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
+# Sitemap: redirect old URLs to the new static sitemap (to bust caches)
+RewriteRule ^sitemap\.xml$ /sitemap-2026.xml [R=301,L]
+RewriteRule ^api/sitemap\.xml$ /sitemap-2026.xml [R=301,L]
+RewriteRule ^api/sitemap$ /sitemap-2026.xml [R=301,L]
 
 # Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} -f [OR]
