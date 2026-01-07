@@ -26,7 +26,8 @@ serve(async (req) => {
 
   try {
     const today = new Date().toISOString().split('T')[0];
-    const baseUrl = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1';
+    // Use canonical cuiz.in URLs to avoid cross-domain sitemap issues
+    const baseUrl = 'https://cuiz.in';
 
     // Generate sitemap index XML
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -34,21 +35,21 @@ serve(async (req) => {
     
     // Main sitemap for static pages, blog, and FAQs
     xml += '  <sitemap>\n';
-    xml += `    <loc>${baseUrl}/sitemap-main</loc>\n`;
+    xml += `    <loc>${baseUrl}/sitemap-main.xml</loc>\n`;
     xml += `    <lastmod>${today}</lastmod>\n`;
     xml += '  </sitemap>\n';
     
     // Category-specific sitemaps for questions
     for (const category of categories) {
       xml += '  <sitemap>\n';
-      xml += `    <loc>${baseUrl}/sitemap-category?category=${category}</loc>\n`;
+      xml += `    <loc>${baseUrl}/sitemap-category.xml?category=${category}</loc>\n`;
       xml += `    <lastmod>${today}</lastmod>\n`;
       xml += '  </sitemap>\n';
     }
     
     xml += '</sitemapindex>';
 
-    console.log(`Generated sitemap index with ${categories.length + 1} sitemaps`);
+    console.log(`Generated sitemap index with ${categories.length + 1} sitemaps using cuiz.in URLs`);
 
     return new Response(xml, { headers: corsHeaders });
   } catch (error) {

@@ -1,7 +1,19 @@
+RewriteEngine On
 
 # Redirect ads.txt to AdsTxtManager
-RewriteEngine On
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
+
+# Sitemap redirects - redirect to Supabase edge functions (before SPA fallback)
+RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
+RewriteRule ^sitemap-index\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
+RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=302,L]
+RewriteRule ^sitemap-category\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category [R=302,L]
+
+# API sitemap paths
+RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
+RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
+RewriteRule ^api/sitemap-index\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
+RewriteRule ^api/sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=302,L]
 
 # Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -24,4 +36,3 @@ RewriteRule ^ index.html [L]
   ExpiresByType text/html "access plus 0 seconds"
   ExpiresByType application/json "access plus 0 seconds"
 </IfModule>
-
