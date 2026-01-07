@@ -60,10 +60,8 @@ const QuizPage: React.FC = () => {
     resetGame
   } = useQuizState();
 
-  // Wrap handleQuestionComplete to trigger milestone check
   const handleQuestionComplete = (isCorrect: boolean) => {
     originalHandleQuestionComplete(isCorrect);
-    // Trigger milestone check after points are updated
     setTimeout(() => {
       setMilestoneCheckTrigger(prev => prev + 1);
     }, 500);
@@ -73,14 +71,12 @@ const QuizPage: React.FC = () => {
   
   useEffect(() => {
     const initializeQuiz = async () => {
-      // First, set user context for legacy users
       const userId = localStorage.getItem('cuizin_user_id');
       if (userId) {
         const { setUserContext } = await import('@/utils/authContext');
         await setUserContext(userId);
       }
       
-      // Then check suspension and load data
       const success = await checkSuspensionStatus();
       if (success) {
         loadInitialData();
@@ -94,7 +90,6 @@ const QuizPage: React.FC = () => {
     return null;
   }
   
-  // Schema.org quiz structured data with enhanced properties
   const quizSchema = {
     '@context': 'https://schema.org',
     '@type': 'Quiz',
@@ -115,7 +110,6 @@ const QuizPage: React.FC = () => {
     }
   };
 
-  // Quiz-specific keywords
   const quizKeywords = [
     'quiz', 'online quiz', 'knowledge quiz', 'trivia', 'free quiz',
     'educational quiz', 'quiz game', 'earn rewards', 'quiz challenges',
@@ -144,12 +138,10 @@ const QuizPage: React.FC = () => {
       <Header />
       <NewsTicker className="mt-16" />
       
-      {/* Milestone Celebration Modal */}
       <MilestoneCelebration triggerCheck={milestoneCheckTrigger} />
       
-      <main className="flex-1 container max-w-4xl pt-8 pb-12 px-4">
-        {/* Visual Breadcrumb */}
-        <Breadcrumb className="mb-4">
+      <main className="flex-1 container max-w-4xl pt-6 pb-8 px-4">
+        <Breadcrumb className="mb-3">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
@@ -163,12 +155,11 @@ const QuizPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
-        {/* Guest Play Progress Bar - shows for guests only */}
-        <GuestPlayProgressBar className="mb-6" />
+        <GuestPlayProgressBar className="mb-4" />
         
-        <SimpleAdBanner position="top" className="mb-6" />
+        <SimpleAdBanner position="top" className="mb-4" />
         
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">
             {config.name}
             {currentMode === 'streak' && streak > 0 && (
@@ -185,15 +176,15 @@ const QuizPage: React.FC = () => {
         </div>
         
         {showGameModeSelector && (
-          <div className="mb-6">
+          <div className="mb-4">
             <GameModeSelector />
           </div>
         )}
         
         {!isGameActive && currentMode === 'time-attack' && (
-          <div className="bg-muted p-6 rounded-lg mb-6 text-center">
+          <div className="bg-muted p-4 rounded-lg mb-4 text-center">
             <h2 className="text-xl font-bold mb-2">Time's Up!</h2>
-            <p className="mb-4">You answered {questionsAnswered} questions in {config.timeLimit} seconds!</p>
+            <p className="mb-3">You answered {questionsAnswered} questions in {config.timeLimit} seconds!</p>
             <Button onClick={resetGame} className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
               Play Again
@@ -201,7 +192,7 @@ const QuizPage: React.FC = () => {
           </div>
         )}
         
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <PointsAndProgress 
               questionsAnswered={questionsAnswered}
@@ -211,7 +202,7 @@ const QuizPage: React.FC = () => {
               nextBadgeThreshold={nextBadgeThreshold}
             />
           
-            <SimpleAdBanner position="middle" className="my-6" />
+            <SimpleAdBanner position="middle" className="my-4" />
           
             {isGameActive && (
               <QuizContent 
@@ -228,24 +219,20 @@ const QuizPage: React.FC = () => {
               />
             )}
           
-            {/* Guest Points Banner - prompts registration */}
-            <GuestPointsBanner className="my-6" />
+            <GuestPointsBanner className="my-4" />
             
             <DailyChallenges />
             
-            {/* Top Players & Leaderboard Section */}
-            <section className="mt-10 space-y-6">
+            <section className="mt-8 space-y-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 🏆 Leaderboards
               </h2>
               
-              {/* Monthly Winners - Full Width with Animation */}
               <div className="animate-fade-in">
                 <MonthlyWinnersSection className="hover-scale" limit={5} />
               </div>
               
-              {/* Top Players & All-Time Leaderboard - Side by Side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                   <TopPlayersSection className="h-full hover-scale" limit={10} />
                 </div>
@@ -255,15 +242,15 @@ const QuizPage: React.FC = () => {
               </div>
             </section>
             
-            <SimpleAdBanner position="bottom" className="mt-6" />
+            <SimpleAdBanner position="bottom" className="mt-4" />
           </div>
           
-          <div className="w-full md:w-64">
+          <aside className="hidden md:block w-64 flex-shrink-0">
             <SimpleAdBanner 
               position="sidebar" 
               className="sticky top-20"
             />
-          </div>
+          </aside>
         </div>
       </main>
       

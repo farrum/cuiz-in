@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Trophy, IndianRupee, Zap } from 'lucide-react';
+import { Users, Trophy, DollarSign, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SocialProofStatsProps {
@@ -18,7 +18,7 @@ const SocialProofStats: React.FC<SocialProofStatsProps> = ({ className }) => {
   const finalStats = {
     players: 12500,
     questionsAnswered: 1850000,
-    rewardsPaid: 285000,
+    rewardsPaid: 3400, // USD value (~₹285,000 / 83)
     activeToday: 2456
   };
 
@@ -73,8 +73,8 @@ const SocialProofStats: React.FC<SocialProofStatsProps> = ({ className }) => {
       color: 'text-[hsl(var(--quiz-purple))]'
     },
     {
-      icon: IndianRupee,
-      value: '₹' + formatNumber(animatedStats.rewardsPaid),
+      icon: DollarSign,
+      value: '$' + formatNumber(animatedStats.rewardsPaid),
       label: 'Rewards Paid',
       color: 'text-accent'
     },

@@ -53,7 +53,7 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
         {withdrawalAmount && !isNaN(parseFloat(withdrawalAmount)) && (
           <div className="text-xs text-muted-foreground mt-1">
             {parseFloat(withdrawalAmount) < minimumAmount ? (
-              <span className="text-red-500">Minimum withdrawal amount is ₹{minimumAmount}</span>
+              <span className="text-red-500">Minimum withdrawal amount is {currencyDisplay.symbol}{minimumAmount}</span>
             ) : (
               <span>{(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted</span>
             )}

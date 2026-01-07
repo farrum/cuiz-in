@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award, PartyPopper, IndianRupee } from 'lucide-react';
+import { Award, PartyPopper, DollarSign } from 'lucide-react';
 import FeatureCard from './FeatureCard';
 
 const FeatureSection: React.FC = () => {
@@ -16,14 +16,14 @@ const FeatureSection: React.FC = () => {
       description: "Invite friends to join and earn bonus cash for each successful referral."
     },
     {
-      icon: <IndianRupee className="w-12 h-12 text-green-500" />,
+      icon: <DollarSign className="w-12 h-12 text-green-500" />,
       title: "Cash Out",
-      description: "Earn more than ₹5000 per month fix income."
+      description: "Earn more than $60 per month fixed income."
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
       {features.map((feature, index) => (
         <FeatureCard 
           key={feature.title}

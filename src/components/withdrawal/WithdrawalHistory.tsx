@@ -40,7 +40,7 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals, user
             className="flex items-center justify-between p-3 rounded-lg bg-secondary"
           >
             <div>
-              <div className="font-medium">₹{withdrawal.amount.toFixed(2)}</div>
+              <div className="font-medium">${(withdrawal.amount * 0.012).toFixed(2)}</div>
               <div className="text-xs text-muted-foreground">
                 {new Date(withdrawal.date).toLocaleDateString()}
                 {getTypeLabel(withdrawal.type) && (
