@@ -33,5 +33,8 @@ verify_jwt = false
 [functions.sitemap-category]
 verify_jwt = false
 
+[functions.sitemap-static]
+verify_jwt = false
+
 [functions.admin-auth]
 verify_jwt = false

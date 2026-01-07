@@ -1,14 +1,9 @@
-# Sitemap redirects - serve XML directly from edge functions
-/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
-/sitemap-index.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
-/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200
-/sitemap-category.xml category=:category https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=:category 200
-
-# API sitemap paths (legacy/alternative submissions)
-/api/sitemap https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
-/api/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
-/api/sitemap-index.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200
-/api/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200
+# Sitemap redirects to Supabase edge function (dynamic content)
+/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 302
+/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main 302
+/sitemap-category-:category.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=:category 302
+/api/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 302
+/api/sitemap https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 302
 
 # SPA fallback - must be last
 /* /index.html 200
