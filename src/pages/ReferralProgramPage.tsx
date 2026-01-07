@@ -1,18 +1,79 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ReferralSection from '@/components/ReferralSection';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Users, Award, DollarSign, Percent, HelpCircle } from 'lucide-react';
+import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
+import { ArrowLeft, Users, Award, DollarSign, Percent, HelpCircle, Home } from 'lucide-react';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const ReferralProgramPage: React.FC = () => {
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.referral()
+  ];
+
+  const referralSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    'name': 'CuizIN Referral Program',
+    'description': 'Earn rewards by referring friends to CuizIN. Get bonuses for each friend who joins and plays.',
+    'mainEntity': {
+      '@type': 'Service',
+      'name': 'CuizIN Referral Program',
+      'description': 'Refer friends to CuizIN and earn ₹500 for each active referral',
+      'provider': {
+        '@type': 'Organization',
+        'name': 'CuizIN'
+      },
+      'offers': {
+        '@type': 'Offer',
+        'price': '500',
+        'priceCurrency': 'INR',
+        'description': 'Earn ₹500 per referral'
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Referral Program | Earn ₹500 Per Referral | CuizIN"
+        description="Join CuizIN's referral program and earn ₹500 for each friend who signs up and plays. Become a Team Leader for monthly recurring rewards!"
+        canonicalUrl="https://cuiz.in/referral-program"
+        schemaType="WebPage"
+        schemaData={referralSchema}
+        keywords={['referral program', 'earn money', 'invite friends', 'CuizIN referral', 'referral bonus']}
+      />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/"><Home className="h-4 w-4" /></Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Referral Program</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <Link to="/referral" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back to Referral Dashboard

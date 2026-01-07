@@ -1,14 +1,53 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
+import { Home } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const TermsPage: React.FC = () => {
+  const breadcrumbs = [
+    createBreadcrumbs.home(),
+    createBreadcrumbs.custom('Terms of Service', '/terms')
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Terms of Service | CuizIN"
+        description="Read the Terms of Service for CuizIN. Learn about user eligibility, account responsibilities, rewards system, and platform usage policies."
+        canonicalUrl="https://cuiz.in/terms"
+        keywords={['terms of service', 'user agreement', 'CuizIN terms', 'quiz platform rules']}
+      />
+      <BreadcrumbSchema items={breadcrumbs} />
       <Header />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+        {/* Visual Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/"><Home className="h-4 w-4" /></Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Terms of Service</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <SimpleAdBanner position="header" className="mb-6" />
         
         <div className="quiz-card">
