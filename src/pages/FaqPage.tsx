@@ -27,9 +27,21 @@ const FaqPage: React.FC = () => {
     'mainEntity': faqs.map(item => ({
       '@type': 'Question',
       'name': item.question,
+      'dateCreated': new Date().toISOString().split('T')[0],
+      'author': {
+        '@type': 'Organization',
+        'name': 'CuizIN'
+      },
       'acceptedAnswer': {
         '@type': 'Answer',
-        'text': item.answer
+        'text': item.answer,
+        'url': `https://cuiz.in/faq/${item.id}`,
+        'dateCreated': new Date().toISOString().split('T')[0],
+        'upvoteCount': 0,
+        'author': {
+          '@type': 'Organization',
+          'name': 'CuizIN'
+        }
       }
     }))
   } : undefined;

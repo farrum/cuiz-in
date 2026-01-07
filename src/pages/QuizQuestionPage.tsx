@@ -190,6 +190,8 @@ const QuizQuestionPage: React.FC = () => {
   const generateQuestionSchema = () => {
     if (!question) return null;
     
+    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
+    
     return {
       '@context': 'https://schema.org',
       '@type': 'Quiz',
@@ -197,14 +199,37 @@ const QuizQuestionPage: React.FC = () => {
       'about': question.category,
       'educationalLevel': question.difficulty,
       'keywords': keywords.join(', '),
+      'datePublished': new Date().toISOString().split('T')[0],
+      'author': {
+        '@type': 'Organization',
+        'name': 'CuizIN'
+      },
       'hasPart': {
         '@type': 'Question',
         'name': question.question,
         'text': question.question,
         'eduQuestionType': 'Multiple choice',
-        'suggestedAnswer': question.options.map(option => ({
+        'dateCreated': new Date().toISOString().split('T')[0],
+        'author': {
+          '@type': 'Organization',
+          'name': 'CuizIN'
+        },
+        'acceptedAnswer': {
           '@type': 'Answer',
-          'text': option
+          'text': question.correctAnswer,
+          'url': questionUrl,
+          'encodingFormat': 'text/html',
+          'dateCreated': new Date().toISOString().split('T')[0],
+          'upvoteCount': 0,
+          'author': {
+            '@type': 'Organization',
+            'name': 'CuizIN'
+          }
+        },
+        'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map(option => ({
+          '@type': 'Answer',
+          'text': option,
+          'encodingFormat': 'text/html'
         }))
       },
       'isPartOf': {

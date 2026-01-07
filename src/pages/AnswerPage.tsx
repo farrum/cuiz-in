@@ -91,6 +91,9 @@ const AnswerPage: React.FC = () => {
   const generateAnswerSchema = () => {
     if (!question || !selectedOption) return null;
     
+    const answerSlug = createSlug(selectedOption, 50);
+    const answerUrl = `https://cuiz.in/answer/${questionId}/${answerSlug}`;
+    
     return {
       '@context': 'https://schema.org',
       '@type': 'QAPage',
@@ -100,11 +103,22 @@ const AnswerPage: React.FC = () => {
         'text': question.question,
         'keywords': keywords.join(', '),
         'answerCount': 1,
+        'dateCreated': new Date().toISOString().split('T')[0],
+        'author': {
+          '@type': 'Organization',
+          'name': 'CuizIN'
+        },
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': selectedOption,
-          'correct': isCorrect ? 'True' : 'False',
-          'additionalDescription': question.explanation || undefined
+          'text': isCorrect ? selectedOption : question.correctAnswer,
+          'url': answerUrl,
+          'dateCreated': new Date().toISOString().split('T')[0],
+          'upvoteCount': 0,
+          'author': {
+            '@type': 'Organization',
+            'name': 'CuizIN'
+          },
+          'description': question.explanation || `The correct answer is: ${question.correctAnswer}`
         }
       }
     };
