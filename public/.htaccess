@@ -3,36 +3,32 @@ RewriteEngine On
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Sitemap redirects - redirect to Supabase edge functions (before SPA fallback)
-RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
-RewriteRule ^sitemap-index\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
-RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=302,L]
-RewriteRule ^sitemap-category\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category [R=302,L]
-
-# API sitemap paths
-RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
-RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
-RewriteRule ^api/sitemap-index\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=302,L]
-RewriteRule ^api/sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=302,L]
+# Sitemap redirects to Supabase edge function (for dynamic content)
+RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
+RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=302,L]
+RewriteRule ^sitemap-category-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=302,L]
+RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
+RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=302,L]
 
 # Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Rewrite everything else to index.html to allow the SPA router to handle routes
+# SPA fallback for all other routes
 RewriteRule ^ index.html [L]
 
-# Prevent access to cache files directly
-<FilesMatch "^cache.*\.html$">
-  Order allow,deny
-  Deny from all
-</FilesMatch>
-
-# Set proper cache control headers
+# Cache control
 <IfModule mod_expires.c>
   ExpiresActive On
-  ExpiresDefault "access plus 1 hour"
   ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType application/xml "access plus 1 hour"
+  ExpiresByType text/xml "access plus 1 hour"
   ExpiresByType application/json "access plus 0 seconds"
 </IfModule>
