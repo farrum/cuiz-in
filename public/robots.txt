@@ -23,6 +23,8 @@ Allow: /quiz/question/
 Allow: /browse
 Allow: /topics
 Allow: /topics/
+Allow: /stories
+Allow: /stories/
 Allow: /faq
 Allow: /faq/
 Allow: /blog
