@@ -54,7 +54,11 @@ const PartnershipSection: React.FC = () => {
                   <img 
                     src={partner.logo} 
                     alt={`${partner.name} logo`} 
-                    className="h-16 w-16 object-contain" 
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 object-contain"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <h3 className="text-xl font-bold text-center mb-2">{partner.name}</h3>
