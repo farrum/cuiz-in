@@ -22,11 +22,9 @@ const TestimonialsSection = React.lazy(() => import('@/components/home/Testimoni
 const RecentWinnersSection = React.lazy(() => import('@/components/home/RecentWinnersSection'));
 const SimpleAdBanner = React.lazy(() => import('@/components/ads/SimpleAdBanner'));
 
-// Minimal section loader with fixed height to prevent CLS
-const SectionLoader = () => <div className="min-h-[200px]" aria-hidden="true" />;
-
-// Ad placeholder with fixed height to prevent layout shift
-const AdPlaceholder = () => <div className="min-h-[250px] md:min-h-[90px]" aria-hidden="true" />;
+// Minimal fallbacks
+const SectionLoader = () => null;
+const AdPlaceholder = () => null;
 
 const Index: React.FC = () => {
   const {
