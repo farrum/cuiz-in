@@ -64,15 +64,16 @@ const TryQuestionSection: React.FC = () => {
     return (
       <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
+          {/* Fixed height to prevent CLS */}
+          <div className="max-w-3xl mx-auto min-h-[400px] md:min-h-[350px]">
             <Card className="border-2 border-primary/20 shadow-2xl">
               <CardContent className="p-8">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-8 bg-muted rounded w-3/4 mx-auto" />
-                  <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
+                <div className="space-y-4" aria-hidden="true">
+                  <div className="h-8 bg-muted rounded w-3/4 mx-auto animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-1/2 mx-auto animate-pulse" />
                   <div className="grid grid-cols-2 gap-4 mt-8">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-14 bg-muted rounded-xl" />
+                      <div key={i} className="h-14 bg-muted rounded-xl animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
                     ))}
                   </div>
                 </div>

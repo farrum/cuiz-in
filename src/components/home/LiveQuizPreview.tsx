@@ -53,7 +53,13 @@ const LiveQuizPreview: React.FC = () => {
   useEffect(() => {
     // Only run the timer when the component is visible
     if (!isVisible) return;
+    
+    // Respect reduced motion preference
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
 
+    // Increased interval to 8s to reduce CPU usage on mobile
     const timer = setInterval(() => {
       setIsAnimating(true);
       
@@ -73,7 +79,7 @@ const LiveQuizPreview: React.FC = () => {
           }, 1500);
         }, 800);
       }, 1000);
-    }, 5000);
+    }, 8000); // Increased from 5000ms
 
     return () => clearInterval(timer);
   }, [isVisible]);
