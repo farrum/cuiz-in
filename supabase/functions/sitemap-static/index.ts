@@ -13,24 +13,62 @@ const corsHeaders = {
 
 const SITE_URL = 'https://cuiz.in';
 
-// Category slug to database category name mapping
+// COMPLETE category slug to database category name mapping
+// Based on actual database categories (36 total)
 const slugToCategoriesMap: Record<string, string[]> = {
   'history': ['History'],
-  'science': ['Science', 'Science & Nature', 'Science: Computers', 'Science: Mathematics', 'Science: Gadgets'],
-  'geography': ['Geography'],
-  'literature': ['Art', 'Art & Literature'],
-  'entertainment': [
-    'Entertainment', 'Entertainment: Board Games', 'Entertainment: Books', 
-    'Entertainment: Cartoon & Animations', 'Entertainment: Comics', 'Entertainment: Film',
-    'Entertainment: Japanese Anime & Manga', 'Entertainment: Music', 'Entertainment: Musicals & Theatres',
-    'Entertainment: Television', 'Entertainment: Video Games'
+  'science': [
+    'Science', 
+    'Science & Nature', 
+    'Science &amp; Nature',
+    'Nature',
+    'Science: Mathematics'
   ],
-  'sports': ['Sports'],
-  'technology': ['Computers', 'Science: Computers', 'Science: Gadgets', 'Vehicles'],
-  'general-knowledge': ['General Knowledge', 'Mythology', 'Animals', 'Celebrities', 'Politics']
+  'geography': ['Geography'],
+  'literature': [
+    'Art', 
+    'Arts & Literature', 
+    'Arts and Literature',
+    'Entertainment: Books'
+  ],
+  'entertainment': [
+    'Entertainment', 
+    'Entertainment: Board Games', 
+    'Entertainment: Books', 
+    'Entertainment: Cartoon & Animations',
+    'Entertainment: Cartoon &amp; Animations',
+    'Entertainment: Comics', 
+    'Entertainment: Film',
+    'Entertainment: Japanese Anime & Manga',
+    'Entertainment: Japanese Anime &amp; Manga',
+    'Entertainment: Music', 
+    'Entertainment: Musicals & Theatres',
+    'Entertainment: Musicals &amp; Theatres',
+    'Entertainment: Television', 
+    'Entertainment: Video Games',
+    'Celebrities'
+  ],
+  'sports': ['Sports', 'Cricket'],
+  'technology': [
+    'Science: Computers', 
+    'Science: Gadgets', 
+    'Science and Technology',
+    'Science & Technology',
+    'Vehicles'
+  ],
+  'general-knowledge': [
+    'General Knowledge', 
+    'Mythology', 
+    'Animals', 
+    'Culture',
+    'Food & Drink',
+    'Food and Drinks',
+    'Politics'
+  ]
 };
 
 function createSlug(text: string, maxLength: number = 80): string {
+  if (!text) return '';
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -98,6 +136,7 @@ serve(async (req) => {
         { loc: '/', changefreq: 'daily', priority: '1.0' },
         { loc: '/quiz', changefreq: 'daily', priority: '0.9' },
         { loc: '/categories', changefreq: 'weekly', priority: '0.9' },
+        { loc: '/browse', changefreq: 'daily', priority: '0.9' },
         { loc: '/blog', changefreq: 'weekly', priority: '0.8' },
         { loc: '/faq', changefreq: 'weekly', priority: '0.8' },
         { loc: '/referral-program', changefreq: 'monthly', priority: '0.7' },
@@ -177,30 +216,39 @@ ${entries.join('\n')}
     }
     
     if (type === 'category' && category) {
-      // Generate category-specific sitemap
+      // Generate category-specific sitemap with ALL questions
       const dbCategories = slugToCategoriesMap[category];
       if (!dbCategories) {
+        console.error(`Category not found: ${category}`);
         return new Response('Category not found', { status: 404, headers: corsHeaders });
       }
       
-      const { data: questions } = await supabase
+      // Fetch ALL questions for this category (no limit)
+      const { data: questions, error } = await supabase
         .from('quiz_questions')
         .select('id, question, created_at')
         .in('category', dbCategories)
         .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error(`Error fetching questions for ${category}:`, error);
+        return new Response('Error fetching questions', { status: 500, headers: corsHeaders });
+      }
       
       const entries: string[] = [];
       
       if (questions) {
         for (const q of questions) {
           const slug = createSlug(q.question);
-          const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
-          entries.push(`  <url>
+          if (slug) {
+            const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
+            entries.push(`  <url>
     <loc>${SITE_URL}/quiz/question/${q.id}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`);
+          }
         }
       }
       
@@ -209,7 +257,7 @@ ${entries.join('\n')}
 ${entries.join('\n')}
 </urlset>`;
       
-      console.log(`Generated ${category} sitemap with ${entries.length} URLs`);
+      console.log(`Generated ${category} sitemap with ${entries.length} URLs from ${dbCategories.length} DB categories`);
       return new Response(xml, { headers: corsHeaders });
     }
     

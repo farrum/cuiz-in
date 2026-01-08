@@ -33,6 +33,7 @@ import CategoriesPage from '@/pages/CategoriesPage';
 import CategoryDetailPage from '@/pages/CategoryDetailPage';
 import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
+import BrowseQuestionsPage from '@/pages/BrowseQuestionsPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
@@ -234,6 +235,7 @@ function App() {
               <Route path="/blog/:postSlug" element={<BlogPostPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/categories/:categorySlug" element={<CategoryDetailPage />} />
+              <Route path="/browse" element={<BrowseQuestionsPage />} />
               
               <Route path="/team-dashboard" element={
                 <ProtectedRoute>
