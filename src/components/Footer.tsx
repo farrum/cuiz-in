@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2, Search } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2, Search, Compass } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -73,6 +73,12 @@ const Footer: React.FC = () => {
                 <Link to="/browse" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Search className="w-4 h-4 mr-2" />
                   Browse Questions
+                </Link>
+              </li>
+              <li>
+                <Link to="/topics" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Compass className="w-4 h-4 mr-2" />
+                  Quiz Topics
                 </Link>
               </li>
               <li>
