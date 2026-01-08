@@ -47,6 +47,12 @@ serve(async (req) => {
       xml += '  </sitemap>\n';
     }
     
+    // AMP sitemap for all AMP question pages
+    xml += '  <sitemap>\n';
+    xml += `    <loc>${baseUrl}/sitemap-amp.xml</loc>\n`;
+    xml += `    <lastmod>${today}</lastmod>\n`;
+    xml += '  </sitemap>\n';
+    
     xml += '</sitemapindex>';
 
     console.log(`Generated sitemap index with ${categories.length + 1} sitemaps using cuiz.in URLs`);

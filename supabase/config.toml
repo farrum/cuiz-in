@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.amp-question]
 verify_jwt = false
+
+[functions.sitemap-amp]
+verify_jwt = false

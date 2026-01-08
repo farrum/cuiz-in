@@ -9,6 +9,7 @@
 /sitemap-category-sports.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=sports 301!
 /sitemap-category-technology.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=technology 301!
 /sitemap-category-general-knowledge.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=general-knowledge 301!
+/sitemap-amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 301!
 /api/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 301!
 /api/sitemap https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 301!
 
