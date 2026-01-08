@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import SEO from '@/components/SEO';
 import OrganizationSchema from '@/components/OrganizationSchema';
 import Header from '@/components/Header';
@@ -8,17 +8,22 @@ import { useHomePageState } from '@/hooks/useHomePageState';
 import {
   HeroSectionEnhanced,
   HowItWorksSection,
-  CategoryPreviewSection,
-  TestimonialsSection,
   CallToAction,
   MobileBottomNav,
   TryQuestionSection,
   RegistrationIncentiveModal,
   DailyStreakTracker,
   ReferralPreview,
-  RecentWinnersSection
 } from '@/components/home';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+
+// Lazy load below-the-fold sections
+const CategoryPreviewSection = React.lazy(() => import('@/components/home/CategoryPreviewSection'));
+const TestimonialsSection = React.lazy(() => import('@/components/home/TestimonialsSection'));
+const RecentWinnersSection = React.lazy(() => import('@/components/home/RecentWinnersSection'));
+const SimpleAdBanner = React.lazy(() => import('@/components/ads/SimpleAdBanner'));
+
+// Minimal section loader
+const SectionLoader = () => <div className="min-h-[200px]" />;
 
 const Index: React.FC = () => {
   const {
@@ -90,7 +95,7 @@ const Index: React.FC = () => {
       {!isLoggedIn && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
       <div className="flex-1 flex flex-col pt-20 pb-20 md:pb-8">
-        {/* Hero Section */}
+        {/* Hero Section - Critical, loads immediately */}
         <section className="py-8 md:py-12">
           <HeroSectionEnhanced 
             isLoggedIn={isLoggedIn}
@@ -100,7 +105,7 @@ const Index: React.FC = () => {
           />
         </section>
         
-        {/* Try a Question Section */}
+        {/* Try a Question Section - Important for engagement */}
         <TryQuestionSection />
 
         {/* Engagement Section - Streak & Referral */}
@@ -113,17 +118,23 @@ const Index: React.FC = () => {
           </div>
         </section>
 
-        {/* Recent Winners Section */}
-        <RecentWinnersSection />
+        {/* Recent Winners Section - Lazy loaded */}
+        <Suspense fallback={<SectionLoader />}>
+          <RecentWinnersSection />
+        </Suspense>
 
-        {/* Category Preview Section */}
+        {/* Category Preview Section - Lazy loaded */}
         <section className="py-6 md:py-8">
-          <CategoryPreviewSection />
+          <Suspense fallback={<SectionLoader />}>
+            <CategoryPreviewSection />
+          </Suspense>
         </section>
         
-        {/* Ad placement - wrapped to collapse gracefully */}
+        {/* Ad placement - Lazy loaded */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
+          <Suspense fallback={null}>
+            <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
+          </Suspense>
         </div>
 
         {/* How It Works Section */}
@@ -131,9 +142,11 @@ const Index: React.FC = () => {
           <HowItWorksSection />
         </section>
 
-        {/* Testimonials */}
+        {/* Testimonials - Lazy loaded */}
         <section className="py-6 md:py-8 px-4">
-          <TestimonialsSection />
+          <Suspense fallback={<SectionLoader />}>
+            <TestimonialsSection />
+          </Suspense>
         </section>
 
         {/* Final CTA */}

@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { HelmetProvider } from 'react-helmet-async';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
 import scheduledSyncService from './services/scheduledSync';
@@ -10,37 +10,55 @@ import accountStatusService from './services/accountStatusService';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import React from 'react';
 
-// Pages
+// Eagerly load the Index page for best LCP
 import Index from "@/pages/Index";
-import QuizPage from "@/pages/QuizPage";
-import AnswerPage from "@/pages/AnswerPage";
-import ReferralPage from "@/pages/ReferralPage";
-import ReferralProgramPage from "@/pages/ReferralProgramPage";
-import Profile from "@/pages/Profile";
-import LoginPage from "@/pages/LoginPage";
-import Registration from "@/pages/Registration";
-import AdminPage from "@/pages/AdminPage";
-import AdminLoginPage from '@/pages/AdminLoginPage';
-import HowToPlay from '@/pages/HowToPlay';
-import TermsPage from '@/pages/TermsPage';
-import DisclaimerPage from '@/pages/DisclaimerPage';
-import PrivacyPage from '@/pages/PrivacyPage';
-import FaqPage from '@/pages/FaqPage';
-import FaqDetailPage from '@/pages/FaqDetailPage';
-import BlogPage from '@/pages/BlogPage';
-import BlogPostPage from '@/pages/BlogPostPage';
-import CategoriesPage from '@/pages/CategoriesPage';
-import CategoryDetailPage from '@/pages/CategoryDetailPage';
-import ChallengePlayPage from '@/pages/ChallengePlayPage';
-import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
-import BrowseQuestionsPage from '@/pages/BrowseQuestionsPage';
-import TopicPage from '@/pages/TopicPage';
-import WebStoriesPage from '@/pages/WebStoriesPage';
-import NotFound from "@/pages/NotFound";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
-import QuizQuestionPage from "@/pages/QuizQuestionPage";
-import ScrollToTop from "@/components/ScrollToTop";
+
+// Lazy load all other pages for code splitting
+const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
+const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
+const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
+const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
+const Profile = React.lazy(() => import("@/pages/Profile"));
+const LoginPage = React.lazy(() => import("@/pages/LoginPage"));
+const Registration = React.lazy(() => import("@/pages/Registration"));
+const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
+const AdminLoginPage = React.lazy(() => import('@/pages/AdminLoginPage'));
+const HowToPlay = React.lazy(() => import('@/pages/HowToPlay'));
+const TermsPage = React.lazy(() => import('@/pages/TermsPage'));
+const DisclaimerPage = React.lazy(() => import('@/pages/DisclaimerPage'));
+const PrivacyPage = React.lazy(() => import('@/pages/PrivacyPage'));
+const FaqPage = React.lazy(() => import('@/pages/FaqPage'));
+const FaqDetailPage = React.lazy(() => import('@/pages/FaqDetailPage'));
+const BlogPage = React.lazy(() => import('@/pages/BlogPage'));
+const BlogPostPage = React.lazy(() => import('@/pages/BlogPostPage'));
+const CategoriesPage = React.lazy(() => import('@/pages/CategoriesPage'));
+const CategoryDetailPage = React.lazy(() => import('@/pages/CategoryDetailPage'));
+const ChallengePlayPage = React.lazy(() => import('@/pages/ChallengePlayPage'));
+const ArchivedChallengesPage = React.lazy(() => import('@/pages/ArchivedChallengesPage'));
+const BrowseQuestionsPage = React.lazy(() => import('@/pages/BrowseQuestionsPage'));
+const TopicPage = React.lazy(() => import('@/pages/TopicPage'));
+const WebStoriesPage = React.lazy(() => import('@/pages/WebStoriesPage'));
+const NotFound = React.lazy(() => import("@/pages/NotFound"));
+const TeamLeaderDashboardPage = React.lazy(() => import("@/pages/TeamLeaderDashboardPage"));
+const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
+
+// Lazy load components that aren't needed immediately
+const ProtectedRoute = React.lazy(() => import("@/components/ProtectedRoute"));
+const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
+
+// Minimal loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+// Wrapper for protected routes with suspense
+const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<PageLoader />}>
+    <ProtectedRoute>{children}</ProtectedRoute>
+  </Suspense>
+);
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -201,162 +219,181 @@ function App() {
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <Toaster />
           <Router>
-            <ScrollToTop />
+            <Suspense fallback={null}>
+              <ScrollToTop />
+            </Suspense>
             <Routes>
+              {/* Index page loads eagerly for best LCP */}
               <Route path="/" element={<Index />} />
-              <Route path="/quiz" element={<QuizPage />} />
-              <Route path="/answer/:questionId/:selectedOption" element={<AnswerPage />} />
+              
+              {/* All other routes are lazy-loaded */}
+              <Route path="/quiz" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizPage />
+                </Suspense>
+              } />
+              <Route path="/answer/:questionId/:selectedOption" element={
+                <Suspense fallback={<PageLoader />}>
+                  <AnswerPage />
+                </Suspense>
+              } />
               <Route path="/challenge/:challengeId" element={
-                <ProtectedRoute>
+                <LazyProtectedRoute>
                   <ChallengePlayPage />
-                </ProtectedRoute>
+                </LazyProtectedRoute>
               } />
               <Route path="/archived-challenges" element={
-                <ProtectedRoute>
+                <LazyProtectedRoute>
                   <ArchivedChallengesPage />
-                </ProtectedRoute>
+                </LazyProtectedRoute>
               } />
               <Route path="/referral" element={
-                <ProtectedRoute>
+                <LazyProtectedRoute>
                   <ReferralPage />
-                </ProtectedRoute>
+                </LazyProtectedRoute>
               } />
-              <Route path="/referral-program" element={<ReferralProgramPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<Registration />} />
-              <Route path="/admin-login" element={<AdminLoginPage />} />
-              <Route path="/how-to-play" element={<HowToPlay />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/disclaimer" element={<DisclaimerPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/referral-program" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ReferralProgramPage />
+                </Suspense>
+              } />
+              <Route path="/login" element={
+                <Suspense fallback={<PageLoader />}>
+                  <LoginPage />
+                </Suspense>
+              } />
+              <Route path="/register" element={
+                <Suspense fallback={<PageLoader />}>
+                  <Registration />
+                </Suspense>
+              } />
+              <Route path="/admin-login" element={
+                <Suspense fallback={<PageLoader />}>
+                  <AdminLoginPage />
+                </Suspense>
+              } />
+              <Route path="/how-to-play" element={
+                <Suspense fallback={<PageLoader />}>
+                  <HowToPlay />
+                </Suspense>
+              } />
+              <Route path="/terms" element={
+                <Suspense fallback={<PageLoader />}>
+                  <TermsPage />
+                </Suspense>
+              } />
+              <Route path="/disclaimer" element={
+                <Suspense fallback={<PageLoader />}>
+                  <DisclaimerPage />
+                </Suspense>
+              } />
+              <Route path="/privacy" element={
+                <Suspense fallback={<PageLoader />}>
+                  <PrivacyPage />
+                </Suspense>
+              } />
               
               {/* New SEO Content Pages */}
-              <Route path="/faq" element={<FaqPage />} />
-              <Route path="/faq/:id/:slug" element={<FaqDetailPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/blog/:postSlug" element={<BlogPostPage />} />
-              <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/categories/:categorySlug" element={<CategoryDetailPage />} />
-              <Route path="/browse" element={<BrowseQuestionsPage />} />
-              <Route path="/topics" element={<TopicPage />} />
-              <Route path="/topics/:topicSlug" element={<TopicPage />} />
-              <Route path="/stories" element={<WebStoriesPage />} />
-              <Route path="/stories/:storyId" element={<WebStoriesPage />} />
+              <Route path="/faq" element={
+                <Suspense fallback={<PageLoader />}>
+                  <FaqPage />
+                </Suspense>
+              } />
+              <Route path="/faq/:id/:slug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <FaqDetailPage />
+                </Suspense>
+              } />
+              <Route path="/blog" element={
+                <Suspense fallback={<PageLoader />}>
+                  <BlogPage />
+                </Suspense>
+              } />
+              <Route path="/blog/:postSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <BlogPostPage />
+                </Suspense>
+              } />
+              <Route path="/categories" element={
+                <Suspense fallback={<PageLoader />}>
+                  <CategoriesPage />
+                </Suspense>
+              } />
+              <Route path="/categories/:categorySlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <CategoryDetailPage />
+                </Suspense>
+              } />
+              <Route path="/browse" element={
+                <Suspense fallback={<PageLoader />}>
+                  <BrowseQuestionsPage />
+                </Suspense>
+              } />
+              <Route path="/topics" element={
+                <Suspense fallback={<PageLoader />}>
+                  <TopicPage />
+                </Suspense>
+              } />
+              <Route path="/topics/:topicSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <TopicPage />
+                </Suspense>
+              } />
+              <Route path="/stories" element={
+                <Suspense fallback={<PageLoader />}>
+                  <WebStoriesPage />
+                </Suspense>
+              } />
+              <Route path="/stories/:storyId" element={
+                <Suspense fallback={<PageLoader />}>
+                  <WebStoriesPage />
+                </Suspense>
+              } />
               
               <Route path="/team-dashboard" element={
-                <ProtectedRoute>
+                <LazyProtectedRoute>
                   <TeamLeaderDashboardPage />
-                </ProtectedRoute>
+                </LazyProtectedRoute>
               } />
               
               <Route path="/profile" element={
-                <ProtectedRoute>
+                <LazyProtectedRoute>
                   <Profile />
-                </ProtectedRoute>
+                </LazyProtectedRoute>
               } />
               
-              {/* Admin routes - make all admin paths go to the AdminPage */}
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/users" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/logs" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/ads" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/payments" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/referrals" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/quiz" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/quiz/questions" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/quiz/challenges" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/badges" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/reports" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/sync" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/messages" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/ticker" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/icons" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/requests" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/partnerships" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
+              {/* Admin routes */}
+              <Route path="/admin" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/users" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/logs" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/ads" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/payments" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/referrals" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/quiz" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/quiz/questions" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/quiz/challenges" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/badges" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/reports" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/sync" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/messages" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/ticker" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/icons" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/requests" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/partnerships" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/blog" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/faq" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              
+              <Route path="/quiz/question/:questionId/:questionSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizQuestionPage />
+                </Suspense>
               } />
               
-              {/* Add missing routes for blog and faq in admin section */}
-              <Route path="/admin/blog" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
+              <Route path="*" element={
+                <Suspense fallback={<PageLoader />}>
+                  <NotFound />
+                </Suspense>
               } />
-              <Route path="/admin/faq" element={
-                <ProtectedRoute>
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/quiz/question/:questionId/:questionSlug" element={<QuizQuestionPage />} />
-              
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </ThemeProvider>

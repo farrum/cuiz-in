@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, XCircle, Trophy, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,10 +29,31 @@ const LiveQuizPreview: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentQuestion = sampleQuestions[currentQuestionIndex];
 
+  // Use Intersection Observer to only run animations when visible
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Only run the timer when the component is visible
+    if (!isVisible) return;
+
     const timer = setInterval(() => {
       setIsAnimating(true);
       
@@ -55,7 +76,7 @@ const LiveQuizPreview: React.FC = () => {
     }, 5000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isVisible]);
 
   const getOptionStyle = (index: number) => {
     if (!showResult) {
@@ -75,7 +96,7 @@ const LiveQuizPreview: React.FC = () => {
   };
 
   return (
-    <div className="premium-card max-w-md mx-auto lg:mx-0">
+    <div ref={containerRef} className="premium-card max-w-md mx-auto lg:mx-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -94,7 +115,7 @@ const LiveQuizPreview: React.FC = () => {
 
       {/* Question */}
       <div className={cn(
-        "transition-all duration-300",
+        "transition-opacity duration-300",
         isAnimating && !showResult ? "opacity-90" : "opacity-100"
       )}>
         <h4 className="text-lg font-semibold mb-4 leading-snug">
@@ -107,7 +128,7 @@ const LiveQuizPreview: React.FC = () => {
             <div
               key={index}
               className={cn(
-                "flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-300",
+                "flex items-center justify-between p-3 rounded-xl border-2 transition-colors duration-300",
                 getOptionStyle(index)
               )}
             >
@@ -119,10 +140,10 @@ const LiveQuizPreview: React.FC = () => {
               </div>
               
               {showResult && index === currentQuestion.correctIndex && (
-                <CheckCircle2 className="w-5 h-5 text-accent animate-scale-in" />
+                <CheckCircle2 className="w-5 h-5 text-accent" />
               )}
               {showResult && selectedOption === index && index !== currentQuestion.correctIndex && (
-                <XCircle className="w-5 h-5 text-destructive animate-scale-in" />
+                <XCircle className="w-5 h-5 text-destructive" />
               )}
             </div>
           ))}
@@ -135,10 +156,10 @@ const LiveQuizPreview: React.FC = () => {
           <div
             key={index}
             className={cn(
-              "w-2 h-2 rounded-full transition-all duration-300",
+              "h-2 rounded-full transition-all duration-300",
               index === currentQuestionIndex 
                 ? "w-6 bg-primary" 
-                : "bg-muted"
+                : "w-2 bg-muted"
             )}
           />
         ))}

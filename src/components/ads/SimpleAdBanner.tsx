@@ -167,6 +167,11 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
       className={`w-full ad-container overflow-hidden ${className}`}
       ref={containerRef}
       data-position={normalizedPosition}
+      style={{ 
+        contain: 'layout style',
+        contentVisibility: 'auto',
+        containIntrinsicSize: 'auto 250px'
+      }}
     />
   );
 };
