@@ -375,3 +375,46 @@
     min-height: 250px;
   }
 }
+
+/* Mobile performance optimizations */
+@layer utilities {
+  /* Optimize touch interactions */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* GPU-accelerated transforms for smoother animations on mobile */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  
+  /* Content visibility for below-fold content */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+}
+
+/* Reduce motion on mobile to save battery and CPU */
+@media (max-width: 768px) {
+  .float-animation {
+    animation-duration: 8s !important; /* Slower animation on mobile */
+  }
+  
+  /* Disable expensive blur effects on mobile */
+  .blur-3xl,
+  .blur-2xl {
+    filter: blur(24px);
+  }
+}
+
+/* Improve text rendering on mobile */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+  }
+}

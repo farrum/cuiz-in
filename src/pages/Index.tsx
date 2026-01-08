@@ -22,8 +22,11 @@ const TestimonialsSection = React.lazy(() => import('@/components/home/Testimoni
 const RecentWinnersSection = React.lazy(() => import('@/components/home/RecentWinnersSection'));
 const SimpleAdBanner = React.lazy(() => import('@/components/ads/SimpleAdBanner'));
 
-// Minimal section loader
-const SectionLoader = () => <div className="min-h-[200px]" />;
+// Minimal section loader with fixed height to prevent CLS
+const SectionLoader = () => <div className="min-h-[200px]" aria-hidden="true" />;
+
+// Ad placeholder with fixed height to prevent layout shift
+const AdPlaceholder = () => <div className="min-h-[250px] md:min-h-[90px]" aria-hidden="true" />;
 
 const Index: React.FC = () => {
   const {
@@ -130,10 +133,10 @@ const Index: React.FC = () => {
           </Suspense>
         </section>
         
-        {/* Ad placement - Lazy loaded */}
+        {/* Ad placement - Lazy loaded with fixed height placeholder */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Suspense fallback={null}>
-            <SimpleAdBanner position="content" className="rounded-xl overflow-hidden" />
+          <Suspense fallback={<AdPlaceholder />}>
+            <SimpleAdBanner position="content" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
           </Suspense>
         </div>
 

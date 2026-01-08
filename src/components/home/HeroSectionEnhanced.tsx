@@ -42,7 +42,8 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           {/* Social proof badge */}
           <div className="inline-flex items-center gap-2 social-proof-badge">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              {/* Use CSS animation instead of animate-ping to reduce repaints on mobile */}
+              <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-75 animate-pulse"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
             </span>
             <span>2,400+ players online now</span>
