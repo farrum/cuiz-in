@@ -7,6 +7,7 @@ RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=301,L]
 RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=301,L]
 RewriteRule ^sitemap-category-(.+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=301,L]
+RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
 RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=301,L]
 RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=301,L]
 
