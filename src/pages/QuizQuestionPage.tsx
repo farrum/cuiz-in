@@ -277,6 +277,40 @@ const QuizQuestionPage: React.FC = () => {
     };
   };
 
+  // Generate QAPage schema for FAQ-style rich results
+  const generateQAPageSchema = () => {
+    if (!question) return null;
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'QAPage',
+      'name': question.question,
+      'mainEntity': {
+        '@type': 'Question',
+        'name': question.question,
+        'text': question.question,
+        'answerCount': 1,
+        'upvoteCount': 0,
+        'dateCreated': new Date().toISOString().split('T')[0],
+        'author': {
+          '@type': 'Organization',
+          'name': 'CuizIN'
+        },
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': question.correctAnswer,
+          'dateCreated': new Date().toISOString().split('T')[0],
+          'upvoteCount': 0,
+          'url': `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`,
+          'author': {
+            '@type': 'Organization',
+            'name': 'CuizIN'
+          }
+        }
+      }
+    };
+  };
+
   // Generate social metadata using canonical URL utility
   const socialMeta = question ? generateQuestionSocialMeta({
     id: question.id,
@@ -317,6 +351,15 @@ const QuizQuestionPage: React.FC = () => {
         keywords={socialMeta?.keywords || keywords}
       />
       {question && <BreadcrumbSchema items={breadcrumbs} />}
+      {/* QAPage schema for FAQ-style rich results */}
+      {question && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateQAPageSchema())
+          }}
+        />
+      )}
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
         {/* Breadcrumb Navigation */}

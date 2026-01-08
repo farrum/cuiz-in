@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+const supabaseUrl = 'https://pgywvtphfidouakypdno.supabase.co';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,21 +29,57 @@ function createSlug(text: string, maxLength: number = 80): string {
     .substring(0, maxLength);
 }
 
-// Map frontend slug to database categories
+// COMPLETE mapping of frontend slugs to ALL database categories
 const slugToCategoriesMap: Record<string, string[]> = {
   'history': ['History'],
-  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Nature', 'Science: Mathematics'],
+  'science': [
+    'Science', 
+    'Science & Nature', 
+    'Science &amp; Nature',
+    'Nature',
+    'Science: Mathematics'
+  ],
   'geography': ['Geography'],
-  'literature': ['Arts & Literature', 'Arts and Literature', 'Entertainment: Books'],
+  'literature': [
+    'Art', 
+    'Arts & Literature', 
+    'Arts and Literature',
+    'Entertainment: Books'
+  ],
   'entertainment': [
-    'Entertainment', 'Entertainment: Video Games', 'Entertainment: Music', 
-    'Entertainment: Film', 'Entertainment: Television', 'Entertainment: Board Games',
-    'Entertainment: Musicals &amp; Theatres', 'Entertainment: Japanese Anime &amp; Manga',
-    'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities', 'Art'
+    'Entertainment', 
+    'Entertainment: Board Games', 
+    'Entertainment: Books', 
+    'Entertainment: Cartoon & Animations',
+    'Entertainment: Cartoon &amp; Animations',
+    'Entertainment: Comics', 
+    'Entertainment: Film',
+    'Entertainment: Japanese Anime & Manga',
+    'Entertainment: Japanese Anime &amp; Manga',
+    'Entertainment: Music', 
+    'Entertainment: Musicals & Theatres',
+    'Entertainment: Musicals &amp; Theatres',
+    'Entertainment: Television', 
+    'Entertainment: Video Games',
+    'Celebrities'
   ],
   'sports': ['Sports', 'Cricket'],
-  'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles'],
-  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics'],
+  'technology': [
+    'Science: Computers', 
+    'Science: Gadgets', 
+    'Science and Technology',
+    'Science & Technology',
+    'Vehicles'
+  ],
+  'general-knowledge': [
+    'General Knowledge', 
+    'Mythology', 
+    'Animals', 
+    'Culture',
+    'Food & Drink',
+    'Food and Drinks',
+    'Politics'
+  ]
 };
 
 serve(async (req) => {
@@ -55,12 +91,16 @@ serve(async (req) => {
     const url = new URL(req.url);
     const categorySlug = url.searchParams.get('category') || 'general-knowledge';
     
-    const dbCategories = slugToCategoriesMap[categorySlug] || ['General Knowledge'];
+    const dbCategories = slugToCategoriesMap[categorySlug];
+    if (!dbCategories) {
+      console.error(`Unknown category slug: ${categorySlug}`);
+      return new Response('Category not found', { status: 404, headers: corsHeaders });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
     
-    // Fetch questions for this category
+    // Fetch ALL questions for this category (no limit - Supabase default is 1000)
     const { data: questions, error } = await supabase
       .from('quiz_questions')
       .select('id, question, created_at')
@@ -87,7 +127,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Generated ${categorySlug} sitemap with ${urls.length} question URLs`);
+    console.log(`Generated ${categorySlug} sitemap with ${urls.length} question URLs from ${dbCategories.length} DB categories: ${dbCategories.join(', ')}`);
 
     const xml = generateXml(urls);
     return new Response(xml, { headers: corsHeaders });

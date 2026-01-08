@@ -20,6 +20,7 @@ Disallow: /answer/
 # Allow important public pages
 Allow: /quiz
 Allow: /quiz/question/
+Allow: /browse
 Allow: /faq
 Allow: /faq/
 Allow: /blog
