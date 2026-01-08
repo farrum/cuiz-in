@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.indexnow]
 verify_jwt = false
+
+[functions.amp-question]
+verify_jwt = false
