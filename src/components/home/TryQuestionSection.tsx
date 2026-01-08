@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
 
 const TryQuestionSection: React.FC = () => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
@@ -42,14 +41,6 @@ const TryQuestionSection: React.FC = () => {
     
     const correct = answer === question?.correctAnswer;
     setIsCorrect(correct);
-    
-    if (correct) {
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.7 }
-      });
-    }
   };
 
   const handlePlayMore = () => {

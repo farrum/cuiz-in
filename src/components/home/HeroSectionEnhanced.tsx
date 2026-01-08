@@ -109,12 +109,12 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
         </div>
 
         {/* Right Column - Live Quiz Preview */}
-        <div className="relative animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="relative">
           <LiveQuizPreview />
           
-          {/* Decorative elements */}
-          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-[hsl(var(--quiz-purple))]/20 blur-2xl float-animation" />
-          <div className="absolute -bottom-4 -left-4 w-32 h-32 rounded-full bg-gradient-to-br from-accent/20 to-[hsl(var(--quiz-gold))]/20 blur-2xl float-animation" style={{ animationDelay: '2s' }} />
+          {/* Decorative elements - hidden on mobile for performance */}
+          <div className="hidden md:block absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-[hsl(var(--quiz-purple))]/20 blur-2xl" />
+          <div className="hidden md:block absolute -bottom-4 -left-4 w-32 h-32 rounded-full bg-gradient-to-br from-accent/20 to-[hsl(var(--quiz-gold))]/20 blur-2xl" />
         </div>
       </div>
 
