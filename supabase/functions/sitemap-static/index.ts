@@ -154,6 +154,7 @@ serve(async (req) => {
         { loc: '/topics/food-cuisine', changefreq: 'weekly', priority: '0.8' },
         { loc: '/login', changefreq: 'yearly', priority: '0.5' },
         { loc: '/register', changefreq: 'yearly', priority: '0.5' },
+        { loc: '/stories', changefreq: 'daily', priority: '0.8' },
         { loc: '/terms', changefreq: 'yearly', priority: '0.3' },
         { loc: '/disclaimer', changefreq: 'yearly', priority: '0.3' },
         { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
