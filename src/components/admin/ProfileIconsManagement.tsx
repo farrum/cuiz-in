@@ -172,7 +172,11 @@ const ProfileIconsManagement: React.FC = () => {
                     <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden border bg-background">
                       <img 
                         src={icon.icon_url} 
-                        alt={icon.name} 
+                        alt={icon.name}
+                        width={48}
+                        height={48}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWltYWdlLW9mZiI+PHBhdGggZD0iTTE4LjM2OSA1LjYzMUwzLjYzMSAyMC4zNjlBMiAyIDAgMSAxIDMuNjMxIDEuNjMxTDE4LjM2OSAxNi4zNjlBMiAyIDAgMSAxIDE4LjM2OSAxLjYzMSIvPjwvc3ZnPg==';

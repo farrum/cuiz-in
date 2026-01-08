@@ -134,8 +134,11 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
             <img
               src={question.imageUrl}
               alt="Quiz question image"
+              width={640}
+              height={360}
               className="object-contain w-full h-full"
               loading="eager"
+              decoding="async"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "/placeholder.svg";
               }}
