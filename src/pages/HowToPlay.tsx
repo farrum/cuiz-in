@@ -52,6 +52,62 @@ const HowToPlay: React.FC = () => {
     ]
   };
 
+  // FAQ Schema for enhanced search appearance
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': [
+      {
+        '@type': 'Question',
+        'name': 'How do I start playing CuizIN?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'Simply register with your email address, verify your account, and you can immediately start playing quizzes and earning points.'
+        }
+      },
+      {
+        '@type': 'Question',
+        'name': 'Is there a minimum withdrawal amount on CuizIN?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'Yes, the minimum withdrawal amount is ₹5000 (equivalent to 10,000 points).'
+        }
+      },
+      {
+        '@type': 'Question',
+        'name': 'How long do referral benefits last?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'For regular members, you get a one-time ₹500 bonus for each active referral. For Team Leaders, you earn ₹500 per month for each active referred player, as long as they remain active.'
+        }
+      },
+      {
+        '@type': 'Question',
+        'name': 'When do I get paid on CuizIN?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'You can request a withdrawal anytime after reaching the minimum threshold of ₹5000. Payments are processed within 3-5 business days.'
+        }
+      },
+      {
+        '@type': 'Question',
+        'name': 'What payment methods does CuizIN support?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'We support payments via UPI, bank transfers, and popular digital wallets. You\'ll need to provide valid payment details during the withdrawal process.'
+        }
+      },
+      {
+        '@type': 'Question',
+        'name': 'How much can I earn from referrals?',
+        'acceptedAnswer': {
+          '@type': 'Answer',
+          'text': 'Earn ₹500 for each friend who joins using your referral link and plays actively. If you become a Team Leader (10+ active referrals), you\'ll earn ₹500 per month for each active referred player!'
+        }
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
       <SEO
@@ -63,6 +119,13 @@ const HowToPlay: React.FC = () => {
         keywords={['how to play', 'earn money', 'quiz rewards', 'CuizIN tutorial', 'free quiz game']}
       />
       <BreadcrumbSchema items={breadcrumbs} />
+      {/* FAQ Schema for rich results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqSchema)
+        }}
+      />
       <Header />
       
       <div className="container max-w-4xl mx-auto px-4 py-12 flex-1">

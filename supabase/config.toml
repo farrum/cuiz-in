@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.admin-auth]
 verify_jwt = false
+
+[functions.indexnow]
+verify_jwt = false

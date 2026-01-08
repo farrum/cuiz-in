@@ -34,6 +34,7 @@ import CategoryDetailPage from '@/pages/CategoryDetailPage';
 import ChallengePlayPage from '@/pages/ChallengePlayPage';
 import ArchivedChallengesPage from '@/pages/ArchivedChallengesPage';
 import BrowseQuestionsPage from '@/pages/BrowseQuestionsPage';
+import TopicPage from '@/pages/TopicPage';
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeaderDashboardPage from "@/pages/TeamLeaderDashboardPage";
@@ -236,6 +237,8 @@ function App() {
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/categories/:categorySlug" element={<CategoryDetailPage />} />
               <Route path="/browse" element={<BrowseQuestionsPage />} />
+              <Route path="/topics" element={<TopicPage />} />
+              <Route path="/topics/:topicSlug" element={<TopicPage />} />
               
               <Route path="/team-dashboard" element={
                 <ProtectedRoute>

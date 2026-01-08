@@ -21,6 +21,8 @@ Disallow: /answer/
 Allow: /quiz
 Allow: /quiz/question/
 Allow: /browse
+Allow: /topics
+Allow: /topics/
 Allow: /faq
 Allow: /faq/
 Allow: /blog
