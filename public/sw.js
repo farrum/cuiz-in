@@ -10,7 +10,9 @@ const STATIC_ASSETS = [
   '/index.html',
   '/favicon.ico',
   '/og-image.png',
-  '/placeholder.svg'
+  '/og-image-cuizin.png',
+  '/placeholder.svg',
+  '/manifest.json'
 ];
 
 // Malicious domains to block

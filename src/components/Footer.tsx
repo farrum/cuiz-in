@@ -7,13 +7,13 @@ const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="py-8 border-t border-border bg-background">
+    <footer className="py-8 border-t border-border bg-background" role="contentinfo" aria-label="Site footer">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* First Column - Navigation Links */}
-          <div className="space-y-3">
+          <nav className="space-y-3" aria-label="Quick links">
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2" role="list">
               <li>
                 <Link to="/" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Home className="w-4 h-4 mr-2" />
@@ -45,12 +45,12 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
           
           {/* Second Column - Content Pages */}
-          <div className="space-y-3">
+          <nav className="space-y-3" aria-label="Resources">
             <h3 className="text-lg font-semibold mb-4">Resources</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2" role="list">
               <li>
                 <Link to="/blog" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Book className="w-4 h-4 mr-2" />
@@ -106,13 +106,13 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Map className="w-4 h-4 mr-2" />
+                <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center" aria-label="View XML Sitemap">
+                  <Map className="w-4 h-4 mr-2" aria-hidden="true" />
                   Sitemap
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
           
           {/* Third Column - Summary */}
           <div className="space-y-3">

@@ -35,10 +35,10 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
   ];
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* Left Column - Text & CTA */}
-        <div className="text-center lg:text-left space-y-6 animate-fade-in">
+        <div className="text-center lg:text-left space-y-6 animate-fade-in" role="main">
           {/* Social proof badge */}
           <div className="inline-flex items-center gap-2 social-proof-badge">
             <span className="relative flex h-2 w-2">
@@ -50,7 +50,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           </div>
 
           {/* Main heading */}
-          <div className="space-y-4">
+          <div className="space-y-4" id="hero-heading">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
               Play Quizzes,{' '}
               <span className="bg-gradient-to-r from-primary via-[hsl(var(--quiz-purple))] to-accent bg-clip-text text-transparent">
