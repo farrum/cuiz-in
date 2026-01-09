@@ -20,6 +20,8 @@ const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
 const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
 const Profile = React.lazy(() => import("@/pages/Profile"));
 const LoginPage = React.lazy(() => import("@/pages/LoginPage"));
+const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
 const Registration = React.lazy(() => import("@/pages/Registration"));
 const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
 const AdminLoginPage = React.lazy(() => import('@/pages/AdminLoginPage'));
@@ -260,6 +262,16 @@ function App() {
               <Route path="/login" element={
                 <Suspense fallback={<PageLoader />}>
                   <LoginPage />
+                </Suspense>
+              } />
+              <Route path="/forgot-password" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ForgotPasswordPage />
+                </Suspense>
+              } />
+              <Route path="/reset-password" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ResetPasswordPage />
                 </Suspense>
               } />
               <Route path="/register" element={
