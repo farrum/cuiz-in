@@ -19,6 +19,27 @@ RewriteRule ^ - [L]
 # SPA fallback for all other routes
 RewriteRule ^ index.html [L]
 
+# Security Headers
+<IfModule mod_headers.c>
+  # Prevent MIME type sniffing
+  Header always set X-Content-Type-Options "nosniff"
+  
+  # Prevent clickjacking
+  Header always set X-Frame-Options "SAMEORIGIN"
+  
+  # Control referrer information
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # XSS Protection (legacy browsers)
+  Header always set X-XSS-Protection "1; mode=block"
+  
+  # Permissions Policy
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  
+  # Content Security Policy (permissive for ads)
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googletagmanager.com https://*.googlesyndication.com https://*.gstatic.com https://*.doubleclick.net https://js.onclckmn.com https://js.wpadmngr.com https://richinfo.co https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net wss://*.supabase.co; frame-src 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+</IfModule>
+
 # Cache control
 <IfModule mod_expires.c>
   ExpiresActive On
@@ -47,5 +68,5 @@ RewriteRule ^ index.html [L]
 
 # Compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml text/xml application/xml
 </IfModule>

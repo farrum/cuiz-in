@@ -1,11 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN" dir="ltr">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CuizIN - Play Quiz &amp; Earn Money</title>
+    <title>CuizIN - Play Quiz &amp; Earn Money | Free Online Quiz Game India</title>
     <meta name="description" content="Unlock a world of knowledge and fun with Cuiz.in. Participate in engaging online quizzes, learn interesting facts, and discover opportunities to earn rewards. Play smart, learn more, earn money from home!">
     <meta name="author" content="CuizIN" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="1 days" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    
+    <!-- Geo targeting for India -->
+    <meta name="geo.region" content="IN" />
+    <meta name="geo.placename" content="India" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://cuiz.in/" />
+    <link rel="alternate" hreflang="en-in" href="https://cuiz.in/" />
+    <link rel="alternate" hreflang="x-default" href="https://cuiz.in/" />
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/og-image-cuizin.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CuizIN" />
+    <meta name="application-name" content="CuizIN" />
+    <meta name="format-detection" content="telephone=no" />
     
     <!-- Preload critical resources for faster LCP -->
     <link rel="preload" href="/og-image-cuizin.png" as="image" type="image/png">
@@ -21,7 +47,34 @@
       @media(prefers-color-scheme:light){.gradient-hero{background:linear-gradient(135deg,hsl(0 0% 100%) 0%,hsl(210 40% 98%) 100%)}}
     </style>
     
-    <meta property="og:image" content="/og-image-cuizin.png">
+    <!-- Theme colors -->
+    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="msapplication-TileColor" content="#1a1a2e">
+    
+    <!--Google Adsense-->
+    <meta name="google-adsense-account" content="ca-pub-2831295465597549">
+    
+    <!--Bing webmaster-->
+    <meta name="msvalidate.01" content="37EC1B4A7AC0637B3078A472BDEFAC1E" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cuiz.in/">
+    <meta property="og:title" content="CuizIN - Play Quiz &amp; Earn Money | Free Online Quiz Game India">
+    <meta property="og:description" content="Unlock a world of knowledge and fun with Cuiz.in. Participate in engaging online quizzes, learn interesting facts, and discover opportunities to earn rewards. Play smart, learn more, earn money from home!">
+    <meta property="og:image" content="https://cuiz.in/og-image-cuizin.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:site_name" content="CuizIN">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://cuiz.in/">
+    <meta name="twitter:title" content="CuizIN - Play Quiz &amp; Earn Money | Free Online Quiz Game India">
+    <meta name="twitter:description" content="Unlock a world of knowledge and fun with Cuiz.in. Participate in engaging online quizzes, learn interesting facts, and discover opportunities to earn rewards. Play smart, learn more, earn money from home!">
+    <meta name="twitter:image" content="https://cuiz.in/og-image-cuizin.png">
     
     <!-- DNS Prefetch and Preconnect for faster third-party loading -->
     <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
@@ -29,24 +82,6 @@
     <link rel="dns-prefetch" href="//js.wpadmngr.com">
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
-    
-    <!--Google Adsense-->
-    <meta name="google-adsense-account" content="ca-pub-2831295465597549">
-    
-    <!--bing webmaster-->
-    <meta name="msvalidate.01" content="37EC1B4A7AC0637B3078A472BDEFAC1E" />
-    
-    <!-- Prevent layout shift on mobile -->
-    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    
-    <meta property="og:title" content="CuizIN - Play Quiz &amp; Earn Money">
-    <meta name="twitter:title" content="CuizIN - Play Quiz &amp; Earn Money">
-    <meta property="og:description" content="Unlock a world of knowledge and fun with Cuiz.in. Participate in engaging online quizzes, learn interesting facts, and discover opportunities to earn rewards. Play smart, learn more, earn money from home!">
-    <meta name="twitter:description" content="Unlock a world of knowledge and fun with Cuiz.in. Participate in engaging online quizzes, learn interesting facts, and discover opportunities to earn rewards. Play smart, learn more, earn money from home!">
-    <meta name="twitter:image" content="/og-image-cuizin.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:type" content="website">
   </head>
 
   <body>
@@ -56,9 +91,9 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Deferred Third-Party Scripts (load after main content) -->
+    <!-- Deferred Third-Party Scripts (load after page is fully loaded) -->
     <script>
-      // Load third-party scripts after page is interactive
+      // Load third-party scripts after page is fully loaded using requestIdleCallback
       function loadDeferredScripts() {
         // Google Tag Manager
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -87,7 +122,7 @@
         document.head.appendChild(adsenseScript);
       }
       
-      // Load non-critical ad scripts after user interaction or delay
+      // Load non-critical ad scripts after user interaction or longer delay
       function loadAdScripts() {
         // onclick/wpadmngr scripts
         var onclickScript = document.createElement('script');
@@ -110,25 +145,32 @@
         document.body.appendChild(richadsScript);
       }
       
-      // Load essential scripts when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadDeferredScripts);
-      } else {
-        loadDeferredScripts();
+      // Use requestIdleCallback for loading scripts when browser is idle
+      function scheduleScriptLoad(callback, timeout) {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(callback, { timeout: timeout });
+        } else {
+          setTimeout(callback, timeout);
+        }
       }
       
-      // Load ad scripts after a delay or user interaction
+      // Load essential scripts after page load
+      window.addEventListener('load', function() {
+        scheduleScriptLoad(loadDeferredScripts, 2000);
+      });
+      
+      // Load ad scripts after 5 seconds or user interaction (increased from 3s)
       var adScriptsLoaded = false;
       function triggerAdScripts() {
         if (!adScriptsLoaded) {
           adScriptsLoaded = true;
-          loadAdScripts();
+          scheduleScriptLoad(loadAdScripts, 100);
         }
       }
       
-      // Load ads after 3 seconds or on user interaction
-      setTimeout(triggerAdScripts, 3000);
-      ['scroll', 'click', 'touchstart'].forEach(function(event) {
+      // Load ads after 5 seconds or on user interaction
+      setTimeout(triggerAdScripts, 5000);
+      ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(event) {
         document.addEventListener(event, triggerAdScripts, { once: true, passive: true });
       });
     </script>

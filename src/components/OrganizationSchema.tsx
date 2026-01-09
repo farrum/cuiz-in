@@ -141,6 +141,33 @@ const OrganizationSchema: React.FC = () => {
     }
   };
 
+  const siteNavigationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SiteNavigationElement',
+    'name': 'Main Navigation',
+    'hasPart': [
+      { '@type': 'WebPage', 'name': 'Home', 'url': 'https://cuiz.in/' },
+      { '@type': 'WebPage', 'name': 'Play Quiz', 'url': 'https://cuiz.in/quiz' },
+      { '@type': 'WebPage', 'name': 'Categories', 'url': 'https://cuiz.in/categories' },
+      { '@type': 'WebPage', 'name': 'FAQ', 'url': 'https://cuiz.in/faq' },
+      { '@type': 'WebPage', 'name': 'Blog', 'url': 'https://cuiz.in/blog' },
+      { '@type': 'WebPage', 'name': 'Referral Program', 'url': 'https://cuiz.in/referral-program' }
+    ]
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Home',
+        'item': 'https://cuiz.in/'
+      }
+    ]
+  };
+
   return (
     <Helmet>
       <script type="application/ld+json">
@@ -151,6 +178,12 @@ const OrganizationSchema: React.FC = () => {
       </script>
       <script type="application/ld+json">
         {JSON.stringify(webApplicationSchema)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(siteNavigationSchema)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(breadcrumbSchema)}
       </script>
     </Helmet>
   );
