@@ -77,7 +77,7 @@ const UserLogin: React.FC = () => {
           body: { identifier: username, password },
         });
 
-        if (error || !data?.access_token || !data?.refresh_token) {
+        if (error || !data?.success) {
           const code = String((data as any)?.code ?? '').toLowerCase();
 
           if (code === 'email_not_confirmed') {
@@ -97,23 +97,29 @@ const UserLogin: React.FC = () => {
           return;
         }
 
-        // Persist the session in the Supabase client
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-        });
-
-        if (sessionError || !sessionData.session?.user) {
-          toast({
-            title: "Login Failed",
-            description: "Could not start session. Please try again.",
-            variant: "destructive",
+        // Handle legacy authentication (users without Supabase Auth)
+        if (data.legacy) {
+          authUserId = data.user_id;
+          // For legacy users, we skip Supabase session - they'll use localStorage auth
+        } else {
+          // Modern auth - persist the session in the Supabase client
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
           });
-          return;
-        }
 
-        authUserId = sessionData.session.user.id;
-        authEmail = sessionData.session.user.email ?? null;
+          if (sessionError || !sessionData.session?.user) {
+            toast({
+              title: "Login Failed",
+              description: "Could not start session. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          authUserId = sessionData.session.user.id;
+          authEmail = sessionData.session.user.email ?? null;
+        }
       }
 
       if (!authUserId) {
