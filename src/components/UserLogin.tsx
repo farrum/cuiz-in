@@ -39,19 +39,52 @@ const UserLogin: React.FC = () => {
     try {
       // PHASE 1: Try Supabase Auth first
       let supabaseAuthAttempt = null;
+      let loginEmail = username;
       
-      // If input looks like email, try email login
+      // If input looks like email, try email login directly
       if (username.includes('@')) {
         supabaseAuthAttempt = await supabase.auth.signInWithPassword({
           email: username,
           password: password
         });
       } else {
-        // Try with temp email format for migrated users
-        supabaseAuthAttempt = await supabase.auth.signInWithPassword({
-          email: `${username}@temp.local`,
-          password: password
-        });
+        // First, check if this username has an associated email in profiles
+        const { data: profileWithEmail } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', username)
+          .maybeSingle();
+          
+        if (profileWithEmail?.email) {
+          loginEmail = profileWithEmail.email;
+          supabaseAuthAttempt = await supabase.auth.signInWithPassword({
+            email: profileWithEmail.email,
+            password: password
+          });
+        } else {
+          // Try with temp email format for migrated users
+          supabaseAuthAttempt = await supabase.auth.signInWithPassword({
+            email: `${username}@temp.local`,
+            password: password
+          });
+        }
+      }
+      
+      // Check for specific Supabase Auth errors
+      if (supabaseAuthAttempt?.error) {
+        const errorMessage = supabaseAuthAttempt.error.message?.toLowerCase() || '';
+        
+        // Handle email not confirmed case
+        if (errorMessage.includes('email not confirmed') || 
+            errorMessage.includes('email_not_confirmed')) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email and click the verification link before logging in.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
       }
 
       // If Supabase auth succeeded
