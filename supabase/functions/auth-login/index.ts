@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encodeHex } from "https://deno.land/std@0.220.0/encoding/hex.ts";
+import { crypto } from "https://deno.land/std@0.220.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +12,14 @@ type LoginRequest = {
   identifier: string;
   password: string;
 };
+
+// MD5 hash for legacy password verification
+async function md5Hash(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest("MD5", data);
+  return encodeHex(new Uint8Array(hashBuffer));
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -41,27 +51,40 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
+    const logFailedLogin = async (usernameToLog: string) => {
+      await supabaseAdmin.from("login_logs").insert({
+        username: usernameToLog,
+        ip_address: req.headers.get("x-forwarded-for") || "unknown",
+        device: req.headers.get("user-agent") || "unknown",
+        login_time: new Date().toISOString(),
+        successful: false,
+      });
+    };
+
+    const logSuccessfulLogin = async (usernameToLog: string) => {
+      await supabaseAdmin.from("login_logs").insert({
+        username: usernameToLog,
+        ip_address: req.headers.get("x-forwarded-for") || "unknown",
+        device: req.headers.get("user-agent") || "unknown",
+        login_time: new Date().toISOString(),
+        successful: true,
+      });
+    };
+
     let email = identifier;
     let resolvedUsername: string | null = null;
+    let legacyProfile: { id: string; username: string; password_hash: string | null; suspended: boolean; auth_migrated: boolean } | null = null;
 
-    // If user typed username, resolve to email via service role (profiles table has RLS)
+    // If user typed username, resolve to profile via service role (profiles table has RLS)
     if (!identifier.includes("@")) {
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("email, suspended, username")
+        .select("id, email, suspended, username, password_hash, auth_migrated")
         .eq("username", identifier)
         .maybeSingle();
 
-      if (profileError || !profile?.email) {
-        // Avoid revealing whether username exists
-        await supabaseAdmin.from("login_logs").insert({
-          username: identifier,
-          ip_address: req.headers.get("x-forwarded-for") || "unknown",
-          device: req.headers.get("user-agent") || "unknown",
-          login_time: new Date().toISOString(),
-          successful: false,
-        });
-
+      if (profileError || !profile) {
+        await logFailedLogin(identifier);
         return new Response(
           JSON.stringify({ success: false, error: "Invalid login credentials" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -75,11 +98,55 @@ serve(async (req) => {
         );
       }
 
-      email = profile.email;
-      resolvedUsername = profile.username;
+      // Check if this is a legacy user (no email, not migrated to Supabase Auth)
+      if (!profile.email && !profile.auth_migrated && profile.password_hash) {
+        legacyProfile = {
+          id: profile.id,
+          username: profile.username,
+          password_hash: profile.password_hash,
+          suspended: profile.suspended ?? false,
+          auth_migrated: profile.auth_migrated ?? false,
+        };
+      } else if (!profile.email) {
+        // No email and no password_hash - can't authenticate
+        await logFailedLogin(identifier);
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid login credentials" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      } else {
+        email = profile.email;
+        resolvedUsername = profile.username;
+      }
     }
 
-    // Exchange credentials for tokens
+    // Legacy authentication path (MD5 password hash)
+    if (legacyProfile) {
+      const hashedPassword = await md5Hash(password);
+      
+      if (hashedPassword !== legacyProfile.password_hash) {
+        await logFailedLogin(legacyProfile.username);
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid login credentials" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Legacy user authenticated successfully
+      await logSuccessfulLogin(legacyProfile.username);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          legacy: true,
+          user_id: legacyProfile.id,
+          username: legacyProfile.username,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Modern authentication path (Supabase Auth)
     const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: {
@@ -93,15 +160,7 @@ serve(async (req) => {
     const tokenJson = await tokenRes.json().catch(() => ({}));
 
     if (!tokenRes.ok) {
-      await supabaseAdmin.from("login_logs").insert({
-        username: resolvedUsername || identifier,
-        ip_address: req.headers.get("x-forwarded-for") || "unknown",
-        device: req.headers.get("user-agent") || "unknown",
-        login_time: new Date().toISOString(),
-        successful: false,
-      });
-
-      // Return code (when present) so the client can show better messages
+      await logFailedLogin(resolvedUsername || identifier);
       return new Response(
         JSON.stringify({
           success: false,
@@ -112,7 +171,7 @@ serve(async (req) => {
       );
     }
 
-    // Optional: block suspended users even for email logins
+    // Block suspended users even for email logins
     const userId = tokenJson?.user?.id as string | undefined;
     if (userId) {
       const { data: p } = await supabaseAdmin
@@ -129,13 +188,7 @@ serve(async (req) => {
       }
     }
 
-    await supabaseAdmin.from("login_logs").insert({
-      username: resolvedUsername || identifier,
-      ip_address: req.headers.get("x-forwarded-for") || "unknown",
-      device: req.headers.get("user-agent") || "unknown",
-      login_time: new Date().toISOString(),
-      successful: true,
-    });
+    await logSuccessfulLogin(resolvedUsername || identifier);
 
     return new Response(
       JSON.stringify({
