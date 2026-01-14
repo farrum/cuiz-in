@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
 import { getRandomMessage } from '@/utils/funMessages';
 import { getRandomImageQuizQuestion } from '@/utils/imageQuizUtils';
+import { createSlug } from '@/utils/urlUtils';
 
 export const useQuizAnswer = (questionId: string | undefined, selectedOption: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +68,21 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
         
         if (foundQuestion) {
           setQuestion(foundQuestion);
-          const correct = foundQuestion.correctAnswer === selectedOption;
+          
+          // Compare using slugs for case-insensitive and normalized comparison
+          const selectedSlug = createSlug(selectedOption || '');
+          const correctSlug = createSlug(foundQuestion.correctAnswer);
+          const correct = selectedSlug === correctSlug || 
+                          foundQuestion.correctAnswer.toLowerCase() === (selectedOption || '').toLowerCase();
+          
+          console.log('[useQuizAnswer] Answer comparison:', {
+            selectedOption,
+            selectedSlug,
+            correctAnswer: foundQuestion.correctAnswer,
+            correctSlug,
+            isCorrect: correct
+          });
+          
           setIsCorrect(correct);
           
           // Set fun message based on correctness

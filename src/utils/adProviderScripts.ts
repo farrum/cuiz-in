@@ -94,27 +94,57 @@ export const ensureAclibLoaded = async (): Promise<boolean> => {
 /**
  * Trigger onclick/banner ad network rescan for dynamically added banners
  */
-export const triggerBannerRescan = (): void => {
+export const triggerBannerRescan = (retryCount = 0): void => {
+  const maxRetries = 3;
+  const retryDelay = 500;
+
   try {
-    // Try various onclick/banner network init methods
     const win = window as any;
+    
+    // Check if banner elements exist in DOM first
+    const bannerElements = document.querySelectorAll('[data-banner-id]');
+    if (bannerElements.length === 0) {
+      console.log('[AdProvider] No banner elements found in DOM');
+      if (retryCount < maxRetries) {
+        console.log(`[AdProvider] Retrying banner rescan in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
+      }
+      return;
+    }
+
+    console.log(`[AdProvider] Found ${bannerElements.length} banner elements, triggering rescan`);
+    
+    // Try various onclick/banner network init methods
+    let rescanTriggered = false;
     
     if (win.a3klsam?.init) {
       console.log('[AdProvider] Triggering a3klsam.init rescan');
       win.a3klsam.init();
+      rescanTriggered = true;
     }
     
     if (win.a3klsam?.refresh) {
       console.log('[AdProvider] Triggering a3klsam.refresh');
       win.a3klsam.refresh();
+      rescanTriggered = true;
     }
 
     // Some networks use different global names
     if (win.adManager?.refresh) {
       win.adManager.refresh();
+      rescanTriggered = true;
+    }
+
+    // If no ad manager found but we have banner elements, retry
+    if (!rescanTriggered && retryCount < maxRetries) {
+      console.log(`[AdProvider] No ad manager found, retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
     }
   } catch (error) {
     console.error('[AdProvider] Error during banner rescan:', error);
+    if (retryCount < maxRetries) {
+      setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
+    }
   }
 };
 

@@ -45,12 +45,22 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
       // Trigger banner rescan for onclick/data-banner-id ads
       if (adContent.includes('data-banner-id')) {
         console.log(`[SimpleAdBanner] Detected banner-id ads for ${position}`);
-        setTimeout(() => {
-          if (isMountedRef.current) {
-            triggerBannerRescan();
-            setHasRendered(true);
-          }
-        }, 500);
+        // Use requestAnimationFrame to ensure DOM is painted before rescan
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (isMountedRef.current && containerRef.current) {
+              // Verify the banner elements exist in DOM before triggering rescan
+              const bannerElements = containerRef.current.querySelectorAll('[data-banner-id]');
+              if (bannerElements.length > 0) {
+                console.log(`[SimpleAdBanner] Found ${bannerElements.length} banner elements, triggering rescan`);
+                triggerBannerRescan();
+                setHasRendered(true);
+              } else {
+                console.warn(`[SimpleAdBanner] No banner elements found in DOM for ${position}`);
+              }
+            }
+          }, 300);
+        });
       }
 
       // Push to adsbygoogle if present
@@ -170,7 +180,8 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
       style={{ 
         contain: 'layout style',
         contentVisibility: 'auto',
-        containIntrinsicSize: 'auto 250px'
+        // Only reserve space if content has rendered, otherwise collapse
+        minHeight: hasRendered ? 'auto' : '0'
       }}
     />
   );
