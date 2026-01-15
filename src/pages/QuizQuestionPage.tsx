@@ -192,120 +192,61 @@ const QuizQuestionPage: React.FC = () => {
     
     const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
     
+    // Simplified Quiz schema following Google's recommended structure
+    // Removed nested Comment types that cause "Invalid object type for field '<parent_node>'" error
     return {
       '@context': 'https://schema.org',
       '@type': 'Quiz',
       'name': question.question,
-      'about': question.category,
-      'educationalLevel': question.difficulty,
-      'keywords': keywords.join(', '),
-      'datePublished': new Date().toISOString().split('T')[0],
-      'learningResourceType': 'Quiz',
-      'typicalAgeRange': '13+',
-      'educationalAlignment': {
-        '@type': 'AlignmentObject',
-        'alignmentType': 'educationalSubject',
-        'targetName': question.category,
-        'educationalFramework': 'General Knowledge'
+      'about': {
+        '@type': 'Thing',
+        'name': question.category
       },
-      'assesses': question.category,
+      'educationalLevel': question.difficulty,
+      'url': questionUrl,
+      'datePublished': new Date().toISOString().split('T')[0],
       'author': {
         '@type': 'Organization',
-        'name': 'CuizIN'
+        'name': 'CuizIN',
+        'url': 'https://cuiz.in'
       },
-      'hasPart': {
+      'publisher': {
+        '@type': 'Organization',
+        'name': 'CuizIN',
+        'url': 'https://cuiz.in'
+      },
+      'hasPart': [{
         '@type': 'Question',
         'name': question.question,
         'text': question.question,
-        'eduQuestionType': 'Multiple choice',
-        'encodingFormat': 'text/html',
-        'learningResourceType': 'Quiz',
-        'typicalAgeRange': '13+',
-        'educationalAlignment': {
-          '@type': 'AlignmentObject',
-          'alignmentType': 'educationalSubject',
-          'targetName': question.category,
-          'educationalFramework': 'General Knowledge'
-        },
-        'assesses': question.category,
-        'comment': {
-          '@type': 'Comment',
-          'text': question.explanation || `This is a ${question.difficulty} level question about ${question.category}.`
-        },
-        'dateCreated': new Date().toISOString().split('T')[0],
-        'author': {
-          '@type': 'Organization',
-          'name': 'CuizIN'
-        },
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': question.correctAnswer,
-          'url': questionUrl,
-          'encodingFormat': 'text/html',
-          'dateCreated': new Date().toISOString().split('T')[0],
-          'upvoteCount': 0,
-          'position': 1,
-          'comment': {
-            '@type': 'Comment',
-            'text': question.explanation || 'This is the correct answer.'
-          },
-          'author': {
-            '@type': 'Organization',
-            'name': 'CuizIN'
-          }
+          'text': question.correctAnswer
         },
-        'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map((option, index) => ({
+        'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map(option => ({
           '@type': 'Answer',
-          'text': option,
-          'encodingFormat': 'text/html',
-          'position': index + 2,
-          'comment': {
-            '@type': 'Comment',
-            'text': 'This is an incorrect answer option.'
-          }
+          'text': option
         }))
-      },
-      'isPartOf': {
-        '@type': 'CreativeWork',
-        'name': `${question.category} Quiz`,
-        'educationalAlignment': {
-          '@type': 'AlignmentObject',
-          'alignmentType': 'educationalSubject',
-          'targetName': question.category
-        }
-      }
+      }]
     };
   };
 
   // Generate QAPage schema for FAQ-style rich results
+  // Simplified to avoid nested type conflicts that cause Google validation errors
   const generateQAPageSchema = () => {
     if (!question) return null;
     
     return {
       '@context': 'https://schema.org',
       '@type': 'QAPage',
-      'name': question.question,
       'mainEntity': {
         '@type': 'Question',
         'name': question.question,
         'text': question.question,
         'answerCount': 1,
-        'upvoteCount': 0,
-        'dateCreated': new Date().toISOString().split('T')[0],
-        'author': {
-          '@type': 'Organization',
-          'name': 'CuizIN'
-        },
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': question.correctAnswer,
-          'dateCreated': new Date().toISOString().split('T')[0],
-          'upvoteCount': 0,
-          'url': `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`,
-          'author': {
-            '@type': 'Organization',
-            'name': 'CuizIN'
-          }
+          'text': question.correctAnswer
         }
       }
     };

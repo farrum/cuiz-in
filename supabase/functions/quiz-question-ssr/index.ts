@@ -92,6 +92,8 @@ serve(async (req) => {
     );
     
     // Generate JSON-LD structured data
+    // Simplified schemas to avoid Google's "Invalid object type for field '<parent_node>'" error
+    // Only use required fields per schema.org and Google's guidelines
     const quizSchema = {
       "@context": "https://schema.org",
       "@type": "Quiz",
@@ -103,6 +105,17 @@ serve(async (req) => {
         "@type": "Thing",
         "name": q.category
       },
+      "datePublished": new Date().toISOString().split('T')[0],
+      "author": {
+        "@type": "Organization",
+        "name": SITE_NAME,
+        "url": SITE_URL
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": SITE_NAME,
+        "url": SITE_URL
+      },
       "hasPart": [{
         "@type": "Question",
         "name": q.question,
@@ -112,16 +125,12 @@ serve(async (req) => {
         },
         "suggestedAnswer": options.filter(opt => opt !== q.correct_answer).map(opt => ({
           "@type": "Answer",
-          "text": opt
+          "text": String(opt)
         }))
-      }],
-      "publisher": {
-        "@type": "Organization",
-        "name": SITE_NAME,
-        "url": SITE_URL
-      }
+      }]
     };
     
+    // Simplified QAPage schema - only essential fields
     const qaPageSchema = {
       "@context": "https://schema.org",
       "@type": "QAPage",
@@ -132,8 +141,7 @@ serve(async (req) => {
         "answerCount": 1,
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": q.correct_answer,
-          "upvoteCount": 1
+          "text": q.correct_answer
         }
       }
     };
