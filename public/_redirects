@@ -1,3 +1,7 @@
+# SSR for quiz question pages (for SEO - Googlebot sees pre-rendered content)
+/quiz/question/:id/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
+/quiz/question/:id https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
+
 # Dynamic sitemap redirects to edge function
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 301!
 /sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main 301!

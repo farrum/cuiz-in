@@ -8,7 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Content-Type': 'application/xml; charset=UTF-8',
-  'Cache-Control': 'public, max-age=3600',
+  'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+  'X-Robots-Tag': 'noindex, follow',
 };
 
 const SITE_URL = 'https://cuiz.in';
