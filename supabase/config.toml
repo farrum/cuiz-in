@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.sitemap-amp]
 verify_jwt = false
+
+[functions.quiz-question-ssr]
+verify_jwt = false
