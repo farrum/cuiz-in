@@ -97,7 +97,13 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
 
         containerRef.current.innerHTML = safeContent;
 
-        // Execute inline scripts (non-aclib ones)
+        // Some banner providers expect the mount target element id to equal the banner id.
+        // Ensure any [data-banner-id] element also has id="<banner-id>".
+        const bannerTargets = containerRef.current.querySelectorAll<HTMLElement>('[data-banner-id]');
+        bannerTargets.forEach((el) => {
+          const bannerId = el.getAttribute('data-banner-id');
+          if (bannerId && !el.id) el.id = bannerId;
+        });
         setTimeout(() => {
           if (!containerRef.current || !isMountedRef.current) return;
           
