@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Trophy, Sparkles, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { CheckCircle2, XCircle, Trophy, Sparkles, Loader2, Clock, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import IQResultModal from './IQResultModal';
@@ -15,6 +15,8 @@ interface QuizQuestion {
 }
 
 const TOTAL_QUESTIONS = 5;
+const SECONDS_PER_QUESTION = 30;
+const BEST_IQ_KEY = 'cuizin_best_iq_score';
 
 const InteractiveQuizPreview: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
@@ -26,11 +28,69 @@ const InteractiveQuizPreview: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showResult, setShowResult] = useState(false);
   const [usedQuestionIds, setUsedQuestionIds] = useState<string[]>([]);
+  const [bestIQ, setBestIQ] = useState<number | null>(null);
+  const [timerStarted, setTimerStarted] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(SECONDS_PER_QUESTION);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load best IQ from localStorage on mount
+  useEffect(() => {
+    const storedBestIQ = localStorage.getItem(BEST_IQ_KEY);
+    if (storedBestIQ) {
+      setBestIQ(parseInt(storedBestIQ, 10));
+    }
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    if (timerStarted && !isAnswered && !isLoading && !showResult) {
+      timerRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            // Time's up - auto-select wrong answer
+            handleTimeUp();
+            return SECONDS_PER_QUESTION;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [timerStarted, isAnswered, isLoading, showResult, questionsAnswered]);
+
+  const handleTimeUp = () => {
+    if (isAnswered) return;
+    
+    setIsAnswered(true);
+    // Clear timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    // Auto-advance after showing correct answer
+    setTimeout(() => {
+      const newCount = questionsAnswered + 1;
+      setQuestionsAnswered(newCount);
+
+      if (newCount >= TOTAL_QUESTIONS) {
+        setShowResult(true);
+      } else {
+        loadQuestion();
+      }
+    }, 1500);
+  };
 
   const loadQuestion = useCallback(async () => {
     setIsLoading(true);
+    // Reset timer for new question
+    setTimeRemaining(SECONDS_PER_QUESTION);
+    
     try {
-      // Fetch a random question that hasn't been used yet
       let query = supabase
         .from('quiz_questions')
         .select('id, question, options, correct_answer, category, points')
@@ -44,7 +104,6 @@ const InteractiveQuizPreview: React.FC = () => {
       const { data, error } = await query;
 
       if (error || !data || data.length === 0) {
-        // Fallback to a default question if database is empty
         setCurrentQuestion({
           id: 'default-1',
           question: 'Which planet is known as the Red Planet?',
@@ -54,7 +113,6 @@ const InteractiveQuizPreview: React.FC = () => {
           points: 10
         });
       } else {
-        // Pick a random question from results
         const randomIndex = Math.floor(Math.random() * data.length);
         const q = data[randomIndex];
         const options = Array.isArray(q.options) 
@@ -75,7 +133,6 @@ const InteractiveQuizPreview: React.FC = () => {
       }
     } catch (err) {
       console.error('Error loading question:', err);
-      // Fallback question
       setCurrentQuestion({
         id: 'default-1',
         question: 'Which planet is known as the Red Planet?',
@@ -97,16 +154,27 @@ const InteractiveQuizPreview: React.FC = () => {
   const handleAnswerSelect = (answer: string) => {
     if (isAnswered || isLoading) return;
 
+    // Start timer on first answer
+    if (!timerStarted) {
+      setTimerStarted(true);
+    }
+
+    // Clear timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     setSelectedAnswer(answer);
     setIsAnswered(true);
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     if (isCorrect) {
       setCorrectAnswers(prev => prev + 1);
-      setTotalPoints(prev => prev + (currentQuestion?.points || 10));
+      // Bonus points for quick answers
+      const timeBonus = Math.floor(timeRemaining / 10);
+      setTotalPoints(prev => prev + (currentQuestion?.points || 10) + timeBonus);
     }
 
-    // Auto-advance after 1.5 seconds
     setTimeout(() => {
       const newCount = questionsAnswered + 1;
       setQuestionsAnswered(newCount);
@@ -125,7 +193,16 @@ const InteractiveQuizPreview: React.FC = () => {
     setTotalPoints(0);
     setShowResult(false);
     setUsedQuestionIds([]);
+    setTimerStarted(false);
+    setTimeRemaining(SECONDS_PER_QUESTION);
     loadQuestion();
+  };
+
+  const handleNewBestIQ = (newIQ: number) => {
+    if (!bestIQ || newIQ > bestIQ) {
+      setBestIQ(newIQ);
+      localStorage.setItem(BEST_IQ_KEY, newIQ.toString());
+    }
   };
 
   const getOptionStyle = (option: string) => {
@@ -142,6 +219,12 @@ const InteractiveQuizPreview: React.FC = () => {
     }
 
     return 'border-border opacity-50';
+  };
+
+  const getTimerColor = () => {
+    if (timeRemaining > 20) return 'text-accent';
+    if (timeRemaining > 10) return 'text-[hsl(var(--quiz-gold))]';
+    return 'text-destructive';
   };
 
   if (isLoading && !currentQuestion) {
@@ -165,11 +248,30 @@ const InteractiveQuizPreview: React.FC = () => {
               {currentQuestion?.category || 'Quiz'}
             </span>
           </div>
-          <div className="flex items-center gap-1 text-sm font-medium text-accent">
-            <Sparkles className="w-4 h-4" />
-            <span>+{currentQuestion?.points || 10} pts</span>
+          <div className="flex items-center gap-3">
+            {/* Timer - only show after first answer */}
+            {timerStarted && !isAnswered && (
+              <div className={cn("flex items-center gap-1 text-sm font-bold", getTimerColor())}>
+                <Clock className="w-4 h-4" />
+                <span>{timeRemaining}s</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1 text-sm font-medium text-accent">
+              <Sparkles className="w-4 h-4" />
+              <span>+{currentQuestion?.points || 10} pts</span>
+            </div>
           </div>
         </div>
+
+        {/* Best IQ badge */}
+        {bestIQ && (
+          <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-[hsl(var(--quiz-gold))]/10 border border-[hsl(var(--quiz-gold))]/20">
+            <Award className="w-4 h-4 text-[hsl(var(--quiz-gold))]" />
+            <span className="text-xs font-medium text-[hsl(var(--quiz-gold))]">
+              Your Best IQ: {bestIQ}
+            </span>
+          </div>
+        )}
 
         {/* Progress indicator */}
         <div className="flex items-center gap-2 mb-4">
@@ -251,7 +353,9 @@ const InteractiveQuizPreview: React.FC = () => {
         correctAnswers={correctAnswers}
         totalQuestions={TOTAL_QUESTIONS}
         totalPoints={totalPoints}
+        bestIQ={bestIQ}
         onPlayAgain={handlePlayAgain}
+        onNewBestIQ={handleNewBestIQ}
       />
     </>
   );
