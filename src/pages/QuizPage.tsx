@@ -12,7 +12,6 @@ import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
-import GuestPlayProgressBar from '@/components/quiz/GuestPlayProgressBar';
 import GuestPointsBanner from '@/components/quiz/GuestPointsBanner';
 import MilestoneCelebration from '@/components/quiz/MilestoneCelebration';
 import SEOKeywords from '@/components/SEOKeywords';
@@ -178,9 +177,6 @@ const QuizPage: React.FC = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        
-        {/* Guest progress - only show if needed */}
-        <GuestPlayProgressBar className="mb-3" />
         
         {/* Top Ad - compact */}
         <SimpleAdBanner position="top" className="mb-3" />

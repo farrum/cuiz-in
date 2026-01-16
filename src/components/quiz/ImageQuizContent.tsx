@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Award, Image as ImageIcon } from "lucide-react";
@@ -49,7 +48,12 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+
+  // Reset selection/submitting when question changes
+  useEffect(() => {
+    setSelectedOption(null);
+    setIsSubmitting(false);
+  }, [question.id]);
 
   // Store image question in local storage for answer page retrieval
   useEffect(() => {
@@ -77,11 +81,6 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
     
     const isCorrect = selectedOption === question.correctAnswer;
     onComplete(isCorrect, selectedOption);
-    
-    // If this is not a challenge question, navigate to the answer page
-    if (!isChallenge) {
-      navigate(`/answer/${question.id}/${encodeURIComponent(selectedOption)}`);
-    }
   };
 
   if (isLoading) {
