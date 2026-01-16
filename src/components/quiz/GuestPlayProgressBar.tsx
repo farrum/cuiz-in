@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import { Gift, UserPlus } from 'lucide-react';
@@ -15,14 +15,29 @@ interface GuestPlayProgressBarProps {
 }
 
 const GuestPlayProgressBar: React.FC<GuestPlayProgressBarProps> = ({ className = '' }) => {
+  const [remaining, setRemaining] = useState(getRemainingGuestPlays());
+  const [sessionPoints, setSessionPoints] = useState(getGuestSessionPoints());
+  
+  // Listen for guest question completed events to trigger re-render
+  useEffect(() => {
+    const handleGuestQuestionCompleted = (event: CustomEvent<{ questionsPlayed: number; sessionPoints: number }>) => {
+      setRemaining(getRemainingGuestPlays());
+      setSessionPoints(event.detail.sessionPoints);
+    };
+    
+    window.addEventListener('guestQuestionCompleted', handleGuestQuestionCompleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('guestQuestionCompleted', handleGuestQuestionCompleted as EventListener);
+    };
+  }, []);
+
   // Don't show for logged-in users
   if (isUserLoggedIn()) return null;
 
-  const remaining = getRemainingGuestPlays();
   const maxQuestions = getMaxGuestQuestions();
   const questionsPlayed = maxQuestions - remaining;
   const progressPercent = (questionsPlayed / maxQuestions) * 100;
-  const sessionPoints = getGuestSessionPoints();
 
   return (
     <div className={`bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-4 ${className}`}>
