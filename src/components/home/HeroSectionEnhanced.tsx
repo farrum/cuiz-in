@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Play, UserPlus, LogIn, Trophy, Zap, Users, TrendingUp, Sparkles, CheckCircle2 } from 'lucide-react';
 import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayService';
-import LiveQuizPreview from './LiveQuizPreview';
+import InteractiveQuizPreview from './InteractiveQuizPreview';
 import SocialProofStats from './SocialProofStats';
 
 interface HeroSectionEnhancedProps {
@@ -108,9 +108,9 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           )}
         </div>
 
-        {/* Right Column - Live Quiz Preview */}
+        {/* Right Column - Interactive Quiz Preview */}
         <div className="relative">
-          <LiveQuizPreview />
+          <InteractiveQuizPreview />
           
           {/* Decorative elements - hidden on mobile for performance */}
           <div className="hidden md:block absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-[hsl(var(--quiz-purple))]/20 blur-2xl" />
