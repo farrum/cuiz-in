@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,23 @@ import { logPointsEarned } from '@/utils/pointsService';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { Link } from 'react-router-dom';
+
+// Streak bonus multipliers
+const STREAK_BONUSES = [
+  { threshold: 3, multiplier: 1.5, label: '1.5x', emoji: '🔥' },
+  { threshold: 5, multiplier: 2, label: '2x', emoji: '⚡' },
+  { threshold: 10, multiplier: 2.5, label: '2.5x', emoji: '💎' },
+  { threshold: 15, multiplier: 3, label: '3x', emoji: '🏆' },
+];
+
+const getStreakBonus = (streak: number) => {
+  for (let i = STREAK_BONUSES.length - 1; i >= 0; i--) {
+    if (streak >= STREAK_BONUSES[i].threshold) {
+      return STREAK_BONUSES[i];
+    }
+  }
+  return null;
+};
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -59,6 +76,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
+  const [showStreakBonus, setShowStreakBonus] = useState(false);
+  const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
@@ -148,14 +167,26 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       else if (!isCorrect && soundEnabled) playWrongSound();
     }
 
-    // Calculate points
+    // Calculate points with streak bonus
     let points = 0;
+    const currentStreakBonus = getStreakBonus(streak);
+    
     if (isCorrect) {
       const basePoints = question.difficulty === 'easy' ? 2 : question.difficulty === 'medium' ? 3 : 4;
       const timeBonus = Math.floor(timeRemaining / 10);
-      points = Math.round((basePoints + timeBonus) * config.multiplier);
+      let calculatedPoints = (basePoints + timeBonus) * config.multiplier;
+      
+      // Apply streak bonus
+      if (currentStreakBonus) {
+        calculatedPoints *= currentStreakBonus.multiplier;
+        setStreakBonusApplied(currentStreakBonus);
+        setShowStreakBonus(true);
+      }
+      
+      points = Math.round(calculatedPoints);
     } else if (answer !== null) {
       points = Math.round(0.5 * config.multiplier);
+      setStreakBonusApplied(null);
     }
     setPointsEarned(points);
 
@@ -235,22 +266,68 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     }
   };
 
-  // Timer visual bar
+  // Timer visual bar calculations
   const timerPercentage = (timeRemaining / config.timer) * 100;
+  const isTimeLow = timerPercentage <= 25;
+  const isTimeMedium = timerPercentage <= 50 && timerPercentage > 25;
+  
+  // Get current streak bonus info for display
+  const currentStreakBonus = getStreakBonus(streak);
+  const nextStreakBonus = STREAK_BONUSES.find(b => b.threshold > streak);
 
   return (
     <>
-      <div className="bg-card border rounded-2xl overflow-hidden shadow-lg">
-        {/* Timer bar */}
+      <div className="bg-card border rounded-2xl overflow-hidden shadow-lg relative">
+        {/* Animated Timer Bar */}
         {timerStarted && !isAnswered && (
-          <div className="h-1.5 bg-muted overflow-hidden">
+          <div className="h-2 bg-muted/50 overflow-hidden relative">
+            {/* Background glow for urgency */}
+            {isTimeLow && (
+              <div className="absolute inset-0 bg-destructive/20 animate-pulse" />
+            )}
+            
+            {/* Timer bar with gradient and glow */}
             <div 
               className={cn(
-                "h-full transition-all duration-1000 ease-linear",
-                timerPercentage > 50 ? "bg-accent" : timerPercentage > 25 ? "bg-[hsl(var(--quiz-gold))]" : "bg-destructive"
+                "h-full transition-all duration-1000 ease-linear relative",
+                timerPercentage > 50 
+                  ? "bg-gradient-to-r from-accent to-accent/80" 
+                  : timerPercentage > 25 
+                  ? "bg-gradient-to-r from-[hsl(var(--quiz-gold))] to-[hsl(var(--quiz-gold))]/80" 
+                  : "bg-gradient-to-r from-destructive to-destructive/80"
               )}
               style={{ width: `${timerPercentage}%` }}
-            />
+            >
+              {/* Shimmer effect */}
+              <div 
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent",
+                  isTimeLow ? "animate-[shimmer_0.5s_ease-in-out_infinite]" : "animate-[shimmer_2s_ease-in-out_infinite]"
+                )}
+                style={{
+                  backgroundSize: '200% 100%',
+                }}
+              />
+              
+              {/* Pulsing dot at the end */}
+              <div 
+                className={cn(
+                  "absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full",
+                  timerPercentage > 50 ? "bg-accent" : timerPercentage > 25 ? "bg-[hsl(var(--quiz-gold))]" : "bg-destructive",
+                  isTimeLow ? "animate-ping" : "animate-pulse"
+                )}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Streak Bonus Celebration Overlay */}
+        {showStreakBonus && streakBonusApplied && (
+          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+            <div className="animate-[scale-in_0.3s_ease-out] bg-primary/90 text-primary-foreground px-4 py-2 rounded-full font-bold text-lg shadow-lg flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              {streakBonusApplied.emoji} {streakBonusApplied.label} Streak Bonus!
+            </div>
           </div>
         )}
 
@@ -297,16 +374,29 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           </div>
 
-          {/* Streak and Points info */}
-          {(streak > 0 || totalPoints > 0) && (
-            <div className="flex items-center gap-3 mb-4 text-sm">
+          {/* Streak and Points info with bonus indicator */}
+          {(streak > 0 || totalPoints > 0 || currentStreakBonus) && (
+            <div className="flex items-center gap-2 mb-4 text-sm flex-wrap">
               {streak > 0 && (
-                <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                <span className={cn(
+                  "px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 transition-all",
+                  currentStreakBonus 
+                    ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary ring-1 ring-primary/30 animate-pulse" 
+                    : "bg-primary/10 text-primary"
+                )}>
                   🔥 {streak} streak
+                  {currentStreakBonus && (
+                    <span className="text-xs font-bold">({currentStreakBonus.label})</span>
+                  )}
+                </span>
+              )}
+              {nextStreakBonus && streak > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {nextStreakBonus.threshold - streak} more for {nextStreakBonus.label}!
                 </span>
               )}
               {totalPoints > 0 && (
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground ml-auto">
                   Total: <span className="font-semibold text-foreground">{totalPoints} pts</span>
                 </span>
               )}
@@ -381,7 +471,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             ))}
           </div>
 
-          {/* Feedback / Points earned */}
+          {/* Feedback / Points earned with streak bonus info */}
           {isAnswered && pointsEarned !== null && (
             <div className={cn(
               "mt-4 p-3 rounded-xl text-center font-medium",
@@ -390,20 +480,35 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                 : "bg-destructive/10 text-destructive"
             )}>
               {selectedAnswer === question.correctAnswer ? (
-                <span className="flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" />
-                  Correct! +{pointsEarned} points
-                </span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Correct! +{pointsEarned} points
+                  </span>
+                  {streakBonusApplied && (
+                    <span className="text-xs opacity-80 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      Includes {streakBonusApplied.label} streak bonus!
+                    </span>
+                  )}
+                </div>
               ) : selectedAnswer === null ? (
                 <span className="flex items-center justify-center gap-2">
                   <Clock className="w-5 h-5" />
                   Time's up! The answer was {question.correctAnswer}
                 </span>
               ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <XCircle className="w-5 h-5" />
-                  Wrong! Correct: {question.correctAnswer}
-                </span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="flex items-center justify-center gap-2">
+                    <XCircle className="w-5 h-5" />
+                    Wrong! Correct: {question.correctAnswer}
+                  </span>
+                  {streak > 0 && (
+                    <span className="text-xs opacity-80">
+                      Streak reset to 0
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           )}
