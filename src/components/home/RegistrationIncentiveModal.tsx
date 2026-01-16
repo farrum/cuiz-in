@@ -156,7 +156,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
               <ul className="space-y-1.5 text-sm">
                 <li className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                  15 plays/day
+                  30 plays/day
                 </li>
                 <li className="flex items-center gap-2 text-muted-foreground">
                   <X className="w-3.5 h-3.5" />
