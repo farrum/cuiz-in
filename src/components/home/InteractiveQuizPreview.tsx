@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Trophy, Sparkles, Loader2, Clock, Award } from 'lucide-react';
+import { CheckCircle2, XCircle, Trophy, Sparkles, Loader2, Clock, Award, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useQuizSounds } from '@/hooks/useQuizSounds';
 import IQResultModal from './IQResultModal';
 
 interface QuizQuestion {
@@ -14,8 +16,23 @@ interface QuizQuestion {
   points: number;
 }
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface DifficultyConfig {
+  label: string;
+  timer: number;
+  multiplier: number;
+  color: string;
+  icon: string;
+}
+
+const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
+  easy: { label: 'Easy', timer: 45, multiplier: 1, color: 'text-accent', icon: '🌱' },
+  medium: { label: 'Medium', timer: 30, multiplier: 1.5, color: 'text-[hsl(var(--quiz-gold))]', icon: '⚡' },
+  hard: { label: 'Hard', timer: 15, multiplier: 2, color: 'text-destructive', icon: '🔥' },
+};
+
 const TOTAL_QUESTIONS = 5;
-const SECONDS_PER_QUESTION = 30;
 const BEST_IQ_KEY = 'cuizin_best_iq_score';
 
 const InteractiveQuizPreview: React.FC = () => {
@@ -30,8 +47,15 @@ const InteractiveQuizPreview: React.FC = () => {
   const [usedQuestionIds, setUsedQuestionIds] = useState<string[]>([]);
   const [bestIQ, setBestIQ] = useState<number | null>(null);
   const [timerStarted, setTimerStarted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(SECONDS_PER_QUESTION);
+  const [timeRemaining, setTimeRemaining] = useState(30);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickRef = useRef<number>(0);
+
+  const { playCorrectSound, playWrongSound, playTickSound, playTimeUpSound, playSelectSound } = useQuizSounds();
+
+  const config = difficulty ? DIFFICULTY_CONFIG[difficulty] : null;
 
   // Load best IQ from localStorage on mount
   useEffect(() => {
@@ -41,15 +65,23 @@ const InteractiveQuizPreview: React.FC = () => {
     }
   }, []);
 
-  // Timer logic
+  // Timer logic with sound warnings
   useEffect(() => {
-    if (timerStarted && !isAnswered && !isLoading && !showResult) {
+    if (timerStarted && !isAnswered && !isLoading && !showResult && config) {
       timerRef.current = setInterval(() => {
         setTimeRemaining(prev => {
+          // Play tick sound when time is low (every second under 10)
+          if (prev <= 10 && prev > 1 && soundEnabled) {
+            const now = Date.now();
+            if (now - lastTickRef.current >= 900) {
+              playTickSound();
+              lastTickRef.current = now;
+            }
+          }
+          
           if (prev <= 1) {
-            // Time's up - auto-select wrong answer
             handleTimeUp();
-            return SECONDS_PER_QUESTION;
+            return config.timer;
           }
           return prev - 1;
         });
@@ -61,18 +93,18 @@ const InteractiveQuizPreview: React.FC = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [timerStarted, isAnswered, isLoading, showResult, questionsAnswered]);
+  }, [timerStarted, isAnswered, isLoading, showResult, questionsAnswered, config, soundEnabled]);
 
   const handleTimeUp = () => {
     if (isAnswered) return;
     
+    if (soundEnabled) playTimeUpSound();
     setIsAnswered(true);
-    // Clear timer
+    
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
 
-    // Auto-advance after showing correct answer
     setTimeout(() => {
       const newCount = questionsAnswered + 1;
       setQuestionsAnswered(newCount);
@@ -86,9 +118,10 @@ const InteractiveQuizPreview: React.FC = () => {
   };
 
   const loadQuestion = useCallback(async () => {
+    if (!config) return;
+    
     setIsLoading(true);
-    // Reset timer for new question
-    setTimeRemaining(SECONDS_PER_QUESTION);
+    setTimeRemaining(config.timer);
     
     try {
       let query = supabase
@@ -145,21 +178,29 @@ const InteractiveQuizPreview: React.FC = () => {
     setSelectedAnswer(null);
     setIsAnswered(false);
     setIsLoading(false);
-  }, [usedQuestionIds]);
+  }, [usedQuestionIds, config]);
 
+  const handleDifficultySelect = (selectedDifficulty: Difficulty) => {
+    if (soundEnabled) playSelectSound();
+    setDifficulty(selectedDifficulty);
+    setTimeRemaining(DIFFICULTY_CONFIG[selectedDifficulty].timer);
+  };
+
+  // Load first question when difficulty is selected
   useEffect(() => {
-    loadQuestion();
-  }, []);
+    if (difficulty && !currentQuestion) {
+      loadQuestion();
+    }
+  }, [difficulty]);
 
   const handleAnswerSelect = (answer: string) => {
-    if (isAnswered || isLoading) return;
+    if (isAnswered || isLoading || !config) return;
 
     // Start timer on first answer
     if (!timerStarted) {
       setTimerStarted(true);
     }
 
-    // Clear timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -169,10 +210,14 @@ const InteractiveQuizPreview: React.FC = () => {
 
     const isCorrect = answer === currentQuestion?.correct_answer;
     if (isCorrect) {
+      if (soundEnabled) playCorrectSound();
       setCorrectAnswers(prev => prev + 1);
-      // Bonus points for quick answers
       const timeBonus = Math.floor(timeRemaining / 10);
-      setTotalPoints(prev => prev + (currentQuestion?.points || 10) + timeBonus);
+      const basePoints = (currentQuestion?.points || 10) + timeBonus;
+      const multipliedPoints = Math.round(basePoints * config.multiplier);
+      setTotalPoints(prev => prev + multipliedPoints);
+    } else {
+      if (soundEnabled) playWrongSound();
     }
 
     setTimeout(() => {
@@ -194,8 +239,8 @@ const InteractiveQuizPreview: React.FC = () => {
     setShowResult(false);
     setUsedQuestionIds([]);
     setTimerStarted(false);
-    setTimeRemaining(SECONDS_PER_QUESTION);
-    loadQuestion();
+    setDifficulty(null);
+    setCurrentQuestion(null);
   };
 
   const handleNewBestIQ = (newIQ: number) => {
@@ -222,10 +267,74 @@ const InteractiveQuizPreview: React.FC = () => {
   };
 
   const getTimerColor = () => {
-    if (timeRemaining > 20) return 'text-accent';
-    if (timeRemaining > 10) return 'text-[hsl(var(--quiz-gold))]';
-    return 'text-destructive';
+    if (!config) return 'text-muted-foreground';
+    const percentage = timeRemaining / config.timer;
+    if (percentage > 0.5) return 'text-accent';
+    if (percentage > 0.25) return 'text-[hsl(var(--quiz-gold))]';
+    return 'text-destructive animate-pulse';
   };
+
+  // Difficulty selection screen
+  if (!difficulty) {
+    return (
+      <div className="premium-card max-w-md mx-auto lg:mx-0">
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center mx-auto mb-4">
+            <Zap className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-xl font-bold mb-2">Quick IQ Test</h3>
+          <p className="text-sm text-muted-foreground">
+            Answer {TOTAL_QUESTIONS} questions and discover your Quiz IQ!
+          </p>
+        </div>
+
+        {/* Best IQ badge */}
+        {bestIQ && (
+          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-[hsl(var(--quiz-gold))]/10 border border-[hsl(var(--quiz-gold))]/20">
+            <Award className="w-4 h-4 text-[hsl(var(--quiz-gold))]" />
+            <span className="text-sm font-medium text-[hsl(var(--quiz-gold))]">
+              Your Best IQ: {bestIQ}
+            </span>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-center mb-3">Select Difficulty:</p>
+          {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, DifficultyConfig][]).map(([key, cfg]) => (
+            <Button
+              key={key}
+              onClick={() => handleDifficultySelect(key)}
+              variant="outline"
+              className={cn(
+                "w-full justify-between p-4 h-auto border-2 hover:border-primary transition-all",
+                key === 'medium' && "border-primary/50"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{cfg.icon}</span>
+                <div className="text-left">
+                  <div className={cn("font-semibold", cfg.color)}>{cfg.label}</div>
+                  <div className="text-xs text-muted-foreground">{cfg.timer}s per question</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-primary">{cfg.multiplier}x</div>
+                <div className="text-xs text-muted-foreground">points</div>
+              </div>
+            </Button>
+          ))}
+        </div>
+
+        {/* Sound toggle */}
+        <button
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {soundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading && !currentQuestion) {
     return (
@@ -244,12 +353,17 @@ const InteractiveQuizPreview: React.FC = () => {
             <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center">
               <Trophy className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {currentQuestion?.category || 'Quiz'}
-            </span>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">
+                {currentQuestion?.category || 'Quiz'}
+              </span>
+              <span className={cn("text-xs font-semibold", config?.color)}>
+                {config?.icon} {config?.label} ({config?.multiplier}x)
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* Timer - only show after first answer */}
+            {/* Timer */}
             {timerStarted && !isAnswered && (
               <div className={cn("flex items-center gap-1 text-sm font-bold", getTimerColor())}>
                 <Clock className="w-4 h-4" />
@@ -258,20 +372,10 @@ const InteractiveQuizPreview: React.FC = () => {
             )}
             <div className="flex items-center gap-1 text-sm font-medium text-accent">
               <Sparkles className="w-4 h-4" />
-              <span>+{currentQuestion?.points || 10} pts</span>
+              <span>+{Math.round((currentQuestion?.points || 10) * (config?.multiplier || 1))} pts</span>
             </div>
           </div>
         </div>
-
-        {/* Best IQ badge */}
-        {bestIQ && (
-          <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-[hsl(var(--quiz-gold))]/10 border border-[hsl(var(--quiz-gold))]/20">
-            <Award className="w-4 h-4 text-[hsl(var(--quiz-gold))]" />
-            <span className="text-xs font-medium text-[hsl(var(--quiz-gold))]">
-              Your Best IQ: {bestIQ}
-            </span>
-          </div>
-        )}
 
         {/* Progress indicator */}
         <div className="flex items-center gap-2 mb-4">
@@ -354,8 +458,10 @@ const InteractiveQuizPreview: React.FC = () => {
         totalQuestions={TOTAL_QUESTIONS}
         totalPoints={totalPoints}
         bestIQ={bestIQ}
+        difficulty={difficulty}
         onPlayAgain={handlePlayAgain}
         onNewBestIQ={handleNewBestIQ}
+        soundEnabled={soundEnabled}
       />
     </>
   );

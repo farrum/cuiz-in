@@ -10,6 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Brain, Trophy, Target, RefreshCw, UserPlus, LogIn, Sparkles, Award, Share2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useQuizSounds } from '@/hooks/useQuizSounds';
+
+type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface IQResultModalProps {
   isOpen: boolean;
@@ -17,22 +20,38 @@ interface IQResultModalProps {
   totalQuestions: number;
   totalPoints: number;
   bestIQ: number | null;
+  difficulty: Difficulty | null;
   onPlayAgain: () => void;
   onNewBestIQ: (iq: number) => void;
+  soundEnabled?: boolean;
 }
 
-const calculateIQ = (correctAnswers: number, totalQuestions: number): number => {
+const calculateIQ = (correctAnswers: number, totalQuestions: number, difficulty: Difficulty | null): number => {
   const accuracy = correctAnswers / totalQuestions;
-  const baseIQ = 85 + (accuracy * 60);
+  // Base IQ calculation
+  let baseIQ = 85 + (accuracy * 60);
+  
+  // Difficulty bonus
+  if (difficulty === 'medium') baseIQ += 5;
+  if (difficulty === 'hard') baseIQ += 10;
+  
+  // Add small random variation
   const variation = Math.floor(Math.random() * 11) - 5;
   return Math.round(baseIQ + variation);
 };
 
 const getIQLabel = (iq: number): { label: string; color: string } => {
-  if (iq >= 130) return { label: 'Genius Level! 🧠', color: 'text-accent' };
-  if (iq >= 115) return { label: 'Above Average! ⭐', color: 'text-primary' };
+  if (iq >= 135) return { label: 'Genius Level! 🧠', color: 'text-accent' };
+  if (iq >= 120) return { label: 'Above Average! ⭐', color: 'text-primary' };
   if (iq >= 100) return { label: 'Smart Cookie! 🍪', color: 'text-[hsl(var(--quiz-purple))]' };
   return { label: 'Keep Learning! 📚', color: 'text-muted-foreground' };
+};
+
+const getDifficultyLabel = (difficulty: Difficulty | null): string => {
+  if (difficulty === 'easy') return '🌱 Easy';
+  if (difficulty === 'medium') return '⚡ Medium';
+  if (difficulty === 'hard') return '🔥 Hard';
+  return '';
 };
 
 const IQResultModal: React.FC<IQResultModalProps> = ({
@@ -41,16 +60,18 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
   totalQuestions,
   totalPoints,
   bestIQ,
+  difficulty,
   onPlayAgain,
   onNewBestIQ,
+  soundEnabled = true,
 }) => {
   const navigate = useNavigate();
+  const { playNewBestSound, playCorrectSound } = useQuizSounds();
   
-  // Use useMemo to calculate IQ only once when modal opens
   const iq = useMemo(() => {
     if (!isOpen) return 0;
-    return calculateIQ(correctAnswers, totalQuestions);
-  }, [isOpen, correctAnswers, totalQuestions]);
+    return calculateIQ(correctAnswers, totalQuestions, difficulty);
+  }, [isOpen, correctAnswers, totalQuestions, difficulty]);
   
   const { label, color } = getIQLabel(iq);
   const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
@@ -61,6 +82,9 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
       // Update best IQ if it's a new record
       if (isNewBest) {
         onNewBestIQ(iq);
+        if (soundEnabled) playNewBestSound();
+      } else if (accuracy >= 60 && soundEnabled) {
+        playCorrectSound();
       }
 
       // Trigger confetti for good performance
@@ -91,7 +115,7 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
         frame();
       }
     }
-  }, [isOpen, iq, accuracy, isNewBest, onNewBestIQ]);
+  }, [isOpen, iq, accuracy, isNewBest, onNewBestIQ, soundEnabled]);
 
   const handleRegister = () => {
     navigate('/register');
@@ -101,7 +125,8 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
     navigate('/login');
   };
 
-  const shareText = `🧠 I just scored ${iq} IQ on CuizIN Quiz! Can you beat my score? ${correctAnswers}/${totalQuestions} correct answers!`;
+  const difficultyLabel = getDifficultyLabel(difficulty);
+  const shareText = `🧠 I scored ${iq} IQ on CuizIN Quiz (${difficultyLabel})! ${correctAnswers}/${totalQuestions} correct with ${totalPoints} points. Can you beat me?`;
   const shareUrl = 'https://cuiz-in.lovable.app';
 
   const handleShareTwitter = () => {
@@ -127,9 +152,16 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
         <div className="text-center space-y-5 py-4">
           {/* New Best Badge */}
           {isNewBest && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--quiz-gold))]/10 border border-[hsl(var(--quiz-gold))]/30">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--quiz-gold))]/10 border border-[hsl(var(--quiz-gold))]/30 animate-pulse">
               <Award className="w-4 h-4 text-[hsl(var(--quiz-gold))]" />
               <span className="text-sm font-semibold text-[hsl(var(--quiz-gold))]">New Personal Best!</span>
+            </div>
+          )}
+
+          {/* Difficulty badge */}
+          {difficulty && (
+            <div className="text-sm text-muted-foreground">
+              Played on {difficultyLabel} mode
             </div>
           )}
 
