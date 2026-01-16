@@ -161,14 +161,39 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
     };
   }, [content, position, initializeAdProviders]);
 
-  // Return null for error states - no empty space
+  // Get min height based on position for placeholder
+  const getMinHeight = () => {
+    switch (position) {
+      case 'sidebar':
+        return '250px';
+      case 'top':
+      case 'bottom':
+        return '90px';
+      case 'middle':
+        return '100px';
+      default:
+        return '90px';
+    }
+  };
+
+  // Show subtle placeholder during loading or error - prevents layout collapse
   if (!isLoading && (error || !content || hasError)) {
-    return null;
+    // Return minimal placeholder to prevent blank space but not intrusive
+    return (
+      <div 
+        className={`w-full rounded-lg bg-muted/20 ${className}`}
+        style={{ minHeight: getMinHeight() }}
+      />
+    );
   }
 
-  // Don't show loading skeleton to avoid layout shift
   if (isLoading) {
-    return null;
+    return (
+      <div 
+        className={`w-full rounded-lg bg-muted/30 animate-pulse ${className}`}
+        style={{ minHeight: getMinHeight() }}
+      />
+    );
   }
 
   return (
@@ -180,8 +205,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ position, className = "
       style={{ 
         contain: 'layout style',
         contentVisibility: 'auto',
-        // Only reserve space if content has rendered, otherwise collapse
-        minHeight: hasRendered ? 'auto' : '0'
+        minHeight: hasRendered ? 'auto' : getMinHeight()
       }}
     />
   );
