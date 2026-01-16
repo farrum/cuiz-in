@@ -14,6 +14,8 @@ export { default as AnimatedBackgrounds } from './AnimatedBackgrounds';
 export { default as PartnershipSection } from './PartnershipSection';
 export { default as CategoryPreviewSection } from './CategoryPreviewSection';
 export { default as LiveQuizPreview } from './LiveQuizPreview';
+export { default as InteractiveQuizPreview } from './InteractiveQuizPreview';
+export { default as IQResultModal } from './IQResultModal';
 export { default as SocialProofStats } from './SocialProofStats';
 export { default as MobileBottomNav } from './MobileBottomNav';
 export { default as TryQuestionSection } from './TryQuestionSection';
