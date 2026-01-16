@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuizPoints } from './useQuizPoints';
 import { useQuizQuestion } from './useQuizQuestion';
 import { useQuizMotivation } from './useQuizMotivation';
@@ -13,6 +13,7 @@ import { logPointsEarned } from '@/utils/pointsService';
 
 export const useQuizState = () => {
   const [streak, setStreak] = useState(0);
+  const [localQuestionsAnswered, setLocalQuestionsAnswered] = useState(0);
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const [isGameActive, setIsGameActive] = useState(true);
@@ -62,6 +63,13 @@ export const useQuizState = () => {
     changeGameMode
   } = useGameMode();
   
+  // Sync local questions answered when database value loads/changes
+  useEffect(() => {
+    if (questionsAnswered > 0 && localQuestionsAnswered === 0) {
+      setLocalQuestionsAnswered(questionsAnswered);
+    }
+  }, [questionsAnswered, localQuestionsAnswered]);
+  
   const loadInitialData = async () => {
     // Explicitly fetch points which includes questions answered
     await fetchPoints();
@@ -83,15 +91,19 @@ export const useQuizState = () => {
 
   const handleTimeUp = () => {
     setIsGameActive(false);
+    const effectiveCount = localQuestionsAnswered > 0 ? localQuestionsAnswered : questionsAnswered;
     toast({
       title: "Time's Up!",
-      description: `You answered ${questionsAnswered} questions in ${config.timeLimit} seconds!`,
+      description: `You answered ${effectiveCount} questions in ${config.timeLimit} seconds!`,
       variant: "default",
     });
   };
   
   const handleQuestionComplete = async (isCorrect: boolean) => {
     if (!currentQuestion || !isGameActive) return;
+    
+    // Increment local questions answered immediately for responsive UI
+    setLocalQuestionsAnswered(prev => prev + 1);
     
     // Update streak counter based on correctness
     let newStreak = 0;
@@ -142,7 +154,7 @@ export const useQuizState = () => {
       }
     }
     
-    // Update points data
+    // Update points data from database (async sync)
     await fetchPoints();
     
     // Load the next question
@@ -164,10 +176,13 @@ export const useQuizState = () => {
     loadNewQuestion();
   };
 
+  // Use local questions answered for immediate UI updates, fallback to DB value
+  const effectiveQuestionsAnswered = localQuestionsAnswered > 0 ? localQuestionsAnswered : questionsAnswered;
+
   return {
     currentQuestion,
     streak,
-    questionsAnswered,
+    questionsAnswered: effectiveQuestionsAnswered,
     userPoints,
     dailyPoints,
     monthlyPoints,
