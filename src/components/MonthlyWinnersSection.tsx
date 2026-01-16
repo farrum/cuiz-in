@@ -40,7 +40,7 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
       ];
       setCurrentMonth(`${monthNames[now.getMonth()]} ${now.getFullYear()}`);
       
-      // Fetch monthly points with user info
+      // Fetch monthly points with user info using a join-like approach
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('monthly_points')
         .select('user_id, points')
@@ -64,14 +64,19 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
 
       if (profileError) throw profileError;
 
-      // Create username lookup map
-      const usernameMap = new Map(profileData?.map(p => [p.id, p.username]) || []);
+      // Create username lookup map - ensure string comparison
+      const usernameMap = new Map<string, string>();
+      profileData?.forEach(p => {
+        if (p.id && p.username) {
+          usernameMap.set(String(p.id), p.username);
+        }
+      });
 
-      // Format winners data
+      // Format winners data with proper string comparison
       const formattedWinners: MonthlyWinner[] = monthlyData.map((mp, index) => ({
-        username: usernameMap.get(mp.user_id) || 'Unknown',
+        username: usernameMap.get(String(mp.user_id)) || 'Anonymous Player',
         points: Number(mp.points || 0),
-        isCurrentUser: mp.user_id === currentUserId,
+        isCurrentUser: String(mp.user_id) === String(currentUserId),
         rank: index + 1
       }));
 
