@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useQuizState } from '@/hooks/quiz';
@@ -177,6 +178,9 @@ const QuizPage: React.FC = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        
+        {/* Admin-only Ad Debug Panel */}
+        <AdminAdDebugPanel className="mb-3" />
         
         {/* Top Ad - compact */}
         <SimpleAdBanner position="top" className="mb-3" />
