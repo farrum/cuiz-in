@@ -5,6 +5,7 @@ import { useQuizQuestion } from './useQuizQuestion';
 import { useQuizMotivation } from './useQuizMotivation';
 import { useQuizAdSync } from './useQuizAdSync';
 import { useQuizSuspension } from './useQuizSuspension';
+import { usePersistentQuizStats } from './usePersistentQuizStats';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useGameMode } from './useGameMode';
 import { useToast } from '@/hooks/use-toast';
@@ -12,8 +13,17 @@ import { confetti } from '@/utils/animations';
 import { logPointsEarned } from '@/utils/pointsService';
 
 export const useQuizState = () => {
-  const [streak, setStreak] = useState(0);
-  const [localQuestionsAnswered, setLocalQuestionsAnswered] = useState(0);
+  // Use persistent stats hook for streak and questions answered
+  const {
+    streak,
+    questionsAnswered: localQuestionsAnswered,
+    setStreak,
+    incrementStreak,
+    resetStreak,
+    incrementQuestionsAnswered,
+    syncWithDatabase
+  } = usePersistentQuizStats();
+  
   const [forceReloadAds, setForceReloadAds] = useState(0);
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const [isGameActive, setIsGameActive] = useState(true);
@@ -24,7 +34,7 @@ export const useQuizState = () => {
     userPoints, 
     dailyPoints, 
     monthlyPoints,
-    questionsAnswered,
+    questionsAnswered: dbQuestionsAnswered,
     fetchPoints, 
     updateNextBadgeThreshold 
   } = useQuizPoints(setNextBadgeThreshold);
@@ -41,7 +51,7 @@ export const useQuizState = () => {
     setShowMotivation,
     setMotivationMessage,
     showMotivationalMessage: showMotivationalMessageHook
-  } = useQuizMotivation(questionsAnswered);
+  } = useQuizMotivation(localQuestionsAnswered);
   
   const {
     adsSynced,
@@ -63,12 +73,12 @@ export const useQuizState = () => {
     changeGameMode
   } = useGameMode();
   
-  // Sync local questions answered when database value loads/changes
+  // Sync local stats with database value when it loads (take max to avoid data loss)
   useEffect(() => {
-    if (questionsAnswered > 0 && localQuestionsAnswered === 0) {
-      setLocalQuestionsAnswered(questionsAnswered);
+    if (dbQuestionsAnswered > 0) {
+      syncWithDatabase(dbQuestionsAnswered);
     }
-  }, [questionsAnswered, localQuestionsAnswered]);
+  }, [dbQuestionsAnswered, syncWithDatabase]);
   
   const loadInitialData = async () => {
     // Explicitly fetch points which includes questions answered
@@ -91,10 +101,9 @@ export const useQuizState = () => {
 
   const handleTimeUp = () => {
     setIsGameActive(false);
-    const effectiveCount = localQuestionsAnswered > 0 ? localQuestionsAnswered : questionsAnswered;
     toast({
       title: "Time's Up!",
-      description: `You answered ${effectiveCount} questions in ${config.timeLimit} seconds!`,
+      description: `You answered ${localQuestionsAnswered} questions in ${config.timeLimit} seconds!`,
       variant: "default",
     });
   };
@@ -102,14 +111,14 @@ export const useQuizState = () => {
   const handleQuestionComplete = async (isCorrect: boolean) => {
     if (!currentQuestion || !isGameActive) return;
     
-    // Increment local questions answered immediately for responsive UI
-    setLocalQuestionsAnswered(prev => prev + 1);
+    // Increment local questions answered immediately (persisted to localStorage)
+    incrementQuestionsAnswered();
     
     // Update streak counter based on correctness
     let newStreak = 0;
     if (isCorrect) {
+      incrementStreak();
       newStreak = streak + 1;
-      setStreak(newStreak);
       
       // Calculate points based on game mode
       const basePoints = currentQuestion.points || 10;
@@ -142,7 +151,7 @@ export const useQuizState = () => {
       }
     } else {
       // Reset streak on wrong answer
-      setStreak(0);
+      resetStreak();
       
       // Show message for lost streak
       if (streak >= 3) {
@@ -168,7 +177,7 @@ export const useQuizState = () => {
   
   // Reset game for time attack mode
   const resetGame = () => {
-    setStreak(0);
+    resetStreak();
     setIsGameActive(true);
     if (currentMode === 'time-attack' && config.timeLimit) {
       setTimeRemaining(config.timeLimit);
@@ -176,13 +185,10 @@ export const useQuizState = () => {
     loadNewQuestion();
   };
 
-  // Use local questions answered for immediate UI updates, fallback to DB value
-  const effectiveQuestionsAnswered = localQuestionsAnswered > 0 ? localQuestionsAnswered : questionsAnswered;
-
   return {
     currentQuestion,
     streak,
-    questionsAnswered: effectiveQuestionsAnswered,
+    questionsAnswered: localQuestionsAnswered,
     userPoints,
     dailyPoints,
     monthlyPoints,
