@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,15 +31,127 @@ function createSlug(text: string, maxLength: number = 80): string {
 
 const validCategorySlugs = ['history', 'science', 'geography', 'literature', 'entertainment', 'sports', 'technology', 'general-knowledge'];
 
+// COMPLETE mapping of frontend slugs to ALL database categories
+const slugToCategoriesMap: Record<string, string[]> = {
+  'history': ['History'],
+  'science': [
+    'Science', 
+    'Science & Nature', 
+    'Science &amp; Nature',
+    'Nature',
+    'Science: Mathematics'
+  ],
+  'geography': ['Geography'],
+  'literature': [
+    'Art', 
+    'Arts & Literature', 
+    'Arts and Literature',
+    'Entertainment: Books'
+  ],
+  'entertainment': [
+    'Entertainment', 
+    'Entertainment: Board Games', 
+    'Entertainment: Books', 
+    'Entertainment: Cartoon & Animations',
+    'Entertainment: Cartoon &amp; Animations',
+    'Entertainment: Comics', 
+    'Entertainment: Film',
+    'Entertainment: Japanese Anime & Manga',
+    'Entertainment: Japanese Anime &amp; Manga',
+    'Entertainment: Music', 
+    'Entertainment: Musicals & Theatres',
+    'Entertainment: Musicals &amp; Theatres',
+    'Entertainment: Television', 
+    'Entertainment: Video Games',
+    'Celebrities'
+  ],
+  'sports': ['Sports', 'Cricket'],
+  'technology': [
+    'Science: Computers', 
+    'Science: Gadgets', 
+    'Science and Technology',
+    'Science & Technology',
+    'Vehicles'
+  ],
+  'general-knowledge': [
+    'General Knowledge', 
+    'Mythology', 
+    'Animals', 
+    'Culture',
+    'Food & Drink',
+    'Food and Drinks',
+    'Politics'
+  ]
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const url = new URL(req.url);
+    const category = url.searchParams.get('category');
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
+
+    // If category is specified, return category sitemap with questions
+    if (category) {
+      const dbCategories = slugToCategoriesMap[category];
+      if (!dbCategories) {
+        console.error(`Unknown category slug: ${category}`);
+        return new Response('Category not found', { status: 404, headers: corsHeaders });
+      }
+
+      // Fetch ALL questions for this category with pagination
+      const allQuestions: { id: string; question: string; created_at: string | null }[] = [];
+      let offset = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data: questions, error } = await supabase
+          .from('quiz_questions')
+          .select('id, question, created_at')
+          .in('category', dbCategories)
+          .range(offset, offset + pageSize - 1);
+        
+        if (error) {
+          console.error('Error fetching questions:', error);
+          return new Response('Error fetching questions', { status: 500, headers: corsHeaders });
+        }
+        
+        if (questions && questions.length > 0) {
+          allQuestions.push(...questions);
+          offset += pageSize;
+          hasMore = questions.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const urls: SitemapEntry[] = [];
+      
+      allQuestions.forEach(question => {
+        const slug = createSlug(question.question);
+        if (slug) {
+          urls.push({
+            loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
+            lastmod: question.created_at?.split('T')[0] || today,
+            changefreq: 'monthly',
+            priority: '0.7'
+          });
+        }
+      });
+
+      console.log(`Generated ${category} sitemap with ${urls.length} question URLs from ${dbCategories.length} DB categories: ${dbCategories.join(', ')}`);
+
+      const xml = generateXml(urls);
+      return new Response(xml, { headers: corsHeaders });
+    }
     
+    // Otherwise, return main sitemap (static pages, blog, FAQs)
     const urls: SitemapEntry[] = [
       { loc: 'https://cuiz.in/', lastmod: today, changefreq: 'daily', priority: '1.0' },
       { loc: 'https://cuiz.in/quiz', lastmod: today, changefreq: 'daily', priority: '0.9' },
@@ -109,7 +221,7 @@ serve(async (req) => {
     const xml = generateXml(urls);
     return new Response(xml, { headers: corsHeaders });
   } catch (error) {
-    console.error('Error generating main sitemap:', error);
+    console.error('Error generating sitemap:', error);
     return new Response('Error generating sitemap', { status: 500, headers: corsHeaders });
   }
 });

@@ -285,14 +285,6 @@ ${entries.join('\n')}
       
       console.log(`Generated ${category} sitemap with ${entries.length} URLs from ${dbCategories.length} DB categories`);
       return new Response(xml, { headers: corsHeaders });
-      
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${entries.join('\n')}
-</urlset>`;
-      
-      console.log(`Generated ${category} sitemap with ${entries.length} URLs from ${dbCategories.length} DB categories`);
-      return new Response(xml, { headers: corsHeaders });
     }
     
     return new Response('Invalid sitemap type', { status: 400, headers: corsHeaders });
