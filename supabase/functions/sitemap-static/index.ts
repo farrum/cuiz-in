@@ -9,7 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Content-Type': 'application/xml; charset=UTF-8',
   'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-  'X-Robots-Tag': 'noindex, follow',
 };
 
 const SITE_URL = 'https://cuiz.in';
@@ -229,41 +228,63 @@ ${entries.join('\n')}
     }
     
     if (type === 'category' && category) {
-      // Generate category-specific sitemap with ALL questions
+      // Generate category-specific sitemap with ALL questions using pagination
       const dbCategories = slugToCategoriesMap[category];
       if (!dbCategories) {
         console.error(`Category not found: ${category}`);
         return new Response('Category not found', { status: 404, headers: corsHeaders });
       }
       
-      // Fetch ALL questions for this category (no limit)
-      const { data: questions, error } = await supabase
-        .from('quiz_questions')
-        .select('id, question, created_at')
-        .in('category', dbCategories)
-        .order('created_at', { ascending: false });
+      // Paginate to get ALL questions (Supabase default limit is 1000)
+      const allQuestions: { id: string; question: string; created_at: string | null }[] = [];
+      let offset = 0;
+      const pageSize = 1000;
+      let hasMore = true;
       
-      if (error) {
-        console.error(`Error fetching questions for ${category}:`, error);
-        return new Response('Error fetching questions', { status: 500, headers: corsHeaders });
+      while (hasMore) {
+        const { data: questions, error } = await supabase
+          .from('quiz_questions')
+          .select('id, question, created_at')
+          .in('category', dbCategories)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        
+        if (error) {
+          console.error(`Error fetching questions for ${category}:`, error);
+          return new Response('Error fetching questions', { status: 500, headers: corsHeaders });
+        }
+        
+        if (questions && questions.length > 0) {
+          allQuestions.push(...questions);
+          offset += pageSize;
+          hasMore = questions.length === pageSize;
+        } else {
+          hasMore = false;
+        }
       }
       
       const entries: string[] = [];
       
-      if (questions) {
-        for (const q of questions) {
-          const slug = createSlug(q.question);
-          if (slug) {
-            const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
-            entries.push(`  <url>
+      for (const q of allQuestions) {
+        const slug = createSlug(q.question);
+        if (slug) {
+          const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
+          entries.push(`  <url>
     <loc>${SITE_URL}/quiz/question/${q.id}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`);
-          }
         }
       }
+      
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries.join('\n')}
+</urlset>`;
+      
+      console.log(`Generated ${category} sitemap with ${entries.length} URLs from ${dbCategories.length} DB categories`);
+      return new Response(xml, { headers: corsHeaders });
       
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

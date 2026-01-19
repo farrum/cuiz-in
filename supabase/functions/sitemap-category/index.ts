@@ -100,11 +100,36 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
     
-    // Fetch ALL questions for this category (no limit - Supabase default is 1000)
-    const { data: questions, error } = await supabase
-      .from('quiz_questions')
-      .select('id, question, created_at')
-      .in('category', dbCategories);
+    // Fetch ALL questions for this category with explicit high limit
+    // Supabase default is 1000, so we need to paginate for large categories
+    const allQuestions: { id: string; question: string; created_at: string | null }[] = [];
+    let offset = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: questions, error } = await supabase
+        .from('quiz_questions')
+        .select('id, question, created_at')
+        .in('category', dbCategories)
+        .range(offset, offset + pageSize - 1);
+      
+      if (error) {
+        console.error('Error fetching questions:', error);
+        return new Response('Error fetching questions', { status: 500, headers: corsHeaders });
+      }
+      
+      if (questions && questions.length > 0) {
+        allQuestions.push(...questions);
+        offset += pageSize;
+        hasMore = questions.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+    
+    const questions = allQuestions;
+    const error = null;
 
     if (error) {
       console.error('Error fetching questions:', error);
