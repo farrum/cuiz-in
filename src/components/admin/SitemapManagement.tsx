@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +6,8 @@ import { Loader2, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { sitemapService } from '@/utils/sitemapService';
+import SitemapValidator from './SitemapValidator';
+import IndexNowPinger from './IndexNowPinger';
 
 const SitemapManagement = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -59,6 +60,12 @@ const SitemapManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Sitemap Validator */}
+      <SitemapValidator />
+      
+      {/* IndexNow Pinger */}
+      <IndexNowPinger />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -84,7 +91,7 @@ const SitemapManagement = () => {
                 </Badge>
                 <Badge variant="outline" className="w-fit">
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  Category Pages
+                  Auto IndexNow on New Questions
                 </Badge>
               </div>
             </div>
@@ -152,6 +159,10 @@ const SitemapManagement = () => {
               <Badge variant="secondary">Active</Badge>
             </div>
             <div className="flex justify-between items-center">
+              <span className="text-sm">New Question → IndexNow Ping</span>
+              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">Active</Badge>
+            </div>
+            <div className="flex justify-between items-center">
               <span className="text-sm">Blog Posts (INSERT/UPDATE/DELETE)</span>
               <Badge variant="secondary">Active</Badge>
             </div>
@@ -183,21 +194,21 @@ const SitemapManagement = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => window.open('/sitemap.xml', '_blank')}
+                onClick={() => window.open('https://cuiz.in/sitemap.xml', '_blank')}
               >
                 View
               </Button>
             </div>
             <div className="flex items-center justify-between">
               <code className="text-sm bg-muted px-2 py-1 rounded">
-                https://cuiz.in/api/sitemap
+                https://cuiz.in/sitemap-main.xml
               </code>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => window.open('https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap', '_blank')}
+                onClick={() => window.open('https://cuiz.in/sitemap-main.xml', '_blank')}
               >
-                View Dynamic
+                View
               </Button>
             </div>
           </div>
