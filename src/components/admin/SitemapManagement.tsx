@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { sitemapService } from '@/utils/sitemapService';
 import SitemapValidator from './SitemapValidator';
 import IndexNowPinger from './IndexNowPinger';
+ import SitemapUrlCounter from './SitemapUrlCounter';
 
 const SitemapManagement = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -60,6 +61,9 @@ const SitemapManagement = () => {
 
   return (
     <div className="space-y-6">
+       {/* Sitemap URL Counter */}
+       <SitemapUrlCounter />
+       
       {/* Sitemap Validator */}
       <SitemapValidator />
       
