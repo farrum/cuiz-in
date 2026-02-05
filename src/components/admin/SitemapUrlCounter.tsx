@@ -87,6 +87,7 @@
          toast.warning(`${errorCount} sitemaps failed to load`);
        }
      } catch (error) {
+       console.error('Sitemap fetch error:', error);
        toast.error('Failed to fetch sitemap counts');
      } finally {
        setIsLoading(false);
