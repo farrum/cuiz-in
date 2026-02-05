@@ -1,3 +1,4 @@
-
-# This file is redirected to https://srv.adstxtmanager.com/19390/cuiz.in
-# Please do not modify this file directly as it is managed through AdsTxtManager
+ google.com, pub-2831295465597549, DIRECT, f08c47fec0942fa0
+ 
+ # AdsTxtManager redirect (for additional ad networks)
+ # https://srv.adstxtmanager.com/19390/cuiz.in
