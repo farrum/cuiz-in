@@ -67,7 +67,7 @@ const ReferralPreview: React.FC = () => {
     
     toast({
       title: "Link Copied!",
-      description: "Share this link with friends to earn rewards",
+      description: "Share this link with friends to earn bonus points",
     });
     
     setTimeout(() => setCopied(false), 2000);
