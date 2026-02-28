@@ -2,12 +2,11 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { User, Trophy, History, CreditCard } from 'lucide-react';
+import { User, Trophy, History } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import PointsDisplay from '@/components/PointsDisplay';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
-import WithdrawalSection from '@/components/WithdrawalSection';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
 
 interface ProfileTabsProps {
