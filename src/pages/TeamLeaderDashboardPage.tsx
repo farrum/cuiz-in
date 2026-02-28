@@ -54,7 +54,6 @@ const TeamLeaderDashboardPage = () => {
             </div>
             
             <StatsCards
-              totalEarnings={totalEarnings}
               activeMembers={activeMembers}
               inactiveMembers={inactiveMembers}
               suspendedMembers={suspendedMembers}
