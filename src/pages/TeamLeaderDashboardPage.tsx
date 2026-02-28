@@ -7,7 +7,6 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import TeamLeaderAccessCheck from '@/components/team-leader/TeamLeaderAccessCheck';
 import StatsCards from '@/components/team-leader/StatsCards';
-import EarningsChart from '@/components/team-leader/EarningsChart';
 import TabsSection from '@/components/team-leader/TabsSection';
 
 const TeamLeaderDashboardPage = () => {
