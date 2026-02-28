@@ -19,9 +19,9 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ chartData }) => {
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle>Monthly Earnings Trend</CardTitle>
+        <CardTitle>Monthly Activity Trend</CardTitle>
         <CardDescription>
-          View your earnings over time
+          View your team activity over time
         </CardDescription>
       </CardHeader>
       <CardContent className="h-80">
