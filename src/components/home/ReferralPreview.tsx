@@ -93,9 +93,9 @@ const ReferralPreview: React.FC = () => {
   };
 
   const benefits = [
-    { icon: '💰', text: '₹500 per active referral' },
+    { icon: '⭐', text: '500 bonus points per active referral' },
     { icon: '👥', text: 'Become Team Leader with 10+ referrals' },
-    { icon: '🔄', text: 'Recurring monthly earnings' }
+    { icon: '🔄', text: 'Recurring monthly bonus points' }
   ];
 
   return (
