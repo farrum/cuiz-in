@@ -20,9 +20,9 @@ import {
 const blogPosts = [
   {
     id: 1,
-    slug: 'how-to-maximize-your-quiz-earnings',
-    title: 'How to Maximize Your Quiz Earnings on CuizIN',
-    excerpt: 'Learn the top strategies for increasing your points and rewards when playing quizzes on CuizIN.',
+    slug: 'how-to-maximize-your-quiz-points',
+    title: 'How to Maximize Your Quiz Points on CuizIN',
+    excerpt: 'Learn the top strategies for increasing your points when playing quizzes on CuizIN.',
     category: 'Tips & Tricks',
     date: '2025-04-15',
     author: 'Quiz Master',
