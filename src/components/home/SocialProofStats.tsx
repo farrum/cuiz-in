@@ -11,7 +11,7 @@ interface SocialProofStatsProps {
 const stats = [
   { icon: Users, value: '12.5K', label: 'Total Players', color: 'text-primary' },
   { icon: Zap, value: '1.8M', label: 'Questions Answered', color: 'text-[hsl(var(--quiz-purple))]' },
-  { icon: Zap, value: '850+', label: 'Categories', color: 'text-accent' },
+  { icon: Trophy, value: '850+', label: 'Categories', color: 'text-accent' },
   { icon: Trophy, value: '2.4K', label: 'Active Today', color: 'text-[hsl(var(--quiz-gold))]' }
 ];
 

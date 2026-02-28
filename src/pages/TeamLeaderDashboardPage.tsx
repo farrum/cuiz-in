@@ -58,8 +58,6 @@ const TeamLeaderDashboardPage = () => {
               suspendedMembers={suspendedMembers}
             />
             
-            <EarningsChart chartData={chartData} />
-            
             <TabsSection
               teamMembers={teamMembers}
               earnings={earnings}

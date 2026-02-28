@@ -15,17 +15,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
   suspendedMembers,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Total Earnings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">${Math.round(totalEarnings * 0.012)}</p>
-          <p className="text-muted-foreground text-sm">Lifetime earnings</p>
-        </CardContent>
-      </Card>
-      
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Active Members</CardTitle>

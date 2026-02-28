@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '../utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 
