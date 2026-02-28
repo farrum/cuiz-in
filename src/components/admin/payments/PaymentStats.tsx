@@ -60,8 +60,8 @@ export const PaymentStats: React.FC<PaymentStatsProps> = ({ payments }) => {
       <Card className="p-6">
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Referral Earnings</p>
-            <h3 className="text-2xl font-bold">₹{referralEarnings}</h3>
+            <p className="text-sm font-medium text-muted-foreground">Referral Points</p>
+            <h3 className="text-2xl font-bold">{referralEarnings} pts</h3>
           </div>
           <CreditCard className="h-10 w-10 text-blue-500 opacity-75" />
         </div>

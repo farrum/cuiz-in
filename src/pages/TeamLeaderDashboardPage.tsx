@@ -17,8 +17,6 @@ const TeamLeaderDashboardPage = () => {
     inactiveMembers,
     suspendedMembers,
     teamMembers,
-    totalEarnings,
-    chartData,
     isLoading,
     membersLoading,
     earnings,
