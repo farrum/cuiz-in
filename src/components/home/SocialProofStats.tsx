@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, Trophy, BookOpen, Zap } from 'lucide-react';
+import { Users, Trophy, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SocialProofStatsProps {
