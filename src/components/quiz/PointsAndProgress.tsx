@@ -62,7 +62,7 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
         <Progress value={monthlyProgressPercentage} className="h-2" />
         
         <div className="mt-3 text-xs text-muted-foreground">
-          Complete the monthly target to earn $100 reward!
+          Complete the monthly target to unlock a special badge!
         </div>
       </div>
       

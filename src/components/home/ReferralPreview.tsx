@@ -209,7 +209,7 @@ const ReferralPreview: React.FC = () => {
             className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
           >
             <Gift className="w-4 h-4 mr-2" />
-            Sign Up to Start Earning
+            Sign Up to Start Playing
           </Button>
         </>
       )}

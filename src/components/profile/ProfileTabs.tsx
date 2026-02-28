@@ -55,10 +55,6 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <History className="w-4 h-4 mr-2" />
             History
           </TabsTrigger>
-          <TabsTrigger value="withdrawals">
-            <CreditCard className="w-4 h-4 mr-2" />
-            Withdrawals
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -76,12 +72,6 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         <TabsContent value="history">
           <Card className="p-6">
             {userId && <RecentlyAnsweredQuestions userId={userId} />}
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="withdrawals">
-          <Card className="p-6">
-            <WithdrawalSection />
           </Card>
         </TabsContent>
       </Tabs>
