@@ -35,8 +35,8 @@ export const useFaqs = () => {
             },
             {
               id: '2',
-              question: 'How can I withdraw my earnings?',
-              answer: 'You can withdraw your earnings by navigating to the Profile section and selecting "Withdraw Points". We support multiple payment methods including UPI, bank transfer, and gift cards.',
+              question: 'How do I track my points?',
+              answer: 'You can track your points by navigating to the Profile section. Your total points and daily progress are displayed on your dashboard.',
               category: 'Points & Rewards'
             },
             {
