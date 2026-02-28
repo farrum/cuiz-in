@@ -42,7 +42,7 @@ export const useFaqs = () => {
             {
               id: '3',
               question: 'What are daily challenges?',
-              answer: 'Daily challenges are special quiz sets that refresh every 24 hours. They offer higher point multipliers and unique rewards compared to regular quizzes.',
+              answer: 'Daily challenges are special quiz sets that refresh every 24 hours. They offer higher point multipliers compared to regular quizzes.',
               category: 'Gameplay'
             },
             {
