@@ -1,10 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
-import { IndianRupee, DollarSign } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { STORAGE_KEYS } from '../utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 
 interface PointsDisplayProps {
   animateUpdate?: boolean;
@@ -17,8 +13,6 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
 }) => {
   const [points, setPoints] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const navigate = useNavigate();
-  const currencyDisplay = useCurrencyDisplay();
   
   const fetchUserPoints = useCallback(async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -73,15 +67,10 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
     };
   }, [fetchUserPoints, handlePointsUpdate]);
 
-  const cashAmount = useMemo(() => {
-    const inrAmount = calculateCashAmount(points);
-    return inrAmount * currencyDisplay.exchangeRate;
-  }, [points, currencyDisplay.exchangeRate]);
-
   return (
     <div className={`glass rounded-2xl p-4 ${className}`}>
       <div className="flex flex-col items-center">
-        <h4 className="text-sm text-muted-foreground mb-1">Your Balance</h4>
+        <h4 className="text-sm text-muted-foreground mb-1">Your Points</h4>
         
         <div className={`text-3xl font-bold flex items-center transition-all duration-300 ${
           isAnimating ? 'scale-110 text-primary' : ''
@@ -89,26 +78,6 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
           <span>{points.toFixed(1)}</span>
           <span className="ml-1 text-sm text-muted-foreground">pts</span>
         </div>
-        
-        <div className="mt-2 flex items-center text-sm text-muted-foreground">
-          {currencyDisplay.symbol === '₹' ? (
-            <IndianRupee className="w-4 h-4 mr-1" />
-          ) : (
-            <DollarSign className="w-4 h-4 mr-1" />
-          )}
-          <span>{currencyDisplay.symbol}{cashAmount.toFixed(2)} available</span>
-        </div>
-
-        {!currencyDisplay.isIndian && !localStorage.getItem(STORAGE_KEYS.USER_ID) && (
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="mt-4 bg-primary text-white hover:bg-primary/90"
-            onClick={() => navigate('/register')}
-          >
-            Register to Start Earning
-          </Button>
-        )}
       </div>
     </div>
   );

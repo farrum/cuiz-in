@@ -35,20 +35,20 @@ export const useFaqs = () => {
             },
             {
               id: '2',
-              question: 'How can I withdraw my earnings?',
-              answer: 'You can withdraw your earnings by navigating to the Profile section and selecting "Withdraw Points". We support multiple payment methods including UPI, bank transfer, and gift cards.',
+              question: 'How do I track my points?',
+              answer: 'You can track your points by navigating to the Profile section. Your total points and daily progress are displayed on your dashboard.',
               category: 'Points & Rewards'
             },
             {
               id: '3',
               question: 'What are daily challenges?',
-              answer: 'Daily challenges are special quiz sets that refresh every 24 hours. They offer higher point multipliers and unique rewards compared to regular quizzes.',
+              answer: 'Daily challenges are special quiz sets that refresh every 24 hours. They offer higher point multipliers compared to regular quizzes.',
               category: 'Gameplay'
             },
             {
               id: '4',
               question: 'How does the referral program work?',
-              answer: 'When you invite friends using your referral link, you earn a percentage of the points they generate. The more active your referrals are, the more points you earn.',
+              answer: 'When you invite friends using your referral link, you earn bonus points when they are active. The more active your referrals are, the more points you earn.',
               category: 'Points & Rewards'
             },
             {
@@ -101,14 +101,14 @@ export const useFaqs = () => {
             },
             {
               id: '13',
-              question: 'Is there a minimum withdrawal amount?',
-              answer: 'Yes, the minimum withdrawal amount is 100 points, which is equivalent to approximately $1 USD. Different payment methods may have different minimum thresholds.',
+              question: 'How many points do I need to reach milestones?',
+              answer: 'Different milestones require different point thresholds. Check the Achievements section in your profile to see upcoming milestones and their requirements.',
               category: 'Points & Rewards'
             },
             {
               id: '14',
-              question: 'How long do withdrawals take to process?',
-              answer: 'Most withdrawals are processed within 24-72 hours. UPI transfers are typically fastest, while bank transfers may take 3-5 business days.',
+              question: 'How do login streaks work?',
+              answer: 'Logging in daily builds your streak counter. Longer streaks earn you bonus points multipliers. If you miss a day, your streak resets.',
               category: 'Points & Rewards'
             },
             {

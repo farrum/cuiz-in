@@ -67,7 +67,7 @@ const ReferralPreview: React.FC = () => {
     
     toast({
       title: "Link Copied!",
-      description: "Share this link with friends to earn rewards",
+      description: "Share this link with friends to earn bonus points",
     });
     
     setTimeout(() => setCopied(false), 2000);
@@ -76,8 +76,8 @@ const ReferralPreview: React.FC = () => {
   const shareReferralLink = async () => {
     const link = `${window.location.origin}/register?ref=${userName}`;
     const shareData = {
-      title: 'Join CuizIN - Play Quizzes & Earn!',
-      text: 'Hey! Join me on CuizIN and earn rewards by playing fun quizzes. Use my referral link to get started!',
+      title: 'Join CuizIN - Play Fun Quizzes!',
+      text: 'Hey! Join me on CuizIN and test your knowledge with fun quizzes. Use my referral link to get started!',
       url: link
     };
 
@@ -93,9 +93,9 @@ const ReferralPreview: React.FC = () => {
   };
 
   const benefits = [
-    { icon: '💰', text: '₹500 per active referral' },
+    { icon: '⭐', text: '500 bonus points per active referral' },
     { icon: '👥', text: 'Become Team Leader with 10+ referrals' },
-    { icon: '🔄', text: 'Recurring monthly earnings' }
+    { icon: '🔄', text: 'Recurring monthly bonus points' }
   ];
 
   return (
@@ -106,15 +106,15 @@ const ReferralPreview: React.FC = () => {
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Invite & Earn</h3>
-            <p className="text-sm text-muted-foreground">Share with friends, earn together!</p>
+            <h3 className="text-lg font-bold text-foreground">Invite Friends</h3>
+            <p className="text-sm text-muted-foreground">Share with friends, play together!</p>
           </div>
         </div>
         
         {isLoggedIn && stats.totalReferrals > 0 && (
           <div className="text-right">
-            <div className="text-2xl font-bold text-purple-500">₹{stats.totalEarned}</div>
-            <div className="text-xs text-muted-foreground">earned</div>
+            <div className="text-2xl font-bold text-purple-500">{stats.totalReferrals}</div>
+            <div className="text-xs text-muted-foreground">referrals</div>
           </div>
         )}
       </div>
@@ -209,7 +209,7 @@ const ReferralPreview: React.FC = () => {
             className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
           >
             <Gift className="w-4 h-4 mr-2" />
-            Sign Up to Start Earning
+            Sign Up to Start Playing
           </Button>
         </>
       )}

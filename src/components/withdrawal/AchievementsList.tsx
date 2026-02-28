@@ -41,7 +41,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-xl font-bold mb-2">${(achievement.reward * 0.012).toFixed(2)}</div>
+                <div className="text-xl font-bold mb-2">{achievement.reward} pts</div>
                 <Button 
                   size="sm" 
                   onClick={() => onClaimAchievement(achievement)}

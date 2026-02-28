@@ -7,7 +7,6 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import TeamLeaderAccessCheck from '@/components/team-leader/TeamLeaderAccessCheck';
 import StatsCards from '@/components/team-leader/StatsCards';
-import EarningsChart from '@/components/team-leader/EarningsChart';
 import TabsSection from '@/components/team-leader/TabsSection';
 
 const TeamLeaderDashboardPage = () => {
@@ -18,8 +17,6 @@ const TeamLeaderDashboardPage = () => {
     inactiveMembers,
     suspendedMembers,
     teamMembers,
-    totalEarnings,
-    chartData,
     isLoading,
     membersLoading,
     earnings,
@@ -45,7 +42,7 @@ const TeamLeaderDashboardPage = () => {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Team Leader Dashboard</h1>
                 <p className="text-muted-foreground mt-1">
-                  Manage your team members and track your earnings.
+                  Manage your team members and track activity.
                 </p>
               </div>
               <Button onClick={() => navigate('/profile')}>
@@ -54,13 +51,10 @@ const TeamLeaderDashboardPage = () => {
             </div>
             
             <StatsCards
-              totalEarnings={totalEarnings}
               activeMembers={activeMembers}
               inactiveMembers={inactiveMembers}
               suspendedMembers={suspendedMembers}
             />
-            
-            <EarningsChart chartData={chartData} />
             
             <TabsSection
               teamMembers={teamMembers}

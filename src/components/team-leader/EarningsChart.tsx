@@ -19,9 +19,9 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ chartData }) => {
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle>Monthly Earnings Trend</CardTitle>
+        <CardTitle>Monthly Activity Trend</CardTitle>
         <CardDescription>
-          View your earnings over time
+          View your team activity over time
         </CardDescription>
       </CardHeader>
       <CardContent className="h-80">
@@ -36,7 +36,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ chartData }) => {
             <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
             <Tooltip />
             <Legend />
-            <Bar yAxisId="left" dataKey="amount" name="Earnings ($)" fill="#8884d8" />
+            <Bar yAxisId="left" dataKey="amount" name="Points" fill="#8884d8" />
             <Bar yAxisId="right" dataKey="members" name="Active Members" fill="#82ca9d" />
           </BarChart>
         </ResponsiveContainer>
