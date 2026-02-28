@@ -76,8 +76,8 @@ const ReferralPreview: React.FC = () => {
   const shareReferralLink = async () => {
     const link = `${window.location.origin}/register?ref=${userName}`;
     const shareData = {
-      title: 'Join CuizIN - Play Quizzes & Earn!',
-      text: 'Hey! Join me on CuizIN and earn rewards by playing fun quizzes. Use my referral link to get started!',
+      title: 'Join CuizIN - Play Fun Quizzes!',
+      text: 'Hey! Join me on CuizIN and test your knowledge with fun quizzes. Use my referral link to get started!',
       url: link
     };
 
