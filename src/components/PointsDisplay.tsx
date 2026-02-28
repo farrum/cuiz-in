@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { STORAGE_KEYS, calculateCashAmount } from '../utils/quizData';
-import { IndianRupee, DollarSign } from 'lucide-react';
+import { STORAGE_KEYS } from '../utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useCurrencyDisplay } from '@/hooks/useCurrencyDisplay';
 
 interface PointsDisplayProps {
   animateUpdate?: boolean;
