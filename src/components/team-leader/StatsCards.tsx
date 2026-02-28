@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserCheck, UserX, Ban } from 'lucide-react';
 
 interface StatsCardsProps {
-  totalEarnings: number;
   activeMembers: number;
   inactiveMembers: number;
   suspendedMembers: number;
