@@ -48,7 +48,7 @@ export const useFaqs = () => {
             {
               id: '4',
               question: 'How does the referral program work?',
-              answer: 'When you invite friends using your referral link, you earn a percentage of the points they generate. The more active your referrals are, the more points you earn.',
+              answer: 'When you invite friends using your referral link, you earn bonus points when they are active. The more active your referrals are, the more points you earn.',
               category: 'Points & Rewards'
             },
             {
