@@ -113,8 +113,8 @@ const ReferralPreview: React.FC = () => {
         
         {isLoggedIn && stats.totalReferrals > 0 && (
           <div className="text-right">
-            <div className="text-2xl font-bold text-purple-500">₹{stats.totalEarned}</div>
-            <div className="text-xs text-muted-foreground">earned</div>
+            <div className="text-2xl font-bold text-purple-500">{stats.totalReferrals}</div>
+            <div className="text-xs text-muted-foreground">referrals</div>
           </div>
         )}
       </div>
