@@ -13,8 +13,6 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
 }) => {
   const [points, setPoints] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const navigate = useNavigate();
-  const currencyDisplay = useCurrencyDisplay();
   
   const fetchUserPoints = useCallback(async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
