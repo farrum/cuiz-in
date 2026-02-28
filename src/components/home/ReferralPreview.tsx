@@ -106,8 +106,8 @@ const ReferralPreview: React.FC = () => {
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Invite & Earn</h3>
-            <p className="text-sm text-muted-foreground">Share with friends, earn together!</p>
+            <h3 className="text-lg font-bold text-foreground">Invite Friends</h3>
+            <p className="text-sm text-muted-foreground">Share with friends, play together!</p>
           </div>
         </div>
         
