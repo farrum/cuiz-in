@@ -45,7 +45,7 @@ const TeamLeaderDashboardPage = () => {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Team Leader Dashboard</h1>
                 <p className="text-muted-foreground mt-1">
-                  Manage your team members and track your earnings.
+                  Manage your team members and track activity.
                 </p>
               </div>
               <Button onClick={() => navigate('/profile')}>
