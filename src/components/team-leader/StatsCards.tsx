@@ -10,7 +10,6 @@ interface StatsCardsProps {
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({
-  totalEarnings,
   activeMembers,
   inactiveMembers,
   suspendedMembers,
