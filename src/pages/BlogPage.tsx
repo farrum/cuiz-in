@@ -32,7 +32,7 @@ const blogPosts = [
     id: 2,
     slug: 'benefits-of-daily-quiz-challenges',
     title: 'The Benefits of Completing Daily Quiz Challenges',
-    excerpt: 'Discover why daily challenges are the best way to boost your knowledge and earn more rewards.',
+    excerpt: 'Discover why daily challenges are the best way to boost your knowledge and earn more points.',
     category: 'Guides',
     date: '2025-04-10',
     author: 'Quiz Expert',

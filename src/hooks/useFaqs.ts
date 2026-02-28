@@ -101,14 +101,14 @@ export const useFaqs = () => {
             },
             {
               id: '13',
-              question: 'Is there a minimum withdrawal amount?',
-              answer: 'Yes, the minimum withdrawal amount is 100 points, which is equivalent to approximately $1 USD. Different payment methods may have different minimum thresholds.',
+              question: 'How many points do I need to reach milestones?',
+              answer: 'Different milestones require different point thresholds. Check the Achievements section in your profile to see upcoming milestones and their requirements.',
               category: 'Points & Rewards'
             },
             {
               id: '14',
-              question: 'How long do withdrawals take to process?',
-              answer: 'Most withdrawals are processed within 24-72 hours. UPI transfers are typically fastest, while bank transfers may take 3-5 business days.',
+              question: 'How do login streaks work?',
+              answer: 'Logging in daily builds your streak counter. Longer streaks earn you bonus points multipliers. If you miss a day, your streak resets.',
               category: 'Points & Rewards'
             },
             {
