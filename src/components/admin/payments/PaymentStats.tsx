@@ -41,7 +41,7 @@ export const PaymentStats: React.FC<PaymentStatsProps> = ({ payments }) => {
         <div className="flex justify-between items-center">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
-            <h3 className="text-2xl font-bold">₹{totalPending}</h3>
+            <h3 className="text-2xl font-bold">{totalPending} pts</h3>
           </div>
           <Clock className="h-10 w-10 text-amber-500 opacity-75" />
         </div>
