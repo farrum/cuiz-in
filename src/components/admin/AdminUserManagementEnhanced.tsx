@@ -27,9 +27,10 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     try {
       setIsLoading(true);
 
-      // Call edge function - JWT is automatically included by supabase client
+      // Call edge function - include adminUserId for legacy auth
+      const adminUserId = localStorage.getItem('quiz_app_user_id');
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
-        body: {}
+        body: { adminUserId }
       });
 
       if (error) {
@@ -56,11 +57,13 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
-      // Call edge function - JWT is automatically included
+      // Call edge function - include adminUserId for legacy auth
+      const adminId = localStorage.getItem('quiz_app_user_id');
       const { error } = await supabase.functions.invoke('admin-update-user', {
         body: { 
           userId,
-          updates: { suspended: !currentStatus }
+          updates: { suspended: !currentStatus },
+          adminUserId: adminId
         }
       });
 
