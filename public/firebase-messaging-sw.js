@@ -33,80 +33,70 @@ self.addEventListener('push', function(event) {
   console.log('Push received: ', event);
 });
 
-// Expanded block list for problematic domains
+// Block list for malicious domains - DO NOT add cuiz.in here
 const BLOCKED_DOMAINS = [
   'onclickpsh.com', 
   'mrtnsvr.com', 
   'TCPusher',
+  'richinfo.co',
+  'onclckmn.com',
+  'wpadmngr.com',
+  'goodgaming138',
+  'mahjong222',
   'push.js',
   'vo2pn0.js',
   'sdk/push',
   'Va3pn0.js',
   'push.m.js',
-  'ServiceWorker',
-  'notification',
-  'register',
-  'Topics',
-  'cuiz.in',
   'adspector.io',
-  'attestation',
-  'facebook.com',
   'pageadsodar'
 ];
 
-// IMPORTANT: Block problematic scripts including Topics API and Facebook
+// Block problematic scripts
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   
   try {
-    // Always intercept problematic requests
+    // Block sodar requests
     if (url.includes('pageadsodar') || url.includes('sodar2')) {
-      console.log('Intercepting sodar request:', url);
-      event.respondWith(new Response('// Request intercepted by service worker', {
+      event.respondWith(new Response('// blocked', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
     
-    // Handle Topics API attestation errors more aggressively
-    if ((url.includes('cuiz.in') && (url.includes('topics') || url.includes('Topics'))) || 
-        url.includes('adspector.io') || 
-        url.includes('attestation') ||
-        url.includes('facebook.com')) {
-      console.log('Intercepting Topics API, attestation or Facebook request:', url);
-      event.respondWith(new Response('// Request intercepted by service worker', {
+    // Block Topics API attestation errors
+    if (url.includes('adspector.io') || url.includes('attestation')) {
+      event.respondWith(new Response('// blocked', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
     
-    // Check for AAB requests, which are often part of problematic ad requests
+    // Block AAB requests
     if (url.includes('AAB') || url.includes('aab.min.js')) {
-      console.log('Intercepting AAB request:', url);
-      event.respondWith(new Response('// AAB request intercepted', {
+      event.respondWith(new Response('// blocked', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
     
-    // Specifically block TCPusher service worker registration
-    if (url.includes('TCPusher') || url.includes('ServiceWorker')) {
-      console.log('Blocking TCPusher service worker request:', url);
-      event.respondWith(new Response('// TCPusher service worker registration blocked', {
+    // Block TCPusher service worker registration
+    if (url.includes('TCPusher')) {
+      event.respondWith(new Response('// blocked', {
         status: 200,
         headers: new Headers({'Content-Type': 'application/javascript'})
       }));
       return;
     }
     
-    // Block other problematic domains
+    // Block other malicious domains
     for (const domain of BLOCKED_DOMAINS) {
       if (url.toLowerCase().includes(domain.toLowerCase())) {
-        console.log('Blocking problematic script request:', url);
-        event.respondWith(new Response('// Script blocked by service worker', {
+        event.respondWith(new Response('// blocked', {
           status: 200,
           headers: new Headers({'Content-Type': 'application/javascript'})
         }));
@@ -115,58 +105,32 @@ self.addEventListener('fetch', event => {
     }
   } catch (e) {
     console.error('Error in service worker fetch handler:', e);
-    // Provide a safe response instead of failing
-    event.respondWith(new Response('// Error in service worker, request safely intercepted', {
-      status: 200,
-      headers: new Headers({'Content-Type': 'application/javascript'})
-    }));
   }
-  
-  // Let all other requests pass through
 });
 
-// Create a flag to prevent loading sw.js twice
+// Load optional sw.js
 if (!self.swLoaded) {
   self.swLoaded = true;
-  
-  // Try to load optional sw.js - but suppress errors
   try {
     importScripts('/sw.js');
-    console.log('Successfully loaded optional SW script');
   } catch(e) {
-    console.log('Optional SW script not found or failed to load');
+    console.log('Optional SW script not found');
   }
 }
 
-// Add specific handler for Topics API errors
+// Handle messages
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
-  // Intercept any attempts to register additional service workers or Topics API requests
-  if (event.data && (event.data.type === 'REGISTER_SW' || 
-      event.data.type === 'TOPICS_API' ||
-      (typeof event.data === 'string' && (
-        event.data.includes('register') || 
-        event.data.includes('Topics') ||
-        event.data.includes('attestation'))))) {
-    console.log('Intercepted attempt to register additional service worker or use Topics API');
-    // Don't pass this message along
-    return;
-  }
 });
 
-// Prevent common error patterns
+// Suppress errors from blocked scripts
 self.addEventListener('error', event => {
   if (event.message && (
       event.message.includes('TCPusher') || 
-      event.message.includes('ServiceWorker') ||
-      event.message.includes('register') ||
-      event.message.includes('Attestation check for Topics') ||
-      event.message.includes('facebook.com')
+      event.message.includes('Attestation')
   )) {
-    console.log('Intercepted error in service worker:', event.message);
     event.preventDefault();
   }
 });

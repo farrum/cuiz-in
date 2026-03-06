@@ -1,8 +1,9 @@
 // Service Worker with caching for static assets
 // Provides offline support and improved repeat visit performance
+// v2 - Security update: blocked malicious ad domains
 
-const CACHE_NAME = 'cuizin-v1';
-const STATIC_CACHE_NAME = 'cuizin-static-v1';
+const CACHE_NAME = 'cuizin-v2';
+const STATIC_CACHE_NAME = 'cuizin-static-v2';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
@@ -18,12 +19,17 @@ const STATIC_ASSETS = [
 // Malicious domains to block
 const MALICIOUS_DOMAINS = [
   'onclickpsh.com',
-  'mrtnsvr.com'
+  'mrtnsvr.com',
+  'richinfo.co',
+  'onclckmn.com',
+  'wpadmngr.com',
+  'TCPusher',
+  'goodgaming138',
+  'mahjong222'
 ];
 
 // Cache strategies
 const CACHE_STRATEGIES = {
-  // Cache first, fallback to network (for static assets)
   cacheFirst: async (request, cacheName) => {
     const cache = await caches.open(cacheName);
     const cached = await cache.match(request);
@@ -41,7 +47,6 @@ const CACHE_STRATEGIES = {
     }
   },
   
-  // Network first, fallback to cache (for dynamic content)
   networkFirst: async (request, cacheName) => {
     try {
       const response = await fetch(request);
@@ -57,7 +62,6 @@ const CACHE_STRATEGIES = {
     }
   },
   
-  // Stale while revalidate (for semi-dynamic content)
   staleWhileRevalidate: async (request, cacheName) => {
     const cache = await caches.open(cacheName);
     const cached = await cache.match(request);
@@ -73,27 +77,26 @@ const CACHE_STRATEGIES = {
   }
 };
 
-// Install event - cache static assets
+// Install event - cache static assets and force activate
 self.addEventListener('install', event => {
-  console.log('Service Worker: Installing...');
+  console.log('Service Worker v2: Installing...');
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME).then(cache => {
-      console.log('Service Worker: Caching static assets');
       return cache.addAll(STATIC_ASSETS);
     }).then(() => self.skipWaiting())
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - purge ALL old caches
 self.addEventListener('activate', event => {
-  console.log('Service Worker: Activating...');
+  console.log('Service Worker v2: Activating - purging old caches...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames
           .filter(name => name !== CACHE_NAME && name !== STATIC_CACHE_NAME)
           .map(name => {
-            console.log('Service Worker: Deleting old cache:', name);
+            console.log('Deleting old cache:', name);
             return caches.delete(name);
           })
       );
@@ -101,77 +104,63 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - handle requests with appropriate caching strategy
+// Fetch event
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
   // Block malicious domains
   for (const domain of MALICIOUS_DOMAINS) {
-    if (url.hostname.includes(domain)) {
+    if (url.hostname.includes(domain) || url.href.toLowerCase().includes(domain.toLowerCase())) {
       console.log('SW: Blocking malicious domain:', url.href);
       event.respondWith(new Response('', { status: 204 }));
       return;
     }
   }
   
-  // Skip non-GET requests and cross-origin requests for ad networks
   if (event.request.method !== 'GET') return;
   
-  // Skip caching for ad-related and analytics scripts
   const skipPatterns = [
     'googlesyndication',
     'googletagmanager',
     'google-analytics',
     'doubleclick',
     'adsbygoogle',
-    'wpadmngr',
-    'onclckmn',
-    'richinfo',
     'supabase.co',
     'gpteng.co'
   ];
   
   if (skipPatterns.some(pattern => url.href.includes(pattern))) {
-    return; // Let the browser handle these normally
+    return;
   }
   
-  // Determine caching strategy based on request type
   const destination = event.request.destination;
   
-  // Static assets - cache first
   if (destination === 'image' || destination === 'font' || destination === 'style') {
     event.respondWith(CACHE_STRATEGIES.cacheFirst(event.request, STATIC_CACHE_NAME));
     return;
   }
   
-  // JavaScript - stale while revalidate (for faster updates)
   if (destination === 'script' && url.origin === self.location.origin) {
     event.respondWith(CACHE_STRATEGIES.staleWhileRevalidate(event.request, CACHE_NAME));
     return;
   }
   
-  // HTML pages - network first (for fresh content)
   if (destination === 'document' || event.request.mode === 'navigate') {
     event.respondWith(CACHE_STRATEGIES.networkFirst(event.request, CACHE_NAME));
     return;
   }
   
-  // Same-origin requests - stale while revalidate
   if (url.origin === self.location.origin) {
     event.respondWith(CACHE_STRATEGIES.staleWhileRevalidate(event.request, CACHE_NAME));
     return;
   }
-  
-  // Let all other requests pass through normally
 });
 
-// Handle service worker updates
+// Handle messages
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
-  // Allow cache clearing
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     caches.keys().then(names => {
       names.forEach(name => caches.delete(name));
@@ -179,4 +168,4 @@ self.addEventListener('message', event => {
   }
 });
 
-console.log('CuizIN Service Worker initialized with caching strategies');
+console.log('CuizIN Service Worker v2 initialized - malicious scripts blocked');
