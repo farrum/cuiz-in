@@ -91,7 +91,11 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const category = url.searchParams.get('category');
+    // Support category from query param OR URL path (e.g., /sitemap-main/science)
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const pathCategory = pathParts.length > 0 ? pathParts[pathParts.length - 1] : null;
+    const category = url.searchParams.get('category') || 
+      (pathCategory && validCategorySlugs.includes(pathCategory) ? pathCategory : null);
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
