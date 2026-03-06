@@ -8,7 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Content-Type': 'application/xml; charset=UTF-8',
-  'Cache-Control': 'public, max-age=3600',
+  'Cache-Control': 'public, max-age=600, s-maxage=600',
 };
 
 // Consistent slug generation function
