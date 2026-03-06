@@ -26,22 +26,10 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      
-      // Get admin user ID from localStorage with fallback
-      let adminUserId = localStorage.getItem('quiz_app_user_id');
-      
-      // Fallback: If not set, use the main admin user ID
-      if (!adminUserId) {
-        console.warn('Admin user ID not found in localStorage, using fallback');
-        adminUserId = '066otqbbqac7'; // Main admin user
-        localStorage.setItem('quiz_app_user_id', adminUserId);
-      }
-      
-      console.log('Fetching users with admin ID:', adminUserId);
 
-      // Call edge function to fetch users with admin authorization
+      // Call edge function - JWT is automatically included by supabase client
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
-        body: { adminUserId }
+        body: {}
       });
 
       if (error) {
@@ -49,9 +37,8 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         throw error;
       }
       
-      console.log('Fetched users:', data?.users?.length || 0);
       setUsers(data?.users || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
         title: 'Error',
@@ -69,19 +56,9 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
-      // Get admin user ID from localStorage with fallback
-      let adminUserId = localStorage.getItem('quiz_app_user_id');
-      
-      if (!adminUserId) {
-        console.warn('Admin user ID not found, using fallback');
-        adminUserId = '066otqbbqac7';
-        localStorage.setItem('quiz_app_user_id', adminUserId);
-      }
-
-      // Call edge function to update user with admin authorization
+      // Call edge function - JWT is automatically included
       const { error } = await supabase.functions.invoke('admin-update-user', {
         body: { 
-          adminUserId,
           userId,
           updates: { suspended: !currentStatus }
         }
@@ -177,7 +154,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   ];
 
   const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.display_name && user.display_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.phone && user.phone.includes(searchTerm))
   );

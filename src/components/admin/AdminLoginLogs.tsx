@@ -35,15 +35,9 @@ const AdminLoginLogs: React.FC = () => {
     const fetchLoginLogs = async () => {
       setIsLoading(true);
       try {
-        const adminUserId = localStorage.getItem('quiz_app_user_id');
-        
-        if (!adminUserId) {
-          throw new Error('Admin user ID not found');
-        }
-
-        // Call edge function to fetch logs with admin authorization
+        // Call edge function - JWT is automatically included by supabase client
         const { data, error } = await supabase.functions.invoke('admin-get-login-logs', {
-          body: { adminUserId }
+          body: {}
         });
 
         if (error) throw error;

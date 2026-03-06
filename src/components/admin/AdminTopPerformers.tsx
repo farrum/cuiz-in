@@ -31,16 +31,9 @@ const AdminTopPerformers: React.FC = () => {
     console.log("Fetching top performers...");
 
     try {
-      const adminUserId = localStorage.getItem('quiz_app_user_id');
-      
-      if (!adminUserId) {
-        throw new Error('Admin user ID not found');
-      }
-
-      // Fetch daily performers
+      // Fetch daily performers - JWT is automatically included by supabase client
       const { data: dailyData, error: dailyError } = await supabase.functions.invoke('admin-get-reports', {
         body: { 
-          adminUserId,
           reportType: 'daily-top-performers'
         }
       });
@@ -50,7 +43,6 @@ const AdminTopPerformers: React.FC = () => {
       // Fetch monthly performers
       const { data: monthlyData, error: monthlyError } = await supabase.functions.invoke('admin-get-reports', {
         body: { 
-          adminUserId,
           reportType: 'monthly-top-performers'
         }
       });
