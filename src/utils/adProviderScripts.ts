@@ -1,155 +1,51 @@
-// Ad Provider Script Loader
-// Ensures ad provider scripts are loaded only once and in the correct order
+// Ad Provider Script Loader - Hardened version
+// Only allows Google AdSense scripts. All other ad networks are blocked.
 
-interface LoadedScript {
-  url: string;
-  loaded: boolean;
-  promise: Promise<void>;
-}
+// Strict allowlist of permitted ad script domains
+const ALLOWED_SCRIPT_DOMAINS = [
+  'pagead2.googlesyndication.com',
+  'googleads.g.doubleclick.net',
+  'adservice.google.com',
+  'tpc.googlesyndication.com',
+];
 
-const loadedScripts = new Map<string, LoadedScript>();
-
-/**
- * Load an external script and return a promise that resolves when loaded
- */
-export const loadScript = (url: string, id: string): Promise<void> => {
-  // Check if already loaded or loading
-  const existing = loadedScripts.get(id);
-  if (existing) {
-    return existing.promise;
-  }
-
-  // Check if script already exists in DOM
-  const existingScript = document.getElementById(id) || document.querySelector(`script[src="${url}"]`);
-  if (existingScript) {
-    const resolvedPromise = Promise.resolve();
-    loadedScripts.set(id, { url, loaded: true, promise: resolvedPromise });
-    return resolvedPromise;
-  }
-
-  // Create and load the script
-  const promise = new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.id = id;
-    script.src = url;
-    script.async = true;
-    
-    script.onload = () => {
-      console.log(`[AdProvider] Script loaded: ${id}`);
-      const entry = loadedScripts.get(id);
-      if (entry) entry.loaded = true;
-      resolve();
-    };
-    
-    script.onerror = () => {
-      console.error(`[AdProvider] Failed to load script: ${id}`);
-      loadedScripts.delete(id);
-      reject(new Error(`Failed to load script: ${url}`));
-    };
-    
-    document.head.appendChild(script);
-  });
-
-  loadedScripts.set(id, { url, loaded: false, promise });
-  return promise;
-};
+// Known malicious domains - block these explicitly
+const BLOCKED_DOMAINS = [
+  'acscdn.com',
+  'adexchangeclear.com',
+  'onclickpsh.com',
+  'mrtnsvr.com',
+  'richinfo.co',
+  'onclckmn.com',
+  'wpadmngr.com',
+  'a3klsam',
+  'TCPusher',
+  'goodgaming138',
+  'mahjong222',
+];
 
 /**
- * Check if a script is already loaded
+ * Check if a URL is from an allowed domain
  */
-export const isScriptLoaded = (id: string): boolean => {
-  return loadedScripts.get(id)?.loaded ?? false;
-};
-
-/**
- * Load the aclib library for ad network
- */
-export const ensureAclibLoaded = async (): Promise<boolean> => {
-  // Check if aclib is already available
-  if (typeof (window as any).aclib !== 'undefined') {
-    console.log('[AdProvider] aclib already available');
-    return true;
-  }
-
+export const isAllowedAdScript = (url: string): boolean => {
   try {
-    // Load the aclib library - common URL pattern for this ad network
-    await loadScript('https://acscdn.com/script/aclib.js', 'aclib-script');
-    
-    // Wait a bit for initialization
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    if (typeof (window as any).aclib !== 'undefined') {
-      console.log('[AdProvider] aclib loaded successfully');
-      return true;
-    }
-    
-    console.warn('[AdProvider] aclib script loaded but aclib not defined');
-    return false;
-  } catch (error) {
-    console.error('[AdProvider] Failed to load aclib:', error);
+    const parsed = new URL(url);
+    return ALLOWED_SCRIPT_DOMAINS.some(domain => parsed.hostname.includes(domain));
+  } catch {
     return false;
   }
 };
 
 /**
- * Trigger onclick/banner ad network rescan for dynamically added banners
+ * Check if content contains blocked domains
  */
-export const triggerBannerRescan = (retryCount = 0): void => {
-  const maxRetries = 3;
-  const retryDelay = 500;
-
-  try {
-    const win = window as any;
-    
-    // Check if banner elements exist in DOM first
-    const bannerElements = document.querySelectorAll('[data-banner-id]');
-    if (bannerElements.length === 0) {
-      console.log('[AdProvider] No banner elements found in DOM');
-      if (retryCount < maxRetries) {
-        console.log(`[AdProvider] Retrying banner rescan in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
-      }
-      return;
-    }
-
-    console.log(`[AdProvider] Found ${bannerElements.length} banner elements, triggering rescan`);
-    
-    // Try various onclick/banner network init methods
-    let rescanTriggered = false;
-    
-    if (win.a3klsam?.init) {
-      console.log('[AdProvider] Triggering a3klsam.init rescan');
-      win.a3klsam.init();
-      rescanTriggered = true;
-    }
-    
-    if (win.a3klsam?.refresh) {
-      console.log('[AdProvider] Triggering a3klsam.refresh');
-      win.a3klsam.refresh();
-      rescanTriggered = true;
-    }
-
-    // Some networks use different global names
-    if (win.adManager?.refresh) {
-      win.adManager.refresh();
-      rescanTriggered = true;
-    }
-
-    // If no ad manager found but we have banner elements, retry
-    if (!rescanTriggered && retryCount < maxRetries) {
-      console.log(`[AdProvider] No ad manager found, retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-      setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
-    }
-  } catch (error) {
-    console.error('[AdProvider] Error during banner rescan:', error);
-    if (retryCount < maxRetries) {
-      setTimeout(() => triggerBannerRescan(retryCount + 1), retryDelay);
-    }
-  }
+export const containsBlockedContent = (content: string): boolean => {
+  const lower = content.toLowerCase();
+  return BLOCKED_DOMAINS.some(domain => lower.includes(domain.toLowerCase()));
 };
 
 /**
- * Push to adsbygoogle if available
+ * Push to adsbygoogle if available (Google AdSense only)
  */
 export const pushAdsByGoogle = (): void => {
   try {
@@ -162,3 +58,7 @@ export const pushAdsByGoogle = (): void => {
     console.error('[AdProvider] Error pushing to adsbygoogle:', error);
   }
 };
+
+// REMOVED: ensureAclibLoaded - was loading malicious acscdn.com/script/aclib.js
+// REMOVED: triggerBannerRescan - was triggering compromised a3klsam network
+// REMOVED: loadScript - no longer needed, only Google AdSense is allowed
