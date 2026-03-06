@@ -203,18 +203,6 @@ const SitemapManagement = () => {
                 View
               </Button>
             </div>
-            <div className="flex items-center justify-between">
-              <code className="text-sm bg-muted px-2 py-1 rounded">
-                https://cuiz.in/sitemap-main.xml
-              </code>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => window.open('https://cuiz.in/sitemap-main.xml', '_blank')}
-              >
-                View
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
