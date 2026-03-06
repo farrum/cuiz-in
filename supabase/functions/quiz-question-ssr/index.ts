@@ -91,58 +91,33 @@ serve(async (req) => {
       160
     );
     
-    // Generate JSON-LD structured data
-    // Simplified schemas to avoid Google's "Invalid object type for field '<parent_node>'" error
-    // Only use required fields per schema.org and Google's guidelines
-    const quizSchema = {
+    // Only use QAPage schema - avoid Quiz schema which causes Google's
+    // "Invalid object type for field '<parent_node>'" error in Review snippets
+    const qaPageSchema = {
       "@context": "https://schema.org",
-      "@type": "Quiz",
+      "@type": "QAPage",
       "name": q.question,
-      "description": description,
-      "url": canonicalUrl,
-      "educationalLevel": q.difficulty || "Intermediate",
-      "about": {
-        "@type": "Thing",
-        "name": q.category
-      },
-      "datePublished": new Date().toISOString().split('T')[0],
+      "datePublished": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
       "author": {
         "@type": "Organization",
         "name": SITE_NAME,
         "url": SITE_URL
       },
-      "publisher": {
-        "@type": "Organization",
-        "name": SITE_NAME,
-        "url": SITE_URL
-      },
-      "hasPart": [{
-        "@type": "Question",
-        "name": q.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": q.correct_answer
-        },
-        "suggestedAnswer": options.filter(opt => opt !== q.correct_answer).map(opt => ({
-          "@type": "Answer",
-          "text": String(opt)
-        }))
-      }]
-    };
-    
-    // Simplified QAPage schema - only essential fields
-    const qaPageSchema = {
-      "@context": "https://schema.org",
-      "@type": "QAPage",
       "mainEntity": {
         "@type": "Question",
         "name": q.question,
         "text": q.question,
         "answerCount": 1,
+        "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": q.correct_answer
-        }
+          "text": q.correct_answer,
+          "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        },
+        "suggestedAnswer": options.filter(opt => opt !== q.correct_answer).map(opt => ({
+          "@type": "Answer",
+          "text": String(opt)
+        }))
       }
     };
     
@@ -208,7 +183,6 @@ serve(async (req) => {
   <meta name="googlebot" content="index, follow">
   
   <!-- Structured Data -->
-  <script type="application/ld+json">${JSON.stringify(quizSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(qaPageSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   
