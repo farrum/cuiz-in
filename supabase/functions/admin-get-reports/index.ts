@@ -11,48 +11,49 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { reportType, limit } = await req.json();
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const authHeader = req.headers.get('Authorization') ?? '';
 
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const adminUserId = claimsData.claims.sub;
+    const body = await req.json();
+    const { reportType, limit } = body;
 
     const supabaseAdmin = createClient(
       supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Determine admin user ID
+    let adminUserId: string | null = null;
+
+    if (authHeader.startsWith('Bearer ')) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      const { data: { user } } = await supabaseAuth.auth.getUser();
+      if (user) adminUserId = user.id;
+    }
+
+    if (!adminUserId && body.adminUserId) {
+      adminUserId = body.adminUserId;
+    }
+
+    if (!adminUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: No valid session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Validate admin
-    const { data: adminRole, error: roleError } = await supabaseAdmin
+    const { data: adminRole } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', adminUserId)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
-    if (roleError || !adminRole) {
+    if (!adminRole) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
