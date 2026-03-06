@@ -34,16 +34,7 @@ interface ValidationSummary {
 const EDGE_FUNCTION_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1';
 
 const SITEMAPS_TO_VALIDATE = [
-  { name: 'Index', url: '/sitemap.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-index` },
-  { name: 'Main', url: '/sitemap-main.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main` },
-  { name: 'History', url: '/sitemap-category-history.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=history` },
-  { name: 'Science', url: '/sitemap-category-science.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=science` },
-  { name: 'Geography', url: '/sitemap-category-geography.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=geography` },
-  { name: 'Literature', url: '/sitemap-category-literature.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=literature` },
-  { name: 'Entertainment', url: '/sitemap-category-entertainment.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=entertainment` },
-  { name: 'Sports', url: '/sitemap-category-sports.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=sports` },
-  { name: 'Technology', url: '/sitemap-category-technology.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=technology` },
-  { name: 'General Knowledge', url: '/sitemap-category-general-knowledge.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=general-knowledge` },
+  { name: 'Primary Sitemap', url: '/sitemap.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main` },
 ];
 
 const SitemapValidator: React.FC = () => {
@@ -218,7 +209,7 @@ const SitemapValidator: React.FC = () => {
           Sitemap Validator
         </CardTitle>
         <CardDescription>
-          Validate all sitemaps and check URL counts for SEO monitoring
+          Validate the canonical sitemap endpoint and check URL counts for SEO monitoring
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -236,7 +227,7 @@ const SitemapValidator: React.FC = () => {
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Validate All Sitemaps
+                Validate Sitemap
               </>
             )}
           </Button>

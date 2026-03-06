@@ -155,7 +155,7 @@ serve(async (req) => {
       return new Response(xml, { headers: corsHeaders });
     }
     
-    // Otherwise, return main sitemap (static pages, blog, FAQs)
+    // Otherwise, return canonical single sitemap (static pages, blog, FAQs, and ALL questions)
     const urls: SitemapEntry[] = [
       { loc: 'https://cuiz.in/', lastmod: today, changefreq: 'daily', priority: '1.0' },
       { loc: 'https://cuiz.in/quiz', lastmod: today, changefreq: 'daily', priority: '0.9' },
@@ -220,7 +220,45 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Generated main sitemap with ${urls.length} URLs`);
+    // Fetch ALL quiz questions with pagination (Supabase 1000-row limit safe)
+    const allQuestions: { id: string; question: string; created_at: string | null }[] = [];
+    let offset = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data: questions, error } = await supabase
+        .from('quiz_questions')
+        .select('id, question, created_at')
+        .range(offset, offset + pageSize - 1);
+
+      if (error) {
+        console.error('Error fetching quiz questions:', error);
+        return new Response('Error fetching quiz questions', { status: 500, headers: corsHeaders });
+      }
+
+      if (questions && questions.length > 0) {
+        allQuestions.push(...questions);
+        offset += pageSize;
+        hasMore = questions.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    allQuestions.forEach(question => {
+      const slug = createSlug(question.question);
+      if (slug) {
+        urls.push({
+          loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
+          lastmod: question.created_at?.split('T')[0] || today,
+          changefreq: 'monthly',
+          priority: '0.7'
+        });
+      }
+    });
+
+    console.log(`Generated canonical single sitemap with ${urls.length} URLs (questions: ${allQuestions.length})`);
 
     const xml = generateXml(urls);
     return new Response(xml, { headers: corsHeaders });
