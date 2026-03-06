@@ -1,27 +1,13 @@
-# SSR for quiz question pages (for SEO - Googlebot sees pre-rendered content)
+# SSR for quiz question pages
 /quiz/question/:id/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 /quiz/question/:id https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 
-# Single sitemap model (canonical)
+# Sitemap - single proxy (query params pass through to edge function)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
-/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
 
-# Legacy category sitemap URLs → canonical sitemap
-/sitemap-category-history.xml /sitemap.xml 301
-/sitemap-category-science.xml /sitemap.xml 301
-/sitemap-category-geography.xml /sitemap.xml 301
-/sitemap-category-literature.xml /sitemap.xml 301
-/sitemap-category-entertainment.xml /sitemap.xml 301
-/sitemap-category-sports.xml /sitemap.xml 301
-/sitemap-category-technology.xml /sitemap.xml 301
-/sitemap-category-general-knowledge.xml /sitemap.xml 301
-
-# AMP sitemap
-/sitemap-amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 200!
-
-# API sitemap aliases
-/api/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
-/api/sitemap https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
+# Legacy sitemap redirects
+/sitemap-main.xml /sitemap.xml 301
+/sitemap-amp.xml /sitemap.xml 301
 
 # SPA fallback - must be last
 /* /index.html 200
