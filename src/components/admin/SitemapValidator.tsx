@@ -31,17 +31,19 @@ interface ValidationSummary {
   warningCount: number;
 }
 
+const EDGE_FUNCTION_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1';
+
 const SITEMAPS_TO_VALIDATE = [
-  { name: 'Index', url: '/sitemap.xml' },
-  { name: 'Main', url: '/sitemap-main.xml' },
-  { name: 'History', url: '/sitemap-category-history.xml' },
-  { name: 'Science', url: '/sitemap-category-science.xml' },
-  { name: 'Geography', url: '/sitemap-category-geography.xml' },
-  { name: 'Literature', url: '/sitemap-category-literature.xml' },
-  { name: 'Entertainment', url: '/sitemap-category-entertainment.xml' },
-  { name: 'Sports', url: '/sitemap-category-sports.xml' },
-  { name: 'Technology', url: '/sitemap-category-technology.xml' },
-  { name: 'General Knowledge', url: '/sitemap-category-general-knowledge.xml' },
+  { name: 'Index', url: '/sitemap.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-index` },
+  { name: 'Main', url: '/sitemap-main.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main` },
+  { name: 'History', url: '/sitemap-category-history.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=history` },
+  { name: 'Science', url: '/sitemap-category-science.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=science` },
+  { name: 'Geography', url: '/sitemap-category-geography.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=geography` },
+  { name: 'Literature', url: '/sitemap-category-literature.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=literature` },
+  { name: 'Entertainment', url: '/sitemap-category-entertainment.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=entertainment` },
+  { name: 'Sports', url: '/sitemap-category-sports.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=sports` },
+  { name: 'Technology', url: '/sitemap-category-technology.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=technology` },
+  { name: 'General Knowledge', url: '/sitemap-category-general-knowledge.xml', edgeUrl: `${EDGE_FUNCTION_BASE}/sitemap-main?category=general-knowledge` },
 ];
 
 const SitemapValidator: React.FC = () => {
@@ -51,15 +53,16 @@ const SitemapValidator: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [currentSitemap, setCurrentSitemap] = useState('');
 
-  const validateSitemap = async (sitemapUrl: string): Promise<SitemapValidationResult> => {
+  const validateSitemap = async (sitemapUrl: string, edgeUrl: string): Promise<SitemapValidationResult> => {
     const startTime = Date.now();
-    const fullUrl = `https://cuiz.in${sitemapUrl}`;
     
     try {
-      const response = await fetch(fullUrl, {
+      // Use edge function URL directly to avoid CORS issues when running from preview
+      const response = await fetch(edgeUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/xml, text/xml',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneXd2dHBoZmlkb3Vha3lwZG5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwMjcwOTQsImV4cCI6MjA1NzYwMzA5NH0.YazHsLiGkw-Uo-TYYAObWVzlf0HcZBDQjI5pP-F7Eco',
         },
       });
       
@@ -147,7 +150,7 @@ const SitemapValidator: React.FC = () => {
       setCurrentSitemap(sitemap.name);
       setProgress(((i + 1) / SITEMAPS_TO_VALIDATE.length) * 100);
       
-      const result = await validateSitemap(sitemap.url);
+      const result = await validateSitemap(sitemap.url, sitemap.edgeUrl);
       validationResults.push(result);
       setResults([...validationResults]);
       
