@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, CheckCircle2, XCircle, AlertTriangle, Globe, FileText, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertTriangle, Globe, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EDGE_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main';

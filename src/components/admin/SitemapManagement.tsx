@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import { CheckCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import SitemapValidator from './SitemapValidator';
 import IndexNowPinger from './IndexNowPinger';
 import SitemapUrlCounter from './SitemapUrlCounter';
