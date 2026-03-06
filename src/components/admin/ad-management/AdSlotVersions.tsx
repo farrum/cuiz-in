@@ -269,10 +269,13 @@ const AdSlotVersions: React.FC<AdSlotVersionsProps> = ({
             </DialogDescription>
           </DialogHeader>
           
+          {/* SECURITY: Never render ad code as HTML - always show as safe text */}
           <div className="bg-secondary/30 border border-secondary rounded-md p-4">
-            <div className="text-xs text-muted-foreground mb-2 text-center">Advertisement Preview</div>
+            <div className="text-xs text-muted-foreground mb-2 text-center">Ad Code (Text Preview)</div>
             {selectedVersion && (
-              <div dangerouslySetInnerHTML={{ __html: selectedVersion.code }} />
+              <pre className="font-mono text-xs whitespace-pre-wrap overflow-x-auto max-h-[300px]">
+                {selectedVersion.code}
+              </pre>
             )}
           </div>
           

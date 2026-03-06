@@ -2,7 +2,6 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -16,11 +15,7 @@ const PageLayout = ({ children, hidePreFooterAd = false }: PageLayoutProps) => {
       
       {children}
       
-      {!hidePreFooterAd && (
-        <div className="container mx-auto px-4 mb-8">
-          <SimpleAdBanner position="bottom" className="w-full" />
-        </div>
-      )}
+      {/* ADS DISABLED FOR SECURITY - all ad rendering removed sitewide */}
       
       <Footer />
     </div>

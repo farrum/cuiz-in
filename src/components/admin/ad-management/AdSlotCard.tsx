@@ -69,16 +69,10 @@ const AdSlotCard: React.FC<AdSlotCardProps> = ({
       </CardHeader>
       
       <CardContent>
-        {previewMode ? (
-          <div className="bg-secondary/30 border border-secondary rounded-md p-3 min-h-[100px]">
-            <div className="text-xs text-muted-foreground mb-2 text-center">Advertisement Preview</div>
-            <div dangerouslySetInnerHTML={{ __html: slot.code || '' }} />
-          </div>
-        ) : (
-          <div className="font-mono text-xs bg-secondary/10 p-3 rounded-md overflow-x-auto max-h-[200px]">
-            {slot.code || 'No ad code defined'}
-          </div>
-        )}
+        {/* SECURITY: Never render ad code as HTML - always show as safe text */}
+        <div className="font-mono text-xs bg-secondary/10 p-3 rounded-md overflow-x-auto max-h-[200px] whitespace-pre-wrap">
+          {slot.code || 'No ad code defined'}
+        </div>
         <div className="text-xs text-muted-foreground mt-2">
           Last updated: {formatDate(slot.last_updated)}
         </div>
