@@ -93,13 +93,21 @@
     <!-- SECURITY: Force purge all rogue SWs, caches, and malicious localStorage -->
     <script>
       (function() {
-        // Purge malicious ad data from localStorage
+        // SECURITY: Unconditionally purge ALL ad data from localStorage
+        // This prevents any cached malicious ad code from being re-used
         try {
-          var adData = localStorage.getItem('quiz_app_ad_slots');
-          if (adData && (adData.indexOf('data-banner-id') !== -1 || adData.indexOf('aclib') !== -1 || adData.indexOf('acscdn') !== -1 || adData.indexOf('adexchangeclear') !== -1)) {
-            localStorage.removeItem('quiz_app_ad_slots');
-            console.log('Purged malicious ad cache from localStorage');
+          localStorage.removeItem('quiz_app_ad_slots');
+          localStorage.removeItem('ad_index_');
+          // Remove all ad index keys
+          var keysToRemove = [];
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && (key.startsWith('ad_index_') || key.startsWith('ad_cache_'))) {
+              keysToRemove.push(key);
+            }
           }
+          keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+          if (keysToRemove.length > 0) console.log('Purged', keysToRemove.length + 1, 'ad-related localStorage keys');
         } catch(e) {}
 
         if ('serviceWorker' in navigator) {

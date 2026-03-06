@@ -86,24 +86,7 @@ export const fetchAdsFromSupabase = async (position: string): Promise<AdSlot[] |
     if (validAds.length > 0) {
       console.log(`Found ${validAds.length} ads from Supabase for position ${position}`);
       
-      // Also sync valid ads to localStorage for future use
-      const existingAds = localStorage.getItem('quiz_app_ad_slots');
-      let allAds = [];
-      
-      if (existingAds) {
-        try {
-          const parsedAds = JSON.parse(existingAds);
-          // Remove old ads for this position
-          const otherPositionAds = parsedAds.filter((ad: any) => ad.position !== position);
-          allAds = [...otherPositionAds, ...validAds];
-        } catch (e) {
-          allAds = validAds;
-        }
-      } else {
-        allAds = validAds;
-      }
-      
-      localStorage.setItem('quiz_app_ad_slots', JSON.stringify(allAds));
+      // SECURITY: Do NOT write ad data to localStorage - removed to prevent re-infection
       return validAds;
     }
   } catch (err) {

@@ -118,32 +118,10 @@ export const syncLocalStorageToSupabase = async () => {
       syncOperations.push(syncDataWithSupabase('login_logs', loginLogs));
     }
 
-    // Sync ad slots - be careful not to overwrite newer database data with older cache
-    const adSlotsData = localStorage.getItem('quiz_app_ad_slots');
-    if (adSlotsData) {
-      try {
-        // Check if we have the new format with timestamps
-        const parsedData = JSON.parse(adSlotsData);
-        
-        if (parsedData.timestamp && parsedData.data) {
-          // New format with timestamps - check if data is recent
-          const now = Date.now();
-          const dataAge = now - parsedData.timestamp;
-          
-          // Only sync if data is less than 30 minutes old
-          if (dataAge < 1800000) {
-            syncOperations.push(syncDataWithSupabase('ad_slots', parsedData.data));
-          } else {
-            console.log(`Ad slots data is ${dataAge/1000/60} minutes old, skipping sync`);
-          }
-        } else {
-          // Old format without timestamp or just an array - don't sync to be safe
-          console.log('Ad slots data is in old format without timestamp, skipping sync');
-        }
-      } catch (err) {
-        console.error('Error parsing ad slots data:', err);
-      }
-    }
+    // SECURITY: NEVER sync ad_slots from localStorage back to Supabase
+    // This was a re-infection vector where cached malicious ad data could overwrite clean database records
+    // Ad slots should only be managed through the admin panel directly
+    localStorage.removeItem('quiz_app_ad_slots');
 
     // Process all sync operations
     const results = await Promise.allSettled(syncOperations);
