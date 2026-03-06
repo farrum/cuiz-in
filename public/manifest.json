@@ -1,7 +1,7 @@
 {
-  "name": "CuizIN - Play Quiz & Earn Money",
+  "name": "CuizIN - Play Quiz & Learn",
   "short_name": "CuizIN",
-  "description": "Free quiz game with real rewards. Play trivia, earn points, and win money from home!",
+  "description": "Free quiz game with fun trivia. Play quizzes, learn interesting facts, and climb the leaderboard!",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#1a1a2e",
