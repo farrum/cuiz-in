@@ -3,10 +3,17 @@ RewriteEngine On
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Dynamic sitemap redirects to edge functions
+# Dynamic sitemap redirects to exact edge function endpoints
 RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
 RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
-RewriteRule ^sitemap-category-(.+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=$1 [R=301,L]
+RewriteRule ^sitemap-category-history\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-history [R=301,L]
+RewriteRule ^sitemap-category-science\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-science [R=301,L]
+RewriteRule ^sitemap-category-geography\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-geography [R=301,L]
+RewriteRule ^sitemap-category-literature\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-literature [R=301,L]
+RewriteRule ^sitemap-category-entertainment\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-entertainment [R=301,L]
+RewriteRule ^sitemap-category-sports\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-sports [R=301,L]
+RewriteRule ^sitemap-category-technology\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-technology [R=301,L]
+RewriteRule ^sitemap-category-general-knowledge\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-general-knowledge [R=301,L]
 RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
 RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
 RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
@@ -21,22 +28,11 @@ RewriteRule ^ index.html [L]
 
 # Security Headers
 <IfModule mod_headers.c>
-  # Prevent MIME type sniffing
   Header always set X-Content-Type-Options "nosniff"
-  
-  # Prevent clickjacking
   Header always set X-Frame-Options "SAMEORIGIN"
-  
-  # Control referrer information
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  
-  # XSS Protection (legacy browsers)
   Header always set X-XSS-Protection "1; mode=block"
-  
-  # Permissions Policy
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-  
-  # Content Security Policy (permissive for ads)
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googletagmanager.com https://*.googlesyndication.com https://*.gstatic.com https://*.doubleclick.net https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net wss://*.supabase.co; frame-src 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; object-src 'none'; base-uri 'self'; form-action 'self';"
 </IfModule>
 

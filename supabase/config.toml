@@ -50,3 +50,27 @@ verify_jwt = false
 
 [functions.quiz-question-ssr]
 verify_jwt = false
+
+[functions.sitemap-category-history]
+verify_jwt = false
+
+[functions.sitemap-category-science]
+verify_jwt = false
+
+[functions.sitemap-category-geography]
+verify_jwt = false
+
+[functions.sitemap-category-literature]
+verify_jwt = false
+
+[functions.sitemap-category-entertainment]
+verify_jwt = false
+
+[functions.sitemap-category-sports]
+verify_jwt = false
+
+[functions.sitemap-category-technology]
+verify_jwt = false
+
+[functions.sitemap-category-general-knowledge]
+verify_jwt = false
