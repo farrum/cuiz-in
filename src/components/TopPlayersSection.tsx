@@ -47,11 +47,9 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       const isAdmin = localStorage.getItem('quiz_app_admin_auth') === 'true';
       
       if (isAdmin) {
-        // Use edge function for admins
-        const adminUserId = localStorage.getItem('quiz_app_user_id');
+        // Use edge function for admins - JWT is automatically included
         const { data, error } = await supabase.functions.invoke('admin-get-reports', {
           body: { 
-            adminUserId,
             reportType: 'top-players',
             limit 
           }

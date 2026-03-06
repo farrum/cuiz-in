@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -11,21 +11,40 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { adminUserId, reportType, limit } = await req.json();
-
-    if (!adminUserId) {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Admin user ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const { reportType, limit } = await req.json();
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const adminUserId = claimsData.claims.sub;
+
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate admin status
+    // Validate admin
     const { data: adminRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
@@ -34,7 +53,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (roleError || !adminRole) {
-      console.error('Admin validation failed:', roleError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -50,9 +68,8 @@ Deno.serve(async (req) => {
         .limit(limit || 10);
 
       if (profilesError) {
-        console.error('Error fetching top players:', profilesError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch top players', details: profilesError.message }),
+          JSON.stringify({ error: 'Failed to fetch top players' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -75,9 +92,8 @@ Deno.serve(async (req) => {
         .limit(10);
 
       if (dailyError) {
-        console.error('Error fetching daily performers:', dailyError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch daily performers', details: dailyError.message }),
+          JSON.stringify({ error: 'Failed to fetch daily performers' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -89,20 +105,11 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Get usernames
       const userIds = dailyData.map(d => d.user_id);
-      const { data: profiles, error: profilesError } = await supabaseAdmin
+      const { data: profiles } = await supabaseAdmin
         .from('profiles')
         .select('id, username')
         .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch profiles', details: profilesError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
 
       const usernameMap: Record<string, string> = {};
       profiles?.forEach(profile => {
@@ -134,9 +141,8 @@ Deno.serve(async (req) => {
         .limit(10);
 
       if (monthlyError) {
-        console.error('Error fetching monthly performers:', monthlyError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch monthly performers', details: monthlyError.message }),
+          JSON.stringify({ error: 'Failed to fetch monthly performers' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -148,20 +154,11 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Get usernames
       const userIds = monthlyData.map(d => d.user_id);
-      const { data: profiles, error: profilesError } = await supabaseAdmin
+      const { data: profiles } = await supabaseAdmin
         .from('profiles')
         .select('id, username')
         .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch profiles', details: profilesError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
 
       const usernameMap: Record<string, string> = {};
       profiles?.forEach(profile => {
@@ -188,7 +185,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error in admin-get-reports:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
