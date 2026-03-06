@@ -3,20 +3,23 @@ RewriteEngine On
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Dynamic sitemap redirects to exact edge function endpoints
-RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
+# Single sitemap model (canonical)
+RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
 RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
-RewriteRule ^sitemap-category-history\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-history [R=301,L]
-RewriteRule ^sitemap-category-science\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-science [R=301,L]
-RewriteRule ^sitemap-category-geography\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-geography [R=301,L]
-RewriteRule ^sitemap-category-literature\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-literature [R=301,L]
-RewriteRule ^sitemap-category-entertainment\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-entertainment [R=301,L]
-RewriteRule ^sitemap-category-sports\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-sports [R=301,L]
-RewriteRule ^sitemap-category-technology\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-technology [R=301,L]
-RewriteRule ^sitemap-category-general-knowledge\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-general-knowledge [R=301,L]
+
+# Legacy category sitemap URLs -> canonical sitemap
+RewriteRule ^sitemap-category-history\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-science\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-geography\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-literature\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-entertainment\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-sports\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-technology\.xml$ /sitemap.xml [R=301,L]
+RewriteRule ^sitemap-category-general-knowledge\.xml$ /sitemap.xml [R=301,L]
+
 RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
-RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
-RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
+RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
+RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
 
 # Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} -f [OR]
