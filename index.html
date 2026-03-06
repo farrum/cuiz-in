@@ -79,7 +79,6 @@
     <!-- DNS Prefetch and Preconnect for faster third-party loading -->
     <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
     <link rel="dns-prefetch" href="//www.googletagmanager.com">
-    <link rel="dns-prefetch" href="//js.wpadmngr.com">
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
     <meta property="og:title" content="CuizIN - Play Quiz  | Free Online Quiz Game">
@@ -91,6 +90,44 @@
   <body>
     <div id="root"></div>
     
+    <!-- SECURITY: Force purge all rogue SWs, caches, and malicious localStorage -->
+    <script>
+      (function() {
+        // Purge malicious ad data from localStorage
+        try {
+          var adData = localStorage.getItem('quiz_app_ad_slots');
+          if (adData && (adData.indexOf('data-banner-id') !== -1 || adData.indexOf('aclib') !== -1 || adData.indexOf('acscdn') !== -1 || adData.indexOf('adexchangeclear') !== -1)) {
+            localStorage.removeItem('quiz_app_ad_slots');
+            console.log('Purged malicious ad cache from localStorage');
+          }
+        } catch(e) {}
+
+        if ('serviceWorker' in navigator) {
+          // Unregister ALL service workers first
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(reg) {
+              reg.unregister().then(function() {
+                console.log('Unregistered SW:', reg.scope);
+              });
+            });
+          });
+          // Purge ALL caches
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              names.forEach(function(name) { caches.delete(name); });
+              if (names.length > 0) console.log('Purged', names.length, 'caches');
+            });
+          }
+          // Re-register clean v3 service worker
+          setTimeout(function() {
+            navigator.serviceWorker.register('/sw.js').then(function() {
+              console.log('Clean SW v3 registered');
+            });
+          }, 3000);
+        }
+      })();
+    </script>
+
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
@@ -126,27 +163,10 @@
         document.head.appendChild(adsenseScript);
       }
       
-      // Load non-critical ad scripts after user interaction or longer delay
+      // Malicious ad scripts removed - richinfo.co, onclckmn.com, wpadmngr.com were injecting gambling content
       function loadAdScripts() {
-        // onclick/wpadmngr scripts
-        var onclickScript = document.createElement('script');
-        onclickScript.async = true;
-        onclickScript.src = 'https://js.onclckmn.com/static/onclicka.js';
-        onclickScript.dataset.admpid = '312231';
-        document.body.appendChild(onclickScript);
-        
-        var wpadmngrScript = document.createElement('script');
-        wpadmngrScript.async = true;
-        wpadmngrScript.src = 'https://js.wpadmngr.com/static/adManager.js';
-        wpadmngrScript.dataset.admpid = '374885';
-        document.body.appendChild(wpadmngrScript);
-        
-        // Richads
-        var richadsScript = document.createElement('script');
-        richadsScript.type = 'module';
-        richadsScript.src = 'https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=968892&siteid=361293&niche=33';
-        richadsScript.async = true;
-        document.body.appendChild(richadsScript);
+        // All third-party ad network scripts have been removed for security
+        console.log('Ad scripts disabled for security');
       }
       
       // Use requestIdleCallback for loading scripts when browser is idle
