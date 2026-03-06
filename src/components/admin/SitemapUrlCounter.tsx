@@ -21,18 +21,9 @@
    isIndex?: boolean;
  }
  
- const SITEMAPS = [
-   { name: 'Index', url: '/sitemap.xml', isIndex: true },
-   { name: 'Main', url: '/sitemap-main.xml' },
-   { name: 'History', url: '/sitemap-category-history.xml' },
-   { name: 'Science', url: '/sitemap-category-science.xml' },
-   { name: 'Geography', url: '/sitemap-category-geography.xml' },
-   { name: 'Literature', url: '/sitemap-category-literature.xml' },
-   { name: 'Entertainment', url: '/sitemap-category-entertainment.xml' },
-   { name: 'Sports', url: '/sitemap-category-sports.xml' },
-   { name: 'Technology', url: '/sitemap-category-technology.xml' },
-   { name: 'General Knowledge', url: '/sitemap-category-general-knowledge.xml' },
- ];
+const SITEMAPS = [
+  { name: 'Primary Sitemap', url: '/sitemap.xml' },
+];
  
  const SitemapUrlCounter: React.FC = () => {
    const [counts, setCounts] = useState<SitemapCount[]>([]);
