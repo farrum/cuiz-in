@@ -100,6 +100,10 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/icons')) tab = 'icons';
     else if (path.includes('/sync')) tab = 'sync';
     else if (path.includes('/requests')) tab = 'requests';
+    else if (path.includes('/blog')) tab = 'blog';
+    else if (path.includes('/faq')) tab = 'faq';
+    else if (path.includes('/partnerships')) tab = 'partnerships';
+    else if (path.includes('/seo')) tab = 'seo';
     else if (path === '/admin') {
       navigate('/admin/users', { replace: true });
       tab = 'users';

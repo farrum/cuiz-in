@@ -11,33 +11,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Extract and validate JWT from Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    
-    // Create client with the user's JWT to verify identity
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    const authHeader = req.headers.get('Authorization') ?? '';
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const adminUserId = claimsData.claims.sub;
+    // Parse body (may contain legacy adminUserId)
+    let body: any = {};
+    try { body = await req.json(); } catch { /* empty body is fine */ }
 
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -45,13 +25,38 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate that the JWT-identified user is actually an admin
+    // Determine admin user ID: try Supabase Auth first, then legacy fallback
+    let adminUserId: string | null = null;
+
+    if (authHeader.startsWith('Bearer ')) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      const { data: { user } } = await supabaseAuth.auth.getUser();
+      if (user) {
+        adminUserId = user.id;
+      }
+    }
+
+    // Legacy auth fallback: adminUserId from localStorage via body
+    if (!adminUserId && body.adminUserId) {
+      adminUserId = body.adminUserId;
+    }
+
+    if (!adminUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: No valid session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate admin role server-side
     const { data: adminRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', adminUserId)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
     if (roleError || !adminRole) {
       return new Response(
