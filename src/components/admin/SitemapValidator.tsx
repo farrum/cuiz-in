@@ -209,7 +209,7 @@ const SitemapValidator: React.FC = () => {
           Sitemap Validator
         </CardTitle>
         <CardDescription>
-          Validate all sitemaps and check URL counts for SEO monitoring
+          Validate the canonical sitemap endpoint and check URL counts for SEO monitoring
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -227,7 +227,7 @@ const SitemapValidator: React.FC = () => {
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Validate All Sitemaps
+                Validate Sitemap
               </>
             )}
           </Button>

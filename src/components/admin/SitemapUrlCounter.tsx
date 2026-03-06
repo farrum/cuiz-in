@@ -73,7 +73,7 @@ const SITEMAPS = [
          .reduce((sum, r) => sum + (r.count || 0), 0);
        
        if (errorCount === 0) {
-         toast.success(`Found ${totalUrls.toLocaleString()} URLs across ${results.length - 1} sitemaps`);
+         toast.success(`Found ${totalUrls.toLocaleString()} URLs in ${results.length} sitemap`);
        } else {
          toast.warning(`${errorCount} sitemaps failed to load`);
        }
