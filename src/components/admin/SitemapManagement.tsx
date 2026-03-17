@@ -24,10 +24,10 @@ const SitemapManagement = () => {
             <div className="space-y-2">
               <h4 className="font-medium">How it works</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• <code>/sitemap.xml</code> → Sitemap Index (9 children)</p>
-                <p>• <code>/sitemap.xml?type=main</code> → Static + Blog + FAQ</p>
-                <p>• <code>/sitemap.xml?cat=history</code> → History questions</p>
-                <p>• ...8 category sitemaps total</p>
+              <p>• <code>/sitemap.xml</code> → Sitemap Index (9 children)</p>
+                <p>• <code>/sitemap-main.xml</code> → Static + Blog + FAQ + Answers</p>
+                <p>• <code>/sitemap-cat-history.xml</code> → History questions</p>
+                <p>• ...8 category sitemaps total (path-based, CDN-compatible)</p>
               </div>
             </div>
             <div className="space-y-2">
