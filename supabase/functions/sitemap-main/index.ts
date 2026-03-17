@@ -56,6 +56,25 @@ async function fetchAllQuestions(supabase: any, categoryFilter?: string[]) {
   return all;
 }
 
+async function fetchAllAnswers(supabase: any) {
+  const all: { id: string; correct_answer: string; created_at: string | null }[] = [];
+  let offset = 0;
+  const pageSize = 1000;
+  
+  while (true) {
+    const { data, error } = await supabase.from('quiz_questions')
+      .select('id, correct_answer, created_at')
+      .not('correct_answer', 'is', null)
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers });
@@ -87,7 +106,7 @@ serve(async (req) => {
       return new Response(xml, { headers });
     }
 
-    // ROUTE 2: ?type=main → static pages, categories, blog, FAQs
+    // ROUTE 2: ?type=main → static pages, categories, blog, FAQs, answers
     if (type === 'main') {
       const staticPages = [
         { path: '/', pri: '1.0', freq: 'daily' },
@@ -106,17 +125,14 @@ serve(async (req) => {
 
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
       
-      // Static pages
       for (const p of staticPages) {
         xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in${p.path}`)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.freq}</changefreq>\n    <priority>${p.pri}</priority>\n  </url>\n`;
       }
       
-      // Category pages
       for (const slug of validCategories) {
         xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/categories/${slug}`)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
       }
 
-      // Blog posts
       const { data: blogs } = await supabase.from('blog_posts').select('slug, updated_at, created_at').eq('is_published', true);
       if (blogs) {
         for (const b of blogs) {
@@ -125,7 +141,6 @@ serve(async (req) => {
         }
       }
 
-      // FAQs
       const { data: faqs } = await supabase.from('faqs').select('id, question, updated_at, created_at').eq('is_published', true);
       if (faqs) {
         for (const f of faqs) {
@@ -135,12 +150,12 @@ serve(async (req) => {
         }
       }
 
-      // Answer pages (correct answers only - now allowed by robots.txt)
+      // Answer pages (correct answers only)
       const answerPages = await fetchAllAnswers(supabase);
       for (const q of answerPages) {
         const answerSlug = createSlug(q.correct_answer, 50);
         if (!answerSlug) continue;
-        xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/answer/${q.id}/${answerSlug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`; 
+        xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/answer/${q.id}/${answerSlug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
       }
 
       xml += '</urlset>';
@@ -149,14 +164,12 @@ serve(async (req) => {
       return new Response(xml, { headers });
     }
 
-    // ROUTE 3: No params → sitemap index (use path-based URLs, NOT query params)
+    // ROUTE 3: No params → sitemap index (path-based URLs for CDN compatibility)
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     
-    // Main sitemap (static + blog + FAQ + answers)
     xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
     
-    // Category sitemaps (path-based, proxied via _redirects)
     for (const cat of validCategories) {
       xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap-cat-${cat}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
     }
