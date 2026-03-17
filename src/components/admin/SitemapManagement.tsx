@@ -51,7 +51,7 @@ const SitemapManagement = () => {
           <div className="space-y-2">
             {[
               { label: 'Sitemap Index', url: 'https://cuiz.in/sitemap.xml' },
-              { label: 'Main (Static+Blog+FAQ)', url: 'https://cuiz.in/sitemap.xml?type=main' },
+              { label: 'Main (Static+Blog+FAQ+Answers)', url: 'https://cuiz.in/sitemap-main.xml' },
               { label: 'Direct Edge Function', url: 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main' },
             ].map((item) => (
               <div key={item.url} className="flex items-center justify-between">
