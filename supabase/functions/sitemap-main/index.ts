@@ -135,21 +135,12 @@ serve(async (req) => {
         }
       }
 
-      // Answer pages (correct answers only - now unblocked by robots.txt)
-      const allQuestions = await fetchAllQuestions(supabase);
-      for (const q of allQuestions) {
-        // We need correct_answer too - fetch separately
-      }
-      
-      // Fetch questions with correct_answer for answer URLs
-      const { data: answerQuestions } = await supabase.from('quiz_questions').select('id, correct_answer, created_at').limit(1000);
-      if (answerQuestions) {
-        for (const q of answerQuestions) {
-          if (!q.correct_answer) continue;
-          const answerSlug = createSlug(q.correct_answer, 50);
-          if (!answerSlug) continue;
-          xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/answer/${q.id}/${answerSlug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
-        }
+      // Answer pages (correct answers only - now allowed by robots.txt)
+      const answerPages = await fetchAllAnswers(supabase);
+      for (const q of answerPages) {
+        const answerSlug = createSlug(q.correct_answer, 50);
+        if (!answerSlug) continue;
+        xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/answer/${q.id}/${answerSlug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`; 
       }
 
       xml += '</urlset>';
