@@ -1,5 +1,5 @@
 # Robots.txt for Cuiz.in
-# Updated: 2026-03-06
+# Updated: 2026-03-17
 
 User-agent: *
 Allow: /
@@ -10,8 +10,8 @@ Disallow: /profile/
 Disallow: /referral/
 Disallow: /challenge/
 Disallow: /archived-challenges/
-Disallow: /answer/
 
+Allow: /answer/
 Allow: /quiz
 Allow: /quiz/question/
 Allow: /browse

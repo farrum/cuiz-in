@@ -2,12 +2,19 @@
 /quiz/question/:id/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 /quiz/question/:id https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 
-# Sitemap - single proxy (query params pass through to edge function)
+# Sitemap index (no query params needed)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
 
-# Legacy sitemap redirects
-/sitemap-main.xml /sitemap.xml 301
-/sitemap-amp.xml /sitemap.xml 301
+# Individual sitemap files - each maps to edge function with proper query params
+/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?type=main 200!
+/sitemap-cat-history.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=history 200!
+/sitemap-cat-science.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=science 200!
+/sitemap-cat-geography.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=geography 200!
+/sitemap-cat-literature.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=literature 200!
+/sitemap-cat-entertainment.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=entertainment 200!
+/sitemap-cat-sports.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=sports 200!
+/sitemap-cat-technology.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=technology 200!
+/sitemap-cat-general-knowledge.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=general-knowledge 200!
 
 # SPA fallback - must be last
 /* /index.html 200
