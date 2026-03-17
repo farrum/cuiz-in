@@ -141,16 +141,16 @@ serve(async (req) => {
       return new Response(xml, { headers });
     }
 
-    // ROUTE 3: No params → sitemap index
+    // ROUTE 3: No params → sitemap index (use path-based URLs, NOT query params)
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     
-    // Main sitemap (static + blog + FAQ)
-    xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap.xml?type=main</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+    // Main sitemap (static + blog + FAQ + answers)
+    xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
     
-    // Category sitemaps
+    // Category sitemaps (path-based, proxied via _redirects)
     for (const cat of validCategories) {
-      xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap.xml?cat=${cat}</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      xml += `  <sitemap>\n    <loc>https://cuiz.in/sitemap-cat-${cat}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
     }
     
     xml += '</sitemapindex>';
