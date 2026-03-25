@@ -28,7 +28,7 @@ import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
 import { ContentPartnerships } from '@/components/admin/partnerships';
 import SitemapManagement from '@/components/admin/SitemapManagement';
-import { setUserContext } from '@/utils/authContext';
+
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
