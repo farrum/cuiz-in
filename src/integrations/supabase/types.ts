@@ -1039,6 +1039,15 @@ export type Database = {
           },
         ]
       }
+      sitemap_entries: {
+        Row: {
+          changefreq: string | null
+          last_modified: string | null
+          path: string | null
+          priority: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_delete_profile_icon: {
@@ -1082,6 +1091,7 @@ export type Database = {
       is_current_user_admin: { Args: never; Returns: boolean }
       regenerate_sitemap: { Args: never; Returns: undefined }
       set_user_context: { Args: { user_id: string }; Returns: undefined }
+      slugify_ascii: { Args: { input: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
