@@ -40,23 +40,6 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     const initializeAdmin = async () => {
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      
-      if (isAdminAuth) {
-        const adminUserId = '066otqbbqac7'; // Main admin user
-        
-        // Ensure user ID is always set in localStorage
-        const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (!storedUserId || storedUserId !== adminUserId) {
-          localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
-          localStorage.setItem(STORAGE_KEYS.USER_NAME, 'player');
-          console.log('Set admin user ID in localStorage:', adminUserId);
-        }
-        
-        await setUserContext(adminUserId);
-        console.log('Admin context initialized for user:', adminUserId);
-      }
-      
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const { data } = await supabase

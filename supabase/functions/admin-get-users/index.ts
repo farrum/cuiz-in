@@ -38,10 +38,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Legacy auth fallback: adminUserId from localStorage via body
-    if (!adminUserId && body.adminUserId) {
-      adminUserId = body.adminUserId;
-    }
+    // Legacy body.adminUserId fallback removed for security
 
     if (!adminUserId) {
       return new Response(
