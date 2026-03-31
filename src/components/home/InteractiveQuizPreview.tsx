@@ -192,7 +192,7 @@ const InteractiveQuizPreview: React.FC = () => {
     }
   }, [difficulty]);
 
-  const handleAnswerSelect = (answer: string) => {
+  const handleAnswerSelect = async (answer: string) => {
     if (isAnswered || isLoading || !config) return;
 
     // Start timer on first answer
@@ -207,7 +207,20 @@ const InteractiveQuizPreview: React.FC = () => {
     setSelectedAnswer(answer);
     setIsAnswered(true);
 
-    const isCorrect = answer === currentQuestion?.correct_answer;
+    // Validate answer server-side
+    let isCorrect = false;
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+        body: { question_id: currentQuestion?.id, selected_answer: answer }
+      });
+      if (!error && data) {
+        isCorrect = data.is_correct;
+        setCurrentQuestion(prev => prev ? { ...prev, correct_answer: data.correct_answer } : prev);
+      }
+    } catch (err) {
+      console.error('Error validating answer:', err);
+    }
+
     if (isCorrect) {
       if (soundEnabled) playCorrectSound();
       setCorrectAnswers(prev => prev + 1);
