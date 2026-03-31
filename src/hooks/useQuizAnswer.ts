@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
@@ -69,19 +70,26 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
         if (foundQuestion) {
           setQuestion(foundQuestion);
           
-          // Compare using slugs for case-insensitive and normalized comparison
-          const selectedSlug = createSlug(selectedOption || '');
-          const correctSlug = createSlug(foundQuestion.correctAnswer);
-          const correct = selectedSlug === correctSlug || 
-                          foundQuestion.correctAnswer.toLowerCase() === (selectedOption || '').toLowerCase();
-          
-          console.log('[useQuizAnswer] Answer comparison:', {
-            selectedOption,
-            selectedSlug,
-            correctAnswer: foundQuestion.correctAnswer,
-            correctSlug,
-            isCorrect: correct
-          });
+          // Validate answer server-side
+          let correct = false;
+          try {
+            const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+              body: { question_id: questionId, selected_answer: selectedOption }
+            });
+            if (!error && data) {
+              correct = data.is_correct;
+              foundQuestion.correctAnswer = data.correct_answer;
+            }
+          } catch (err) {
+            console.error('[useQuizAnswer] Server validation error:', err);
+            // Fallback to client-side if available
+            if (foundQuestion.correctAnswer) {
+              const selectedSlug = createSlug(selectedOption || '');
+              const correctSlug = createSlug(foundQuestion.correctAnswer);
+              correct = selectedSlug === correctSlug || 
+                        foundQuestion.correctAnswer.toLowerCase() === (selectedOption || '').toLowerCase();
+            }
+          }
           
           setIsCorrect(correct);
           

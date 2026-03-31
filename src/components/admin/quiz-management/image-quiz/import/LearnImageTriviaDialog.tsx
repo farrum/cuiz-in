@@ -74,7 +74,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
         description: `Found ${imageQuestions.length} questions. Converting to image questions...`,
       });
       
-      const result = await saveImageTriviaToDB(imageQuestions);
+      const result = await saveImageTriviaToDB(imageQuestions as any);
       
       toast({
         title: "Import complete",

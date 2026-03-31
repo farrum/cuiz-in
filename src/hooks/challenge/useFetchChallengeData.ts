@@ -66,7 +66,7 @@ export const useFetchChallengeData = (
       if (challengeData) {
         const { data: questionData, error: questionError } = await supabase
           .from('quiz_questions')
-          .select('*')
+          .select('id, question, options, category, difficulty, explanation, points, image_url, question_type')
           .in('id', challengeData.question_ids);
           
         if (questionError) throw questionError;
@@ -94,7 +94,7 @@ export const useFetchChallengeData = (
               id: question.id,
               question: question.question,
               options: options,
-              correctAnswer: question.correct_answer,
+              correctAnswer: undefined, // Validated server-side
               explanation: question.explanation || '',
               category: question.category,
               difficulty: question.difficulty as 'easy' | 'medium' | 'hard',

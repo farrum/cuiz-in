@@ -51,7 +51,7 @@ export const useCompletedChallenge = (
       // Get question data to include explanations and correct answers
       const { data: questionData, error: questionError } = await supabase
         .from('quiz_questions')
-        .select('*')
+        .select('id, question, explanation')
         .in('id', challengeData.question_ids);
         
       if (questionError) throw questionError;
@@ -59,11 +59,20 @@ export const useCompletedChallenge = (
       // Create simple lookup objects
       const questionMap: SimpleMap<QuestionExplanation> = {};
       
+      // For completed challenges, fetch correct answers via edge function
       for (const q of questionData || []) {
+        let correctAnswer = '';
+        try {
+          const { data } = await supabase.functions.invoke('validate-quiz-answer', {
+            body: { question_id: q.id, selected_answer: '__fetch_answer__' }
+          });
+          if (data) correctAnswer = data.correct_answer || '';
+        } catch { /* ignore */ }
+        
         questionMap[q.id] = {
           question: q.question,
           explanation: q.explanation || '',
-          correctAnswer: q.correct_answer
+          correctAnswer
         };
       }
       

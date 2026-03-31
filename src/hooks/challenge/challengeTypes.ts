@@ -49,7 +49,7 @@ export interface QuizQuestion {
   id: string;
   question: string;
   options: string[];
-  correctAnswer: string;
+  correctAnswer?: string;
   explanation: string;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
