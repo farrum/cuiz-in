@@ -158,7 +158,6 @@ const InteractiveQuizPreview: React.FC = () => {
           id: q.id,
           question: q.question,
           options: options,
-          correct_answer: q.correct_answer,
           category: q.category,
           points: q.points || 10
         });
