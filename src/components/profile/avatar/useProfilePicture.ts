@@ -103,8 +103,8 @@ export const useProfilePicture = (currentAvatar: string | undefined, userId: str
 
       // Generate a unique file name using user id and timestamp
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/avatars/${fileName}`;
 
       setTimeout(() => setUploadProgress(30), 300);
 
