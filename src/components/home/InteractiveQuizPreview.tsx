@@ -11,7 +11,7 @@ interface QuizQuestion {
   id: string;
   question: string;
   options: string[];
-  correct_answer: string;
+  correct_answer?: string;
   category: string;
   points: number;
 }
