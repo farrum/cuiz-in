@@ -126,7 +126,7 @@ const InteractiveQuizPreview: React.FC = () => {
     try {
       let query = supabase
         .from('quiz_questions')
-        .select('id, question, options, correct_answer, category, points')
+        .select('id, question, options, category, points')
         .eq('question_type', 'text')
         .limit(20);
       
