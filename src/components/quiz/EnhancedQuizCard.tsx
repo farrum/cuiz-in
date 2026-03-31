@@ -159,7 +159,28 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     }
 
     setIsAnswered(true);
-    const isCorrect = answer === question.correctAnswer;
+    
+    // Validate answer server-side via edge function
+    let isCorrect = false;
+    let serverCorrectAnswer = question.correctAnswer || '';
+    
+    if (answer !== null) {
+      try {
+        const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+          body: { question_id: question.id, selected_answer: answer }
+        });
+        
+        if (!error && data) {
+          isCorrect = data.is_correct;
+          serverCorrectAnswer = data.correct_answer || '';
+          // Update the question object with server response for UI display
+          question.correctAnswer = serverCorrectAnswer;
+          if (data.explanation) question.explanation = data.explanation;
+        }
+      } catch (err) {
+        console.error('Error validating answer:', err);
+      }
+    }
     
     // Play sound
     if (answer !== null) {
