@@ -94,7 +94,7 @@ export const useFetchChallengeData = (
               id: question.id,
               question: question.question,
               options: options,
-              correctAnswer: question.correct_answer,
+              correctAnswer: undefined, // Validated server-side
               explanation: question.explanation || '',
               category: question.category,
               difficulty: question.difficulty as 'easy' | 'medium' | 'hard',
