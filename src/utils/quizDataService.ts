@@ -40,7 +40,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
     // First try to get from Supabase
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('*');
+      .select('id, question, options, category, difficulty, explanation, points, image_url, question_type');
       
     if (error) {
       console.error('Error fetching quiz questions from Supabase:', error);
@@ -51,11 +51,11 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
       console.log(`Fetched ${data.length} questions from Supabase`);
       
       // Transform Supabase data to match QuizQuestion interface
+      // Note: correct_answer is no longer fetched client-side for security
       const questions: QuizQuestion[] = data.map(q => ({
         id: q.id,
         question: q.question,
         options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
-        correctAnswer: q.correct_answer,
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
         points: q.points || 10,
