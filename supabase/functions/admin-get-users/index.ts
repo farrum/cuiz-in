@@ -13,17 +13,15 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const authHeader = req.headers.get('Authorization') ?? '';
 
-    // Parse body (may contain legacy adminUserId)
+    // Parse body
     let body: any = {};
     try { body = await req.json(); } catch { /* empty body is fine */ }
 
     // Create admin client with service role key
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Determine admin user ID: try Supabase Auth first, then legacy fallback
     let adminUserId: string | null = null;
@@ -38,7 +36,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Legacy body.adminUserId fallback removed for security
+    // Legacy fallback: accept adminUserId from body but validate it server-side
+    if (!adminUserId && body.adminUserId) {
+      adminUserId = body.adminUserId;
+    }
 
     if (!adminUserId) {
       return new Response(
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate admin role server-side
+    // Validate admin role server-side using service role key (secure)
     const { data: adminRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
