@@ -73,19 +73,26 @@ const LearnTriviaDialog: React.FC<LearnTriviaDialogProps> = ({ onSuccess, onCanc
       });
       
       const result = await saveTriviaToDB(questions);
+
+      if (result.saved === 0 && result.errors > 0) {
+        throw new Error('Questions were fetched but could not be saved.');
+      }
       
       toast({
         title: "Success",
         description: `Added ${result.saved} new questions! (${result.duplicates} duplicates skipped, ${result.errors} errors)`,
       });
       
-      onSuccess();
+      if (result.saved > 0) {
+        onSuccess();
+      }
     } catch (err) {
       console.error('Error learning trivia questions:', err);
-      setError('Failed to fetch or save trivia questions');
+      const message = err instanceof Error ? err.message : 'Failed to fetch or save trivia questions';
+      setError(message);
       toast({
         title: "Error",
-        description: "Failed to learn trivia questions",
+        description: message,
         variant: "destructive"
       });
     } finally {
