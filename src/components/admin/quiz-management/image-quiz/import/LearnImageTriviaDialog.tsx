@@ -65,7 +65,7 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
       
       const imageQuestions = questions.map(q => ({
         ...q,
-        imageUrl: getRandomImageForCategory(q.category),
+        imageUrl: getRandomImageForCategory(q.category, q.question),
         questionType: 'image' as const
       }));
       
