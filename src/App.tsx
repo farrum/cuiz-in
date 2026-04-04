@@ -357,6 +357,11 @@ function App() {
                   <WebStoriesPage />
                 </Suspense>
               } />
+              <Route path="/all-questions" element={
+                <Suspense fallback={<PageLoader />}>
+                  <HtmlSitemapPage />
+                </Suspense>
+              } />
               <Route path="/stories/:storyId" element={
                 <Suspense fallback={<PageLoader />}>
                   <WebStoriesPage />
