@@ -203,17 +203,26 @@ const UserRegistrationForm: React.FC = () => {
       });
 
       if (authError) {
-        console.error('Registration error:', authError);
-        toast({
-          title: "Registration Failed",
-          description: authError.message || "Failed to create account. Please try again.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
+        // If user was created but confirmation email failed, continue anyway
+        if (authData?.user && authError.message?.toLowerCase().includes('email')) {
+          console.warn('User created but confirmation email failed:', authError.message);
+          toast({
+            title: "Account Created",
+            description: "Your account was created successfully! Confirmation email couldn't be sent, but you can still log in.",
+          });
+        } else {
+          console.error('Registration error:', authError);
+          toast({
+            title: "Registration Failed",
+            description: authError.message || "Failed to create account. Please try again.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
       }
 
-      if (!authData.user) {
+      if (!authData?.user) {
         toast({
           title: "Registration Failed",
           description: "Failed to create account. Please try again.",
