@@ -1,24 +1,13 @@
-import { supabase } from '@/integrations/supabase/client';
-
 /**
- * Sets the user context for legacy auth users
- * This allows RLS policies to work with custom authentication
+ * Auth context utilities - DEPRECATED
+ * All authentication now goes through Supabase Auth.
+ * These functions are kept as no-ops for backward compatibility.
  */
-export const setUserContext = async (userId: string): Promise<void> => {
-  try {
-    await supabase.rpc('set_user_context', { user_id: userId });
-  } catch (error) {
-    console.error('Failed to set user context:', error);
-  }
+
+export const setUserContext = async (_userId: string): Promise<void> => {
+  // No-op: Supabase Auth session handles RLS automatically
 };
 
-/**
- * Clears the user context (on logout)
- */
 export const clearUserContext = async (): Promise<void> => {
-  try {
-    await supabase.rpc('set_user_context', { user_id: '' });
-  } catch (error) {
-    console.error('Failed to clear user context:', error);
-  }
+  // No-op: Use supabase.auth.signOut() instead
 };

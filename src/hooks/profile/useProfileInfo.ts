@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
-import { setUserContext } from '@/utils/authContext';
 
 export const useProfileInfo = () => {
   const navigate = useNavigate();
@@ -18,13 +17,9 @@ export const useProfileInfo = () => {
   
   const isMountedRef = useRef(true);
   
-  // Optimized fetch profile function
   const fetchUserProfile = useCallback(async (storedUserId: string) => {
     try {
-      // Set user context for RLS policies
-      await setUserContext(storedUserId);
-      
-      // Select only the fields we need in a single query
+      // No setUserContext needed - Supabase Auth session handles RLS
       const { data, error } = await supabase
         .from('profiles')
         .select('username, suspended, upi_id, profile_picture, display_name')
@@ -33,7 +28,6 @@ export const useProfileInfo = () => {
         
       if (error) {
         console.error('Error fetching profile:', error);
-        // Don't show error toast, fall back to localStorage
       }
       
       if (data && isMountedRef.current) {
@@ -51,33 +45,19 @@ export const useProfileInfo = () => {
           }
         }
       } else if (isMountedRef.current) {
-        // No profile found - fall back to localStorage for legacy users
         const storedUsername = localStorage.getItem(STORAGE_KEYS.USER_NAME);
         const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
-        
-        if (storedUsername) {
-          setUsername(storedUsername);
-        }
-        if (storedAvatar) {
-          setProfilePicture(storedAvatar);
-        }
-        
-        // Assume not suspended if no profile data
+        if (storedUsername) setUsername(storedUsername);
+        if (storedAvatar) setProfilePicture(storedAvatar);
         setSuspended(false);
       }
     } catch (error) {
       console.error('Unexpected error fetching user profile:', error);
-      // Fall back to localStorage
       if (isMountedRef.current) {
         const storedUsername = localStorage.getItem(STORAGE_KEYS.USER_NAME);
         const storedAvatar = localStorage.getItem('quiz_app_user_avatar');
-        
-        if (storedUsername) {
-          setUsername(storedUsername);
-        }
-        if (storedAvatar) {
-          setProfilePicture(storedAvatar);
-        }
+        if (storedUsername) setUsername(storedUsername);
+        if (storedAvatar) setProfilePicture(storedAvatar);
         setSuspended(false);
       }
     } finally {
@@ -87,7 +67,6 @@ export const useProfileInfo = () => {
     }
   }, [toast]);
   
-  // Load user profile data
   useEffect(() => {
     isMountedRef.current = true;
     
@@ -110,14 +89,8 @@ export const useProfileInfo = () => {
     upiId?: string;
     profilePicture?: string;
   }) => {
-    if (data.displayName) {
-      setUsername(data.displayName);
-    }
-    
-    if (data.upiId !== undefined) {
-      setUserUpi(data.upiId);
-    }
-    
+    if (data.displayName) setUsername(data.displayName);
+    if (data.upiId !== undefined) setUserUpi(data.upiId);
     if (data.profilePicture !== undefined) {
       console.log("Profile picture updated:", data.profilePicture);
       setProfilePicture(data.profilePicture);
