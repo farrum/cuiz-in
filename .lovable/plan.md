@@ -1,59 +1,89 @@
 
 
-## Fix: Registration Failing with "Error sending confirmation email"
+## Rebuild: Registration, Login, and Profile Authentication
 
-### Root Cause
+### Problem Diagnosis
 
-Supabase Auth's `signUp()` is configured to require email confirmation, but the SMTP/email sending is failing. This is a Supabase-side email delivery issue -- either the built-in email service is rate-limited (Supabase's default mailer has a limit of ~4 emails/hour on free plans), or SMTP isn't configured properly.
+After thorough investigation, the issues stem from a fragmented auth system with three competing mechanisms:
 
-### Two-Part Fix
+1. **Registration silently fails**: The `register-user` edge function shows only "shutdown" in logs -- no actual invocations recorded. The auth logs show `/signup` (native Supabase Auth endpoint) was called instead, meaning either the edge function isn't deployed or calls are failing silently before reaching it.
 
-**Part 1: Make registration work immediately (disable email confirmation requirement)**
+2. **Login fails for new users**: The `auth-login` edge function resolves username to email via profiles table, then calls Supabase Auth. If the profile wasn't created (due to #1), this lookup fails.
 
-Update the registration flow to NOT require email confirmation. Instead, auto-confirm users so they can start playing right away. This is done by:
+3. **RLS blocks everything**: `get_current_user_id()` strictly returns `auth.uid()` with no fallback. `set_user_context()` rejects calls where `auth.uid()` doesn't match. Legacy localStorage-based auth is essentially broken.
 
-1. Adding `emailRedirectTo` is already there, but the key fix is to **handle the Supabase email error gracefully** -- if signup succeeds but email fails, the user account IS created. The current code treats this as a fatal error when it shouldn't be.
+4. **Ghost users**: player41 can answer questions because quiz_questions has a public SELECT policy and quiz_answers INSERT only checks `user_id = auth.uid()::text` -- but without a proper Supabase Auth session, the profile is never created.
 
-2. Modify `UserRegistrationForm.tsx` to:
-   - Check if `authData.user` exists even when `authError` contains an email-sending error
-   - If the user was created but email failed, still proceed with registration (log them in)
-   - Show a warning instead of blocking: "Account created but confirmation email couldn't be sent"
+### Rebuild Architecture
 
-**Part 2: Enable auto-confirm in Supabase Dashboard (recommended)**
+Single auth path: **Supabase Auth only**. No legacy fallback. No localStorage-based authentication.
 
-The permanent fix is to go to the Supabase Dashboard → Authentication → Settings and either:
-- **Option A**: Enable "Auto Confirm" for email signups (users don't need to verify email)
-- **Option B**: Configure custom SMTP (if email verification is important to you)
+```text
+REGISTER                         LOGIN
+   |                                |
+   v                                v
+register-user Edge Function     auth-login Edge Function
+   |                                |
+   v                                v
+admin.createUser()              resolve username -> email
+   +                                |
+ensureProfileAndRole()              v
+   |                           signInWithPassword()
+   v                                |
+Return user_id + auto-login         v
+   |                           Return access_token
+   v                                |
+Client: signInWithPassword()        v
+   |                           Client: setSession()
+   v                                |
+Redirect to /quiz                   v
+                               Redirect to /quiz
+```
 
 ### Files to Change
 
-1. **`src/components/UserRegistrationForm.tsx`**:
-   - After `signUp()`, check if the error is specifically about email sending vs actual registration failure
-   - If `authData.user` exists despite the error, treat registration as successful
-   - Proceed with profile setup, referral tracking, and redirect
-   - Show a non-blocking warning about email
+**1. `supabase/functions/register-user/index.ts`** -- Add detailed error logging, return tokens for auto-login after registration:
+- After creating user, call `signInWithPassword` to get tokens
+- Return `access_token` and `refresh_token` alongside `user.id`
+- Add `console.log` at every step for debugging
 
-### Code Change Summary
+**2. `src/components/UserRegistrationForm.tsx`** -- Auto-login after registration:
+- After successful edge function call, use returned tokens to set session via `supabase.auth.setSession()`
+- Store user data in localStorage
+- Redirect directly to `/quiz` (skip the login page)
 
-```typescript
-// Current: treats ALL authErrors as fatal
-if (authError) { /* show error, return */ }
+**3. `supabase/functions/auth-login/index.ts`** -- Simplify and harden:
+- Remove the legacy MD5 password hash path entirely (it can't work with current RLS anyway)
+- Always resolve username to email, then authenticate via Supabase Auth token endpoint
+- Add error logging at each step
 
-// Fixed: distinguish email errors from real failures
-if (authError) {
-  // If user was created but email failed, continue
-  if (authData?.user && authError.message?.includes('email')) {
-    // Warn but don't block
-    toast({ title: "Account Created", description: "..." });
-  } else {
-    // Real failure
-    toast({ variant: "destructive", ... });
-    return;
-  }
-}
-```
+**4. `src/components/UserLogin.tsx`** -- Simplify login flow:
+- Always go through `auth-login` edge function for both username and email inputs
+- Remove the separate `supabase.auth.signInWithPassword()` path for email logins (edge function handles it)
+- After getting tokens, call `supabase.auth.setSession()` to establish session
+- Remove CryptoJS dependency (no more MD5 hashing)
 
-### Supabase Dashboard Action Required
+**5. `src/hooks/useAuthCheck.tsx`** -- Remove legacy auth fallback:
+- Remove Phase 2 (legacy localStorage-only auth)
+- Only authenticate if `supabase.auth.getSession()` returns a valid session
+- Keep localStorage writes for caching display data (username, role) but never use them as auth source
+- If no session and user has localStorage data, redirect to login
 
-Go to **Supabase Dashboard → Auth → Settings → Email** and enable "Confirm email" to OFF (auto-confirm), OR configure SMTP with a real email provider for reliable delivery.
+**6. `src/hooks/profile/useProfileInfo.ts`** -- Remove `setUserContext` call:
+- Remove the `setUserContext(storedUserId)` call (it fails when `auth.uid()` doesn't match)
+- Rely on Supabase Auth session for RLS -- if session exists, `auth.uid()` works automatically
+
+**7. `src/utils/authContext.ts`** -- Deprecate:
+- Remove or empty out `setUserContext` and `clearUserContext` functions
+- These are no longer needed since all auth goes through Supabase Auth
+
+### Migration Safety
+
+- Existing users with Supabase Auth accounts will work immediately
+- Legacy users (MD5 password, no email) will need to re-register -- but the `auth-login` function currently can't authenticate them via RLS anyway, so this is already broken
+- No database schema changes needed -- the `handle_new_user` trigger and `ensureProfileAndRole` in the edge function will both ensure profile creation
+
+### Summary
+
+This rebuild eliminates the dual auth system that has been the root cause of cascading failures. Every user will authenticate through Supabase Auth, every RLS check will use `auth.uid()`, and registration will auto-login users so they never hit the "registered but can't login" gap.
 
