@@ -121,7 +121,7 @@ export const logPointsForDay = async (points: number, userId?: string | null) =>
       .select('points')
       .eq('user_id', userId)
       .eq('date', today)
-      .single();
+      .maybeSingle();
     
     if (error && error.code !== 'PGSQL_ERROR') {
       console.error('Error checking daily points:', error);
