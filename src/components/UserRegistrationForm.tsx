@@ -186,41 +186,40 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      // Use Supabase Auth for registration
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            username: username,
-            display_name: displayName,
-            phone: phone
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
+      const { data: registerData, error: registerError } = await supabase.functions.invoke('register-user', {
+        body: {
+          username,
+          displayName,
+          email,
+          phone,
+          password,
+        },
       });
 
-      if (authError) {
-        // If user was created but confirmation email failed, continue anyway
-        if (authData?.user && authError.message?.toLowerCase().includes('email')) {
-          console.warn('User created but confirmation email failed:', authError.message);
-          toast({
-            title: "Account Created",
-            description: "Your account was created successfully! Confirmation email couldn't be sent, but you can still log in.",
-          });
-        } else {
-          console.error('Registration error:', authError);
-          toast({
-            title: "Registration Failed",
-            description: authError.message || "Failed to create account. Please try again.",
-            variant: "destructive"
-          });
-          setIsLoading(false);
-          return;
-        }
+      if (registerError) {
+        console.error('Registration error:', registerError);
+        toast({
+          title: "Registration Failed",
+          description: registerError.message || "Failed to create account. Please try again.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
 
-      if (!authData?.user) {
+      if (registerData?.error) {
+        toast({
+          title: "Registration Failed",
+          description: registerData.error,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const createdUserId = registerData?.user?.id;
+
+      if (!createdUserId) {
         toast({
           title: "Registration Failed",
           description: "Failed to create account. Please try again.",
