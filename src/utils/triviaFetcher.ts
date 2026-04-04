@@ -102,50 +102,58 @@ export async function saveTriviaToDB(questions: QuizQuestion[]): Promise<{
   duplicates: number;
   errors: number;
 }> {
-  let saved = 0;
+  const adminUserId = localStorage.getItem('quiz_user_id');
+  
+  if (!adminUserId) {
+    console.error('No admin user ID found');
+    return { saved: 0, duplicates: 0, errors: questions.length };
+  }
+
+  // Filter out duplicates client-side first
+  const uniqueQuestions: QuizQuestion[] = [];
   let duplicates = 0;
-  let errors = 0;
   
   for (const question of questions) {
-    try {
-      // Check if this question is a duplicate
-      const isDuplicate = await checkForDuplicateQuestion(question.question);
-      
-      if (isDuplicate) {
-        console.log('Skipping duplicate question:', question.question);
-        duplicates++;
-        continue;
-      }
-      
-      // Insert the question into the database
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .insert({
-          question: question.question,
-          options: question.options,
-          correct_answer: question.correctAnswer,
-          difficulty: question.difficulty,
-          category: question.category,
-          explanation: question.explanation,
-          points: question.points,
-          question_type: 'text'
-        })
-        .select();
-        
-      if (error) {
-        console.error('Error saving question:', error);
-        errors++;
-      } else {
-        saved++;
-        console.log('Successfully saved question:', question.question);
-      }
-    } catch (e) {
-      console.error('Error processing question:', e);
-      errors++;
+    const isDuplicate = await checkForDuplicateQuestion(question.question);
+    if (isDuplicate) {
+      console.log('Skipping duplicate question:', question.question);
+      duplicates++;
+    } else {
+      uniqueQuestions.push(question);
     }
   }
-  
-  return { saved, duplicates, errors };
+
+  if (uniqueQuestions.length === 0) {
+    return { saved: 0, duplicates, errors: 0 };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-create-quiz-question', {
+      body: {
+        adminUserId,
+        questions: uniqueQuestions.map(q => ({
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          difficulty: q.difficulty,
+          category: q.category,
+          explanation: q.explanation,
+          questionType: 'text',
+        })),
+      },
+    });
+
+    if (error) {
+      console.error('Error calling admin-create-quiz-question:', error);
+      return { saved: 0, duplicates, errors: uniqueQuestions.length };
+    }
+
+    const result = data as { saved: number; duplicates: number; errors: number };
+    return { saved: result.saved, duplicates: duplicates + result.duplicates, errors: result.errors };
+  } catch (e) {
+    console.error('Error saving trivia:', e);
+    return { saved: 0, duplicates, errors: uniqueQuestions.length };
+  }
 }
 
 /**
