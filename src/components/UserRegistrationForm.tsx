@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { STORAGE_KEYS } from '@/utils/quizData';
-import { setUserContext } from '@/utils/authContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 
@@ -188,41 +186,40 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      // Use Supabase Auth for registration
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            username: username,
-            display_name: displayName,
-            phone: phone
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
+      const { data: registerData, error: registerError } = await supabase.functions.invoke('register-user', {
+        body: {
+          username,
+          displayName,
+          email,
+          phone,
+          password,
+        },
       });
 
-      if (authError) {
-        // If user was created but confirmation email failed, continue anyway
-        if (authData?.user && authError.message?.toLowerCase().includes('email')) {
-          console.warn('User created but confirmation email failed:', authError.message);
-          toast({
-            title: "Account Created",
-            description: "Your account was created successfully! Confirmation email couldn't be sent, but you can still log in.",
-          });
-        } else {
-          console.error('Registration error:', authError);
-          toast({
-            title: "Registration Failed",
-            description: authError.message || "Failed to create account. Please try again.",
-            variant: "destructive"
-          });
-          setIsLoading(false);
-          return;
-        }
+      if (registerError) {
+        console.error('Registration error:', registerError);
+        toast({
+          title: "Registration Failed",
+          description: registerError.message || "Failed to create account. Please try again.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
 
-      if (!authData?.user) {
+      if (registerData?.error) {
+        toast({
+          title: "Registration Failed",
+          description: registerData.error,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const createdUserId = registerData?.user?.id;
+
+      if (!createdUserId) {
         toast({
           title: "Registration Failed",
           description: "Failed to create account. Please try again.",
@@ -244,7 +241,7 @@ const UserRegistrationForm: React.FC = () => {
             .insert({
               referrer_id: referrerId,
               referrer_name: referrerUsername,
-              referred_id: authData.user.id,
+              referred_id: createdUserId,
               referred_name: username,
               referred_email: email,
               date: new Date().toISOString().split('T')[0],
@@ -255,19 +252,12 @@ const UserRegistrationForm: React.FC = () => {
 
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created. Please check your email to verify your account.",
+        description: "Your account has been created. You can log in immediately.",
       });
 
-      // Store user data
-      localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
-      
-      // Set user context for RLS
-      await setUserContext(authData.user.id);
-      
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1200);
       
     } catch (error) {
       console.error('Registration error:', error);
