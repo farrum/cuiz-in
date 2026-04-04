@@ -2,114 +2,20 @@
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
 import { checkForDuplicateQuestion } from './quizDuplicateChecker';
-import { useToast } from '@/hooks/use-toast';
-
-// Define interfaces for the Open Trivia DB API response
-interface OpenTriviaDBQuestion {
-  category: string;
-  type: string;
-  difficulty: string;
-  question: string;
-  correct_answer: string;
-  incorrect_answers: string[];
-}
-
-interface OpenTriviaDBResponse {
-  response_code: number;
-  results: OpenTriviaDBQuestion[];
-}
-
-interface TriviaCategory {
-  id: number;
-  name: string;
-}
-
-interface TriviaCategoriesResponse {
-  trivia_categories: TriviaCategory[];
-}
-
-/**
- * Fetches trivia questions from Open Trivia Database API
- * @param amount Number of questions to fetch
- * @param category Category ID (optional)
- * @param difficulty Difficulty level (optional)
- * @returns Array of trivia questions
- */
-export async function fetchTriviaQuestions(
-  amount: number = 10, 
-  category?: number, 
-  difficulty?: 'easy' | 'medium' | 'hard'
-): Promise<QuizQuestion[]> {
-  try {
-    let url = `https://opentdb.com/api.php?amount=${amount}&type=multiple`;
-    
-    if (category) {
-      url += `&category=${category}`;
-    }
-    
-    if (difficulty) {
-      url += `&difficulty=${difficulty}`;
-    }
-    
-    console.log('Fetching trivia from:', url);
-    
-    const response = await fetch(url);
-    const data: OpenTriviaDBResponse = await response.json();
-    
-    if (data.response_code !== 0) {
-      console.error('Error from Open Trivia DB:', data.response_code);
-      return [];
-    }
-    
-    // Map the API response to our QuizQuestion format
-    const questions: QuizQuestion[] = data.results.map(q => {
-      // Decode HTML entities in the question and answers
-      const decodedQuestion = decodeHtmlEntities(q.question);
-      const decodedCorrectAnswer = decodeHtmlEntities(q.correct_answer);
-      const decodedIncorrectAnswers = q.incorrect_answers.map(decodeHtmlEntities);
-      
-      // Combine and shuffle answers
-      const options = [...decodedIncorrectAnswers, decodedCorrectAnswer];
-      shuffleArray(options);
-      
-      return {
-        id: crypto.randomUUID(), // Temporary ID
-        question: decodedQuestion,
-        options: options,
-        correctAnswer: decodedCorrectAnswer,
-        difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
-        category: q.category,
-        points: q.difficulty === 'easy' ? 2 : q.difficulty === 'medium' ? 3 : 4,
-        explanation: '',
-        questionType: 'text'
-      };
-    });
-    
-    return questions;
-  } catch (error) {
-    console.error('Error fetching trivia questions:', error);
-    return [];
-  }
-}
-
-/**
- * Save trivia questions to the database, checking for duplicates
- * @param questions Array of questions to save
- * @returns Object with counts of saved and duplicate questions
- */
+import { STORAGE_KEYS } from './constants';
+...
 export async function saveTriviaToDB(questions: QuizQuestion[]): Promise<{
   saved: number;
   duplicates: number;
   errors: number;
 }> {
-  const adminUserId = localStorage.getItem('quiz_user_id');
+  const adminUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   
   if (!adminUserId) {
     console.error('No admin user ID found');
-    return { saved: 0, duplicates: 0, errors: questions.length };
+    throw new Error('Admin session not found. Please log in again and retry.');
   }
 
-  // Filter out duplicates client-side first
   const uniqueQuestions: QuizQuestion[] = [];
   let duplicates = 0;
   
@@ -145,14 +51,23 @@ export async function saveTriviaToDB(questions: QuizQuestion[]): Promise<{
 
     if (error) {
       console.error('Error calling admin-create-quiz-question:', error);
-      return { saved: 0, duplicates, errors: uniqueQuestions.length };
+      throw new Error(error.message || 'Failed to save trivia questions.');
     }
 
-    const result = data as { saved: number; duplicates: number; errors: number };
-    return { saved: result.saved, duplicates: duplicates + result.duplicates, errors: result.errors };
+    const result = data as { saved: number; duplicates: number; errors: number; error?: string };
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return {
+      saved: result.saved,
+      duplicates: duplicates + (result.duplicates ?? 0),
+      errors: result.errors ?? 0,
+    };
   } catch (e) {
     console.error('Error saving trivia:', e);
-    return { saved: 0, duplicates, errors: uniqueQuestions.length };
+    throw e instanceof Error ? e : new Error('Failed to save trivia questions.');
   }
 }
 

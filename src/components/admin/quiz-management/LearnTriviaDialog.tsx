@@ -88,10 +88,11 @@ const LearnTriviaDialog: React.FC<LearnTriviaDialogProps> = ({ onSuccess, onCanc
       }
     } catch (err) {
       console.error('Error learning trivia questions:', err);
-      setError('Failed to fetch or save trivia questions');
+      const message = err instanceof Error ? err.message : 'Failed to fetch or save trivia questions';
+      setError(message);
       toast({
         title: "Error",
-        description: "Failed to learn trivia questions",
+        description: message,
         variant: "destructive"
       });
     } finally {
