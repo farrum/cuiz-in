@@ -191,7 +191,7 @@ export const logPointsForMonth = async (points: number, userId?: string | null) 
       .select('points')
       .eq('user_id', userId)
       .eq('month', monthKey)
-      .single();
+      .maybeSingle();
     
     if (error && error.code !== 'PGSQL_ERROR') {
       console.error('Error checking monthly points:', error);
