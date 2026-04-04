@@ -106,6 +106,12 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/all-questions" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Map className="w-4 h-4 mr-2" aria-hidden="true" />
+                  All Questions
+                </Link>
+              </li>
+              <li>
                 <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center" aria-label="View XML Sitemap">
                   <Map className="w-4 h-4 mr-2" aria-hidden="true" />
                   Sitemap

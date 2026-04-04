@@ -40,6 +40,7 @@ const ArchivedChallengesPage = React.lazy(() => import('@/pages/ArchivedChalleng
 const BrowseQuestionsPage = React.lazy(() => import('@/pages/BrowseQuestionsPage'));
 const TopicPage = React.lazy(() => import('@/pages/TopicPage'));
 const WebStoriesPage = React.lazy(() => import('@/pages/WebStoriesPage'));
+const HtmlSitemapPage = React.lazy(() => import('@/pages/HtmlSitemapPage'));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const TeamLeaderDashboardPage = React.lazy(() => import("@/pages/TeamLeaderDashboardPage"));
 const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
@@ -354,6 +355,11 @@ function App() {
               <Route path="/stories" element={
                 <Suspense fallback={<PageLoader />}>
                   <WebStoriesPage />
+                </Suspense>
+              } />
+              <Route path="/all-questions" element={
+                <Suspense fallback={<PageLoader />}>
+                  <HtmlSitemapPage />
                 </Suspense>
               } />
               <Route path="/stories/:storyId" element={
