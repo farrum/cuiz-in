@@ -241,7 +241,7 @@ const UserRegistrationForm: React.FC = () => {
             .insert({
               referrer_id: referrerId,
               referrer_name: referrerUsername,
-              referred_id: authData.user.id,
+              referred_id: createdUserId,
               referred_name: username,
               referred_email: email,
               date: new Date().toISOString().split('T')[0],
@@ -252,19 +252,12 @@ const UserRegistrationForm: React.FC = () => {
 
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created. Please check your email to verify your account.",
+        description: "Your account has been created. You can log in immediately.",
       });
 
-      // Store user data
-      localStorage.setItem(STORAGE_KEYS.USER_ID, authData.user.id);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
-      
-      // Set user context for RLS
-      await setUserContext(authData.user.id);
-      
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1200);
       
     } catch (error) {
       console.error('Registration error:', error);
