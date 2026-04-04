@@ -7,131 +7,82 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { setUserContext } from '@/utils/authContext';
-import CryptoJS from 'crypto-js';
 
 const UserLogin: React.FC = () => {
-  const [username, setUsername] = React.useState('');
+  const [identifier, setIdentifier] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const hashPassword = React.useMemo(
-    () => (password: string): string => CryptoJS.MD5(password).toString(),
-    []
-  );
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username.trim() || !password.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
+    if (!identifier.trim() || !password.trim()) {
+      toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // NOTE: The `profiles` table has RLS enabled, so resolving username -> email
-      // must happen server-side (Edge Function) before calling Supabase Auth.
-      let authUserId: string | null = null;
-      let authEmail: string | null = null;
+      // Always go through auth-login edge function for both username and email
+      console.log('[Login] Calling auth-login edge function');
+      const { data, error } = await supabase.functions.invoke('auth-login', {
+        body: { identifier: identifier.trim(), password },
+      });
 
-      if (username.includes('@')) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: username,
-          password,
-        });
+      if (error || !data?.success) {
+        const errorMsg = data?.error || 'Invalid email/username or password';
+        const code = String(data?.code ?? '').toLowerCase();
 
-        if (error) {
-          const code = String((error as any)?.code ?? '').toLowerCase();
-          const msg = String(error.message ?? '').toLowerCase();
-
-          if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) {
-            toast({
-              title: "Email Not Verified",
-              description: "Please check your email and click the verification link before logging in.",
-              variant: "destructive",
-            });
-            return;
-          }
-
+        if (code === 'email_not_confirmed') {
           toast({
-            title: "Login Failed",
-            description: "Invalid email/username or password",
+            title: "Email Not Verified",
+            description: "Please check your email and click the verification link before logging in.",
             variant: "destructive",
           });
           return;
         }
 
-        authUserId = data.user?.id ?? null;
-        authEmail = data.user?.email ?? null;
-      } else {
-        // Username login via edge function (bypasses RLS for username->email lookup)
-        const { data, error } = await supabase.functions.invoke('auth-login', {
-          body: { identifier: username, password },
-        });
-
-        if (error || !data?.success) {
-          const code = String((data as any)?.code ?? '').toLowerCase();
-
-          if (code === 'email_not_confirmed') {
-            toast({
-              title: "Email Not Verified",
-              description: "Please check your email and click the verification link before logging in.",
-              variant: "destructive",
-            });
-            return;
-          }
-
+        if (errorMsg === 'Account suspended') {
           toast({
-            title: "Login Failed",
-            description: "Invalid email/username or password",
+            title: "Account Suspended",
+            description: "Your account has been suspended. Please contact support.",
             variant: "destructive",
           });
           return;
         }
 
-        // Handle legacy authentication (users without Supabase Auth)
-        if (data.legacy) {
-          authUserId = data.user_id;
-          // For legacy users, we skip Supabase session - they'll use localStorage auth
-        } else {
-          // Modern auth - persist the session in the Supabase client
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-          });
-
-          if (sessionError || !sessionData.session?.user) {
-            toast({
-              title: "Login Failed",
-              description: "Could not start session. Please try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          authUserId = sessionData.session.user.id;
-          authEmail = sessionData.session.user.email ?? null;
-        }
-      }
-
-      if (!authUserId) {
         toast({
           title: "Login Failed",
-          description: "Invalid email/username or password",
+          description: errorMsg,
           variant: "destructive",
         });
         return;
       }
 
-      // Fetch profile data (RLS allows the authenticated user to read their row)
+      // Set session with returned tokens
+      console.log('[Login] Setting session with tokens');
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError || !sessionData.session?.user) {
+        console.error('[Login] Session set failed:', sessionError);
+        toast({
+          title: "Login Failed",
+          description: "Could not establish session. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const authUserId = sessionData.session.user.id;
+      const authEmail = sessionData.session.user.email;
+
+      // Fetch profile data (RLS works now because we have a valid session)
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username, suspended')
@@ -148,25 +99,11 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      const displayUsername = profileData?.username || username || authEmail || 'User';
+      const displayUsername = profileData?.username || identifier || authEmail || 'User';
 
-      // Store user data
+      // Cache user data in localStorage
       localStorage.setItem(STORAGE_KEYS.USER_ID, authUserId);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, displayUsername);
-
-      // Log successful login (table allows public insert)
-      await supabase.from('login_logs').insert({
-        username: displayUsername,
-        ip_address: 'client-side',
-        device: navigator.userAgent,
-        login_time: new Date().toISOString(),
-        successful: true,
-      });
-
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
 
       // Check role for redirection
       const { data: roleData } = await supabase
@@ -175,7 +112,15 @@ const UserLogin: React.FC = () => {
         .eq('user_id', authUserId)
         .maybeSingle();
 
-      if (roleData?.role === 'admin') {
+      const userRole = roleData?.role || 'player';
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
+
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+
+      if (userRole === 'admin') {
         localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         navigate('/admin');
       } else {
@@ -204,12 +149,12 @@ const UserLogin: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username or Email</Label>
+            <Label htmlFor="identifier">Username or Email</Label>
             <Input
-              id="username"
+              id="identifier"
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               placeholder="Enter your username or email"
               required
             />

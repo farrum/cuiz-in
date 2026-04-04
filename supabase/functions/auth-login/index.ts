@@ -1,39 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encodeHex } from "https://deno.land/std@0.220.0/encoding/hex.ts";
-import { crypto } from "https://deno.land/std@0.220.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type LoginRequest = {
-  identifier: string;
-  password: string;
-};
-
-// MD5 hash for legacy password verification
-async function md5Hash(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest("MD5", data);
-  return encodeHex(new Uint8Array(hashBuffer));
-}
-
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { identifier, password } = (await req.json()) as Partial<LoginRequest>;
+    const { identifier, password } = await req.json();
+    console.log("[auth-login] Login attempt for:", identifier);
 
     if (!identifier || !password) {
       return new Response(
         JSON.stringify({ success: false, error: "Identifier and password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -42,111 +27,70 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
     if (!supabaseUrl || !serviceRoleKey || !anonKey) {
-      console.error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_ANON_KEY");
+      console.error("[auth-login] Missing env vars");
       return new Response(
         JSON.stringify({ success: false, error: "Server not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const logFailedLogin = async (usernameToLog: string) => {
+    const logLogin = async (usernameToLog: string, successful: boolean) => {
       await supabaseAdmin.from("login_logs").insert({
         username: usernameToLog,
         ip_address: req.headers.get("x-forwarded-for") || "unknown",
         device: req.headers.get("user-agent") || "unknown",
         login_time: new Date().toISOString(),
-        successful: false,
-      });
-    };
-
-    const logSuccessfulLogin = async (usernameToLog: string) => {
-      await supabaseAdmin.from("login_logs").insert({
-        username: usernameToLog,
-        ip_address: req.headers.get("x-forwarded-for") || "unknown",
-        device: req.headers.get("user-agent") || "unknown",
-        login_time: new Date().toISOString(),
-        successful: true,
+        successful,
       });
     };
 
     let email = identifier;
     let resolvedUsername: string | null = null;
-    let legacyProfile: { id: string; username: string; password_hash: string | null; suspended: boolean; auth_migrated: boolean } | null = null;
 
-    // If user typed username, resolve to profile via service role (profiles table has RLS)
+    // If not an email, resolve username to email
     if (!identifier.includes("@")) {
+      console.log("[auth-login] Resolving username to email");
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("id, email, suspended, username, password_hash, auth_migrated")
+        .select("id, email, suspended, username")
         .eq("username", identifier)
         .maybeSingle();
 
       if (profileError || !profile) {
-        await logFailedLogin(identifier);
+        console.log("[auth-login] Username not found:", identifier);
+        await logLogin(identifier, false);
         return new Response(
           JSON.stringify({ success: false, error: "Invalid login credentials" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       if (profile.suspended) {
+        console.log("[auth-login] Account suspended:", identifier);
         return new Response(
           JSON.stringify({ success: false, error: "Account suspended" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Check if this is a legacy user (no email, not migrated to Supabase Auth)
-      if (!profile.email && !profile.auth_migrated && profile.password_hash) {
-        legacyProfile = {
-          id: profile.id,
-          username: profile.username,
-          password_hash: profile.password_hash,
-          suspended: profile.suspended ?? false,
-          auth_migrated: profile.auth_migrated ?? false,
-        };
-      } else if (!profile.email) {
-        // No email and no password_hash - can't authenticate
-        await logFailedLogin(identifier);
+      if (!profile.email) {
+        console.log("[auth-login] No email for username:", identifier);
+        await logLogin(identifier, false);
         return new Response(
-          JSON.stringify({ success: false, error: "Invalid login credentials" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({ success: false, error: "Account needs to be re-registered with an email address" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
-      } else {
-        email = profile.email;
-        resolvedUsername = profile.username;
       }
+
+      email = profile.email;
+      resolvedUsername = profile.username;
+      console.log("[auth-login] Resolved to email:", email);
     }
 
-    // Legacy authentication path (MD5 password hash)
-    if (legacyProfile) {
-      const hashedPassword = await md5Hash(password);
-      
-      if (hashedPassword !== legacyProfile.password_hash) {
-        await logFailedLogin(legacyProfile.username);
-        return new Response(
-          JSON.stringify({ success: false, error: "Invalid login credentials" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-
-      // Legacy user authenticated successfully
-      await logSuccessfulLogin(legacyProfile.username);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          legacy: true,
-          user_id: legacyProfile.id,
-          username: legacyProfile.username,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Modern authentication path (Supabase Auth)
+    // Authenticate via Supabase Auth
+    console.log("[auth-login] Authenticating via Supabase Auth");
     const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: {
@@ -160,18 +104,19 @@ serve(async (req) => {
     const tokenJson = await tokenRes.json().catch(() => ({}));
 
     if (!tokenRes.ok) {
-      await logFailedLogin(resolvedUsername || identifier);
+      console.log("[auth-login] Auth failed:", tokenJson?.error || tokenJson?.msg);
+      await logLogin(resolvedUsername || identifier, false);
       return new Response(
         JSON.stringify({
           success: false,
           error: "Invalid login credentials",
           code: tokenJson?.error_code || tokenJson?.code || tokenJson?.error,
         }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Block suspended users even for email logins
+    // Check suspension for email logins
     const userId = tokenJson?.user?.id as string | undefined;
     if (userId) {
       const { data: p } = await supabaseAdmin
@@ -181,14 +126,16 @@ serve(async (req) => {
         .maybeSingle();
 
       if (p?.suspended) {
+        console.log("[auth-login] Account suspended (post-auth check):", userId);
         return new Response(
           JSON.stringify({ success: false, error: "Account suspended" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
 
-    await logSuccessfulLogin(resolvedUsername || identifier);
+    await logLogin(resolvedUsername || identifier, true);
+    console.log("[auth-login] Login successful for:", resolvedUsername || identifier);
 
     return new Response(
       JSON.stringify({
@@ -199,13 +146,13 @@ serve(async (req) => {
         token_type: tokenJson.token_type,
         user: tokenJson.user,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in auth-login function:", error);
+    console.error("[auth-login] Unexpected error:", error);
     return new Response(
       JSON.stringify({ success: false, error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

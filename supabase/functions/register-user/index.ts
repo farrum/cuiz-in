@@ -184,7 +184,43 @@ Deno.serve(async (req) => {
 
     await ensureProfileAndRole(userId);
 
-    return new Response(JSON.stringify({ success: true, user: { id: userId, email: normalizedEmail } }), {
+    // Get auth tokens for auto-login
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+
+    if (anonKey) {
+      console.log("[register-user] Getting auth tokens for auto-login");
+      try {
+        const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+          method: "POST",
+          headers: {
+            apikey: anonKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: normalizedEmail, password }),
+        });
+
+        if (tokenRes.ok) {
+          const tokenJson = await tokenRes.json();
+          accessToken = tokenJson.access_token;
+          refreshToken = tokenJson.refresh_token;
+          console.log("[register-user] Auto-login tokens obtained");
+        } else {
+          console.error("[register-user] Token fetch failed:", await tokenRes.text());
+        }
+      } catch (tokenErr) {
+        console.error("[register-user] Token fetch error:", tokenErr);
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      user: { id: userId, email: normalizedEmail },
+      username: normalizedUsername,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

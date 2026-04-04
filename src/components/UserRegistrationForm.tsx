@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
@@ -32,7 +33,6 @@ const UserRegistrationForm: React.FC = () => {
     
     if (refCode) {
       setReferralCode(refCode);
-      // Check if referrer exists in the system
       (async () => {
         const referrerData = await getReferrerInfo(refCode);
         if (referrerData) {
@@ -46,7 +46,6 @@ const UserRegistrationForm: React.FC = () => {
     }
   }, [location]);
   
-  // Function to get referrer info for display
   const getReferrerInfo = async (referrerUsername: string) => {
     try {
       const { data, error } = await supabase
@@ -54,20 +53,13 @@ const UserRegistrationForm: React.FC = () => {
         .select('username')
         .eq('username', referrerUsername)
         .maybeSingle();
-        
-      if (error || !data) {
-        console.error("Error checking referrer:", error);
-        return null;
-      }
-      
+      if (error || !data) return null;
       return data;
     } catch (err) {
-      console.error("Failed to check referrer:", err);
       return null;
     }
   };
 
-  // Function to get referrer ID for insertion
   const getReferrerId = async (referrerUsername: string): Promise<string | null> => {
     try {
       const { data, error } = await supabase
@@ -75,33 +67,24 @@ const UserRegistrationForm: React.FC = () => {
         .select('id')
         .eq('username', referrerUsername)
         .maybeSingle();
-      
-      if (error || !data) {
-        return null;
-      }
-      
+      if (error || !data) return null;
       return data.id;
-    } catch (error) {
-      console.error('Error checking referrer:', error);
+    } catch {
       return null;
     }
   };
   
-  // Auto-fill display name based on username
   useEffect(() => {
     if (username && !displayName) {
       setDisplayName(username);
     }
   }, [username, displayName]);
   
-  // Check username availability with debounce
   useEffect(() => {
     if (!username) return;
-    
     const timer = setTimeout(async () => {
       checkUsernameAvailability(username);
     }, 500);
-    
     return () => clearTimeout(timer);
   }, [username]);
   
@@ -110,26 +93,19 @@ const UserRegistrationForm: React.FC = () => {
       setUsernameError('Username must be at least 3 characters');
       return;
     }
-    
     setIsCheckingUsername(true);
     setUsernameError('');
-    
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('username')
         .eq('username', username)
         .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking username:', error);
-      }
-      
       if (data) {
         setUsernameError('Username already taken');
       }
-    } catch (err) {
-      console.error('Failed to check username availability:', err);
+    } catch {
+      // ignore
     } finally {
       setIsCheckingUsername(false);
     }
@@ -138,69 +114,32 @@ const UserRegistrationForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate fields
     if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
       return;
     }
-
     if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Password must be at least 6 characters long", variant: "destructive" });
       return;
     }
-
     if (!email.includes('@')) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid email address",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // Check if username already exists
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (existingUser) {
-        toast({
-          title: "Error",
-          description: "Username already exists. Please choose a different one.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
+      // Call register-user edge function
       const { data: registerData, error: registerError } = await supabase.functions.invoke('register-user', {
-        body: {
-          username,
-          displayName,
-          email,
-          phone,
-          password,
-        },
+        body: { username, displayName, email, phone, password },
       });
 
       if (registerError) {
-        console.error('Registration error:', registerError);
+        console.error('Registration edge function error:', registerError);
         toast({
           title: "Registration Failed",
-          description: registerError.message || "Failed to create account. Please try again.",
+          description: "Failed to create account. Please try again.",
           variant: "destructive"
         });
         setIsLoading(false);
@@ -217,9 +156,7 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      const createdUserId = registerData?.user?.id;
-
-      if (!createdUserId) {
+      if (!registerData?.success || !registerData?.user?.id) {
         toast({
           title: "Registration Failed",
           description: "Failed to create account. Please try again.",
@@ -229,16 +166,38 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      // Profile will be auto-created via trigger
-      // Handle referral if present
-      if (referralCode) {
-        const referrerUsername = referralCode.toLowerCase();
-        const referrerId = await getReferrerId(referrerUsername);
-        
-        if (referrerId) {
-          await supabase
-            .from('user_referrals')
-            .insert({
+      const createdUserId = registerData.user.id;
+
+      // Auto-login if tokens were returned
+      if (registerData.access_token && registerData.refresh_token) {
+        console.log('[Registration] Setting session with returned tokens');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: registerData.access_token,
+          refresh_token: registerData.refresh_token,
+        });
+
+        if (sessionError) {
+          console.error('[Registration] Session set failed:', sessionError);
+          // Still created - redirect to login
+          toast({
+            title: "Account Created!",
+            description: "Please log in with your credentials.",
+          });
+          navigate('/login');
+          return;
+        }
+
+        // Store user data in localStorage
+        localStorage.setItem(STORAGE_KEYS.USER_ID, createdUserId);
+        localStorage.setItem(STORAGE_KEYS.USER_NAME, registerData.username || username);
+        localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
+
+        // Handle referral if present
+        if (referralCode) {
+          const referrerUsername = referralCode.toLowerCase();
+          const referrerId = await getReferrerId(referrerUsername);
+          if (referrerId) {
+            await supabase.from('user_referrals').insert({
               referrer_id: referrerId,
               referrer_name: referrerUsername,
               referred_id: createdUserId,
@@ -247,18 +206,23 @@ const UserRegistrationForm: React.FC = () => {
               date: new Date().toISOString().split('T')[0],
               status: 'active'
             });
+          }
         }
-      }
 
-      toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. You can log in immediately.",
-      });
+        toast({
+          title: "Welcome to CuizIn!",
+          description: "Your account is ready. Let's start playing!",
+        });
 
-      setTimeout(() => {
+        navigate('/quiz');
+      } else {
+        // No tokens returned - redirect to login
+        toast({
+          title: "Account Created!",
+          description: "Please log in with your credentials.",
+        });
         navigate('/login');
-      }, 1200);
-      
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
