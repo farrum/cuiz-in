@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface ImageQuizQuestion {
   question: string;
@@ -20,45 +21,41 @@ interface SaveResult {
 }
 
 /**
- * Save image trivia questions to the database
+ * Save image trivia questions to the database via admin edge function
  */
 export const saveImageTriviaToDB = async (questions: ImageQuizQuestion[]): Promise<SaveResult> => {
-  let saved = 0;
-  let duplicates = 0;
-  let errors = 0;
+  const adminUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
   
-  for (const question of questions) {
-    try {
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .insert({
-          question: question.question,
-          options: question.options,
-          correct_answer: question.correctAnswer,
-          difficulty: question.difficulty,
-          category: question.category,
-          explanation: question.explanation || '',
-          points: question.difficulty === 'easy' ? 2 : question.difficulty === 'medium' ? 3 : 4,
-          question_type: 'image',
-          image_url: question.imageUrl
-        })
-        .select();
-        
-      if (error) {
-        if (error.message.includes('duplicate')) {
-          duplicates++;
-        } else {
-          console.error('Error saving question:', error);
-          errors++;
-        }
-      } else {
-        saved++;
-      }
-    } catch (e) {
-      console.error('Error processing question:', e);
-      errors++;
-    }
+  if (!adminUserId) {
+    console.error('No admin user ID found');
+    return { saved: 0, duplicates: 0, errors: questions.length };
   }
-  
-  return { saved, duplicates, errors };
+
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-create-quiz-question', {
+      body: {
+        adminUserId,
+        questions: questions.map(q => ({
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          difficulty: q.difficulty,
+          category: q.category,
+          explanation: q.explanation || '',
+          questionType: q.questionType,
+          imageUrl: q.imageUrl,
+        })),
+      },
+    });
+
+    if (error) {
+      console.error('Error calling admin-create-quiz-question:', error);
+      return { saved: 0, duplicates: 0, errors: questions.length };
+    }
+
+    return data as SaveResult;
+  } catch (e) {
+    console.error('Error saving image trivia:', e);
+    return { saved: 0, duplicates: 0, errors: questions.length };
+  }
 };
