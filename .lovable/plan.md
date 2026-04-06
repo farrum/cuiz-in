@@ -1,89 +1,74 @@
 
+Do I know what the issue is? Yes.
 
-## Rebuild: Registration, Login, and Profile Authentication
+This app should not be dumped yet. The current failure looks concentrated and fixable: the backend auth is working, but the frontend auth lifecycle is likely deadlocking.
 
-### Problem Diagnosis
+What I found:
+- `auth-login` is succeeding on the backend. Logs show a successful login for `player41`, and the `profiles` table contains that user.
+- That means the “stuck on Logging in...” problem is most likely on the client after tokens are returned.
+- The strongest culprit is `onAuthStateChange` usage:
+  - `src/App.tsx` uses an `async` auth state callback and does awaited profile/role queries inside it.
+  - `src/hooks/useAuthCheck.tsx` calls `checkAuth()` from `onAuthStateChange`, and `checkAuth()` immediately calls `supabase.auth.getSession()`.
+- Supabase specifically warns this pattern can deadlock `setSession()`, `getSession()`, and related auth flows. That matches your symptom exactly: register/login never finish.
+- There is also fragility from `.single()` profile reads in `src/App.tsx` and admin screens, which can throw and cascade when profile data is briefly unavailable.
+- The app still has mixed auth assumptions in header/mobile/admin areas via localStorage, which increases instability.
 
-After thorough investigation, the issues stem from a fragmented auth system with three competing mechanisms:
+Plan to fix:
+1. Remove auth deadlock pattern
+   - Refactor `src/App.tsx` so `onAuthStateChange` does not await any Supabase auth/DB calls inside the callback.
+   - Move async work into a separate function and trigger it with `setTimeout(..., 0)` or an equivalent deferred call.
+   - Do the same in `src/hooks/useAuthCheck.tsx`: the callback should only schedule re-checking, not directly invoke auth methods in the callback stack.
 
-1. **Registration silently fails**: The `register-user` edge function shows only "shutdown" in logs -- no actual invocations recorded. The auth logs show `/signup` (native Supabase Auth endpoint) was called instead, meaning either the edge function isn't deployed or calls are failing silently before reaching it.
+2. Centralize session hydration
+   - Create one shared “hydrate current user from session” flow used by app init and auth changes.
+   - This flow should:
+     - read the session safely
+     - fetch profile with `.maybeSingle()`
+     - fetch role with `.maybeSingle()`
+     - update localStorage cache only after successful reads
+   - This removes duplicated logic between `App.tsx` and `useAuthCheck.tsx`.
 
-2. **Login fails for new users**: The `auth-login` edge function resolves username to email via profiles table, then calls Supabase Auth. If the profile wasn't created (due to #1), this lookup fails.
+3. Harden login and registration completion
+   - Keep `UserLogin.tsx` and `UserRegistrationForm.tsx` using the edge functions.
+   - After `setSession()`, rely on the fixed auth listener/hydration flow instead of doing too much inline work.
+   - Improve error reporting so if token-setting fails, the user sees the exact failure instead of an endless loading state.
 
-3. **RLS blocks everything**: `get_current_user_id()` strictly returns `auth.uid()` with no fallback. `set_user_context()` rejects calls where `auth.uid()` doesn't match. Legacy localStorage-based auth is essentially broken.
+4. Replace brittle `.single()` calls in auth-critical paths
+   - Update auth-critical reads in:
+     - `src/App.tsx`
+     - `src/pages/AdminLoginPage.tsx`
+     - `src/pages/AdminPage.tsx`
+     - `src/components/ProtectedRoute.tsx`
+   - Use `.maybeSingle()` where “no row yet” is recoverable, to prevent 406-style failures from breaking the session flow.
 
-4. **Ghost users**: player41 can answer questions because quiz_questions has a public SELECT policy and quiz_answers INSERT only checks `user_id = auth.uid()::text` -- but without a proper Supabase Auth session, the profile is never created.
+5. Stabilize auth-dependent UI
+   - Update `Header.tsx` and `MobileNav.tsx` so they do not treat localStorage alone as proof of login.
+   - They should react to the stabilized auth cache/session state, preventing “ghost logged-in” UI.
 
-### Rebuild Architecture
+6. Verify the full flow end-to-end
+   - Test:
+     - new registration with auto-login
+     - logout
+     - login with username
+     - login with email
+     - refresh after login
+     - admin login still working
+   - Also verify the created user appears consistently in profile/admin data after registration.
 
-Single auth path: **Supabase Auth only**. No legacy fallback. No localStorage-based authentication.
+Technical details:
+- Primary files to change:
+  - `src/App.tsx`
+  - `src/hooks/useAuthCheck.tsx`
+  - `src/components/UserLogin.tsx`
+  - `src/components/UserRegistrationForm.tsx`
+  - `src/components/Header.tsx`
+  - `src/components/MobileNav.tsx`
+  - likely a few `.single()` callers in admin/auth guard files
+- No database migration is required for this fix.
+- I would treat this as a frontend auth-state stabilization pass, not another backend rebuild.
 
-```text
-REGISTER                         LOGIN
-   |                                |
-   v                                v
-register-user Edge Function     auth-login Edge Function
-   |                                |
-   v                                v
-admin.createUser()              resolve username -> email
-   +                                |
-ensureProfileAndRole()              v
-   |                           signInWithPassword()
-   v                                |
-Return user_id + auto-login         v
-   |                           Return access_token
-   v                                |
-Client: signInWithPassword()        v
-   |                           Client: setSession()
-   v                                |
-Redirect to /quiz                   v
-                               Redirect to /quiz
-```
-
-### Files to Change
-
-**1. `supabase/functions/register-user/index.ts`** -- Add detailed error logging, return tokens for auto-login after registration:
-- After creating user, call `signInWithPassword` to get tokens
-- Return `access_token` and `refresh_token` alongside `user.id`
-- Add `console.log` at every step for debugging
-
-**2. `src/components/UserRegistrationForm.tsx`** -- Auto-login after registration:
-- After successful edge function call, use returned tokens to set session via `supabase.auth.setSession()`
-- Store user data in localStorage
-- Redirect directly to `/quiz` (skip the login page)
-
-**3. `supabase/functions/auth-login/index.ts`** -- Simplify and harden:
-- Remove the legacy MD5 password hash path entirely (it can't work with current RLS anyway)
-- Always resolve username to email, then authenticate via Supabase Auth token endpoint
-- Add error logging at each step
-
-**4. `src/components/UserLogin.tsx`** -- Simplify login flow:
-- Always go through `auth-login` edge function for both username and email inputs
-- Remove the separate `supabase.auth.signInWithPassword()` path for email logins (edge function handles it)
-- After getting tokens, call `supabase.auth.setSession()` to establish session
-- Remove CryptoJS dependency (no more MD5 hashing)
-
-**5. `src/hooks/useAuthCheck.tsx`** -- Remove legacy auth fallback:
-- Remove Phase 2 (legacy localStorage-only auth)
-- Only authenticate if `supabase.auth.getSession()` returns a valid session
-- Keep localStorage writes for caching display data (username, role) but never use them as auth source
-- If no session and user has localStorage data, redirect to login
-
-**6. `src/hooks/profile/useProfileInfo.ts`** -- Remove `setUserContext` call:
-- Remove the `setUserContext(storedUserId)` call (it fails when `auth.uid()` doesn't match)
-- Rely on Supabase Auth session for RLS -- if session exists, `auth.uid()` works automatically
-
-**7. `src/utils/authContext.ts`** -- Deprecate:
-- Remove or empty out `setUserContext` and `clearUserContext` functions
-- These are no longer needed since all auth goes through Supabase Auth
-
-### Migration Safety
-
-- Existing users with Supabase Auth accounts will work immediately
-- Legacy users (MD5 password, no email) will need to re-register -- but the `auth-login` function currently can't authenticate them via RLS anyway, so this is already broken
-- No database schema changes needed -- the `handle_new_user` trigger and `ensureProfileAndRole` in the edge function will both ensure profile creation
-
-### Summary
-
-This rebuild eliminates the dual auth system that has been the root cause of cascading failures. Every user will authenticate through Supabase Auth, every RLS check will use `auth.uid()`, and registration will auto-login users so they never hit the "registered but can't login" gap.
-
+Expected outcome:
+- Login and registration stop hanging.
+- Auto-login after registration completes reliably.
+- Session state stays consistent across quiz/profile/admin surfaces.
+- “Ghost user” UI behavior is reduced because localStorage stops acting like the source of truth.
