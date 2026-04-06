@@ -14,7 +14,6 @@ interface AuthState {
 }
 
 export const useAuthCheck = () => {
-  const location = useLocation();
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: null,
     userRole: null,
@@ -24,8 +23,6 @@ export const useAuthCheck = () => {
     isAdminAuth: false,
     isTeamLeader: false
   });
-
-  const isAdminPath = useMemo(() => location.pathname.startsWith('/admin'), [location.pathname]);
 
   const checkAuth = useCallback(async () => {
     try {
