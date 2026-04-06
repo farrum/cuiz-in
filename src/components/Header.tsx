@@ -28,14 +28,14 @@ const Header: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    const checkAuth = () => {
+    const syncFromCache = () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
       
       const userLoggedIn = !!userName && !!userId;
       setIsLoggedIn(userLoggedIn);
-      setIsAdmin(userName === 'admin' || userName === 'quizadmin' || userRole === 'admin');
+      setIsAdmin(userRole === 'admin');
       setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
       
       if (!userLoggedIn) {
@@ -44,13 +44,21 @@ const Header: React.FC = () => {
       }
     };
     
-    checkAuth();
+    // Initial sync from localStorage (populated by App.tsx auth listener)
+    syncFromCache();
+
+    // Re-sync when auth state changes (App.tsx updates localStorage, then this fires)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Defer to let App.tsx hydration complete first
+      setTimeout(syncFromCache, 50);
+    });
     
-    const handleRoleUpdate = () => checkAuth();
+    const handleRoleUpdate = () => syncFromCache();
     window.addEventListener('currentUserRoleUpdated', handleRoleUpdate);
     window.addEventListener('userRoleUpdated', handleRoleUpdate);
     
     return () => {
+      subscription.unsubscribe();
       window.removeEventListener('currentUserRoleUpdated', handleRoleUpdate);
       window.removeEventListener('userRoleUpdated', handleRoleUpdate);
     };

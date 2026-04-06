@@ -46,7 +46,7 @@ const AdminPage: React.FC = () => {
           .from('profiles')
           .select('username')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
           
         if (data?.username) {
           setAdminName(data.username);

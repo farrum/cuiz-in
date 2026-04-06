@@ -58,7 +58,7 @@ const AdminLoginPage: React.FC = () => {
         .from('profiles')
         .select('is_admin')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error checking admin status:', error);
