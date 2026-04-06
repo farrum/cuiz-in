@@ -1,6 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,7 +14,6 @@ interface AuthState {
 }
 
 export const useAuthCheck = () => {
-  const location = useLocation();
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: null,
     userRole: null,
@@ -26,103 +24,97 @@ export const useAuthCheck = () => {
     isTeamLeader: false
   });
 
-  const isAdminPath = useMemo(() => location.pathname.startsWith('/admin'), [location.pathname]);
-
   const checkAuth = useCallback(async () => {
-    // Only authenticate via Supabase Auth session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      const userId = session.user.id;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Fetch profile and role in parallel
-      const [profileResult, roleResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('username, suspended')
-          .eq('id', userId)
-          .maybeSingle(),
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle()
-      ]);
-      
-      const profile = profileResult.data;
-      const isSuspended = profile?.suspended || false;
-      const userRole = roleResult.data?.role || 'player';
-      const isTeamLeader = userRole === 'team_leader';
-      const isAdmin = userRole === 'admin';
-      
-      // Cache in localStorage for display purposes
-      localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-      if (profile?.username) {
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, profile.username);
-      }
-      localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
-      
-      if (isAdmin) {
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-      }
-      
-      setAuthState({
-        isAuthenticated: true,
-        userRole,
-        isSuspended,
-        userId,
-        userName: profile?.username || null,
-        isAdminAuth: isAdmin,
-        isTeamLeader
-      });
-      return;
-    }
-    
-    // No valid Supabase session - check if admin panel with legacy admin auth
-    if (isAdminPath) {
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-      
-      if (isAdminAuth) {
+      if (session?.user) {
+        const userId = session.user.id;
+        
+        // Fetch profile and role in parallel using maybeSingle
+        const [profileResult, roleResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('username, suspended')
+            .eq('id', userId)
+            .maybeSingle(),
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .maybeSingle()
+        ]);
+        
+        const profile = profileResult.data;
+        const isSuspended = profile?.suspended || false;
+        const userRole = roleResult.data?.role || 'player';
+        const isTeamLeader = userRole === 'team_leader';
+        const isAdmin = userRole === 'admin';
+        
+        // Cache in localStorage for display purposes
+        localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+        if (profile?.username) {
+          localStorage.setItem(STORAGE_KEYS.USER_NAME, profile.username);
+        }
+        localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
+        
+        if (isAdmin) {
+          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+        }
+        
         setAuthState({
           isAuthenticated: true,
-          userRole: 'admin',
-          isSuspended: false,
+          userRole,
+          isSuspended,
           userId,
-          userName,
-          isAdminAuth: true,
-          isTeamLeader: false
+          userName: profile?.username || null,
+          isAdminAuth: isAdmin,
+          isTeamLeader
         });
         return;
       }
+      
+      // No valid Supabase session — not authenticated
+      // Clear stale localStorage data
+      localStorage.removeItem(STORAGE_KEYS.USER_ID);
+      localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+      localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+      
+      setAuthState({
+        isAuthenticated: false,
+        userRole: null,
+        isSuspended: false,
+        userId: null,
+        userName: null,
+        isAdminAuth: false,
+        isTeamLeader: false
+      });
+    } catch (err) {
+      console.error('Auth check error:', err);
+      setAuthState({
+        isAuthenticated: false,
+        userRole: null,
+        isSuspended: false,
+        userId: null,
+        userName: null,
+        isAdminAuth: false,
+        isTeamLeader: false
+      });
     }
-    
-    // No session at all - not authenticated
-    // Clear stale localStorage data
-    localStorage.removeItem(STORAGE_KEYS.USER_ID);
-    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-    localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
-    localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
-    
-    setAuthState({
-      isAuthenticated: false,
-      userRole: null,
-      isSuspended: false,
-      userId: null,
-      userName: null,
-      isAdminAuth: false,
-      isTeamLeader: false
-    });
-  }, [isAdminPath]);
+  }, []);
   
   useEffect(() => {
     checkAuth();
     
+    // CRITICAL: Do NOT await anything inside onAuthStateChange callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      console.log('Auth state changed:', event);
+      console.log('useAuthCheck: Auth state changed:', event);
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        checkAuth();
+        // Defer to avoid deadlocking setSession/getSession
+        setTimeout(() => {
+          checkAuth();
+        }, 0);
       }
     });
     

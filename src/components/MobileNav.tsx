@@ -10,14 +10,34 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const MobileNav: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const isAuthenticated = localStorage.getItem(STORAGE_KEYS.USER_NAME) !== null;
-  const isAdmin = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-  const isTeamLeader = localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' || 
-                      localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'teamleader';
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem(STORAGE_KEYS.USER_NAME));
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'admin');
+  const [isTeamLeader, setIsTeamLeader] = useState(
+    localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' || 
+    localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'teamleader'
+  );
   const location = useLocation();
   const isMobile = useIsMobile();
   const [todayPoints, setTodayPoints] = useState(0);
   const [monthlyPoints, setMonthlyPoints] = useState(0);
+
+  // Sync auth state from localStorage (populated by App.tsx auth listener)
+  useEffect(() => {
+    const syncAuth = () => {
+      const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const role = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+      setIsAuthenticated(!!userName && !!userId);
+      setIsAdmin(role === 'admin');
+      setIsTeamLeader(role === 'team_leader' || role === 'teamleader');
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      setTimeout(syncAuth, 50);
+    });
+
+    return () => { subscription.unsubscribe(); };
+  }, []);
   
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -27,8 +47,11 @@ const MobileNav: React.FC = () => {
     setIsOpen(false);
   };
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
     localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
     closeMenu();
     window.location.href = '/';

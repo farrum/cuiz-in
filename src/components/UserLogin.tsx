@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { STORAGE_KEYS } from '@/utils/quizData';
+
 
 const UserLogin: React.FC = () => {
   const [identifier, setIdentifier] = React.useState('');
@@ -26,7 +26,7 @@ const UserLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Always go through auth-login edge function for both username and email
+      // Call auth-login edge function for both username and email
       console.log('[Login] Calling auth-login edge function');
       const { data, error } = await supabase.functions.invoke('auth-login', {
         body: { identifier: identifier.trim(), password },
@@ -42,6 +42,7 @@ const UserLogin: React.FC = () => {
             description: "Please check your email and click the verification link before logging in.",
             variant: "destructive",
           });
+          setIsLoading(false);
           return;
         }
 
@@ -51,6 +52,7 @@ const UserLogin: React.FC = () => {
             description: "Your account has been suspended. Please contact support.",
             variant: "destructive",
           });
+          setIsLoading(false);
           return;
         }
 
@@ -59,69 +61,38 @@ const UserLogin: React.FC = () => {
           description: errorMsg,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
       // Set session with returned tokens
       console.log('[Login] Setting session with tokens');
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
 
-      if (sessionError || !sessionData.session?.user) {
+      if (sessionError) {
         console.error('[Login] Session set failed:', sessionError);
         toast({
           title: "Login Failed",
           description: "Could not establish session. Please try again.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
-      const authUserId = sessionData.session.user.id;
-      const authEmail = sessionData.session.user.email;
-
-      // Fetch profile data (RLS works now because we have a valid session)
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('username, suspended')
-        .eq('id', authUserId)
-        .maybeSingle();
-
-      if (profileData?.suspended) {
-        await supabase.auth.signOut();
-        toast({
-          title: "Account Suspended",
-          description: "Your account has been suspended. Please contact support.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const displayUsername = profileData?.username || identifier || authEmail || 'User';
-
-      // Cache user data in localStorage
-      localStorage.setItem(STORAGE_KEYS.USER_ID, authUserId);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, displayUsername);
-
-      // Check role for redirection
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', authUserId)
-        .maybeSingle();
-
-      const userRole = roleData?.role || 'player';
-      localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
-
+      // Session is now set — onAuthStateChange in App.tsx will hydrate user data.
+      // We just need to determine where to navigate.
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
 
+      // Quick role check for navigation (the full hydration happens via the auth listener)
+      const userRole = data.role || 'player';
       if (userRole === 'admin') {
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         navigate('/admin');
       } else {
         navigate('/quiz');

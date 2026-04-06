@@ -63,6 +63,43 @@ const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
   </Suspense>
 );
 
+/**
+ * Hydrate localStorage cache from a valid Supabase session user.
+ * This is called both on init and on auth state changes.
+ * It is NEVER called inside onAuthStateChange directly — always deferred.
+ */
+async function hydrateUserFromSession(userId: string) {
+  try {
+    const [profileResult, roleResult] = await Promise.all([
+      supabase.from('profiles').select('username, points').eq('id', userId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
+    ]);
+
+    if (profileResult.data) {
+      localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, profileResult.data.username);
+      localStorage.setItem(STORAGE_KEYS.USER_POINTS, String(profileResult.data.points ?? 0));
+    }
+
+    const role = roleResult.data?.role || 'player';
+    localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
+
+    if (role === 'admin') {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+    }
+  } catch (err) {
+    console.error('Error hydrating user session:', err);
+  }
+}
+
+function clearUserCache() {
+  localStorage.removeItem(STORAGE_KEYS.USER_ID);
+  localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+  localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+  localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+  localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+}
+
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -72,53 +109,25 @@ function App() {
       try {
         console.log('Initializing app...');
         
-        // Check for existing session
         const { data: sessionData } = await supabase.auth.getSession();
         
-        // If user is logged in, fetch their profile
         if (sessionData?.session?.user) {
-          const userId = sessionData.session.user.id;
-          
-          // Get user profile from Supabase
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-            
-          if (profileData) {
-            // Store user data in localStorage
-            localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-            localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
-            localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
-            
-            // Get user role
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', userId)
-              .maybeSingle();
-              
-            if (roleData) {
-              localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
-            } else {
-              localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
-            }
-          }
+          await hydrateUserFromSession(sessionData.session.user.id);
+        } else {
+          // No session — clear stale cache
+          clearUserCache();
         }
         
-        // Fetch all app data
         await fetchAllAppData();
         console.log('Initial data fetch complete');
         
-        // Set up realtime subscriptions
         setupRealtimeSubscriptions();
         console.log('Realtime subscriptions initialized');
         
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing app:', error);
-        setIsInitialized(true); // Set to true anyway to allow app to render
+        setIsInitialized(true);
       }
     };
     
@@ -129,11 +138,10 @@ function App() {
   useEffect(() => {
     if (isInitialized) {
       scheduledSyncService.start();
-      accountStatusService.start(30); // Check every 30 minutes
+      accountStatusService.start(30);
     }
     
     return () => {
-      // Clean up services on unmount
       scheduledSyncService.stop();
       accountStatusService.stop();
     };
@@ -151,7 +159,6 @@ function App() {
           localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
           console.log('User role updated:', roleData.role);
           
-          // Force reload if on access-controlled pages to refresh permissions
           if (window.location.pathname.startsWith('/admin') || 
               window.location.pathname.startsWith('/team-dashboard')) {
             console.log('User is on a role-controlled page, will reload to apply permissions');
@@ -168,45 +175,24 @@ function App() {
     };
   }, []);
 
-  // Set up auth state listener
+  // Set up auth state listener — CRITICAL: no awaited Supabase calls inside callback
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('Auth state changed:', event);
+        
         if (event === 'SIGNED_IN' && session?.user) {
-          // User signed in, update local storage
-          const userId = session.user.id;
-          
-          // Get user profile
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-            
-          if (profileData) {
-            localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-            localStorage.setItem(STORAGE_KEYS.USER_NAME, profileData.username);
-            localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
-            
-            // Get user role
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', userId)
-              .maybeSingle();
-              
-            if (roleData) {
-              localStorage.setItem(STORAGE_KEYS.USER_ROLE, roleData.role);
-            } else {
-              localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
-            }
-          }
+          // Defer async work to avoid deadlocking setSession/getSession
+          setTimeout(() => {
+            hydrateUserFromSession(session.user.id);
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
-          // User signed out, clear local storage
-          localStorage.removeItem(STORAGE_KEYS.USER_ID);
-          localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-          localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
-          localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+          clearUserCache();
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Silently refresh cache
+          setTimeout(() => {
+            hydrateUserFromSession(session.user.id);
+          }, 0);
         }
       }
     );

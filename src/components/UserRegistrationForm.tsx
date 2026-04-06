@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { STORAGE_KEYS } from '@/utils/quizData';
+
 import { Loader } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
@@ -178,7 +178,6 @@ const UserRegistrationForm: React.FC = () => {
 
         if (sessionError) {
           console.error('[Registration] Session set failed:', sessionError);
-          // Still created - redirect to login
           toast({
             title: "Account Created!",
             description: "Please log in with your credentials.",
@@ -187,26 +186,29 @@ const UserRegistrationForm: React.FC = () => {
           return;
         }
 
-        // Store user data in localStorage
-        localStorage.setItem(STORAGE_KEYS.USER_ID, createdUserId);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, registerData.username || username);
-        localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'player');
-
+        // Session is set — onAuthStateChange in App.tsx will hydrate user data.
         // Handle referral if present
         if (referralCode) {
-          const referrerUsername = referralCode.toLowerCase();
-          const referrerId = await getReferrerId(referrerUsername);
-          if (referrerId) {
-            await supabase.from('user_referrals').insert({
-              referrer_id: referrerId,
-              referrer_name: referrerUsername,
-              referred_id: createdUserId,
-              referred_name: username,
-              referred_email: email,
-              date: new Date().toISOString().split('T')[0],
-              status: 'active'
-            });
-          }
+          // Defer referral insert so it doesn't block navigation
+          setTimeout(async () => {
+            try {
+              const referrerUsername = referralCode.toLowerCase();
+              const referrerId = await getReferrerId(referrerUsername);
+              if (referrerId) {
+                await supabase.from('user_referrals').insert({
+                  referrer_id: referrerId,
+                  referrer_name: referrerUsername,
+                  referred_id: createdUserId,
+                  referred_name: username,
+                  referred_email: email,
+                  date: new Date().toISOString().split('T')[0],
+                  status: 'active'
+                });
+              }
+            } catch (err) {
+              console.error('Referral insert error:', err);
+            }
+          }, 100);
         }
 
         toast({

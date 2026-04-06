@@ -51,7 +51,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             .from('profiles')
             .select('reactivation_approved')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
             
           if (!error && data && data.reactivation_approved) {
             // If approved, reactivate the account
