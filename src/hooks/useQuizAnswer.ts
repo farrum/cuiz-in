@@ -79,6 +79,7 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
             if (!error && data) {
               correct = data.is_correct;
               foundQuestion.correctAnswer = data.correct_answer;
+              foundQuestion.explanation = data.explanation || foundQuestion.explanation;
             }
           } catch (err) {
             console.error('[useQuizAnswer] Server validation error:', err);
