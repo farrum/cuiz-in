@@ -243,10 +243,10 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       console.error('Error saving answer:', error);
     }
 
-    // Auto-advance after feedback
+    // Auto-advance after feedback (5s to allow reading explanation)
     setTimeout(() => {
       onComplete(isCorrect, answer || 'timeout');
-    }, 1500);
+    }, 5000);
   };
 
   const toggleSound = () => {
@@ -531,6 +531,16 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Explanation */}
+          {isAnswered && question.explanation && (
+            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <h4 className="font-semibold text-sm text-primary flex items-center gap-1.5 mb-1.5">
+                💡 Did you know?
+              </h4>
+              <p className="text-sm text-foreground/80 leading-relaxed">{question.explanation}</p>
             </div>
           )}
 
