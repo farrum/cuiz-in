@@ -32,7 +32,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
     toast({
       title: "Payment Details",
       description: `Transaction ID: ${payment.transactionId || 'N/A'}
-                   Amount: ₹${payment.amount}
+                   Amount: ${payment.amount} pts
                    Status: ${payment.status}
                    Method: ${payment.method || 'N/A'}
                    User: ${payment.userName}
@@ -72,7 +72,7 @@ export const PaymentsTable: React.FC<PaymentsTableProps> = ({
                 <div>{format(new Date(payment.date), 'MMM d, yyyy')}</div>
               </div>
             </TableCell>
-            <TableCell className="font-medium">₹{payment.amount}</TableCell>
+            <TableCell className="font-medium">{payment.amount} pts</TableCell>
             <TableCell>
               <Badge variant="outline" className={payment.status === 'paid' || payment.status === 'approved' 
                 ? 'bg-green-100 text-green-800' 

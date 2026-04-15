@@ -19,9 +19,9 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals, user
   const getTypeLabel = (type?: string) => {
     switch (type) {
       case 'achievement':
-        return 'Reward';
+        return 'Bonus';
       case 'quiz':
-        return 'Quiz Earnings';
+        return 'Quiz Points';
       case 'referral':
         return 'Referral Bonus';
       default:
@@ -40,7 +40,7 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals, user
             className="flex items-center justify-between p-3 rounded-lg bg-secondary"
           >
             <div>
-              <div className="font-medium">${(withdrawal.amount * 0.012).toFixed(2)}</div>
+              <div className="font-medium">{withdrawal.amount} pts</div>
               <div className="text-xs text-muted-foreground">
                 {new Date(withdrawal.date).toLocaleDateString()}
                 {getTypeLabel(withdrawal.type) && (

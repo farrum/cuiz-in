@@ -3,7 +3,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ReferralSection from '@/components/ReferralSection';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import { ArrowLeft, Users, Trophy, Star, HelpCircle, Home } from 'lucide-react';
