@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import ReferralSection from '@/components/ReferralSection';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
-import { ArrowLeft, Users, Award, DollarSign, Percent, HelpCircle, Home } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Star, HelpCircle, Home } from 'lucide-react';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import {
   Breadcrumb,
@@ -27,20 +27,14 @@ const ReferralProgramPage: React.FC = () => {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     'name': 'CuizIN Referral Program',
-    'description': 'Earn rewards by referring friends to CuizIN. Get bonuses for each friend who joins and plays.',
+    'description': 'Invite friends to CuizIN and earn bonus points. Build your team and climb the leaderboard together.',
     'mainEntity': {
       '@type': 'Service',
       'name': 'CuizIN Referral Program',
-      'description': 'Refer friends to CuizIN and earn ₹500 for each active referral',
+      'description': 'Invite friends to CuizIN and earn bonus points for each active referral',
       'provider': {
         '@type': 'Organization',
         'name': 'CuizIN'
-      },
-      'offers': {
-        '@type': 'Offer',
-        'price': '500',
-        'priceCurrency': 'INR',
-        'description': 'Earn ₹500 per referral'
       }
     }
   };
@@ -48,12 +42,12 @@ const ReferralProgramPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
-        title="Referral Program | Earn ₹500 Per Referral | CuizIN"
-        description="Join CuizIN's referral program and earn ₹500 for each friend who signs up and plays. Become a Team Leader for monthly recurring rewards!"
+        title="Referral Program | Earn Bonus Points | CuizIN"
+        description="Join CuizIN's referral program and earn bonus points for each friend who signs up and plays. Become a Team Leader for monthly recurring bonuses!"
         canonicalUrl="https://cuiz.in/referral-program"
         schemaType="WebPage"
         schemaData={referralSchema}
-        keywords={['referral program', 'earn money', 'invite friends', 'CuizIN referral', 'referral bonus']}
+        keywords={['referral program', 'invite friends', 'CuizIN referral', 'bonus points', 'team leader']}
       />
       <BreadcrumbSchema items={breadcrumbs} />
       <Header />
@@ -91,7 +85,7 @@ const ReferralProgramPage: React.FC = () => {
                 How Our Referral Program Works
               </h2>
               <p className="text-muted-foreground">
-                The CuizIN referral program allows you to earn additional rewards by inviting friends and family to join the platform. Each person you refer who joins using your unique referral code becomes part of your referral network, allowing you to earn bonus points based on their activity.
+                The CuizIN referral program lets you earn bonus points by inviting friends and family to join the platform. Each person you refer who joins using your unique referral code becomes part of your referral network, allowing you to earn bonus points based on their activity.
               </p>
               
               <div className="mt-6 grid md:grid-cols-3 gap-6">
@@ -115,48 +109,48 @@ const ReferralProgramPage: React.FC = () => {
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                     <span className="text-xl font-bold">3</span>
                   </div>
-                  <h3 className="font-semibold mb-2">Both Earn Rewards</h3>
-                  <p className="text-sm text-muted-foreground">You both receive bonuses—they get a welcome bonus, and you earn ongoing referral rewards.</p>
+                  <h3 className="font-semibold mb-2">Both Earn Points</h3>
+                  <p className="text-sm text-muted-foreground">You both receive bonuses—they get a welcome bonus, and you earn ongoing referral points.</p>
                 </div>
               </div>
             </section>
             
             <section>
               <h2 className="text-2xl font-semibold mb-4 flex items-center">
-                <Award className="w-6 h-6 mr-2 text-primary" />
+                <Trophy className="w-6 h-6 mr-2 text-primary" />
                 Benefits of Referring Friends
               </h2>
               
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <DollarSign className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
+                  <Star className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold">Welcome Bonuses</h3>
-                    <p className="text-muted-foreground">When someone joins using your referral code, you receive a one-time welcome bonus after they complete their first quiz.</p>
+                    <p className="text-muted-foreground">When someone joins using your referral code, you receive a one-time bonus after they complete their first quiz.</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
-                  <Percent className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
+                  <Star className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold">Ongoing Commission</h3>
-                    <p className="text-muted-foreground">Earn a percentage of the points your referrals generate on the platform. As they play and win, you win too!</p>
+                    <h3 className="font-semibold">Ongoing Points</h3>
+                    <p className="text-muted-foreground">Earn bonus points based on your referrals' activity on the platform. As they play, you earn too!</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
                   <Users className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold">Multi-Level Benefits</h3>
-                    <p className="text-muted-foreground">Our multi-tiered referral system also rewards you when your referrals bring in new players, creating a network effect that maximizes your earnings.</p>
+                    <h3 className="font-semibold">Team Leader Status</h3>
+                    <p className="text-muted-foreground">Refer 10+ active players to become a Team Leader with access to a dedicated dashboard and enhanced bonuses.</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start">
-                  <Award className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
+                  <Trophy className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold">Bonus Milestones</h3>
-                    <p className="text-muted-foreground">Unlock special bonuses when you reach referral milestones. The more friends you bring, the bigger the rewards!</p>
+                    <p className="text-muted-foreground">Unlock special bonuses when you reach referral milestones. The more friends you bring, the bigger the bonuses!</p>
                   </div>
                 </div>
               </div>
@@ -171,22 +165,22 @@ const ReferralProgramPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="border border-border rounded-lg p-4">
                   <h3 className="font-semibold mb-2">How many people can I refer?</h3>
-                  <p className="text-muted-foreground">There is no limit to the number of friends you can refer to CuizIN. The more people you refer, the more rewards you can earn!</p>
+                  <p className="text-muted-foreground">There is no limit to the number of friends you can refer to CuizIN. The more people you refer, the more points you can earn!</p>
                 </div>
                 
                 <div className="border border-border rounded-lg p-4">
-                  <h3 className="font-semibold mb-2">When do I receive my referral rewards?</h3>
-                  <p className="text-muted-foreground">Welcome bonuses are credited within 24 hours after your referral completes their first quiz. Ongoing commission rewards are calculated and added to your account on a daily basis.</p>
+                  <h3 className="font-semibold mb-2">When do I receive my referral points?</h3>
+                  <p className="text-muted-foreground">Welcome bonuses are credited within 24 hours after your referral completes their first quiz. Ongoing bonus points are calculated and added to your account daily.</p>
                 </div>
                 
                 <div className="border border-border rounded-lg p-4">
                   <h3 className="font-semibold mb-2">What happens if someone forgets to use my referral code?</h3>
-                  <p className="text-muted-foreground">The referral code must be entered during registration to be counted. Make sure your friends enter your code when they sign up to ensure you receive your rewards.</p>
+                  <p className="text-muted-foreground">The referral code must be entered during registration to be counted. Make sure your friends enter your code when they sign up to ensure you receive your bonus.</p>
                 </div>
                 
                 <div className="border border-border rounded-lg p-4">
-                  <h3 className="font-semibold mb-2">Can I withdraw my referral earnings?</h3>
-                  <p className="text-muted-foreground">Yes, referral earnings are added to your regular account balance and can be withdrawn according to our standard withdrawal policies and minimum withdrawal amounts.</p>
+                  <h3 className="font-semibold mb-2">How do I become a Team Leader?</h3>
+                  <p className="text-muted-foreground">Refer 10 or more active players to unlock Team Leader status. Team Leaders get access to a dedicated dashboard and earn enhanced monthly bonus points.</p>
                 </div>
               </div>
             </section>

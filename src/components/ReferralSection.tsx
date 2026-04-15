@@ -171,7 +171,7 @@ const ReferralSection: React.FC = () => {
             lastActive: member.last_active_date || '',
             daysActive: daysActive,
             monthsActive: Math.ceil(daysActive / 30),
-            monthlyEarning: member.status === 'active' ? 500 : 0
+            monthlyEarning: member.status === 'active' ? 500 : 0 // points
           };
         });
         
@@ -309,7 +309,7 @@ const ReferralSection: React.FC = () => {
     
     toast({
       title: "Referral Success!",
-      description: "Your friend signed up! You'll earn ₹500 after they play for one day.",
+      description: "Your friend signed up! You'll earn 500 bonus points after they play for one day.",
     });
   };
   
@@ -387,9 +387,9 @@ const ReferralSection: React.FC = () => {
       accessorKey: "daysActive",
     },
     {
-      header: "Monthly Earning",
+      header: "Monthly Points",
       accessorKey: "monthlyEarning",
-      cell: (row: any) => `₹${row.monthlyEarning}`
+      cell: (row: any) => `${row.monthlyEarning} pts`
     }
   ];
 
@@ -410,15 +410,15 @@ const ReferralSection: React.FC = () => {
                 {isTeamLeader ? <Shield className="h-5 w-5 text-primary" /> : <Award className="h-5 w-5 text-primary" />}
               </div>
               <div>
-                <h4 className="font-medium text-lg">{isTeamLeader ? "Team Leader Benefits" : "Regular Referral Bonus"}</h4>
+                <h4 className="font-medium text-lg">{isTeamLeader ? "Team Leader Benefits" : "Referral Bonus"}</h4>
                 {isTeamLeader ? (
                   <p className="text-muted-foreground mt-1">
-                    As a Team Leader, you earn ₹500 per month for each active referred player!
+                    As a Team Leader, you earn 500 bonus points per month for each active referred player!
                     Your members must remain active for the full month for you to receive the bonus.
                   </p>
                 ) : (
                   <p className="text-muted-foreground mt-1">
-                    Invite your friends to play QuizPoints and earn ₹500 for each friend who joins and plays actively for one day.
+                    Invite your friends to play CuizIN and earn 500 bonus points for each friend who joins and plays actively for one day.
                   </p>
                 )}
                 
@@ -443,7 +443,7 @@ const ReferralSection: React.FC = () => {
                 <div>
                   <h4 className="font-medium text-lg">Become a Team Leader</h4>
                   <p className="text-muted-foreground mt-1">
-                    Refer 10 active friends to unlock Team Leader status and earn ₹500 monthly from each active referred player!
+                    Refer 10 active friends to unlock Team Leader status and earn 500 bonus points monthly from each active referred player!
                   </p>
                   
                   <div className="mt-4">
@@ -492,15 +492,15 @@ const ReferralSection: React.FC = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-muted-foreground">Monthly Earnings</h4>
-              <p className="text-2xl font-bold mt-1">₹{monthlyEarnings}</p>
+              <h4 className="text-sm font-medium text-muted-foreground">Monthly Points</h4>
+              <p className="text-2xl font-bold mt-1">{monthlyEarnings} pts</p>
               <p className="text-xs text-muted-foreground mt-1">From {activeReferrals} active team members</p>
             </div>
             
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-muted-foreground">Total Team Earnings</h4>
-              <p className="text-2xl font-bold mt-1">₹{totalTeamEarnings}</p>
-              <p className="text-xs text-muted-foreground mt-1">All-time earnings from your team</p>
+              <h4 className="text-sm font-medium text-muted-foreground">Total Team Points</h4>
+              <p className="text-2xl font-bold mt-1">{totalTeamEarnings} pts</p>
+              <p className="text-xs text-muted-foreground mt-1">All-time points from your team</p>
             </div>
           </div>
           
@@ -548,9 +548,9 @@ const ReferralSection: React.FC = () => {
             </div>
             
             <div className="bg-secondary p-4 rounded-lg">
-              <div className="text-sm text-muted-foreground">Total Earned</div>
+              <div className="text-sm text-muted-foreground">Total Points Earned</div>
               <div className="text-2xl font-bold">
-                ₹{referrals.reduce((sum, r) => sum + (r.status === 'active' ? 500 : 0), 0)}
+                {referrals.reduce((sum, r) => sum + (r.status === 'active' ? 500 : 0), 0)} pts
               </div>
             </div>
           </div>

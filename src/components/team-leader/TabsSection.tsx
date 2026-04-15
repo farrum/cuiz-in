@@ -37,7 +37,7 @@ const TabsSection: React.FC<TabsSectionProps> = ({
         </TabsTrigger>
         <TabsTrigger value="earnings">
           <CalendarDays className="h-4 w-4 mr-2" />
-          Monthly Earnings
+          Monthly Activity
         </TabsTrigger>
       </TabsList>
       
@@ -67,9 +67,9 @@ const TabsSection: React.FC<TabsSectionProps> = ({
       <TabsContent value="earnings">
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Earnings</CardTitle>
+            <CardTitle>Monthly Activity</CardTitle>
             <CardDescription>
-              View your monthly earnings from active members.
+              View your monthly team activity and points.
             </CardDescription>
           </CardHeader>
           <CardContent>

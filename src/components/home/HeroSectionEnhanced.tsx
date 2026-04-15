@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Play, UserPlus, LogIn, Trophy, Zap, Users, TrendingUp, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Play, UserPlus, Zap, CheckCircle2 } from 'lucide-react';
 import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayService';
 import InteractiveQuizPreview from './InteractiveQuizPreview';
 import SocialProofStats from './SocialProofStats';

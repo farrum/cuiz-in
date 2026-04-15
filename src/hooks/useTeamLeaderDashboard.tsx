@@ -111,9 +111,9 @@ export const useTeamLeaderDashboard = () => {
       cell: (row: any) => row.daysActive,
     },
     {
-      header: "Earnings",
+      header: "Points",
       accessorKey: "totalEarned",
-      cell: (row: any) => <span>₹{row.totalEarned}</span>,
+      cell: (row: any) => <span>{row.totalEarned} pts</span>,
     },
     {
       header: "Actions",
@@ -132,9 +132,9 @@ export const useTeamLeaderDashboard = () => {
       accessorKey: "membersCount",
     },
     {
-      header: "Amount",
+      header: "Points",
       accessorKey: "amount",
-      cell: (row: any) => <span>₹{row.amount}</span>,
+      cell: (row: any) => <span>{row.amount} pts</span>,
     },
   ];
   
