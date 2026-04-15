@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       .from('quiz_questions')
       .select('id, question, correct_answer, category, difficulty, explanation')
       .or('explanation.is.null,explanation.eq.')
-      .limit(20);
+      .limit(10);
 
     if (fetchError) {
       return new Response(JSON.stringify({ error: fetchError.message }), {
@@ -38,13 +38,13 @@ Deno.serve(async (req) => {
 
     // Also get short explanations if no nulls/empty left
     let batch = questions || [];
-    if (batch.length < 20) {
+    if (batch.length < 10) {
       const { data: shortOnes } = await supabaseAdmin
         .from('quiz_questions')
         .select('id, question, correct_answer, category, difficulty, explanation')
         .not('explanation', 'is', null)
         .neq('explanation', '')
-        .limit(20 - batch.length);
+        .limit(10 - batch.length);
       
       // Filter to only short ones client-side
       const short = (shortOnes || []).filter(q => (q.explanation || '').length < 50);
