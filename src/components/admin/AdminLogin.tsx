@@ -79,8 +79,9 @@ const AdminLogin: React.FC = () => {
       await setUserContext(adminUserId);
       console.log('User context set for admin:', adminUserId);
       
-      // Store admin data in localStorage
+      // Store admin data in localStorage with session timestamp
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      localStorage.setItem('quiz_app_admin_auth_time', Date.now().toString());
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, data.adminUsername);
       localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, data.adminUsername);
