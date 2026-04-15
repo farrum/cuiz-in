@@ -1,55 +1,45 @@
 
 
-## Backfill Quiz Question Explanations
+## Fix: Admin Login and Edge Function Errors
 
-### Problem
-- 1,030 questions have **empty** explanations
-- 23 questions have **very short** (under 50 chars) explanations
-- Total needing fixes: **1,053 out of 1,960 questions**
-- The code is correct — it displays `question.explanation` — but the data is missing
+### Root Cause
 
-### Solution
+The admin login flow is broken because it never creates a real Supabase Auth session:
 
-Write a batch script that processes all questions with missing/short explanations and generates proper 1-2 sentence explanations using the question text, correct answer, category, and difficulty as context.
+1. `AdminLogin.tsx` calls the `admin-auth` edge function, which validates username/password against environment secrets
+2. `admin-auth` returns `adminUserId` and `adminUsername` but **no auth tokens**
+3. The admin user IDs in the `profiles` table (e.g., `066otqbbqac7`) are not real `auth.users` entries — they have no email addresses
+4. After navigating to `/admin`, `ProtectedRoute` runs `useAuthCheck`, which calls `supabase.auth.getSession()` — finds nothing — and clears all localStorage including `ADMIN_AUTH`
+5. The admin gets redirected to `/login`, which tries to work but any edge function calls (like `admin-get-users`) fail with 401 because there's no JWT
 
-### Approach
+### Fix Strategy
 
-1. **Create a Supabase Edge Function** (`backfill-explanations`) that:
-   - Fetches batches of questions where `explanation IS NULL OR LENGTH(explanation) < 50`
-   - For each question, generates a factual 1-2 sentence explanation using the Gemini API (already available via `GEMINI_API_KEY`)
-   - Updates each question's `explanation` field
-   - Processes in batches of 20 to avoid timeouts
+Since the admin profiles don't have real Supabase Auth accounts (no emails, non-UUID IDs), we cannot create real auth sessions for them. The fix is to make the admin flow work **without** requiring a Supabase session, by treating admin auth as a separate path.
 
-2. **Prompt template** per question:
-   ```
-   Question: "{question}"
-   Correct Answer: "{correct_answer}"
-   Category: "{category}"
-   
-   Write a 1-2 sentence factual explanation of why this answer is correct.
-   Be educational and concise. Do not repeat the question.
-   ```
+### Changes
 
-3. **Run the function** multiple times until all 1,053 questions are backfilled
+**1. `src/hooks/useAuthCheck.tsx`**
+- When no Supabase session exists, check if `ADMIN_AUTH === 'true'` in localStorage before clearing everything
+- If admin auth is present, set `isAuthenticated: true`, `isAdminAuth: true`, `userRole: 'admin'` using the cached localStorage values
+- This stops the "logged out" loop
 
-4. **Create a migration** to add a `NOT NULL DEFAULT ''` constraint isn't needed since the column exists — we just need to populate data
+**2. `src/components/admin/AdminLogin.tsx`**
+- After successful `admin-auth` call, also store a timestamp (`ADMIN_AUTH_TIME`) so we can expire stale admin sessions (e.g., after 24 hours)
 
-### Technical Details
+**3. `src/components/AdminRouteGuard.tsx`**  
+- No changes needed — it already accepts `isAdminAuth` as a valid access path
 
-- Edge Function will use `GEMINI_API_KEY` secret (check availability first)
-- Process 20 questions per invocation to stay within edge function timeout limits
-- Use `maxOutputTokens: 256` per question (explanations are short)
-- Update via `supabaseAdmin.from('quiz_questions').update({ explanation }).eq('id', id)`
-- Add a simple admin trigger button or just invoke via curl
+**4. Edge function calls from admin pages**
+- The admin edge functions (`admin-get-users`, `admin-get-reports`, etc.) already use `SERVICE_ROLE_KEY` internally. They just need the request to reach them. Currently they may be checking for an Authorization header. We need to verify they accept requests without JWT or use a different auth mechanism.
+- If they require JWT, update the admin page to pass the admin credentials in the request body instead of relying on the Authorization header.
 
-### Files to create/change
+### Files to modify
+- `src/hooks/useAuthCheck.tsx` — Respect localStorage admin auth when no Supabase session exists
+- `src/components/admin/AdminLogin.tsx` — Add session expiry timestamp
+- Possibly admin edge functions if they reject requests without JWT
 
-1. **`supabase/functions/backfill-explanations/index.ts`** — New edge function
-2. **Deploy and invoke** — Run it repeatedly until all questions are filled
-
-### Alternative (if no AI API key available)
-
-Generate template-based explanations like:
-- `"The correct answer is {answer}. {category}-based fact derived from the question context."`
-- Less ideal but ensures every question has *something*
+### What this fixes
+- Admin can log in and stay logged in
+- Admin page loads without "Edge Function returned a non-2xx status code" errors
+- Regular user login flow remains unchanged
 
