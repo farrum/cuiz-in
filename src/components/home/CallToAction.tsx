@@ -9,8 +9,8 @@ const CallToAction: React.FC = () => {
   
   return (
     <div className="mt-8 p-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white text-center">
-      <h2 className="text-2xl font-bold mb-4">Ready to Start Earning?</h2>
-      <p className="mb-6">Join thousands of users who are already earning rewards through CuizIN!</p>
+      <h2 className="text-2xl font-bold mb-4">Ready to Test Your Knowledge?</h2>
+      <p className="mb-6">Join thousands of players who are already competing on CuizIN!</p>
       <Button 
         size="lg" 
         onClick={() => navigate('/register')} 

@@ -7,24 +7,24 @@ const TestimonialsSection: React.FC = () => {
     <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
       <div className="flex items-center justify-center mb-4">
         <Gift className="w-8 h-8 text-purple-500 mr-3" />
-        <h2 className="text-2xl font-bold">Testimonials from Our Community</h2>
+        <h2 className="text-2xl font-bold">What Our Players Say</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <blockquote className="bg-white/70 dark:bg-gray-700/70 p-4 rounded-xl shadow">
           <p className="italic text-muted-foreground mb-3 text-sm">
-            "I've been playing CuizIN for 3 months and have already earned $180. It's a fun way to test my knowledge and make some extra income!"
+            "I've been playing CuizIN for 3 months and learned so much! The variety of questions keeps me coming back every day."
           </p>
           <footer className="font-medium text-sm">- Sarah M.</footer>
         </blockquote>
         <blockquote className="bg-white/70 dark:bg-gray-700/70 p-4 rounded-xl shadow">
           <p className="italic text-muted-foreground mb-3 text-sm">
-            "The daily challenges keep me coming back. I love competing with friends and watching my points add up toward real cash rewards."
+            "The daily challenges keep me coming back. I love competing with friends and watching my points add up on the leaderboard."
           </p>
           <footer className="font-medium text-sm">- James R.</footer>
         </blockquote>
         <blockquote className="bg-white/70 dark:bg-gray-700/70 p-4 rounded-xl shadow">
           <p className="italic text-muted-foreground mb-3 text-sm">
-            "CuizIN has the best referral program! I invited 10 friends and earned bonus points for each one. The withdrawal process is quick and easy."
+            "CuizIN has the best quiz community! I invited my friends and we all compete together. Great way to learn something new every day."
           </p>
           <footer className="font-medium text-sm">- Emily P.</footer>
         </blockquote>

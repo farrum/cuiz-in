@@ -114,7 +114,7 @@ const UserLogin: React.FC = () => {
       <CardHeader>
         <CardTitle>Log In</CardTitle>
         <CardDescription>
-          Log in to your account to start earning points
+          Log in to your account to continue playing
         </CardDescription>
       </CardHeader>
       <CardContent>

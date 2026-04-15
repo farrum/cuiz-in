@@ -1,7 +1,6 @@
 
 import React from 'react';
 
-
 const HowToEarnSection: React.FC = () => {
   return (
     <div className="mt-12 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
@@ -53,8 +52,8 @@ const HowToEarnSection: React.FC = () => {
               <p className="text-sm text-muted-foreground">Earn bonus points just by logging in daily</p>
             </div>
             <div className="bg-white/80 dark:bg-gray-700/80 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Referral Program</h4>
-              <p className="text-sm text-muted-foreground">Invite friends and earn extra points for each referral</p>
+              <h4 className="font-medium mb-2">Invite Friends</h4>
+              <p className="text-sm text-muted-foreground">Invite friends and earn extra points for each one who joins</p>
             </div>
             <div className="bg-white/80 dark:bg-gray-700/80 p-4 rounded-lg">
               <h4 className="font-medium mb-2">Achievement Badges</h4>
