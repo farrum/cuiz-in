@@ -17,14 +17,12 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is logged in or modal already shown this session
     if (isUserLoggedIn()) return;
     
     const modalShownKey = 'registration_modal_shown_session';
     const alreadyShown = sessionStorage.getItem(modalShownKey);
     if (alreadyShown) return;
 
-    // Check questions played periodically
     const checkQuestions = () => {
       const questionsPlayed = getGuestQuestionsPlayed();
       
@@ -35,17 +33,13 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
       }
     };
 
-    // Initial check
     checkQuestions();
 
-    // Listen for question completion events
     const handleQuestionComplete = () => {
       setTimeout(checkQuestions, 500);
     };
 
     window.addEventListener('guestQuestionCompleted', handleQuestionComplete);
-    
-    // Also check on interval in case event doesn't fire
     const intervalId = setInterval(checkQuestions, 2000);
 
     return () => {
@@ -71,8 +65,8 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
     },
     {
       icon: Trophy,
-      title: 'Earn Real Rewards',
-      description: 'Convert your points to cash prizes'
+      title: 'Compete on Leaderboards',
+      description: 'Rise through the ranks and become a champion'
     },
     {
       icon: Star,
@@ -82,7 +76,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
     {
       icon: Users,
       title: 'Compete & Win',
-      description: 'Join leaderboards and win monthly prizes'
+      description: 'Join leaderboards and earn recognition monthly'
     }
   ];
 
@@ -160,7 +154,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
                 </li>
                 <li className="flex items-center gap-2 text-muted-foreground">
                   <X className="w-3.5 h-3.5" />
-                  No rewards
+                  No leaderboard
                 </li>
                 <li className="flex items-center gap-2 text-muted-foreground">
                   <X className="w-3.5 h-3.5" />
@@ -180,7 +174,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                  Cash rewards
+                  Leaderboard access
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />

@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Play, UserPlus, LogIn, Trophy, Zap, Users, TrendingUp, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Play, UserPlus, Zap, CheckCircle2 } from 'lucide-react';
 import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayService';
 import InteractiveQuizPreview from './InteractiveQuizPreview';
 import SocialProofStats from './SocialProofStats';
@@ -30,7 +30,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
   const benefits = [
     "No deposits required",
-    "Earn real rewards",
+    "Learn while you play",
     "Play anytime, anywhere"
   ];
 
@@ -42,7 +42,6 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           {/* Social proof badge */}
           <div className="inline-flex items-center gap-2 social-proof-badge">
             <span className="relative flex h-2 w-2">
-              {/* Use CSS animation instead of animate-ping to reduce repaints on mobile */}
               <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-75 animate-pulse"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
             </span>
@@ -54,11 +53,11 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
               Play Quizzes,{' '}
               <span className="bg-gradient-to-r from-primary via-[hsl(var(--quiz-purple))] to-accent bg-clip-text text-transparent">
-                Earn Real Rewards
+                Test Your Knowledge
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
-              Join thousands of players earning money daily. Answer questions, climb the leaderboard, and cash out your winnings.
+              Join thousands of players competing daily. Answer questions, climb the leaderboard, and become the quiz champion.
             </p>
           </div>
 

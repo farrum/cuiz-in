@@ -55,11 +55,11 @@ const FaqPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
         title="Frequently Asked Questions | CuizIN"
-        description="Find answers to the most common questions about CuizIN quiz game, rewards system, and how to maximize your earnings through regular play."
+        description="Find answers to the most common questions about CuizIN quiz game, points system, and how to get the most out of playing."
         canonicalUrl="https://cuiz.in/faq"
         schemaType="FAQPage"
         schemaData={faqSchema}
-        keywords={['FAQ', 'quiz game help', 'CuizIN questions', 'rewards system', 'how to play quiz', 'earn money online']}
+        keywords={['FAQ', 'quiz game help', 'CuizIN questions', 'points system', 'how to play quiz', 'trivia game']}
       />
       <BreadcrumbSchema items={breadcrumbs} />
       <Header />

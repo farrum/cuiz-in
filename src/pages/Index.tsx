@@ -38,8 +38,8 @@ const Index: React.FC = () => {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     'url': 'https://cuiz.in',
-    'name': 'CuizIN - Free Quiz Game with Rewards',
-    'description': 'Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play.',
+    'name': 'CuizIN - Play Quiz & Learn',
+    'description': 'Play quizzes, earn points, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete.',
     'datePublished': '2024-01-01',
     'dateModified': new Date().toISOString().split('T')[0],
     'inLanguage': 'en-IN',
@@ -64,7 +64,7 @@ const Index: React.FC = () => {
         '@type': 'Review',
         'author': { '@type': 'Person', 'name': 'Priya S.' },
         'datePublished': '2025-12-15',
-        'reviewBody': 'Amazing quiz app! I love earning rewards while learning new things.',
+        'reviewBody': 'Amazing quiz app! I love learning new things while competing on the leaderboard.',
         'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
       },
       {
@@ -85,8 +85,8 @@ const Index: React.FC = () => {
   return (
     <main className="min-h-screen flex flex-col gradient-hero">
       <SEO 
-        title="CuizIN - Free Quiz Game with Rewards" 
-        description="Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play."
+        title="CuizIN - Play Quiz & Learn" 
+        description="Play quizzes, earn points, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete."
         schemaType="WebSite"
         schemaData={homeSchema}
       />

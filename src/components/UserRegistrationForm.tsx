@@ -242,7 +242,7 @@ const UserRegistrationForm: React.FC = () => {
       <CardHeader>
         <CardTitle>Create an Account</CardTitle>
         <CardDescription>
-          Start earning points by answering quiz questions
+          Start playing quizzes and climb the leaderboard
         </CardDescription>
         {referrerName && (
           <div className="mt-2 p-2 bg-primary/10 rounded-md text-sm">

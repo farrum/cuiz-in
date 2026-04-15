@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserPlus, Brain, Trophy, IndianRupee, ArrowRight } from 'lucide-react';
+import { UserPlus, Brain, Trophy, Star, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -28,13 +28,13 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
     {
       icon: Trophy,
       title: 'Climb Leaderboard',
-      description: 'Compete with other players. Top performers earn bonus rewards monthly.',
+      description: 'Compete with other players and rise through the rankings each month.',
       color: 'from-amber-500 to-orange-500'
     },
     {
-      icon: IndianRupee,
-      title: 'Cash Out',
-      description: 'Convert your points to real money. Withdraw directly to your bank or UPI.',
+      icon: Star,
+      title: 'Unlock Badges',
+      description: 'Collect achievement badges and showcase your quiz mastery to the community.',
       color: 'from-green-500 to-emerald-500'
     }
   ];
@@ -47,7 +47,7 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
           How It Works
         </h2>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Start earning in 4 simple steps. It's completely free to play!
+          Start playing in 4 simple steps. It's completely free!
         </p>
       </div>
 

@@ -26,8 +26,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({
   return (
     <div className="mb-8">
       <h4 className="font-medium mb-3 flex items-center">
-        <Award className="w-5 h-5 mr-2 text-primary" />
-        Available Rewards
+        <Award className="w-5 h-5 mr-2 text-primary" /> Available Bonuses
       </h4>
       
       <div className="space-y-4">
@@ -47,7 +46,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({
                   onClick={() => onClaimAchievement(achievement)}
                   className="btn-shine"
                 >
-                  Claim Reward
+                  Claim Bonus
                 </Button>
               </div>
             </div>
