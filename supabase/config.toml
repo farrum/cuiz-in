@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.admin-create-quiz-question]
 verify_jwt = false
+
+[functions.backfill-explanations]
+verify_jwt = false
