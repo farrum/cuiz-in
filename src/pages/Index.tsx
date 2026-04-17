@@ -119,10 +119,7 @@ const Index: React.FC = () => {
           </div>
         </section>
 
-        {/* Recent Winners Section - Lazy loaded */}
-        <Suspense fallback={<SectionLoader />}>
-          <RecentWinnersSection />
-        </Suspense>
+
 
         {/* Category Preview Section - Lazy loaded */}
         <section className="py-6 md:py-8">

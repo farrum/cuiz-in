@@ -22,4 +22,4 @@ export { default as TryQuestionSection } from './TryQuestionSection';
 export { default as RegistrationIncentiveModal } from './RegistrationIncentiveModal';
 export { default as DailyStreakTracker } from './DailyStreakTracker';
 export { default as ReferralPreview } from './ReferralPreview';
-export { default as RecentWinnersSection } from './RecentWinnersSection';
+
