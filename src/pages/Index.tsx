@@ -19,7 +19,7 @@ import {
 // Lazy load below-the-fold sections
 const CategoryPreviewSection = React.lazy(() => import('@/components/home/CategoryPreviewSection'));
 const TestimonialsSection = React.lazy(() => import('@/components/home/TestimonialsSection'));
-const RecentWinnersSection = React.lazy(() => import('@/components/home/RecentWinnersSection'));
+
 const SimpleAdBanner = React.lazy(() => import('@/components/ads/SimpleAdBanner'));
 
 // Minimal fallbacks
