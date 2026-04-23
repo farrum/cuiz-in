@@ -5,10 +5,50 @@ import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, H
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+
+  // Static category links — important for crawler depth & internal linking SEO
+  const seoCategories: { name: string; slug: string }[] = [
+    { name: 'General Knowledge', slug: 'general-knowledge' },
+    { name: 'History', slug: 'history' },
+    { name: 'Geography', slug: 'geography' },
+    { name: 'Science & Nature', slug: 'science-nature' },
+    { name: 'Entertainment', slug: 'entertainment' },
+    { name: 'Sports', slug: 'sports' },
+    { name: 'Cricket', slug: 'cricket' },
+    { name: 'Arts & Literature', slug: 'arts-and-literature' },
+    { name: 'Mythology', slug: 'mythology' },
+    { name: 'Films', slug: 'entertainment-film' },
+    { name: 'Television', slug: 'entertainment-television' },
+    { name: 'Music', slug: 'entertainment-music' },
+    { name: 'Video Games', slug: 'entertainment-video-games' },
+    { name: 'Computers', slug: 'science-computers' },
+  ];
   
   return (
     <footer className="py-8 border-t border-border bg-background" role="contentinfo" aria-label="Site footer">
       <div className="container mx-auto px-4">
+        {/* SEO: Static category link grid for crawler depth */}
+        <nav aria-label="Quiz categories" className="mb-8 pb-8 border-b border-border">
+          <h3 className="text-lg font-semibold mb-4">Browse Quiz Categories</h3>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 text-sm" role="list">
+            {seoCategories.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  to={`/categories/${c.slug}`}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  {c.name} Quiz
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link to="/categories" className="text-primary hover:underline font-medium">
+                View all categories →
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* First Column - Navigation Links */}
           <nav className="space-y-3" aria-label="Quick links">

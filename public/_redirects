@@ -2,6 +2,12 @@
 /quiz/question/:id/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 /quiz/question/:id https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
 
+# Bot prerendering for key SEO routes (Bot User-Agent → prerender edge function)
+# NOTE: Lovable hosting has built-in SPA fallback; these rules act as
+# documentation for any CDN/edge layer that supports User-Agent matching.
+# Crawlers can also call /functions/v1/prerender?path=/ directly (used in
+# sitemaps and webmaster tooling).
+
 # Sitemap redirects (302 to preserve query params - CDN strips them on 200 proxy)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 302!
 /sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?type=main 302!
