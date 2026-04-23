@@ -169,81 +169,56 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Deferred Third-Party Scripts (load after page is fully loaded) -->
+    <!-- Deferred Third-Party Scripts: load only on first user interaction or after long idle, never blocking LCP -->
     <script>
-      // Load third-party scripts after page is fully loaded using requestIdleCallback
-      function loadDeferredScripts() {
-        // Google Tag Manager
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-MHCGRS7J');
+      (function(){
+        var analyticsLoaded = false;
+        function loadAnalytics() {
+          if (analyticsLoaded) return;
+          analyticsLoaded = true;
 
-        // Google Analytics
-        var gtagScript = document.createElement('script');
-        gtagScript.async = true;
-        gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-3QSCS3TEE7';
-        document.head.appendChild(gtagScript);
-        gtagScript.onload = function() {
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-3QSCS3TEE7');
-        };
+          // Google Tag Manager
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-MHCGRS7J');
 
-        // AdSense (single instance, deferred)
-        var adsenseScript = document.createElement('script');
-        adsenseScript.async = true;
-        adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549';
-        adsenseScript.crossOrigin = 'anonymous';
-        document.head.appendChild(adsenseScript);
-      }
+          // Google Analytics
+          var gtagScript = document.createElement('script');
+          gtagScript.async = true;
+          gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-3QSCS3TEE7';
+          document.head.appendChild(gtagScript);
+          gtagScript.onload = function() {
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-3QSCS3TEE7');
+          };
 
-      // Load non-critical ad scripts after user interaction or longer delay
-      function loadAdScripts() {
-        // onclick/wpadmngr scripts
-        var onclickScript = document.createElement('script');
-        onclickScript.async = true;
-        onclickScript.src = 'https://js.onclckmn.com/static/onclicka.js';
-        onclickScript.dataset.admpid = '312231';
-        document.body.appendChild(onclickScript);
-
-        var wpadmngrScript = document.createElement('script');
-        wpadmngrScript.async = true;
-        wpadmngrScript.src = 'https://js.wpadmngr.com/static/adManager.js';
-        wpadmngrScript.dataset.admpid = '374885';
-        document.body.appendChild(wpadmngrScript);
-      }
-
-      // Use requestIdleCallback for loading scripts when browser is idle
-      function scheduleScriptLoad(callback, timeout) {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(callback, { timeout: timeout });
-        } else {
-          setTimeout(callback, timeout);
+          // AdSense (single instance, deferred)
+          var adsenseScript = document.createElement('script');
+          adsenseScript.async = true;
+          adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549';
+          adsenseScript.crossOrigin = 'anonymous';
+          document.head.appendChild(adsenseScript);
         }
-      }
 
-      // Load essential scripts after page load
-      window.addEventListener('load', function() {
-        scheduleScriptLoad(loadDeferredScripts, 2000);
-      });
-
-      // Load ad scripts after 5 seconds or user interaction (increased from 3s)
-      var adScriptsLoaded = false;
-      function triggerAdScripts() {
-        if (!adScriptsLoaded) {
-          adScriptsLoaded = true;
-          scheduleScriptLoad(loadAdScripts, 100);
+        function schedule(cb, timeout) {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(cb, { timeout: timeout });
+          } else {
+            setTimeout(cb, timeout);
+          }
         }
-      }
 
-      // Load ads after 5 seconds or on user interaction
-      setTimeout(triggerAdScripts, 5000);
-      ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(event) {
-        document.addEventListener(event, triggerAdScripts, { once: true, passive: true });
-      });
+        // Trigger on first user interaction (instant) or after 6s idle as fallback
+        function trigger() { schedule(loadAnalytics, 1000); }
+        ['scroll','click','touchstart','keydown','mousemove'].forEach(function(ev){
+          window.addEventListener(ev, trigger, { once: true, passive: true });
+        });
+        setTimeout(trigger, 6000);
+      })();
     </script>
 
     <!-- Google Tag Manager (noscript) -->
