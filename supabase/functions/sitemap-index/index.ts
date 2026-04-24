@@ -42,7 +42,7 @@ serve(async (req) => {
     // Category-specific sitemaps for questions
     for (const category of categories) {
       xml += '  <sitemap>\n';
-      xml += `    <loc>${baseUrl}/sitemap-category-${category}.xml</loc>\n`;
+      xml += `    <loc>${baseUrl}/sitemap-cat-${category}.xml</loc>\n`;
       xml += `    <lastmod>${today}</lastmod>\n`;
       xml += '  </sitemap>\n';
     }

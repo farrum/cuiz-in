@@ -8,17 +8,18 @@
 # Crawlers can also call /functions/v1/prerender?path=/ directly (used in
 # sitemaps and webmaster tooling).
 
-# Sitemap redirects (302 to preserve query params - CDN strips them on 200 proxy)
-/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 302!
-/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?type=main 302!
-/sitemap-cat-history.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=history 302!
-/sitemap-cat-science.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=science 302!
-/sitemap-cat-geography.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=geography 302!
-/sitemap-cat-literature.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=literature 302!
-/sitemap-cat-entertainment.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=entertainment 302!
-/sitemap-cat-sports.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=sports 302!
-/sitemap-cat-technology.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=technology 302!
-/sitemap-cat-general-knowledge.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main?cat=general-knowledge 302!
+# Sitemap proxies (200 OK for Googlebot indexing)
+/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200!
+/sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
+/sitemap-cat-history.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-history 200!
+/sitemap-cat-science.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-science 200!
+/sitemap-cat-geography.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-geography 200!
+/sitemap-cat-literature.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-literature 200!
+/sitemap-cat-entertainment.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-entertainment 200!
+/sitemap-cat-sports.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-sports 200!
+/sitemap-cat-technology.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-technology 200!
+/sitemap-cat-general-knowledge.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-general-knowledge 200!
+/sitemap-amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 200!
 
 # SPA fallback - must be last
 /* /index.html 200

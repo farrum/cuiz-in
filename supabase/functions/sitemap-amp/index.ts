@@ -44,16 +44,34 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
     const ampBaseUrl = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question';
 
-    // Fetch all quiz questions for AMP pages
-    const { data: questions, error } = await supabase
-      .from('quiz_questions')
-      .select('id, question, created_at')
-      .order('created_at', { ascending: false });
+    // Fetch all quiz questions for AMP pages with pagination
+    const allQuestions: { id: string; created_at: string | null }[] = [];
+    let offset = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error) {
-      console.error('Error fetching quiz questions for AMP sitemap:', error);
-      throw error;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('id, created_at')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + pageSize - 1);
+        
+      if (error) {
+        console.error('Error fetching quiz questions for AMP sitemap:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        allQuestions.push(...data);
+        offset += pageSize;
+        hasMore = data.length === pageSize;
+      } else {
+        hasMore = false;
+      }
     }
+    
+    const questions = allQuestions;
 
     // Generate AMP sitemap XML
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
