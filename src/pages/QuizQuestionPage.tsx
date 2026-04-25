@@ -291,7 +291,7 @@ const QuizQuestionPage: React.FC = () => {
     category: question.category,
     difficulty: question.difficulty,
     options: question.options
-  }) : null;
+  }, keywords) : null;
 
   const pageTitle = socialMeta?.title || 'Quiz Question | CuizIN';
   const pageDescription = socialMeta?.description || 
@@ -381,15 +381,20 @@ const QuizQuestionPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
-        {/* Static SEO-friendly heading that renders immediately */}
+        {/* Visible, SEO-optimized heading */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-7 w-7 text-primary" />
-            Quiz Question
+          <div className="flex items-center gap-2 text-primary font-semibold mb-2">
+            <Brain className="h-5 w-5" />
+            {question ? `${question.category} Quiz` : 'Quiz Question'}
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+            {question ? question.question : 'Loading question...'}
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Test your knowledge and earn points by answering correctly!
-          </p>
+          {question && keywords.length > 0 && (
+            <p className="text-muted-foreground mt-3 text-sm">
+              <span className="font-medium text-foreground">Keywords:</span> {keywords.slice(0, 8).join(', ')}
+            </p>
+          )}
         </div>
         
         {isLoading ? (
@@ -414,9 +419,8 @@ const QuizQuestionPage: React.FC = () => {
           </div>
         ) : question ? (
           <div className="space-y-6">
-            {/* Hidden SEO content for search engines */}
+            {/* Hidden SEO content for search engines (fallback) */}
             <div className="hidden">
-              <h1>{question.question}</h1>
               <p>Category: {question.category}</p>
               <p>Difficulty: {question.difficulty}</p>
               <ul>
@@ -424,10 +428,6 @@ const QuizQuestionPage: React.FC = () => {
                   <li key={idx}>{option}</li>
                 ))}
               </ul>
-              <div>
-                <h2>Keywords</h2>
-                <p>{keywords.join(', ')}</p>
-              </div>
             </div>
             
             <QuizCard 

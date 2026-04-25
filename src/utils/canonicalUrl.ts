@@ -108,15 +108,20 @@ export const generateQuestionSocialMeta = (question: {
   category: string;
   difficulty: string;
   options: string[];
-}) => {
+}, extractedKeywords?: string[]) => {
   const canonicalUrl = generateCanonicalUrl({
     questionId: question.id,
     questionText: question.question
   });
 
-  const title = `${question.question.substring(0, 60)}${question.question.length > 60 ? '...' : ''} | CuizIN Quiz`;
+  const title = `${question.question.substring(0, 60)}${question.question.length > 60 ? '...' : ''} | ${question.category} Quiz`;
   
-  const description = `Test your ${question.category} knowledge! ${question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)} level quiz question. Play free and earn rewards at CuizIN.`;
+  const keywordString = extractedKeywords && extractedKeywords.length > 0 
+    ? ` Keywords: ${extractedKeywords.slice(0, 5).join(', ')}.` 
+    : '';
+    
+  const cleanQuestionText = question.question.replace(/"/g, "'");
+  const description = `Answer this ${question.category} quiz question: "${cleanQuestionText.substring(0, 80)}${cleanQuestionText.length > 80 ? '...' : ''}" (${question.difficulty} difficulty).${keywordString} Play free trivia and earn rewards at CuizIN.`;
 
   return {
     title,
@@ -130,7 +135,7 @@ export const generateQuestionSocialMeta = (question: {
       difficulty: question.difficulty
     }),
     twitterCard: 'summary_large_image' as const,
-    keywords: [
+    keywords: extractedKeywords && extractedKeywords.length > 0 ? extractedKeywords : [
       question.category.toLowerCase(),
       question.difficulty,
       'quiz',

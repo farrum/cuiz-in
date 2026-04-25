@@ -89,6 +89,8 @@ const SEO: React.FC<SEOProps> = ({
       <title>{seoTitle}</title>
       <meta name="description" content={seoDescription} />
       <link rel="canonical" href={pageUrl} />
+      <link rel="alternate" hreflang="en-in" href={pageUrl} />
+      <link rel="alternate" hreflang="x-default" href={pageUrl} />
       
       {/* AMP Link - for pages with AMP versions */}
       {ampUrl && <link rel="amphtml" href={ampUrl} />}
@@ -115,7 +117,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={seoTitle} />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en_IN" />
       
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
