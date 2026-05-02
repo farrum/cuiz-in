@@ -425,6 +425,18 @@ async function buildQuestionPage(supabase: any, id: string): Promise<string> {
   extracted.push(q.category.toLowerCase(), 'quiz', 'trivia', 'questions');
   const keywords = [...new Set(extracted)].slice(0, 15).join(', ');
 
+  // Fetch related questions for internal linking (crawl path)
+  const { data: related } = await supabase
+    .from("quiz_questions")
+    .select("id, question")
+    .eq("category", q.category)
+    .neq("id", q.id)
+    .limit(5);
+
+  const relatedList = (related || [])
+    .map((r: any) => `<li><a href="${SITE_URL}/quiz/question/${r.id}/${slugify(r.question)}">${escapeHtml(r.question)}</a></li>`)
+    .join("");
+
   const body = `
 <nav class="bc"><a href="${SITE_URL}/">Home</a> &rsaquo; <a href="${SITE_URL}/quiz">Quiz</a> &rsaquo; <a href="${SITE_URL}/categories/${slugify(q.category)}">${escapeHtml(q.category)}</a> &rsaquo; Question</nav>
 <article itemscope itemtype="https://schema.org/Question">
@@ -445,8 +457,11 @@ async function buildQuestionPage(supabase: any, id: string): Promise<string> {
 </article>
 
 <section style="margin-top:32px;">
-  <h2>Related Topics</h2>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+  <h2>More ${escapeHtml(q.category)} Questions</h2>
+  <ul class="list">
+    ${relatedList || "<li>No related questions found.</li>"}
+  </ul>
+  <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;">
     <a href="${SITE_URL}/categories/${slugify(q.category)}" class="tag">${escapeHtml(q.category)} Quiz</a>
     <a href="${SITE_URL}/quiz" class="tag">Free Trivia</a>
     <a href="${SITE_URL}/all-questions" class="tag">Browse All Questions</a>
