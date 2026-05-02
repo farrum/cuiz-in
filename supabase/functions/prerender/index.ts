@@ -1,4 +1,4 @@
-import { createClient } from "supabase";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 /**
  * Prerender Edge Function
@@ -488,7 +488,7 @@ async function buildQuestionPage(supabase: any, id: string): Promise<string> {
 
 // ---------- Router ----------
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
