@@ -46,6 +46,24 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;");
 }
 
+const STOP_WORDS = [
+  'a', 'an', 'the', 'and', 'or', 'but', 'if', 'then', 'else', 'when', 'where', 'why', 'how',
+  'all', 'any', 'both', 'each', 'few', 'more', 'most', 'some', 'such', 'no', 'nor', 'not',
+  'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don',
+  'should', 'now', 'this', 'that', 'these', 'those', 'from', 'with', 'about', 'have',
+  'what', 'which', 'their', 'they', 'them', 'there', 'been', 'being', 'into', 'does',
+  'your', 'over', 'under', 'again', 'once', 'here', 'there', 'when', 'who'
+];
+
+function extractKeywords(text: string): string[] {
+  if (!text) return [];
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !STOP_WORDS.includes(word));
+  return [...new Set(words)];
+}
+
 function slugify(text: string, maxLen = 80): string {
   if (!text) return "";
   return text
@@ -380,6 +398,95 @@ async function buildFaqIndex(supabase: any): Promise<string> {
   });
 }
 
+async function buildQuestionPage(supabase: any, id: string): Promise<string> {
+  const { data: q, error } = await supabase
+    .from("quiz_questions")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !q) {
+    return htmlShell({
+      title: "Question Not Found | CuizIN",
+      description: "The requested quiz question was not found.",
+      canonical: `${SITE_URL}/quiz/question/${id}`,
+      body: `<h1>Question not found</h1><p><a href="${SITE_URL}/quiz">Browse all quizzes</a></p>`,
+    });
+  }
+
+  const options = Array.isArray(q.options) ? q.options : [];
+  const slug = slugify(q.question);
+  const canonical = `${SITE_URL}/quiz/question/${q.id}/${slug}`;
+  const title = `${q.question} - ${q.category} Quiz | CuizIN`;
+  const description = `Trivia: ${q.question} Category: ${q.category}. Play this ${q.difficulty || "medium"} difficulty quiz question and earn points on CuizIN.`;
+
+  // Dynamic keyword generation
+  const extracted = extractKeywords(q.question);
+  options.forEach((opt: any) => extracted.push(...extractKeywords(String(opt))));
+  extracted.push(q.category.toLowerCase(), 'quiz', 'trivia', 'questions');
+  const keywords = [...new Set(extracted)].slice(0, 15).join(', ');
+
+  const body = `
+<nav class="bc"><a href="${SITE_URL}/">Home</a> &rsaquo; <a href="${SITE_URL}/quiz">Quiz</a> &rsaquo; <a href="${SITE_URL}/categories/${slugify(q.category)}">${escapeHtml(q.category)}</a> &rsaquo; Question</nav>
+<article itemscope itemtype="https://schema.org/Question">
+  <div class="tag">${escapeHtml(q.category)}</div>
+  ${q.difficulty ? `<span class="tag">${escapeHtml(q.difficulty)}</span>` : ""}
+  <h1 itemprop="name">${escapeHtml(q.question)}</h1>
+  
+  <p>Choose the correct answer from the options below:</p>
+  <ul class="list">
+    ${options.map((opt: any, i: number) => `<li><strong>${String.fromCharCode(65 + i)}.</strong> ${escapeHtml(String(opt))}</li>`).join("")}
+  </ul>
+  
+  <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+    <p><strong>Answer & Explanation:</strong></p>
+    <p>Play the quiz on CuizIN to see the correct answer and detailed explanation! Build your streak and climb the leaderboard.</p>
+    <a href="${canonical}" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#2563eb;color:#fff;border-radius:6px;font-weight:600;">Play Now &rarr;</a>
+  </div>
+</article>
+
+<section style="margin-top:32px;">
+  <h2>Related Topics</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <a href="${SITE_URL}/categories/${slugify(q.category)}" class="tag">${escapeHtml(q.category)} Quiz</a>
+    <a href="${SITE_URL}/quiz" class="tag">Free Trivia</a>
+    <a href="${SITE_URL}/all-questions" class="tag">Browse All Questions</a>
+  </div>
+</section>`;
+
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "QAPage",
+      mainEntity: {
+        "@type": "Question",
+        name: q.question,
+        text: q.question,
+        answerCount: 1,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: q.correct_answer,
+        },
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Quiz", item: `${SITE_URL}/quiz` },
+        { "@type": "ListItem", position: 3, name: q.category, item: `${SITE_URL}/categories/${slugify(q.category)}` },
+      ],
+    },
+  ];
+
+  const html = htmlShell({ title, description, canonical, body, schema });
+  // Inject keywords meta tag into the shell
+  const htmlWithKeywords = html.replace('</title>', `</title>\n<meta name="keywords" content="${escapeHtml(keywords)}" />`);
+
+  return htmlWithKeywords;
+}
+
 // ---------- Router ----------
 
 serve(async (req) => {
@@ -415,6 +522,13 @@ serve(async (req) => {
     if (catMatch) {
       return htmlResponse(await buildCategoryDetail(supabase, catMatch[1]));
     }
+    
+    // Quiz Question Routing
+    const questMatch = cleanPath.match(/^\/quiz\/question\/([^\/]+)(\/.*)?$/);
+    if (questMatch) {
+      return htmlResponse(await buildQuestionPage(supabase, questMatch[1]));
+    }
+
     if (cleanPath === "/blog" || cleanPath === "/blog/") {
       return htmlResponse(await buildBlogIndex(supabase));
     }

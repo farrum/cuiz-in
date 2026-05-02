@@ -56,10 +56,19 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const questionId = url.searchParams.get('id');
+    let questionId = url.searchParams.get('id');
+    
+    // Fallback: extract from path splat if query param is missing (due to CDN stripping on 200 proxies)
+    if (!questionId) {
+      const pathParts = url.pathname.split('/');
+      const ssrIndex = pathParts.indexOf('quiz-question-ssr');
+      if (ssrIndex !== -1 && pathParts[ssrIndex + 1]) {
+        questionId = pathParts[ssrIndex + 1];
+      }
+    }
     
     if (!questionId) {
-      console.error('No question ID provided');
+      console.error('No question ID provided in query or path');
       return new Response('Question ID required', { status: 400, headers: corsHeaders });
     }
 

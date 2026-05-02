@@ -1,6 +1,5 @@
 # SSR for quiz question pages
-/quiz/question/:id/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
-/quiz/question/:id https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr?id=:id 200!
+/quiz/question/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/:splat 200!
 
 # Bot prerendering for key SEO routes (Bot User-Agent → prerender edge function)
 # NOTE: Lovable hosting has built-in SPA fallback; these rules act as

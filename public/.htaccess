@@ -35,6 +35,16 @@ RewriteRule ^ - [L]
 # SPA fallback for all other routes
 RewriteRule ^ index.html [L]
 
+# BOT DETECTION & PRERENDER ROUTING
+# Send search engines and social bots to the Edge Function prerenderer
+RewriteCond %{HTTP_USER_AGENT} (googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|telegrambot|applebot) [NC]
+RewriteCond %{REQUEST_URI} !^/index.html$
+RewriteCond %{REQUEST_URI} !^/ads\.txt$
+RewriteCond %{REQUEST_URI} !^/sitemap.*\.xml$
+RewriteCond %{REQUEST_URI} !^/favicon\.ico$
+RewriteCond %{REQUEST_URI} !^/og-image.*\.png$
+RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerender?path=/$1 [L,R=302]
+
 # Security Headers
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"

@@ -170,7 +170,10 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Deferred Third-Party Scripts: load only on first user interaction or after long idle, never blocking LCP -->
+    <!-- AdSense (Directly loaded for crawler visibility) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549" crossorigin="anonymous"></script>
+
+    <!-- Deferred Third-Party Scripts: Analytics and GTM load on first user interaction -->
     <script>
       (function(){
         var analyticsLoaded = false;
@@ -196,13 +199,6 @@
             gtag('js', new Date());
             gtag('config', 'G-3QSCS3TEE7');
           };
-
-          // AdSense (single instance, deferred)
-          var adsenseScript = document.createElement('script');
-          adsenseScript.async = true;
-          adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549';
-          adsenseScript.crossOrigin = 'anonymous';
-          document.head.appendChild(adsenseScript);
         }
 
         function schedule(cb, timeout) {
@@ -213,12 +209,12 @@
           }
         }
 
-        // Trigger on first user interaction (instant) or after 6s idle as fallback
-        function trigger() { schedule(loadAnalytics, 1000); }
+        // Trigger on first user interaction (instant) or after 5s idle as fallback
+        function trigger() { schedule(loadAnalytics, 500); }
         ['scroll','click','touchstart','keydown','mousemove'].forEach(function(ev){
           window.addEventListener(ev, trigger, { once: true, passive: true });
         });
-        setTimeout(trigger, 6000);
+        setTimeout(trigger, 5000);
       })();
     </script>
 
