@@ -23,7 +23,7 @@ const Registration: React.FC = () => {
   ];
 
   return (
-    <PageLayout containerClassName="relative flex flex-col items-center justify-center px-6 pt-24 pb-12">
+    <PageLayout containerClassName="relative flex flex-col items-center justify-center px-6 pt-8 pb-12">
       <SEO
         title="Create Account | Join CuizIN Free Quiz Platform"
         description="Register for a free CuizIN account and start earning rewards by playing quizzes. No deposit required - play and earn today!"

@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
   ];
 
   return (
-    <PageLayout containerClassName="relative flex flex-col items-center justify-center px-6 pt-24 pb-12">
+    <PageLayout containerClassName="relative flex flex-col items-center justify-center px-6 pt-8 pb-12">
       <SEO
         title="Login to CuizIN | Access Your Quiz Account"
         description="Login to your CuizIN account to play quizzes, track your progress, and withdraw your rewards."
