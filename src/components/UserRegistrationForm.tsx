@@ -130,108 +130,107 @@ const UserRegistrationForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Call register-user edge function
-      const { data: registerData, error: registerError } = await supabase.functions.invoke('register-user', {
-        body: { username, displayName, email, phone, password },
+      console.log('[Registration] Starting sign up process for:', email);
+      
+      // 1. Check if username is already taken in profiles (pre-validation)
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('username')
+        .ilike('username', username)
+        .maybeSingle();
+        
+      if (existingUser) {
+        toast({
+          title: "Username Taken",
+          description: "This username is already in use. Please choose another.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Use standard Supabase signUp
+      // This will trigger the 'handle_new_user' database function automatically
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username.trim(),
+            display_name: displayName.trim(),
+            phone: phone.trim(),
+          }
+        }
       });
 
-      if (registerError) {
-        console.error('Registration edge function error:', registerError);
+      if (error) {
+        console.error('[Registration] SignUp error:', error);
         toast({
           title: "Registration Failed",
-          description: registerError.message || "Failed to contact registration server.",
+          description: error.message,
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
-      if (registerData?.error) {
+      if (!data.user) {
         toast({
           title: "Registration Failed",
-          description: typeof registerData.error === 'object' 
-            ? JSON.stringify(registerData.error) 
-            : registerData.error,
+          description: "Something went wrong. Please try again.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
-      if (!registerData?.success || !registerData?.user?.id) {
-        toast({
-          title: "Registration Failed",
-          description: "The server did not return a valid user ID.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
+      console.log('[Registration] User created successfully:', data.user.id);
+      const createdUserId = data.user.id;
 
-      const createdUserId = registerData.user.id;
-
-      // Auto-login if tokens were returned
-      if (registerData.access_token && registerData.refresh_token) {
-        console.log('[Registration] Setting session with returned tokens');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: registerData.access_token,
-          refresh_token: registerData.refresh_token,
-        });
-
-        if (sessionError) {
-          console.error('[Registration] Session set failed:', sessionError);
-          toast({
-            title: "Account Created!",
-            description: "Please log in with your credentials.",
-          });
-          navigate('/login');
-          return;
-        }
-
-        // Session is set — onAuthStateChange in App.tsx will hydrate user data.
-        // Handle referral if present
-        if (referralCode) {
-          // Defer referral insert so it doesn't block navigation
-          setTimeout(async () => {
-            try {
-              const referrerUsername = referralCode.toLowerCase();
-              const referrerId = await getReferrerId(referrerUsername);
-              if (referrerId) {
-                await supabase.from('user_referrals').insert({
-                  referrer_id: referrerId,
-                  referrer_name: referrerUsername,
-                  referred_id: createdUserId,
-                  referred_name: username,
-                  referred_email: email,
-                  date: new Date().toISOString().split('T')[0],
-                  status: 'active'
-                });
-              }
-            } catch (err) {
-              console.error('Referral insert error:', err);
+      // 3. Handle referral if present
+      if (referralCode) {
+        setTimeout(async () => {
+          try {
+            const referrerUsername = referralCode.toLowerCase();
+            const referrerId = await getReferrerId(referrerUsername);
+            if (referrerId) {
+              await supabase.from('user_referrals').insert({
+                referrer_id: referrerId,
+                referrer_name: referrerUsername,
+                referred_id: createdUserId,
+                referred_name: username,
+                referred_email: email,
+                date: new Date().toISOString().split('T')[0],
+                status: 'active'
+              });
             }
-          }, 100);
-        }
+          } catch (err) {
+            console.error('Referral insert error:', err);
+          }
+        }, 500);
+      }
 
+      // 4. Success handling
+      if (data.session) {
+        // Instant login (email confirmation disabled)
         toast({
           title: "Welcome to CuizIn!",
-          description: "Your account is ready. Let's start playing!",
+          description: "Account created successfully. Let's play!",
         });
-
         navigate('/quiz');
       } else {
-        // No tokens returned - redirect to login
+        // Email confirmation required or pending
         toast({
           title: "Account Created!",
-          description: "Please log in with your credentials.",
+          description: "Please check your email to confirm your account, then log in.",
         });
         navigate('/login');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       toast({
         title: "Error",
-        description: "An error occurred during registration. Please try again.",
+        description: error.message || "An unexpected error occurred during registration.",
         variant: "destructive"
       });
     } finally {
