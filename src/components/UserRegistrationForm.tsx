@@ -139,7 +139,7 @@ const UserRegistrationForm: React.FC = () => {
         console.error('Registration edge function error:', registerError);
         toast({
           title: "Registration Failed",
-          description: "Failed to create account. Please try again.",
+          description: registerError.message || "Failed to contact registration server.",
           variant: "destructive"
         });
         setIsLoading(false);
@@ -149,7 +149,9 @@ const UserRegistrationForm: React.FC = () => {
       if (registerData?.error) {
         toast({
           title: "Registration Failed",
-          description: registerData.error,
+          description: typeof registerData.error === 'object' 
+            ? JSON.stringify(registerData.error) 
+            : registerData.error,
           variant: "destructive"
         });
         setIsLoading(false);
@@ -159,7 +161,7 @@ const UserRegistrationForm: React.FC = () => {
       if (!registerData?.success || !registerData?.user?.id) {
         toast({
           title: "Registration Failed",
-          description: "Failed to create account. Please try again.",
+          description: "The server did not return a valid user ID.",
           variant: "destructive"
         });
         setIsLoading(false);
