@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !serviceRoleKey) {
-      return new Response(JSON.stringify({ error: "Server not configured" }), {
+      return new Response(JSON.stringify({ error: "Server configuration missing" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // 1. Check if username is taken in profiles
     const { data: existingUsername } = await supabase
       .from("profiles")
       .select("id")
@@ -55,48 +56,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingUsername) {
-      return new Response(JSON.stringify({ error: "Username already exists" }), {
+      return new Response(JSON.stringify({ error: "This username is already taken. Please choose another." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const ensureProfileAndRole = async (userId: string) => {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: userId,
-          username: normalizedUsername,
-          display_name: normalizedDisplayName,
-          phone: normalizedPhone,
-          email: normalizedEmail,
-          auth_migrated: true,
-        }, { onConflict: "id" });
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "player")
-        .maybeSingle();
-
-      if (!existingRole) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "player" });
-
-        if (roleError) {
-          throw roleError;
-        }
-      }
-    };
-
+    // 2. Try to create the user in Auth
     let userId: string | null = null;
-
     const { data: createdUser, error: createError } = await supabase.auth.admin.createUser({
       email: normalizedEmail,
       password,
@@ -109,95 +76,78 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      const message = createError.message.toLowerCase();
-      const alreadyExists = message.includes("already been registered") || message.includes("already registered") || message.includes("already exists");
-
-      if (!alreadyExists) {
+      // If user already exists in Auth, try to find them
+      if (createError.message.toLowerCase().includes("already registered") || createError.message.toLowerCase().includes("already exists")) {
+        // Find existing user by email
+        const { data: listedUsers } = await supabase.auth.admin.listUsers();
+        const existingUser = listedUsers?.users.find(u => u.email?.toLowerCase() === normalizedEmail);
+        
+        if (!existingUser) {
+          return new Response(JSON.stringify({ error: "Email already in use by another account." }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // If they exist but have no profile, we can "recover" it
+        const { data: profile } = await supabase.from('profiles').select('id').eq('id', existingUser.id).maybeSingle();
+        if (profile) {
+          return new Response(JSON.stringify({ error: "An account with this email already exists." }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        userId = existingUser.id;
+      } else {
         return new Response(JSON.stringify({ error: createError.message }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      const { data: listedUsers, error: listError } = await supabase.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      });
-
-      if (listError) {
-        return new Response(JSON.stringify({ error: listError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const existingUser = listedUsers.users.find((user) => user.email?.toLowerCase() === normalizedEmail);
-
-      if (!existingUser) {
-        return new Response(JSON.stringify({ error: "Email already registered" }), {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", existingUser.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        return new Response(JSON.stringify({ error: "Email already registered" }), {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: updatedUser, error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
-        password,
-        email_confirm: true,
-        user_metadata: {
-          username: normalizedUsername,
-          display_name: normalizedDisplayName,
-          phone: normalizedPhone,
-        },
-      });
-
-      if (updateError || !updatedUser.user) {
-        return new Response(JSON.stringify({ error: updateError?.message || "Failed to recover existing account" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      userId = updatedUser.user.id;
-    } else if (createdUser.user) {
-      userId = createdUser.user.id;
+    } else {
+      userId = createdUser.user?.id || null;
     }
 
     if (!userId) {
-      return new Response(JSON.stringify({ error: "Failed to create user" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      throw new Error("User creation failed - no ID returned");
     }
 
-    await ensureProfileAndRole(userId);
+    // 3. Ensure profile and roles (Wait a moment for triggers to fire)
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        username: normalizedUsername,
+        display_name: normalizedDisplayName,
+        phone: normalizedPhone,
+        email: normalizedEmail,
+        auth_migrated: true,
+      }, { onConflict: "id" });
 
-    // Get auth tokens for auto-login
+    if (profileError) {
+      console.error("Profile upsert error:", profileError);
+      // We don't fail here because the trigger might have already done it
+    }
+
+    // Ensure role
+    const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+    if (!role) {
+      await supabase.from("user_roles").insert({ user_id: userId, role: "player" });
+    }
+
+    // 4. Get tokens for auto-login
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     let accessToken: string | null = null;
     let refreshToken: string | null = null;
 
     if (anonKey) {
-      console.log("[register-user] Getting auth tokens for auto-login");
       try {
         const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
           method: "POST",
-          headers: {
-            apikey: anonKey,
-            "Content-Type": "application/json",
-          },
+          headers: { apikey: anonKey, "Content-Type": "application/json" },
           body: JSON.stringify({ email: normalizedEmail, password }),
         });
 
@@ -205,30 +155,24 @@ Deno.serve(async (req) => {
           const tokenJson = await tokenRes.json();
           accessToken = tokenJson.access_token;
           refreshToken = tokenJson.refresh_token;
-          console.log("[register-user] Auto-login tokens obtained");
-        } else {
-          console.error("[register-user] Token fetch failed:", await tokenRes.text());
         }
-      } catch (tokenErr) {
-        console.error("[register-user] Token fetch error:", tokenErr);
+      } catch (e) {
+        console.error("Token fetch error:", e);
       }
     }
 
     return new Response(JSON.stringify({
       success: true,
       user: { id: userId, email: normalizedEmail },
-      username: normalizedUsername,
       access_token: accessToken,
       refresh_token: refreshToken,
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("register-user error:", message);
 
-    return new Response(JSON.stringify({ error: message }), {
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
