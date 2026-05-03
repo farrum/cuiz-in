@@ -1,30 +1,4 @@
-
-import React, { Suspense } from 'react';
-import SEO from '@/components/SEO';
-import OrganizationSchema from '@/components/OrganizationSchema';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { useHomePageState } from '@/hooks/useHomePageState';
-import {
-  HeroSectionEnhanced,
-  HowItWorksSection,
-  CallToAction,
-  MobileBottomNav,
-  TryQuestionSection,
-  RegistrationIncentiveModal,
-  DailyStreakTracker,
-  ReferralPreview,
-} from '@/components/home';
-
-// Lazy load below-the-fold sections
-const CategoryPreviewSection = React.lazy(() => import('@/components/home/CategoryPreviewSection'));
-const TestimonialsSection = React.lazy(() => import('@/components/home/TestimonialsSection'));
-
-const SimpleAdBanner = React.lazy(() => import('@/components/ads/SimpleAdBanner'));
-
-// Minimal fallbacks
-const SectionLoader = () => null;
-const AdPlaceholder = () => null;
+import PageLayout from '@/components/layout/PageLayout';
 
 const Index: React.FC = () => {
   const {
@@ -83,7 +57,7 @@ const Index: React.FC = () => {
   };
   
   return (
-    <main className="min-h-screen flex flex-col gradient-hero">
+    <PageLayout className="gradient-hero" containerClassName="pt-20 pb-20 md:pb-8">
       <SEO 
         title="CuizIN - Play Quiz & Learn" 
         description="Play quizzes, earn points, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete."
@@ -91,85 +65,79 @@ const Index: React.FC = () => {
         schemaData={homeSchema}
       />
       <OrganizationSchema />
-      <Header />
       
       {!isLoggedIn && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
-      <div className="flex-1 flex flex-col pt-20 pb-20 md:pb-8">
-        {/* Hero Section - Critical, loads immediately */}
-        <section className="py-8 md:py-12">
-          <HeroSectionEnhanced 
-            isLoggedIn={isLoggedIn}
-            hasStarted={hasStarted}
-            navigateToRegister={navigateToRegister}
-            navigateToLogin={navigateToLogin}
-          />
-        </section>
-        
-        {/* Try a Question Section - Important for engagement */}
-        <TryQuestionSection />
-
-        {/* Ad placement - Top of homepage */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
-          <Suspense fallback={<AdPlaceholder />}>
-            <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden min-h-[90px]" />
-          </Suspense>
-        </div>
-
-        {/* Engagement Section - Streak & Referral */}
-        <section className="py-6 md:py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <DailyStreakTracker />
-              <ReferralPreview />
-            </div>
-          </div>
-        </section>
-
-
-
-        {/* Category Preview Section - Lazy loaded */}
-        <section className="py-6 md:py-8">
-          <Suspense fallback={<SectionLoader />}>
-            <CategoryPreviewSection />
-          </Suspense>
-        </section>
-        
-        {/* Ad placement - Lazy loaded with fixed height placeholder */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-          <Suspense fallback={<AdPlaceholder />}>
-            <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
-          </Suspense>
-        </div>
-
-        {/* How It Works Section */}
-        <section className="py-6 md:py-8 bg-muted/30">
-          <HowItWorksSection />
-        </section>
-
-        {/* Testimonials - Lazy loaded */}
-        <section className="py-6 md:py-8 px-4">
-          <Suspense fallback={<SectionLoader />}>
-            <TestimonialsSection />
-          </Suspense>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-6 md:py-8 px-4">
-          <CallToAction />
-        </section>
-
-        {/* Ad placement - Bottom of homepage */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-          <Suspense fallback={<AdPlaceholder />}>
-            <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden min-h-[90px]" />
-          </Suspense>
-        </div>
-      </div>
+      {/* Hero Section - Critical, loads immediately */}
+      <section className="py-8 md:py-12">
+        <HeroSectionEnhanced 
+          isLoggedIn={isLoggedIn}
+          hasStarted={hasStarted}
+          navigateToRegister={navigateToRegister}
+          navigateToLogin={navigateToLogin}
+        />
+      </section>
       
-      <Footer />
+      {/* Try a Question Section - Important for engagement */}
+      <TryQuestionSection />
+
+      {/* Ad placement - Top of homepage */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+        <Suspense fallback={<AdPlaceholder />}>
+          <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden min-h-[90px]" />
+        </Suspense>
+      </div>
+
+      {/* Engagement Section - Streak & Referral */}
+      <section className="py-6 md:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <DailyStreakTracker />
+            <ReferralPreview />
+          </div>
+        </div>
+      </section>
+
+      {/* Category Preview Section - Lazy loaded */}
+      <section className="py-6 md:py-8">
+        <Suspense fallback={<SectionLoader />}>
+          <CategoryPreviewSection />
+        </Suspense>
+      </section>
+      
+      {/* Ad placement - Lazy loaded with fixed height placeholder */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+        <Suspense fallback={<AdPlaceholder />}>
+          <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
+        </Suspense>
+      </div>
+
+      {/* How It Works Section */}
+      <section className="py-6 md:py-8 bg-muted/30">
+        <HowItWorksSection />
+      </section>
+
+      {/* Testimonials - Lazy loaded */}
+      <section className="py-6 md:py-8 px-4">
+        <Suspense fallback={<SectionLoader />}>
+          <TestimonialsSection />
+        </Suspense>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-6 md:py-8 px-4">
+        <CallToAction />
+      </section>
+
+      {/* Ad placement - Bottom of homepage */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <Suspense fallback={<AdPlaceholder />}>
+          <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden min-h-[90px]" />
+        </Suspense>
+      </div>
+
       <MobileBottomNav />
-    </main>
+    </PageLayout>
   );
 };
 
