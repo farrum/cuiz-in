@@ -101,7 +101,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Top of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="top" />}>
           <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden min-h-[90px]" />
         </Suspense>
       </div>
@@ -125,7 +125,7 @@ const Index: React.FC = () => {
       
       {/* Ad placement - Lazy loaded with fixed height placeholder */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="content" />}>
           <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
         </Suspense>
       </div>
@@ -149,7 +149,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Bottom of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="bottom" />}>
           <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden min-h-[90px]" />
         </Suspense>
       </div>
