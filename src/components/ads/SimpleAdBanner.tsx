@@ -24,7 +24,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   const uniqueId = useId().replace(/:/g, "");
   const containerId = `ad-container-${position}-${uniqueId}`;
   
-  const { adContent, adLoaded, adDebug, error } = useAdvertisement({ 
+  const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({ 
     position,
     slotId,
     pageSection
