@@ -65,7 +65,8 @@ const QuizQuestionPage: React.FC = () => {
             difficulty: data.difficulty as 'easy' | 'medium' | 'hard',
             category: data.category,
             points: data.points || 10,
-            explanation: data.explanation || ''
+            explanation: data.explanation || '',
+            createdAt: data.created_at
           };
           
           setQuestion(formattedQuestion);
@@ -191,6 +192,7 @@ const QuizQuestionPage: React.FC = () => {
     if (!question) return null;
     
     const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
+    const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
     
     // Quiz schema for educational content rich snippets
     return {
@@ -203,7 +205,7 @@ const QuizQuestionPage: React.FC = () => {
       },
       'educationalLevel': question.difficulty,
       'url': questionUrl,
-      'datePublished': new Date().toISOString().split('T')[0],
+      'datePublished': dateStr,
       'author': {
         '@type': 'Organization',
         'name': 'CuizIN',
@@ -224,7 +226,13 @@ const QuizQuestionPage: React.FC = () => {
         'text': question.question,
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': question.correctAnswer
+          'text': question.correctAnswer,
+          'url': `${questionUrl}#answer`,
+          'author': {
+            '@type': 'Organization',
+            'name': 'CuizIN',
+            'url': 'https://cuiz.in'
+          }
         },
         'suggestedAnswer': question.options.filter(opt => opt !== question.correctAnswer).map(option => ({
           '@type': 'Answer',
@@ -254,7 +262,8 @@ const QuizQuestionPage: React.FC = () => {
 
   // Generate QAPage schema for Q&A style rich results
   const generateQAPageSchema = () => {
-    if (!question) return null;
+    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
+    const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
     
     return {
       '@context': 'https://schema.org',
@@ -263,21 +272,25 @@ const QuizQuestionPage: React.FC = () => {
         '@type': 'Question',
         'name': question.question,
         'text': question.question,
+        'url': questionUrl,
         'answerCount': 1,
-        'upvoteCount': Math.floor(Math.random() * 50) + 10, // Dynamic engagement signal
-        'dateCreated': new Date().toISOString(),
+        'upvoteCount': Math.floor(Math.random() * 50) + 10,
+        'dateCreated': dateStr,
         'author': {
           '@type': 'Organization',
-          'name': 'CuizIN'
+          'name': 'CuizIN',
+          'url': 'https://cuiz.in'
         },
         'acceptedAnswer': {
           '@type': 'Answer',
           'text': question.correctAnswer,
+          'url': `${questionUrl}#answer`,
           'upvoteCount': Math.floor(Math.random() * 30) + 5,
-          'dateCreated': new Date().toISOString(),
+          'dateCreated': dateStr,
           'author': {
             '@type': 'Organization',
-            'name': 'CuizIN'
+            'name': 'CuizIN',
+            'url': 'https://cuiz.in'
           }
         }
       }

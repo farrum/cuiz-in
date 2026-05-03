@@ -93,6 +93,8 @@ const AnswerPage: React.FC = () => {
     
     const answerSlug = createSlug(selectedOption, 50);
     const answerUrl = `https://cuiz.in/answer/${questionId}/${answerSlug}`;
+    const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
+    const questionUrl = `https://cuiz.in/quiz/question/${questionId}/${createSlug(question.question, 80)}`;
     
     return {
       '@context': 'https://schema.org',
@@ -101,22 +103,25 @@ const AnswerPage: React.FC = () => {
         '@type': 'Question',
         'name': question.question,
         'text': question.question,
+        'url': questionUrl,
         'keywords': keywords.join(', '),
         'answerCount': 1,
-        'dateCreated': new Date().toISOString().split('T')[0],
+        'dateCreated': dateStr,
         'author': {
           '@type': 'Organization',
-          'name': 'CuizIN'
+          'name': 'CuizIN',
+          'url': 'https://cuiz.in'
         },
         'acceptedAnswer': {
           '@type': 'Answer',
           'text': isCorrect ? selectedOption : question.correctAnswer,
           'url': answerUrl,
-          'dateCreated': new Date().toISOString().split('T')[0],
+          'dateCreated': dateStr,
           'upvoteCount': 0,
           'author': {
             '@type': 'Organization',
-            'name': 'CuizIN'
+            'name': 'CuizIN',
+            'url': 'https://cuiz.in'
           },
           'description': question.explanation || `The correct answer is: ${question.correctAnswer}`
         }

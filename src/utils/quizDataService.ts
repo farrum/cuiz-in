@@ -40,7 +40,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
     // First try to get from Supabase
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, options, category, difficulty, explanation, points, image_url, question_type');
+      .select('id, question, options, category, difficulty, explanation, points, image_url, question_type, created_at');
       
     if (error) {
       console.error('Error fetching quiz questions from Supabase:', error);
@@ -61,7 +61,8 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
         points: q.points || 10,
         explanation: q.explanation || '',
         imageUrl: q.image_url || undefined,
-        questionType: q.question_type as 'text' | 'image' || 'text'
+        questionType: q.question_type as 'text' | 'image' || 'text',
+        createdAt: q.created_at
       }));
       
       // Save to localStorage

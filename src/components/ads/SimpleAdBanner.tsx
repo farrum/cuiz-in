@@ -1,17 +1,71 @@
-import React from "react";
+import React, { useId } from "react";
+import { useAdvertisement } from "@/hooks/useAdvertisement";
+import { useScriptExecution } from "@/hooks/useScriptExecution";
+import AdPlaceholder from "./AdPlaceholder";
+import { cn } from "@/lib/utils";
 
 interface SimpleAdBannerProps {
   position: "top" | "middle" | "bottom" | "sidebar" | "header" | "content" | "footer";
   className?: string;
+  slotId?: string;
+  pageSection?: string;
 }
 
 /**
- * ADS DISABLED FOR SECURITY
- * All ad rendering has been temporarily disabled to eliminate malicious script injection vectors.
- * This component renders nothing until ads are re-enabled with verified safe content only.
+ * AdSense Banner Component
+ * Fetches and renders ads from the verified ad provider system.
  */
-const SimpleAdBanner: React.FC<SimpleAdBannerProps> = () => {
-  return null;
+const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ 
+  position, 
+  className,
+  slotId,
+  pageSection
+}) => {
+  const uniqueId = useId().replace(/:/g, "");
+  const containerId = `ad-container-${position}-${uniqueId}`;
+  
+  const { adContent, adLoaded, adDebug, error } = useAdvertisement({ 
+    position,
+    slotId,
+    pageSection
+  });
+
+  // Execute scripts within the ad content safely
+  const executionStatus = useScriptExecution(adContent, containerId);
+
+  // If no ad content is available after loading, show nothing or a placeholder in dev
+  if (!adContent && adLoaded) {
+    return null;
+  }
+
+  return (
+    <div 
+      className={cn(
+        "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
+        !adLoaded && "opacity-0",
+        adLoaded && "opacity-100",
+        className
+      )}
+    >
+      {!adLoaded && <AdPlaceholder position={position === 'header' || position === 'footer' ? 'top' : (position as any)} />}
+      
+      <div 
+        id={containerId}
+        className="ad-container min-h-[1px] w-full flex justify-center"
+        dangerouslySetInnerHTML={{ __html: adContent }}
+        data-ad-position={position}
+        data-ad-debug={adDebug}
+        data-execution-status={executionStatus}
+      />
+      
+      {error && process.env.NODE_ENV === 'development' && (
+        <div className="text-[10px] text-destructive text-center mt-1">
+          Ad Error: {error}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default SimpleAdBanner;
+

@@ -10,6 +10,7 @@ export interface QuizQuestion {
   explanation: string;
   imageUrl?: string; // URL for image-based questions
   questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false'; // Type of question (default is text)
+  createdAt?: string; // Date the question was created
 }
 
 export type GameMode = 'normal' | 'time-attack' | 'team-quiz' | 'streak';
