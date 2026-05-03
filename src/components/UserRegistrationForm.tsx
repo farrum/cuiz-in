@@ -132,17 +132,34 @@ const UserRegistrationForm: React.FC = () => {
     try {
       console.log('[Registration] Starting sign up process for:', email);
       
-      // 1. Check if username is already taken in profiles (pre-validation)
+      // 1a. Check if username is already taken
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('username')
         .ilike('username', username)
         .maybeSingle();
-        
+
       if (existingUser) {
         toast({
           title: "Username Taken",
           description: "This username is already in use. Please choose another.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // 1b. Check if email is already registered (prevents silent duplicate-signup success)
+      const { data: existingEmail } = await supabase
+        .from('profiles')
+        .select('username')
+        .ilike('email', email.trim())
+        .maybeSingle();
+
+      if (existingEmail) {
+        toast({
+          title: "Email Already Registered",
+          description: `An account with this email already exists (username: ${existingEmail.username}). Please log in or reset your password.`,
           variant: "destructive"
         });
         setIsLoading(false);
@@ -168,6 +185,20 @@ const UserRegistrationForm: React.FC = () => {
         toast({
           title: "Registration Failed",
           description: error.message,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Supabase returns success with empty identities array when email is duplicate
+      const isDuplicateSignup =
+        data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+
+      if (isDuplicateSignup) {
+        toast({
+          title: "Email Already Registered",
+          description: "An account with this email already exists. Please log in or use 'Forgot password' to reset it.",
           variant: "destructive"
         });
         setIsLoading(false);
