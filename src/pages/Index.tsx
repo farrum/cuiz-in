@@ -125,7 +125,7 @@ const Index: React.FC = () => {
       
       {/* Ad placement - Lazy loaded with fixed height placeholder */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-        <Suspense fallback={<AdPlaceholder position="content" />}>
+        <Suspense fallback={<AdPlaceholder position="middle" />}>
           <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
         </Suspense>
       </div>
