@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Key, User, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { setUserContext } from '@/utils/authContext';
 
 const AdminLogin: React.FC = () => {
   const { toast } = useToast();
@@ -17,14 +16,21 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Check if already logged in as admin
+  // Check if already logged in as admin (real Supabase session)
   useEffect(() => {
-    const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-    
-    if (isAdminAuth) {
-      console.log('Admin already authenticated, redirecting to admin panel');
-      navigate('/admin');
-    }
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: role } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        if (role?.role === 'admin') {
+          navigate('/admin');
+        }
+      }
+    })();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -61,7 +67,7 @@ const AdminLogin: React.FC = () => {
         return;
       }
 
-      if (!data?.success) {
+      if (!data?.success || !data.access_token) {
         console.log('Admin authentication failed:', data?.error);
         toast({
           title: "Authentication Failed",
@@ -72,19 +78,26 @@ const AdminLogin: React.FC = () => {
         return;
       }
 
-      console.log('Admin authentication successful');
+      // Establish a real Supabase session so RLS works (auth.uid() is set)
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+      if (sessionError) {
+        toast({
+          title: "Login Failed",
+          description: "Could not establish admin session.",
+          variant: "destructive",
+        });
+        setIsLoggingIn(false);
+        return;
+      }
 
-      // Set user context for RLS policies
-      const adminUserId = data.adminUserId;
-      await setUserContext(adminUserId);
-      console.log('User context set for admin:', adminUserId);
-      
-      // Store admin data in localStorage with session timestamp
-      localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-      localStorage.setItem('quiz_app_admin_auth_time', Date.now().toString());
+      // Cache for display (useAuthCheck refreshes from DB on next tick)
       localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, data.adminUsername);
-      localStorage.setItem(STORAGE_KEYS.USER_ID, adminUserId);
+      localStorage.setItem(STORAGE_KEYS.USER_ID, data.adminUserId);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, data.adminUsername);
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'admin');
       
       toast({
         title: "Success",

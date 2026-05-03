@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.prerender]
 verify_jwt = false
+
+[functions.admin-reset-legacy-players]
+verify_jwt = false

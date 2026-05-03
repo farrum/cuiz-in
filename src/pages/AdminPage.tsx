@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import UserManagementWithAttendance from '@/components/admin/UserManagementWithAttendance';
+import ResetLegacyPlayersButton from '@/components/admin/ResetLegacyPlayersButton';
 import AdminLoginLogs from '@/components/admin/AdminLoginLogs';
 import AdminAdManagement from '@/components/admin/AdminAdManagement';
 import AdminPaymentsOverview from '@/components/admin/AdminPaymentsOverview';
@@ -214,6 +215,9 @@ const AdminPage: React.FC = () => {
           <Separator className="my-6" />
 
           <TabsContent value="users">
+            <div className="mb-4">
+              <ResetLegacyPlayersButton />
+            </div>
             <UserManagementWithAttendance />
           </TabsContent>
           <TabsContent value="logs">
