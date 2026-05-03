@@ -101,10 +101,23 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       const username = localStorage.getItem('quiz_app_admin_username') || 'admin';
       const now = new Date().toISOString();
       
+      console.log('Starting ad slot save operation...', { isCreatingNew, values });
+
       if (isCreatingNew) {
+        // Validation for new slots
+        if (!values.id || !values.name || !values.code) {
+          toast({
+            title: "Validation Error",
+            description: "ID, Name, and Code are required for new slots.",
+            variant: "destructive"
+          });
+          return;
+        }
+
         const { data, error } = await supabase
           .from('ad_slots')
           .insert({
+            id: values.id,
             name: values.name,
             position: values.position,
             code: values.code,
@@ -114,13 +127,16 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           })
           .select();
           
-        if (error) throw error;
+        if (error) {
+          console.error('ad_slots insert error:', error);
+          throw error;
+        }
         
         if (data && data.length > 0) {
           const newSlot = data[0] as AdSlot;
           
           // Create first version entry
-          await supabase
+          const { data: versionData, error: vError } = await supabase
             .from('ad_slot_versions')
             .insert({
               slot_id: newSlot.id,
@@ -131,29 +147,28 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
               version_number: 1,
               created_by: username,
               version_notes: versionNotes || 'Initial version'
-            });
-            
-          // Create initial performance tracker entry using the interface
-          const initialPerfData: VersionPerformanceData = {
-            version_id: newSlot.id, // Using the same ID initially
-            slot_id: newSlot.id,
-            start_date: now,
-            views: 0,
-            clicks: 0,
-            ctr: 0
-          };
-          
-          // Use a type assertion to avoid TypeScript "excessively deep" error
-          await supabase
-            .from('ad_version_performance')
-            .insert(initialPerfData as any);
+            })
+            .select('id')
+            .single();
+
+          if (vError) {
+            console.warn('ad_slot_versions insert error (non-critical):', vError);
+          } else if (versionData) {
+            // Create initial performance tracker entry
+            await supabase
+              .from('ad_version_performance')
+              .insert({
+                version_id: versionData.id,
+                slot_id: newSlot.id,
+                start_date: now,
+                views: 0,
+                clicks: 0,
+                ctr: 0
+              } as any);
+          }
             
           const updatedSlots = [...adSlots, newSlot];
           setAdSlots(updatedSlots);
-          localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
-          
-          // Dispatch event to notify other components of the update
-          window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
           
           toast({
             title: "Ad Slot Created",
@@ -161,13 +176,13 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           });
         }
       } else {
-        // Update existing slot with a new version
+        // Update existing slot
         const currentSlot = adSlots.find(slot => slot.id === values.id);
         if (!currentSlot) throw new Error('Slot not found');
         
         const newVersionNumber = (currentSlot.version_number || 1) + 1;
         
-        // Create a new version in ad_slot_versions
+        // 1. Create a new version record
         const { data: versionData, error: versionError } = await supabase
             .from('ad_slot_versions')
             .insert({
@@ -183,36 +198,37 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
             .select('id')
             .single();
           
-        if (versionError) throw versionError;
-        
-        // Close previous version performance tracking
-        await supabase
-            .from('ad_version_performance')
-            .update({
-              end_date: now
-            })
-            .eq('slot_id', values.id)
-            .is('end_date', null);
-          
-        // Create new performance tracker entry using the interface
-        if (versionData) {
-          const newPerfData: VersionPerformanceData = {
-            version_id: versionData.id,
-            slot_id: values.id,
-            start_date: now,
-            views: 0,
-            clicks: 0,
-            ctr: 0
-          };
-          
-          // Use a type assertion to avoid TypeScript "excessively deep" error
-          await supabase
-            .from('ad_version_performance')
-            .insert(newPerfData as any);
+        if (versionError) {
+          console.error('version creation error:', versionError);
+          // We continue to update the main slot even if versioning fails
         }
         
-        // Update the main ad_slots table
-        const { error } = await supabase
+        // 2. Close previous performance tracking and start new one
+        if (versionData) {
+          try {
+            await supabase
+                .from('ad_version_performance')
+                .update({ end_date: now })
+                .eq('slot_id', values.id)
+                .is('end_date', null);
+              
+            await supabase
+              .from('ad_version_performance')
+              .insert({
+                version_id: versionData.id,
+                slot_id: values.id,
+                start_date: now,
+                views: 0,
+                clicks: 0,
+                ctr: 0
+              } as any);
+          } catch (perfErr) {
+            console.warn('performance tracking update error:', perfErr);
+          }
+        }
+        
+        // 3. Update the main ad_slots table (The most important step)
+        const { error: updateError } = await supabase
           .from('ad_slots')
           .update({
             name: values.name,
@@ -224,7 +240,10 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
           })
           .eq('id', values.id);
           
-        if (error) throw error;
+        if (updateError) {
+          console.error('ad_slots update error:', updateError);
+          throw updateError;
+        }
         
         const updatedSlots = adSlots.map(slot => {
           if (slot.id === values.id) {
@@ -238,25 +257,21 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
         });
         
         setAdSlots(updatedSlots);
-        localStorage.setItem('quiz_app_ad_slots', JSON.stringify(updatedSlots));
-        
-        // Dispatch event to notify other components of the update
-        window.dispatchEvent(new CustomEvent('adSlotsUpdated', { detail: updatedSlots }));
         
         toast({
           title: "Ad Slot Updated",
-          description: `Version ${newVersionNumber} has been created successfully.`,
+          description: `Version ${newVersionNumber} has been saved successfully.`,
         });
       }
       
       setEditingSlot(null);
       setIsCreatingNew(false);
       
-    } catch (error) {
-      console.error('Error saving ad slot:', error);
+    } catch (error: any) {
+      console.error('Detailed error saving ad slot:', error);
       toast({
         title: "Save Failed",
-        description: "There was an error saving your changes.",
+        description: error.message || "There was an error saving your changes. Check console for details.",
         variant: "destructive"
       });
     }
