@@ -14,40 +14,41 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const adminUsername = Deno.env.get('ADMIN_USERNAME');
+    const adminPassword = Deno.env.get('ADMIN_PASSWORD');
 
-    // Verify caller is an admin
-    const callerClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: claimsErr } = await callerClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
+    // Authorize: either an admin Supabase JWT, OR the admin username/password in body
+    const body = await req.json().catch(() => ({} as any));
+    const authHeader = req.headers.get('Authorization');
     const admin = createClient(supabaseUrl, serviceKey);
 
-    const { data: roleRow } = await admin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', claims.claims.sub)
-      .eq('role', 'admin')
-      .maybeSingle();
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: 'Forbidden — admin only' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    let isAuthorized = false;
+    if (body?.username && body?.password
+        && body.username === adminUsername && body.password === adminPassword) {
+      isAuthorized = true;
+    } else if (authHeader?.startsWith('Bearer ')) {
+      const callerClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claims } = await callerClient.auth.getClaims(token);
+      if (claims?.claims?.sub) {
+        const { data: roleRow } = await admin
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', claims.claims.sub)
+          .eq('role', 'admin')
+          .maybeSingle();
+        if (roleRow) isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
