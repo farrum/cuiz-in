@@ -1,4 +1,19 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Home } from 'lucide-react';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import UserLogin from '@/components/UserLogin';
 
 const LoginPage: React.FC = () => {
   const breadcrumbs = [
