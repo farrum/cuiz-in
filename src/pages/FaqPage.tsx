@@ -3,6 +3,17 @@ import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import PageLayout from '@/components/layout/PageLayout';
+import { useFaqs } from '@/hooks/useFaqs';
+import { FaqList } from '@/components/faq/FaqList';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const FaqPage: React.FC = () => {
   const { faqs, isLoading } = useFaqs();

@@ -89,8 +89,8 @@ const SEO: React.FC<SEOProps> = ({
       <title>{seoTitle}</title>
       <meta name="description" content={seoDescription} />
       <link rel="canonical" href={pageUrl} />
-      <link rel="alternate" hreflang="en-in" href={pageUrl} />
-      <link rel="alternate" hreflang="x-default" href={pageUrl} />
+      <link rel="alternate" hrefLang="en-in" href={pageUrl} />
+      <link rel="alternate" hrefLang="x-default" href={pageUrl} />
       
       {/* AMP Link - for pages with AMP versions */}
       {ampUrl && <link rel="amphtml" href={ampUrl} />}

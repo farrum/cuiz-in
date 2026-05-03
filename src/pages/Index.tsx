@@ -1,4 +1,22 @@
+import React, { Suspense, lazy } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/SEO';
+import OrganizationSchema from '@/components/OrganizationSchema';
+import { useHomePageState } from '@/hooks/useHomePageState';
+import HeroSectionEnhanced from '@/components/home/HeroSectionEnhanced';
+import TryQuestionSection from '@/components/home/TryQuestionSection';
+import HowItWorksSection from '@/components/home/HowItWorksSection';
+import CallToAction from '@/components/home/CallToAction';
+import DailyStreakTracker from '@/components/home/DailyStreakTracker';
+import ReferralPreview from '@/components/home/ReferralPreview';
+import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
+import MobileBottomNav from '@/components/home/MobileBottomNav';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdPlaceholder from '@/components/ads/AdPlaceholder';
+
+const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
+const TestimonialsSection = lazy(() => import('@/components/home/TestimonialsSection'));
+const SectionLoader = () => <div className="min-h-[200px] flex items-center justify-center"><div className="animate-pulse text-muted-foreground text-sm">Loading...</div></div>;
 
 const Index: React.FC = () => {
   const {
@@ -83,7 +101,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Top of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="top" />}>
           <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden min-h-[90px]" />
         </Suspense>
       </div>
@@ -107,7 +125,7 @@ const Index: React.FC = () => {
       
       {/* Ad placement - Lazy loaded with fixed height placeholder */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="middle" />}>
           <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
         </Suspense>
       </div>
@@ -131,7 +149,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Bottom of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <Suspense fallback={<AdPlaceholder />}>
+        <Suspense fallback={<AdPlaceholder position="bottom" />}>
           <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden min-h-[90px]" />
         </Suspense>
       </div>

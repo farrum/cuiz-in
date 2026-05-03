@@ -1,4 +1,18 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowLeft, Home } from 'lucide-react';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/SEO';
+import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import UserRegistrationForm from '@/components/UserRegistrationForm';
 
 const Registration: React.FC = () => {
   const location = useLocation();
