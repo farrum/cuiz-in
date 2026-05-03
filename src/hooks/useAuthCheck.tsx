@@ -58,9 +58,8 @@ export const useAuthCheck = () => {
         }
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, userRole);
         
-        if (isAdmin) {
-          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
-        }
+        // Note: admin status is derived from user_roles + Supabase session.
+        // We no longer rely on a localStorage admin flag.
         
         setAuthState({
           isAuthenticated: true,
@@ -74,29 +73,6 @@ export const useAuthCheck = () => {
         return;
       }
       
-      // No valid Supabase session — check for admin localStorage auth
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      const adminAuthTime = localStorage.getItem('quiz_app_admin_auth_time');
-      const isAdminExpired = adminAuthTime 
-        ? (Date.now() - parseInt(adminAuthTime, 10)) > 24 * 60 * 60 * 1000 
-        : true;
-
-      if (isAdminAuth && !isAdminExpired) {
-        // Admin is authenticated via edge function, not Supabase Auth
-        const cachedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        const cachedUserName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-        setAuthState({
-          isAuthenticated: true,
-          userRole: 'admin',
-          isSuspended: false,
-          userId: cachedUserId,
-          userName: cachedUserName,
-          isAdminAuth: true,
-          isTeamLeader: false
-        });
-        return;
-      }
-
       // Not authenticated — clear stale localStorage data
       localStorage.removeItem(STORAGE_KEYS.USER_ID);
       localStorage.removeItem(STORAGE_KEYS.USER_NAME);
