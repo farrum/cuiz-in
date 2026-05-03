@@ -394,6 +394,9 @@ const QuizQuestionPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
+        {/* Ad placement - Top of question page */}
+        <SimpleAdBanner position="header" slotId="question-top" className="mb-8" />
+        
         {/* Visible, SEO-optimized heading */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-primary font-semibold mb-2">
@@ -502,6 +505,9 @@ const QuizQuestionPage: React.FC = () => {
                 title="Related Questions"
               />
             )}
+            
+            {/* Ad placement - Bottom of question page */}
+            <SimpleAdBanner position="footer" slotId="question-bottom" className="mt-8" />
           </div>
         ) : (
           <div className="p-8 text-center bg-card rounded-lg border">

@@ -269,7 +269,7 @@ const TopicPage: React.FC = () => {
 
         {/* Top Ad */}
         <div className="mb-8">
-          <SimpleAdBanner position="header" />
+          <SimpleAdBanner position="header" slotId="topic-top" />
         </div>
 
         {/* Topic Header */}
@@ -304,6 +304,11 @@ const TopicPage: React.FC = () => {
           <Button size="lg" asChild>
             <Link to="/quiz">Start Quiz Now</Link>
           </Button>
+        </div>
+
+        {/* Middle Ad */}
+        <div className="my-8">
+          <SimpleAdBanner position="content" slotId="topic-middle" />
         </div>
 
         {/* Questions List */}
@@ -377,7 +382,7 @@ const TopicPage: React.FC = () => {
 
         {/* Bottom Ad */}
         <div className="mt-12">
-          <SimpleAdBanner position="footer" />
+          <SimpleAdBanner position="footer" slotId="topic-bottom" />
         </div>
       </main>
     </PageLayout>

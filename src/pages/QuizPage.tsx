@@ -183,7 +183,7 @@ const QuizPage: React.FC = () => {
         <AdminAdDebugPanel className="mb-3" />
         
         {/* Top Ad - compact */}
-        <SimpleAdBanner position="top" className="mb-3" />
+        <SimpleAdBanner position="top" slotId="quiz-top" className="mb-3" />
         
         {/* Header with mode selector */}
         <div className="flex items-center justify-between mb-3">
@@ -260,7 +260,7 @@ const QuizPage: React.FC = () => {
         </div>
         
         {/* Middle Ad */}
-        <SimpleAdBanner position="middle" className="my-4" />
+        <SimpleAdBanner position="middle" slotId="quiz-middle" className="my-4" />
         
         {/* Leaderboards - collapsible on mobile */}
         <div className="mt-4">
@@ -290,7 +290,7 @@ const QuizPage: React.FC = () => {
         </div>
         
         {/* Bottom Ad */}
-        <SimpleAdBanner position="bottom" className="mt-4" />
+        <SimpleAdBanner position="bottom" slotId="quiz-bottom" className="mt-4" />
       </main>
       
       <Footer />

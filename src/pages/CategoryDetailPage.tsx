@@ -204,6 +204,9 @@ const CategoryDetailPage: React.FC = () => {
           </BreadcrumbList>
         </Breadcrumb>
         
+        {/* Ad placement - Top of category page */}
+        <SimpleAdBanner position="header" slotId="category-top" className="mb-8" />
+        
         <div className="flex items-center gap-4 mb-6">
           <div className="text-4xl">{category.icon}</div>
           <div>
@@ -251,7 +254,7 @@ const CategoryDetailPage: React.FC = () => {
           </div>
         </div>
         
-        <SimpleAdBanner position="content" />
+        <SimpleAdBanner position="content" slotId="category-middle" />
         
         <div className="grid gap-8 md:grid-cols-3 mt-8">
           <div className="md:col-span-2">
@@ -366,6 +369,9 @@ const CategoryDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Ad placement - Bottom of category page */}
+        <SimpleAdBanner position="footer" slotId="category-bottom" className="mt-12" />
       </main>
       
       <Footer />

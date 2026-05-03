@@ -109,6 +109,13 @@ const Index: React.FC = () => {
         {/* Try a Question Section - Important for engagement */}
         <TryQuestionSection />
 
+        {/* Ad placement - Top of homepage */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+          <Suspense fallback={<AdPlaceholder />}>
+            <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden min-h-[90px]" />
+          </Suspense>
+        </div>
+
         {/* Engagement Section - Streak & Referral */}
         <section className="py-6 md:py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,9 +136,9 @@ const Index: React.FC = () => {
         </section>
         
         {/* Ad placement - Lazy loaded with fixed height placeholder */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
           <Suspense fallback={<AdPlaceholder />}>
-            <SimpleAdBanner position="content" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
+            <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden min-h-[250px] md:min-h-[90px]" />
           </Suspense>
         </div>
 
@@ -151,6 +158,13 @@ const Index: React.FC = () => {
         <section className="py-6 md:py-8 px-4">
           <CallToAction />
         </section>
+
+        {/* Ad placement - Bottom of homepage */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <Suspense fallback={<AdPlaceholder />}>
+            <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden min-h-[90px]" />
+          </Suspense>
+        </div>
       </div>
       
       <Footer />
