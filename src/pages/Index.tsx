@@ -1,4 +1,22 @@
+import React, { Suspense, lazy } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
+import SEO from '@/components/SEO';
+import OrganizationSchema from '@/components/OrganizationSchema';
+import { useHomePageState } from '@/hooks/useHomePageState';
+import HeroSectionEnhanced from '@/components/home/HeroSectionEnhanced';
+import TryQuestionSection from '@/components/home/TryQuestionSection';
+import HowItWorksSection from '@/components/home/HowItWorksSection';
+import CallToAction from '@/components/home/CallToAction';
+import DailyStreakTracker from '@/components/home/DailyStreakTracker';
+import ReferralPreview from '@/components/home/ReferralPreview';
+import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
+import MobileBottomNav from '@/components/home/MobileBottomNav';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import AdPlaceholder from '@/components/ads/AdPlaceholder';
+
+const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
+const TestimonialsSection = lazy(() => import('@/components/home/TestimonialsSection'));
+const SectionLoader = () => <div className="min-h-[200px] flex items-center justify-center"><div className="animate-pulse text-muted-foreground text-sm">Loading...</div></div>;
 
 const Index: React.FC = () => {
   const {
