@@ -92,6 +92,54 @@ export const categoriesArray = [
     description: 'A mix of questions covering various topics for a broad knowledge challenge.',
     questionCount: 225,
     icon: '🧠'
+  },
+  {
+    id: 9,
+    name: 'Global Politics',
+    slug: 'global-politics',
+    description: 'World governments, international relations, and political systems.',
+    questionCount: 85,
+    icon: '🗳️'
+  },
+  {
+    id: 10,
+    name: 'Kids Corner',
+    slug: 'kids-trivia',
+    description: 'Fun, educational, and safe questions for our younger players.',
+    questionCount: 120,
+    icon: '🎈'
+  },
+  {
+    id: 11,
+    name: 'Law & Justice',
+    slug: 'law-justice',
+    description: 'Legal systems, famous trials, and the history of human rights.',
+    questionCount: 65,
+    icon: '⚖️'
+  },
+  {
+    id: 12,
+    name: 'World Music',
+    slug: 'music',
+    description: 'From classical masters to modern pop and rock legends.',
+    questionCount: 145,
+    icon: '🎵'
+  },
+  {
+    id: 13,
+    name: 'Environment',
+    slug: 'environment-nature',
+    description: 'Climate science, wildlife, and protecting our natural world.',
+    questionCount: 95,
+    icon: '🌱'
+  },
+  {
+    id: 14,
+    name: 'Business',
+    slug: 'business-finance',
+    description: 'Economics, startups, and the global financial markets.',
+    questionCount: 110,
+    icon: '💼'
   }
 ];
 

@@ -103,6 +103,55 @@ const topicConfig: Record<string, {
     keywords: ['food', 'cuisine', 'dish', 'recipe', 'cooking', 'chef', 'restaurant', 'ingredient'],
     categories: ['Food & Drink', 'Food and Drinks'],
     icon: '🍽️'
+  },
+  'global-politics': {
+    title: 'Global Politics',
+    description: 'Test your knowledge of world governments, international relations, famous leaders, and political systems.',
+    keywords: ['politics', 'government', 'president', 'prime minister', 'election', 'democracy', 'un', 'nato', 'diplomacy'],
+    categories: ['Politics', 'History'],
+    icon: '🗳️'
+  },
+  'kids-trivia': {
+    title: 'Kids Corner',
+    description: 'Fun and educational questions designed specifically for younger players. Cartoons, animals, and simple wonders!',
+    keywords: ['cartoon', 'disney', 'animal', 'dinosaur', 'toy', 'school', 'fairy tale', 'animation'],
+    categories: ['Animals', 'General Knowledge', 'Entertainment: Cartoon & Animations'],
+    icon: '🎈'
+  },
+  'law-justice': {
+    title: 'Law & Justice',
+    description: 'Explore the world of legal systems, famous court cases, constitutional rights, and the history of justice.',
+    keywords: ['law', 'court', 'judge', 'lawyer', 'legal', 'constitution', 'crime', 'justice', 'rights'],
+    categories: ['History', 'Politics', 'General Knowledge'],
+    icon: '⚖️'
+  },
+  'music': {
+    title: 'World Music',
+    description: 'From classical masterpieces to modern pop hits. Test your knowledge of bands, singers, albums, and instruments.',
+    keywords: ['music', 'singer', 'band', 'song', 'album', 'guitar', 'piano', 'jazz', 'rock', 'pop', 'concert'],
+    categories: ['Entertainment: Music', 'Entertainment'],
+    icon: '🎵'
+  },
+  'environment-nature': {
+    title: 'Environment & Nature',
+    description: 'Questions about our planet, wildlife conservation, climate science, and the wonders of the natural world.',
+    keywords: ['environment', 'nature', 'wildlife', 'animal', 'plant', 'climate', 'earth', 'ocean', 'green', 'solar'],
+    categories: ['Science & Nature', 'Geography'],
+    icon: '🌱'
+  },
+  'business-finance': {
+    title: 'Business & Finance',
+    description: 'The world of money, startups, stock markets, and economics. How well do you know the global market?',
+    keywords: ['business', 'finance', 'money', 'stock', 'market', 'economy', 'startup', 'company', 'trade'],
+    categories: ['General Knowledge', 'Politics'],
+    icon: '💼'
+  },
+  'literature': {
+    title: 'Literature & Books',
+    description: 'Journey through the pages of classic novels, famous poems, and the lives of legendary authors.',
+    keywords: ['book', 'author', 'novel', 'poem', 'writer', 'literature', 'shakespeare', 'fiction'],
+    categories: ['Entertainment: Books', 'General Knowledge', 'History'],
+    icon: '📚'
   }
 };
 
