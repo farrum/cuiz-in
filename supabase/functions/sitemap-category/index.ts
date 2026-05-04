@@ -89,16 +89,43 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const categorySlug = url.searchParams.get('category') || 'general-knowledge';
+    // Support both /sitemap-category?category=slug and /sitemap-cat-slug paths
+    let categorySlug = url.searchParams.get('category');
     
-    const dbCategories = slugToCategoriesMap[categorySlug];
-    if (!dbCategories) {
-      console.error(`Unknown category slug: ${categorySlug}`);
-      return new Response('Category not found', { status: 404, headers: corsHeaders });
+    // If not in query param, try to extract from path (e.g. /sitemap-cat-history.xml)
+    if (!categorySlug) {
+      const pathParts = url.pathname.split('/');
+      const lastPart = pathParts[pathParts.length - 1];
+      if (lastPart.startsWith('sitemap-cat-')) {
+        categorySlug = lastPart.replace('sitemap-cat-', '').replace('.xml', '');
+      }
+    }
+
+    if (!categorySlug) {
+      return new Response('Category slug missing', { status: 400, headers: corsHeaders });
     }
     
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
+    );
     const today = new Date().toISOString().split('T')[0];
+
+    // Determine which DB categories match this slug
+    let dbCategories = slugToCategoriesMap[categorySlug];
+    
+    if (!dbCategories) {
+      // AUTO-DISCOVERY: Fetch unique categories and find the match
+      console.log(`Auto-discovering categories for slug: ${categorySlug}`);
+      const { data: allCats } = await supabase.from('quiz_questions').select('category').not('category', 'is', null);
+      const uniqueCats = [...new Set(allCats?.map(q => q.category) || [])];
+      dbCategories = uniqueCats.filter(cat => createSlug(cat) === categorySlug);
+      
+    if (dbCategories.length === 0) {
+        console.error(`No DB categories found matching slug: ${categorySlug}`);
+        return new Response('Category not found', { status: 404, headers: corsHeaders });
+      }
+    }
     
     // Fetch ALL questions for this category with explicit high limit
     // Supabase default is 1000, so we need to paginate for large categories

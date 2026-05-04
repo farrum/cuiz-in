@@ -31,46 +31,43 @@ interface Question {
 
 const ITEMS_PER_PAGE = 50;
 
-const categoryOptions = [
-  { value: 'all', label: 'All Categories' },
-  { value: 'history', label: 'History' },
-  { value: 'science', label: 'Science & Nature' },
-  { value: 'geography', label: 'Geography' },
-  { value: 'literature', label: 'Arts & Literature' },
-  { value: 'entertainment', label: 'Entertainment' },
-  { value: 'sports', label: 'Sports' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'general-knowledge', label: 'General Knowledge' },
-];
-
-// Map frontend slugs to database categories
-const slugToDbCategories: Record<string, string[]> = {
-  'history': ['History'],
-  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Nature', 'Science: Mathematics'],
-  'geography': ['Geography'],
-  'literature': ['Art', 'Arts & Literature', 'Arts and Literature', 'Entertainment: Books'],
-  'entertainment': [
-    'Entertainment', 'Entertainment: Board Games', 'Entertainment: Books', 
-    'Entertainment: Cartoon & Animations', 'Entertainment: Cartoon &amp; Animations',
-    'Entertainment: Comics', 'Entertainment: Film', 'Entertainment: Japanese Anime & Manga',
-    'Entertainment: Japanese Anime &amp; Manga', 'Entertainment: Music', 
-    'Entertainment: Musicals & Theatres', 'Entertainment: Musicals &amp; Theatres',
-    'Entertainment: Television', 'Entertainment: Video Games', 'Celebrities'
-  ],
-  'sports': ['Sports', 'Cricket'],
-  'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles'],
-  'general-knowledge': ['General Knowledge', 'Mythology', 'Animals', 'Culture', 'Food & Drink', 'Food and Drinks', 'Politics'],
-};
-
 const BrowseQuestionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [categories, setCategories] = useState<{value: string, label: string}[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentCategory = searchParams.get('category') || 'all';
+
+  // Fetch unique categories for the filter
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('category')
+          .not('category', 'is', null);
+        
+        if (error) throw error;
+        
+        const uniqueNames = [...new Set(data.map(q => q.category))];
+        const options = [
+          { value: 'all', label: 'All Categories' },
+          ...uniqueNames.sort().map(cat => ({
+            value: cat, // Use raw category name as value for direct DB matching
+            label: cat
+          }))
+        ];
+        setCategories(options);
+      } catch (err) {
+        console.error('Error fetching categories for filter:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -81,9 +78,9 @@ const BrowseQuestionsPage: React.FC = () => {
           .from('quiz_questions')
           .select('id, question, category, difficulty, created_at', { count: 'exact' });
         
-        // Apply category filter
-        if (currentCategory !== 'all' && slugToDbCategories[currentCategory]) {
-          query = query.in('category', slugToDbCategories[currentCategory]);
+        // Apply category filter - dynamic matching
+        if (currentCategory !== 'all') {
+          query = query.eq('category', currentCategory);
         }
         
         // Apply search filter
@@ -227,7 +224,7 @@ const BrowseQuestionsPage: React.FC = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryOptions.map(option => (
+                    {categories.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

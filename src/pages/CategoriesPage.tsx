@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
@@ -8,6 +7,8 @@ import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { categoriesArray } from '@/utils/categoryData';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,11 +19,61 @@ import {
 } from '@/components/ui/breadcrumb';
 
 const CategoriesPage: React.FC = () => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDynamicCategories = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch unique categories from database
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('category');
+
+        if (error) throw error;
+
+        // Count questions per category and get unique list
+        const counts: Record<string, number> = {};
+        data.forEach(q => {
+          if (q.category) {
+            counts[q.category] = (counts[q.category] || 0) + 1;
+          }
+        });
+
+        // Merge with static data for icons/descriptions
+        const dynamicCats = Object.keys(counts).map(catName => {
+          const staticMatch = categoriesArray.find(c => c.name.toLowerCase() === catName.toLowerCase());
+          const slug = catName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+          
+          return {
+            id: staticMatch?.id || Math.random(),
+            name: catName,
+            slug: staticMatch?.slug || slug,
+            description: staticMatch?.description || `Explore questions in the ${catName} category.`,
+            questionCount: counts[catName],
+            icon: staticMatch?.icon || '❓'
+          };
+        });
+
+        // Sort by question count descending
+        setCategories(dynamicCats.sort((a, b) => b.questionCount - a.questionCount));
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setCategories(categoriesArray); // Fallback
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDynamicCategories();
+  }, []);
+
   // Generate schema.org structured data
   const categorySchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    'itemListElement': categoriesArray.map((category, index) => ({
+    'itemListElement': categories.map((category, index) => ({
       '@type': 'ListItem',
       'position': index + 1,
       'item': {
@@ -80,28 +131,34 @@ const CategoriesPage: React.FC = () => {
             </p>
           </div>
           
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {categoriesArray.map(category => (
-              <Card key={category.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="text-4xl mb-2">{category.icon}</div>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{category.name}</span>
-                    <span className="text-sm font-normal text-muted-foreground">{category.questionCount} questions</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4">{category.description}</CardDescription>
-                  <Link 
-                    to={`/categories/${category.slug}`} 
-                    className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 w-full"
-                  >
-                    Explore Category
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {categories.map(category => (
+                <Card key={category.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="text-4xl mb-2">{category.icon}</div>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="truncate mr-2">{category.name}</span>
+                      <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">{category.questionCount}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="mb-4 line-clamp-2">{category.description}</CardDescription>
+                    <Link 
+                      to={`/categories/${category.slug}`} 
+                      className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 w-full"
+                    >
+                      Explore Category
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           
           {/* Bottom Ad Banner */}
           <div className="mt-12">

@@ -72,11 +72,40 @@ const categoryToSlugMap: Record<string, string> = {
   'Food & Drink': 'general-knowledge',
   'Food and Drinks': 'general-knowledge',
   'Mythology': 'general-knowledge',
-  'Politics': 'general-knowledge',
+  'Politics': 'global-politics',
+  'Global Politics': 'global-politics',
+  'Law': 'law-justice',
+  'Law & Justice': 'law-justice',
+  'Music': 'music',
+  'Environment': 'environment-nature',
+  'Environment & Nature': 'environment-nature',
+  'Business': 'business-finance',
+  'Business & Finance': 'business-finance',
+  'Indian Mythology': 'indian-mythology',
+  'Philosophy': 'philosophy',
+  'Kids': 'kids-trivia',
+  'Kids Corner': 'kids-trivia',
 };
 
 // Valid frontend category slugs (only these will be included in sitemap)
-const validCategorySlugs = ['history', 'science', 'geography', 'literature', 'entertainment', 'sports', 'technology', 'general-knowledge'];
+const validCategorySlugs = [
+  'history', 
+  'science', 
+  'geography', 
+  'literature', 
+  'entertainment', 
+  'sports', 
+  'technology', 
+  'general-knowledge',
+  'global-politics',
+  'kids-trivia',
+  'law-justice',
+  'music',
+  'environment-nature',
+  'business-finance',
+  'indian-mythology',
+  'philosophy'
+];
 
 serve(async (req) => {
   // Handle CORS preflight requests

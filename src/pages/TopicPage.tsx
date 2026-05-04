@@ -155,6 +155,14 @@ const topicConfig: Record<string, {
   }
 };
 
+// Helper to convert slug to title (e.g. "global-politics" -> "Global Politics")
+const slugToTitle = (slug: string): string => {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // List of all topics for the topics index page
 export const allTopics = Object.entries(topicConfig).map(([slug, config]) => ({
   slug,
@@ -166,45 +174,50 @@ const TopicPage: React.FC = () => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dynamicTopic, setDynamicTopic] = useState<any>(null);
 
-  const topic = topicSlug ? topicConfig[topicSlug] : null;
+  // Determine the topic configuration
+  useEffect(() => {
+    if (!topicSlug) {
+      setDynamicTopic(null);
+      return;
+    }
+
+    const curatedTopic = topicConfig[topicSlug];
+    if (curatedTopic) {
+      setDynamicTopic(curatedTopic);
+    } else {
+      // DYNAMIC FALLBACK: Create a topic config on the fly
+      const title = slugToTitle(topicSlug);
+      setDynamicTopic({
+        title: title,
+        description: `Explore everything about ${title} in our comprehensive quiz collection.`,
+        keywords: [topicSlug.replace('-', ' ')],
+        categories: [title],
+        icon: '🎯' // Default icon for auto-discovered topics
+      });
+    }
+  }, [topicSlug]);
 
   useEffect(() => {
     const fetchQuestions = async () => {
-      if (!topic || !topicSlug) {
-        setIsLoading(false);
+      if (!dynamicTopic || !topicSlug) {
+        if (!topicSlug) setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
-
       try {
-        // First fetch by categories
-        let { data: categoryQuestions } = await supabase
+        // Search by multiple criteria: Category match OR Keyword match
+        // Using keywords and categories from the config
+        const { data, error } = await supabase
           .from('quiz_questions')
           .select('id, question, category, difficulty')
-          .in('category', topic.categories)
-          .limit(30);
+          .or(`category.in.(${dynamicTopic.categories.map((c: string) => `"${c}"`).join(',')}),${dynamicTopic.keywords.map((k: string) => `question.ilike.%${k}%`).join(',')}`)
+          .limit(50);
 
-        // Then search by keywords in questions
-        const keywordQueries = topic.keywords.map(keyword =>
-          supabase
-            .from('quiz_questions')
-            .select('id, question, category, difficulty')
-            .ilike('question', `%${keyword}%`)
-            .limit(10)
-        );
-
-        const keywordResults = await Promise.all(keywordQueries);
-        const keywordQuestions = keywordResults.flatMap(r => r.data || []);
-
-        // Combine and deduplicate
-        const allQuestions = [...(categoryQuestions || []), ...keywordQuestions];
-        const uniqueQuestions = Array.from(
-          new Map(allQuestions.map(q => [q.id, q])).values()
-        ).slice(0, 50);
-
-        setQuestions(uniqueQuestions);
+        if (error) throw error;
+        setQuestions(data || []);
       } catch (error) {
         console.error('Error fetching topic questions:', error);
       } finally {
@@ -213,7 +226,45 @@ const TopicPage: React.FC = () => {
     };
 
     fetchQuestions();
-  }, [topicSlug, topic]);
+  }, [dynamicTopic, topicSlug]);
+
+  const topic = dynamicTopic;
+
+  if (!topic && !topicSlug && !isLoading) {
+    return (
+      <PageLayout>
+        <SEO
+          title="Topics | CuizIN"
+          description="Browse quiz topics and test your knowledge on various subjects."
+          canonicalUrl="https://cuiz.in/topics"
+        />
+        <NewsTicker className="mt-16" />
+        <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
+          <h1 className="text-4xl font-bold mb-4 text-center">Quiz Topics</h1>
+          <p className="text-muted-foreground text-center mb-8">
+            Explore specialized quiz topics and test your knowledge
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allTopics.map(t => (
+              <Card key={t.slug} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="text-4xl mb-3">{t.icon}</div>
+                  <h2 className="text-xl font-semibold mb-2">{t.title}</h2>
+                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                    {t.description}
+                  </p>
+                  <Button asChild className="w-full">
+                    <Link to={`/topics/${t.slug}`}>Explore Topic</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </PageLayout>
+    );
+  }
 
   // Topic not found
   if (!topic) {

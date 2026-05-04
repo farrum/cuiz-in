@@ -1,23 +1,24 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Content-Type': 'application/xml; charset=UTF-8',
-  'Cache-Control': 'public, max-age=600, s-maxage=600',
+  'Cache-Control': 'public, max-age=3600',
 };
 
-// Valid frontend category slugs
-const categories = [
-  'history',
-  'science', 
-  'geography',
-  'literature',
-  'entertainment',
-  'sports',
-  'technology',
-  'general-knowledge'
-];
+// Map of raw DB categories to URL slugs
+// This helps ensure we generate clean URLs even if DB categories have spaces/special chars
+function createSlug(text: string): string {
+  if (!text) return '';
+  return text.toLowerCase().trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,27 +26,50 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
-    // Use canonical cuiz.in URLs to avoid cross-domain sitemap issues
     const baseUrl = 'https://cuiz.in';
+
+    // Fetch all unique categories from the quiz_questions table
+    const { data: categoryData, error } = await supabase
+      .from('quiz_questions')
+      .select('category')
+      .not('category', 'is', null);
+
+    if (error) throw error;
+
+    // Get unique category slugs
+    const uniqueCategories = [...new Set(categoryData?.map(q => createSlug(q.category)) || [])]
+      .filter(Boolean);
 
     // Generate sitemap index XML
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     
-    // Main sitemap for static pages, blog, and FAQs
+    // Main sitemap for static pages
     xml += '  <sitemap>\n';
     xml += `    <loc>${baseUrl}/sitemap-main.xml</loc>\n`;
     xml += `    <lastmod>${today}</lastmod>\n`;
     xml += '  </sitemap>\n';
     
-    // Category-specific sitemaps for questions
-    for (const category of categories) {
+    // Dynamic category sitemaps
+    for (const category of uniqueCategories) {
       xml += '  <sitemap>\n';
       xml += `    <loc>${baseUrl}/sitemap-cat-${category}.xml</loc>\n`;
       xml += `    <lastmod>${today}</lastmod>\n`;
       xml += '  </sitemap>\n';
     }
+    
+    // AMP sitemap
+    xml += '  <sitemap>\n';
+    xml += `    <loc>${baseUrl}/sitemap-amp.xml</loc>\n`;
+    xml += `    <lastmod>${today}</lastmod>\n`;
+    xml += '  </sitemap>\n';
+    
+    xml += '</sitemapindex>';
+
+    console.log(`Generated dynamic sitemap index with ${uniqueCategories.length} category sitemaps`);
+    return new Response(xml, { headers: corsHeaders });
     
     // AMP sitemap for all AMP question pages
     xml += '  <sitemap>\n';
