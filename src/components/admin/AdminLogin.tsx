@@ -24,9 +24,8 @@ const AdminLogin: React.FC = () => {
         const { data: role } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        if (role?.role === 'admin') {
+          .eq('user_id', session.user.id);
+        if (role?.some((item) => item.role === 'admin')) {
           navigate('/admin');
         }
       }
