@@ -1,3 +1,5 @@
+declare const Deno: any;
+// @ts-ignore: Deno specific URL import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
