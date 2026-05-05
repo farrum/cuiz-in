@@ -8,7 +8,6 @@ import AdminLogin from '@/components/admin/AdminLogin';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { STORAGE_KEYS } from '@/utils/quizData';
 
 const AdminLoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,24 +23,7 @@ const AdminLoginPage: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // First check localStorage for admin auth - bare minimum
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      if (isAdminAuth) {
-        console.log('Admin authenticated via localStorage');
-        setIsAdmin(true);
-        toast({
-          title: 'Welcome back, Admin!',
-          description: 'You are already logged in as an administrator.',
-        });
-        
-        // Redirect to admin page
-        setTimeout(() => {
-          navigate('/admin');
-        }, 1500);
-        return;
-      }
-      
-      // Get current user from Supabase as backup verification
+      // Get current user from Supabase and verify admin role server-side
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -53,19 +35,16 @@ const AdminLoginPage: React.FC = () => {
       
       console.log('Checking admin status for user:', user.id);
       
-      // Check if user is admin in profiles table
       const { data, error } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .maybeSingle();
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
       
       if (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
-      } else if (data?.is_admin) {
+      } else if (data?.some((item) => item.role === 'admin')) {
         console.log('User is confirmed as admin in database');
-        localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
         setIsAdmin(true);
         
         toast({
