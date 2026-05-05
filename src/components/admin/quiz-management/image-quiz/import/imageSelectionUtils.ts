@@ -109,6 +109,20 @@ const categoryImages: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&h=400&fit=crop',
     'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&h=400&fit=crop',
   ],
+  'business': [
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1454165833767-0274b196eaad?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&h=400&fit=crop',
+  ],
+  'kids': [
+    'https://images.unsplash.com/photo-1502086223501-7ea2443f84bd?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=600&h=400&fit=crop',
+  ],
+  'law': [
+    'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=600&h=400&fit=crop',
+  ],
 };
 
 // Simple hash for consistent image selection per question
@@ -125,17 +139,58 @@ const simpleHash = (str: string): number => {
 /**
  * Get a relevant image URL for a trivia question
  * Uses category matching with direct Unsplash CDN URLs (reliable, no API key needed)
- * Falls back to picsum.photos for unmatched categories
+ * Falls back to keyword matching in question text, then finally picsum.photos
  */
 export const getRandomImageForCategory = (category: string, question?: string): string => {
   const categoryLower = category.toLowerCase();
+  const questionLower = question?.toLowerCase() || '';
   
-  // Find matching category images
+  // 1. Try to find matching category images
   let matchedImages: string[] | null = null;
   for (const [key, images] of Object.entries(categoryImages)) {
-    if (categoryLower.includes(key)) {
+    if (categoryLower.includes(key) || questionLower.includes(key)) {
       matchedImages = images;
       break;
+    }
+  }
+
+  // 2. If no category match, search question text for specific keywords
+  if (!matchedImages) {
+    const commonKeywords: Record<string, string> = {
+      'space': 'science',
+      'galaxy': 'science',
+      'planet': 'science',
+      'war': 'history',
+      'president': 'politics',
+      'government': 'politics',
+      'money': 'business',
+      'finance': 'business',
+      'stock': 'business',
+      'computer': 'computer',
+      'internet': 'computer',
+      'software': 'computer',
+      'code': 'computer',
+      'game': 'entertainment',
+      'movie': 'entertainment',
+      'film': 'entertainment',
+      'music': 'music',
+      'song': 'music',
+      'singer': 'music',
+      'car': 'vehicle',
+      'truck': 'vehicle',
+      'plane': 'vehicle',
+      'animal': 'animal',
+      'dog': 'animal',
+      'cat': 'animal',
+      'math': 'mathematics',
+      'number': 'mathematics',
+    };
+
+    for (const [kw, cat] of Object.entries(commonKeywords)) {
+      if (questionLower.includes(kw)) {
+        matchedImages = categoryImages[cat];
+        break;
+      }
     }
   }
 
@@ -145,7 +200,7 @@ export const getRandomImageForCategory = (category: string, question?: string): 
     return matchedImages[seed % matchedImages.length];
   }
 
-  // Fallback: use picsum.photos with a question-based seed for variety
+  // 3. Fallback: use picsum.photos with a question-based seed for variety
   const seed = question ? simpleHash(question) % 1000 : Math.floor(Math.random() * 1000);
   return `https://picsum.photos/seed/${seed}/600/400`;
 };

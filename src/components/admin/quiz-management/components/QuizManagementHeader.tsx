@@ -7,7 +7,8 @@ import {
   Download,
   BookOpenIcon,
   ImageIcon,
-  Users
+  Users,
+  Wand2
 } from 'lucide-react';
 
 interface QuizManagementHeaderProps {
@@ -19,6 +20,7 @@ interface QuizManagementHeaderProps {
   onExport: () => void;
   onAddImageQuestion: () => void;
   onLearnImageTrivia: () => void;
+  onCleanupImages: () => void;
 }
 
 const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
@@ -29,7 +31,8 @@ const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
   onLearnTrivia,
   onExport,
   onAddImageQuestion,
-  onLearnImageTrivia
+  onLearnImageTrivia,
+  onCleanupImages
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -102,6 +105,14 @@ const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
             >
               <BookOpenIcon className="h-4 w-4" />
               Learn Image Trivia
+            </Button>
+            <Button 
+              onClick={onCleanupImages}
+              variant="outline"
+              className="flex items-center gap-1 border-orange-200 hover:bg-orange-50 text-orange-700"
+            >
+              <Wand2 className="h-4 w-4" />
+              Cleanup Images
             </Button>
             <Button 
               onClick={onExport}

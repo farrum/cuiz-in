@@ -146,6 +146,54 @@ export const useQuizActions = (
     }
   };
 
+  const handleCleanupImageQuizzes = async () => {
+    try {
+      toast({
+        title: "Cleaning up image quizzes",
+        description: "Moving quizzes with placeholder images to normal section...",
+      });
+
+      // 1. Find questions of type 'image' that have picsum.photos in the URL or are null
+      const { data: brokenQuizzes, error: fetchError } = await supabase
+        .from('quiz_questions')
+        .select('id')
+        .eq('question_type', 'image')
+        .or('image_url.is.null,image_url.ilike.%picsum.photos%');
+
+      if (fetchError) throw fetchError;
+
+      if (!brokenQuizzes || brokenQuizzes.length === 0) {
+        toast({
+          title: "Clean",
+          description: "No broken image quizzes found.",
+        });
+        return;
+      }
+
+      // 2. Update them to be 'text' type
+      const { error: updateError } = await supabase
+        .from('quiz_questions')
+        .update({ question_type: 'text' })
+        .in('id', brokenQuizzes.map(q => q.id));
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Cleanup Complete",
+        description: `Successfully moved ${brokenQuizzes.length} quizzes to the normal section.`,
+      });
+
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error cleaning up quizzes:', error);
+      toast({
+        title: "Cleanup Failed",
+        description: "An error occurred while cleaning up quizzes.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const exportToExcel = (activeTab: string, questions: QuizQuestion[]) => {
     const worksheet = XLSX.utils.json_to_sheet(
       questions.map(q => ({
@@ -189,6 +237,7 @@ export const useQuizActions = (
     handleAddQuestion,
     handleUpdateQuestion,
     handleDeleteQuestion,
+    handleCleanupImageQuizzes,
     exportToExcel
   };
 };

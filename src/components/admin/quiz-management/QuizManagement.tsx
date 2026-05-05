@@ -62,6 +62,7 @@ const QuizManagement: React.FC = () => {
     handleAddQuestion,
     handleUpdateQuestion,
     handleDeleteQuestion,
+    handleCleanupImageQuizzes,
     exportToExcel
   } = useQuizActions(fetchQuestions, categories);
 
@@ -100,6 +101,7 @@ const QuizManagement: React.FC = () => {
             onExport={() => exportToExcel(activeTab, filteredQuestions)}
             onAddImageQuestion={() => setIsImageQuizDialogOpen(true)}
             onLearnImageTrivia={() => setIsLearnImageTriviaDialogOpen(true)}
+            onCleanupImages={handleCleanupImageQuizzes}
           />
 
           <QuizFilterSection 
