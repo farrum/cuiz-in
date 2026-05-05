@@ -34,10 +34,9 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   // Execute scripts within the ad content safely
   const executionStatus = useScriptExecution(adContent, containerId);
 
-  // If no ad content is available, show nothing
-  if (!adContent) {
-    return null;
-  }
+  // Extract size from code metadata if available (e.g. <!-- size: 300x250 -->)
+  const sizeMatch = adContent?.match(/<!-- size: (\d+x\d+) -->/);
+  const forcedSize = sizeMatch ? sizeMatch[1] : null;
 
   return (
     <div 
@@ -48,14 +47,23 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
         className
       )}
     >
-      <div 
-        id={containerId}
-        className="ad-container min-h-[1px] w-full flex justify-center"
-        dangerouslySetInnerHTML={{ __html: adContent }}
-        data-ad-position={position}
-        data-ad-debug={adDebug}
-        data-execution-status={executionStatus}
-      />
+      {( !adContent || (forcedSize && adContent.replace(/<!-- size: \d+x\d+ -->/, '').trim() === '') ) && (
+        <AdPlaceholder 
+          position={position === 'header' || position === 'footer' ? 'top' : (position as any)} 
+          size={forcedSize as any}
+        />
+      )}
+      
+      {adContent && (!forcedSize || adContent.replace(/<!-- size: \d+x\d+ -->/, '').trim() !== '') && (
+        <div 
+          id={containerId}
+          className="ad-container min-h-[1px] w-full flex justify-center"
+          dangerouslySetInnerHTML={{ __html: adContent }}
+          data-ad-position={position}
+          data-ad-debug={adDebug}
+          data-execution-status={executionStatus}
+        />
+      )}
       
       {error && process.env.NODE_ENV === 'development' && (
         <div className="text-[10px] text-destructive text-center mt-1">

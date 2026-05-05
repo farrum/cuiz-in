@@ -100,6 +100,34 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                 </FormItem>
               )}
             />
+
+            <FormItem>
+              <FormLabel>Banner Size</FormLabel>
+              <Select 
+                value={(() => {
+                  const code = form.getValues('code') || '';
+                  const match = code.match(/<!-- size: (\d+x\d+) -->/);
+                  return match ? match[1] : '728x90';
+                })()} 
+                onValueChange={(val) => {
+                  const currentCode = form.getValues('code') || '';
+                  const newCode = currentCode.replace(/<!-- size: \d+x\d+ -->\n?/, '');
+                  form.setValue('code', `<!-- size: ${val} -->\n${newCode.trim()}`);
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a size" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="728x90">Leaderboard (728x90)</SelectItem>
+                  <SelectItem value="300x250">Medium Rectangle (300x250)</SelectItem>
+                  <SelectItem value="320x50">Mobile Banner (320x50)</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>Define the dimensions for the placeholder banner</FormDescription>
+            </FormItem>
             
             <FormField
               control={form.control}

@@ -21,7 +21,7 @@ export const fetchAdsFromLocalStorage = (position: string): AdSlot[] | null => {
       console.log(`Found ${adSlots.length} total ad slots in localStorage`);
       
       const matchingAds = adSlots.filter((ad: any) => 
-        ad.position === position && ad.active && ad.code && ad.code.trim() !== ''
+        ad.position === position && ad.active
       );
       
       console.log(`Found ${matchingAds.length} matching ads for position ${position}`);
@@ -80,8 +80,8 @@ export const fetchAdsFromSupabase = async (position: string): Promise<AdSlot[] |
       return null;
     }
     
-    // Filter out ads with empty code
-    const validAds = supabaseAds?.filter(ad => ad.code && ad.code.trim() !== '') || [];
+    // Use all active ads, including those with empty code (for placeholders)
+    const validAds = supabaseAds || [];
     
     if (validAds.length > 0) {
       console.log(`Found ${validAds.length} ads from Supabase for position ${position}`);

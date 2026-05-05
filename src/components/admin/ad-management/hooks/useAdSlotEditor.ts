@@ -53,7 +53,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       id: '',
       name: '',
       position: 'top',
-      code: '',
+      code: '<!-- size: 728x90 -->',
       active: true,
       last_updated: new Date().toISOString(),
       version_number: 1
@@ -62,7 +62,7 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       id: '',
       name: '',
       position: 'top',
-      code: '',
+      code: '<!-- size: 728x90 -->',
       active: true,
       last_updated: new Date().toISOString(),
       version_number: 1
