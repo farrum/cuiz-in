@@ -1,3 +1,5 @@
+declare const Deno: any;
+// @ts-ignore: Deno specific URL import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -20,7 +22,7 @@ function createSlug(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-serve(async (req) => {
+Deno.serve(async (req: any) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

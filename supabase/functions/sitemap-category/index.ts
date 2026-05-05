@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+declare const Deno: any;
+// @ts-ignore: Deno specific URL import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const supabaseUrl = 'https://pgywvtphfidouakypdno.supabase.co';
@@ -82,7 +83,7 @@ const slugToCategoriesMap: Record<string, string[]> = {
   ]
 };
 
-serve(async (req) => {
+Deno.serve(async (req: any) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -118,7 +119,7 @@ serve(async (req) => {
       // AUTO-DISCOVERY: Fetch unique categories and find the match
       console.log(`Auto-discovering categories for slug: ${categorySlug}`);
       const { data: allCats } = await supabase.from('quiz_questions').select('category').not('category', 'is', null);
-      const uniqueCats = [...new Set(allCats?.map(q => q.category) || [])];
+      const uniqueCats = [...new Set((allCats || []).map(q => q.category as string))];
       dbCategories = uniqueCats.filter(cat => createSlug(cat) === categorySlug);
       
     if (dbCategories.length === 0) {
