@@ -316,9 +316,9 @@ const QuizQuestionPage: React.FC = () => {
   // Create consistent slug for canonical URL (matches sitemap generation)
   const canonicalSlug = question ? createSlug(question.question, 80) : '';
 
-  // AMP URL for the question page
+  // AMP URL for the question page (proxied via _redirects)
   const ampUrl = question 
-    ? `https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question/${question.id}` 
+    ? `https://cuiz.in/amp/question/${question.id}` 
     : undefined;
 
   // JSON-LD breadcrumbs

@@ -42,7 +42,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date().toISOString().split('T')[0];
-    const ampBaseUrl = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question';
+    const ampBaseUrl = 'https://cuiz.in/amp/question';
 
     // Fetch all quiz questions for AMP pages with pagination
     const allQuestions: { id: string; created_at: string | null }[] = [];

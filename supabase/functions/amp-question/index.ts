@@ -366,11 +366,12 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/').filter(Boolean);
     
-    // Path: /amp-question/{questionId} - function name is first part
-    // pathParts[0] = 'amp-question', pathParts[1] = questionId
-    const questionId = pathParts[1] || url.searchParams.get('id');
+    // Path structure: /functions/v1/amp-question/{questionId}
+    // parts[0]=functions, parts[1]=v1, parts[2]=amp-question, parts[3]=questionId
+    const questionId = url.searchParams.get('id') || pathParts[3] || pathParts[pathParts.length - 1];
     
-    if (!questionId || questionId === 'amp-question') {
+    if (!questionId || questionId === 'amp-question' || questionId === 'v1') {
+      console.error('Invalid or missing Question ID in path:', url.pathname);
       return new Response(generate404Page(), {
         status: 404,
         headers: { 
