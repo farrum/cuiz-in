@@ -4,9 +4,16 @@ import { cn } from '@/lib/utils';
 interface AdPlaceholderProps {
   position: 'top' | 'middle' | 'bottom' | 'sidebar';
   className?: string;
+  forceShow?: boolean;
 }
 
-const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ position, className }) => {
+const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ position, className, forceShow = false }) => {
+  // Only show placeholder in development or if explicitly forced
+  const isDev = process.env.NODE_ENV === 'development';
+  if (!isDev && !forceShow) {
+    return <div className="h-0 w-0 overflow-hidden" aria-hidden="true" />;
+  }
+
   const getHeight = () => {
     switch (position) {
       case 'sidebar':
@@ -29,7 +36,7 @@ const AdPlaceholder: React.FC<AdPlaceholderProps> = ({ position, className }) =>
         className
       )}
     >
-      <span className="text-xs text-muted-foreground/50">Ad Space</span>
+      <span className="text-xs text-muted-foreground/50">Ad Space ({position})</span>
     </div>
   );
 };

@@ -369,9 +369,7 @@ const TopicPage: React.FC = () => {
         </Breadcrumb>
 
         {/* Top Ad */}
-        <div className="mb-8">
-          <SimpleAdBanner position="header" slotId="topic-top" />
-        </div>
+        <SimpleAdBanner position="header" slotId="topic-top" />
 
         {/* Topic Header */}
         <div className="text-center mb-8">
@@ -408,9 +406,7 @@ const TopicPage: React.FC = () => {
         </div>
 
         {/* Middle Ad */}
-        <div className="my-8">
-          <SimpleAdBanner position="content" slotId="topic-middle" />
-        </div>
+        <SimpleAdBanner position="content" slotId="topic-middle" />
 
         {/* Questions List */}
         <h2 className="text-2xl font-semibold mb-4">Featured Questions</h2>
@@ -482,9 +478,7 @@ const TopicPage: React.FC = () => {
         </div>
 
         {/* Bottom Ad */}
-        <div className="mt-12">
-          <SimpleAdBanner position="footer" slotId="topic-bottom" />
-        </div>
+        <SimpleAdBanner position="footer" slotId="topic-bottom" />
       </main>
     </PageLayout>
   );

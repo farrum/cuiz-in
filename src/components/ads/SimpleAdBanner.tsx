@@ -3,6 +3,7 @@ import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
 import AdPlaceholder from "./AdPlaceholder";
 import { cn } from "@/lib/utils";
+import { getPositionClasses } from "./adStyles";
 
 interface SimpleAdBannerProps {
   position: "top" | "middle" | "bottom" | "sidebar" | "header" | "content" | "footer";
@@ -33,8 +34,8 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   // Execute scripts within the ad content safely
   const executionStatus = useScriptExecution(adContent, containerId);
 
-  // If no ad content is available after loading, show nothing or a placeholder in dev
-  if (!adContent && adLoaded) {
+  // If no ad content is available, show nothing
+  if (!adContent) {
     return null;
   }
 
@@ -42,13 +43,11 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     <div 
       className={cn(
         "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
-        !adLoaded && "opacity-0",
-        adLoaded && "opacity-100",
+        adLoaded ? "opacity-100" : "opacity-0",
+        getPositionClasses(position),
         className
       )}
     >
-      {!adLoaded && <AdPlaceholder position={position === 'header' || position === 'footer' ? 'top' : (position as any)} />}
-      
       <div 
         id={containerId}
         className="ad-container min-h-[1px] w-full flex justify-center"
