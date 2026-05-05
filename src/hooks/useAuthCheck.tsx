@@ -13,6 +13,13 @@ interface AuthState {
   isTeamLeader: boolean;
 }
 
+const getHighestRole = (roles?: { role: string | null }[] | null): string => {
+  const roleSet = new Set((roles || []).map((item) => item.role).filter(Boolean));
+  if (roleSet.has('admin')) return 'admin';
+  if (roleSet.has('team_leader') || roleSet.has('teamleader')) return 'team_leader';
+  return 'player';
+};
+
 export const useAuthCheck = () => {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: null,
@@ -42,12 +49,11 @@ export const useAuthCheck = () => {
             .from('user_roles')
             .select('role')
             .eq('user_id', userId)
-            .maybeSingle()
         ]);
         
         const profile = profileResult.data;
         const isSuspended = profile?.suspended || false;
-        const userRole = roleResult.data?.role || 'player';
+        const userRole = getHighestRole(roleResult.data);
         const isTeamLeader = userRole === 'team_leader';
         const isAdmin = userRole === 'admin';
         
