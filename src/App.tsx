@@ -72,7 +72,7 @@ async function hydrateUserFromSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
       supabase.from('profiles').select('username, points').eq('id', userId).maybeSingle(),
-      supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
 
     if (profileResult.data) {
@@ -81,7 +81,8 @@ async function hydrateUserFromSession(userId: string) {
       localStorage.setItem(STORAGE_KEYS.USER_POINTS, String(profileResult.data.points ?? 0));
     }
 
-    const role = roleResult.data?.role || 'player';
+    const roles = new Set((roleResult.data || []).map((item) => item.role).filter(Boolean));
+    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') || roles.has('teamleader') ? 'team_leader' : 'player';
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
 
     if (role === 'admin') {
