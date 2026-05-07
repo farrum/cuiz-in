@@ -259,7 +259,7 @@ async function buildCategoriesIndex(supabase: any): Promise<string> {
 async function buildCategoryDetail(
   supabase: any,
   slug: string
-): Promise<string> {
+): Promise<{html: string, status: number}> {
   const { data: all } = await supabase
     .from("quiz_questions")
     .select("id,question,category,difficulty");
@@ -267,12 +267,13 @@ async function buildCategoryDetail(
     (q: any) => slugify(q.category || "") === slug
   );
   if (matches.length === 0) {
-    return htmlShell({
+    const html = htmlShell({
       title: "Category Not Found | CuizIN",
       description: "The requested quiz category was not found.",
       canonical: `${SITE_URL}/categories/${slug}`,
       body: `<h1>Category not found</h1><p><a href="${SITE_URL}/categories">Browse all categories</a></p>`,
     });
+    return { html, status: 404 };
   }
   const catName = matches[0].category;
   const items = matches
@@ -283,7 +284,7 @@ async function buildCategoryDetail(
     )
     .join("");
 
-  return htmlShell({
+  const html = htmlShell({
     title: `${catName} Quiz Questions | CuizIN`,
     description: `Play ${matches.length} ${catName} quiz questions. Test your knowledge and earn points on CuizIN.`,
     canonical: `${SITE_URL}/categories/${slug}`,
@@ -298,6 +299,7 @@ async function buildCategoryDetail(
       url: `${SITE_URL}/categories/${slug}`,
     },
   });
+  return { html, status: 200 };
 }
 
 async function buildBlogIndex(supabase: any): Promise<string> {
@@ -324,7 +326,7 @@ async function buildBlogIndex(supabase: any): Promise<string> {
   });
 }
 
-async function buildBlogPost(supabase: any, slug: string): Promise<string> {
+async function buildBlogPost(supabase: any, slug: string): Promise<{html: string, status: number}> {
   const { data } = await supabase
     .from("blog_posts")
     .select("*")
@@ -332,14 +334,15 @@ async function buildBlogPost(supabase: any, slug: string): Promise<string> {
     .eq("is_published", true)
     .maybeSingle();
   if (!data) {
-    return htmlShell({
+    const html = htmlShell({
       title: "Post not found | CuizIN",
       description: "The requested blog post was not found.",
       canonical: `${SITE_URL}/blog/${slug}`,
       body: `<h1>Post not found</h1><p><a href="${SITE_URL}/blog">Back to blog</a></p>`,
     });
+    return { html, status: 404 };
   }
-  return htmlShell({
+  const html = htmlShell({
     title: `${data.title} | CuizIN Blog`,
     description: data.excerpt || data.title,
     canonical: `${SITE_URL}/blog/${slug}`,
@@ -359,6 +362,7 @@ ${data.content || ""}
       mainEntityOfPage: `${SITE_URL}/blog/${slug}`,
     },
   });
+  return { html, status: 200 };
 }
 
 async function buildFaqIndex(supabase: any): Promise<string> {
@@ -397,7 +401,7 @@ async function buildFaqIndex(supabase: any): Promise<string> {
   });
 }
 
-async function buildQuestionPage(supabase: any, id: string): Promise<string> {
+async function buildQuestionPage(supabase: any, id: string): Promise<{html: string, status: number}> {
   const { data: q, error } = await supabase
     .from("quiz_questions")
     .select("*")
@@ -405,12 +409,13 @@ async function buildQuestionPage(supabase: any, id: string): Promise<string> {
     .single();
 
   if (error || !q) {
-    return htmlShell({
+    const html = htmlShell({
       title: "Question Not Found | CuizIN",
       description: "The requested quiz question was not found.",
       canonical: `${SITE_URL}/quiz/question/${id}`,
       body: `<h1>Question not found</h1><p><a href="${SITE_URL}/quiz">Browse all quizzes</a></p>`,
     });
+    return { html, status: 404 };
   }
 
   const options = Array.isArray(q.options) ? q.options : [];
@@ -498,7 +503,7 @@ async function buildQuestionPage(supabase: any, id: string): Promise<string> {
   // Inject keywords meta tag into the shell
   const htmlWithKeywords = html.replace('</title>', `</title>\n<meta name="keywords" content="${escapeHtml(keywords)}" />`);
 
-  return htmlWithKeywords;
+  return { html: htmlWithKeywords, status: 200 };
 }
 
 // ---------- Router ----------
@@ -534,13 +539,15 @@ Deno.serve(async (req: Request) => {
     }
     const catMatch = cleanPath.match(/^\/categories\/([^\/]+)\/?$/);
     if (catMatch) {
-      return htmlResponse(await buildCategoryDetail(supabase, catMatch[1]));
+      const result = await buildCategoryDetail(supabase, catMatch[1]);
+      return htmlResponse(result.html, result.status);
     }
     
     // Quiz Question Routing
     const questMatch = cleanPath.match(/^\/quiz\/question\/([^\/]+)(\/.*)?$/);
     if (questMatch) {
-      return htmlResponse(await buildQuestionPage(supabase, questMatch[1]));
+      const result = await buildQuestionPage(supabase, questMatch[1]);
+      return htmlResponse(result.html, result.status);
     }
 
     if (cleanPath === "/blog" || cleanPath === "/blog/") {
@@ -548,7 +555,8 @@ Deno.serve(async (req: Request) => {
     }
     const blogMatch = cleanPath.match(/^\/blog\/([^\/]+)\/?$/);
     if (blogMatch) {
-      return htmlResponse(await buildBlogPost(supabase, blogMatch[1]));
+      const result = await buildBlogPost(supabase, blogMatch[1]);
+      return htmlResponse(result.html, result.status);
     }
     if (cleanPath === "/faq" || cleanPath === "/faq/") {
       return htmlResponse(await buildFaqIndex(supabase));
