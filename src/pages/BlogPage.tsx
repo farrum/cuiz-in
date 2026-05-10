@@ -16,49 +16,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
-// Sample blog data - in a real app, this would come from a database
-const blogPosts = [
-  {
-    id: 1,
-    slug: 'how-to-maximize-your-quiz-points',
-    title: 'How to Maximize Your Quiz Points on CuizIN',
-    excerpt: 'Learn the top strategies for increasing your points when playing quizzes on CuizIN.',
-    category: 'Tips & Tricks',
-    date: '2025-04-15',
-    author: 'Quiz Master',
-    readTime: '5 min read'
-  },
-  {
-    id: 2,
-    slug: 'benefits-of-daily-quiz-challenges',
-    title: 'The Benefits of Completing Daily Quiz Challenges',
-    excerpt: 'Discover why daily challenges are the best way to boost your knowledge and earn more points.',
-    category: 'Guides',
-    date: '2025-04-10',
-    author: 'Quiz Expert',
-    readTime: '4 min read'
-  },
-  {
-    id: 3,
-    slug: 'science-behind-quiz-learning',
-    title: 'The Science Behind Learning Through Quizzes',
-    excerpt: 'Research shows that quiz-based learning enhances memory retention and cognitive capabilities.',
-    category: 'Education',
-    date: '2025-04-05',
-    author: 'Dr. Quiz',
-    readTime: '7 min read'
-  },
-  {
-    id: 4,
-    slug: 'building-quiz-streaks',
-    title: 'The Power of Building Quiz Streaks',
-    excerpt: 'How maintaining a consistent quiz streak can exponentially increase your points and knowledge.',
-    category: 'Strategy',
-    date: '2025-03-28',
-    author: 'Streak Master',
-    readTime: '6 min read'
-  }
-];
+import { blogPosts } from '@/utils/blogData';
 
 const BlogPage: React.FC = () => {
   const navigate = useNavigate();

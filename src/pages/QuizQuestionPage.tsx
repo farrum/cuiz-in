@@ -14,7 +14,8 @@ import {
   Tag,
   Home,
   Brain,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
 import { 
@@ -31,6 +32,7 @@ import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 import RelatedQuestions from '@/components/RelatedQuestions';
+import RelatedArticles from '@/components/RelatedArticles';
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -451,6 +453,39 @@ const QuizQuestionPage: React.FC = () => {
               onComplete={handleQuizComplete} 
             />
             
+            {/* SEO Content Bulking Block for AdSense */}
+            <div className="mt-8 bg-card rounded-lg p-6 border shadow-sm">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Topic Context & Learning
+              </h2>
+              
+              {question.explanation && (
+                <div className="mb-5">
+                  <h3 className="font-semibold text-foreground mb-2">Did You Know?</h3>
+                  <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
+                    {question.explanation}
+                  </p>
+                </div>
+              )}
+              
+              <div className="text-sm md:text-base text-muted-foreground space-y-3">
+                <p>
+                  This <strong className="text-foreground capitalize">{question.difficulty}</strong> level educational question is designed to test your understanding of <strong className="text-foreground">{question.category}</strong>. 
+                  Whether you are preparing for a general knowledge test, engaging in daily learning, or simply enjoying trivia, 
+                  taking the time to practice these questions improves cognitive retention and helps build a stronger foundational knowledge base.
+                </p>
+                
+                {keywords.length > 0 && (
+                  <p>
+                    <strong className="text-foreground">Key subjects covered in this topic:</strong> We have identified several important educational terms associated with this question. 
+                    These concepts include <span className="font-medium text-foreground">{keywords.join(', ')}</span>. 
+                    Mastering these topics will help you perform better in our comprehensive {question.category} trivia challenges and expand your overall expertise in the subject matter.
+                  </p>
+                )}
+              </div>
+            </div>
+            
             {/* Question navigation */}
             <div className="flex justify-between mt-8">
               {prevQuestion ? (
@@ -504,6 +539,11 @@ const QuizQuestionPage: React.FC = () => {
                 currentCategory={question.category}
                 title="Related Questions"
               />
+            )}
+            
+            {/* Added for AdSense Text Bulking - Cross Linking */}
+            {question && (
+              <RelatedArticles currentCategory={question.category} limit={2} />
             )}
             
             {/* Ad placement - Bottom of question page */}

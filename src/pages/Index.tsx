@@ -15,6 +15,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import AdPlaceholder from '@/components/ads/AdPlaceholder';
 
 const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
+const LatestArticlesSection = lazy(() => import('@/components/home/LatestArticlesSection'));
 const TestimonialsSection = lazy(() => import('@/components/home/TestimonialsSection'));
 const SectionLoader = () => <div className="min-h-[200px] flex items-center justify-center"><div className="animate-pulse text-muted-foreground text-sm">Loading...</div></div>;
 
@@ -120,6 +121,13 @@ const Index: React.FC = () => {
       <section className="py-6 md:py-8">
         <Suspense fallback={<SectionLoader />}>
           <CategoryPreviewSection />
+        </Suspense>
+      </section>
+
+      {/* Latest Articles Section - AdSense SEO Bulking */}
+      <section className="py-6 md:py-8 bg-muted/10 border-y">
+        <Suspense fallback={<SectionLoader />}>
+          <LatestArticlesSection />
         </Suspense>
       </section>
       
