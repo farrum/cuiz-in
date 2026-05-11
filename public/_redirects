@@ -12,7 +12,7 @@
 # Sitemap proxies (200 OK for Googlebot indexing)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index 200!
 /sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main 200!
-/sitemap-cat-*.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category 200!
+/sitemap-cat-*.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=:splat 200!
 /sitemap-amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 200!
 
 # SPA fallback - must be last

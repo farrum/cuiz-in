@@ -32,17 +32,33 @@ Deno.serve(async (req: any) => {
     const today = new Date().toISOString().split('T')[0];
     const baseUrl = 'https://cuiz.in';
 
-    // Fetch all unique categories from the quiz_questions table
-    const { data: categoryData, error } = await supabase
-      .from('quiz_questions')
-      .select('category')
-      .not('category', 'is', null);
+    // Fetch all unique categories from the quiz_questions table with pagination to ensure we get all of them
+    const allCategoriesSet = new Set<string>();
+    let offset = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: categoryData, error } = await supabase
+        .from('quiz_questions')
+        .select('category')
+        .not('category', 'is', null)
+        .range(offset, offset + pageSize - 1);
 
-    if (error) throw error;
+      if (error) throw error;
+      
+      if (categoryData && categoryData.length > 0) {
+        categoryData.forEach((q: any) => {
+          if (q.category) allCategoriesSet.add(createSlug(q.category));
+        });
+        offset += pageSize;
+        hasMore = categoryData.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
 
-    // Get unique category slugs
-    const uniqueCategories = [...new Set(categoryData?.map(q => createSlug(q.category)) || [])]
-      .filter(Boolean);
+    const uniqueCategories = Array.from(allCategoriesSet).filter(Boolean);
 
     // Generate sitemap index XML
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';

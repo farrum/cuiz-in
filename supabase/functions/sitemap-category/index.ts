@@ -118,9 +118,30 @@ Deno.serve(async (req: any) => {
     if (!dbCategories) {
       // AUTO-DISCOVERY: Fetch unique categories and find the match
       console.log(`Auto-discovering categories for slug: ${categorySlug}`);
-      const { data: allCats } = await supabase.from('quiz_questions').select('category').not('category', 'is', null);
-      const uniqueCats = [...new Set((allCats || []).map(q => q.category as string))];
-      dbCategories = uniqueCats.filter(cat => createSlug(cat) === categorySlug);
+      // AUTO-DISCOVERY: Fetch unique categories and find the match with pagination
+      console.log(`Auto-discovering categories for slug: ${categorySlug}`);
+      const allUniqueCats = new Set<string>();
+      let catOffset = 0;
+      let catHasMore = true;
+      
+      while (catHasMore) {
+        const { data: catData, error: catError } = await supabase
+          .from('quiz_questions')
+          .select('category')
+          .not('category', 'is', null)
+          .range(catOffset, catOffset + 999);
+          
+        if (catError) break;
+        if (catData && catData.length > 0) {
+          catData.forEach(q => allUniqueCats.add(q.category));
+          catOffset += 1000;
+          catHasMore = catData.length === 1000;
+        } else {
+          catHasMore = false;
+        }
+      }
+      
+      dbCategories = Array.from(allUniqueCats).filter(cat => createSlug(cat) === categorySlug);
       
     if (dbCategories.length === 0) {
         console.error(`No DB categories found matching slug: ${categorySlug}`);
