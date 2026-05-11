@@ -100,6 +100,9 @@ Deno.serve(async (req: any) => {
       if (lastPart.startsWith('sitemap-cat-')) {
         categorySlug = lastPart.replace('sitemap-cat-', '').replace('.xml', '');
       }
+    } else {
+      // If passed as query param, also strip .xml just in case it's passed as 'history.xml'
+      categorySlug = categorySlug.replace('.xml', '');
     }
 
     if (!categorySlug) {

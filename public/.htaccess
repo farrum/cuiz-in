@@ -6,20 +6,20 @@ RewriteRule ^(.*)$ https://cuiz.in/$1 [L,R=301]
 
 # Remove trailing slashes
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)/$ /$1 [L,R=301]# Redirect ads.txt to AdsTxtManager
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Main Sitemap Index (Canonical)
-RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
-
-# Individual Sitemap Files
-RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [R=301,L]
-RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=$1 [R=301,L]
-RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
+# Sitemap Proxies (Canonical) - Using [P] flag for internal proxy
+RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
+RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main [P,L]
+RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category?category=$1 [P,L]
+RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
 
 # Legacy and API Fallbacks
-RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
-RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
+RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
+RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
 
 # Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -46,7 +46,6 @@ RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerend
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-XSS-Protection "1; mode=block"
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googletagmanager.com https://*.googlesyndication.com https://*.gstatic.com https://*.doubleclick.net https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net wss://*.supabase.co; frame-src 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; object-src 'none'; base-uri 'self'; form-action 'self';"
 </IfModule>
 
 # Cache control
