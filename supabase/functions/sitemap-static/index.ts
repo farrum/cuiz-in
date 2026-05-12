@@ -116,7 +116,7 @@ serve(async (req) => {
       // Category sitemaps
       for (const cat of categories) {
         xml += '  <sitemap>\n';
-        xml += `    <loc>${SITE_URL}/sitemap-category-${cat}.xml</loc>\n`;
+        xml += `    <loc>${SITE_URL}/sitemap-cat-${cat}.xml</loc>\n`;
         xml += `    <lastmod>${today}</lastmod>\n`;
         xml += '  </sitemap>\n';
       }
