@@ -110,6 +110,60 @@
     />
   </head>
 
+    <!-- Schema.org structured data (sitewide) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://cuiz.in/#organization",
+          "name": "CuizIN",
+          "url": "https://cuiz.in/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://cuiz.in/og-image-cuizin.png",
+            "width": 1200,
+            "height": 630
+          },
+          "sameAs": []
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://cuiz.in/#website",
+          "url": "https://cuiz.in/",
+          "name": "CuizIN",
+          "description": "Free online quiz game with 1,900+ trivia questions across history, science, geography, sports, entertainment and more.",
+          "publisher": { "@id": "https://cuiz.in/#organization" },
+          "inLanguage": "en-IN",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://cuiz.in/browse?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://cuiz.in/#webapp",
+          "name": "CuizIN Quiz Game",
+          "url": "https://cuiz.in/",
+          "applicationCategory": "GameApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript and a modern web browser",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+          },
+          "publisher": { "@id": "https://cuiz.in/#organization" }
+        }
+      ]
+    }
+    </script>
+
   <body>
     <div id="root"></div>
 
