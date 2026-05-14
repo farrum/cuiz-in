@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-main.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cuiz.in/sitemap-amp.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-general-knowledge</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-science</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-history</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-geography</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-sports</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-entertainment</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-technology</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-category-literature</loc>
+  </sitemap>
+</sitemapindex>
