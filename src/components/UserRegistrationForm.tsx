@@ -182,9 +182,15 @@ const UserRegistrationForm: React.FC = () => {
 
       if (error) {
         console.error('[Registration] SignUp error:', error);
+        
+        let errorMessage = error.message;
+        if (error.message.includes('Error sending confirmation email')) {
+          errorMessage = "We're having trouble sending the confirmation email. Please try again later or contact support.";
+        }
+        
         toast({
           title: "Registration Failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         setIsLoading(false);
@@ -338,14 +344,13 @@ const UserRegistrationForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">Phone Number (Optional)</Label>
             <Input
               id="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter your phone number"
-              required
             />
           </div>
           
