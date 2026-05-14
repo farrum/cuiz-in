@@ -1,0 +1,24 @@
+# CuizIN
+
+> CuizIN is India's free points-based quiz platform. Players answer trivia across categories, earn points, and climb monthly leaderboards.
+
+## Pages
+
+- [Home](/): Play the daily quiz and see top players.
+- [Play Quiz](/quiz): Start a quiz session across categories and difficulties.
+- [Browse Questions](/browse): Explore the full question bank.
+- [Categories](/categories): All quiz categories (Science, History, Sports, etc.).
+- [Topics](/topics): Curated topic pages with related questions.
+- [Web Stories](/stories): Mobile-friendly swipeable quiz stories.
+- [Blog](/blog): Articles, tips, and guides about quizzes and learning.
+- [FAQ](/faq): Common questions about CuizIN.
+- [How to Play](/how-to-play): Rules, scoring, and tips.
+- [Referral Program](/referral-program): Invite friends and earn bonus points.
+- [Login](/login): Sign in to your account.
+- [Register](/register): Create a new account.
+
+## Optional
+
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
+- [Disclaimer](/disclaimer): Site disclaimer.
