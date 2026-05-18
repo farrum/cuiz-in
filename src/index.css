@@ -410,3 +410,8 @@ body {
 body.no-ad-anchor {
   padding-bottom: 0;
 }
+
+/* Hide AdSense slots until they are actually filled to avoid blank gaps. */
+ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
+}
