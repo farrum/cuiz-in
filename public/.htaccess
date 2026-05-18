@@ -14,6 +14,7 @@ RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 # Sitemap Proxies (Canonical) - Using [P] flag for internal proxy
 RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]
 RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
+RewriteRule ^sitemap-cat-([a-z-]+)-sub-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [P,L]
 RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
 RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
 

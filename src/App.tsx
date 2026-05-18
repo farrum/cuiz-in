@@ -35,6 +35,7 @@ const BlogPage = React.lazy(() => import('@/pages/BlogPage'));
 const BlogPostPage = React.lazy(() => import('@/pages/BlogPostPage'));
 const CategoriesPage = React.lazy(() => import('@/pages/CategoriesPage'));
 const CategoryDetailPage = React.lazy(() => import('@/pages/CategoryDetailPage'));
+const SubcategoryPage = React.lazy(() => import('@/pages/SubcategoryPage'));
 const ChallengePlayPage = React.lazy(() => import('@/pages/ChallengePlayPage'));
 const ArchivedChallengesPage = React.lazy(() => import('@/pages/ArchivedChallengesPage'));
 const BrowseQuestionsPage = React.lazy(() => import('@/pages/BrowseQuestionsPage'));
@@ -323,6 +324,11 @@ function App() {
               <Route path="/categories/:categorySlug" element={
                 <Suspense fallback={<PageLoader />}>
                   <CategoryDetailPage />
+                </Suspense>
+              } />
+              <Route path="/categories/:categorySlug/:subSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <SubcategoryPage />
                 </Suspense>
               } />
               <Route path="/browse" element={

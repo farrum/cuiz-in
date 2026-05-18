@@ -1,6 +1,7 @@
 # Sitemap proxies (200 OK for Googlebot indexing)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 200
 /sitemap-main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main 200
+/sitemap-cat-:category-sub-:sub.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=:category&sub=:sub 200
 /sitemap-cat-*.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=:splat 200
 /sitemap-amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 200
 
