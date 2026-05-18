@@ -10,7 +10,6 @@ interface QuestionEntry {
   id: string;
   question: string;
   category: string;
-  correct_answer: string;
 }
 
 const HtmlSitemapPage: React.FC = () => {
@@ -31,7 +30,7 @@ const HtmlSitemapPage: React.FC = () => {
         while (hasMore) {
           const { data, error } = await supabase
             .from('quiz_questions')
-            .select('id, question, category, correct_answer')
+            .select('id, question, category')
             .order('category', { ascending: true })
             .order('created_at', { ascending: false })
             .range(from, from + batchSize - 1);
@@ -152,7 +151,6 @@ const HtmlSitemapPage: React.FC = () => {
                 <ul className="space-y-1 text-sm">
                   {questionsByCategory[category].map(q => {
                     const questionSlug = createSlug(q.question);
-                    const answerSlug = createSlug(q.correct_answer, 50);
                     return (
                       <li key={q.id} className="py-1 border-b border-border/30">
                         <Link
@@ -161,16 +159,6 @@ const HtmlSitemapPage: React.FC = () => {
                         >
                           {q.question}
                         </Link>
-                        {answerSlug && (
-                          <span className="ml-2">
-                            — <Link
-                              to={`/answer/${q.id}/${answerSlug}`}
-                              className="text-muted-foreground hover:text-primary transition-colors text-xs"
-                            >
-                              View Answer
-                            </Link>
-                          </span>
-                        )}
                       </li>
                     );
                   })}
