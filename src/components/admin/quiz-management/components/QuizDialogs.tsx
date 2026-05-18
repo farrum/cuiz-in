@@ -14,6 +14,7 @@ import TriviaImporter from '../TriviaImporter';
 import LearnTriviaDialog from '../LearnTriviaDialog';
 import { LearnImageTriviaDialog } from '../image-quiz';
 import ImageQuizForm from '../ImageQuizForm';
+import AIGenerateQuestionsDialog from '../AIGenerateQuestionsDialog';
 
 interface QuizDialogsProps {
   isAddDialogOpen: boolean;
@@ -30,6 +31,8 @@ interface QuizDialogsProps {
   setIsLearnImageTriviaDialogOpen: (open: boolean) => void;
   isImageQuizDialogOpen: boolean;
   setIsImageQuizDialogOpen: (open: boolean) => void;
+  isAiGenerateDialogOpen: boolean;
+  setIsAiGenerateDialogOpen: (open: boolean) => void;
   currentQuestion: QuizQuestion | null;
   categories: string[];
   handleAddQuestion: (question: Omit<QuizQuestion, 'id'>) => Promise<void>;
@@ -52,6 +55,8 @@ const QuizDialogs: React.FC<QuizDialogsProps> = ({
   setIsLearnImageTriviaDialogOpen,
   isImageQuizDialogOpen,
   setIsImageQuizDialogOpen,
+  isAiGenerateDialogOpen,
+  setIsAiGenerateDialogOpen,
   currentQuestion,
   categories,
   handleAddQuestion,
@@ -164,6 +169,25 @@ const QuizDialogs: React.FC<QuizDialogsProps> = ({
               setIsLearnImageTriviaDialogOpen(false);
             }}
             onCancel={() => setIsLearnImageTriviaDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAiGenerateDialogOpen} onOpenChange={setIsAiGenerateDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>AI Generate Questions</DialogTitle>
+            <DialogDescription>
+              Use Lovable AI to generate new quiz questions with category, sub-topic, and India focus.
+            </DialogDescription>
+          </DialogHeader>
+          <AIGenerateQuestionsDialog
+            categories={categories}
+            onSuccess={() => {
+              fetchQuestions();
+              setIsAiGenerateDialogOpen(false);
+            }}
+            onCancel={() => setIsAiGenerateDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>

@@ -59,6 +59,8 @@ const QuizManagement: React.FC = () => {
     setIsLearnImageTriviaDialogOpen,
     isImageQuizDialogOpen, 
     setIsImageQuizDialogOpen,
+    isAiGenerateDialogOpen,
+    setIsAiGenerateDialogOpen,
     handleAddQuestion,
     handleUpdateQuestion,
     handleDeleteQuestion,
@@ -102,6 +104,7 @@ const QuizManagement: React.FC = () => {
             onAddImageQuestion={() => setIsImageQuizDialogOpen(true)}
             onLearnImageTrivia={() => setIsLearnImageTriviaDialogOpen(true)}
             onCleanupImages={handleCleanupImageQuizzes}
+            onAiGenerate={() => setIsAiGenerateDialogOpen(true)}
           />
 
           <QuizFilterSection 
@@ -184,6 +187,8 @@ const QuizManagement: React.FC = () => {
         setIsLearnImageTriviaDialogOpen={setIsLearnImageTriviaDialogOpen}
         isImageQuizDialogOpen={isImageQuizDialogOpen}
         setIsImageQuizDialogOpen={setIsImageQuizDialogOpen}
+        isAiGenerateDialogOpen={isAiGenerateDialogOpen}
+        setIsAiGenerateDialogOpen={setIsAiGenerateDialogOpen}
         currentQuestion={currentQuestion}
         categories={categories}
         handleAddQuestion={handleAddQuestion}

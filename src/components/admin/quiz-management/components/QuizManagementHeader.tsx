@@ -8,7 +8,8 @@ import {
   BookOpenIcon,
   ImageIcon,
   Users,
-  Wand2
+  Wand2,
+  Sparkles
 } from 'lucide-react';
 
 interface QuizManagementHeaderProps {
@@ -21,6 +22,7 @@ interface QuizManagementHeaderProps {
   onAddImageQuestion: () => void;
   onLearnImageTrivia: () => void;
   onCleanupImages: () => void;
+  onAiGenerate: () => void;
 }
 
 const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
@@ -32,7 +34,8 @@ const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
   onExport,
   onAddImageQuestion,
   onLearnImageTrivia,
-  onCleanupImages
+  onCleanupImages,
+  onAiGenerate,
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -66,6 +69,14 @@ const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
             >
               <BookOpenIcon className="h-4 w-4" />
               Learn Trivia
+            </Button>
+            <Button
+              onClick={onAiGenerate}
+              variant="outline"
+              className="flex items-center gap-1 border-primary/40 text-primary hover:bg-primary/5"
+            >
+              <Sparkles className="h-4 w-4" />
+              AI Generate
             </Button>
             <Button 
               onClick={onImportQuestions}

@@ -17,6 +17,7 @@ export const useQuizActions = (
   const [isLearnTriviaDialogOpen, setIsLearnTriviaDialogOpen] = useState(false);
   const [isLearnImageTriviaDialogOpen, setIsLearnImageTriviaDialogOpen] = useState(false);
   const [isImageQuizDialogOpen, setIsImageQuizDialogOpen] = useState(false);
+  const [isAiGenerateDialogOpen, setIsAiGenerateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddQuestion = async (question: Omit<QuizQuestion, 'id'>) => {
@@ -234,6 +235,8 @@ export const useQuizActions = (
     setIsLearnImageTriviaDialogOpen,
     isImageQuizDialogOpen, 
     setIsImageQuizDialogOpen,
+    isAiGenerateDialogOpen,
+    setIsAiGenerateDialogOpen,
     handleAddQuestion,
     handleUpdateQuestion,
     handleDeleteQuestion,
