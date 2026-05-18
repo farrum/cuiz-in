@@ -1094,6 +1094,14 @@ export type Database = {
           slot_id: string
         }[]
       }
+      get_attempted_correct_answers: {
+        Args: { p_question_ids: string[] }
+        Returns: {
+          correct_answer: string
+          explanation: string
+          question_id: string
+        }[]
+      }
       get_current_user_id: { Args: never; Returns: string }
       get_current_user_role: { Args: never; Returns: string }
       get_daily_ad_reports: {
