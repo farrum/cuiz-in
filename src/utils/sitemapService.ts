@@ -216,13 +216,6 @@ export const sitemapService = {
     // Answer URLs are now generated server-side by edge function sitemaps
     // (correct_answer is no longer exposed to the client for cheating protection).
     return [];
-    try {
-      return [];
-        .filter((url): url is SitemapEntry => url !== null);
-    } catch (error) {
-      console.error('Error generating answer URLs:', error);
-      return [];
-    }
   },
 
   /**
