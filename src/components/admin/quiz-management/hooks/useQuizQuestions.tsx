@@ -15,10 +15,10 @@ export const useQuizQuestions = () => {
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
+      // Use admin RPC to fetch full rows (including correct_answer).
+      // Direct SELECT on quiz_questions no longer returns correct_answer.
       const { data, error } = await supabase
-        .from('quiz_questions')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('admin_get_quiz_questions', { p_ids: null });
         
       if (error) {
         throw error;
