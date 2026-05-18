@@ -149,10 +149,24 @@ const WebStoriesPage: React.FC = () => {
     }
   };
 
-  const handleAnswerSelect = (answer: string) => {
+  const handleAnswerSelect = async (answer: string) => {
     setSelectedAnswer(answer);
     setShowAnswer(true);
     setIsPaused(true);
+
+    if (!currentStory) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+        body: { question_id: currentStory.id, selected_answer: answer }
+      });
+      if (!error && data?.correct_answer) {
+        setStories(prev => prev.map((s, idx) =>
+          idx === currentIndex ? { ...s, correctAnswer: data.correct_answer, explanation: data.explanation || s.explanation } : s
+        ));
+      }
+    } catch (err) {
+      console.error('[WebStories] validate error', err);
+    }
   };
 
   const handleClose = () => {
