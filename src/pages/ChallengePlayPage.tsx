@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import useChallengeData from '@/hooks/challenge/useChallengeData';
+import { supabase } from '@/integrations/supabase/client';
 import ChallengeInProgress from '@/components/challenge/ChallengeInProgress';
 import ChallengeComplete from '@/components/challenge/ChallengeComplete';
 import ChallengeNotFound from '@/components/challenge/ChallengeNotFound';
@@ -68,7 +69,7 @@ const ChallengePlayPage = () => {
     }
   }, [challenge, loading, isComplete, toast, navigate]);
   
-  const handleQuestionCompleteWithErrorHandling = (selectedOption: string) => {
+  const handleQuestionCompleteWithErrorHandling = async (selectedOption: string) => {
     try {
       if (!selectedOption) {
         toast({
@@ -80,7 +81,20 @@ const ChallengePlayPage = () => {
       }
       
       const currentQuestion = questions[currentQuestionIndex];
-      const isCorrect = selectedOption === currentQuestion.correctAnswer;
+      // Server-side validation (correct_answer is no longer exposed to the client).
+      let isCorrect = false;
+      try {
+        const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+          body: { question_id: currentQuestion.id, selected_answer: selectedOption }
+        });
+        if (!error && data) {
+          isCorrect = !!data.is_correct;
+          currentQuestion.correctAnswer = data.correct_answer || currentQuestion.correctAnswer;
+          currentQuestion.explanation = data.explanation || currentQuestion.explanation;
+        }
+      } catch (err) {
+        console.error('[ChallengePlayPage] validate error', err);
+      }
       
       handleQuestionComplete(isCorrect, selectedOption);
     } catch (error) {
