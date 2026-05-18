@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Loader2 } from 'lucide-react';
 import { fetchTriviaQuestions, saveTriviaToDB, getTriviaCategories } from '@/utils/triviaFetcher';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Link } from 'react-router-dom';
 
 interface LearnTriviaDialogProps {
   onSuccess: () => void;
@@ -115,7 +116,21 @@ const LearnTriviaDialog: React.FC<LearnTriviaDialogProps> = ({ onSuccess, onCanc
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
+
+      <div className="rounded-md border border-border bg-muted/40 p-3">
+        <p className="text-xs font-medium mb-2 text-muted-foreground">
+          Quick picks (SEO landing pages):
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/gk-quiz" className="text-xs px-3 py-1 rounded-full border hover:bg-background">🧠 GK Quiz</Link>
+          <Link to="/cricket-quiz" className="text-xs px-3 py-1 rounded-full border hover:bg-background">🏏 Cricket Quiz</Link>
+          <Link to="/bollywood-quiz" className="text-xs px-3 py-1 rounded-full border hover:bg-background">🎬 Bollywood Quiz</Link>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-2">
+          Use General Knowledge (id 9) or Sports (id 21) below to import related questions from Open Trivia DB.
+        </p>
+      </div>
+
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium mb-1 block">Number of Questions</label>
