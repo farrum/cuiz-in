@@ -1054,6 +1054,28 @@ export type Database = {
         Args: { p_icon_id: string }
         Returns: boolean
       }
+      admin_get_quiz_questions: {
+        Args: { p_ids?: string[] }
+        Returns: {
+          category: string
+          correct_answer: string
+          created_at: string | null
+          difficulty: string | null
+          explanation: string | null
+          id: string
+          image_url: string | null
+          options: Json
+          points: number | null
+          question: string
+          question_type: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "quiz_questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_insert_profile_icon: {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
