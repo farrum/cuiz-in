@@ -11,7 +11,7 @@ interface StoryQuestion {
   id: string;
   question: string;
   options: string[];
-  correctAnswer: string;
+  correctAnswer?: string;
   category: string;
   difficulty: string | null;
   explanation: string | null;
@@ -76,21 +76,21 @@ const WebStoriesPage: React.FC = () => {
         // If storyId provided, start from that question
         let query = supabase
           .from('quiz_questions')
-          .select('id, question, options, correct_answer, category, difficulty, explanation')
+          .select('id, question, options, category, difficulty, explanation')
           .limit(10);
 
         if (storyId) {
           // Get the specific question and 9 more from same category
           const { data: mainQuestion } = await supabase
             .from('quiz_questions')
-            .select('id, question, options, correct_answer, category, difficulty, explanation')
+            .select('id, question, options, category, difficulty, explanation')
             .eq('id', storyId)
             .single();
 
           if (mainQuestion) {
             const { data: relatedQuestions } = await supabase
               .from('quiz_questions')
-              .select('id, question, options, correct_answer, category, difficulty, explanation')
+              .select('id, question, options, category, difficulty, explanation')
               .eq('category', mainQuestion.category)
               .neq('id', storyId)
               .limit(9);
@@ -100,7 +100,6 @@ const WebStoriesPage: React.FC = () => {
               id: q.id,
               question: q.question,
               options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as string),
-              correctAnswer: q.correct_answer,
               category: q.category,
               difficulty: q.difficulty,
               explanation: q.explanation
@@ -118,7 +117,6 @@ const WebStoriesPage: React.FC = () => {
             id: q.id,
             question: q.question,
             options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as string),
-            correctAnswer: q.correct_answer,
             category: q.category,
             difficulty: q.difficulty,
             explanation: q.explanation
