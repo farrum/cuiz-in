@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { categoriesArray } from '@/utils/categoryData';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -130,7 +131,34 @@ const CategoriesPage: React.FC = () => {
               Explore our diverse range of quiz topics and challenge yourself in your favorite categories
             </p>
           </div>
-          
+
+          {/* Featured landing pages — high-intent SEO entry points */}
+          <section aria-label="Featured quizzes" className="mb-10">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> Featured Quizzes
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { slug: 'gk-quiz', name: 'GK Quiz', icon: '🧠', desc: '200+ general knowledge questions for exams and trivia nights.' },
+                { slug: 'cricket-quiz', name: 'Cricket Quiz', icon: '🏏', desc: 'IPL, World Cup, Indian cricket legends and records.' },
+                { slug: 'bollywood-quiz', name: 'Bollywood Quiz', icon: '🎬', desc: 'Hindi cinema, iconic songs, stars and dialogues.' },
+              ].map(f => (
+                <Card key={f.slug} className="hover:shadow-md transition-shadow border-primary/40">
+                  <CardHeader>
+                    <div className="text-4xl mb-2">{f.icon}</div>
+                    <CardTitle>{f.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="mb-4">{f.desc}</CardDescription>
+                    <Button asChild className="w-full">
+                      <Link to={`/${f.slug}`}>Play {f.name}</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
           {isLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
