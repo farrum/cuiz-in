@@ -213,31 +213,11 @@ export const sitemapService = {
    * Generate answer page URLs from database - ONLY correct answers to avoid duplicate content
    */
   generateAnswerUrls: async (): Promise<SitemapEntry[]> => {
+    // Answer URLs are now generated server-side by edge function sitemaps
+    // (correct_answer is no longer exposed to the client for cheating protection).
+    return [];
     try {
-      const { data: questions } = await supabase
-        .from('quiz_questions')
-        .select('id, correct_answer, created_at');
-
-      if (!questions) return [];
-      const today = new Date().toISOString().split('T')[0];
-
-      return questions
-        .filter(q => q.correct_answer)
-        .map(question => {
-          const answerSlug = createSlug(question.correct_answer, 50);
-          if (!answerSlug) return null;
-          
-          const lastmod = question.created_at 
-            ? new Date(question.created_at).toISOString().split('T')[0]
-            : today;
-            
-          return {
-            loc: `https://cuiz.in/answer/${question.id}/${answerSlug}`,
-            lastmod: lastmod,
-            changefreq: 'monthly',
-            priority: '0.6'
-          };
-        })
+      return [];
         .filter((url): url is SitemapEntry => url !== null);
     } catch (error) {
       console.error('Error generating answer URLs:', error);
