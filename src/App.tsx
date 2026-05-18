@@ -44,6 +44,7 @@ const HtmlSitemapPage = React.lazy(() => import('@/pages/HtmlSitemapPage'));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const TeamLeaderDashboardPage = React.lazy(() => import("@/pages/TeamLeaderDashboardPage"));
 const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
+const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 
 // Lazy load components that aren't needed immediately
 const ProtectedRoute = React.lazy(() => import("@/components/ProtectedRoute"));
@@ -392,6 +393,23 @@ function App() {
               <Route path="/quiz/question/:questionId/:questionSlug" element={
                 <Suspense fallback={<PageLoader />}>
                   <QuizQuestionPage />
+                </Suspense>
+              } />
+
+              {/* SEO landing pages targeting high-volume Indian search queries */}
+              <Route path="/cricket-quiz" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizLandingPage slug="cricket-quiz" />
+                </Suspense>
+              } />
+              <Route path="/bollywood-quiz" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizLandingPage slug="bollywood-quiz" />
+                </Suspense>
+              } />
+              <Route path="/gk-quiz" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizLandingPage slug="gk-quiz" />
                 </Suspense>
               } />
               
