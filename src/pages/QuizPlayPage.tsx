@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
+import { useQuizPoints } from '@/hooks/quiz/useQuizPoints';
 import EnhancedQuizCard from '@/components/quiz/EnhancedQuizCard';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 import Header from '@/components/Header';
@@ -36,6 +37,10 @@ const QuizPlayPage: React.FC = () => {
     incrementStreak,
     resetStreak,
   } = usePersistentQuizStats();
+
+  // Daily/monthly/total points fetched from DB (refreshes after each answer)
+  const [, setNextBadgeThreshold] = useState(10);
+  const { dailyPoints, fetchPoints } = useQuizPoints(setNextBadgeThreshold);
 
   // Fetch current question by id
   useEffect(() => {
@@ -96,6 +101,9 @@ const QuizPlayPage: React.FC = () => {
     incrementQuestionsAnswered();
     if (isCorrect) incrementStreak(); else resetStreak();
 
+    // Refresh points from DB so the stats bar reflects today's earnings
+    fetchPoints();
+
     const newCount = questionsAnswered + 1;
     // Show interstitial every Nth question, but not on the very first one.
     if (newCount > 0 && newCount % INTERSTITIAL_EVERY === 0) {
@@ -103,7 +111,7 @@ const QuizPlayPage: React.FC = () => {
     } else {
       goToNextQuestion();
     }
-  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, goToNextQuestion]);
+  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, goToNextQuestion, fetchPoints]);
 
   const canonicalUrl = question
     ? `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`
@@ -129,7 +137,7 @@ const QuizPlayPage: React.FC = () => {
         <CompactStatsBar
           questionsAnswered={questionsAnswered}
           streak={streak}
-          dailyPoints={0}
+          dailyPoints={dailyPoints}
           className="mb-4"
         />
 
