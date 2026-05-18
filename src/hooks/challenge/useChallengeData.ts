@@ -111,13 +111,21 @@ const useChallengeData = (
             return;
           }
           
-          // Get question data to include explanations and correct answers
+          // Get question data (without correct_answer — column is restricted).
           const { data: questionData, error: questionError } = await supabase
             .from('quiz_questions')
-            .select('*')
+            .select('id, question, explanation')
             .in('id', challengeData.question_ids);
             
           if (questionError) throw questionError;
+
+          // Fetch correct answers for questions the user has already attempted.
+          const { data: answerReveal } = await supabase
+            .rpc('get_attempted_correct_answers', { p_question_ids: challengeData.question_ids });
+          const correctAnswerMap: Record<string, string> = {};
+          for (const r of (answerReveal || []) as Array<{ question_id: string; correct_answer: string }>) {
+            correctAnswerMap[r.question_id] = r.correct_answer;
+          }
           
           // Create simple lookup objects
           const questionMap: {[key: string]: QuestionExplanation} = {};
@@ -126,7 +134,7 @@ const useChallengeData = (
             questionMap[q.id] = {
               question: q.question,
               explanation: q.explanation || '',
-              correctAnswer: q.correct_answer
+              correctAnswer: correctAnswerMap[q.id] || ''
             };
           }
           
