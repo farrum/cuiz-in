@@ -31,6 +31,21 @@ const Footer: React.FC = () => {
         <nav aria-label="Quiz categories" className="mb-8 pb-8 border-b border-border">
           <h3 className="text-lg font-semibold mb-4">Browse Quiz Categories</h3>
           <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 text-sm" role="list">
+            <li>
+              <Link to="/gk-quiz" className="text-primary hover:underline font-medium">
+                GK Quiz
+              </Link>
+            </li>
+            <li>
+              <Link to="/cricket-quiz" className="text-primary hover:underline font-medium">
+                Cricket Quiz
+              </Link>
+            </li>
+            <li>
+              <Link to="/bollywood-quiz" className="text-primary hover:underline font-medium">
+                Bollywood Quiz
+              </Link>
+            </li>
             {seoCategories.map((c) => (
               <li key={c.slug}>
                 <Link
