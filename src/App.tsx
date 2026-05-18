@@ -46,6 +46,7 @@ const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const TeamLeaderDashboardPage = React.lazy(() => import("@/pages/TeamLeaderDashboardPage"));
 const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
 const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
+const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 
 // Lazy load components that aren't needed immediately
 const ProtectedRoute = React.lazy(() => import("@/components/ProtectedRoute"));
@@ -399,6 +400,16 @@ function App() {
               <Route path="/quiz/question/:questionId/:questionSlug" element={
                 <Suspense fallback={<PageLoader />}>
                   <QuizQuestionPage />
+                </Suspense>
+              } />
+              <Route path="/quiz/play/:questionId/:questionSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizPlayPage />
+                </Suspense>
+              } />
+              <Route path="/quiz/play/:questionId" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizPlayPage />
                 </Suspense>
               } />
 

@@ -401,3 +401,12 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* Reserve space for AdSense Auto Ads bottom anchor so it doesn't cover CTAs.
+   Admin pages opt out via the .no-ad-anchor class on a root wrapper. */
+body {
+  padding-bottom: 60px;
+}
+body.no-ad-anchor {
+  padding-bottom: 0;
+}

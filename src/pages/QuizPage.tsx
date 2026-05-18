@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
 import Header from '@/components/Header';
@@ -20,7 +20,9 @@ import TopPlayersSection from '@/components/TopPlayersSection';
 import LeaderboardSection from '@/components/LeaderboardSection';
 import MonthlyWinnersSection from '@/components/MonthlyWinnersSection';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Settings2, Play } from 'lucide-react';
+import { getRandomQuestion } from '@/utils/quizData';
+import { createSlug } from '@/utils/urlUtils';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,6 +36,8 @@ const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
   const [milestoneCheckTrigger, setMilestoneCheckTrigger] = useState(0);
   const [showLeaderboards, setShowLeaderboards] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const navigate = useNavigate();
   
   const {
     currentQuestion,
@@ -69,6 +73,17 @@ const QuizPage: React.FC = () => {
   };
   
   useMonthlyReset();
+
+  const handleStartPlaying = async () => {
+    setIsStarting(true);
+    try {
+      const q = await getRandomQuestion();
+      navigate(`/quiz/play/${q.id}/${createSlug(q.question, 80)}`);
+    } catch (e) {
+      console.error('Failed to start play session', e);
+      setIsStarting(false);
+    }
+  };
   
   useEffect(() => {
     const initializeQuiz = async () => {
@@ -181,6 +196,19 @@ const QuizPage: React.FC = () => {
         
         {/* Admin-only Ad Debug Panel */}
         <AdminAdDebugPanel className="mb-3" />
+
+        {/* Primary CTA: each question = its own URL = its own ad auction */}
+        <div className="mb-4">
+          <Button
+            size="lg"
+            className="w-full gap-2"
+            onClick={handleStartPlaying}
+            disabled={isStarting}
+          >
+            <Play className="h-5 w-5" />
+            {isStarting ? 'Loading…' : 'Start Playing'}
+          </Button>
+        </div>
         
         {/* Top Ad - compact */}
         <SimpleAdBanner position="top" slotId="quiz-top" className="mb-3" />
