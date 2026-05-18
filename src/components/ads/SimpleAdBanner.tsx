@@ -22,6 +22,12 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   slotId,
   pageSection
 }) => {
+  // Hide all ad placeholder slots until a real ad is actually rendered by AdSense.
+  // Empty bordered boxes hurt UX and add CLS; AdSense Auto Ads inject their own
+  // containers when they have a fill, so we simply render nothing here.
+  return null;
+
+  // eslint-disable-next-line no-unreachable
   const uniqueId = useId().replace(/:/g, "");
   const containerId = `ad-container-${position}-${uniqueId}`;
   
