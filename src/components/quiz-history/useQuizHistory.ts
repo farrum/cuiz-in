@@ -65,7 +65,6 @@ export const useQuizHistory = (userId: string, page: number, limit: number) => {
             id,
             question,
             options,
-            correct_answer,
             explanation,
             category
           )
@@ -77,6 +76,19 @@ export const useQuizHistory = (userId: string, page: number, limit: number) => {
       if (error) {
         console.error('Error fetching answered questions:', error);
         return;
+      }
+
+      // Fetch correct answers for the attempted questions via RPC
+      const questionIds = (data || [])
+        .map((r: any) => r.question_id)
+        .filter(Boolean);
+      let correctMap: Record<string, string> = {};
+      if (questionIds.length > 0) {
+        const { data: reveal } = await supabase
+          .rpc('get_attempted_correct_answers', { p_question_ids: questionIds });
+        for (const r of (reveal || []) as Array<{ question_id: string; correct_answer: string }>) {
+          correctMap[r.question_id] = r.correct_answer;
+        }
       }
 
       // Transform data to AnsweredQuestion format
@@ -117,7 +129,7 @@ export const useQuizHistory = (userId: string, page: number, limit: number) => {
 
         // Set default values for when quiz_questions is null or undefined
         const questionText = quizQuestion?.question || 'Question not available';
-        const correctAnswer = quizQuestion?.correct_answer || '';
+        const correctAnswer = correctMap[item.question_id] || '';
         const explanation = quizQuestion?.explanation || 'No explanation available';
         const category = quizQuestion?.category || 'General';
 
