@@ -18,6 +18,7 @@ import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
 import { generateCategorySocialMeta } from '@/utils/canonicalUrl';
+import { getSubcategories } from '@/utils/subcategoryConfig';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -355,17 +356,28 @@ const CategoryDetailPage: React.FC = () => {
             
             <div className="bg-card rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4">Subcategories</h2>
-              <div className="grid grid-cols-2 gap-2">
-                {category.subcategories.map((subcat, index) => (
-                  <Button 
-                    key={index} 
-                    variant="outline" 
-                    className="justify-start h-auto py-2 px-3 text-sm"
-                  >
-                    {subcat}
-                  </Button>
-                ))}
-              </div>
+              {(() => {
+                const subs = getSubcategories(categorySlug || '');
+                if (subs.length === 0) {
+                  return (
+                    <p className="text-sm text-muted-foreground">No subcategories yet.</p>
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-2 gap-2">
+                    {subs.map((s) => (
+                      <Button
+                        key={s.slug}
+                        asChild
+                        variant="outline"
+                        className="justify-start h-auto py-2 px-3 text-sm"
+                      >
+                        <Link to={`/categories/${categorySlug}/${s.slug}`}>{s.name}</Link>
+                      </Button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
