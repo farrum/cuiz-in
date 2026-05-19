@@ -53,10 +53,10 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
       
       // Fetch ALL monthly gems to calculate current user's rank
       const { data: allMonthlyData, error: allMonthlyError } = await supabase
-        .from('monthly_gems')
+        .from('monthly_points')
         .select('user_id, gems')
         .eq('month', monthKey)
-        .order('gems', { ascending: false });
+        .order('points', { ascending: false });
 
       if (allMonthlyError) throw allMonthlyError;
 

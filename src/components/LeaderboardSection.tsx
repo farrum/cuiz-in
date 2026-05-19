@@ -34,7 +34,7 @@ const LeaderboardSection: React.FC = () => {
       const { data: topUsers, error } = await supabase
         .from('profiles')
         .select('id, username, gems')
-        .order('gems', { ascending: false })
+        .order('points', { ascending: false })
         .limit(10);
         
       if (error) {
@@ -71,7 +71,7 @@ const LeaderboardSection: React.FC = () => {
         const { count, error: countError } = await supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true })
-          .gt('gems', parseFloat(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0'));
+          .gt('points', parseFloat(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0'));
           
         if (countError) {
           console.error('Error counting higher ranked users:', countError);

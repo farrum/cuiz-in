@@ -62,7 +62,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
         <div className="flex flex-col space-y-1 text-sm">
           <div className="flex items-center text-muted-foreground">
             <Award className="h-4 w-4 mr-1" />
-            <span className="font-medium text-foreground">{challenge.gems_multiplier}x</span> gems multiplier
+            <span className="font-medium text-foreground">{challenge.points_multiplier}x</span> gems multiplier
           </div>
           <div className="flex items-center text-muted-foreground">
             <Calendar className="h-4 w-4 mr-1" />

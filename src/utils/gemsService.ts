@@ -23,7 +23,7 @@ export const checkDailyGemsReset = async (userId?: string | null) => {
       
       // Reset in database - update today's record to zero or create a new one
       const { data, error } = await supabase
-        .from('daily_gems')
+        .from('daily_points')
         .upsert({ 
           user_id: userId, 
           date: today, 
@@ -75,7 +75,7 @@ export const checkMonthlyGemsReset = async (userId?: string | null) => {
         
         // Reset in database - update this month's record to zero or create a new one
         const { data, error } = await supabase
-          .from('monthly_gems')
+          .from('monthly_points')
           .upsert({
             user_id: userId,
             month: currentMonth,
@@ -117,8 +117,8 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
   try {
     // Check if there's already a record for today for this user
     const { data, error } = await supabase
-      .from('daily_gems')
-      .select('gems')
+      .from('daily_points')
+      .select('points')
       .eq('user_id', userId)
       .eq('date', today)
       .maybeSingle();
@@ -135,7 +135,7 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
       dailyGems = Number(data.gems) + gems;
       
       const { error: updateError } = await supabase
-        .from('daily_gems')
+        .from('daily_points')
         .update({ gems: dailyGems })
         .eq('user_id', userId)
         .eq('date', today);
@@ -149,7 +149,7 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
       dailyGems = gems;
       
       const { error: insertError } = await supabase
-        .from('daily_gems')
+        .from('daily_points')
         .insert({ user_id: userId, date: today, gems });
         
       if (insertError) {
@@ -187,8 +187,8 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
   try {
     // Check if there's already a record for this month for this user
     const { data, error } = await supabase
-      .from('monthly_gems')
-      .select('gems')
+      .from('monthly_points')
+      .select('points')
       .eq('user_id', userId)
       .eq('month', monthKey)
       .maybeSingle();
@@ -205,7 +205,7 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
       monthlyGems = Number(data.gems) + gems;
       
       const { error: updateError } = await supabase
-        .from('monthly_gems')
+        .from('monthly_points')
         .update({ gems: monthlyGems })
         .eq('user_id', userId)
         .eq('month', monthKey);
@@ -219,7 +219,7 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
       monthlyGems = gems;
       
       const { error: insertError } = await supabase
-        .from('monthly_gems')
+        .from('monthly_points')
         .insert({ user_id: userId, month: monthKey, gems });
         
       if (insertError) {
@@ -249,7 +249,7 @@ export const updateTotalGems = async (gems: number, userId?: string | null) => {
     // Get current gems
     const { data, error } = await supabase
       .from('profiles')
-      .select('gems')
+      .select('points')
       .eq('id', userId)
       .single();
       

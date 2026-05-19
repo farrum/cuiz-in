@@ -81,7 +81,7 @@ const ChallengeComplete: React.FC<ChallengeCompleteProps> = ({
                 
                 <div className="flex justify-between text-sm">
                   <span>Gems Multiplier</span>
-                  <span className="font-medium">{challenge.gems_multiplier}x</span>
+                  <span className="font-medium">{challenge.points_multiplier}x</span>
                 </div>
               </div>
             </div>

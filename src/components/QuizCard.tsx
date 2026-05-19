@@ -107,7 +107,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          gems_earned: gemsEarned,
+          points_earned: gemsEarned,
           answered_at: new Date().toISOString()
         });
       } else {

@@ -5,7 +5,7 @@ export interface Challenge {
   title: string;
   description: string | null;
   num_questions: number;
-  gems_multiplier: number;
+  points_multiplier: number;
   question_ids: string[];
   start_date: string;
   end_date: string;

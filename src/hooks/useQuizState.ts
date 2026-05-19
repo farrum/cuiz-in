@@ -138,8 +138,8 @@ export const useQuizState = () => {
     
     try {
       const { data: dailyData } = await supabase
-        .from('daily_gems')
-        .select('gems')
+        .from('daily_points')
+        .select('points')
         .eq('user_id', userId)
         .eq('date', today)
         .maybeSingle();
@@ -151,8 +151,8 @@ export const useQuizState = () => {
       }
       
       const { data: monthlyData } = await supabase
-        .from('monthly_gems')
-        .select('gems')
+        .from('monthly_points')
+        .select('points')
         .eq('user_id', userId)
         .eq('month', currentMonth)
         .maybeSingle();
@@ -165,7 +165,7 @@ export const useQuizState = () => {
       
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('gems, suspended')
+        .select('points, suspended')
         .eq('id', userId)
         .single();
         

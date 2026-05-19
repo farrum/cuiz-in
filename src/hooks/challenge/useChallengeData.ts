@@ -253,7 +253,7 @@ const useChallengeData = (
     try {
       const { data: userProfileData, error: profileError } = await supabase
         .from('profiles')
-        .select('gems')
+        .select('points')
         .eq('id', userId)
         .single();
         
@@ -286,7 +286,7 @@ const useChallengeData = (
       const monthString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data: dailyGemsData, error: dailyGemsError } = await supabase
-        .from('daily_gems')
+        .from('daily_points')
         .select('*')
         .eq('user_id', userId)
         .eq('date', dateString)
@@ -296,12 +296,12 @@ const useChallengeData = (
       
       if (dailyGemsData) {
         await supabase
-          .from('daily_gems')
+          .from('daily_points')
           .update({ gems: dailyGemsData.gems + finalScore })
           .eq('id', dailyGemsData.id);
       } else {
         await supabase
-          .from('daily_gems')
+          .from('daily_points')
           .insert([{ 
             user_id: userId, 
             date: dateString, 
@@ -310,7 +310,7 @@ const useChallengeData = (
       }
       
       const { data: monthlyGemsData, error: monthlyGemsError } = await supabase
-        .from('monthly_gems')
+        .from('monthly_points')
         .select('*')
         .eq('user_id', userId)
         .eq('month', monthString)
@@ -320,12 +320,12 @@ const useChallengeData = (
       
       if (monthlyGemsData) {
         await supabase
-          .from('monthly_gems')
+          .from('monthly_points')
           .update({ gems: monthlyGemsData.gems + finalScore })
           .eq('id', monthlyGemsData.id);
       } else {
         await supabase
-          .from('monthly_gems')
+          .from('monthly_points')
           .insert([{ 
             user_id: userId, 
             month: monthString, 

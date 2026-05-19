@@ -34,14 +34,14 @@ export const useMonthlyReset = () => {
           const { data: activeUsers, error: userError } = await supabase
             .from('profiles')
             .select('id')
-            .gt('gems', 0);
+            .gt('points', 0);
             
           if (userError) throw userError;
           
           if (activeUsers && activeUsers.length > 0) {
             // Reset existing monthly gems if any
             const { error: resetError } = await supabase
-              .from('monthly_gems')
+              .from('monthly_points')
               .upsert(
                 activeUsers.map(user => ({
                   user_id: user.id,

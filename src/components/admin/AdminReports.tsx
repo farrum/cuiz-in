@@ -295,7 +295,7 @@ const DailyPlayReports = () => {
         question: play.question_id?.question || 'Unknown',
         answer: play.selected_answer,
         correct: play.correct ? 'Yes' : 'No',
-        gems: play.gems_earned || 0
+        gems: play.points_earned || 0
       })) || [];
       
       setPlays(playData);
@@ -787,19 +787,19 @@ const TopPerformersReport = () => {
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_gems')
+        .from('daily_points')
         .select('user_id, gems')
         .eq('date', today)
-        .order('gems', { ascending: false })
+        .order('points', { ascending: false })
         .limit(10);
         
       if (dailyError) throw dailyError;
       
       const { data: monthlyData, error: monthlyError } = await supabase
-        .from('monthly_gems')
+        .from('monthly_points')
         .select('user_id, gems')
         .eq('month', currentMonth)
-        .order('gems', { ascending: false })
+        .order('points', { ascending: false })
         .limit(10);
         
       if (monthlyError) throw monthlyError;

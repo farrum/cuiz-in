@@ -70,7 +70,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         const { data, error } = await supabase
           .from('profiles')
           .select('id, username, gems')
-          .order('gems', { ascending: false })
+          .order('points', { ascending: false })
           .limit(limit);
 
         if (error) throw error;
@@ -102,8 +102,8 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data, error } = await supabase
-        .from('monthly_gems')
-        .select('gems')
+        .from('monthly_points')
+        .select('points')
         .eq('user_id', currentUserId)
         .eq('month', currentMonth)
         .maybeSingle();
