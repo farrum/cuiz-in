@@ -11,6 +11,7 @@ import DailyStreakTracker from '@/components/home/DailyStreakTracker';
 import ReferralPreview from '@/components/home/ReferralPreview';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
+import DailyRewardsSection from '@/components/home/DailyRewardsSection';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import AdPlaceholder from '@/components/ads/AdPlaceholder';
 
@@ -114,6 +115,13 @@ const Index: React.FC = () => {
             <DailyStreakTracker />
             <ReferralPreview />
           </div>
+        </div>
+      </section>
+
+      {/* Daily Rewards Section */}
+      <section className="py-6 md:py-8 bg-purple-50/30 border-y">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <DailyRewardsSection />
         </div>
       </section>
 
