@@ -165,7 +165,7 @@ export const useQuizState = () => {
       
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('points, suspended')
+        .select('gems:points, suspended')
         .eq('id', userId)
         .single();
         
