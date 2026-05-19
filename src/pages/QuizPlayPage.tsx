@@ -18,7 +18,7 @@ import { ArrowLeft } from 'lucide-react';
 
 // AdSense slot id for the inter-question interstitial ad unit.
 // Create a Display ad unit in AdSense dashboard and paste its slot id here.
-const INTERSTITIAL_SLOT_ID = '';
+const INTERSTITIAL_SLOT_ID = '3705941132';
 
 // Show interstitial every N answered questions; first N are warm-up.
 const INTERSTITIAL_EVERY = 2;
