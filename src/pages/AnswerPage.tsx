@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import SEO from '@/components/SEO';
-import { Award, ArrowRight, Tag, Home } from 'lucide-react';
+import { Award, ArrowRight, Tag, Home, Lock, UserPlus } from 'lucide-react';
 import { useQuizAnswer } from '@/hooks/useQuizAnswer';
 import CountdownButton from '@/components/CountdownButton';
 import ResultCard from '@/components/ResultCard';
@@ -34,6 +34,18 @@ const AnswerPage: React.FC = () => {
 
   const [keywords, setKeywords] = useState<string[]>([]);
   const [similarQuestions, setSimilarQuestions] = useState<QuizQuestion[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setIsAuthenticated(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (mounted) setIsAuthenticated(!!session);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     if (question) {
@@ -199,6 +211,29 @@ const AnswerPage: React.FC = () => {
         
         {isLoading ? (
           <LoadingCard />
+        ) : question && isAuthenticated === false ? (
+          <Card className="p-8 text-center max-w-xl mx-auto">
+            <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Lock className="h-7 w-7 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Sign up to see the answer</h1>
+            <p className="text-muted-foreground mb-6">
+              Create a free CuizIN account to reveal the correct answer, earn points, and climb the leaderboard.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button asChild size="lg" className="fun-button">
+                <Link to={`/register?next=${encodeURIComponent(`/answer/${questionId}/${selectedOption || ''}`)}`}>
+                  <UserPlus className="h-5 w-5 mr-2" /> Create free account
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/login">Log in</Link>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-6">
+              Question: <span className="font-medium">{question.question}</span>
+            </p>
+          </Card>
         ) : question ? (
           <>
             {/* Hidden SEO content */}
