@@ -10,7 +10,7 @@ import ReferralSection from '@/components/ReferralSection';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
 import { AvatarEvolution } from '@/components/gamification/AvatarEvolution';
 import { ModularAvatar } from '@/components/gamification/ModularAvatar';
-import { SkillTree } from '@/components/gamification/SkillTree';
+import { SkillTreeContainer } from '@/components/gamification/SkillTreeContainer';
 import { Palette } from 'lucide-react';
 
 interface ProfileTabsProps {
@@ -104,15 +104,11 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               </Card>
             </div>
             <div className="col-span-1 lg:col-span-2">
-              <SkillTree 
-                skillGems={150} 
-                nodes={[
-                  { id: '1', label: 'Quick Thinker', description: '+5% Gems on all quizzes', cost: 50, unlocked: true, purchasable: true, icon: <span>🧠</span> },
-                  { id: '2', label: 'Lucky Guess', description: 'One free wrong answer per quiz', cost: 200, unlocked: false, purchasable: true, icon: <span>🍀</span> },
-                  { id: '3', label: 'Premium Scholar', description: 'Unlock Premium Categories', cost: 500, unlocked: false, purchasable: false, icon: <span>👑</span> }
-                ]}
-                onPurchase={(id) => console.log('Purchased node', id)}
-              />
+              {userId ? (
+                <SkillTreeContainer userId={userId} />
+              ) : (
+                <div className="p-8 text-center bg-slate-50 rounded-2xl">Sign in to view your Skill Tree</div>
+              )}
             </div>
           </div>
         </TabsContent>
