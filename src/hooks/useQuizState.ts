@@ -139,7 +139,7 @@ export const useQuizState = () => {
     try {
       const { data: dailyData } = await supabase
         .from('daily_points')
-        .select('points')
+        .select('gems:points')
         .eq('user_id', userId)
         .eq('date', today)
         .maybeSingle();
@@ -152,7 +152,7 @@ export const useQuizState = () => {
       
       const { data: monthlyData } = await supabase
         .from('monthly_points')
-        .select('points')
+        .select('gems:points')
         .eq('user_id', userId)
         .eq('month', currentMonth)
         .maybeSingle();

@@ -47,7 +47,7 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
         if (!questionId.includes('image-')) {
           const { data: q, error } = await supabase
             .from('quiz_questions')
-            .select('id, question, options, category, difficulty, explanation, points, image_url, question_type, created_at')
+            .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
             .eq('id', questionId)
             .maybeSingle();
 

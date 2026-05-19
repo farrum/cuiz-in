@@ -118,7 +118,7 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
     // Check if there's already a record for today for this user
     const { data, error } = await supabase
       .from('daily_points')
-      .select('points')
+      .select('gems:points')
       .eq('user_id', userId)
       .eq('date', today)
       .maybeSingle();
@@ -188,7 +188,7 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
     // Check if there's already a record for this month for this user
     const { data, error } = await supabase
       .from('monthly_points')
-      .select('points')
+      .select('gems:points')
       .eq('user_id', userId)
       .eq('month', monthKey)
       .maybeSingle();
@@ -249,7 +249,7 @@ export const updateTotalGems = async (gems: number, userId?: string | null) => {
     // Get current gems
     const { data, error } = await supabase
       .from('profiles')
-      .select('points')
+      .select('gems:points')
       .eq('id', userId)
       .single();
       

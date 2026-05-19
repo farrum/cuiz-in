@@ -79,8 +79,8 @@ const Header: React.FC = () => {
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
         const [dailyResponse, monthlyResponse] = await Promise.all([
-          supabase.from('daily_points').select('points').eq('user_id', userId).eq('date', today).maybeSingle(),
-          supabase.from('monthly_points').select('points').eq('user_id', userId).eq('month', currentMonth).maybeSingle()
+          supabase.from('daily_points').select('gems:points').eq('user_id', userId).eq('date', today).maybeSingle(),
+          supabase.from('monthly_points').select('gems:points').eq('user_id', userId).eq('month', currentMonth).maybeSingle()
         ]);
         
         setTodayGems(dailyResponse.data?.gems ?? 0);

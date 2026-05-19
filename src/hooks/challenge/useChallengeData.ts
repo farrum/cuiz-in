@@ -253,7 +253,7 @@ const useChallengeData = (
     try {
       const { data: userProfileData, error: profileError } = await supabase
         .from('profiles')
-        .select('points')
+        .select('gems:points')
         .eq('id', userId)
         .single();
         

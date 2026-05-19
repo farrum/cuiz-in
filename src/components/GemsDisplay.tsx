@@ -21,7 +21,7 @@ const GemsDisplay: React.FC<GemsDisplayProps> = ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('points')
+        .select('gems:points')
         .eq('id', userId)
         .maybeSingle();
         

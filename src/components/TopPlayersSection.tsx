@@ -103,7 +103,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       
       const { data, error } = await supabase
         .from('monthly_points')
-        .select('points')
+        .select('gems:points')
         .eq('user_id', currentUserId)
         .eq('month', currentMonth)
         .maybeSingle();
