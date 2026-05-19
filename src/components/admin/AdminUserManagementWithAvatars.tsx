@@ -89,6 +89,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         for (const user of data) {
           enhancedUserData.push({
             ...user,
+            gems: (user as any).points ?? 0,
             login_streak: userStreaks.get(user.id) || 0
           });
         }
@@ -151,7 +152,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         .update({
           display_name: editDisplayName,
           phone: editPhone || null,
-          gems: editGems,
+          points: editGems,
           suspended: editSuspended,
           upi_id: editUpiId || null
         })
