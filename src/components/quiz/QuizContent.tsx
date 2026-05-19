@@ -6,6 +6,8 @@ import ImageQuizContent from './ImageQuizContent';
 import TimeAttackTimer from './TimeAttackTimer';
 import TeamQuizContent from './team-quiz/TeamQuizContent';
 import { GameMode } from '@/utils/types';
+import { TrueFalseSwipe } from '@/components/gamification/TrueFalseSwipe';
+import { FlashcardMatch } from '@/components/gamification/FlashcardMatch';
 import { Loader2 } from 'lucide-react';
 
 interface QuizContentProps {
@@ -21,7 +23,9 @@ interface QuizContentProps {
   handleTimeUp: () => void;
   streak: number;
   questionsAnswered?: number;
+  questionsAnswered?: number;
   dailyGems?: number;
+  upcomingQuestions?: QuizQuestion[];
 }
 
 const QuizContent: React.FC<QuizContentProps> = ({
@@ -37,7 +41,8 @@ const QuizContent: React.FC<QuizContentProps> = ({
   handleTimeUp,
   streak,
   questionsAnswered = 0,
-  dailyGems = 0
+  dailyGems = 0,
+  upcomingQuestions = []
 }) => {
   if (isLoading) {
     return (
@@ -96,6 +101,40 @@ const QuizContent: React.FC<QuizContentProps> = ({
         isLoading={isLoading}
         onQuestionComplete={onQuestionComplete}
         teamSize={getTeamSize()}
+      />
+    );
+  }
+
+  // True/False Mode
+  if (currentMode === 'true-false') {
+    const gameQuestions = [currentQuestion, ...upcomingQuestions].filter(q => q);
+    return (
+      <TrueFalseSwipe 
+        questions={gameQuestions as QuizQuestion[]}
+        onGameComplete={(score) => {
+          // Just grant gems for the score and move on
+          for(let i=0; i<score; i++) {
+             onQuestionComplete(true, "TRUE");
+          }
+          if (score === 0) onQuestionComplete(false, "FALSE");
+        }}
+      />
+    );
+  }
+
+  // Flashcards Mode
+  if (currentMode === 'flashcards') {
+    const gameQuestions = [currentQuestion, ...upcomingQuestions].filter(q => q);
+    return (
+      <FlashcardMatch 
+        questions={gameQuestions as QuizQuestion[]}
+        onGameComplete={(score) => {
+          // Grant gems based on matches
+          for(let i=0; i<score; i++) {
+             onQuestionComplete(true, "MATCH");
+          }
+          if (score === 0) onQuestionComplete(false, "MISS");
+        }}
       />
     );
   }

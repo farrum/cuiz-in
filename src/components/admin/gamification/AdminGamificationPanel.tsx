@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Trash2, Save, Settings, Gift } from 'lucide-react';
+import { Plus, Trash2, Save, Settings, Gift, Brain, FileText } from 'lucide-react';
 
 interface WheelPrize {
   id: string;
@@ -24,6 +24,12 @@ export const AdminGamificationPanel: React.FC = () => {
   const [prizes, setPrizes] = useState<WheelPrize[]>([]);
   const [limits, setLimits] = useState({ free_spins_per_day: 1, free_scratch_cards_per_day: 1 });
   const [jackpotConfig, setJackpotConfig] = useState({ cooldown_days: 30, jackpot_prize_id: '6' });
+  const [dailyChallenges, setDailyChallenges] = useState({
+    riddle_text: 'I speak without a mouth and hear without ears. What am I?',
+    riddle_answer: 'echo',
+    wordle_clue: 'Capital of France',
+    wordle_answer: 'PARIS'
+  });
 
   useEffect(() => {
     fetchSettings();
@@ -42,6 +48,7 @@ export const AdminGamificationPanel: React.FC = () => {
         if (setting.setting_type === 'wheel_prizes') setPrizes(setting.config);
         if (setting.setting_type === 'daily_limits') setLimits(setting.config);
         if (setting.setting_type === 'jackpot_config') setJackpotConfig(setting.config);
+        if (setting.setting_type === 'daily_challenges') setDailyChallenges(setting.config);
       });
     } catch (err) {
       console.error('Error fetching gamification settings:', err);
@@ -199,6 +206,63 @@ export const AdminGamificationPanel: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Challenges Admin */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Brain size={18} /> Daily Challenges Config</CardTitle>
+            <CardDescription>Set the Daily Riddle and Trivia Wordle for all users</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Daily Riddle */}
+              <div className="space-y-4 border p-4 rounded-xl bg-slate-50">
+                <h3 className="font-bold flex items-center gap-2 text-indigo-700"><FileText size={16}/> Daily Riddle</h3>
+                <div className="space-y-2">
+                  <Label>Riddle Text</Label>
+                  <Input 
+                    value={dailyChallenges.riddle_text} 
+                    onChange={(e) => setDailyChallenges({...dailyChallenges, riddle_text: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Exact Answer (case-insensitive)</Label>
+                  <Input 
+                    value={dailyChallenges.riddle_answer} 
+                    onChange={(e) => setDailyChallenges({...dailyChallenges, riddle_answer: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              {/* Trivia Wordle */}
+              <div className="space-y-4 border p-4 rounded-xl bg-slate-50">
+                <h3 className="font-bold flex items-center gap-2 text-blue-700"><Brain size={16}/> Trivia Wordle</h3>
+                <div className="space-y-2">
+                  <Label>Clue</Label>
+                  <Input 
+                    value={dailyChallenges.wordle_clue} 
+                    onChange={(e) => setDailyChallenges({...dailyChallenges, wordle_clue: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Exact Word (will convert to uppercase)</Label>
+                  <Input 
+                    value={dailyChallenges.wordle_answer} 
+                    onChange={(e) => setDailyChallenges({...dailyChallenges, wordle_answer: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              className="w-full mt-4" 
+              onClick={() => handleSaveSettings('daily_challenges', dailyChallenges)}
+              disabled={isSaving}
+            >
+              <Save size={16} className="mr-2" /> Save Daily Challenges
+            </Button>
           </CardContent>
         </Card>
 

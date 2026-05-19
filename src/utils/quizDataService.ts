@@ -117,6 +117,38 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
   return availableQuestions[randomIndex];
 };
 
+// Get a batch of random questions
+export const getBatchQuestions = async (limit: number = 10): Promise<QuizQuestion[]> => {
+  let questions = await fetchQuizQuestions();
+  
+  if (questions.length === 0) {
+    return [
+      {
+        id: 'default-question',
+        question: 'What is 2 + 2?',
+        options: ['3', '4', '5', '6'],
+        correctAnswer: '4',
+        difficulty: 'easy',
+        category: 'Math',
+        gems: 10,
+        explanation: 'Basic addition'
+      }
+    ];
+  }
+  
+  // Filter out questions the user has already completed
+  const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
+  let availableQuestions = questions.filter(q => !completedQuestions.includes(q.id));
+  
+  if (availableQuestions.length < limit) {
+    availableQuestions = questions; // reset if not enough
+  }
+
+  // Shuffle and pick
+  availableQuestions = availableQuestions.sort(() => Math.random() - 0.5);
+  return availableQuestions.slice(0, limit);
+};
+
 // Calculate gems for answers
 export const calculateGems = (isCorrect: boolean, difficulty: string = 'easy'): number => {
   if (isCorrect) {

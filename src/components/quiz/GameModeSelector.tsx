@@ -33,11 +33,11 @@ const GameModeSelector: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={currentMode} className="w-full" onValueChange={(value) => changeGameMode(value as GameMode)}>
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="flex flex-wrap gap-2 mb-8 h-auto justify-start bg-transparent">
             {allModes.map((mode) => (
-              <TabsTrigger key={mode} value={mode} className="flex items-center space-x-1">
+              <TabsTrigger key={mode} value={mode} className="flex items-center space-x-2 px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-white rounded-full shadow-sm bg-white border">
                 <ModeIcon mode={mode} />
-                <span className="hidden md:inline">{modeConfigs[mode].name}</span>
+                <span>{modeConfigs[mode].name}</span>
               </TabsTrigger>
             ))}
           </TabsList>

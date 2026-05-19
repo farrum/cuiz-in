@@ -29,6 +29,18 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     description: 'Build your streak for increasing point bonuses',
     icon: 'zap',
     streakMultiplier: 0.5, // 50% bonus per streak level
+  },
+  'true-false': {
+    name: 'Swipe Mode',
+    description: 'Tinder-style True or False rapid fire',
+    icon: 'zap',
+    timeLimit: 60,
+  },
+  'flashcards': {
+    name: 'Memory Match',
+    description: 'Match questions with correct answers before time runs out',
+    icon: 'brain',
+    timeLimit: 90,
   }
 };
 

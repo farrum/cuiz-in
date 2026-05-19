@@ -2,11 +2,15 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
-import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
+import { getRandomQuestion, getBatchQuestions, QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
-import { useQuizGems } from '@/hooks/quiz/useQuizGems';
+import { useGameMode } from '@/hooks/quiz/useGameMode';
 import EnhancedQuizCard from '@/components/quiz/EnhancedQuizCard';
+import { TrueFalseSwipe } from '@/components/gamification/TrueFalseSwipe';
+import { FlashcardMatch } from '@/components/gamification/FlashcardMatch';
+import { BossFight } from '@/components/gamification/BossFight';
+import { ImageReveal } from '@/components/gamification/ImageReveal';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -16,6 +20,7 @@ import GuestGemsBanner from '@/components/quiz/GuestGemsBanner';
 import { ScratchCard } from '@/components/gamification/ScratchCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { useQuizGems } from '@/hooks/quiz';
 
 // AdSense slot id for the inter-question interstitial ad unit.
 // Create a Display ad unit in AdSense dashboard and paste its slot id here.
@@ -28,10 +33,15 @@ const QuizPlayPage: React.FC = () => {
   const { questionId } = useParams<{ questionId: string; questionSlug?: string }>();
   const navigate = useNavigate();
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
+  const [batchQuestions, setBatchQuestions] = useState<QuizQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showScratchCard, setShowScratchCard] = useState(false);
+  const [showBossFight, setShowBossFight] = useState(false);
+  const [showImageReveal, setShowImageReveal] = useState(false);
   const [scratchPrize, setScratchPrize] = useState(0);
+
+  const { currentMode } = useGameMode();
 
   const {
     streak,
@@ -53,35 +63,44 @@ const QuizPlayPage: React.FC = () => {
       setIsLoading(true);
       setShowInterstitial(false);
       setShowScratchCard(false);
+      setShowBossFight(false);
+      setShowImageReveal(false);
       try {
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
-          .eq('id', questionId)
-          .maybeSingle();
+        if (currentMode === 'true-false' || currentMode === 'flashcards') {
+          // Fetch a batch of random questions
+          const batch = await getBatchQuestions(12);
+          if (!cancelled) setBatchQuestions(batch);
+        } else {
+          // Normal single question fetch
+          const { data, error } = await supabase
+            .from('quiz_questions')
+            .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
+            .eq('id', questionId)
+            .maybeSingle();
 
-        if (error || !data) {
-          // Fall back to a random question
-          const fallback = await getRandomQuestion();
-          if (!cancelled) {
-            navigate(`/quiz/play/${fallback.id}/${createSlug(fallback.question, 80)}`, { replace: true });
+          if (error || !data) {
+            // Fall back to a random question
+            const fallback = await getRandomQuestion();
+            if (!cancelled) {
+              navigate(`/quiz/play/${fallback.id}/${createSlug(fallback.question, 80)}`, { replace: true });
+            }
+            return;
           }
-          return;
-        }
 
-        const q: QuizQuestion = {
-          id: data.id,
-          question: data.question,
-          options: Array.isArray(data.options) ? data.options : Object.values(data.options || {}),
-          difficulty: (data.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
-          category: data.category,
-          gems: data.gems || 10,
-          explanation: data.explanation || '',
-          imageUrl: data.image_url || undefined,
-          questionType: (data.question_type as 'text' | 'image') || 'text',
-          createdAt: data.created_at,
-        };
-        if (!cancelled) setQuestion(q);
+          const q: QuizQuestion = {
+            id: data.id,
+            question: data.question,
+            options: Array.isArray(data.options) ? data.options : Object.values(data.options || {}),
+            difficulty: (data.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+            category: data.category,
+            gems: data.gems || 10,
+            explanation: data.explanation || '',
+            imageUrl: data.image_url || undefined,
+            questionType: (data.question_type as 'text' | 'image') || 'text',
+            createdAt: data.created_at,
+          };
+          if (!cancelled) setQuestion(q);
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -108,20 +127,33 @@ const QuizPlayPage: React.FC = () => {
     // Refresh gems from DB so the stats bar reflects today's earnings
     fetchGems();
 
-    const newCount = questionsAnswered + 1;
-    
-    // 10% chance for a Scratch Card, but ensure we don't show it on the exact same question as an Interstitial
+    const newCount = questionsAnswered + (typeof isCorrect === 'number' ? isCorrect : 1);
+
+    // Check for Boss Fight (exactly 10 streak)
+    if (isCorrect === true && (streak + 1) === 10) {
+      setShowBossFight(true);
+      return;
+    }
+
+    // Interstitial Check
     const isInterstitialTurn = newCount > 0 && newCount % INTERSTITIAL_EVERY === 0;
-    
-    if (Math.random() < 0.10 && !isInterstitialTurn) {
-      setScratchPrize(Math.floor(Math.random() * 50) + 10); // Random prize 10-60 Gems
+
+    // Gamification Random Checks
+    const rand = Math.random();
+
+    if (rand < 0.05 && !isInterstitialTurn) {
+      // 5% chance for Image Reveal
+      setShowImageReveal(true);
+    } else if (rand >= 0.05 && rand < 0.15 && !isInterstitialTurn) {
+      // 10% chance for Scratch Card
+      setScratchPrize(Math.floor(Math.random() * 50) + 10);
       setShowScratchCard(true);
     } else if (isInterstitialTurn) {
       setShowInterstitial(true);
     } else {
       goToNextQuestion();
     }
-  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, goToNextQuestion, fetchGems]);
+  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems]);
 
   const handleScratchComplete = async () => {
     // Backend should ideally handle this via RPC similar to process_wheel_spin
@@ -133,6 +165,32 @@ const QuizPlayPage: React.FC = () => {
       await supabase.from('profiles').update({ gems_balance: currentBalance + scratchPrize }).eq('id', session.session.user.id);
       fetchGems();
     }
+  };
+
+  const handleBossFightComplete = async (success: boolean) => {
+    if (success) {
+      // Double the daily gems
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
+        const currentBalance = data?.gems_balance || 0;
+        await supabase.from('profiles').update({ gems_balance: currentBalance + dailyGems }).eq('id', session.session.user.id);
+        fetchGems();
+      }
+    } else {
+      // Lose daily gems
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
+        const currentBalance = data?.gems_balance || 0;
+        const newBalance = Math.max(0, currentBalance - dailyGems);
+        await supabase.from('profiles').update({ gems_balance: newBalance }).eq('id', session.session.user.id);
+        fetchGems();
+      }
+      resetStreak();
+    }
+    setShowBossFight(false);
+    goToNextQuestion();
   };
 
   const canonicalUrl = question
@@ -163,7 +221,30 @@ const QuizPlayPage: React.FC = () => {
           className="mb-4"
         />
 
-        {showScratchCard ? (
+        {showBossFight && question ? (
+          <BossFight
+            question={question}
+            currentSessionGems={dailyGems}
+            onComplete={handleBossFightComplete}
+            onDecline={() => {
+              setShowBossFight(false);
+              goToNextQuestion();
+            }}
+          />
+        ) : showImageReveal && question ? (
+          <ImageReveal
+            question={question}
+            onComplete={(isCorrect) => {
+              if (isCorrect) incrementStreak();
+              setShowImageReveal(false);
+              goToNextQuestion();
+            }}
+            onSkip={() => {
+              setShowImageReveal(false);
+              goToNextQuestion();
+            }}
+          />
+        ) : showScratchCard ? (
           <div className="flex flex-col items-center justify-center min-h-[400px] bg-card border rounded-2xl p-8 space-y-6 animate-in zoom-in-95">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-primary mb-2 flex items-center justify-center gap-2">
@@ -171,7 +252,7 @@ const QuizPlayPage: React.FC = () => {
               </h2>
               <p className="text-muted-foreground">You found a scratch card. Scratch to reveal your prize!</p>
             </div>
-            
+
             <ScratchCard
               width={280}
               height={140}
@@ -197,17 +278,29 @@ const QuizPlayPage: React.FC = () => {
             slotId={INTERSTITIAL_SLOT_ID}
             onContinue={goToNextQuestion}
           />
-        ) : isLoading || !question ? (
+        ) : isLoading || (!question && batchQuestions.length === 0) ? (
           <LoadingCard />
+        ) : currentMode === 'true-false' ? (
+          <TrueFalseSwipe
+            questions={batchQuestions}
+            onGameComplete={(score) => handleComplete(score)}
+          />
+        ) : currentMode === 'flashcards' ? (
+          <FlashcardMatch
+            questions={batchQuestions}
+            onGameComplete={(score) => handleComplete(score)}
+          />
         ) : (
           <div data-no-auto-ads="true">
-            <EnhancedQuizCard
-              key={question.id}
-              question={question}
-              onComplete={handleComplete}
-              streak={streak}
-              questionsAnswered={questionsAnswered}
-            />
+            {question && (
+              <EnhancedQuizCard
+                key={question.id}
+                question={question}
+                onComplete={(isCorrect) => handleComplete(isCorrect)}
+                streak={streak}
+                questionsAnswered={questionsAnswered}
+              />
+            )}
           </div>
         )}
 

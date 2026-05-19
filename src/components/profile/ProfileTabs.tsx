@@ -11,7 +11,8 @@ import RecentlyAnsweredQuestions from '@/components/quiz-history';
 import { AvatarEvolution } from '@/components/gamification/AvatarEvolution';
 import { ModularAvatar } from '@/components/gamification/ModularAvatar';
 import { SkillTreeContainer } from '@/components/gamification/SkillTreeContainer';
-import { Palette } from 'lucide-react';
+import { DailyChallengesHub } from '@/components/gamification/DailyChallengesHub';
+import { Palette, Flame } from 'lucide-react';
 
 interface ProfileTabsProps {
   userId: string | null;
@@ -63,6 +64,10 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <Palette className="w-4 h-4 mr-2" />
             Avatar & Skills
           </TabsTrigger>
+          <TabsTrigger value="daily-challenges">
+            <Flame className="w-4 h-4 mr-2 text-orange-500" />
+            Daily Challenges
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -111,6 +116,12 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               )}
             </div>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="daily-challenges">
+          <Card className="p-6">
+            <DailyChallengesHub />
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

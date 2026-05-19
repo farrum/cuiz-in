@@ -13,7 +13,7 @@ export interface QuizQuestion {
   createdAt?: string; // Date the question was created
 }
 
-export type GameMode = 'normal' | 'time-attack' | 'team-quiz' | 'streak';
+export type GameMode = 'normal' | 'time-attack' | 'team-quiz' | 'streak' | 'true-false' | 'flashcards';
 
 export interface GameModeConfig {
   name: string;
