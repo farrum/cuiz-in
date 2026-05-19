@@ -32,13 +32,13 @@ export const AdminGamificationPanel: React.FC = () => {
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('gamification_settings')
         .select('*');
 
       if (error) throw error;
 
-      data.forEach(setting => {
+      (data || []).forEach((setting: any) => {
         if (setting.setting_type === 'wheel_prizes') setPrizes(setting.config);
         if (setting.setting_type === 'daily_limits') setLimits(setting.config);
         if (setting.setting_type === 'jackpot_config') setJackpotConfig(setting.config);
@@ -54,7 +54,7 @@ export const AdminGamificationPanel: React.FC = () => {
   const handleSaveSettings = async (type: string, config: any) => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('gamification_settings')
         .upsert({ setting_type: type, config: config }, { onConflict: 'setting_type' });
 
