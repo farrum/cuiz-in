@@ -44,7 +44,7 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
 
   const fetchPrizes = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('gamification_settings')
         .select('config')
         .eq('setting_type', 'wheel_prizes')
@@ -76,7 +76,7 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) throw new Error("Must be logged in to spin");
 
-      const { data: serverPrize, error } = await supabase.rpc('process_wheel_spin', { 
+      const { data: serverPrize, error } = await (supabase as any).rpc('process_wheel_spin', { 
         user_uuid: session.session.user.id 
       });
 
