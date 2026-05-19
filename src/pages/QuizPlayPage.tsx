@@ -128,9 +128,9 @@ const QuizPlayPage: React.FC = () => {
     const { data: session } = await supabase.auth.getSession();
     if (session?.session?.user) {
       // Direct update for now, ideally wire to an RPC for strict tracking
-      const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-      const currentBalance = data?.gems_balance || 0;
-      await supabase.from('profiles').update({ gems_balance: currentBalance + scratchPrize }).eq('id', session.session.user.id);
+      const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).maybeSingle();
+      const currentBalance = (data as any)?.gems_balance || 0;
+      await (supabase as any).from('profiles').update({ gems_balance: currentBalance + scratchPrize }).eq('id', session.session.user.id);
       fetchGems();
     }
   };
