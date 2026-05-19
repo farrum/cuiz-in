@@ -1140,6 +1140,10 @@ export type Database = {
         Returns: boolean
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      purchase_skill_node: {
+        Args: { target_skill_id: string; user_uuid: string }
+        Returns: Json
+      }
       regenerate_sitemap: { Args: never; Returns: undefined }
       set_user_context: { Args: { user_id: string }; Returns: undefined }
       slugify_ascii: { Args: { input: string }; Returns: string }
