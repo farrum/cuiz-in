@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import NewsTicker from '@/components/NewsTicker';
+import MobileBottomNav from '@/components/home/MobileBottomNav';
 import { cn } from '@/lib/utils';
 
 interface PageLayoutProps {
@@ -37,12 +38,19 @@ const PageLayout = ({
       </div>
 
       {!hidePreFooterAd && (
-        <div className="container max-w-4xl mx-auto py-6">
+        <div className="container max-w-4xl mx-auto py-6 hidden md:block">
           <SimpleAdBanner position="footer" slotId="global-prefooter" />
         </div>
       )}
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Spacer so mobile bottom nav doesn't overlap content */}
+      <div className="h-20 md:hidden" aria-hidden="true" />
+
+      <MobileBottomNav />
     </div>
   );
 };
