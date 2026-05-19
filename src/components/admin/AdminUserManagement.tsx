@@ -32,7 +32,6 @@ interface User {
   points: number;
   suspended: boolean;
   created_at?: string;
-  password_hash?: string;
   referrer?: {
     id: string;
     name: string;
