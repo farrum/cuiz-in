@@ -1,7 +1,5 @@
-import React, { useId } from "react";
-import { useAdvertisement } from "@/hooks/useAdvertisement";
-import { useScriptExecution } from "@/hooks/useScriptExecution";
-import AdPlaceholder from "./AdPlaceholder";
+import React from "react";
+import AdSenseUnit from "./AdSenseUnit";
 import { cn } from "@/lib/utils";
 import { getPositionClasses } from "./adStyles";
 
@@ -16,66 +14,33 @@ interface SimpleAdBannerProps {
  * AdSense Banner Component
  * Fetches and renders ads from the verified ad provider system.
  */
-const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({ 
-  position, 
+// Default AdSense slot (horizontal responsive unit)
+const DEFAULT_ADSENSE_SLOT = "3705941132";
+
+const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
+  position,
   className,
   slotId,
-  pageSection
 }) => {
-  // Hide all ad placeholder slots until a real ad is actually rendered by AdSense.
-  // Empty bordered boxes hurt UX and add CLS; AdSense Auto Ads inject their own
-  // containers when they have a fill, so we simply render nothing here.
-  return null;
-
-  // eslint-disable-next-line no-unreachable
-  const uniqueId = useId().replace(/:/g, "");
-  const containerId = `ad-container-${position}-${uniqueId}`;
-  
-  const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({ 
-    position,
-    slotId,
-    pageSection
-  });
-
-  // Execute scripts within the ad content safely
-  const executionStatus = useScriptExecution(adContent, containerId);
-
-  // Extract size from code metadata if available (e.g. <!-- size: 300x250 -->)
-  const sizeMatch = adContent?.match(/<!-- size: (\d+x\d+) -->/);
-  const forcedSize = sizeMatch ? sizeMatch[1] : null;
+  // Use the provided slotId if it looks like an AdSense numeric slot;
+  // otherwise fall back to the default horizontal slot.
+  const adSlot = slotId && /^\d{6,}$/.test(slotId) ? slotId : DEFAULT_ADSENSE_SLOT;
 
   return (
-    <div 
+    <div
       className={cn(
-        "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
-        adLoaded ? "opacity-100" : "opacity-0",
+        "ad-banner-wrapper w-full overflow-hidden",
         getPositionClasses(position),
         className
       )}
+      data-ad-position={position}
     >
-      {( !adContent || (forcedSize && adContent.replace(/<!-- size: \d+x\d+ -->/, '').trim() === '') ) && (
-        <AdPlaceholder 
-          position={position === 'header' || position === 'footer' ? 'top' : (position as any)} 
-          size={forcedSize as any}
-        />
-      )}
-      
-      {adContent && (!forcedSize || adContent.replace(/<!-- size: \d+x\d+ -->/, '').trim() !== '') && (
-        <div 
-          id={containerId}
-          className="ad-container min-h-[1px] w-full flex justify-center"
-          dangerouslySetInnerHTML={{ __html: adContent }}
-          data-ad-position={position}
-          data-ad-debug={adDebug}
-          data-execution-status={executionStatus}
-        />
-      )}
-      
-      {error && process.env.NODE_ENV === 'development' && (
-        <div className="text-[10px] text-destructive text-center mt-1">
-          Ad Error: {error}
-        </div>
-      )}
+      <AdSenseUnit
+        slot={adSlot}
+        format="auto"
+        responsive
+        style={{ display: "block", width: "100%" }}
+      />
     </div>
   );
 };
