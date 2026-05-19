@@ -320,7 +320,7 @@ export type Database = {
           id: string
           is_active: boolean
           num_questions: number
-          gems_multiplier: number
+          points_multiplier: number
           question_ids: string[]
           start_date: string
           title: string
@@ -333,7 +333,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           num_questions: number
-          gems_multiplier?: number
+          points_multiplier?: number
           question_ids: string[]
           start_date: string
           title: string
@@ -346,33 +346,33 @@ export type Database = {
           id?: string
           is_active?: boolean
           num_questions?: number
-          gems_multiplier?: number
+          points_multiplier?: number
           question_ids?: string[]
           start_date?: string
           title?: string
         }
         Relationships: []
       }
-      daily_gems: {
+      daily_points: {
         Row: {
           created_at: string | null
           date: string
           id: string
-          gems: number
+          points: number
           user_id: string
         }
         Insert: {
           created_at?: string | null
           date: string
           id?: string
-          gems?: number
+          points?: number
           user_id: string
         }
         Update: {
           created_at?: string | null
           date?: string
           id?: string
-          gems?: number
+          points?: number
           user_id?: string
         }
         Relationships: []
@@ -500,7 +500,7 @@ export type Database = {
       login_streaks: {
         Row: {
           bonus_claimed_today: boolean
-          bonus_gems_today: number
+          bonus_points_today: number
           created_at: string | null
           current_streak: number
           highest_streak: number
@@ -511,7 +511,7 @@ export type Database = {
         }
         Insert: {
           bonus_claimed_today?: boolean
-          bonus_gems_today?: number
+          bonus_points_today?: number
           created_at?: string | null
           current_streak?: number
           highest_streak?: number
@@ -522,7 +522,7 @@ export type Database = {
         }
         Update: {
           bonus_claimed_today?: boolean
-          bonus_gems_today?: number
+          bonus_points_today?: number
           created_at?: string | null
           current_streak?: number
           highest_streak?: number
@@ -541,26 +541,26 @@ export type Database = {
           },
         ]
       }
-      monthly_gems: {
+      monthly_points: {
         Row: {
           created_at: string | null
           id: string
           month: string
-          gems: number
+          points: number
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           month: string
-          gems?: number
+          points?: number
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           month?: string
-          gems?: number
+          points?: number
           user_id?: string
         }
         Relationships: []
@@ -700,7 +700,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           phone: string | null
-          gems: number | null
+          points: number | null
           profile_picture: string | null
           reactivation_approved: boolean | null
           reactivation_approved_at: string | null
@@ -718,7 +718,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           phone?: string | null
-          gems?: number | null
+          points?: number | null
           profile_picture?: string | null
           reactivation_approved?: boolean | null
           reactivation_approved_at?: string | null
@@ -736,7 +736,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           phone?: string | null
-          gems?: number | null
+          points?: number | null
           profile_picture?: string | null
           reactivation_approved?: boolean | null
           reactivation_approved_at?: string | null
@@ -754,7 +754,7 @@ export type Database = {
           correct: boolean
           created_at: string | null
           id: string
-          gems_earned: number | null
+          points_earned: number | null
           question_id: string | null
           selected_answer: string
           user_id: string
@@ -764,7 +764,7 @@ export type Database = {
           correct: boolean
           created_at?: string | null
           id?: string
-          gems_earned?: number | null
+          points_earned?: number | null
           question_id?: string | null
           selected_answer: string
           user_id: string
@@ -774,7 +774,7 @@ export type Database = {
           correct?: boolean
           created_at?: string | null
           id?: string
-          gems_earned?: number | null
+          points_earned?: number | null
           question_id?: string | null
           selected_answer?: string
           user_id?: string
@@ -799,7 +799,7 @@ export type Database = {
           id: string
           image_url: string | null
           options: Json
-          gems: number | null
+          points: number | null
           question: string
           question_type: string | null
         }
@@ -812,7 +812,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           options: Json
-          gems?: number | null
+          points?: number | null
           question: string
           question_type?: string | null
         }
@@ -825,7 +825,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           options?: Json
-          gems?: number | null
+          points?: number | null
           question?: string
           question_type?: string | null
         }
@@ -1062,7 +1062,7 @@ export type Database = {
           id: string
           image_url: string | null
           options: Json
-          gems: number | null
+          points: number | null
           question: string
           question_type: string | null
         }[]
