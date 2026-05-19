@@ -197,19 +197,6 @@ const QuizPage: React.FC = () => {
         {/* Admin-only Ad Debug Panel */}
         <AdminAdDebugPanel className="mb-3" />
 
-        {/* Primary CTA: each question = its own URL = its own ad auction */}
-        <div className="mb-4">
-          <Button
-            size="lg"
-            className="w-full gap-2"
-            onClick={handleStartPlaying}
-            disabled={isStarting}
-          >
-            <Play className="h-5 w-5" />
-            {isStarting ? 'Loading…' : 'Start Playing'}
-          </Button>
-        </div>
-        
         {/* Top Ad - compact */}
         <SimpleAdBanner position="top" slotId="quiz-top" className="mb-3" />
         
