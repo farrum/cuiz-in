@@ -216,7 +216,7 @@ const useChallengeData = (
             explanation: question.explanation || '',
             category: question.category,
             difficulty: difficulty,
-            gems: question.gems || 10
+            gems: (question as any).points || 10
           });
         }
       }
@@ -264,7 +264,7 @@ const useChallengeData = (
       
       await supabase
         .from('profiles')
-        .update({ gems: newTotalGems })
+        .update({ points: newTotalGems })
         .eq('id', userId);
         
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, newTotalGems.toString());
@@ -297,7 +297,7 @@ const useChallengeData = (
       if (dailyGemsData) {
         await supabase
           .from('daily_points')
-          .update({ gems: dailyGemsData.gems + finalScore })
+          .update({ points: (dailyGemsData as any).points + finalScore })
           .eq('id', dailyGemsData.id);
       } else {
         await supabase
@@ -305,7 +305,7 @@ const useChallengeData = (
           .insert([{ 
             user_id: userId, 
             date: dateString, 
-            gems: finalScore 
+            points: finalScore 
           }]);
       }
       
@@ -321,7 +321,7 @@ const useChallengeData = (
       if (monthlyGemsData) {
         await supabase
           .from('monthly_points')
-          .update({ gems: monthlyGemsData.gems + finalScore })
+          .update({ points: (monthlyGemsData as any).points + finalScore })
           .eq('id', monthlyGemsData.id);
       } else {
         await supabase
@@ -329,7 +329,7 @@ const useChallengeData = (
           .insert([{ 
             user_id: userId, 
             month: monthString, 
-            gems: finalScore 
+            points: finalScore 
           }]);
       }
       
