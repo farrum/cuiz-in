@@ -89,7 +89,7 @@ const AnswerPage: React.FC = () => {
           correctAnswer: q.correct_answer,
           difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
           category: q.category,
-          gems: q.gems || 10,
+          gems: q.points || 10,
           explanation: q.explanation || ''
         }));
         
