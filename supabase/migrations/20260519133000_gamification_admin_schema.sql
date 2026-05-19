@@ -107,7 +107,20 @@ BEGIN
 
     -- 5. Award the Gems and Log it
     IF (winning_prize->>'value')::integer > 0 THEN
+        -- Update Main Profile Balance
         UPDATE profiles SET gems_balance = COALESCE(gems_balance, 0) + (winning_prize->>'value')::integer WHERE id = user_uuid;
+        
+        -- Update Daily Gems (for the UI progress bar)
+        INSERT INTO daily_gems (user_id, date, gems)
+        VALUES (user_uuid, CURRENT_DATE, (winning_prize->>'value')::integer)
+        ON CONFLICT (user_id, date) DO UPDATE 
+        SET gems = daily_gems.gems + EXCLUDED.gems;
+
+        -- Update Monthly Gems (for the UI progress bar)
+        INSERT INTO monthly_gems (user_id, month, gems)
+        VALUES (user_uuid, date_trunc('month', CURRENT_DATE)::date, (winning_prize->>'value')::integer)
+        ON CONFLICT (user_id, month) DO UPDATE 
+        SET gems = monthly_gems.gems + EXCLUDED.gems;
     END IF;
 
     INSERT INTO daily_rewards_log (user_id, reward_type, amount) 
