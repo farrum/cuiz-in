@@ -242,7 +242,7 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
                           };
                         }
                         acc[date].count++;
-                        acc[date].gems += curr.gems_earned || 0;
+                        acc[date].gems += curr.points_earned || 0;
                         return acc;
                       }, {})
                     ).map(([date, stats]: [string, any]) => (

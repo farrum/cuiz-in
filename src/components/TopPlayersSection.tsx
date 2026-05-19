@@ -69,8 +69,8 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         // Regular user query (RLS should handle access)
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, gems')
-          .order('gems', { ascending: false })
+          .select('id, username, gems:points')
+          .order('points', { ascending: false })
           .limit(limit);
 
         if (error) throw error;
@@ -102,8 +102,8 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data, error } = await supabase
-        .from('monthly_gems')
-        .select('gems')
+        .from('monthly_points')
+        .select('gems:points')
         .eq('user_id', currentUserId)
         .eq('month', currentMonth)
         .maybeSingle();

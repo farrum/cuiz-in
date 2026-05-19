@@ -233,7 +233,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           question_id: question.id,
           selected_answer: answer || 'timeout',
           correct: isCorrect,
-          gems_earned: gems,
+          points_earned: gems,
           answered_at: new Date().toISOString()
         });
       } else {

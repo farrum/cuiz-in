@@ -69,8 +69,8 @@ const MobileNav: React.FC = () => {
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
         const { data: dailyData } = await supabase
-          .from('daily_gems')
-          .select('gems')
+          .from('daily_points')
+          .select('gems:points')
           .eq('user_id', userId)
           .eq('date', today)
           .maybeSingle();
@@ -82,8 +82,8 @@ const MobileNav: React.FC = () => {
         }
         
         const { data: monthlyData } = await supabase
-          .from('monthly_gems')
-          .select('gems')
+          .from('monthly_points')
+          .select('gems:points')
           .eq('user_id', userId)
           .eq('month', currentMonth)
           .maybeSingle();

@@ -15,7 +15,7 @@ interface Challenge {
   title: string;
   description: string | null;
   num_questions: number;
-  gems_multiplier: number;
+  points_multiplier: number;
   start_date: string;
   end_date: string;
   is_active: boolean;

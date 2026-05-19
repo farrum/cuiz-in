@@ -52,22 +52,22 @@ export const useQuizGems = (
       
       const [dailyResult, monthlyResult, profileResult, answersResult] = await Promise.all([
         supabase
-          .from('daily_gems')
-          .select('gems')
+          .from('daily_points')
+          .select('gems:points')
           .eq('user_id', userId)
           .eq('date', new Date().toISOString().split('T')[0])
           .maybeSingle(),
           
         supabase
-          .from('monthly_gems')
-          .select('gems')
+          .from('monthly_points')
+          .select('gems:points')
           .eq('user_id', userId)
           .eq('month', `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`)
           .maybeSingle(),
           
         supabase
           .from('profiles')
-          .select('gems')
+          .select('gems:points')
           .eq('id', userId)
           .maybeSingle(),
           

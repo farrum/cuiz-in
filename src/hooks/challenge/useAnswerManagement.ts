@@ -41,7 +41,7 @@ export const useAnswerManagement = (
       
       // Calculate gems for this answer
       const gemsForQuestion = currentQuestion.gems || 10;
-      const gemsMultiplier = challenge.gems_multiplier || 1;
+      const gemsMultiplier = challenge.points_multiplier || 1;
       const earnedGems = isCorrect ? gemsForQuestion * gemsMultiplier : 0;
       
       // Update running total
@@ -69,7 +69,7 @@ export const useAnswerManagement = (
           question_id: currentQuestion.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          gems_earned: earnedGems
+          points_earned: earnedGems
         });
       
       if (answerError) {
