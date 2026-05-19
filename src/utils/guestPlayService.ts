@@ -4,6 +4,8 @@
  * Resets daily for returning guests
  */
 
+import { STORAGE_KEYS } from './constants';
+
 const GUEST_PLAY_KEY = 'cuizin_guest_play';
 const GUEST_MILESTONES_KEY = 'cuizin_guest_milestones';
 const MAX_GUEST_QUESTIONS = 30;
@@ -57,8 +59,25 @@ export const getGuestPlayData = (): GuestPlayData => {
  * Check if the user is logged in
  */
 export const isUserLoggedIn = (): boolean => {
-  const userId = localStorage.getItem('cuizin_user_id');
-  return !!userId && userId.length > 0;
+  // Check both the canonical app user id and any legacy key for safety.
+  const userId =
+    localStorage.getItem(STORAGE_KEYS.USER_ID) ||
+    localStorage.getItem('cuizin_user_id');
+  if (userId && userId.length > 0) return true;
+
+  // Fallback: detect an active Supabase auth session from its localStorage entry.
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(key);
+        if (raw && raw.includes('access_token')) return true;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return false;
 };
 
 /**

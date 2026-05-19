@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { QuizQuestion, fetchQuizQuestions } from '@/utils/quizData';
+import { QuizQuestion } from '@/utils/quizData';
 import { getRandomMessage } from '@/utils/funMessages';
 import { getRandomImageQuizQuestion } from '@/utils/imageQuizUtils';
 import { createSlug } from '@/utils/urlUtils';
@@ -41,13 +41,34 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
       }
       
       try {
-        // First attempt to get all questions
-        let questions = await fetchQuizQuestions();
-        
-        // Find the specific question
-        let foundQuestion = questions.find(q => q.id === questionId);
-        
-        // If not found in normal questions, it might be an image question
+        // Fetch the specific question directly by ID (avoids the 1000-row cap)
+        let foundQuestion: QuizQuestion | undefined;
+
+        if (!questionId.includes('image-')) {
+          const { data: q, error } = await supabase
+            .from('quiz_questions')
+            .select('id, question, options, category, difficulty, explanation, points, image_url, question_type, created_at')
+            .eq('id', questionId)
+            .maybeSingle();
+
+          if (!error && q) {
+            foundQuestion = {
+              id: q.id,
+              question: q.question,
+              options: Array.isArray(q.options) ? (q.options as string[]) : Object.values(q.options || {}) as string[],
+              difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+              category: q.category,
+              points: q.points || 10,
+              explanation: q.explanation || '',
+              imageUrl: q.image_url || undefined,
+              questionType: (q.question_type as 'text' | 'image') || 'text',
+              createdAt: q.created_at,
+              correctAnswer: '',
+            };
+          }
+        }
+
+        // Image questions are generated client-side
         if (!foundQuestion) {
           // For image questions, we need to handle special generated IDs
           if (questionId.includes('image-')) {

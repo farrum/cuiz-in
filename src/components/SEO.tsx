@@ -58,6 +58,16 @@ const SEO: React.FC<SEOProps> = ({
   // For FAQPage, use the provided schema directly (it's already complete)
   if (schemaType === 'FAQPage' && schemaData && schemaData['@context']) {
     schema = schemaData;
+  } else if (schemaType === 'FAQPage') {
+    // FAQPage requires mainEntity; if not provided yet (e.g. FAQs still loading),
+    // fall back to a generic WebPage schema to avoid emitting an invalid FAQPage.
+    schema = {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: title,
+      description: description,
+      url: pageUrl,
+    };
   } else if (schemaData && Object.keys(schemaData).length > 0) {
     // For other types with custom data, build basic schema and merge
     schema = {
