@@ -4,6 +4,8 @@ import { UserPlus, Brain, Trophy, Star, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 interface HowItWorksSectionProps {
   className?: string;
@@ -11,6 +13,13 @@ interface HowItWorksSectionProps {
 
 const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setIsLoggedIn(!!session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const steps = [
     {
@@ -95,10 +104,10 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
       <div className="text-center mt-12">
         <Button 
           size="lg"
-          onClick={() => navigate('/register')}
+          onClick={() => navigate(isLoggedIn ? '/quiz' : '/register')}
           className="gradient-primary text-white px-8 py-6 text-lg btn-shine"
         >
-          Get Started Now — It's Free!
+          {isLoggedIn ? 'Play Now' : "Get Started Now — It's Free!"}
         </Button>
       </div>
     </section>
