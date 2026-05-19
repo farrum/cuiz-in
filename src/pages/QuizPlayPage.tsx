@@ -120,7 +120,7 @@ const QuizPlayPage: React.FC = () => {
     }
   }, [navigate, questionId]);
 
-  const handleComplete = useCallback((isCorrect: boolean) => {
+  const handleComplete = useCallback((isCorrect: boolean | number) => {
     incrementQuestionsAnswered();
     if (isCorrect) incrementStreak(); else resetStreak();
 
@@ -172,19 +172,19 @@ const QuizPlayPage: React.FC = () => {
       // Double the daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-        const currentBalance = data?.gems_balance || 0;
-        await supabase.from('profiles').update({ gems_balance: currentBalance + dailyGems }).eq('id', session.session.user.id);
+        const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
+        const currentBalance = (data as any)?.gems_balance || 0;
+        await (supabase as any).from('profiles').update({ gems_balance: currentBalance + dailyGems }).eq('id', session.session.user.id);
         fetchGems();
       }
     } else {
       // Lose daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-        const currentBalance = data?.gems_balance || 0;
+        const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
+        const currentBalance = (data as any)?.gems_balance || 0;
         const newBalance = Math.max(0, currentBalance - dailyGems);
-        await supabase.from('profiles').update({ gems_balance: newBalance }).eq('id', session.session.user.id);
+        await (supabase as any).from('profiles').update({ gems_balance: newBalance }).eq('id', session.session.user.id);
         fetchGems();
       }
       resetStreak();
