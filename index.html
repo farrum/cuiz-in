@@ -168,7 +168,7 @@
     <div id="root"></div>
 
     <!-- Pre-paint hero shell: gives crawlers + first paint a real LCP element before React loads. Hidden as soon as #root has children. -->
-    <div class="prepaint-hero" id="prepaint-hero">
+    <div class="prepaint-hero" id="prepaint-hero" style="display:none">
       <h1>Cuiz<span class="accent">IN</span> — Free Online Quiz Game</h1>
       <p>Play 1,900+ trivia questions across history, science, geography, sports, entertainment and more. Earn points, climb the leaderboard, learn something new every day.</p>
       <div class="cta-row">
@@ -176,6 +176,17 @@
         <a class="cta cta-secondary" href="/register">Register</a>
       </div>
     </div>
+    <script>
+      // Only show prepaint hero on the homepage; on inner routes it must never appear.
+      (function(){
+        try {
+          if (window.location.pathname === '/' || window.location.pathname === '') {
+            var el = document.getElementById('prepaint-hero');
+            if (el) el.style.display = '';
+          }
+        } catch(e) {}
+      })();
+    </script>
 
     <!-- SEO fallback for crawlers that don't execute JS. Hidden when React mounts. -->
     <noscript>
