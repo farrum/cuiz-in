@@ -9,7 +9,7 @@ export const DailyChallengesHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
   const [hasPlayedWordle, setHasPlayedWordle] = useState(false);
-  const [hasAttemptedRiddle, setHasAttemptedRiddle] = useState(false);
+  const [hourlyWordle, setHourlyWordle] = useState<{ clue: string, answer: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,10 +29,20 @@ export const DailyChallengesHub: React.FC = () => {
         setConfig(settingData.config);
       }
 
-      // Check if user played today (simulate using localStorage for immediate client feedback)
-      // In production this would check a 'user_daily_activity' table via RPC.
+      // Fetch hourly Wordle from RPC
+      const { data: wordleData, error: wordleError } = await supabase.rpc('get_hourly_wordle');
+      if (!wordleError && wordleData && wordleData.length > 0) {
+        setHourlyWordle({
+          clue: wordleData[0].question,
+          answer: wordleData[0].correct_answer
+        });
+      }
+
+      // Check if user played today/this hour
       const today = new Date().toISOString().split('T')[0];
-      const wordlePlayed = localStorage.getItem(`wordle_${today}`);
+      const currentHour = new Date().getHours();
+      
+      const wordlePlayed = localStorage.getItem(`wordle_${today}_${currentHour}`);
       const riddleAttempted = localStorage.getItem(`riddle_${today}`);
       
       if (wordlePlayed) setHasPlayedWordle(true);
@@ -56,7 +66,8 @@ export const DailyChallengesHub: React.FC = () => {
 
   const handleWordleComplete = async (score: number) => {
     const today = new Date().toISOString().split('T')[0];
-    localStorage.setItem(`wordle_${today}`, 'true');
+    const currentHour = new Date().getHours();
+    localStorage.setItem(`wordle_${today}_${currentHour}`, 'true');
     setHasPlayedWordle(true);
     
     if (score > 0) {
@@ -88,7 +99,7 @@ export const DailyChallengesHub: React.FC = () => {
     );
   }
 
-  if (!config) {
+  if (!config && !hourlyWordle) {
     return <div className="p-8 text-center text-slate-500">No challenges configured for today.</div>;
   }
 
@@ -98,12 +109,13 @@ export const DailyChallengesHub: React.FC = () => {
         <h2 className="text-2xl font-bold text-slate-800 px-2">Trivia Wordle</h2>
         {hasPlayedWordle ? (
           <div className="bg-slate-100 border border-slate-200 rounded-2xl p-8 text-center text-slate-500">
-            You've already played Wordle today. Come back tomorrow!
+            You've already solved this hour's Wordle. Come back in the next hour for a new one!
           </div>
         ) : (
           <TriviaWordle 
-            clue={config.wordle_clue}
-            targetWord={config.wordle_answer}
+            key={hourlyWordle?.answer || config?.wordle_answer}
+            clue={hourlyWordle?.clue || config?.wordle_clue}
+            targetWord={hourlyWordle?.answer || config?.wordle_answer}
             onComplete={handleWordleComplete}
           />
         )}
