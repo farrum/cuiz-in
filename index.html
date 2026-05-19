@@ -50,17 +50,6 @@
       #root{min-height:100vh;display:flex;flex-direction:column}
       .gradient-hero{background:linear-gradient(135deg,hsl(222 47% 11%) 0%,hsl(222 47% 8%) 100%)}
       @media(prefers-color-scheme:light){.gradient-hero{background:linear-gradient(135deg,hsl(0 0% 100%) 0%,hsl(210 40% 98%) 100%)}}
-      /* Pre-paint hero shell so LCP element exists before React hydrates */
-      .prepaint-hero{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:96px 16px 48px;background:linear-gradient(135deg,hsl(0 0% 100%) 0%,hsl(210 40% 98%) 100%);color:hsl(222 47% 11%)}
-      .prepaint-hero h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin:0 0 16px;line-height:1.15}
-      .prepaint-hero h1 .accent{color:hsl(142 71% 45%)}
-      .prepaint-hero p{font-size:clamp(1.1rem,2.5vw,1.4rem);max-width:42rem;margin:0 0 24px;color:hsl(215 25% 22%)}
-      .prepaint-hero .cta-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-      .prepaint-hero .cta{display:inline-block;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none;font-size:1rem}
-      .prepaint-hero .cta-primary{background:linear-gradient(135deg,hsl(142 71% 45%),hsl(160 84% 39%));color:#fff}
-      .prepaint-hero .cta-secondary{border:2px solid hsl(217 91% 40%);color:hsl(217 91% 35%);background:transparent}
-      /* Hide pre-paint shell once React mounts content into #root */
-      #root:not(:empty) ~ .prepaint-hero{display:none}
     </style>
 
     <!-- Theme colors -->
@@ -166,27 +155,6 @@
 
   <body>
     <div id="root"></div>
-
-    <!-- Pre-paint hero shell: gives crawlers + first paint a real LCP element before React loads. Hidden as soon as #root has children. -->
-    <div class="prepaint-hero" id="prepaint-hero" style="display:none">
-      <h1>Cuiz<span class="accent">IN</span> — Free Online Quiz Game</h1>
-      <p>Play 1,900+ trivia questions across history, science, geography, sports, entertainment and more. Earn points, climb the leaderboard, learn something new every day.</p>
-      <div class="cta-row">
-        <a class="cta cta-primary" href="/quiz">Play Free</a>
-        <a class="cta cta-secondary" href="/register">Register</a>
-      </div>
-    </div>
-    <script>
-      // Only show prepaint hero on the homepage; on inner routes it must never appear.
-      (function(){
-        try {
-          if (window.location.pathname === '/' || window.location.pathname === '') {
-            var el = document.getElementById('prepaint-hero');
-            if (el) el.style.display = '';
-          }
-        } catch(e) {}
-      })();
-    </script>
 
     <!-- SEO fallback for crawlers that don't execute JS. Hidden when React mounts. -->
     <noscript>
