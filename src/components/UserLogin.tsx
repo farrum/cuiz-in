@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 
 const UserLogin: React.FC = () => {
@@ -83,8 +84,21 @@ const UserLogin: React.FC = () => {
         return;
       }
 
-      // Session is now set — onAuthStateChange in App.tsx will hydrate user data.
-      // We just need to determine where to navigate.
+      // Immediately cache the canonical user keys so all components (which read
+      // from localStorage to decide guest vs. logged-in) reflect the new
+      // session on the very next render. The onAuthStateChange listener in
+      // App.tsx will also hydrate, but it runs asynchronously after navigate.
+      const userId = data.user?.id;
+      const userName =
+        data.user?.user_metadata?.username ||
+        data.user?.user_metadata?.display_name ||
+        (typeof identifier === 'string' && !identifier.includes('@') ? identifier.trim() : data.user?.email);
+      if (userId) {
+        localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
+        if (userName) localStorage.setItem(STORAGE_KEYS.USER_NAME, userName);
+        localStorage.setItem(STORAGE_KEYS.USER_ROLE, data.role || 'player');
+      }
+
       toast({
         title: "Login Successful",
         description: "Welcome back!",
