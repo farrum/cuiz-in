@@ -40,7 +40,7 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
       // Get today's top performers from daily_gems table
       const { data, error } = await supabase
         .from('daily_points')
-        .select('user_id, gems')
+        .select('user_id, gems:points')
         .eq('date', today)
         .order('points', { ascending: false })
         .limit(limit);
@@ -84,7 +84,7 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
       // Get this month's top performers from monthly_gems table
       const { data, error } = await supabase
         .from('monthly_points')
-        .select('user_id, gems')
+        .select('user_id, gems:points')
         .eq('month', currentMonth)
         .order('points', { ascending: false })
         .limit(limit);

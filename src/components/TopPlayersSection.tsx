@@ -69,7 +69,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         // Regular user query (RLS should handle access)
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, gems')
+          .select('id, username, gems:points')
           .order('points', { ascending: false })
           .limit(limit);
 

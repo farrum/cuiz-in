@@ -33,7 +33,7 @@ const LeaderboardSection: React.FC = () => {
       // Directly fetch top players from profiles table
       const { data: topUsers, error } = await supabase
         .from('profiles')
-        .select('id, username, gems')
+        .select('id, username, gems:points')
         .order('points', { ascending: false })
         .limit(10);
         

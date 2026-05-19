@@ -74,7 +74,7 @@ const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
 async function hydrateUserFromSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
-      supabase.from('profiles').select('username, gems').eq('id', userId).maybeSingle(),
+      supabase.from('profiles').select('username, gems:points').eq('id', userId).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
 

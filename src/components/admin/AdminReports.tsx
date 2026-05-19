@@ -788,7 +788,7 @@ const TopPerformersReport = () => {
       
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_points')
-        .select('user_id, gems')
+        .select('user_id, gems:points')
         .eq('date', today)
         .order('points', { ascending: false })
         .limit(10);
@@ -797,7 +797,7 @@ const TopPerformersReport = () => {
       
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('monthly_points')
-        .select('user_id, gems')
+        .select('user_id, gems:points')
         .eq('month', currentMonth)
         .order('points', { ascending: false })
         .limit(10);
