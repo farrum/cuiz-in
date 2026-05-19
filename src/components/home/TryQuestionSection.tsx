@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const TryQuestionSection: React.FC = () => {
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
@@ -33,14 +34,31 @@ const TryQuestionSection: React.FC = () => {
     }
   };
 
-  const handleAnswerSelect = (answer: string) => {
-    if (isAnswered) return;
-    
+  const handleAnswerSelect = async (answer: string) => {
+    if (isAnswered || !question) return;
+
     setSelectedAnswer(answer);
     setIsAnswered(true);
-    
-    const correct = answer === question?.correctAnswer;
-    setIsCorrect(correct);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+        body: { question_id: question.id, selected_answer: answer },
+      });
+      if (!error && data) {
+        setIsCorrect(!!data.is_correct);
+        // Hydrate the question so the UI can display correct answer / explanation
+        setQuestion((prev) => prev ? {
+          ...prev,
+          correctAnswer: data.correct_answer || prev.correctAnswer,
+          explanation: data.explanation || prev.explanation,
+        } : prev);
+      } else {
+        setIsCorrect(false);
+      }
+    } catch (err) {
+      console.error('Error validating answer:', err);
+      setIsCorrect(false);
+    }
   };
 
   const handlePlayMore = () => {
