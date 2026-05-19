@@ -86,6 +86,7 @@ const AdminUserManagement: React.FC = () => {
           
           return {
             ...user,
+            gems: (user as any).points ?? 0,
             referrer: referralInfo ? {
               id: referralInfo.referrer_id,
               name: referralInfo.referrer_name

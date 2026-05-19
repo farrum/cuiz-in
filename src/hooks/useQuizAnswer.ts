@@ -58,7 +58,7 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
               options: Array.isArray(q.options) ? (q.options as string[]) : Object.values(q.options || {}) as string[],
               difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: q.category,
-              points: q.points || 10,
+              gems: (q as any).points || 10,
               explanation: q.explanation || '',
               imageUrl: q.image_url || undefined,
               questionType: (q.question_type as 'text' | 'image') || 'text',

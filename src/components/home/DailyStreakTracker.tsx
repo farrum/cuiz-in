@@ -31,7 +31,7 @@ const DailyStreakTracker: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('login_streaks')
-        .select('current_streak, highest_streak, bonus_gems_today, last_login_date')
+        .select('current_streak, highest_streak, bonus_points_today, last_login_date')
         .eq('user_id', userId)
         .single();
 
@@ -48,7 +48,7 @@ const DailyStreakTracker: React.FC = () => {
         setStreakData({
           currentStreak: data.current_streak,
           highestStreak: data.highest_streak,
-          bonusGemsToday: data.bonus_gems_today,
+          bonusGemsToday: data.bonus_points_today,
           lastLoginDate: data.last_login_date
         });
       }

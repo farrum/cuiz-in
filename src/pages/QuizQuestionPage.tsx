@@ -66,7 +66,7 @@ const QuizQuestionPage: React.FC = () => {
             correctAnswer: data.correct_answer,
             difficulty: data.difficulty as 'easy' | 'medium' | 'hard',
             category: data.category,
-            gems: data.gems || 10,
+            gems: data.points || 10,
             explanation: data.explanation || '',
             createdAt: data.created_at
           };
@@ -121,7 +121,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: q.correct_answer,
               difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
               category: q.category,
-              gems: q.gems || 10,
+              gems: q.points || 10,
               explanation: q.explanation || ''
             }));
             
@@ -156,7 +156,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: prevData[0].correct_answer,
               difficulty: (prevData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: prevData[0].category,
-              gems: prevData[0].gems || 10,
+              gems: prevData[0].points || 10,
               explanation: prevData[0].explanation || ''
             });
           }
@@ -169,7 +169,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: nextData[0].correct_answer,
               difficulty: (nextData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: nextData[0].category,
-              gems: nextData[0].gems || 10,
+              gems: nextData[0].points || 10,
               explanation: nextData[0].explanation || ''
             });
           }

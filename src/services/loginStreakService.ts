@@ -12,7 +12,7 @@ interface LoginStreak {
   current_streak: number;
   last_login_date: string;
   highest_streak: number;
-  bonus_gems_today: number;
+  bonus_points_today: number;
   bonus_claimed_today: boolean;
 }
 
@@ -135,7 +135,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
           current_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           highest_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           last_login_date: todayStr,
-          bonus_gems_today: bonusGems,
+          bonus_points_today: bonusGems,
           bonus_claimed_today: bonusGems > 0
         })
         .select()
@@ -221,7 +221,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       current_streak: newStreak,
       highest_streak: Math.max(newStreak, streakData.highest_streak),
       last_login_date: todayStr,
-      bonus_gems_today: bonusGems,
+      bonus_points_today: bonusGems,
       bonus_claimed_today: true
     });
     
@@ -232,7 +232,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         current_streak: newStreak,
         highest_streak: Math.max(newStreak, streakData.highest_streak),
         last_login_date: todayStr,
-        bonus_gems_today: bonusGems,
+        bonus_points_today: bonusGems,
         bonus_claimed_today: true,
         updated_at: new Date().toISOString()
       })
@@ -285,7 +285,7 @@ const awardBonusGems = async (userId: string, bonusGems: number): Promise<void> 
     
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ gems: newGems })
+      .update({ points: newGems })
       .eq('id', userId);
       
     if (updateError) {
