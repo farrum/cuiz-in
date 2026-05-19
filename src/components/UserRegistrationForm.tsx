@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-import { Loader } from 'lucide-react';
+import { Loader, Check, X } from 'lucide-react';
 
 const UserRegistrationForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -22,6 +22,7 @@ const UserRegistrationForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,7 +104,12 @@ const UserRegistrationForm: React.FC = () => {
   }, [username, displayName]);
   
   useEffect(() => {
-    if (!username) return;
+    if (!username) {
+      setUsernameError('');
+      setUsernameAvailable(false);
+      return;
+    }
+    setUsernameAvailable(false);
     const timer = setTimeout(async () => {
       checkUsernameAvailability(username);
     }, 500);
@@ -113,18 +119,28 @@ const UserRegistrationForm: React.FC = () => {
   const checkUsernameAvailability = async (username: string) => {
     if (username.length < 3) {
       setUsernameError('Username must be at least 3 characters');
+      setUsernameAvailable(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameError('Only letters, numbers, and underscores allowed');
+      setUsernameAvailable(false);
       return;
     }
     setIsCheckingUsername(true);
     setUsernameError('');
+    setUsernameAvailable(false);
     try {
       const { data } = await supabase
         .from('profiles')
         .select('username')
-        .eq('username', username)
+        .ilike('username', username)
         .maybeSingle();
       if (data) {
         setUsernameError('Username already taken');
+        setUsernameAvailable(false);
+      } else {
+        setUsernameAvailable(true);
       }
     } catch {
       // ignore
@@ -317,17 +333,30 @@ const UserRegistrationForm: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter a username"
-                className={usernameError ? "border-red-500" : ""}
+                className={
+                  usernameError
+                    ? "border-red-500 pr-9"
+                    : usernameAvailable
+                    ? "border-green-500 pr-9"
+                    : "pr-9"
+                }
                 required
               />
-              {isCheckingUsername && (
-                <div className="absolute right-2 top-2">
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                {isCheckingUsername ? (
                   <Loader className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              )}
+                ) : usernameAvailable ? (
+                  <Check className="h-5 w-5 text-green-600" />
+                ) : usernameError && username.length > 0 ? (
+                  <X className="h-5 w-5 text-red-500" />
+                ) : null}
+              </div>
             </div>
             {usernameError && (
               <p className="text-sm text-red-500">{usernameError}</p>
+            )}
+            {!usernameError && usernameAvailable && (
+              <p className="text-sm text-green-600">Username is available</p>
             )}
             <p className="text-xs text-muted-foreground">
               This is your unique identifier and cannot be changed later.
