@@ -699,7 +699,6 @@ export type Database = {
           email: string | null
           id: string
           is_admin: boolean | null
-          password_hash: string | null
           phone: string | null
           points: number | null
           profile_picture: string | null
@@ -718,7 +717,6 @@ export type Database = {
           email?: string | null
           id?: string
           is_admin?: boolean | null
-          password_hash?: string | null
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
@@ -737,7 +735,6 @@ export type Database = {
           email?: string | null
           id?: string
           is_admin?: boolean | null
-          password_hash?: string | null
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
