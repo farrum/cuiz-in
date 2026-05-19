@@ -18,7 +18,7 @@ const TestimonialsSection: React.FC = () => {
         </blockquote>
         <blockquote className="bg-white/70 dark:bg-gray-700/70 p-4 rounded-xl shadow">
           <p className="italic text-muted-foreground mb-3 text-sm">
-            "The daily challenges keep me coming back. I love competing with friends and watching my points add up on the leaderboard."
+            "The daily challenges keep me coming back. I love competing with friends and watching my gems add up on the leaderboard."
           </p>
           <footer className="font-medium text-sm">- James R.</footer>
         </blockquote>

@@ -154,7 +154,7 @@ export const generateCategorySocialMeta = (categoryName: string, categorySlug: s
   const canonicalUrl = `${SITE_URL}/categories/${categorySlug}`;
   
   const title = `${categoryName} Quiz Questions | CuizIN - Free Trivia Game`;
-  const description = `Play free ${categoryName} quiz questions and test your knowledge. Earn points, compete on leaderboards, and win rewards at CuizIN!`;
+  const description = `Play free ${categoryName} quiz questions and test your knowledge. Earn gems, compete on leaderboards, and win rewards at CuizIN!`;
 
   return {
     title,

@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface LoginBonusState {
   showBonusPopup: boolean;
-  bonusPoints: number;
+  bonusGems: number;
   streakDays: number;
   bonusChecked: boolean;
 }
@@ -18,7 +18,7 @@ export const useLoginActivity = (
 ) => {
   const [loginBonusState, setLoginBonusState] = useState<LoginBonusState>({
     showBonusPopup: false,
-    bonusPoints: 0,
+    bonusGems: 0,
     streakDays: 1,
     bonusChecked: false
   });
@@ -57,13 +57,13 @@ export const useLoginActivity = (
         // Check and update login streak - only do this once per session
         const bonus = await checkAndUpdateLoginStreak(userId);
         
-        // If bonus points were awarded (first login of the day)
+        // If bonus gems were awarded (first login of the day)
         if (bonus !== null && bonus > 0) {
-          console.log(`User earned ${bonus} bonus points for logging in today`);
+          console.log(`User earned ${bonus} bonus gems for logging in today`);
           setLoginBonusState({
             bonusChecked: true,
-            bonusPoints: bonus,
-            streakDays: Math.min(bonus, 30), // Streak days = bonus points (capped at 30)
+            bonusGems: bonus,
+            streakDays: Math.min(bonus, 30), // Streak days = bonus gems (capped at 30)
             showBonusPopup: true
           });
           

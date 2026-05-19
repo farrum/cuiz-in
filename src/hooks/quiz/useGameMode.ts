@@ -20,7 +20,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
   },
   'team-quiz': {
     name: 'Team Quiz',
-    description: 'Collaborate with team members to earn points together',
+    description: 'Collaborate with team members to earn gems together',
     icon: 'users',
     teamSize: 2,
   },
@@ -97,27 +97,27 @@ export const useGameMode = () => {
     }
   };
 
-  // Calculate points based on game mode
-  const calculatePoints = (basePoints: number, isCorrect: boolean, currentStreak: number) => {
-    if (!isCorrect) return 0.5; // Always give 0.5 points for wrong answers
+  // Calculate gems based on game mode
+  const calculateGems = (baseGems: number, isCorrect: boolean, currentStreak: number) => {
+    if (!isCorrect) return 0.5; // Always give 0.5 gems for wrong answers
     
-    let finalPoints = basePoints;
+    let finalGems = baseGems;
     
     // Apply streak multiplier in streak mode
     if (currentMode === 'streak' && config.streakMultiplier) {
       const streakBonus = Math.floor(currentStreak * config.streakMultiplier);
-      finalPoints += streakBonus;
+      finalGems += streakBonus;
     }
     
     // In team quiz mode, add bonus for team collaboration
     if (currentMode === 'team-quiz') {
       const teamBonus = Math.max(1, teamSize * 0.5);
-      finalPoints = finalPoints * teamBonus;
+      finalGems = finalGems * teamBonus;
     }
     
-    // In time attack mode, faster answers get more points (implemented elsewhere with timer)
+    // In time attack mode, faster answers get more gems (implemented elsewhere with timer)
     
-    return finalPoints;
+    return finalGems;
   };
 
   return {
@@ -128,7 +128,7 @@ export const useGameMode = () => {
     teamSize,
     updateTeamSize,
     changeGameMode,
-    calculatePoints,
+    calculateGems,
     allModes: Object.keys(GAME_MODE_CONFIGS) as GameMode[],
     modeConfigs: GAME_MODE_CONFIGS
   };

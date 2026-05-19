@@ -18,7 +18,7 @@ interface SEOProps {
 
 const SEO: React.FC<SEOProps> = ({
   title = 'CuizIN - Free Quiz Game with Rewards',
-  description = 'Play quizzes, earn points, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play.',
+  description = 'Play quizzes, earn gems, and get rewarded. CuizIN is a completely free quiz platform where players can earn monthly income through active play.',
   canonicalUrl,
   ogImage = 'https://cuiz.in/og-image.png',
   ogType = 'website',

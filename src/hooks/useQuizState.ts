@@ -16,9 +16,9 @@ export const useQuizState = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [streak, setStreak] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
-  const [userPoints, setUserPoints] = useState(0);
-  const [dailyPoints, setDailyPoints] = useState(0);
-  const [monthlyPoints, setMonthlyPoints] = useState(0);
+  const [userGems, setUserGems] = useState(0);
+  const [dailyGems, setDailyGems] = useState(0);
+  const [monthlyGems, setMonthlyGems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [adsSynced, setAdsSynced] = useState(false);
   const [showMotivation, setShowMotivation] = useState(false);
@@ -86,8 +86,8 @@ export const useQuizState = () => {
   };
   
   const loadInitialData = async () => {
-    const savedPoints = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-    setUserPoints(savedPoints);
+    const savedGems = parseFloat(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
+    setUserGems(savedGems);
     
     const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
     setQuestionsAnswered(completedQuestions.length);
@@ -119,7 +119,7 @@ export const useQuizState = () => {
     }
     
     loadNewQuestion();
-    fetchPoints();
+    fetchGems();
     updateNextBadgeThreshold(JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]').length);
   };
   
@@ -128,7 +128,7 @@ export const useQuizState = () => {
     setForceReloadAds(prev => prev + 1);
   };
   
-  const fetchPoints = async () => {
+  const fetchGems = async () => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
     
@@ -138,40 +138,40 @@ export const useQuizState = () => {
     
     try {
       const { data: dailyData } = await supabase
-        .from('daily_points')
-        .select('points')
+        .from('daily_gems')
+        .select('gems')
         .eq('user_id', userId)
         .eq('date', today)
         .maybeSingle();
         
       if (dailyData) {
-        setDailyPoints(Number(dailyData.points));
+        setDailyGems(Number(dailyData.gems));
       } else {
-        setDailyPoints(0);
+        setDailyGems(0);
       }
       
       const { data: monthlyData } = await supabase
-        .from('monthly_points')
-        .select('points')
+        .from('monthly_gems')
+        .select('gems')
         .eq('user_id', userId)
         .eq('month', currentMonth)
         .maybeSingle();
         
       if (monthlyData) {
-        setMonthlyPoints(Number(monthlyData.points));
+        setMonthlyGems(Number(monthlyData.gems));
       } else {
-        setMonthlyPoints(0);
+        setMonthlyGems(0);
       }
       
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('points, suspended')
+        .select('gems, suspended')
         .eq('id', userId)
         .single();
         
       if (profileData) {
-        setUserPoints(Number(profileData.points));
-        localStorage.setItem(STORAGE_KEYS.USER_POINTS, profileData.points.toString());
+        setUserGems(Number(profileData.gems));
+        localStorage.setItem(STORAGE_KEYS.USER_GEMS, profileData.gems.toString());
         
         if (profileData.suspended && !isSuspended) {
           setIsSuspended(true);
@@ -184,7 +184,7 @@ export const useQuizState = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching points:', error);
+      console.error('Error fetching gems:', error);
     }
   };
   
@@ -215,10 +215,10 @@ export const useQuizState = () => {
       setStreak(newStreak);
       
       if (newStreak % 5 === 0) {
-        const bonusPoints = 5;
+        const bonusGems = 5;
         toast({
           title: `${newStreak} Question Streak!`,
-          description: `Bonus ${bonusPoints} points awarded!`,
+          description: `Bonus ${bonusGems} gems awarded!`,
         });
       }
     } else {
@@ -226,8 +226,8 @@ export const useQuizState = () => {
     }
     
     setTimeout(() => {
-      fetchPoints();
-      window.dispatchEvent(new Event('pointsUpdated'));
+      fetchGems();
+      window.dispatchEvent(new Event('gemsUpdated'));
     }, 1000);
     
     loadNewQuestion();
@@ -257,9 +257,9 @@ export const useQuizState = () => {
     currentQuestion,
     streak,
     questionsAnswered,
-    userPoints,
-    dailyPoints,
-    monthlyPoints,
+    userGems,
+    dailyGems,
+    monthlyGems,
     isLoading,
     adsSynced,
     showMotivation,
@@ -270,7 +270,7 @@ export const useQuizState = () => {
     checkSuspensionStatus,
     loadInitialData,
     handleAdSlotsUpdated,
-    fetchPoints,
+    fetchGems,
     loadNewQuestion,
     handleQuestionComplete,
     showMotivationalMessage,

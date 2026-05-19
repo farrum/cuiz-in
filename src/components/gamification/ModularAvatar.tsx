@@ -87,7 +87,7 @@ export const ModularAvatar: React.FC<ModularAvatarProps> = ({
         )}
         {config.headwear === 'graduation' && (
           <>
-            <polygon points="50,5 90,20 50,35 10,20" fill="#1e293b" />
+            <polygon gems="50,5 90,20 50,35 10,20" fill="#1e293b" />
             <rect x="35" y="25" width="30" height="15" fill="#1e293b" />
             <path d="M 85 20 L 85 45" stroke="#fbbf24" strokeWidth="2" />
             <circle cx="85" cy="45" r="3" fill="#fbbf24" />

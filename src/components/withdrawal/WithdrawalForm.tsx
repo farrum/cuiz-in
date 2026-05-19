@@ -55,7 +55,7 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
             {parseFloat(withdrawalAmount) < minimumAmount ? (
               <span className="text-red-500">Minimum withdrawal amount is {currencyDisplay.symbol}{minimumAmount}</span>
             ) : (
-              <span>{(parseFloat(withdrawalAmount) * 2).toFixed(0)} points will be deducted</span>
+              <span>{(parseFloat(withdrawalAmount) * 2).toFixed(0)} gems will be deducted</span>
             )}
           </div>
         )}

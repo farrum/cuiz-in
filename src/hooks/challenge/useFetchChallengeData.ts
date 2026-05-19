@@ -66,7 +66,7 @@ export const useFetchChallengeData = (
       if (challengeData) {
         const { data: questionData, error: questionError } = await supabase
           .from('quiz_questions')
-          .select('id, question, options, category, difficulty, explanation, points, image_url, question_type')
+          .select('id, question, options, category, difficulty, explanation, gems, image_url, question_type')
           .in('id', challengeData.question_ids);
           
         if (questionError) throw questionError;
@@ -98,7 +98,7 @@ export const useFetchChallengeData = (
               explanation: question.explanation || '',
               category: question.category,
               difficulty: question.difficulty as 'easy' | 'medium' | 'hard',
-              points: question.points || 10
+              gems: question.gems || 10
             });
           }
         }

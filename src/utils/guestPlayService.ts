@@ -10,7 +10,7 @@ const MAX_GUEST_QUESTIONS = 30;
 
 interface GuestPlayData {
   questionsPlayed: number;
-  sessionPoints: number;
+  sessionGems: number;
   lastReset: string;
 }
 
@@ -20,7 +20,7 @@ interface GuestMilestones {
 
 const getDefaultGuestData = (): GuestPlayData => ({
   questionsPlayed: 0,
-  sessionPoints: 0,
+  sessionGems: 0,
   lastReset: new Date().toISOString(),
 });
 
@@ -83,28 +83,28 @@ export const getRemainingGuestPlays = (): number => {
 };
 
 /**
- * Get guest session points (for display before registration)
+ * Get guest session gems (for display before registration)
  */
-export const getGuestSessionPoints = (): number => {
+export const getGuestSessionGems = (): number => {
   const data = getGuestPlayData();
-  return data.sessionPoints;
+  return data.sessionGems;
 };
 
 /**
- * Increment guest play count and add points
+ * Increment guest play count and add gems
  */
-export const incrementGuestPlay = (pointsEarned: number = 0): void => {
+export const incrementGuestPlay = (gemsEarned: number = 0): void => {
   if (isUserLoggedIn()) return; // Don't track for logged-in users
   
   const data = getGuestPlayData();
   data.questionsPlayed += 1;
-  data.sessionPoints += pointsEarned;
+  data.sessionGems += gemsEarned;
   
   localStorage.setItem(GUEST_PLAY_KEY, JSON.stringify(data));
   
   // Dispatch event for registration incentive modal
   window.dispatchEvent(new CustomEvent('guestQuestionCompleted', {
-    detail: { questionsPlayed: data.questionsPlayed, sessionPoints: data.sessionPoints }
+    detail: { questionsPlayed: data.questionsPlayed, sessionGems: data.sessionGems }
   }));
 };
 
@@ -186,11 +186,11 @@ export const markMilestoneCelebrated = (milestone: number): void => {
 export const getUncelabratedMilestone = (): number | null => {
   if (isUserLoggedIn()) return null;
   
-  const sessionPoints = getGuestSessionPoints();
+  const sessionGems = getGuestSessionGems();
   const celebrated = getCelebratedMilestones();
   
   for (const milestone of POINT_MILESTONES) {
-    if (sessionPoints >= milestone && !celebrated.includes(milestone)) {
+    if (sessionGems >= milestone && !celebrated.includes(milestone)) {
       return milestone;
     }
   }

@@ -13,13 +13,13 @@ export interface SkillNode {
 }
 
 interface SkillTreeProps {
-  skillPoints: number;
+  skillGems: number;
   nodes: SkillNode[];
   onPurchase: (nodeId: string) => void;
 }
 
 export const SkillTree: React.FC<SkillTreeProps> = ({
-  skillPoints,
+  skillGems,
   nodes,
   onPurchase
 }) => {
@@ -29,7 +29,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({
         <h2 className="text-xl font-bold text-slate-800">Skill Tree</h2>
         <div className="bg-white px-4 py-1.5 rounded-full shadow-sm font-bold text-slate-700 border border-slate-100">
           <span className="text-purple-500 mr-2">✦</span>
-          {skillPoints} SP
+          {skillGems} SP
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({
                   : "bg-slate-100 border-slate-200 opacity-60 grayscale"
             )}
             onClick={() => {
-              if (node.purchasable && !node.unlocked && skillPoints >= node.cost) {
+              if (node.purchasable && !node.unlocked && skillGems >= node.cost) {
                 onPurchase(node.id);
               }
             }}
@@ -75,7 +75,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({
                 <div className="mt-3">
                   <span className={cn(
                     "text-xs font-bold px-2 py-1 rounded",
-                    skillPoints >= node.cost ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                    skillGems >= node.cost ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
                   )}>
                     Cost: {node.cost} SP
                   </span>

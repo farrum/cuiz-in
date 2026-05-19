@@ -94,13 +94,13 @@ export const notifyAchievementClaim = async (
   username: string, 
   userId: string, 
   achievement: string, 
-  points: number
+  gems: number
 ): Promise<boolean> => {
   return createAdminNotification(
     'achievement_claim',
-    `${username} has claimed achievement: ${achievement} for ${points} points`,
+    `${username} has claimed achievement: ${achievement} for ${gems} gems`,
     userId,
-    { username, achievement, points }
+    { username, achievement, gems }
   );
 };
 

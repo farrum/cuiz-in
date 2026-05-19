@@ -6,14 +6,14 @@ import { Award, Calendar, TrendingUp, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface LoginBonusPopupProps {
-  bonusPoints: number;
+  bonusGems: number;
   streakDays: number;
   isOpen: boolean;
   onClose: () => void;
 }
 
 const LoginBonusPopup: React.FC<LoginBonusPopupProps> = ({
-  bonusPoints,
+  bonusGems,
   streakDays,
   isOpen,
   onClose,
@@ -27,9 +27,9 @@ const LoginBonusPopup: React.FC<LoginBonusPopupProps> = ({
         origin: { y: 0.6 }
       });
       
-      console.log("LoginBonusPopup displayed with", { bonusPoints, streakDays, isOpen });
+      console.log("LoginBonusPopup displayed with", { bonusGems, streakDays, isOpen });
     }
-  }, [isOpen, bonusPoints, streakDays]);
+  }, [isOpen, bonusGems, streakDays]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -46,7 +46,7 @@ const LoginBonusPopup: React.FC<LoginBonusPopupProps> = ({
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-3xl font-bold text-primary">+{bonusPoints}</span>
+                <span className="text-3xl font-bold text-primary">+{bonusGems}</span>
               </div>
               <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                 {streakDays} DAY{streakDays !== 1 ? 'S' : ''}
@@ -55,7 +55,7 @@ const LoginBonusPopup: React.FC<LoginBonusPopupProps> = ({
             
             <div className="text-center">
               <p className="text-lg">
-                You've earned <span className="font-bold text-primary">{bonusPoints} bonus points</span> today!
+                You've earned <span className="font-bold text-primary">{bonusGems} bonus gems</span> today!
               </p>
               
               <div className="mt-2 flex items-center justify-center gap-2 text-muted-foreground">
@@ -65,11 +65,11 @@ const LoginBonusPopup: React.FC<LoginBonusPopupProps> = ({
             </div>
             
             <div className="text-sm text-center text-muted-foreground px-4">
-              <p>Log in tomorrow to increase your streak and earn even more points!</p>
+              <p>Log in tomorrow to increase your streak and earn even more gems!</p>
               {streakDays < 30 && (
                 <div className="mt-2 flex items-center justify-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  <span>Next bonus: {Math.min(streakDays + 1, 30)} points</span>
+                  <span>Next bonus: {Math.min(streakDays + 1, 30)} gems</span>
                 </div>
               )}
             </div>

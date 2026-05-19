@@ -36,7 +36,7 @@ const EarningsChart: React.FC<EarningsChartProps> = ({ chartData }) => {
             <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
             <Tooltip />
             <Legend />
-            <Bar yAxisId="left" dataKey="amount" name="Points" fill="#8884d8" />
+            <Bar yAxisId="left" dataKey="amount" name="Gems" fill="#8884d8" />
             <Bar yAxisId="right" dataKey="members" name="Active Members" fill="#82ca9d" />
           </BarChart>
         </ResponsiveContainer>

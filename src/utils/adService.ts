@@ -37,12 +37,12 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
     
     // Different approaches based on timeframe
     if (timeframe === 'daily') {
-      // Get today's top performers from daily_points table
+      // Get today's top performers from daily_gems table
       const { data, error } = await supabase
-        .from('daily_points')
-        .select('user_id, points')
+        .from('daily_gems')
+        .select('user_id, gems')
         .eq('date', today)
-        .order('points', { ascending: false })
+        .order('gems', { ascending: false })
         .limit(limit);
         
       if (error) {
@@ -76,17 +76,17 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
       return data.map((item, index) => ({
         userId: item.user_id,
         username: profileMap[item.user_id] || 'Unknown User',
-        points: Number(item.points),
+        gems: Number(item.gems),
         rank: index + 1
       }));
       
     } else {
-      // Get this month's top performers from monthly_points table
+      // Get this month's top performers from monthly_gems table
       const { data, error } = await supabase
-        .from('monthly_points')
-        .select('user_id, points')
+        .from('monthly_gems')
+        .select('user_id, gems')
         .eq('month', currentMonth)
-        .order('points', { ascending: false })
+        .order('gems', { ascending: false })
         .limit(limit);
         
       if (error) {
@@ -120,7 +120,7 @@ export const getTopPerformers = async (timeframe: 'daily' | 'monthly' = 'daily',
       return data.map((item, index) => ({
         userId: item.user_id,
         username: profileMap[item.user_id] || 'Unknown User',
-        points: Number(item.points),
+        gems: Number(item.gems),
         rank: index + 1
       }));
     }

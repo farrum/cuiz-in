@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface TopPlayer {
   username: string;
-  points: number;
+  gems: number;
   isCurrentUser: boolean;
 }
 
@@ -25,7 +25,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   showMonthlyComparison = false
 }) => {
   const [players, setPlayers] = useState<TopPlayer[]>([]);
-  const [currentUserMonthlyPoints, setCurrentUserMonthlyPoints] = useState<number | null>(null);
+  const [currentUserMonthlyGems, setCurrentUserMonthlyGems] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
@@ -60,7 +60,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
 
         const formattedPlayers = (data?.players || []).map((player: any) => ({
           username: player.username,
-          points: Number(player.points || 0),
+          gems: Number(player.gems || 0),
           isCurrentUser: player.id === currentUserId
         }));
 
@@ -69,15 +69,15 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         // Regular user query (RLS should handle access)
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, points')
-          .order('points', { ascending: false })
+          .select('id, username, gems')
+          .order('gems', { ascending: false })
           .limit(limit);
 
         if (error) throw error;
 
         const formattedPlayers = data.map(player => ({
           username: player.username,
-          points: Number(player.points || 0),
+          gems: Number(player.gems || 0),
           isCurrentUser: player.id === currentUserId
         }));
 
@@ -90,10 +90,10 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     }
   }, [limit, currentUserId]);
 
-  // Optimize monthly points fetching
-  const fetchCurrentUserMonthlyPoints = useCallback(async () => {
+  // Optimize monthly gems fetching
+  const fetchCurrentUserMonthlyGems = useCallback(async () => {
     if (!currentUserId) {
-      setCurrentUserMonthlyPoints(null);
+      setCurrentUserMonthlyGems(null);
       return;
     }
 
@@ -102,8 +102,8 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data, error } = await supabase
-        .from('monthly_points')
-        .select('points')
+        .from('monthly_gems')
+        .select('gems')
         .eq('user_id', currentUserId)
         .eq('month', currentMonth)
         .maybeSingle();
@@ -111,18 +111,18 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       if (error) throw error;
       
       if (data) {
-        const pointsValue = Number(data.points);
-        setCurrentUserMonthlyPoints(pointsValue);
+        const gemsValue = Number(data.gems);
+        setCurrentUserMonthlyGems(gemsValue);
         
         // Update localStorage for consistency across components
-        const monthKey = `monthly_points_${now.getFullYear()}_${now.getMonth()}`;
-        localStorage.setItem(monthKey, pointsValue.toString());
+        const monthKey = `monthly_gems_${now.getFullYear()}_${now.getMonth()}`;
+        localStorage.setItem(monthKey, gemsValue.toString());
       } else {
-        setCurrentUserMonthlyPoints(0);
+        setCurrentUserMonthlyGems(0);
       }
     } catch (error) {
-      console.error('Error fetching monthly points:', error);
-      setCurrentUserMonthlyPoints(0);
+      console.error('Error fetching monthly gems:', error);
+      setCurrentUserMonthlyGems(0);
     }
   }, [currentUserId]);
 
@@ -132,7 +132,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
       const promises = [fetchTopPlayers()];
       
       if (showMonthlyComparison && isLoggedIn) {
-        promises.push(fetchCurrentUserMonthlyPoints());
+        promises.push(fetchCurrentUserMonthlyGems());
       }
       
       await Promise.all(promises);
@@ -140,22 +140,22 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     
     fetchData();
     
-    // Listen for points updates to refresh data
-    const handlePointsUpdate = () => {
-      console.log('Points update detected in TopPlayersSection');
+    // Listen for gems updates to refresh data
+    const handleGemsUpdate = () => {
+      console.log('Gems update detected in TopPlayersSection');
       fetchData();
     };
     
-    window.addEventListener('pointsUpdated', handlePointsUpdate);
+    window.addEventListener('gemsUpdated', handleGemsUpdate);
     
     // Refresh leaderboard every 5 minutes instead of on every render
     const intervalId = setInterval(fetchData, 5 * 60 * 1000);
     
     return () => {
-      window.removeEventListener('pointsUpdated', handlePointsUpdate);
+      window.removeEventListener('gemsUpdated', handleGemsUpdate);
       clearInterval(intervalId);
     };
-  }, [fetchTopPlayers, fetchCurrentUserMonthlyPoints, showMonthlyComparison, isLoggedIn]);
+  }, [fetchTopPlayers, fetchCurrentUserMonthlyGems, showMonthlyComparison, isLoggedIn]);
 
   // Memoize player icon function to prevent recreating on each render
   const getPlayerIcon = useCallback((index: number) => {
@@ -235,20 +235,20 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
                     )}
                   </span>
                 </div>
-                <div className="font-semibold">{player.points.toFixed(1)}</div>
+                <div className="font-semibold">{player.gems.toFixed(1)}</div>
               </div>
             ))}
 
-            {showMonthlyComparison && isLoggedIn && currentUserMonthlyPoints !== null && !players.find(p => p.isCurrentUser) && (
+            {showMonthlyComparison && isLoggedIn && currentUserMonthlyGems !== null && !players.find(p => p.isCurrentUser) && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm">Your monthly points:</div>
-                  <div className="font-semibold">{currentUserMonthlyPoints.toFixed(1)}</div>
+                  <div className="text-sm">Your monthly gems:</div>
+                  <div className="font-semibold">{currentUserMonthlyGems.toFixed(1)}</div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {currentUsername || 'You'} {currentUserMonthlyPoints > 0 ? 'have' : 'have not'} earned 
-                  {currentUserMonthlyPoints > 0 ? ` ${currentUserMonthlyPoints.toFixed(1)} ` : ' any '} 
-                  points this month
+                  {currentUsername || 'You'} {currentUserMonthlyGems > 0 ? 'have' : 'have not'} earned 
+                  {currentUserMonthlyGems > 0 ? ` ${currentUserMonthlyGems.toFixed(1)} ` : ' any '} 
+                  gems this month
                 </div>
               </div>
             )}

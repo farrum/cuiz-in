@@ -33,7 +33,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  points: number;
+  gems: number;
   suspended: boolean;
   referredBy?: string;
   joinDate: string;

@@ -21,7 +21,7 @@ interface QuizContentProps {
   handleTimeUp: () => void;
   streak: number;
   questionsAnswered?: number;
-  dailyPoints?: number;
+  dailyGems?: number;
 }
 
 const QuizContent: React.FC<QuizContentProps> = ({
@@ -37,7 +37,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
   handleTimeUp,
   streak,
   questionsAnswered = 0,
-  dailyPoints = 0
+  dailyGems = 0
 }) => {
   if (isLoading) {
     return (
@@ -125,7 +125,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
           onComplete={onQuestionComplete}
           streak={streak}
           questionsAnswered={questionsAnswered}
-          totalPoints={dailyPoints}
+          totalGems={dailyGems}
           isChallenge={isChallenge}
         />
       </>
@@ -150,7 +150,7 @@ const QuizContent: React.FC<QuizContentProps> = ({
         onComplete={onQuestionComplete}
         streak={streak}
         questionsAnswered={questionsAnswered}
-        totalPoints={dailyPoints}
+        totalGems={dailyGems}
         isChallenge={isChallenge}
         showDifficultySelector={false}
       />

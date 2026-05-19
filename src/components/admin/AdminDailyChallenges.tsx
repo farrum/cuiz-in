@@ -19,7 +19,7 @@ interface DailyChallenge {
   title: string;
   description: string | null;
   num_questions: number;
-  points_multiplier: number;
+  gems_multiplier: number;
   start_date: string;
   end_date: string;
   is_active: boolean;
@@ -38,7 +38,7 @@ export default function AdminDailyChallenges() {
     title: '',
     description: '',
     num_questions: 5,
-    points_multiplier: 2,
+    gems_multiplier: 2,
     start_date: '',
     end_date: '',
     is_active: false,
@@ -147,7 +147,7 @@ export default function AdminDailyChallenges() {
         title: formData.title,
         description: formData.description,
         num_questions: formData.num_questions,
-        points_multiplier: formData.points_multiplier,
+        gems_multiplier: formData.gems_multiplier,
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
         is_active: formData.is_active,
@@ -192,7 +192,7 @@ export default function AdminDailyChallenges() {
       title: challenge.title,
       description: challenge.description || '',
       num_questions: challenge.num_questions,
-      points_multiplier: challenge.points_multiplier,
+      gems_multiplier: challenge.gems_multiplier,
       start_date: challenge.start_date.split('T')[0],
       end_date: challenge.end_date.split('T')[0],
       is_active: challenge.is_active,
@@ -234,7 +234,7 @@ export default function AdminDailyChallenges() {
       title: '',
       description: '',
       num_questions: 5,
-      points_multiplier: 2,
+      gems_multiplier: 2,
       start_date: '',
       end_date: '',
       is_active: false,
@@ -253,9 +253,9 @@ export default function AdminDailyChallenges() {
       accessorKey: 'num_questions',
     },
     {
-      header: 'Points Multiplier',
-      accessorKey: 'points_multiplier',
-      cell: (row: any) => `${row.points_multiplier}x`,
+      header: 'Gems Multiplier',
+      accessorKey: 'gems_multiplier',
+      cell: (row: any) => `${row.gems_multiplier}x`,
     },
     {
       header: 'Start Date',
@@ -370,15 +370,15 @@ export default function AdminDailyChallenges() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="points_multiplier">Points Multiplier</Label>
+                    <Label htmlFor="gems_multiplier">Gems Multiplier</Label>
                     <Input 
-                      id="points_multiplier"
-                      name="points_multiplier"
+                      id="gems_multiplier"
+                      name="gems_multiplier"
                       type="number"
                       min="1"
                       max="10"
                       step="0.1"
-                      value={formData.points_multiplier}
+                      value={formData.gems_multiplier}
                       onChange={handleInputChange}
                       required
                     />

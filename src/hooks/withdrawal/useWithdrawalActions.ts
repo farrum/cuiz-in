@@ -78,12 +78,12 @@ export const useWithdrawalActions = (
         }
       });
 
-      const pointsToDeduct = amount * 2;
-      const currentPoints = parseInt(localStorage.getItem('quiz_app_user_points') || '0');
-      const newPoints = currentPoints - pointsToDeduct;
-      localStorage.setItem('quiz_app_user_points', newPoints.toString());
+      const gemsToDeduct = amount * 2;
+      const currentGems = parseInt(localStorage.getItem('quiz_app_user_gems') || '0');
+      const newGems = currentGems - gemsToDeduct;
+      localStorage.setItem('quiz_app_user_gems', newGems.toString());
 
-      window.dispatchEvent(new Event('pointsUpdated'));
+      window.dispatchEvent(new Event('gemsUpdated'));
 
       toast({
         title: "Withdrawal Requested",

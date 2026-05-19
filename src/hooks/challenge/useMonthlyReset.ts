@@ -30,30 +30,30 @@ export const useMonthlyReset = () => {
         if (storedLastReset !== currentMonth) {
           console.log('Performing monthly score reset for month:', currentMonth);
           
-          // Create a new monthly_points record for active users
+          // Create a new monthly_gems record for active users
           const { data: activeUsers, error: userError } = await supabase
             .from('profiles')
             .select('id')
-            .gt('points', 0);
+            .gt('gems', 0);
             
           if (userError) throw userError;
           
           if (activeUsers && activeUsers.length > 0) {
-            // Reset existing monthly points if any
+            // Reset existing monthly gems if any
             const { error: resetError } = await supabase
-              .from('monthly_points')
+              .from('monthly_gems')
               .upsert(
                 activeUsers.map(user => ({
                   user_id: user.id,
                   month: currentMonth,
-                  points: 0
+                  gems: 0
                 })),
                 { onConflict: 'user_id,month' }
               );
               
             if (resetError) throw resetError;
             
-            console.log(`Monthly points reset completed for ${activeUsers.length} users`);
+            console.log(`Monthly gems reset completed for ${activeUsers.length} users`);
           }
           
           // Store the last reset date to avoid duplicate resets

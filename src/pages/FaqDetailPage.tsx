@@ -286,7 +286,7 @@ const FaqDetailPage: React.FC = () => {
           <div className="grid gap-4 sm:grid-cols-3">
             <Link to="/quiz" className="block p-4 bg-card rounded-lg border hover:border-primary/50 transition-colors">
               <h3 className="font-medium text-primary mb-1">Play Quiz</h3>
-              <p className="text-sm text-muted-foreground">Test your knowledge and earn points</p>
+              <p className="text-sm text-muted-foreground">Test your knowledge and earn gems</p>
             </Link>
             <Link to="/categories" className="block p-4 bg-card rounded-lg border hover:border-primary/50 transition-colors">
               <h3 className="font-medium text-primary mb-1">Browse Categories</h3>

@@ -1,27 +1,27 @@
 
 import React from 'react';
-import PointsDisplay from '@/components/PointsDisplay';
+import GemsDisplay from '@/components/GemsDisplay';
 import { Progress } from '@/components/ui/progress';
 import { DAILY_TARGET, MONTHLY_TARGET } from '@/utils/quizData';
 
-interface PointsAndProgressProps {
+interface GemsAndProgressProps {
   questionsAnswered: number;
   streak: number;
-  dailyPoints: number;
-  monthlyPoints: number;
+  dailyGems: number;
+  monthlyGems: number;
   nextBadgeThreshold: number;
 }
 
-const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
+const GemsAndProgress: React.FC<GemsAndProgressProps> = ({
   questionsAnswered,
   streak,
-  dailyPoints,
-  monthlyPoints,
+  dailyGems,
+  monthlyGems,
   nextBadgeThreshold
 }) => {
   // Ensure progress values are capped at 100%
-  const dailyProgressPercentage = Math.min((dailyPoints / DAILY_TARGET) * 100, 100);
-  const monthlyProgressPercentage = Math.min((monthlyPoints / MONTHLY_TARGET) * 100, 100);
+  const dailyProgressPercentage = Math.min((dailyGems / DAILY_TARGET) * 100, 100);
+  const monthlyProgressPercentage = Math.min((monthlyGems / MONTHLY_TARGET) * 100, 100);
   
   // Calculate questions until next badge with proper handling
   const questionsUntilNextBadge = Math.max(
@@ -38,7 +38,7 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
   return (
     <>
       <div className="flex flex-col md:flex-row gap-6 mb-8">
-        <PointsDisplay animateUpdate className="flex-1" />
+        <GemsDisplay animateUpdate className="flex-1" />
         
         <div className="glass rounded-2xl p-4 flex-1">
           <div className="flex flex-col items-center">
@@ -55,10 +55,10 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
       </div>
       
       <div className="glass rounded-2xl p-4 mb-8">
-        <h4 className="text-sm font-medium mb-3">Daily Target: {dailyPoints.toFixed(1)} / {DAILY_TARGET} points</h4>
+        <h4 className="text-sm font-medium mb-3">Daily Target: {dailyGems.toFixed(1)} / {DAILY_TARGET} gems</h4>
         <Progress value={dailyProgressPercentage} className="h-2 mb-4" />
         
-        <h4 className="text-sm font-medium mb-3">Monthly Target: {monthlyPoints.toFixed(1)} / {MONTHLY_TARGET} points</h4>
+        <h4 className="text-sm font-medium mb-3">Monthly Target: {monthlyGems.toFixed(1)} / {MONTHLY_TARGET} gems</h4>
         <Progress value={monthlyProgressPercentage} className="h-2" />
         
         <div className="mt-3 text-xs text-muted-foreground">
@@ -81,4 +81,4 @@ const PointsAndProgress: React.FC<PointsAndProgressProps> = ({
   );
 };
 
-export default PointsAndProgress;
+export default GemsAndProgress;

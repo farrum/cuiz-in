@@ -29,7 +29,7 @@ const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
     multiplier: 1.5, 
     color: 'text-[hsl(var(--quiz-gold))]',
     icon: <Zap className="w-5 h-5" />,
-    description: 'Balanced challenge with bonus points'
+    description: 'Balanced challenge with bonus gems'
   },
   hard: { 
     label: 'Hard', 
@@ -37,7 +37,7 @@ const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
     multiplier: 2, 
     color: 'text-destructive',
     icon: <Flame className="w-5 h-5" />,
-    description: 'Fast-paced with double points'
+    description: 'Fast-paced with double gems'
   },
 };
 
@@ -59,7 +59,7 @@ const QuizDifficultySelector: React.FC<QuizDifficultySelectorProps> = ({
       <div className="text-center mb-4">
         <h3 className="text-lg font-bold mb-1">Select Difficulty</h3>
         <p className="text-sm text-muted-foreground">
-          Higher difficulty = more points per question
+          Higher difficulty = more gems per question
         </p>
       </div>
 
@@ -106,7 +106,7 @@ const QuizDifficultySelector: React.FC<QuizDifficultySelectorProps> = ({
             </div>
             <div className="text-right">
               <div className="text-lg font-bold">{cfg.multiplier}x</div>
-              <div className="text-xs opacity-70">points</div>
+              <div className="text-xs opacity-70">gems</div>
             </div>
           </Button>
         ))}

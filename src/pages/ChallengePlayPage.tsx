@@ -34,7 +34,7 @@ const ChallengePlayPage = () => {
     isComplete,
     score,
     currentQuestionIndex,
-    currentPoints,
+    currentGems,
     handleQuestionComplete,
     handleNextQuestion,
   } = useChallengeData(challengeId, userId, navigate, toast);
@@ -236,7 +236,7 @@ const ChallengePlayPage = () => {
       challenge={challenge}
       questions={questions}
       currentQuestionIndex={currentQuestionIndex}
-      currentPoints={currentPoints}
+      currentGems={currentGems}
       onExit={() => navigate('/quiz')}
       onComplete={(selectedOption) => handleQuestionCompleteWithErrorHandling(selectedOption)}
       onNextQuestion={handleNextQuestion}

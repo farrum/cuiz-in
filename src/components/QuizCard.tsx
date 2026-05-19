@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
-import { logPointsEarned } from '@/utils/pointsService';
+import { logGemsEarned } from '@/utils/gemsService';
 import { createSlug } from '@/utils/urlUtils';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from './GuestPlayLimitModal';
@@ -15,14 +15,14 @@ import GuestPlayLimitModal from './GuestPlayLimitModal';
 interface QuizCardProps {
   question: QuizQuestion;
   onComplete: (isCorrect: boolean, selectedAnswer: string) => void;
-  pointsMultiplier?: number;
+  gemsMultiplier?: number;
   isChallenge?: boolean;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ 
   question, 
   onComplete, 
-  pointsMultiplier = 1,
+  gemsMultiplier = 1,
   isChallenge = false
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -60,18 +60,18 @@ const QuizCard: React.FC<QuizCardProps> = ({
       // Check if the selected answer is correct
       const isCorrect = selectedOption === question.correctAnswer;
       
-      // Calculate points based on difficulty
-      let pointsEarned = 0;
+      // Calculate gems based on difficulty
+      let gemsEarned = 0;
       if (isCorrect) {
         switch (question.difficulty) {
-          case "easy": pointsEarned = 2; break;
-          case "medium": pointsEarned = 3; break;
-          case "hard": pointsEarned = 4; break;
-          default: pointsEarned = 2;
+          case "easy": gemsEarned = 2; break;
+          case "medium": gemsEarned = 3; break;
+          case "hard": gemsEarned = 4; break;
+          default: gemsEarned = 2;
         }
-        pointsEarned = pointsEarned * pointsMultiplier;
+        gemsEarned = gemsEarned * gemsMultiplier;
       } else {
-        pointsEarned = 0.5 * pointsMultiplier;
+        gemsEarned = 0.5 * gemsMultiplier;
       }
       
       // Track completed question in local storage - only for non-challenge questions
@@ -95,10 +95,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
       if (userId) {
         console.log(`Recording answer for question ${question.id}, correct: ${isCorrect}`);
         
-        // For non-challenge questions, update points across all systems
+        // For non-challenge questions, update gems across all systems
         if (!isChallenge) {
-          console.log(`User earned ${pointsEarned} points for this answer`);
-          await logPointsEarned(pointsEarned, userId);
+          console.log(`User earned ${gemsEarned} gems for this answer`);
+          await logGemsEarned(gemsEarned, userId);
         }
         
         // Save answer to the quiz_answers table regardless of challenge type
@@ -107,19 +107,19 @@ const QuizCard: React.FC<QuizCardProps> = ({
           question_id: question.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          points_earned: pointsEarned,
+          gems_earned: gemsEarned,
           answered_at: new Date().toISOString()
         });
       } else {
-        // Guest user - track session points
-        incrementGuestPlay(pointsEarned);
+        // Guest user - track session gems
+        incrementGuestPlay(gemsEarned);
         
         // Show remaining plays for guests
         const remaining = getRemainingGuestPlays();
         if (remaining > 0 && remaining <= 3) {
           toast({
             title: `${remaining} free questions left!`,
-            description: "Register to save your points and play unlimited quizzes.",
+            description: "Register to save your gems and play unlimited quizzes.",
             variant: "default",
           });
         }
@@ -187,9 +187,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
         <CardDescription className="text-sm mt-2 flex items-center justify-center gap-1">
           <Timer className="h-4 w-4" />
           Select the correct answer below
-          {pointsMultiplier > 1 && (
+          {gemsMultiplier > 1 && (
             <span className="text-primary font-medium ml-1">
-              {pointsMultiplier}x Points!
+              {gemsMultiplier}x Gems!
             </span>
           )}
         </CardDescription>
@@ -221,7 +221,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
       <CardFooter className="flex-col gap-2">
         {!isLoggedIn && remainingPlays > 0 && remainingPlays <= 5 && (
           <p className="text-xs text-muted-foreground text-center w-full">
-            {remainingPlays} free {remainingPlays === 1 ? 'question' : 'questions'} remaining • <Link to="/register" className="text-primary hover:underline">Register to save points</Link>
+            {remainingPlays} free {remainingPlays === 1 ? 'question' : 'questions'} remaining • <Link to="/register" className="text-primary hover:underline">Register to save gems</Link>
           </p>
         )}
         <CountdownButton

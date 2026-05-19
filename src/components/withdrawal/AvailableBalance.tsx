@@ -18,7 +18,7 @@ const AvailableBalance: React.FC<AvailableBalanceProps> = ({ cashAvailable }) =>
         </span>
       </div>
       <div className="text-xs text-muted-foreground mt-1">
-        2 points = {currencyDisplay.symbol}{currencyDisplay.exchangeRate.toFixed(2)} {currencyDisplay.code}
+        2 gems = {currencyDisplay.symbol}{currencyDisplay.exchangeRate.toFixed(2)} {currencyDisplay.code}
       </div>
     </div>
   );

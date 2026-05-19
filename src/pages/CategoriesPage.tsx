@@ -132,7 +132,7 @@ const CategoriesPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Featured landing pages — high-intent SEO entry points */}
+          {/* Featured landing pages — high-intent SEO entry gems */}
           <section aria-label="Featured quizzes" className="mb-10">
             <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" /> Featured Quizzes

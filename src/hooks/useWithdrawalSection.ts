@@ -26,8 +26,8 @@ export const useWithdrawalSection = () => {
     useWithdrawalActions(userId, userName, setWithdrawals);
 
   useEffect(() => {
-    const savedPoints = parseInt(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0');
-    setCashAvailable(calculateCashAmount(savedPoints));
+    const savedGems = parseInt(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
+    setCashAvailable(calculateCashAmount(savedGems));
     
     const upiId = localStorage.getItem('quiz_app_user_upi');
     if (upiId) {

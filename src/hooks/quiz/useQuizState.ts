@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useQuizPoints } from './useQuizPoints';
+import { useQuizGems } from './useQuizGems';
 import { useQuizQuestion } from './useQuizQuestion';
 import { useQuizMotivation } from './useQuizMotivation';
 import { useQuizAdSync } from './useQuizAdSync';
@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { useGameMode } from './useGameMode';
 import { useToast } from '@/hooks/use-toast';
 import { confetti } from '@/utils/animations';
-import { logPointsEarned } from '@/utils/pointsService';
+import { logGemsEarned } from '@/utils/gemsService';
 
 export const useQuizState = () => {
   // Use persistent stats hook for streak and questions answered
@@ -31,13 +31,13 @@ export const useQuizState = () => {
 
   // Compose functionality from smaller hooks
   const { 
-    userPoints, 
-    dailyPoints, 
-    monthlyPoints,
+    userGems, 
+    dailyGems, 
+    monthlyGems,
     questionsAnswered: dbQuestionsAnswered,
-    fetchPoints, 
+    fetchGems, 
     updateNextBadgeThreshold 
-  } = useQuizPoints(setNextBadgeThreshold);
+  } = useQuizGems(setNextBadgeThreshold);
   
   const { 
     currentQuestion, 
@@ -69,7 +69,7 @@ export const useQuizState = () => {
     config,
     timeRemaining,
     setTimeRemaining,
-    calculatePoints,
+    calculateGems,
     changeGameMode
   } = useGameMode();
   
@@ -81,8 +81,8 @@ export const useQuizState = () => {
   }, [dbQuestionsAnswered, syncWithDatabase]);
   
   const loadInitialData = async () => {
-    // Explicitly fetch points which includes questions answered
-    await fetchPoints();
+    // Explicitly fetch gems which includes questions answered
+    await fetchGems();
     
     // Load initial ad data
     await syncAdSlots();
@@ -120,33 +120,33 @@ export const useQuizState = () => {
       incrementStreak();
       newStreak = streak + 1;
       
-      // Calculate points based on game mode
-      const basePoints = currentQuestion.points || 10;
-      const earnedPoints = calculatePoints(basePoints, isCorrect, newStreak);
+      // Calculate gems based on game mode
+      const baseGems = currentQuestion.gems || 10;
+      const earnedGems = calculateGems(baseGems, isCorrect, newStreak);
       
-      // Log points earned (consistently through our utility)
+      // Log gems earned (consistently through our utility)
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (userId) {
-        console.log(`User ${userId} earned ${earnedPoints} points in ${currentMode} mode`);
-        await logPointsEarned(earnedPoints, userId);
+        console.log(`User ${userId} earned ${earnedGems} gems in ${currentMode} mode`);
+        await logGemsEarned(earnedGems, userId);
       }
       
       // Show streak milestone messages
       if (newStreak > 0 && newStreak % 5 === 0) {
         toast({
           title: `${newStreak} Question Streak! 🔥`,
-          description: `You're on fire! Bonus points multiplier: ${newStreak/2}x`,
+          description: `You're on fire! Bonus gems multiplier: ${newStreak/2}x`,
         });
         confetti();
       }
       
       // In streak mode, show the bonus
       if (currentMode === 'streak' && newStreak > 1) {
-        const basePoints = currentQuestion.points || 10;
+        const baseGems = currentQuestion.gems || 10;
         const bonus = Math.floor(newStreak * (config.streakMultiplier || 0.5));
         toast({
           title: "Streak Bonus!",
-          description: `+${basePoints} (base) +${bonus} (streak) = ${basePoints + bonus} points!`,
+          description: `+${baseGems} (base) +${bonus} (streak) = ${baseGems + bonus} gems!`,
         });
       }
     } else {
@@ -163,8 +163,8 @@ export const useQuizState = () => {
       }
     }
     
-    // Update points data from database (async sync)
-    await fetchPoints();
+    // Update gems data from database (async sync)
+    await fetchGems();
     
     // Load the next question
     await loadNewQuestion();
@@ -189,9 +189,9 @@ export const useQuizState = () => {
     currentQuestion,
     streak,
     questionsAnswered: localQuestionsAnswered,
-    userPoints,
-    dailyPoints,
-    monthlyPoints,
+    userGems,
+    dailyGems,
+    monthlyGems,
     isLoading,
     adsSynced,
     showMotivation,
@@ -206,7 +206,7 @@ export const useQuizState = () => {
     checkSuspensionStatus,
     loadInitialData,
     handleAdSlotsUpdated,
-    fetchPoints,
+    fetchGems,
     loadNewQuestion,
     handleQuestionComplete,
     showMotivationalMessage: displayMotivationalMessage,

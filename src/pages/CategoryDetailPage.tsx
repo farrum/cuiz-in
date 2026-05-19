@@ -348,7 +348,7 @@ const CategoryDetailPage: React.FC = () => {
                       </div>
                       <span>{performer.username}</span>
                     </div>
-                    <span className="font-medium">{performer.points} pts</span>
+                    <span className="font-medium">{performer.gems} pts</span>
                   </div>
                 ))}
               </div>

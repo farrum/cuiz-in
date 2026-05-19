@@ -19,7 +19,7 @@ const OrganizationSchema: React.FC = () => {
       'width': 1200,
       'height': 630
     },
-    'description': 'CuizIN is India\'s leading free quiz platform where players can earn rewards through active participation. Play quizzes, earn points, and get rewarded!',
+    'description': 'CuizIN is India\'s leading free quiz platform where players can earn rewards through active participation. Play quizzes, earn gems, and get rewarded!',
     'foundingDate': '2024',
     'email': 'support@cuiz.in',
     'sameAs': [

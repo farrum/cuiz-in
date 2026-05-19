@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface TopPerformer {
   userId: string;
   username: string;
-  points: number;
+  gems: number;
   rank: number;
 }
 
@@ -164,7 +164,7 @@ const AdminTopPerformers: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={user.rank <= 3 ? "default" : "secondary"}>
-                          {user.points.toFixed(1)} pts
+                          {user.gems.toFixed(1)} pts
                         </Badge>
                       </div>
                     </div>
@@ -206,7 +206,7 @@ const AdminTopPerformers: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={user.rank <= 3 ? "default" : "secondary"}>
-                          {user.points.toFixed(1)} pts
+                          {user.gems.toFixed(1)} pts
                         </Badge>
                       </div>
                     </div>

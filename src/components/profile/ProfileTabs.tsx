@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { User, Trophy, History } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
-import PointsDisplay from '@/components/PointsDisplay';
+import GemsDisplay from '@/components/GemsDisplay';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
 import RecentlyAnsweredQuestions from '@/components/quiz-history';
@@ -43,7 +43,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         onProfileUpdate={onProfileUpdate}
       />
       
-      <PointsDisplay animateUpdate className="mb-6" />
+      <GemsDisplay animateUpdate className="mb-6" />
       
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-6">
@@ -105,9 +105,9 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             </div>
             <div className="col-span-1 lg:col-span-2">
               <SkillTree 
-                skillPoints={150} 
+                skillGems={150} 
                 nodes={[
-                  { id: '1', label: 'Quick Thinker', description: '+5% Points on all quizzes', cost: 50, unlocked: true, purchasable: true, icon: <span>🧠</span> },
+                  { id: '1', label: 'Quick Thinker', description: '+5% Gems on all quizzes', cost: 50, unlocked: true, purchasable: true, icon: <span>🧠</span> },
                   { id: '2', label: 'Lucky Guess', description: 'One free wrong answer per quiz', cost: 200, unlocked: false, purchasable: true, icon: <span>🍀</span> },
                   { id: '3', label: 'Premium Scholar', description: 'Unlock Premium Categories', cost: 500, unlocked: false, purchasable: false, icon: <span>👑</span> }
                 ]}

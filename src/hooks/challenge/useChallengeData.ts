@@ -21,7 +21,7 @@ const useChallengeData = (
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  const [currentPoints, setCurrentPoints] = useState(0);
+  const [currentGems, setCurrentGems] = useState(0);
   
   // Use the answer management hook
   const { handleQuestionComplete: handleAnswer } = useAnswerManagement(
@@ -31,8 +31,8 @@ const useChallengeData = (
     userId,
     challengeId,
     answers,
-    currentPoints,
-    setCurrentPoints,
+    currentGems,
+    setCurrentGems,
     setAnswers,
     setCurrentQuestionIndex,
     setIsComplete,
@@ -216,7 +216,7 @@ const useChallengeData = (
             explanation: question.explanation || '',
             category: question.category,
             difficulty: difficulty,
-            points: question.points || 10
+            gems: question.gems || 10
           });
         }
       }
@@ -241,7 +241,7 @@ const useChallengeData = (
     // If this was the last question, we prepare for completion
     // but don't navigate yet - we'll do that when the user clicks a button
     if (currentQuestionIndex >= (challenge?.num_questions || 0) - 1) {
-      await completeChallenge(currentPoints);
+      await completeChallenge(currentGems);
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
@@ -253,21 +253,21 @@ const useChallengeData = (
     try {
       const { data: userProfileData, error: profileError } = await supabase
         .from('profiles')
-        .select('points')
+        .select('gems')
         .eq('id', userId)
         .single();
         
       if (profileError) throw profileError;
       
-      const currentUserPoints = userProfileData.points || 0;
-      const newTotalPoints = currentUserPoints + finalScore;
+      const currentUserGems = userProfileData.gems || 0;
+      const newTotalGems = currentUserGems + finalScore;
       
       await supabase
         .from('profiles')
-        .update({ points: newTotalPoints })
+        .update({ gems: newTotalGems })
         .eq('id', userId);
         
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, newTotalPoints.toString());
+      localStorage.setItem(STORAGE_KEYS.USER_GEMS, newTotalGems.toString());
       
       await supabase
         .from('user_challenge_progress')
@@ -285,57 +285,57 @@ const useChallengeData = (
       const dateString = today.toISOString().split('T')[0];
       const monthString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
       
-      const { data: dailyPointsData, error: dailyPointsError } = await supabase
-        .from('daily_points')
+      const { data: dailyGemsData, error: dailyGemsError } = await supabase
+        .from('daily_gems')
         .select('*')
         .eq('user_id', userId)
         .eq('date', dateString)
         .maybeSingle();
         
-      if (dailyPointsError) throw dailyPointsError;
+      if (dailyGemsError) throw dailyGemsError;
       
-      if (dailyPointsData) {
+      if (dailyGemsData) {
         await supabase
-          .from('daily_points')
-          .update({ points: dailyPointsData.points + finalScore })
-          .eq('id', dailyPointsData.id);
+          .from('daily_gems')
+          .update({ gems: dailyGemsData.gems + finalScore })
+          .eq('id', dailyGemsData.id);
       } else {
         await supabase
-          .from('daily_points')
+          .from('daily_gems')
           .insert([{ 
             user_id: userId, 
             date: dateString, 
-            points: finalScore 
+            gems: finalScore 
           }]);
       }
       
-      const { data: monthlyPointsData, error: monthlyPointsError } = await supabase
-        .from('monthly_points')
+      const { data: monthlyGemsData, error: monthlyGemsError } = await supabase
+        .from('monthly_gems')
         .select('*')
         .eq('user_id', userId)
         .eq('month', monthString)
         .maybeSingle();
         
-      if (monthlyPointsError) throw monthlyPointsError;
+      if (monthlyGemsError) throw monthlyGemsError;
       
-      if (monthlyPointsData) {
+      if (monthlyGemsData) {
         await supabase
-          .from('monthly_points')
-          .update({ points: monthlyPointsData.points + finalScore })
-          .eq('id', monthlyPointsData.id);
+          .from('monthly_gems')
+          .update({ gems: monthlyGemsData.gems + finalScore })
+          .eq('id', monthlyGemsData.id);
       } else {
         await supabase
-          .from('monthly_points')
+          .from('monthly_gems')
           .insert([{ 
             user_id: userId, 
             month: monthString, 
-            points: finalScore 
+            gems: finalScore 
           }]);
       }
       
       toast({
         title: "Challenge Completed!",
-        description: `You earned ${finalScore} points!`,
+        description: `You earned ${finalScore} gems!`,
       });
       
       if (answers.some(a => a.correct)) {
@@ -375,7 +375,7 @@ const useChallengeData = (
     isComplete,
     score,
     currentQuestionIndex,
-    currentPoints,
+    currentGems,
     handleQuestionComplete,
     handleNextQuestion,
   };

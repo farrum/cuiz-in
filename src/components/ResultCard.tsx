@@ -19,8 +19,8 @@ const ResultCard: React.FC<ResultCardProps> = ({
   funEmoji,
   backgroundClass,
 }) => {
-  // Calculate the points earned based on the difficulty and correctness
-  const getPointsEarned = (isCorrect: boolean, difficulty?: string): number => {
+  // Calculate the gems earned based on the difficulty and correctness
+  const getGemsEarned = (isCorrect: boolean, difficulty?: string): number => {
     if (isCorrect) {
       switch (difficulty) {
         case 'easy': return 2;
@@ -29,7 +29,7 @@ const ResultCard: React.FC<ResultCardProps> = ({
         default: return 2;
       }
     }
-    return 0.5; // Wrong answer always gives 0.5 points
+    return 0.5; // Wrong answer always gives 0.5 gems
   };
 
   return (
@@ -77,12 +77,12 @@ const ResultCard: React.FC<ResultCardProps> = ({
             </p>
             <p className="text-lg font-medium">
               {isCorrect 
-                ? `You earned ${getPointsEarned(true, question.difficulty)} points! ${funEmoji}` 
-                : `You earned 0.5 points. The correct answer was: ${question.correctAnswer} ${funEmoji}`}
+                ? `You earned ${getGemsEarned(true, question.difficulty)} gems! ${funEmoji}` 
+                : `You earned 0.5 gems. The correct answer was: ${question.correctAnswer} ${funEmoji}`}
             </p>
             {isCorrect && (
               <div className="flex mt-4">
-                {[...Array(getPointsEarned(true, question.difficulty))].map((_, i) => (
+                {[...Array(getGemsEarned(true, question.difficulty))].map((_, i) => (
                   <Star key={i} className="w-6 h-6 text-yellow-400 mx-1" fill="#FACC15" />
                 ))}
               </div>

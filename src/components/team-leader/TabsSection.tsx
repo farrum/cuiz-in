@@ -69,7 +69,7 @@ const TabsSection: React.FC<TabsSectionProps> = ({
           <CardHeader>
             <CardTitle>Monthly Activity</CardTitle>
             <CardDescription>
-              View your monthly team activity and points.
+              View your monthly team activity and gems.
             </CardDescription>
           </CardHeader>
           <CardContent>

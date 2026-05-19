@@ -103,8 +103,8 @@ const WithdrawalRequestForm = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Withdraw Points</CardTitle>
-        <CardDescription>Request to withdraw your earned points as money</CardDescription>
+        <CardTitle>Withdraw Gems</CardTitle>
+        <CardDescription>Request to withdraw your earned gems as money</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

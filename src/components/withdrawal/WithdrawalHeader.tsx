@@ -9,8 +9,8 @@ const WithdrawalHeader: React.FC = () => {
         <Star className="w-6 h-6 text-primary" />
       </div>
       <div>
-        <h3 className="text-xl font-medium">Points Summary</h3>
-        <p className="text-sm text-muted-foreground">Track your earned points</p>
+        <h3 className="text-xl font-medium">Gems Summary</h3>
+        <p className="text-sm text-muted-foreground">Track your earned gems</p>
       </div>
     </div>
   );

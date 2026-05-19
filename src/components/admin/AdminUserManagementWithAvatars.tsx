@@ -21,7 +21,7 @@ interface UserData {
   username: string;
   display_name?: string;
   phone?: string;
-  points: number;
+  gems: number;
   suspended: boolean;
   profile_picture?: string;
   created_at: string;
@@ -41,7 +41,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editPhone, setEditPhone] = useState('');
-  const [editPoints, setEditPoints] = useState(0);
+  const [editGems, setEditGems] = useState(0);
   const [editSuspended, setEditSuspended] = useState(false);
   const [editUpiId, setEditUpiId] = useState('');
   const { toast } = useToast();
@@ -131,7 +131,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
     setSelectedUser(user);
     setEditDisplayName(user.display_name || user.username || '');
     setEditPhone(user.phone || '');
-    setEditPoints(user.points);
+    setEditGems(user.gems);
     setEditSuspended(user.suspended);
     setEditUpiId(user.upi_id || '');
     setIsEditDialogOpen(true);
@@ -151,7 +151,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
         .update({
           display_name: editDisplayName,
           phone: editPhone || null,
-          points: editPoints,
+          gems: editGems,
           suspended: editSuspended,
           upi_id: editUpiId || null
         })
@@ -352,7 +352,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               <TableHead>Display Name</TableHead>
               <TableHead>Username</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Points</TableHead>
+              <TableHead>Gems</TableHead>
               <TableHead>UPI ID</TableHead>
               <TableHead>Login Streak</TableHead>
               <TableHead>Status</TableHead>
@@ -379,7 +379,7 @@ const AdminUserManagementWithAvatars: React.FC = () => {
                   <TableCell>{user.display_name || '-'}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{user.username}</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
-                  <TableCell>{user.points}</TableCell>
+                  <TableCell>{user.gems}</TableCell>
                   <TableCell>{user.upi_id || '-'}</TableCell>
                   <TableCell>
                     {user.login_streak > 0 ? (
@@ -492,14 +492,14 @@ const AdminUserManagementWithAvatars: React.FC = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="points" className="text-right">
-                Points
+              <Label htmlFor="gems" className="text-right">
+                Gems
               </Label>
               <Input
-                id="points"
+                id="gems"
                 type="number"
-                value={editPoints}
-                onChange={(e) => setEditPoints(Number(e.target.value))}
+                value={editGems}
+                onChange={(e) => setEditGems(Number(e.target.value))}
                 className="col-span-3"
               />
             </div>

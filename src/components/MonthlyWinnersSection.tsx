@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface MonthlyWinner {
   username: string;
-  points: number;
+  gems: number;
   isCurrentUser: boolean;
   rank: number;
   userId: string;
@@ -18,7 +18,7 @@ interface MonthlyWinner {
 
 interface CurrentUserRank {
   rank: number;
-  points: number;
+  gems: number;
   username: string;
   profilePicture: string | null;
 }
@@ -51,12 +51,12 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
       ];
       setCurrentMonth(`${monthNames[now.getMonth()]} ${now.getFullYear()}`);
       
-      // Fetch ALL monthly points to calculate current user's rank
+      // Fetch ALL monthly gems to calculate current user's rank
       const { data: allMonthlyData, error: allMonthlyError } = await supabase
-        .from('monthly_points')
-        .select('user_id, points')
+        .from('monthly_gems')
+        .select('user_id, gems')
         .eq('month', monthKey)
-        .order('points', { ascending: false });
+        .order('gems', { ascending: false });
 
       if (allMonthlyError) throw allMonthlyError;
 
@@ -86,7 +86,7 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
           
           userRankData = {
             rank: userIndex + 1,
-            points: Number(userData.points || 0),
+            gems: Number(userData.gems || 0),
             username: userProfile?.username || 'You',
             profilePicture: userProfile?.profile_picture || null
           };
@@ -121,7 +121,7 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
         return {
           username: profile?.username || 'Anonymous Player',
           profilePicture: profile?.profilePicture || null,
-          points: Number(mp.points || 0),
+          gems: Number(mp.gems || 0),
           isCurrentUser: String(mp.user_id) === String(currentUserId),
           rank: index + 1,
           userId: String(mp.user_id)
@@ -139,17 +139,17 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
   useEffect(() => {
     fetchMonthlyWinners();
     
-    const handlePointsUpdate = () => {
+    const handleGemsUpdate = () => {
       fetchMonthlyWinners();
     };
     
-    window.addEventListener('pointsUpdated', handlePointsUpdate);
+    window.addEventListener('gemsUpdated', handleGemsUpdate);
     
     // Refresh every 5 minutes
     const intervalId = setInterval(fetchMonthlyWinners, 5 * 60 * 1000);
     
     return () => {
-      window.removeEventListener('pointsUpdated', handlePointsUpdate);
+      window.removeEventListener('gemsUpdated', handleGemsUpdate);
       clearInterval(intervalId);
     };
   }, [fetchMonthlyWinners]);
@@ -230,13 +230,13 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
             </div>
             {winner.rank <= 3 && (
               <div className="text-xs text-muted-foreground">
-                {winner.rank === 1 ? 'Leading this month!' : `${winner.points.toFixed(0)} points earned`}
+                {winner.rank === 1 ? 'Leading this month!' : `${winner.gems.toFixed(0)} gems earned`}
               </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg">{winner.points.toFixed(0)}</span>
+          <span className="font-bold text-lg">{winner.gems.toFixed(0)}</span>
           {getRankBadge(winner.rank)}
         </div>
       </div>
@@ -286,7 +286,7 @@ const MonthlyWinnersSection: React.FC<MonthlyWinnersSectionProps> = ({
           <div className="text-muted-foreground text-center py-6">
             <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary/40" />
             <p>No winners yet this month!</p>
-            <p className="text-sm">Be the first to earn points</p>
+            <p className="text-sm">Be the first to earn gems</p>
           </div>
         ) : (
           <div className="space-y-2">

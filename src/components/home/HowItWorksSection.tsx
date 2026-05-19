@@ -22,7 +22,7 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
     {
       icon: Brain,
       title: 'Answer Questions',
-      description: 'Play quizzes across multiple categories. Each correct answer earns you points.',
+      description: 'Play quizzes across multiple categories. Each correct answer earns you gems.',
       color: 'from-purple-500 to-violet-500'
     },
     {

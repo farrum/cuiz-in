@@ -37,7 +37,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Use the login activity hook to track logins and handle login streaks
   const { 
     showBonusPopup, 
-    bonusPoints, 
+    bonusGems, 
     streakDays, 
     closeBonusPopup 
   } = useLoginActivity(userId, userName, isAuthenticated && !localIsSuspended); // Only check login activity if not suspended
@@ -86,7 +86,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     
     toast({
       title: "Login Bonus!",
-      description: `You earned ${bonusPoints} bonus points for your ${streakDays}-day streak!`,
+      description: `You earned ${bonusGems} bonus gems for your ${streakDays}-day streak!`,
     });
   };
 
@@ -122,7 +122,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <LoginBonusPopup
           isOpen={showBonusPopup}
           onClose={handleBonusPopupClose}
-          bonusPoints={bonusPoints}
+          bonusGems={bonusGems}
           streakDays={streakDays}
         />
       )}

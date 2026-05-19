@@ -5,14 +5,14 @@ import { cn } from '@/lib/utils';
 interface CompactStatsBarProps {
   questionsAnswered: number;
   streak: number;
-  dailyPoints: number;
+  dailyGems: number;
   className?: string;
 }
 
 const CompactStatsBar: React.FC<CompactStatsBarProps> = ({
   questionsAnswered,
   streak,
-  dailyPoints,
+  dailyGems,
   className
 }) => {
   return (
@@ -51,13 +51,13 @@ const CompactStatsBar: React.FC<CompactStatsBarProps> = ({
         </div>
       </div>
 
-      {/* Daily Points */}
+      {/* Daily Gems */}
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-accent" />
         </div>
         <div className="text-sm">
-          <span className="font-bold text-accent">{dailyPoints.toFixed(0)}</span>
+          <span className="font-bold text-accent">{dailyGems.toFixed(0)}</span>
           <span className="text-muted-foreground ml-1 hidden sm:inline">pts today</span>
         </div>
       </div>

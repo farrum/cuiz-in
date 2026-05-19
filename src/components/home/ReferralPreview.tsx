@@ -67,7 +67,7 @@ const ReferralPreview: React.FC = () => {
     
     toast({
       title: "Link Copied!",
-      description: "Share this link with friends to earn bonus points",
+      description: "Share this link with friends to earn bonus gems",
     });
     
     setTimeout(() => setCopied(false), 2000);
@@ -93,9 +93,9 @@ const ReferralPreview: React.FC = () => {
   };
 
   const benefits = [
-    { icon: '⭐', text: '500 bonus points per active referral' },
+    { icon: '⭐', text: '500 bonus gems per active referral' },
     { icon: '👥', text: 'Become Team Leader with 10+ referrals' },
-    { icon: '🔄', text: 'Recurring monthly bonus points' }
+    { icon: '🔄', text: 'Recurring monthly bonus gems' }
   ];
 
   return (

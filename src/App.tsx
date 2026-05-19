@@ -74,14 +74,14 @@ const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
 async function hydrateUserFromSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
-      supabase.from('profiles').select('username, points').eq('id', userId).maybeSingle(),
+      supabase.from('profiles').select('username, gems').eq('id', userId).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
 
     if (profileResult.data) {
       localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, profileResult.data.username);
-      localStorage.setItem(STORAGE_KEYS.USER_POINTS, String(profileResult.data.points ?? 0));
+      localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(profileResult.data.gems ?? 0));
     }
 
     const roles = new Set((roleResult.data || []).map((item) => item.role).filter(Boolean));
@@ -99,7 +99,7 @@ async function hydrateUserFromSession(userId: string) {
 function clearUserCache() {
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-  localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+  localStorage.removeItem(STORAGE_KEYS.USER_GEMS);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
 }

@@ -1,22 +1,22 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2, Twitter, Facebook, MessageCircle } from 'lucide-react';
-import { getGuestSessionPoints, isUserLoggedIn } from '@/utils/guestPlayService';
+import { getGuestSessionGems, isUserLoggedIn } from '@/utils/guestPlayService';
 import { useToast } from '@/hooks/use-toast';
 
 interface SocialShareButtonsProps {
   className?: string;
-  points?: number;
+  gems?: number;
 }
 
-const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({ className = '', points }) => {
+const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({ className = '', gems }) => {
   const { toast } = useToast();
-  const sessionPoints = points ?? getGuestSessionPoints();
+  const sessionGems = gems ?? getGuestSessionGems();
   
-  // Don't show for logged-in users or if no points
-  if (isUserLoggedIn() || sessionPoints === 0) return null;
+  // Don't show for logged-in users or if no gems
+  if (isUserLoggedIn() || sessionGems === 0) return null;
 
-  const shareText = `🎮 I just scored ${sessionPoints.toFixed(0)} points playing CuizIN! Think you can beat my score? Try the free quiz game now!`;
+  const shareText = `🎮 I just scored ${sessionGems.toFixed(0)} gems playing CuizIN! Think you can beat my score? Try the free quiz game now!`;
   const shareUrl = window.location.origin;
 
   const handleTwitterShare = () => {

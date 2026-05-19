@@ -38,7 +38,7 @@ export const useQuizQuestions = () => {
           correctAnswer: q.correct_answer,
           difficulty: (q.difficulty as 'easy' | 'medium' | 'hard') || 'easy',
           category: q.category || 'General Knowledge',
-          points: 10,
+          gems: 10,
           explanation: q.explanation || '',
           imageUrl: q.image_url,
           questionType: q.question_type as 'text' | 'image' || 'text'

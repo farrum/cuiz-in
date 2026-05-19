@@ -29,7 +29,7 @@ interface User {
   id: string;
   username: string;
   phone: string;
-  points: number;
+  gems: number;
   suspended: boolean;
   created_at?: string;
   referrer?: {
@@ -161,7 +161,7 @@ const AdminUserManagement: React.FC = () => {
         Username: user.username,
         Phone: user.phone,
         'Referrer Name': user.referrer?.name || 'None',
-        Points: user.points,
+        Gems: user.gems,
         Status: user.suspended ? 'Suspended' : 'Active',
         'Created At': user.created_at ? new Date(user.created_at).toLocaleString() : 'Unknown'
       }));
@@ -231,7 +231,7 @@ const AdminUserManagement: React.FC = () => {
               <TableHead>Username</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Referrer</TableHead>
-              <TableHead className="text-right">Points</TableHead>
+              <TableHead className="text-right">Gems</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -266,7 +266,7 @@ const AdminUserManagement: React.FC = () => {
                       <span className="text-muted-foreground text-sm">No referrer</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{user.points}</TableCell>
+                  <TableCell className="text-right">{user.gems}</TableCell>
                   <TableCell>
                     {user.suspended ? (
                       <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">

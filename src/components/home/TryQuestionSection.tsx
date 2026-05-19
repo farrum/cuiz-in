@@ -126,7 +126,7 @@ const TryQuestionSection: React.FC = () => {
                   {question?.category || 'General'}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  +{question?.points || 10} points
+                  +{question?.gems || 10} gems
                 </span>
               </div>
 
@@ -187,7 +187,7 @@ const TryQuestionSection: React.FC = () => {
                     <div className="flex items-center justify-center gap-2">
                       <Trophy className="w-5 h-5 text-green-500" />
                       <span className="font-semibold text-green-700 dark:text-green-400">
-                        Correct! You earned {question?.points || 10} points!
+                        Correct! You earned {question?.gems || 10} gems!
                       </span>
                     </div>
                   ) : (

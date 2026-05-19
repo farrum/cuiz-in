@@ -21,7 +21,7 @@ const WithdrawalHistory: React.FC<WithdrawalHistoryProps> = ({ withdrawals, user
       case 'achievement':
         return 'Bonus';
       case 'quiz':
-        return 'Quiz Points';
+        return 'Quiz Gems';
       case 'referral':
         return 'Referral Bonus';
       default:

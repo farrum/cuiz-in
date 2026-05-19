@@ -37,7 +37,7 @@ const HowToPlay: React.FC = () => {
       {
         '@type': 'HowToStep',
         'name': 'Answer Quiz Questions',
-        'text': 'Play daily quizzes and answer questions correctly to earn points. Each correct answer gives you points!'
+        'text': 'Play daily quizzes and answer questions correctly to earn gems. Each correct answer gives you gems!'
       },
       {
         '@type': 'HowToStep',
@@ -46,8 +46,8 @@ const HowToPlay: React.FC = () => {
       },
       {
         '@type': 'HowToStep',
-        'name': 'Convert Points to Cash',
-        'text': '2 points = ₹1.00. Convert your points to real money and withdraw it to your bank account or UPI.'
+        'name': 'Convert Gems to Cash',
+        'text': '2 gems = ₹1.00. Convert your gems to real money and withdraw it to your bank account or UPI.'
       }
     ]
   };
@@ -62,7 +62,7 @@ const HowToPlay: React.FC = () => {
         'name': 'How do I start playing CuizIN?',
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': 'Simply register with your email address, verify your account, and you can immediately start playing quizzes and earning points.'
+          'text': 'Simply register with your email address, verify your account, and you can immediately start playing quizzes and earning gems.'
         }
       },
       {
@@ -70,7 +70,7 @@ const HowToPlay: React.FC = () => {
         'name': 'Is there a minimum withdrawal amount on CuizIN?',
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': 'Yes, the minimum withdrawal amount is ₹5000 (equivalent to 10,000 points).'
+          'text': 'Yes, the minimum withdrawal amount is ₹5000 (equivalent to 10,000 gems).'
         }
       },
       {
@@ -171,7 +171,7 @@ const HowToPlay: React.FC = () => {
             {
               icon: <Trophy className="w-8 h-8 text-yellow-500" />,
               title: "Answer Quiz Questions",
-              description: "Play daily quizzes and answer questions correctly to earn points. Each correct answer gives you points!"
+              description: "Play daily quizzes and answer questions correctly to earn gems. Each correct answer gives you gems!"
             },
             {
               icon: <Gift className="w-8 h-8 text-purple-500" />,
@@ -180,8 +180,8 @@ const HowToPlay: React.FC = () => {
             },
             {
               icon: <IndianRupee className="w-8 h-8 text-green-500" />,
-              title: "Convert Points to Cash",
-              description: "2 points = ₹1.00. Convert your points to real money and withdraw it to your bank account or UPI."
+              title: "Convert Gems to Cash",
+              description: "2 gems = ₹1.00. Convert your gems to real money and withdraw it to your bank account or UPI."
             },
             {
               icon: <Calendar className="w-8 h-8 text-blue-500" />,
@@ -241,14 +241,14 @@ const HowToPlay: React.FC = () => {
             <div>
               <h3 className="font-medium text-lg">How do I start playing?</h3>
               <p className="text-muted-foreground">
-                Simply register with your email address, verify your account, and you can immediately start playing quizzes and earning points.
+                Simply register with your email address, verify your account, and you can immediately start playing quizzes and earning gems.
               </p>
             </div>
             
             <div>
               <h3 className="font-medium text-lg">Is there a minimum withdrawal amount?</h3>
               <p className="text-muted-foreground">
-                Yes, the minimum withdrawal amount is ₹5000 (equivalent to 10,000 points).
+                Yes, the minimum withdrawal amount is ₹5000 (equivalent to 10,000 gems).
               </p>
             </div>
             

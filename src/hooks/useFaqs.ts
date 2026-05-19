@@ -29,15 +29,15 @@ export const useFaqs = () => {
           const defaultFaqs = [
             {
               id: '1',
-              question: 'How do I earn points on CuizIN?',
-              answer: 'You earn points by correctly answering quiz questions, completing daily challenges, maintaining login streaks, and through referrals. The more accurate your answers and the longer your streaks, the more points you earn.',
-              category: 'Points & Rewards'
+              question: 'How do I earn gems on CuizIN?',
+              answer: 'You earn gems by correctly answering quiz questions, completing daily challenges, maintaining login streaks, and through referrals. The more accurate your answers and the longer your streaks, the more gems you earn.',
+              category: 'Gems & Rewards'
             },
             {
               id: '2',
-              question: 'How do I track my points?',
-              answer: 'You can track your points by navigating to the Profile section. Your total points and daily progress are displayed on your dashboard.',
-              category: 'Points & Rewards'
+              question: 'How do I track my gems?',
+              answer: 'You can track your gems by navigating to the Profile section. Your total gems and daily progress are displayed on your dashboard.',
+              category: 'Gems & Rewards'
             },
             {
               id: '3',
@@ -48,8 +48,8 @@ export const useFaqs = () => {
             {
               id: '4',
               question: 'How does the referral program work?',
-              answer: 'When you invite friends using your referral link, you earn bonus points when they are active. The more active your referrals are, the more points you earn.',
-              category: 'Points & Rewards'
+              answer: 'When you invite friends using your referral link, you earn bonus gems when they are active. The more active your referrals are, the more gems you earn.',
+              category: 'Gems & Rewards'
             },
             {
               id: '5',
@@ -66,7 +66,7 @@ export const useFaqs = () => {
             {
               id: '7',
               question: 'How are the leaderboards calculated?',
-              answer: 'Leaderboards are calculated based on total points earned within a specific time period (daily, weekly, monthly, all-time). Some special events have their own dedicated leaderboards.',
+              answer: 'Leaderboards are calculated based on total gems earned within a specific time period (daily, weekly, monthly, all-time). Some special events have their own dedicated leaderboards.',
               category: 'Gameplay'
             },
             {
@@ -101,26 +101,26 @@ export const useFaqs = () => {
             },
             {
               id: '13',
-              question: 'How many points do I need to reach milestones?',
+              question: 'How many gems do I need to reach milestones?',
               answer: 'Different milestones require different point thresholds. Check the Achievements section in your profile to see upcoming milestones and their requirements.',
-              category: 'Points & Rewards'
+              category: 'Gems & Rewards'
             },
             {
               id: '14',
               question: 'How do login streaks work?',
-              answer: 'Logging in daily builds your streak counter. Longer streaks earn you bonus points multipliers. If you miss a day, your streak resets.',
-              category: 'Points & Rewards'
+              answer: 'Logging in daily builds your streak counter. Longer streaks earn you bonus gems multipliers. If you miss a day, your streak resets.',
+              category: 'Gems & Rewards'
             },
             {
               id: '15',
               question: 'Can I play CuizIN on multiple devices?',
-              answer: "Yes, you can log into your CuizIN account on multiple devices. Your progress and points will sync across all devices where you're logged in.",
+              answer: "Yes, you can log into your CuizIN account on multiple devices. Your progress and gems will sync across all devices where you're logged in.",
               category: 'Account Management'
             },
             {
               id: '16',
-              question: "What happens to my points if I lose internet connection during a quiz?",
-              answer: "Don't worry! Your progress is automatically saved. When your connection is restored, the system will sync your latest points and quiz progress.",
+              question: "What happens to my gems if I lose internet connection during a quiz?",
+              answer: "Don't worry! Your progress is automatically saved. When your connection is restored, the system will sync your latest gems and quiz progress.",
               category: 'Technical Support'
             },
             {
@@ -174,13 +174,13 @@ export const useFaqs = () => {
             {
               id: '25',
               question: "How do I invite friends to play?",
-              answer: "Go to the 'Invite Friends' section in your profile to get your unique referral link. Share this link with friends, and you'll both receive bonus points when they join.",
+              answer: "Go to the 'Invite Friends' section in your profile to get your unique referral link. Share this link with friends, and you'll both receive bonus gems when they join.",
               category: 'Referrals'
             },
             {
               id: '26',
               question: "What are bonus rounds?",
-              answer: "Bonus rounds are special quiz segments that appear randomly after completing regular quizzes. They offer extra points and special rewards but have a time limit.",
+              answer: "Bonus rounds are special quiz segments that appear randomly after completing regular quizzes. They offer extra gems and special rewards but have a time limit.",
               category: 'Gameplay'
             },
             {

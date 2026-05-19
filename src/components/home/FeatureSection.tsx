@@ -8,7 +8,7 @@ const FeatureSection: React.FC = () => {
     {
       icon: <Award className="w-12 h-12 text-blue-500" />,
       title: "Play & Earn",
-      description: "Answer quiz questions correctly to earn points. The more you play, the more you earn."
+      description: "Answer quiz questions correctly to earn gems. The more you play, the more you earn."
     },
     {
       icon: <PartyPopper className="w-12 h-12 text-purple-500" />,

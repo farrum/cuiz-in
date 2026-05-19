@@ -5,7 +5,7 @@ import { Gift, UserPlus } from 'lucide-react';
 import { 
   getRemainingGuestPlays, 
   getMaxGuestQuestions, 
-  getGuestSessionPoints,
+  getGuestSessionGems,
   isUserLoggedIn 
 } from '@/utils/guestPlayService';
 import ResetCountdown from './ResetCountdown';
@@ -16,13 +16,13 @@ interface GuestPlayProgressBarProps {
 
 const GuestPlayProgressBar: React.FC<GuestPlayProgressBarProps> = ({ className = '' }) => {
   const [remaining, setRemaining] = useState(getRemainingGuestPlays());
-  const [sessionPoints, setSessionPoints] = useState(getGuestSessionPoints());
+  const [sessionGems, setSessionGems] = useState(getGuestSessionGems());
   
   // Listen for guest question completed events to trigger re-render
   useEffect(() => {
-    const handleGuestQuestionCompleted = (event: CustomEvent<{ questionsPlayed: number; sessionPoints: number }>) => {
+    const handleGuestQuestionCompleted = (event: CustomEvent<{ questionsPlayed: number; sessionGems: number }>) => {
       setRemaining(getRemainingGuestPlays());
-      setSessionPoints(event.detail.sessionPoints);
+      setSessionGems(event.detail.sessionGems);
     };
     
     window.addEventListener('guestQuestionCompleted', handleGuestQuestionCompleted as EventListener);
@@ -63,12 +63,12 @@ const GuestPlayProgressBar: React.FC<GuestPlayProgressBarProps> = ({ className =
         <Progress value={progressPercent} className="h-2.5" />
       </div>
 
-      {/* Points & CTA */}
+      {/* Gems & CTA */}
       {questionsPlayed > 0 && (
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-primary/10">
           <div className="text-sm">
-            <span className="text-muted-foreground">Points earned: </span>
-            <span className="font-bold text-primary">{sessionPoints.toFixed(1)}</span>
+            <span className="text-muted-foreground">Gems earned: </span>
+            <span className="font-bold text-primary">{sessionGems.toFixed(1)}</span>
           </div>
           <Link 
             to="/register" 

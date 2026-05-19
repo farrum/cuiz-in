@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { calculatePoints, logPointsForDay, logPointsForMonth } from '@/utils/quizData';
+import { calculateGems, logGemsForDay, logGemsForMonth } from '@/utils/quizData';
 
 // Session key to track if bonus has been shown in current session
 const BONUS_SHOWN_SESSION_KEY = 'login_bonus_shown_today';
@@ -12,13 +12,13 @@ interface LoginStreak {
   current_streak: number;
   last_login_date: string;
   highest_streak: number;
-  bonus_points_today: number;
+  bonus_gems_today: number;
   bonus_claimed_today: boolean;
 }
 
 /**
  * Checks and updates the user's login streak when they log in
- * Returns the bonus points earned if this is their first login of the day
+ * Returns the bonus gems earned if this is their first login of the day
  */
 export const checkAndUpdateLoginStreak = async (userId: string): Promise<number | null> => {
   if (!userId) {
@@ -126,7 +126,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     // If this is the user's first login ever, create a new streak
     if (!streakData) {
       console.log('First login for user, creating new streak record');
-      const bonusPoints = consecutiveDays > 0 ? consecutiveDays : 1; // Minimum 1 point for first login
+      const bonusGems = consecutiveDays > 0 ? consecutiveDays : 1; // Minimum 1 point for first login
       
       const { data: newStreak, error: createError } = await supabase
         .from('login_streaks')
@@ -135,8 +135,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
           current_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           highest_streak: consecutiveDays > 0 ? consecutiveDays : 1,
           last_login_date: todayStr,
-          bonus_points_today: bonusPoints,
-          bonus_claimed_today: bonusPoints > 0
+          bonus_gems_today: bonusGems,
+          bonus_claimed_today: bonusGems > 0
         })
         .select()
         .single();
@@ -150,24 +150,24 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
           last_login_date: todayStr
         }));
         
-        // Award the bonus points locally if applicable
-        if (bonusPoints > 0) {
-          await awardBonusPoints(userId, bonusPoints);
+        // Award the bonus gems locally if applicable
+        if (bonusGems > 0) {
+          await awardBonusGems(userId, bonusGems);
           // Mark as shown in this session
           localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
         }
-        return bonusPoints > 0 ? bonusPoints : null;
+        return bonusGems > 0 ? bonusGems : null;
       }
       
       console.log('Created new streak record:', newStreak);
       
-      // Award the bonus points if applicable
-      if (bonusPoints > 0) {
-        await awardBonusPoints(userId, bonusPoints);
+      // Award the bonus gems if applicable
+      if (bonusGems > 0) {
+        await awardBonusGems(userId, bonusGems);
         // Mark as shown in this session
         localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
       }
-      return bonusPoints > 0 ? bonusPoints : null;
+      return bonusGems > 0 ? bonusGems : null;
     }
     
     console.log('Existing streak data:', streakData);
@@ -191,21 +191,21 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     console.log('Days since last login:', diffDays);
     
     let newStreak: number;
-    let bonusPoints: number;
+    let bonusGems: number;
     
     if (diffDays === 0) {
       // Already logged in today, but haven't claimed bonus
       newStreak = streakData.current_streak;
-      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+      bonusGems = Math.min(newStreak, 30); // Cap at 30 gems
     } else if (diffDays === 1) {
       // Consecutive day login - increment the streak
       newStreak = streakData.current_streak + 1;
-      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+      bonusGems = Math.min(newStreak, 30); // Cap at 30 gems
     } else {
       // Streak broken (more than 1 day since last login)
       // IMPORTANT: Always restart at 1, not at the calculated consecutiveDays
       newStreak = 1; // Reset streak to 1 (today)
-      bonusPoints = 1; // First day gives 1 point
+      bonusGems = 1; // First day gives 1 point
       
       console.log('Streak broken! Resetting to 1.');
     }
@@ -214,14 +214,14 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     if (diffDays <= 1 && consecutiveDays > 0 && consecutiveDays !== newStreak) {
       console.log('Using login logs consecutive days:', consecutiveDays, 'instead of calculated:', newStreak);
       newStreak = consecutiveDays;
-      bonusPoints = Math.min(newStreak, 30); // Cap at 30 points
+      bonusGems = Math.min(newStreak, 30); // Cap at 30 gems
     }
     
     console.log('Updating streak record:', {
       current_streak: newStreak,
       highest_streak: Math.max(newStreak, streakData.highest_streak),
       last_login_date: todayStr,
-      bonus_points_today: bonusPoints,
+      bonus_gems_today: bonusGems,
       bonus_claimed_today: true
     });
     
@@ -232,7 +232,7 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
         current_streak: newStreak,
         highest_streak: Math.max(newStreak, streakData.highest_streak),
         last_login_date: todayStr,
-        bonus_points_today: bonusPoints,
+        bonus_gems_today: bonusGems,
         bonus_claimed_today: true,
         updated_at: new Date().toISOString()
       })
@@ -250,13 +250,13 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
       console.log('Successfully updated login streak in database');
     }
     
-    // Award the bonus points
-    await awardBonusPoints(userId, bonusPoints);
+    // Award the bonus gems
+    await awardBonusGems(userId, bonusGems);
     
     // Mark as shown in this session
     localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
     
-    return bonusPoints;
+    return bonusGems;
   } catch (error) {
     console.error('Error in checkAndUpdateLoginStreak:', error);
     return null;
@@ -264,14 +264,14 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
 };
 
 /**
- * Awards bonus points to the user and updates their total points
+ * Awards bonus gems to the user and updates their total gems
  */
-const awardBonusPoints = async (userId: string, bonusPoints: number): Promise<void> => {
+const awardBonusGems = async (userId: string, bonusGems: number): Promise<void> => {
   try {
-    // Update user's points in the profiles table
+    // Update user's gems in the profiles table
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('points')
+      .select('gems')
       .eq('id', userId)
       .single();
     
@@ -280,32 +280,32 @@ const awardBonusPoints = async (userId: string, bonusPoints: number): Promise<vo
       return;
     }
     
-    const currentPoints = profileData.points || 0;
-    const newPoints = currentPoints + bonusPoints;
+    const currentGems = profileData.gems || 0;
+    const newGems = currentGems + bonusGems;
     
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ points: newPoints })
+      .update({ gems: newGems })
       .eq('id', userId);
       
     if (updateError) {
-      console.error('Error updating user points:', updateError);
+      console.error('Error updating user gems:', updateError);
       return;
     }
     
     // Update local storage
-    localStorage.setItem(STORAGE_KEYS.USER_POINTS, newPoints.toString());
+    localStorage.setItem(STORAGE_KEYS.USER_GEMS, newGems.toString());
     
-    // Also log these points for daily and monthly tracking
-    await logPointsForDay(bonusPoints, userId);
-    await logPointsForMonth(bonusPoints, userId);
+    // Also log these gems for daily and monthly tracking
+    await logGemsForDay(bonusGems, userId);
+    await logGemsForMonth(bonusGems, userId);
     
-    // Trigger points updated event
-    window.dispatchEvent(new Event('pointsUpdated'));
+    // Trigger gems updated event
+    window.dispatchEvent(new Event('gemsUpdated'));
     
-    console.log(`Awarded ${bonusPoints} login bonus points to user ${userId}`);
+    console.log(`Awarded ${bonusGems} login bonus gems to user ${userId}`);
   } catch (error) {
-    console.error('Error awarding bonus points:', error);
+    console.error('Error awarding bonus gems:', error);
   }
 };
 

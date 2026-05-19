@@ -217,7 +217,7 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
                       Questions Attempted
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Points Earned
+                      Gems Earned
                     </th>
                   </tr>
                 </thead>
@@ -238,11 +238,11 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
                         if (!acc[date]) {
                           acc[date] = {
                             count: 0,
-                            points: 0
+                            gems: 0
                           };
                         }
                         acc[date].count++;
-                        acc[date].points += curr.points_earned || 0;
+                        acc[date].gems += curr.gems_earned || 0;
                         return acc;
                       }, {})
                     ).map(([date, stats]: [string, any]) => (
@@ -254,7 +254,7 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
                           {stats.count}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {stats.points}
+                          {stats.gems}
                         </td>
                       </tr>
                     ))

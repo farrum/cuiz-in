@@ -12,7 +12,7 @@ interface TeamMember {
   id: string;
   name: string;
   avatar?: string;
-  points: number;
+  gems: number;
   isReady: boolean;
 }
 
@@ -30,7 +30,7 @@ const TeamQuizContent: React.FC<TeamQuizContentProps> = ({
   teamSize = 2
 }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: '1', name: 'You', avatar: '', points: 0, isReady: true },
+    { id: '1', name: 'You', avatar: '', gems: 0, isReady: true },
   ]);
   const [inviteCode, setInviteCode] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<Array<{id: string, sender: string, message: string}>>([]);
@@ -52,7 +52,7 @@ const TeamQuizContent: React.FC<TeamQuizContentProps> = ({
           id: `${teamMembers.length + 1}`,
           name: `Team Member ${teamMembers.length}`,
           avatar: '',
-          points: 0,
+          gems: 0,
           isReady: true
         };
         
@@ -275,7 +275,7 @@ const TeamQuizContent: React.FC<TeamQuizContentProps> = ({
                     <span>{member.name}</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-sm font-medium">{member.points} pts</span>
+                    <span className="text-sm font-medium">{member.gems} pts</span>
                     {waitingForAnswers && member.id !== '1' && !member.isReady ? (
                       <Clock className="h-4 w-4 text-amber-500 ml-2 animate-pulse" />
                     ) : (

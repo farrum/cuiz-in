@@ -33,7 +33,7 @@ const Index: React.FC = () => {
     '@type': 'WebSite',
     'url': 'https://cuiz.in',
     'name': 'CuizIN - Play Quiz & Learn',
-    'description': 'Play quizzes, earn points, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete.',
+    'description': 'Play quizzes, earn gems, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete.',
     'datePublished': '2024-01-01',
     'dateModified': new Date().toISOString().split('T')[0],
     'inLanguage': 'en-IN',
@@ -80,7 +80,7 @@ const Index: React.FC = () => {
     <PageLayout className="gradient-hero" containerClassName="pt-4 pb-20 md:pb-8">
       <SEO 
         title="CuizIN - Play Quiz & Learn" 
-        description="Play quizzes, earn points, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete."
+        description="Play quizzes, earn gems, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete."
         schemaType="WebSite"
         schemaData={homeSchema}
       />

@@ -66,7 +66,7 @@ const QuizQuestionPage: React.FC = () => {
             correctAnswer: data.correct_answer,
             difficulty: data.difficulty as 'easy' | 'medium' | 'hard',
             category: data.category,
-            points: data.points || 10,
+            gems: data.gems || 10,
             explanation: data.explanation || '',
             createdAt: data.created_at
           };
@@ -121,7 +121,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: q.correct_answer,
               difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
               category: q.category,
-              points: q.points || 10,
+              gems: q.gems || 10,
               explanation: q.explanation || ''
             }));
             
@@ -156,7 +156,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: prevData[0].correct_answer,
               difficulty: (prevData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: prevData[0].category,
-              points: prevData[0].points || 10,
+              gems: prevData[0].gems || 10,
               explanation: prevData[0].explanation || ''
             });
           }
@@ -169,7 +169,7 @@ const QuizQuestionPage: React.FC = () => {
               correctAnswer: nextData[0].correct_answer,
               difficulty: (nextData[0].difficulty || 'medium') as 'easy' | 'medium' | 'hard',
               category: nextData[0].category,
-              points: nextData[0].points || 10,
+              gems: nextData[0].gems || 10,
               explanation: nextData[0].explanation || ''
             });
           }
@@ -420,7 +420,7 @@ const QuizQuestionPage: React.FC = () => {
             {/* SEO-friendly loading state with static content */}
             <div className="bg-card rounded-lg p-6 border">
               <p className="text-muted-foreground text-center">
-                Loading quiz question... Answer correctly to earn points and compete on the leaderboard!
+                Loading quiz question... Answer correctly to earn gems and compete on the leaderboard!
               </p>
               <LoadingCard />
             </div>
@@ -430,7 +430,7 @@ const QuizQuestionPage: React.FC = () => {
               <h2 className="font-semibold mb-2">How to Play</h2>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Select the correct answer from the options</li>
-                <li>• Earn 2-4 points based on difficulty</li>
+                <li>• Earn 2-4 gems based on difficulty</li>
                 <li>• Build streaks for bonus rewards</li>
               </ul>
             </div>

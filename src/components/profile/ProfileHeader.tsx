@@ -42,7 +42,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       // Clear local storage data
       localStorage.removeItem(STORAGE_KEYS.USER_ID);
       localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-      localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+      localStorage.removeItem(STORAGE_KEYS.USER_GEMS);
       localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
       localStorage.removeItem(STORAGE_KEYS.USER_AUTH);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);

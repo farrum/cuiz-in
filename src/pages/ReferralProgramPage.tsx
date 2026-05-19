@@ -26,11 +26,11 @@ const ReferralProgramPage: React.FC = () => {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     'name': 'CuizIN Referral Program',
-    'description': 'Invite friends to CuizIN and earn bonus points. Build your team and climb the leaderboard together.',
+    'description': 'Invite friends to CuizIN and earn bonus gems. Build your team and climb the leaderboard together.',
     'mainEntity': {
       '@type': 'Service',
       'name': 'CuizIN Referral Program',
-      'description': 'Invite friends to CuizIN and earn bonus points for each active referral',
+      'description': 'Invite friends to CuizIN and earn bonus gems for each active referral',
       'provider': {
         '@type': 'Organization',
         'name': 'CuizIN'
@@ -41,12 +41,12 @@ const ReferralProgramPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
-        title="Referral Program | Earn Bonus Points | CuizIN"
-        description="Join CuizIN's referral program and earn bonus points for each friend who signs up and plays. Become a Team Leader for monthly recurring bonuses!"
+        title="Referral Program | Earn Bonus Gems | CuizIN"
+        description="Join CuizIN's referral program and earn bonus gems for each friend who signs up and plays. Become a Team Leader for monthly recurring bonuses!"
         canonicalUrl="https://cuiz.in/referral-program"
         schemaType="WebPage"
         schemaData={referralSchema}
-        keywords={['referral program', 'invite friends', 'CuizIN referral', 'bonus points', 'team leader']}
+        keywords={['referral program', 'invite friends', 'CuizIN referral', 'bonus gems', 'team leader']}
       />
       <BreadcrumbSchema items={breadcrumbs} />
       <Header />
@@ -84,7 +84,7 @@ const ReferralProgramPage: React.FC = () => {
                 How Our Referral Program Works
               </h2>
               <p className="text-muted-foreground">
-                The CuizIN referral program lets you earn bonus points by inviting friends and family to join the platform. Each person you refer who joins using your unique referral code becomes part of your referral network, allowing you to earn bonus points based on their activity.
+                The CuizIN referral program lets you earn bonus gems by inviting friends and family to join the platform. Each person you refer who joins using your unique referral code becomes part of your referral network, allowing you to earn bonus gems based on their activity.
               </p>
               
               <div className="mt-6 grid md:grid-cols-3 gap-6">
@@ -108,8 +108,8 @@ const ReferralProgramPage: React.FC = () => {
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                     <span className="text-xl font-bold">3</span>
                   </div>
-                  <h3 className="font-semibold mb-2">Both Earn Points</h3>
-                  <p className="text-sm text-muted-foreground">You both receive bonuses—they get a welcome bonus, and you earn ongoing referral points.</p>
+                  <h3 className="font-semibold mb-2">Both Earn Gems</h3>
+                  <p className="text-sm text-muted-foreground">You both receive bonuses—they get a welcome bonus, and you earn ongoing referral gems.</p>
                 </div>
               </div>
             </section>
@@ -132,8 +132,8 @@ const ReferralProgramPage: React.FC = () => {
                 <div className="flex items-start">
                   <Star className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold">Ongoing Points</h3>
-                    <p className="text-muted-foreground">Earn bonus points based on your referrals' activity on the platform. As they play, you earn too!</p>
+                    <h3 className="font-semibold">Ongoing Gems</h3>
+                    <p className="text-muted-foreground">Earn bonus gems based on your referrals' activity on the platform. As they play, you earn too!</p>
                   </div>
                 </div>
                 
@@ -164,12 +164,12 @@ const ReferralProgramPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="border border-border rounded-lg p-4">
                   <h3 className="font-semibold mb-2">How many people can I refer?</h3>
-                  <p className="text-muted-foreground">There is no limit to the number of friends you can refer to CuizIN. The more people you refer, the more points you can earn!</p>
+                  <p className="text-muted-foreground">There is no limit to the number of friends you can refer to CuizIN. The more people you refer, the more gems you can earn!</p>
                 </div>
                 
                 <div className="border border-border rounded-lg p-4">
-                  <h3 className="font-semibold mb-2">When do I receive my referral points?</h3>
-                  <p className="text-muted-foreground">Welcome bonuses are credited within 24 hours after your referral completes their first quiz. Ongoing bonus points are calculated and added to your account daily.</p>
+                  <h3 className="font-semibold mb-2">When do I receive my referral gems?</h3>
+                  <p className="text-muted-foreground">Welcome bonuses are credited within 24 hours after your referral completes their first quiz. Ongoing bonus gems are calculated and added to your account daily.</p>
                 </div>
                 
                 <div className="border border-border rounded-lg p-4">
@@ -179,7 +179,7 @@ const ReferralProgramPage: React.FC = () => {
                 
                 <div className="border border-border rounded-lg p-4">
                   <h3 className="font-semibold mb-2">How do I become a Team Leader?</h3>
-                  <p className="text-muted-foreground">Refer 10 or more active players to unlock Team Leader status. Team Leaders get access to a dedicated dashboard and earn enhanced monthly bonus points.</p>
+                  <p className="text-muted-foreground">Refer 10 or more active players to unlock Team Leader status. Team Leaders get access to a dedicated dashboard and earn enhanced monthly bonus gems.</p>
                 </div>
               </div>
             </section>

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuizSounds } from '@/hooks/useQuizSounds';
-import { logPointsEarned } from '@/utils/pointsService';
+import { logGemsEarned } from '@/utils/gemsService';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { Link } from 'react-router-dom';
@@ -52,7 +52,7 @@ interface EnhancedQuizCardProps {
   questionsAnswered?: number;
   streak?: number;
   isChallenge?: boolean;
-  totalPoints?: number;
+  totalGems?: number;
 }
 
 const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
@@ -64,7 +64,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   questionsAnswered = 0,
   streak = 0,
   isChallenge = false,
-  totalPoints = 0
+  totalGems = 0
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -75,7 +75,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     return stored !== 'false';
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
-  const [pointsEarned, setPointsEarned] = useState<number | null>(null);
+  const [gemsEarned, setGemsEarned] = useState<number | null>(null);
   const [showStreakBonus, setShowStreakBonus] = useState(false);
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
@@ -94,7 +94,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     setSelectedAnswer(null);
     setIsAnswered(false);
     setTimeRemaining(config.timer);
-    setPointsEarned(null);
+    setGemsEarned(null);
   }, [question.id, config.timer]);
 
   // Timer logic
@@ -188,28 +188,28 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       else if (!isCorrect && soundEnabled) playWrongSound();
     }
 
-    // Calculate points with streak bonus
-    let points = 0;
+    // Calculate gems with streak bonus
+    let gems = 0;
     const currentStreakBonus = getStreakBonus(streak);
     
     if (isCorrect) {
-      const basePoints = question.difficulty === 'easy' ? 2 : question.difficulty === 'medium' ? 3 : 4;
+      const baseGems = question.difficulty === 'easy' ? 2 : question.difficulty === 'medium' ? 3 : 4;
       const timeBonus = Math.floor(timeRemaining / 10);
-      let calculatedPoints = (basePoints + timeBonus) * config.multiplier;
+      let calculatedGems = (baseGems + timeBonus) * config.multiplier;
       
       // Apply streak bonus
       if (currentStreakBonus) {
-        calculatedPoints *= currentStreakBonus.multiplier;
+        calculatedGems *= currentStreakBonus.multiplier;
         setStreakBonusApplied(currentStreakBonus);
         setShowStreakBonus(true);
       }
       
-      points = Math.round(calculatedPoints);
+      gems = Math.round(calculatedGems);
     } else if (answer !== null) {
-      points = Math.round(0.5 * config.multiplier);
+      gems = Math.round(0.5 * config.multiplier);
       setStreakBonusApplied(null);
     }
-    setPointsEarned(points);
+    setGemsEarned(gems);
 
     // Save to database
     try {
@@ -224,8 +224,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       }
 
       if (userId) {
-        if (!isChallenge && points > 0) {
-          await logPointsEarned(points, userId);
+        if (!isChallenge && gems > 0) {
+          await logGemsEarned(gems, userId);
         }
         
         await supabase.from('quiz_answers').insert({
@@ -233,11 +233,11 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           question_id: question.id,
           selected_answer: answer || 'timeout',
           correct: isCorrect,
-          points_earned: points,
+          gems_earned: gems,
           answered_at: new Date().toISOString()
         });
       } else {
-        incrementGuestPlay(points);
+        incrementGuestPlay(gems);
       }
     } catch (error) {
       console.error('Error saving answer:', error);
@@ -395,8 +395,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           </div>
 
-          {/* Streak and Points info with bonus indicator */}
-          {(streak > 0 || totalPoints > 0 || currentStreakBonus) && (
+          {/* Streak and Gems info with bonus indicator */}
+          {(streak > 0 || totalGems > 0 || currentStreakBonus) && (
             <div className="flex items-center gap-2 mb-4 text-sm flex-wrap">
               {streak > 0 && (
                 <span className={cn(
@@ -416,9 +416,9 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                   {nextStreakBonus.threshold - streak} more for {nextStreakBonus.label}!
                 </span>
               )}
-              {totalPoints > 0 && (
+              {totalGems > 0 && (
                 <span className="text-muted-foreground ml-auto">
-                  Total: <span className="font-semibold text-foreground">{totalPoints} pts</span>
+                  Total: <span className="font-semibold text-foreground">{totalGems} pts</span>
                 </span>
               )}
             </div>
@@ -492,8 +492,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             ))}
           </div>
 
-          {/* Feedback / Points earned with streak bonus info */}
-          {isAnswered && pointsEarned !== null && (
+          {/* Feedback / Gems earned with streak bonus info */}
+          {isAnswered && gemsEarned !== null && (
             <div className={cn(
               "mt-4 p-3 rounded-xl text-center font-medium",
               selectedAnswer === question.correctAnswer
@@ -504,7 +504,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                 <div className="flex flex-col items-center gap-1">
                   <span className="flex items-center justify-center gap-2">
                     <CheckCircle2 className="w-5 h-5" />
-                    Correct! +{pointsEarned} points
+                    Correct! +{gemsEarned} gems
                   </span>
                   {streakBonusApplied && (
                     <span className="text-xs opacity-80 flex items-center gap-1">
@@ -557,7 +557,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             <p className="mt-4 text-xs text-muted-foreground text-center">
               {remainingPlays} free {remainingPlays === 1 ? 'question' : 'questions'} remaining •{' '}
               <Link to="/register" className="text-primary hover:underline">
-                Register to save points
+                Register to save gems
               </Link>
             </p>
           )}

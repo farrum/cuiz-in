@@ -79,7 +79,7 @@ export const createImageQuizQuestion = (baseQuestion: Partial<QuizQuestion>, ima
     correctAnswer: baseQuestion.correctAnswer || "",
     category: baseQuestion.category || "General",
     difficulty: baseQuestion.difficulty || "medium",
-    points: baseQuestion.points || 10,
+    gems: baseQuestion.gems || 10,
     explanation: baseQuestion.explanation || "",
     imageUrl: imageUrl,
     questionType: "image"

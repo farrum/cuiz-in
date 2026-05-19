@@ -33,7 +33,7 @@ export const landingConfigs: Record<string, QuizLandingConfig> = {
     metaDescription: 'Play the ultimate cricket quiz online. Test your knowledge of IPL, ICC World Cup, Sachin, Kohli, Dhoni, records, and cricket history. Free, instant scoring.',
     keywords: ['cricket quiz', 'ipl quiz', 'cricket trivia', 'cricket world cup quiz', 'cricket questions', 'cricket gk', 'sachin tendulkar quiz'],
     intro: 'Cricket is more than a sport in India — it is a way of life. Our cricket quiz brings together questions on every era of the game, from the 1983 World Cup triumph to the modern IPL era. Whether you follow Test cricket, ODIs, T20s or the Women\'s Premier League, there is something here to challenge every fan.',
-    whyPlay: 'Built specifically for Indian cricket fans, this quiz blends international cricket history with deep coverage of the IPL, domestic Ranji Trophy, and Indian legends like Sachin Tendulkar, MS Dhoni, Virat Kohli, and Rohit Sharma. Earn points with every correct answer and climb the CuizIN leaderboard.',
+    whyPlay: 'Built specifically for Indian cricket fans, this quiz blends international cricket history with deep coverage of the IPL, domestic Ranji Trophy, and Indian legends like Sachin Tendulkar, MS Dhoni, Virat Kohli, and Rohit Sharma. Earn gems with every correct answer and climb the CuizIN leaderboard.',
     categories: ['Cricket', 'Sports'],
     questionKeywords: ['cricket', 'ipl', 'world cup', 'sachin', 'kohli', 'dhoni', 'wicket', 'century', 'odi', 't20'],
     subTopics: [
@@ -46,8 +46,8 @@ export const landingConfigs: Record<string, QuizLandingConfig> = {
     faqs: [
       { q: 'How many cricket quiz questions are there?', a: 'CuizIN has more than 95 cricket-specific questions plus hundreds of broader sports questions, all with detailed explanations.' },
       { q: 'Does the cricket quiz cover IPL?', a: 'Yes. Questions span every IPL season, including auctions, franchise records, and player of the tournament awards.' },
-      { q: 'Is the cricket quiz free?', a: 'Completely free. Sign up to save your score, earn points and appear on the monthly leaderboard.' },
-      { q: 'How are questions scored?', a: 'Each correct answer earns points instantly. Difficulty determines the points value — harder questions are worth more.' },
+      { q: 'Is the cricket quiz free?', a: 'Completely free. Sign up to save your score, earn gems and appear on the monthly leaderboard.' },
+      { q: 'How are questions scored?', a: 'Each correct answer earns gems instantly. Difficulty determines the gems value — harder questions are worth more.' },
     ],
     playCtaLink: '/topics/cricket',
     icon: '🏏',
@@ -72,7 +72,7 @@ export const landingConfigs: Record<string, QuizLandingConfig> = {
     faqs: [
       { q: 'What does the Bollywood quiz cover?', a: 'Movies, music, actors, directors, dialogues, awards and box-office trivia from every era of Hindi cinema.' },
       { q: 'Are there questions on old Bollywood?', a: 'Yes — from the 1940s classics to modern OTT releases, every era is represented.' },
-      { q: 'Is the Bollywood quiz free?', a: 'Yes, 100% free. Create a free account to track your score and earn points.' },
+      { q: 'Is the Bollywood quiz free?', a: 'Yes, 100% free. Create a free account to track your score and earn gems.' },
       { q: 'How often are new questions added?', a: 'New Bollywood questions are added every week, covering recent releases and trending stars.' },
     ],
     playCtaLink: '/topics/bollywood',
@@ -91,7 +91,7 @@ export const landingConfigs: Record<string, QuizLandingConfig> = {
     subTopics: [
       { name: 'India GK', description: 'States, capitals, monuments, Indian Constitution, freedom fighters and Indian polity.' },
       { name: 'Current Affairs', description: 'Recent events, awards, appointments, sports news and global headlines.' },
-      { name: 'World History', description: 'Ancient civilizations, world wars, revolutions and turning points in human history.' },
+      { name: 'World History', description: 'Ancient civilizations, world wars, revolutions and turning gems in human history.' },
       { name: 'Geography', description: 'Countries, capitals, rivers, mountains, deserts and physical geography.' },
       { name: 'Science & Tech', description: 'Inventions, discoveries, space, biology, physics and chemistry basics.' },
       { name: 'Sports & Culture', description: 'Olympics, World Cups, art, literature and cultural heritage.' },
@@ -99,7 +99,7 @@ export const landingConfigs: Record<string, QuizLandingConfig> = {
     faqs: [
       { q: 'How many GK questions are on CuizIN?', a: 'Over 200 General Knowledge questions plus 500+ across history, geography, science and politics — all useful for GK practice.' },
       { q: 'Is this GK quiz good for competitive exams?', a: 'Yes. Question patterns reflect SSC, banking and state-level exam formats, with explanations to deepen understanding.' },
-      { q: 'Can I play the GK quiz daily?', a: 'Yes — a fresh set of questions is available every day, and daily play earns bonus points.' },
+      { q: 'Can I play the GK quiz daily?', a: 'Yes — a fresh set of questions is available every day, and daily play earns bonus gems.' },
       { q: 'Does the quiz include India-specific GK?', a: 'Strongly yes. Indian history, polity, geography and culture form a large share of every quiz.' },
     ],
     playCtaLink: '/categories/general-knowledge',

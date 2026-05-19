@@ -15,7 +15,7 @@ interface Challenge {
   title: string;
   description: string | null;
   num_questions: number;
-  points_multiplier: number;
+  gems_multiplier: number;
   start_date: string;
   end_date: string;
   is_active: boolean;
@@ -175,7 +175,7 @@ const ArchivedChallenges: React.FC = () => {
                     {isCompleted && (
                       <div className="flex items-center text-primary">
                         <Trophy className="h-4 w-4 mr-1" />
-                        Score: {userProgress.score || 0} points
+                        Score: {userProgress.score || 0} gems
                       </div>
                     )}
                   </div>

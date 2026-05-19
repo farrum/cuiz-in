@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 interface StreakData {
   currentStreak: number;
   highestStreak: number;
-  bonusPointsToday: number;
+  bonusGemsToday: number;
   lastLoginDate: string;
 }
 
@@ -31,7 +31,7 @@ const DailyStreakTracker: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('login_streaks')
-        .select('current_streak, highest_streak, bonus_points_today, last_login_date')
+        .select('current_streak, highest_streak, bonus_gems_today, last_login_date')
         .eq('user_id', userId)
         .single();
 
@@ -41,14 +41,14 @@ const DailyStreakTracker: React.FC = () => {
         setStreakData({
           currentStreak: 1,
           highestStreak: 1,
-          bonusPointsToday: 1,
+          bonusGemsToday: 1,
           lastLoginDate: new Date().toISOString()
         });
       } else if (data) {
         setStreakData({
           currentStreak: data.current_streak,
           highestStreak: data.highest_streak,
-          bonusPointsToday: data.bonus_points_today,
+          bonusGemsToday: data.bonus_gems_today,
           lastLoginDate: data.last_login_date
         });
       }
@@ -112,7 +112,7 @@ const DailyStreakTracker: React.FC = () => {
           </div>
           <div>
             <h3 className="text-lg font-bold text-foreground">Daily Streak</h3>
-            <p className="text-sm text-muted-foreground">Play daily to earn bonus points!</p>
+            <p className="text-sm text-muted-foreground">Play daily to earn bonus gems!</p>
           </div>
         </div>
         
@@ -164,7 +164,7 @@ const DailyStreakTracker: React.FC = () => {
             </div>
             <div className="bg-background/50 rounded-lg p-3 text-center">
               <Gift className="w-4 h-4 mx-auto text-purple-500 mb-1" />
-              <div className="text-lg font-bold">+{streakData?.bonusPointsToday || 0}</div>
+              <div className="text-lg font-bold">+{streakData?.bonusGemsToday || 0}</div>
               <div className="text-[10px] text-muted-foreground">Today's Bonus</div>
             </div>
             <div className="bg-background/50 rounded-lg p-3 text-center">
@@ -187,14 +187,14 @@ const DailyStreakTracker: React.FC = () => {
               />
             </div>
             <p className="text-[10px] text-muted-foreground text-center">
-              🎁 Earn up to 30 bonus points daily with longer streaks!
+              🎁 Earn up to 30 bonus gems daily with longer streaks!
             </p>
           </div>
         </>
       ) : (
         <div className="text-center py-4">
           <p className="text-muted-foreground mb-3">
-            Sign up to track your streak and earn daily bonus points!
+            Sign up to track your streak and earn daily bonus gems!
           </p>
           <div className="flex justify-center gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((day) => (
@@ -212,7 +212,7 @@ const DailyStreakTracker: React.FC = () => {
             ))}
           </div>
           <p className="text-xs text-orange-500 mt-3 font-medium">
-            +1 point Day 1 → +30 points Day 30!
+            +1 point Day 1 → +30 gems Day 30!
           </p>
         </div>
       )}

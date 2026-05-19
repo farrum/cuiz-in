@@ -29,7 +29,8 @@ import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
 import { ContentPartnerships } from '@/components/admin/partnerships';
 import SitemapManagement from '@/components/admin/SitemapManagement';
-
+import AdminGamificationPanel from '@/components/admin/gamification/AdminGamificationPanel';
+import { Gamepad2 } from 'lucide-react';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -88,6 +89,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/faq')) tab = 'faq';
     else if (path.includes('/partnerships')) tab = 'partnerships';
     else if (path.includes('/seo')) tab = 'seo';
+    else if (path.includes('/gamification')) tab = 'gamification';
     else if (path === '/admin') {
       navigate('/admin/users', { replace: true });
       tab = 'users';
@@ -210,6 +212,10 @@ const AdminPage: React.FC = () => {
               <Search className="w-4 h-4 mr-1" />
               SEO
             </TabsTrigger>
+            <TabsTrigger value="gamification">
+              <Gamepad2 className="w-4 h-4 mr-1" />
+              Gamification
+            </TabsTrigger>
           </TabsList>
           
           <Separator className="my-6" />
@@ -288,6 +294,9 @@ const AdminPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="seo">
             <SitemapManagement />
+          </TabsContent>
+          <TabsContent value="gamification">
+            <AdminGamificationPanel />
           </TabsContent>
         </Tabs>
       </div>

@@ -6,15 +6,15 @@ import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import GuestPointsDisplay from './GuestPointsDisplay';
+import GuestGemsDisplay from './GuestGemsDisplay';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [todayPoints, setTodayPoints] = useState(0);
-  const [monthlyPoints, setMonthlyPoints] = useState(0);
+  const [todayGems, setTodayGems] = useState(0);
+  const [monthlyGems, setMonthlyGems] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTeamLeader, setIsTeamLeader] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -39,8 +39,8 @@ const Header: React.FC = () => {
       setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
       
       if (!userLoggedIn) {
-        setTodayPoints(0);
-        setMonthlyPoints(0);
+        setTodayGems(0);
+        setMonthlyGems(0);
       }
     };
     
@@ -65,11 +65,11 @@ const Header: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    const updatePoints = async () => {
+    const updateGems = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) {
-        setTodayPoints(0);
-        setMonthlyPoints(0);
+        setTodayGems(0);
+        setMonthlyGems(0);
         return;
       }
       
@@ -79,31 +79,31 @@ const Header: React.FC = () => {
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
         const [dailyResponse, monthlyResponse] = await Promise.all([
-          supabase.from('daily_points').select('points').eq('user_id', userId).eq('date', today).maybeSingle(),
-          supabase.from('monthly_points').select('points').eq('user_id', userId).eq('month', currentMonth).maybeSingle()
+          supabase.from('daily_gems').select('gems').eq('user_id', userId).eq('date', today).maybeSingle(),
+          supabase.from('monthly_gems').select('gems').eq('user_id', userId).eq('month', currentMonth).maybeSingle()
         ]);
         
-        setTodayPoints(dailyResponse.data?.points ?? 0);
-        setMonthlyPoints(monthlyResponse.data?.points ?? 0);
+        setTodayGems(dailyResponse.data?.gems ?? 0);
+        setMonthlyGems(monthlyResponse.data?.gems ?? 0);
         
       } catch (error) {
-        console.error('Error fetching points:', error);
+        console.error('Error fetching gems:', error);
       }
     };
     
     if (isLoggedIn) {
-      updatePoints();
-      window.addEventListener('pointsUpdated', updatePoints);
-      const intervalId = setInterval(updatePoints, 30000);
+      updateGems();
+      window.addEventListener('gemsUpdated', updateGems);
+      const intervalId = setInterval(updateGems, 30000);
       return () => {
-        window.removeEventListener('pointsUpdated', updatePoints);
+        window.removeEventListener('gemsUpdated', updateGems);
         clearInterval(intervalId);
       };
     }
   }, [isLoggedIn]);
   
-  const dailyProgress = Math.min(100, todayPoints / DAILY_TARGET * 100);
-  const monthlyProgress = Math.min(100, monthlyPoints / MONTHLY_TARGET * 100);
+  const dailyProgress = Math.min(100, todayGems / DAILY_TARGET * 100);
+  const monthlyProgress = Math.min(100, monthlyGems / MONTHLY_TARGET * 100);
 
   // Simplified navigation
   const mainNavItems = [
@@ -167,26 +167,26 @@ const Header: React.FC = () => {
             ))}
           </nav>
 
-          {/* Right side: Points + CTA */}
+          {/* Right side: Gems + CTA */}
           <div className="flex items-center gap-3">
-            {/* Points display - desktop only */}
+            {/* Gems display - desktop only */}
             {isLoggedIn ? (
               <div className="hidden lg:flex flex-col gap-1 w-36">
                 <div className="flex text-xs items-center gap-1">
                   <Target className="w-3 h-3 text-muted-foreground" />
                   <span className="text-xs">Daily:</span>
                   <Progress value={dailyProgress} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{todayPoints.toFixed(0)}</span>
+                  <span className="text-xs text-muted-foreground">{todayGems.toFixed(0)}</span>
                 </div>
                 <div className="flex text-xs items-center gap-1">
                   <Target className="w-3 h-3 text-muted-foreground" />
                   <span className="text-xs">Monthly:</span>
                   <Progress value={monthlyProgress} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{monthlyPoints.toFixed(0)}</span>
+                  <span className="text-xs text-muted-foreground">{monthlyGems.toFixed(0)}</span>
                 </div>
               </div>
             ) : (
-              <GuestPointsDisplay className="hidden lg:flex" />
+              <GuestGemsDisplay className="hidden lg:flex" />
             )}
 
             {/* Play Now CTA - always visible */}

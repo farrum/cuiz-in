@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Trophy, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
-  getGuestSessionPoints, 
+  getGuestSessionGems, 
   getRemainingGuestPlays, 
   getMaxGuestQuestions,
   isUserLoggedIn 
@@ -11,15 +11,15 @@ import {
 import SocialShareButtons from './SocialShareButtons';
 import ResetCountdown from './ResetCountdown';
 
-interface GuestPointsBannerProps {
+interface GuestGemsBannerProps {
   className?: string;
 }
 
-const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' }) => {
+const GuestGemsBanner: React.FC<GuestGemsBannerProps> = ({ className = '' }) => {
   // Don't show for logged-in users
   if (isUserLoggedIn()) return null;
 
-  const sessionPoints = getGuestSessionPoints();
+  const sessionGems = getGuestSessionGems();
   const remaining = getRemainingGuestPlays();
   const maxQuestions = getMaxGuestQuestions();
   const questionsPlayed = maxQuestions - remaining;
@@ -44,7 +44,7 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
       
       <div className="relative p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Points Display */}
+          {/* Gems Display */}
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-2 bg-primary/20 rounded-full">
@@ -56,7 +56,7 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {isOutOfPlays 
-                    ? "Register to continue playing and save your points"
+                    ? "Register to continue playing and save your gems"
                     : "Register to save your progress"}
                 </p>
               </div>
@@ -65,8 +65,8 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
             <div className="flex flex-wrap items-center gap-4 mt-3">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-yellow-500" />
-                <span className="text-lg font-bold text-foreground">{sessionPoints.toFixed(1)}</span>
-                <span className="text-sm text-muted-foreground">points earned</span>
+                <span className="text-lg font-bold text-foreground">{sessionGems.toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground">gems earned</span>
               </div>
               
               {!isOutOfPlays && (
@@ -78,7 +78,7 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
             </div>
 
             {/* Social Sharing */}
-            {sessionPoints >= 10 && (
+            {sessionGems >= 10 && (
               <div className="mt-3">
                 <SocialShareButtons />
               </div>
@@ -110,4 +110,4 @@ const GuestPointsBanner: React.FC<GuestPointsBannerProps> = ({ className = '' })
   );
 };
 
-export default GuestPointsBanner;
+export default GuestGemsBanner;

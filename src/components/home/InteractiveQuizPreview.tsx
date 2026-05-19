@@ -13,7 +13,7 @@ interface QuizQuestion {
   options: string[];
   correct_answer?: string;
   category: string;
-  points: number;
+  gems: number;
 }
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -39,7 +39,7 @@ const InteractiveQuizPreview: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalGems, setTotalGems] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +126,7 @@ const InteractiveQuizPreview: React.FC = () => {
     try {
       let query = supabase
         .from('quiz_questions')
-        .select('id, question, options, category, points')
+        .select('id, question, options, category, gems')
         .eq('question_type', 'text')
         .limit(20);
       
@@ -143,7 +143,7 @@ const InteractiveQuizPreview: React.FC = () => {
           options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
           correct_answer: 'Mars',
           category: 'Science',
-          points: 10
+          gems: 10
         });
       } else {
         const randomIndex = Math.floor(Math.random() * data.length);
@@ -159,7 +159,7 @@ const InteractiveQuizPreview: React.FC = () => {
           question: q.question,
           options: options,
           category: q.category,
-          points: q.points || 10
+          gems: q.gems || 10
         });
         setUsedQuestionIds(prev => [...prev, q.id]);
       }
@@ -171,7 +171,7 @@ const InteractiveQuizPreview: React.FC = () => {
         options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
         correct_answer: 'Mars',
         category: 'Science',
-        points: 10
+        gems: 10
       });
     }
     setSelectedAnswer(null);
@@ -225,9 +225,9 @@ const InteractiveQuizPreview: React.FC = () => {
       if (soundEnabled) playCorrectSound();
       setCorrectAnswers(prev => prev + 1);
       const timeBonus = Math.floor(timeRemaining / 10);
-      const basePoints = (currentQuestion?.points || 10) + timeBonus;
-      const multipliedPoints = Math.round(basePoints * config.multiplier);
-      setTotalPoints(prev => prev + multipliedPoints);
+      const baseGems = (currentQuestion?.gems || 10) + timeBonus;
+      const multipliedGems = Math.round(baseGems * config.multiplier);
+      setTotalGems(prev => prev + multipliedGems);
     } else {
       if (soundEnabled) playWrongSound();
     }
@@ -247,7 +247,7 @@ const InteractiveQuizPreview: React.FC = () => {
   const handlePlayAgain = () => {
     setQuestionsAnswered(0);
     setCorrectAnswers(0);
-    setTotalPoints(0);
+    setTotalGems(0);
     setShowResult(false);
     setUsedQuestionIds([]);
     setTimerStarted(false);
@@ -331,7 +331,7 @@ const InteractiveQuizPreview: React.FC = () => {
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-primary">{cfg.multiplier}x</div>
-                <div className="text-xs text-muted-foreground">points</div>
+                <div className="text-xs text-muted-foreground">gems</div>
               </div>
             </Button>
           ))}
@@ -384,7 +384,7 @@ const InteractiveQuizPreview: React.FC = () => {
             )}
             <div className="flex items-center gap-1 text-sm font-medium text-accent">
               <Sparkles className="w-4 h-4" />
-              <span>+{Math.round((currentQuestion?.points || 10) * (config?.multiplier || 1))} pts</span>
+              <span>+{Math.round((currentQuestion?.gems || 10) * (config?.multiplier || 1))} pts</span>
             </div>
           </div>
         </div>
@@ -411,10 +411,10 @@ const InteractiveQuizPreview: React.FC = () => {
           </span>
         </div>
 
-        {/* Points display */}
-        {totalPoints > 0 && (
+        {/* Gems display */}
+        {totalGems > 0 && (
           <div className="mb-4 text-sm font-medium text-primary">
-            Total: {totalPoints} points
+            Total: {totalGems} gems
           </div>
         )}
 
@@ -468,7 +468,7 @@ const InteractiveQuizPreview: React.FC = () => {
         isOpen={showResult}
         correctAnswers={correctAnswers}
         totalQuestions={TOTAL_QUESTIONS}
-        totalPoints={totalPoints}
+        totalGems={totalGems}
         bestIQ={bestIQ}
         difficulty={difficulty}
         onPlayAgain={handlePlayAgain}

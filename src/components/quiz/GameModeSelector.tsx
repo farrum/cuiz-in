@@ -54,7 +54,7 @@ const GameModeSelector: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   {mode === 'streak' && (
-                    <p>Build up your streak to earn bonus points! Each consecutive correct answer increases your multiplier.</p>
+                    <p>Build up your streak to earn bonus gems! Each consecutive correct answer increases your multiplier.</p>
                   )}
                   {mode === 'time-attack' && (
                     <p>You have {modeConfigs[mode].timeLimit} seconds to answer as many questions as possible.</p>
@@ -85,7 +85,7 @@ const GameModeSelector: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Team members share points and achievements. Larger teams get higher point multipliers.
+                        Team members share gems and achievements. Larger teams get higher point multipliers.
                       </div>
                     </div>
                   )}

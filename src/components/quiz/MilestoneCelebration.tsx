@@ -6,7 +6,7 @@ import { Trophy, Star, Sparkles, PartyPopper, Rocket, Crown } from 'lucide-react
 import { 
   getUncelabratedMilestone, 
   markMilestoneCelebrated,
-  getGuestSessionPoints 
+  getGuestSessionGems 
 } from '@/utils/guestPlayService';
 import confetti from 'canvas-confetti';
 import SocialShareButtons from './SocialShareButtons';
@@ -86,7 +86,7 @@ const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({ triggerChec
   };
 
   const Icon = getMilestoneIcon();
-  const sessionPoints = getGuestSessionPoints();
+  const sessionGems = getGuestSessionGems();
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -110,33 +110,33 @@ const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({ triggerChec
             🎉 {getMilestoneMessage()}
           </h2>
           <p className="text-lg text-muted-foreground mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            You've reached <span className={`font-bold ${getMilestoneColor()}`}>{milestone}</span> points!
+            You've reached <span className={`font-bold ${getMilestoneColor()}`}>{milestone}</span> gems!
           </p>
 
-          {/* Current points display */}
+          {/* Current gems display */}
           <div className="bg-primary/10 rounded-xl p-4 mb-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-center gap-2 mb-1">
               <Trophy className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-muted-foreground">Total Session Points</span>
+              <span className="text-sm font-medium text-muted-foreground">Total Session Gems</span>
             </div>
-            <div className="text-4xl font-bold text-primary">{sessionPoints.toFixed(1)}</div>
+            <div className="text-4xl font-bold text-primary">{sessionGems.toFixed(1)}</div>
           </div>
 
           {/* Social sharing */}
           <div className="mb-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <SocialShareButtons points={sessionPoints} className="justify-center" />
+            <SocialShareButtons gems={sessionGems} className="justify-center" />
           </div>
 
           {/* Registration CTA */}
           <div className="space-y-2 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <p className="text-sm text-muted-foreground">
-              Register now to save your points forever!
+              Register now to save your gems forever!
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button asChild size="lg" className="group">
                 <Link to="/register">
                   <Star className="w-4 h-4 mr-2" />
-                  Register & Save Points
+                  Register & Save Gems
                 </Link>
               </Button>
               <Button variant="outline" size="lg" onClick={handleClose}>

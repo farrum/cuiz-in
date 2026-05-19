@@ -49,7 +49,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text sm:text-5xl">
           Cuiz<span className="text-green-500">IN</span> Rewards
         </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto text-2xl">Play Quiz for Free, Earn Points, and convert them to real money. 
+        <p className="text-muted-foreground max-w-2xl mx-auto text-2xl">Play Quiz for Free, Earn Gems, and convert them to real money. 
 Invite friends to earn even more!</p>
         
         <div className="mt-6 inline-block text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium border border-green-200 dark:border-green-800 bg-teal-300">

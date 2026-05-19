@@ -1,17 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, UserPlus } from 'lucide-react';
-import { getGuestSessionPoints, getRemainingGuestPlays, getMaxGuestQuestions, isUserLoggedIn } from '@/utils/guestPlayService';
+import { getGuestSessionGems, getRemainingGuestPlays, getMaxGuestQuestions, isUserLoggedIn } from '@/utils/guestPlayService';
 
-interface GuestPointsDisplayProps {
+interface GuestGemsDisplayProps {
   className?: string;
 }
 
-const GuestPointsDisplay: React.FC<GuestPointsDisplayProps> = ({ className = '' }) => {
+const GuestGemsDisplay: React.FC<GuestGemsDisplayProps> = ({ className = '' }) => {
   // Don't show for logged-in users
   if (isUserLoggedIn()) return null;
 
-  const sessionPoints = getGuestSessionPoints();
+  const sessionGems = getGuestSessionGems();
   const remaining = getRemainingGuestPlays();
   const maxQuestions = getMaxGuestQuestions();
   const questionsPlayed = maxQuestions - remaining;
@@ -24,7 +24,7 @@ const GuestPointsDisplay: React.FC<GuestPointsDisplayProps> = ({ className = '' 
       <div className="flex items-center gap-1.5">
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium text-foreground">
-          {sessionPoints.toFixed(1)} pts
+          {sessionGems.toFixed(1)} pts
         </span>
         <span className="text-xs text-muted-foreground">
           ({remaining}/{maxQuestions} free left)
@@ -36,10 +36,10 @@ const GuestPointsDisplay: React.FC<GuestPointsDisplayProps> = ({ className = '' 
         className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         <UserPlus className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Save Points</span>
+        <span className="hidden sm:inline">Save Gems</span>
       </Link>
     </div>
   );
 };
 
-export default GuestPointsDisplay;
+export default GuestGemsDisplay;

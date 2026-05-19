@@ -19,7 +19,7 @@ interface ValidationResult {
   responseTime?: number;
 }
 
-const ENDPOINTS = [
+const ENDGEMS = [
   { name: 'Index', param: '?type=index' },
   { name: 'Main (Static+Blog+FAQ)', param: '?type=main' },
   { name: 'History', param: '?type=category&category=history' },
@@ -38,7 +38,7 @@ const SitemapValidator: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [currentName, setCurrentName] = useState('');
 
-  const validate = async (ep: typeof ENDPOINTS[0]): Promise<ValidationResult> => {
+  const validate = async (ep: typeof ENDGEMS[0]): Promise<ValidationResult> => {
     const start = Date.now();
     try {
       const res = await fetch(`${EDGE_BASE}${ep.param}`, {
@@ -72,10 +72,10 @@ const SitemapValidator: React.FC = () => {
     setProgress(0);
     const all: ValidationResult[] = [];
     
-    for (let i = 0; i < ENDPOINTS.length; i++) {
-      setCurrentName(ENDPOINTS[i].name);
-      setProgress(((i + 1) / ENDPOINTS.length) * 100);
-      const r = await validate(ENDPOINTS[i]);
+    for (let i = 0; i < ENDGEMS.length; i++) {
+      setCurrentName(ENDGEMS[i].name);
+      setProgress(((i + 1) / ENDGEMS.length) * 100);
+      const r = await validate(ENDGEMS[i]);
       all.push(r);
       setResults([...all]);
       await new Promise(res => setTimeout(res, 200));
@@ -86,7 +86,7 @@ const SitemapValidator: React.FC = () => {
     const errors = all.filter(r => r.status === 'error').length;
     const total = all.filter(r => r.status === 'success' && !r.message.includes('Index')).reduce((s, r) => s + r.urlCount, 0);
     if (errors === 0) toast.success(`All valid! ${total.toLocaleString()} total URLs`);
-    else toast.error(`${errors} endpoints failed`);
+    else toast.error(`${errors} endgems failed`);
   };
 
   const totalUrls = results.filter(r => r.status === 'success' && !r.message.includes('Index')).reduce((s, r) => s + r.urlCount, 0);
@@ -95,11 +95,11 @@ const SitemapValidator: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" />Sitemap Validator</CardTitle>
-        <CardDescription>Validates all sitemap endpoints directly via edge function</CardDescription>
+        <CardDescription>Validates all sitemap endgems directly via edge function</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button onClick={runValidation} disabled={isValidating} className="flex items-center gap-2">
-          {isValidating ? <><Loader2 className="w-4 h-4 animate-spin" />Validating {currentName}...</> : <><RefreshCw className="w-4 h-4" />Validate All Endpoints</>}
+          {isValidating ? <><Loader2 className="w-4 h-4 animate-spin" />Validating {currentName}...</> : <><RefreshCw className="w-4 h-4" />Validate All Endgems</>}
         </Button>
         
         {isValidating && (

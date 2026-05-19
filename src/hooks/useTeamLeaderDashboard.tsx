@@ -111,7 +111,7 @@ export const useTeamLeaderDashboard = () => {
       cell: (row: any) => row.daysActive,
     },
     {
-      header: "Points",
+      header: "Gems",
       accessorKey: "totalEarned",
       cell: (row: any) => <span>{row.totalEarned} pts</span>,
     },
@@ -132,7 +132,7 @@ export const useTeamLeaderDashboard = () => {
       accessorKey: "membersCount",
     },
     {
-      header: "Points",
+      header: "Gems",
       accessorKey: "amount",
       cell: (row: any) => <span>{row.amount} pts</span>,
     },

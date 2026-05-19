@@ -393,7 +393,7 @@ const TopicPage: React.FC = () => {
             <CardContent className="p-4 text-center">
               <Trophy className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
               <div className="text-2xl font-bold">{questions.length * 10}</div>
-              <div className="text-sm text-muted-foreground">Points Available</div>
+              <div className="text-sm text-muted-foreground">Gems Available</div>
             </CardContent>
           </Card>
         </div>

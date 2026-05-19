@@ -20,7 +20,7 @@ export type CategoryData = {
   }[];
   topPerformers: {
     username: string;
-    points: number;
+    gems: number;
     rank: number;
   }[];
 };
@@ -182,9 +182,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'HistoryBuff42', points: 1250, rank: 1 },
-      { username: 'TimeTraveler', points: 1150, rank: 2 },
-      { username: 'AncientScholar', points: 1050, rank: 3 }
+      { username: 'HistoryBuff42', gems: 1250, rank: 1 },
+      { username: 'TimeTraveler', gems: 1150, rank: 2 },
+      { username: 'AncientScholar', gems: 1050, rank: 3 }
     ]
   },
   'science': {
@@ -224,9 +224,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'QuantumThinker', points: 1350, rank: 1 },
-      { username: 'MolecularMaster', points: 1200, rank: 2 },
-      { username: 'StarGazer', points: 1100, rank: 3 }
+      { username: 'QuantumThinker', gems: 1350, rank: 1 },
+      { username: 'MolecularMaster', gems: 1200, rank: 2 },
+      { username: 'StarGazer', gems: 1100, rank: 3 }
     ]
   },
   'geography': {
@@ -266,9 +266,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'GlobeExplorer', points: 1420, rank: 1 },
-      { username: 'MapMaster', points: 1320, rank: 2 },
-      { username: 'WorldTraveler', points: 1280, rank: 3 }
+      { username: 'GlobeExplorer', gems: 1420, rank: 1 },
+      { username: 'MapMaster', gems: 1320, rank: 2 },
+      { username: 'WorldTraveler', gems: 1280, rank: 3 }
     ]
   },
   'literature': {
@@ -308,9 +308,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'BookWorm99', points: 980, rank: 1 },
-      { username: 'ClassicReader', points: 920, rank: 2 },
-      { username: 'NovelEnthusiast', points: 870, rank: 3 }
+      { username: 'BookWorm99', gems: 980, rank: 1 },
+      { username: 'ClassicReader', gems: 920, rank: 2 },
+      { username: 'NovelEnthusiast', gems: 870, rank: 3 }
     ]
   },
   'entertainment': {
@@ -350,9 +350,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'MovieBuff', points: 2150, rank: 1 },
-      { username: 'PopCultureGuru', points: 2050, rank: 2 },
-      { username: 'Cinephile', points: 1950, rank: 3 }
+      { username: 'MovieBuff', gems: 2150, rank: 1 },
+      { username: 'PopCultureGuru', gems: 2050, rank: 2 },
+      { username: 'Cinephile', gems: 1950, rank: 3 }
     ]
   },
   'sports': {
@@ -392,9 +392,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'SportsFanatic', points: 1320, rank: 1 },
-      { username: 'StatsMaster', points: 1280, rank: 2 },
-      { username: 'ChampionKnowledge', points: 1230, rank: 3 }
+      { username: 'SportsFanatic', gems: 1320, rank: 1 },
+      { username: 'StatsMaster', gems: 1280, rank: 2 },
+      { username: 'ChampionKnowledge', gems: 1230, rank: 3 }
     ]
   },
   'technology': {
@@ -434,9 +434,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'CodeMaster', points: 1160, rank: 1 },
-      { username: 'TechWizard', points: 1120, rank: 2 },
-      { username: 'DigitalGuru', points: 1050, rank: 3 }
+      { username: 'CodeMaster', gems: 1160, rank: 1 },
+      { username: 'TechWizard', gems: 1120, rank: 2 },
+      { username: 'DigitalGuru', gems: 1050, rank: 3 }
     ]
   },
   'general-knowledge': {
@@ -476,9 +476,9 @@ export const categoryData: CategoryDataRecord = {
       }
     ],
     topPerformers: [
-      { username: 'Quizmaster', points: 2250, rank: 1 },
-      { username: 'KnowledgeBank', points: 2100, rank: 2 },
-      { username: 'FactCollector', points: 1950, rank: 3 }
+      { username: 'Quizmaster', gems: 2250, rank: 1 },
+      { username: 'KnowledgeBank', gems: 2100, rank: 2 },
+      { username: 'FactCollector', gems: 1950, rank: 3 }
     ]
   }
 };
@@ -518,9 +518,9 @@ export const getDefaultCategoryData = (categorySlug: string, basicInfo: any): Ca
       }
     ],
     topPerformers: [
-      { username: 'User1', points: 1000, rank: 1 },
-      { username: 'User2', points: 900, rank: 2 },
-      { username: 'User3', points: 800, rank: 3 }
+      { username: 'User1', gems: 1000, rank: 1 },
+      { username: 'User2', gems: 900, rank: 2 },
+      { username: 'User3', gems: 800, rank: 3 }
     ]
   };
 };

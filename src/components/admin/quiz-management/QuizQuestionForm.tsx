@@ -46,7 +46,7 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
     correctAnswer: '',
     difficulty: 'easy' as const,
     category: '',
-    points: 10,
+    gems: 10,
     explanation: ''
   };
 
@@ -320,13 +320,13 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
           )}
         />
 
-        {/* Points Field */}
+        {/* Gems Field */}
         <FormField
           control={form.control}
-          name="points"
+          name="gems"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Points</FormLabel>
+              <FormLabel>Gems</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -335,7 +335,7 @@ const QuizQuestionForm: React.FC<QuizQuestionFormProps> = ({
                 />
               </FormControl>
               <FormDescription>
-                Points awarded for correctly answering this question.
+                Gems awarded for correctly answering this question.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -295,7 +295,7 @@ const DailyPlayReports = () => {
         question: play.question_id?.question || 'Unknown',
         answer: play.selected_answer,
         correct: play.correct ? 'Yes' : 'No',
-        points: play.points_earned || 0
+        gems: play.gems_earned || 0
       })) || [];
       
       setPlays(playData);
@@ -324,18 +324,18 @@ const DailyPlayReports = () => {
   });
 
   const aggregateByDate = () => {
-    const aggregated: Record<string, {count: number, correctCount: number, totalPoints: number}> = {};
+    const aggregated: Record<string, {count: number, correctCount: number, totalGems: number}> = {};
     
     filteredPlays.forEach(play => {
       if (aggregated[play.date]) {
         aggregated[play.date].count++;
         if (play.correct === 'Yes') aggregated[play.date].correctCount++;
-        aggregated[play.date].totalPoints += play.points;
+        aggregated[play.date].totalGems += play.gems;
       } else {
         aggregated[play.date] = { 
           count: 1, 
           correctCount: play.correct === 'Yes' ? 1 : 0,
-          totalPoints: play.points
+          totalGems: play.gems
         };
       }
     });
@@ -345,7 +345,7 @@ const DailyPlayReports = () => {
       count: stats.count,
       correctCount: stats.correctCount,
       accuracy: `${((stats.correctCount / stats.count) * 100).toFixed(1)}%`,
-      totalPoints: stats.totalPoints
+      totalGems: stats.totalGems
     }));
   };
 
@@ -358,7 +358,7 @@ const DailyPlayReports = () => {
     { header: 'Question', accessorKey: 'question' },
     { header: 'Answer', accessorKey: 'answer' },
     { header: 'Correct', accessorKey: 'correct' },
-    { header: 'Points', accessorKey: 'points' }
+    { header: 'Gems', accessorKey: 'gems' }
   ];
 
   const summaryColumns = [
@@ -366,7 +366,7 @@ const DailyPlayReports = () => {
     { header: 'Total Plays', accessorKey: 'count' },
     { header: 'Correct Answers', accessorKey: 'correctCount' },
     { header: 'Accuracy', accessorKey: 'accuracy' },
-    { header: 'Total Points', accessorKey: 'totalPoints' }
+    { header: 'Total Gems', accessorKey: 'totalGems' }
   ];
 
   return (
@@ -787,19 +787,19 @@ const TopPerformersReport = () => {
       const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       
       const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_points')
-        .select('user_id, points')
+        .from('daily_gems')
+        .select('user_id, gems')
         .eq('date', today)
-        .order('points', { ascending: false })
+        .order('gems', { ascending: false })
         .limit(10);
         
       if (dailyError) throw dailyError;
       
       const { data: monthlyData, error: monthlyError } = await supabase
-        .from('monthly_points')
-        .select('user_id, points')
+        .from('monthly_gems')
+        .select('user_id, gems')
         .eq('month', currentMonth)
-        .order('points', { ascending: false })
+        .order('gems', { ascending: false })
         .limit(10);
         
       if (monthlyError) throw monthlyError;
@@ -825,7 +825,7 @@ const TopPerformersReport = () => {
         rank: index + 1,
         userId: item.user_id,
         username: profileMap[item.user_id] || 'Unknown User',
-        points: Number(item.points).toFixed(1),
+        gems: Number(item.gems).toFixed(1),
         type: 'daily'
       })) || [];
       
@@ -833,7 +833,7 @@ const TopPerformersReport = () => {
         rank: index + 1,
         userId: item.user_id,
         username: profileMap[item.user_id] || 'Unknown User',
-        points: Number(item.points).toFixed(1),
+        gems: Number(item.gems).toFixed(1),
         type: 'monthly'
       })) || [];
       
@@ -858,13 +858,13 @@ const TopPerformersReport = () => {
   const dailyColumns = [
     { header: 'Rank', accessorKey: 'rank' },
     { header: 'Username', accessorKey: 'username' },
-    { header: 'Points Today', accessorKey: 'points' }
+    { header: 'Gems Today', accessorKey: 'gems' }
   ];
 
   const monthlyColumns = [
     { header: 'Rank', accessorKey: 'rank' },
     { header: 'Username', accessorKey: 'username' },
-    { header: 'Points This Month', accessorKey: 'points' }
+    { header: 'Gems This Month', accessorKey: 'gems' }
   ];
 
   return (

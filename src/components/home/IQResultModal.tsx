@@ -18,7 +18,7 @@ interface IQResultModalProps {
   isOpen: boolean;
   correctAnswers: number;
   totalQuestions: number;
-  totalPoints: number;
+  totalGems: number;
   bestIQ: number | null;
   difficulty: Difficulty | null;
   onPlayAgain: () => void;
@@ -58,7 +58,7 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
   isOpen,
   correctAnswers,
   totalQuestions,
-  totalPoints,
+  totalGems,
   bestIQ,
   difficulty,
   onPlayAgain,
@@ -126,7 +126,7 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
   };
 
   const difficultyLabel = getDifficultyLabel(difficulty);
-  const shareText = `🧠 I scored ${iq} IQ on CuizIN Quiz (${difficultyLabel})! ${correctAnswers}/${totalQuestions} correct with ${totalPoints} points. Can you beat me?`;
+  const shareText = `🧠 I scored ${iq} IQ on CuizIN Quiz (${difficultyLabel})! ${correctAnswers}/${totalQuestions} correct with ${totalGems} gems. Can you beat me?`;
   const shareUrl = 'https://cuiz-in.lovable.app';
 
   const handleShareTwitter = () => {
@@ -186,8 +186,8 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
               <div className="flex items-center justify-center mb-1">
                 <Trophy className="w-4 h-4 text-[hsl(var(--quiz-gold))]" />
               </div>
-              <div className="text-2xl font-bold">{totalPoints}</div>
-              <div className="text-xs text-muted-foreground">Points</div>
+              <div className="text-2xl font-bold">{totalGems}</div>
+              <div className="text-xs text-muted-foreground">Gems</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-1">

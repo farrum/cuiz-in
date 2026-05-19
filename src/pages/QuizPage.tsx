@@ -13,7 +13,7 @@ import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
-import GuestPointsBanner from '@/components/quiz/GuestPointsBanner';
+import GuestGemsBanner from '@/components/quiz/GuestGemsBanner';
 import MilestoneCelebration from '@/components/quiz/MilestoneCelebration';
 import SEOKeywords from '@/components/SEOKeywords';
 import TopPlayersSection from '@/components/TopPlayersSection';
@@ -43,8 +43,8 @@ const QuizPage: React.FC = () => {
     currentQuestion,
     streak,
     questionsAnswered,
-    dailyPoints,
-    monthlyPoints,
+    dailyGems,
+    monthlyGems,
     isLoading,
     showMotivation,
     motivationMessage,
@@ -165,7 +165,7 @@ const QuizPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
         title="Play Quiz and Earn Rewards | CuizIN"
-        description="Play our free quiz game, answer questions correctly to earn points and rewards. Challenge yourself with our daily quiz challenges!"
+        description="Play our free quiz game, answer questions correctly to earn gems and rewards. Challenge yourself with our daily quiz challenges!"
         ogType="website"
         schemaType="Quiz"
         schemaData={quizSchema}
@@ -257,7 +257,7 @@ const QuizPage: React.FC = () => {
         <CompactStatsBar
           questionsAnswered={questionsAnswered}
           streak={streak}
-          dailyPoints={dailyPoints}
+          dailyGems={dailyGems}
           className="mb-4"
         />
         
@@ -275,12 +275,12 @@ const QuizPage: React.FC = () => {
             handleTimeUp={handleTimeUp}
             streak={streak}
             questionsAnswered={questionsAnswered}
-            dailyPoints={dailyPoints}
+            dailyGems={dailyGems}
           />
         )}
         
         {/* Guest banner */}
-        <GuestPointsBanner className="mt-4" />
+        <GuestGemsBanner className="mt-4" />
         
         {/* Daily Challenges - compact */}
         <div className="mt-4">

@@ -5,7 +5,7 @@ export interface Challenge {
   title: string;
   description: string | null;
   num_questions: number;
-  points_multiplier: number;
+  gems_multiplier: number;
   question_ids: string[];
   start_date: string;
   end_date: string;
@@ -53,7 +53,7 @@ export interface QuizQuestion {
   explanation: string;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  points: number;
+  gems: number;
   imageUrl?: string;
   questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false';
 }

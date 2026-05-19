@@ -18,8 +18,8 @@ const MobileNav: React.FC = () => {
   );
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [todayPoints, setTodayPoints] = useState(0);
-  const [monthlyPoints, setMonthlyPoints] = useState(0);
+  const [todayGems, setTodayGems] = useState(0);
+  const [monthlyGems, setMonthlyGems] = useState(0);
 
   // Sync auth state from localStorage (populated by App.tsx auth listener)
   useEffect(() => {
@@ -58,7 +58,7 @@ const MobileNav: React.FC = () => {
   };
   
   useEffect(() => {
-    const updatePoints = async () => {
+    const updateGems = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
       
@@ -69,48 +69,48 @@ const MobileNav: React.FC = () => {
         const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
         
         const { data: dailyData } = await supabase
-          .from('daily_points')
-          .select('points')
+          .from('daily_gems')
+          .select('gems')
           .eq('user_id', userId)
           .eq('date', today)
           .maybeSingle();
           
         if (dailyData) {
-          setTodayPoints(Number(dailyData.points));
+          setTodayGems(Number(dailyData.gems));
         } else {
-          setTodayPoints(0);
+          setTodayGems(0);
         }
         
         const { data: monthlyData } = await supabase
-          .from('monthly_points')
-          .select('points')
+          .from('monthly_gems')
+          .select('gems')
           .eq('user_id', userId)
           .eq('month', currentMonth)
           .maybeSingle();
           
         if (monthlyData) {
-          setMonthlyPoints(Number(monthlyData.points));
+          setMonthlyGems(Number(monthlyData.gems));
         } else {
-          setMonthlyPoints(0);
+          setMonthlyGems(0);
         }
       } catch (error) {
-        console.error('Error fetching points data:', error);
+        console.error('Error fetching gems data:', error);
       }
     };
     
     if (isAuthenticated) {
-      updatePoints();
+      updateGems();
       
-      const handlePointsUpdate = () => {
-        updatePoints();
+      const handleGemsUpdate = () => {
+        updateGems();
       };
       
-      window.addEventListener('pointsUpdated', handlePointsUpdate);
+      window.addEventListener('gemsUpdated', handleGemsUpdate);
       
-      const intervalId = setInterval(updatePoints, 10000);
+      const intervalId = setInterval(updateGems, 10000);
       
       return () => {
-        window.removeEventListener('pointsUpdated', handlePointsUpdate);
+        window.removeEventListener('gemsUpdated', handleGemsUpdate);
         clearInterval(intervalId);
       };
     }
@@ -135,8 +135,8 @@ const MobileNav: React.FC = () => {
   
   if (!isMobile) return null;
   
-  const dailyProgress = Math.min(100, (todayPoints / DAILY_TARGET) * 100);
-  const monthlyProgress = Math.min(100, (monthlyPoints / MONTHLY_TARGET) * 100);
+  const dailyProgress = Math.min(100, (todayGems / DAILY_TARGET) * 100);
+  const monthlyProgress = Math.min(100, (monthlyGems / MONTHLY_TARGET) * 100);
   
   const menuGradient = "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950";
   
@@ -249,7 +249,7 @@ const MobileNav: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex text-xs items-center justify-between mb-1">
                       <span className="font-medium">Daily Target:</span>
-                      <span className="font-bold">{todayPoints.toFixed(1)}/{DAILY_TARGET}</span>
+                      <span className="font-bold">{todayGems.toFixed(1)}/{DAILY_TARGET}</span>
                     </div>
                     <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
                       <Progress value={dailyProgress} className="h-full" />
@@ -264,7 +264,7 @@ const MobileNav: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex text-xs items-center justify-between mb-1">
                       <span className="font-medium">Monthly Target:</span>
-                      <span className="font-bold">{monthlyPoints.toFixed(1)}/{MONTHLY_TARGET}</span>
+                      <span className="font-bold">{monthlyGems.toFixed(1)}/{MONTHLY_TARGET}</span>
                     </div>
                     <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
                       <Progress value={monthlyProgress} className="h-full" />

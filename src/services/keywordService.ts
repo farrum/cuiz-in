@@ -81,7 +81,7 @@ export const generateMetaKeywords = async (): Promise<string[]> => {
         correctAnswer: q.correct_answer,
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
-        points: q.points || 10,
+        gems: q.gems || 10,
         explanation: q.explanation || ''
       };
       

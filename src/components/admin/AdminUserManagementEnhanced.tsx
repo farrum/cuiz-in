@@ -110,10 +110,10 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       cell: (row: any) => row.phone || '-'
     },
     {
-      header: 'Points',
-      accessorKey: 'points',
+      header: 'Gems',
+      accessorKey: 'gems',
       cell: (row: any) => (
-        <Badge variant="secondary">{row.points}</Badge>
+        <Badge variant="secondary">{row.gems}</Badge>
       )
     },
     {

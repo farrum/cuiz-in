@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trophy, Star, Users, Zap, Gift } from 'lucide-react';
-import { getGuestSessionPoints, getMaxGuestQuestions } from '@/utils/guestPlayService';
+import { getGuestSessionGems, getMaxGuestQuestions } from '@/utils/guestPlayService';
 
 interface GuestPlayLimitModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface GuestPlayLimitModalProps {
 }
 
 const GuestPlayLimitModal: React.FC<GuestPlayLimitModalProps> = ({ isOpen, onClose }) => {
-  const sessionPoints = getGuestSessionPoints();
+  const sessionGems = getGuestSessionGems();
   const maxQuestions = getMaxGuestQuestions();
 
   return (
@@ -28,15 +28,15 @@ const GuestPlayLimitModal: React.FC<GuestPlayLimitModalProps> = ({ isOpen, onClo
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Session Points Display */}
+          {/* Session Gems Display */}
           <div className="bg-primary/10 rounded-lg p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Star className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-muted-foreground">Session Points Earned</span>
+              <span className="text-sm font-medium text-muted-foreground">Session Gems Earned</span>
             </div>
-            <div className="text-3xl font-bold text-primary">{sessionPoints.toFixed(1)}</div>
+            <div className="text-3xl font-bold text-primary">{sessionGems.toFixed(1)}</div>
             <p className="text-sm text-muted-foreground mt-1">
-              Register now to save these points!
+              Register now to save these gems!
             </p>
           </div>
 
@@ -60,7 +60,7 @@ const GuestPlayLimitModal: React.FC<GuestPlayLimitModalProps> = ({ isOpen, onClo
               </div>
               <div>
                 <p className="font-medium text-sm">Save Your Progress</p>
-                <p className="text-xs text-muted-foreground">Track your points and compete on leaderboards</p>
+                <p className="text-xs text-muted-foreground">Track your gems and compete on leaderboards</p>
               </div>
             </div>
 
@@ -70,7 +70,7 @@ const GuestPlayLimitModal: React.FC<GuestPlayLimitModalProps> = ({ isOpen, onClo
               </div>
               <div>
                 <p className="font-medium text-sm">Earn Real Rewards</p>
-                <p className="text-xs text-muted-foreground">Convert your points to cash withdrawals</p>
+                <p className="text-xs text-muted-foreground">Convert your gems to cash withdrawals</p>
               </div>
             </div>
 
@@ -80,7 +80,7 @@ const GuestPlayLimitModal: React.FC<GuestPlayLimitModalProps> = ({ isOpen, onClo
               </div>
               <div>
                 <p className="font-medium text-sm">Join Daily Challenges</p>
-                <p className="text-xs text-muted-foreground">Compete with others for bonus points</p>
+                <p className="text-xs text-muted-foreground">Compete with others for bonus gems</p>
               </div>
             </div>
           </div>

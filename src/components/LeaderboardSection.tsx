@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface LeaderboardUser {
   userId: string;
   username: string;
-  points: number;
+  gems: number;
   rank: number;
   isCurrentUser?: boolean;
 }
@@ -33,8 +33,8 @@ const LeaderboardSection: React.FC = () => {
       // Directly fetch top players from profiles table
       const { data: topUsers, error } = await supabase
         .from('profiles')
-        .select('id, username, points')
-        .order('points', { ascending: false })
+        .select('id, username, gems')
+        .order('gems', { ascending: false })
         .limit(10);
         
       if (error) {
@@ -55,7 +55,7 @@ const LeaderboardSection: React.FC = () => {
       const processedUsers = topUsers.map((user, index) => ({
         userId: user.id,
         username: user.username,
-        points: Number(user.points || 0),
+        gems: Number(user.gems || 0),
         rank: index + 1,
         isCurrentUser: user.id === currentUserId
       }));
@@ -67,11 +67,11 @@ const LeaderboardSection: React.FC = () => {
       
       // If not, find their rank and add them separately
       if (!currentUserInTop10 && currentUserId) {
-        // Count how many users have more points
+        // Count how many users have more gems
         const { count, error: countError } = await supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true })
-          .gt('points', parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0'));
+          .gt('gems', parseFloat(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0'));
           
         if (countError) {
           console.error('Error counting higher ranked users:', countError);
@@ -102,9 +102,9 @@ const LeaderboardSection: React.FC = () => {
     fetchLeaderboard();
     
     // Set up listener for point updates
-    window.addEventListener('pointsUpdated', fetchLeaderboard);
+    window.addEventListener('gemsUpdated', fetchLeaderboard);
     return () => {
-      window.removeEventListener('pointsUpdated', fetchLeaderboard);
+      window.removeEventListener('gemsUpdated', fetchLeaderboard);
     };
   }, []);
 
@@ -192,7 +192,7 @@ const LeaderboardSection: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">{user.points.toFixed(1)}</span>
+                    <span className="font-semibold">{user.gems.toFixed(1)}</span>
                     <span className="text-xs text-muted-foreground">pts</span>
                     {user.rank <= 3 && (
                       <Badge variant={user.rank === 1 ? "default" : "secondary"} className="ml-2">
@@ -228,7 +228,7 @@ const LeaderboardSection: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">
-                        {parseFloat(localStorage.getItem(STORAGE_KEYS.USER_POINTS) || '0').toFixed(1)}
+                        {parseFloat(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0').toFixed(1)}
                       </span>
                       <span className="text-xs text-muted-foreground">pts</span>
                     </div>

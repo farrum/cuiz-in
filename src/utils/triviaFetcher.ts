@@ -67,7 +67,7 @@ export async function fetchTriviaQuestions(
         correctAnswer: decodedCorrectAnswer,
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
-        points: q.difficulty === 'easy' ? 2 : q.difficulty === 'medium' ? 3 : 4,
+        gems: q.difficulty === 'easy' ? 2 : q.difficulty === 'medium' ? 3 : 4,
         explanation: '',
         questionType: 'text',
       };

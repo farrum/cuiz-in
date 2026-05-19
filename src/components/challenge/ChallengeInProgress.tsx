@@ -17,7 +17,7 @@ interface ChallengeInProgressProps {
   challenge: Challenge;
   questions: QuizQuestion[];
   currentQuestionIndex: number;
-  currentPoints: number;
+  currentGems: number;
   onExit: () => void;
   onComplete: (selectedOption: string) => void;
   onNextQuestion: () => void;
@@ -27,7 +27,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
   challenge,
   questions,
   currentQuestionIndex,
-  currentPoints,
+  currentGems,
   onExit,
   onComplete,
   onNextQuestion
@@ -114,7 +114,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
         <div className="mb-8">
           <div className="flex justify-between text-sm mb-1">
             <span>Question {currentQuestionIndex + 1} of {challenge?.num_questions || 0}</span>
-            <span>Points: {currentPoints}</span>
+            <span>Gems: {currentGems}</span>
           </div>
           <Progress 
             value={((currentQuestionIndex) / (challenge?.num_questions || 1)) * 100} 
@@ -213,7 +213,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Exit Challenge?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your progress will be saved, but you won't earn points for this question. 
+              Your progress will be saved, but you won't earn gems for this question. 
               Are you sure you want to exit the challenge?
             </AlertDialogDescription>
           </AlertDialogHeader>

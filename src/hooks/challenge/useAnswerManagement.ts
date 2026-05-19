@@ -11,8 +11,8 @@ export const useAnswerManagement = (
   userId: string | null,
   challengeId: string | undefined,
   answers: Answer[],
-  currentPoints: number,
-  setCurrentPoints: (points: number) => void,
+  currentGems: number,
+  setCurrentGems: (gems: number) => void,
   setAnswers: (answers: Answer[]) => void,
   setCurrentQuestionIndex: (index: number) => void,
   setIsComplete: (isComplete: boolean) => void,
@@ -39,14 +39,14 @@ export const useAnswerManagement = (
     try {
       const currentQuestion = questions[currentQuestionIndex];
       
-      // Calculate points for this answer
-      const pointsForQuestion = currentQuestion.points || 10;
-      const pointsMultiplier = challenge.points_multiplier || 1;
-      const earnedPoints = isCorrect ? pointsForQuestion * pointsMultiplier : 0;
+      // Calculate gems for this answer
+      const gemsForQuestion = currentQuestion.gems || 10;
+      const gemsMultiplier = challenge.gems_multiplier || 1;
+      const earnedGems = isCorrect ? gemsForQuestion * gemsMultiplier : 0;
       
       // Update running total
-      const newTotalPoints = currentPoints + earnedPoints;
-      setCurrentPoints(newTotalPoints);
+      const newTotalGems = currentGems + earnedGems;
+      setCurrentGems(newTotalGems);
       
       // Record the answer
       const newAnswer: Answer = {
@@ -69,7 +69,7 @@ export const useAnswerManagement = (
           question_id: currentQuestion.id,
           selected_answer: selectedOption,
           correct: isCorrect,
-          points_earned: earnedPoints
+          gems_earned: earnedGems
         });
       
       if (answerError) {
@@ -87,14 +87,14 @@ export const useAnswerManagement = (
       if (isLastQuestion) {
         // Prepare for completion but don't navigate yet - we'll do that after the delay
         // The challenge will be marked as complete when the user clicks "Complete Challenge"
-        setScore(newTotalPoints);
+        setScore(newTotalGems);
       }
       
       // Show correct/incorrect toast
       toast({
         title: isCorrect ? "Correct!" : "Incorrect",
         description: isCorrect 
-          ? `You earned ${earnedPoints} points!` 
+          ? `You earned ${earnedGems} gems!` 
           : `The correct answer was: ${currentQuestion.correctAnswer}`,
         variant: isCorrect ? "default" : "warning",
       });

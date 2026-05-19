@@ -71,16 +71,16 @@ export const useTeamQuiz = (teamSize: number = 2) => {
   };
 
   // Update team score
-  const updateTeamScore = (points: number) => {
-    setTeamScore(prev => prev + points);
+  const updateTeamScore = (gems: number) => {
+    setTeamScore(prev => prev + gems);
     
-    // Distribute points to team members
-    const pointsPerMember = points / teamMembers.length;
+    // Distribute gems to team members
+    const gemsPerMember = gems / teamMembers.length;
     
     setTeamMembers(prev => 
       prev.map(member => ({
         ...member,
-        score: member.score + pointsPerMember
+        score: member.score + gemsPerMember
       }))
     );
   };

@@ -31,13 +31,13 @@ const IndexNowPinger: React.FC = () => {
       
       if (error) throw error;
       
-      if (data?.endpoints) {
-        setResults(data.endpoints);
+      if (data?.endgems) {
+        setResults(data.endgems);
       }
       
       setLastPing(new Date());
       
-      const successCount = data?.endpoints?.filter((r: PingResult) => r.success).length || 0;
+      const successCount = data?.endgems?.filter((r: PingResult) => r.success).length || 0;
       
       if (successCount > 0) {
         toast.success(`Successfully pinged ${successCount} search engines with ${urls.length} URLs`);

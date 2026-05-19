@@ -68,7 +68,7 @@ const ChallengeComplete: React.FC<ChallengeCompleteProps> = ({
             
             <div className="glass p-4 rounded-lg mb-6 mx-auto max-w-md">
               <div className="text-4xl font-bold text-primary mb-2">{score}</div>
-              <div className="text-muted-foreground">Points Earned</div>
+              <div className="text-muted-foreground">Gems Earned</div>
               
               <div className="mt-4 space-y-2">
                 <div>
@@ -80,8 +80,8 @@ const ChallengeComplete: React.FC<ChallengeCompleteProps> = ({
                 </div>
                 
                 <div className="flex justify-between text-sm">
-                  <span>Points Multiplier</span>
-                  <span className="font-medium">{challenge.points_multiplier}x</span>
+                  <span>Gems Multiplier</span>
+                  <span className="font-medium">{challenge.gems_multiplier}x</span>
                 </div>
               </div>
             </div>

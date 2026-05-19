@@ -13,7 +13,7 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: '4',
     difficulty: 'easy',
     category: 'Math',
-    points: 10,
+    gems: 10,
     explanation: 'Basic addition'
   },
   {
@@ -23,7 +23,7 @@ export const quizQuestions: QuizQuestion[] = [
     correctAnswer: 'Paris',
     difficulty: 'easy',
     category: 'Geography',
-    points: 10,
+    gems: 10,
     explanation: 'Paris is the capital city of France'
   }
 ];
@@ -40,7 +40,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
     // First try to get from Supabase
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, options, category, difficulty, explanation, points, image_url, question_type, created_at');
+      .select('id, question, options, category, difficulty, explanation, gems, image_url, question_type, created_at');
       
     if (error) {
       console.error('Error fetching quiz questions from Supabase:', error);
@@ -58,7 +58,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
         options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
-        points: q.points || 10,
+        gems: q.gems || 10,
         explanation: q.explanation || '',
         imageUrl: q.image_url || undefined,
         questionType: q.question_type as 'text' | 'image' || 'text',
@@ -98,7 +98,7 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
       correctAnswer: '4',
       difficulty: 'easy',
       category: 'Math',
-      points: 10,
+      gems: 10,
       explanation: 'Basic addition'
     };
   }
@@ -117,10 +117,10 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
   return availableQuestions[randomIndex];
 };
 
-// Calculate points for answers
-export const calculatePoints = (isCorrect: boolean, difficulty: string = 'easy'): number => {
+// Calculate gems for answers
+export const calculateGems = (isCorrect: boolean, difficulty: string = 'easy'): number => {
   if (isCorrect) {
-    // Updated points calculation
+    // Updated gems calculation
     switch (difficulty) {
       case 'easy': return 2;
       case 'medium': return 3;
@@ -129,7 +129,7 @@ export const calculatePoints = (isCorrect: boolean, difficulty: string = 'easy')
     }
   }
   
-  // Wrong answer always gives 0.5 points
+  // Wrong answer always gives 0.5 gems
   return 0.5;
 };
 

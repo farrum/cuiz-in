@@ -9,7 +9,7 @@ interface ImageQuizQuestion {
   difficulty: string;
   category: string;
   explanation?: string;
-  points: number;
+  gems: number;
   questionType: 'image';
   imageUrl: string;
 }

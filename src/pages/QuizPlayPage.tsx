@@ -5,14 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
-import { useQuizPoints } from '@/hooks/quiz/useQuizPoints';
+import { useQuizGems } from '@/hooks/quiz/useQuizGems';
 import EnhancedQuizCard from '@/components/quiz/EnhancedQuizCard';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoadingCard from '@/components/LoadingCard';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
-import GuestPointsBanner from '@/components/quiz/GuestPointsBanner';
+import GuestGemsBanner from '@/components/quiz/GuestGemsBanner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -38,9 +38,9 @@ const QuizPlayPage: React.FC = () => {
     resetStreak,
   } = usePersistentQuizStats();
 
-  // Daily/monthly/total points fetched from DB (refreshes after each answer)
+  // Daily/monthly/total gems fetched from DB (refreshes after each answer)
   const [, setNextBadgeThreshold] = useState(10);
-  const { dailyPoints, fetchPoints } = useQuizPoints(setNextBadgeThreshold);
+  const { dailyGems, fetchGems } = useQuizGems(setNextBadgeThreshold);
 
   // Fetch current question by id
   useEffect(() => {
@@ -52,7 +52,7 @@ const QuizPlayPage: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('quiz_questions')
-          .select('id, question, options, category, difficulty, explanation, points, image_url, question_type, created_at')
+          .select('id, question, options, category, difficulty, explanation, gems, image_url, question_type, created_at')
           .eq('id', questionId)
           .maybeSingle();
 
@@ -71,7 +71,7 @@ const QuizPlayPage: React.FC = () => {
           options: Array.isArray(data.options) ? data.options : Object.values(data.options || {}),
           difficulty: (data.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
           category: data.category,
-          points: data.points || 10,
+          gems: data.gems || 10,
           explanation: data.explanation || '',
           imageUrl: data.image_url || undefined,
           questionType: (data.question_type as 'text' | 'image') || 'text',
@@ -101,8 +101,8 @@ const QuizPlayPage: React.FC = () => {
     incrementQuestionsAnswered();
     if (isCorrect) incrementStreak(); else resetStreak();
 
-    // Refresh points from DB so the stats bar reflects today's earnings
-    fetchPoints();
+    // Refresh gems from DB so the stats bar reflects today's earnings
+    fetchGems();
 
     const newCount = questionsAnswered + 1;
     // Show interstitial every Nth question, but not on the very first one.
@@ -111,7 +111,7 @@ const QuizPlayPage: React.FC = () => {
     } else {
       goToNextQuestion();
     }
-  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, goToNextQuestion, fetchPoints]);
+  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, goToNextQuestion, fetchGems]);
 
   const canonicalUrl = question
     ? `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`
@@ -137,7 +137,7 @@ const QuizPlayPage: React.FC = () => {
         <CompactStatsBar
           questionsAnswered={questionsAnswered}
           streak={streak}
-          dailyPoints={dailyPoints}
+          dailyGems={dailyGems}
           className="mb-4"
         />
 
@@ -160,7 +160,7 @@ const QuizPlayPage: React.FC = () => {
           </div>
         )}
 
-        <GuestPointsBanner className="mt-4" />
+        <GuestGemsBanner className="mt-4" />
       </main>
       <Footer />
     </div>

@@ -116,7 +116,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
               <Star className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold">Bonus: +50 Points on Registration!</p>
+              <p className="font-semibold">Bonus: +50 Gems on Registration!</p>
               <p className="text-sm text-primary-foreground/80">Limited time offer</p>
             </div>
           </div>
@@ -191,7 +191,7 @@ const RegistrationIncentiveModal: React.FC<RegistrationIncentiveModalProps> = ({
               size="lg"
               className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
             >
-              Register Now - Get 50 Bonus Points
+              Register Now - Get 50 Bonus Gems
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             <Button
