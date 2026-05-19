@@ -18,31 +18,31 @@ export const SkillTreeContainer: React.FC<SkillTreeContainerProps> = ({ userId }
   const fetchSkillData = async () => {
     try {
       // 1. Fetch available nodes from gamification settings
-      const { data: settingsData } = await supabase
+      const { data: settingsData } = await (supabase as any)
         .from('gamification_settings')
         .select('config')
         .eq('setting_type', 'skill_nodes')
-        .single();
+        .maybeSingle();
         
       // 2. Fetch user's unlocked skills
-      const { data: unlockedData } = await supabase
+      const { data: unlockedData } = await (supabase as any)
         .from('user_skills')
         .select('skill_id')
         .eq('user_id', userId);
         
       // 3. Fetch user's gem balance
-      const { data: profileData } = await supabase
+      const { data: profileData } = await (supabase as any)
         .from('profiles')
         .select('gems_balance')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       setUserGems(profileData?.gems_balance || 0);
 
-      const unlockedSet = new Set(unlockedData?.map(row => row.skill_id) || []);
+      const unlockedSet = new Set<string>((unlockedData || []).map((row: any) => row.skill_id));
 
       if (settingsData && settingsData.config) {
-        const rawNodes: any[] = settingsData.config;
+        const rawNodes: any[] = settingsData.config as any[];
         
         // Map raw config into SkillNode objects with state
         const mappedNodes: SkillNode[] = rawNodes.map(raw => {
@@ -79,13 +79,13 @@ export const SkillTreeContainer: React.FC<SkillTreeContainerProps> = ({ userId }
     setIsPurchasing(true);
     
     try {
-      const { data, error } = await supabase.rpc('purchase_skill_node', {
+      const { data, error } = await (supabase as any).rpc('purchase_skill_node', {
         user_uuid: userId,
         target_skill_id: nodeId
       });
 
       if (error) throw error;
-      if (data && data.error) throw new Error(data.error);
+      if (data && (data as any).error) throw new Error((data as any).error);
 
       toast({ title: 'Skill Unlocked!', description: 'You have successfully purchased this skill.', variant: 'default' });
       
