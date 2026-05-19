@@ -285,7 +285,7 @@ const awardBonusGems = async (userId: string, bonusGems: number): Promise<void> 
     
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ gems: newGems })
+      .update({ points: newGems })
       .eq('id', userId);
       
     if (updateError) {

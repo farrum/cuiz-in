@@ -27,7 +27,7 @@ export const checkDailyGemsReset = async (userId?: string | null) => {
         .upsert({ 
           user_id: userId, 
           date: today, 
-          gems: 0 
+          points: 0 
         })
         .eq('user_id', userId)
         .eq('date', today);
@@ -79,7 +79,7 @@ export const checkMonthlyGemsReset = async (userId?: string | null) => {
           .upsert({
             user_id: userId,
             month: currentMonth,
-            gems: 0
+            points: 0
           })
           .eq('user_id', userId)
           .eq('month', currentMonth);
@@ -136,7 +136,7 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
       
       const { error: updateError } = await supabase
         .from('daily_points')
-        .update({ gems: dailyGems })
+        .update({ points: dailyGems })
         .eq('user_id', userId)
         .eq('date', today);
         
@@ -150,7 +150,7 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
       
       const { error: insertError } = await supabase
         .from('daily_points')
-        .insert({ user_id: userId, date: today, gems });
+        .insert({ user_id: userId, date: today, points: gems });
         
       if (insertError) {
         console.error('Error inserting daily gems:', insertError);
@@ -206,7 +206,7 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
       
       const { error: updateError } = await supabase
         .from('monthly_points')
-        .update({ gems: monthlyGems })
+        .update({ points: monthlyGems })
         .eq('user_id', userId)
         .eq('month', monthKey);
         
@@ -220,7 +220,7 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
       
       const { error: insertError } = await supabase
         .from('monthly_points')
-        .insert({ user_id: userId, month: monthKey, gems });
+        .insert({ user_id: userId, month: monthKey, points: gems });
         
       if (insertError) {
         console.error('Error inserting monthly gems:', insertError);
@@ -264,7 +264,7 @@ export const updateTotalGems = async (gems: number, userId?: string | null) => {
     // Update gems in database
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ gems: newTotal })
+      .update({ points: newTotal })
       .eq('id', userId);
       
     if (updateError) {
