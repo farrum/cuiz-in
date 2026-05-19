@@ -73,6 +73,28 @@ const UserRegistrationForm: React.FC = () => {
       return null;
     }
   };
+
+  const getSafeNextPath = () => {
+    const params = new URLSearchParams(location.search);
+    const nextPath = params.get('next');
+    return nextPath?.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/quiz';
+  };
+
+  const getFunctionErrorMessage = async (error: any, data: any) => {
+    if (data?.error) return String(data.error);
+
+    try {
+      const context = error?.context;
+      if (context?.json) {
+        const body = await context.json();
+        if (body?.error) return String(body.error);
+      }
+    } catch {
+      // Ignore parsing errors and fall through to the generic message.
+    }
+
+    return error?.message || "Registration failed. Please try again.";
+  };
   
   useEffect(() => {
     if (username && !displayName) {
@@ -166,28 +188,21 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      // 2. Use standard Supabase signUp
-      // This will trigger the 'handle_new_user' database function automatically
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: username.trim(),
-            display_name: displayName.trim(),
-            phone: phone.trim(),
-          }
-        }
+      // 2. Register through the server flow so account creation does not depend on email delivery.
+      const { data, error } = await supabase.functions.invoke('register-user', {
+        body: {
+          username: username.trim(),
+          displayName: displayName.trim() || username.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+        },
       });
 
-      if (error) {
-        console.error('[Registration] SignUp error:', error);
-        
-        let errorMessage = error.message;
-        if (error.message.includes('Error sending confirmation email')) {
-          errorMessage = "We're having trouble sending the confirmation email. Please try again later or contact support.";
-        }
-        
+      if (error || !data?.success) {
+        console.error('[Registration] Register function error:', error || data);
+        const errorMessage = await getFunctionErrorMessage(error, data);
+
         toast({
           title: "Registration Failed",
           description: errorMessage,
@@ -197,26 +212,40 @@ const UserRegistrationForm: React.FC = () => {
         return;
       }
 
-      // Supabase returns success with empty identities array when email is duplicate
-      const isDuplicateSignup =
-        data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
-
-      if (isDuplicateSignup) {
+      if (!data.user?.id) {
         toast({
-          title: "Email Already Registered",
-          description: "An account with this email already exists. Please log in or use 'Forgot password' to reset it.",
+          title: "Registration Failed",
+          description: "Something went wrong. Please try again.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
-      if (!data.user) {
+      if (!data.access_token || !data.refresh_token) {
         toast({
           title: "Registration Failed",
-          description: "Something went wrong. Please try again.",
+          description: "Account was created, but we could not start your session. Please log in.",
           variant: "destructive"
         });
+        navigate('/login');
+        setIsLoading(false);
+        return;
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) {
+        console.error('[Registration] Session set failed:', sessionError);
+        toast({
+          title: "Registration Failed",
+          description: "Account was created, but we could not start your session. Please log in.",
+          variant: "destructive"
+        });
+        navigate('/login');
         setIsLoading(false);
         return;
       }
@@ -247,22 +276,11 @@ const UserRegistrationForm: React.FC = () => {
         }, 500);
       }
 
-      // 4. Success handling
-      if (data.session) {
-        // Instant login (email confirmation disabled)
-        toast({
-          title: "Welcome to CuizIn!",
-          description: "Account created successfully. Let's play!",
-        });
-        navigate('/quiz');
-      } else {
-        // Email confirmation required or pending
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to confirm your account, then log in.",
-        });
-        navigate('/login');
-      }
+      toast({
+        title: "Welcome to CuizIN!",
+        description: "Account created successfully.",
+      });
+      navigate(getSafeNextPath());
     } catch (error: any) {
       console.error('Registration error:', error);
       toast({
