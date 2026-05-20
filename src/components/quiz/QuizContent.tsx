@@ -23,7 +23,6 @@ interface QuizContentProps {
   handleTimeUp: () => void;
   streak: number;
   questionsAnswered?: number;
-  questionsAnswered?: number;
   dailyGems?: number;
   upcomingQuestions?: QuizQuestion[];
 }
