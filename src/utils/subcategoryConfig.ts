@@ -30,6 +30,7 @@ export const subcategoriesByCategory: Record<string, SubcategoryDef[]> = {
     { slug: 'astronomy', name: 'Astronomy', keywords: ['planet', 'star', 'galaxy', 'solar', 'moon', 'universe', 'nasa', 'asteroid'] },
     { slug: 'mathematics', name: 'Mathematics', dbCategories: ['Science: Mathematics'] },
     { slug: 'nature', name: 'Nature', dbCategories: ['Nature'] },
+    { slug: 'space-exploration', name: 'Space & Exploration', keywords: ['nasa', 'spacex', 'mars', 'iss', 'astronaut', 'rocket', 'satellite', 'apollo', 'space station', 'lunar'] },
   ],
   geography: [
     { slug: 'countries-capitals', name: 'Countries & Capitals', keywords: ['capital', 'country', 'nation'] },
@@ -66,6 +67,8 @@ export const subcategoriesByCategory: Record<string, SubcategoryDef[]> = {
     { slug: 'programming', name: 'Programming', keywords: ['programming', 'language', 'code', 'developer', 'python', 'javascript', 'java '] },
     { slug: 'ai-robotics', name: 'AI & Robotics', keywords: ['artificial intelligence', ' ai ', 'robot', 'machine learning', 'neural'] },
     { slug: 'internet', name: 'Internet & Web', keywords: ['internet', 'web', 'browser', 'http', 'url', 'website'] },
+    { slug: 'ai-machine-learning', name: 'AI & Machine Learning', keywords: ['artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'chatgpt', 'openai', 'llm', 'gpt', 'generative ai', 'transformer'] },
+    { slug: 'electric-vehicles', name: 'Electric Vehicles', keywords: ['tesla', 'electric vehicle', ' ev ', 'evs', 'lithium', 'battery', 'rivian', 'charging station', 'hybrid car'] },
   ],
   'general-knowledge': [
     { slug: 'mythology', name: 'Mythology', dbCategories: ['Mythology'] },
@@ -73,6 +76,7 @@ export const subcategoriesByCategory: Record<string, SubcategoryDef[]> = {
     { slug: 'food-drink', name: 'Food & Drink', dbCategories: ['Food & Drink', 'Food and Drinks'] },
     { slug: 'politics', name: 'Politics', dbCategories: ['Politics'] },
     { slug: 'culture', name: 'Culture', dbCategories: ['Culture'] },
+    { slug: 'green-energy', name: 'Green Energy & Sustainability', keywords: ['solar', 'wind energy', 'renewable', 'sustainability', 'climate', 'carbon', 'greenhouse', 'hydro', 'geothermal', 'biofuel', 'recycling'] },
   ],
 };
 
