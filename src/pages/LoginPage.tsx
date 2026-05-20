@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
     <PageLayout containerClassName="relative flex flex-col items-center justify-center px-6 pt-8 pb-12">
       <SEO
         title="Login to CuizIN | Access Your Quiz Account"
-        description="Login to your CuizIN account to play quizzes, track your progress, and withdraw your rewards."
+        description="Login to your CuizIN account to play free quizzes across 10+ categories, climb the leaderboard, earn gems, track your daily streaks, and unlock exclusive rewards."
         canonicalUrl="https://cuiz.in/login"
         keywords={['login', 'sign in', 'CuizIN login', 'quiz account']}
       />
@@ -55,7 +55,10 @@ const LoginPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Home
           </Link>
-          
+
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Login to CuizIN</h1>
+          <p className="text-muted-foreground mb-6">Sign in to continue playing quizzes and earning rewards.</p>
+
           <SimpleAdBanner position="top" className="mb-8" />
           
           <UserLogin />
