@@ -19,6 +19,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
+import { getGuestQuestionsPlayed } from '@/utils/guestPlayService';
+
+const GUEST_ANSWER_WALL_THRESHOLD = 5;
 
 const AnswerPage: React.FC = () => {
   const { questionId, selectedOption } = useParams();
@@ -35,6 +38,8 @@ const AnswerPage: React.FC = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [similarQuestions, setSimilarQuestions] = useState<QuizQuestion[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const guestQuestionsPlayed = getGuestQuestionsPlayed();
+  const shouldShowAuthWall = isAuthenticated === false && guestQuestionsPlayed >= GUEST_ANSWER_WALL_THRESHOLD;
 
   useEffect(() => {
     let mounted = true;
@@ -211,7 +216,7 @@ const AnswerPage: React.FC = () => {
         
         {isLoading ? (
           <LoadingCard />
-        ) : question && isAuthenticated === false ? (
+        ) : question && shouldShowAuthWall ? (
           <Card className="p-8 text-center max-w-xl mx-auto">
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Lock className="h-7 w-7 text-primary" />
