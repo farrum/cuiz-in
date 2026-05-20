@@ -32,15 +32,15 @@ export const TrueFalseSwipe: React.FC<TrueFalseSwipeProps> = ({
       // 50% chance to show the correct answer (True), 50% chance to show a wrong option (False)
       const showTrue = Math.random() > 0.5;
       
-      const correctOption = q.options.find(o => o.isCorrect);
-      const wrongOptions = q.options.filter(o => !o.isCorrect);
+      const correctOption = q.correctAnswer;
+      const wrongOptions = q.options.filter(o => o !== q.correctAnswer);
       
       let answerText = '';
       if (showTrue && correctOption) {
-        answerText = correctOption.text;
+        answerText = correctOption;
       } else if (wrongOptions.length > 0) {
         const randomWrong = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
-        answerText = randomWrong.text;
+        answerText = randomWrong;
       } else {
         // Fallback if no options are properly formatted
         answerText = 'Unknown';

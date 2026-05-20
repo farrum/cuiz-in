@@ -9,6 +9,7 @@ export const DailyChallengesHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
   const [hasPlayedWordle, setHasPlayedWordle] = useState(false);
+  const [hasAttemptedRiddle, setHasAttemptedRiddle] = useState(false);
   const [hourlyWordle, setHourlyWordle] = useState<{ clue: string, answer: string } | null>(null);
   const { toast } = useToast();
 
@@ -58,9 +59,10 @@ export const DailyChallengesHub: React.FC = () => {
   const grantGems = async (amount: number) => {
     const { data: session } = await supabase.auth.getSession();
     if (session?.session?.user && amount > 0) {
-      const { data } = await supabase.from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-      const currentBalance = data?.gems_balance || 0;
-      await supabase.from('profiles').update({ gems_balance: currentBalance + amount }).eq('id', session.session.user.id);
+      const sb = supabase as any;
+      const { data } = await sb.from('profiles').select('gems_balance').eq('id', session.session.user.id).maybeSingle();
+      const currentBalance = (data as any)?.gems_balance || 0;
+      await sb.from('profiles').update({ gems_balance: currentBalance + amount }).eq('id', session.session.user.id);
     }
   };
 
