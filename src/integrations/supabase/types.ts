@@ -1135,6 +1135,13 @@ export type Database = {
           unique_views: number
         }[]
       }
+      get_hourly_wordle: {
+        Args: never
+        Returns: {
+          correct_answer: string
+          question: string
+        }[]
+      }
       has_user_been_active_in_days: {
         Args: { p_days: number; p_user_id: string }
         Returns: boolean
