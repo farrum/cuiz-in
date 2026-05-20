@@ -70,11 +70,23 @@ const BlogPostPage: React.FC = () => {
     createBreadcrumbs.custom(post.title.substring(0, 40) + (post.title.length > 40 ? '...' : ''), `/blog/${post.slug}`)
   ];
 
+  // Ensure meta description is 150-160 chars for SEO (Bing flags shorter ones)
+  const rawExcerpt = (post.excerpt || '').replace(/\.\.\.$/, '').trim();
+  const plainContent = (post.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  let metaDescription = rawExcerpt;
+  if (metaDescription.length < 150 && plainContent) {
+    const remaining = plainContent.slice(rawExcerpt.length);
+    metaDescription = (rawExcerpt + ' ' + remaining).trim();
+  }
+  metaDescription = metaDescription.length > 160
+    ? metaDescription.substring(0, 157).trim() + '...'
+    : metaDescription;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
         title={`${post.title} | CuizIN Blog`}
-        description={post.excerpt}
+        description={metaDescription}
         canonicalUrl={`https://cuiz.in/blog/${post.slug}`}
         ogType="article"
         schemaType="WebPage"
