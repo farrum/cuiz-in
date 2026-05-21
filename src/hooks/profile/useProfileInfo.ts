@@ -5,6 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 
+type ProfileInfoRow = {
+  username: string;
+  suspended: boolean | null;
+  upi_id: string | null;
+  profile_picture: string | null;
+  display_name: string | null;
+  email: string | null;
+  phone: string | null;
+  provider?: string | null;
+};
+
 export const useProfileInfo = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,11 +38,11 @@ export const useProfileInfo = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('profiles')
         .select('username, suspended, upi_id, profile_picture, display_name, email, phone, provider')
         .eq('id', storedUserId)
-        .maybeSingle();
+        .maybeSingle() as Promise<{ data: ProfileInfoRow | null; error: any }>);
         
       if (error) {
         console.error('Error fetching profile:', error);
@@ -70,7 +81,7 @@ export const useProfileInfo = () => {
           }
           
           if (needsDbUpdate) {
-            const { error: updateError } = await supabase
+            const { error: updateError } = await (supabase
               .from('profiles')
               .update({
                 profile_picture: finalProfilePicture,
@@ -78,7 +89,7 @@ export const useProfileInfo = () => {
                 email: finalEmail,
                 provider: 'google'
               })
-              .eq('id', storedUserId);
+              .eq('id', storedUserId) as any);
               
             if (updateError) {
               console.error('[Google Auth Sync] Error updating synced fields in db:', updateError);

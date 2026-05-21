@@ -12,6 +12,7 @@ const ProfilePage: React.FC = () => {
   const {
     isLoading,
     username,
+    displayName,
     userUpi,
     userId,
     profilePicture,
@@ -51,6 +52,7 @@ const ProfilePage: React.FC = () => {
             <ProfileTabs
               userId={userId}
               username={username}
+              displayName={displayName}
               userUpi={userUpi}
               profilePicture={profilePicture}
               email={email}
