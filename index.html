@@ -234,19 +234,7 @@
             gtag('config', 'G-3QSCS3TEE7');
           };
 
-          // Google AdSense
-          var adsenseScript = document.createElement('script');
-          adsenseScript.async = true;
-          adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549';
-          adsenseScript.crossOrigin = 'anonymous';
-          document.head.appendChild(adsenseScript);
-          adsenseScript.onload = function() {
-            (window.adsbygoogle = window.adsbygoogle || []).push({
-              google_ad_client: "ca-pub-2831295465597549",
-              enable_page_level_ads: true,
-              overlays: { bottom: true }
-            });
-          };
+          // Ad rendering is disabled sitewide for security; do not initialize AdSense here.
         }
 
         function schedule(cb, timeout) {

@@ -12,18 +12,18 @@ import React from 'react';
 
 // Eagerly load the Index page for best LCP
 import Index from "@/pages/Index";
+import LoginPage from "@/pages/LoginPage";
+import Registration from "@/pages/Registration";
+import AuthCallback from "@/pages/AuthCallback";
 
-// Lazy load all other pages for code splitting
+// Lazy load non-critical pages for code splitting
 const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
 const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
 const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
 const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
 const Profile = React.lazy(() => import("@/pages/Profile"));
-const LoginPage = React.lazy(() => import("@/pages/LoginPage"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
-const Registration = React.lazy(() => import("@/pages/Registration"));
-const AuthCallback = React.lazy(() => import("@/pages/AuthCallback"));
 const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
 const AdminLoginPage = React.lazy(() => import('@/pages/AdminLoginPage'));
 const HowToPlay = React.lazy(() => import('@/pages/HowToPlay'));
@@ -252,9 +252,7 @@ function App() {
                 </Suspense>
               } />
               <Route path="/login" element={
-                <Suspense fallback={<PageLoader />}>
-                  <LoginPage />
-                </Suspense>
+                <LoginPage />
               } />
               <Route path="/forgot-password" element={
                 <Suspense fallback={<PageLoader />}>
@@ -267,14 +265,10 @@ function App() {
                 </Suspense>
               } />
               <Route path="/register" element={
-                <Suspense fallback={<PageLoader />}>
-                  <Registration />
-                </Suspense>
+                <Registration />
               } />
               <Route path="/auth/callback" element={
-                <Suspense fallback={<PageLoader />}>
-                  <AuthCallback />
-                </Suspense>
+                <AuthCallback />
               } />
               <Route path="/admin-login" element={
                 <Suspense fallback={<PageLoader />}>
