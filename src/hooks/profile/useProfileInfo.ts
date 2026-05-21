@@ -13,7 +13,6 @@ type ProfileInfoRow = {
   display_name: string | null;
   email: string | null;
   phone: string | null;
-  provider?: string | null;
 };
 
 export const useProfileInfo = () => {
@@ -38,11 +37,11 @@ export const useProfileInfo = () => {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
-      const { data, error } = await (supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('username, suspended, upi_id, profile_picture, display_name, email, phone, provider')
+        .select('username, suspended, upi_id, profile_picture, display_name, email, phone')
         .eq('id', storedUserId)
-        .maybeSingle() as Promise<{ data: ProfileInfoRow | null; error: any }>);
+        .maybeSingle();
         
       if (error) {
         console.error('Error fetching profile:', error);
@@ -53,7 +52,7 @@ export const useProfileInfo = () => {
         let finalDisplayName = data.display_name || '';
         let finalEmail = data.email || '';
         let finalPhone = data.phone || '';
-        let finalProvider = data.provider || 'email';
+        let finalProvider = user?.app_metadata?.provider === 'google' ? 'google' : 'email';
         
         // Auto-sync Google credentials if they are missing from the profile
         if (user && (user.app_metadata?.provider === 'google' || finalProvider === 'google')) {
@@ -75,21 +74,15 @@ export const useProfileInfo = () => {
             finalEmail = user.email;
             needsDbUpdate = true;
           }
-          if (!data.provider || data.provider !== 'google') {
-            finalProvider = 'google';
-            needsDbUpdate = true;
-          }
-          
           if (needsDbUpdate) {
-            const { error: updateError } = await (supabase
+            const { error: updateError } = await supabase
               .from('profiles')
               .update({
                 profile_picture: finalProfilePicture,
                 display_name: finalDisplayName,
-                email: finalEmail,
-                provider: 'google'
+                email: finalEmail
               })
-              .eq('id', storedUserId) as any);
+              .eq('id', storedUserId);
               
             if (updateError) {
               console.error('[Google Auth Sync] Error updating synced fields in db:', updateError);
