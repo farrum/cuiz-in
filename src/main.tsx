@@ -6,6 +6,16 @@ import './index.css'
 // Global error handler for uncaught exceptions
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error || event.message);
+  // Auto-recover from stale dynamic import chunks after a new deploy
+  const msg = String(event?.message || event?.error?.message || '');
+  if (msg.includes('Failed to fetch dynamically imported module') || msg.includes('Importing a module script failed')) {
+    const key = '__lov_chunk_reload__';
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+      return;
+    }
+  }
   // Prevent blank screen by rendering error message if the app fails to load
   if (document.body.innerHTML === '') {
     document.body.innerHTML = `
