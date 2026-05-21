@@ -23,6 +23,7 @@ const LoginPage = React.lazy(() => import("@/pages/LoginPage"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
 const Registration = React.lazy(() => import("@/pages/Registration"));
+const AuthCallback = React.lazy(() => import("@/pages/AuthCallback"));
 const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
 const AdminLoginPage = React.lazy(() => import('@/pages/AdminLoginPage'));
 const HowToPlay = React.lazy(() => import('@/pages/HowToPlay'));
@@ -268,6 +269,11 @@ function App() {
               <Route path="/register" element={
                 <Suspense fallback={<PageLoader />}>
                   <Registration />
+                </Suspense>
+              } />
+              <Route path="/auth/callback" element={
+                <Suspense fallback={<PageLoader />}>
+                  <AuthCallback />
                 </Suspense>
               } />
               <Route path="/admin-login" element={
