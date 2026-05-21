@@ -6,10 +6,14 @@ export const useProfileData = () => {
   const {
     isLoading,
     username,
+    displayName,
     userUpi,
     userId,
     profilePicture,
     suspended,
+    email,
+    phone,
+    provider,
     handleProfileUpdate,
     handleReactivated
   } = useProfileInfo();
@@ -19,10 +23,14 @@ export const useProfileData = () => {
   return {
     isLoading,
     username,
+    displayName,
     userUpi,
     userId,
     profilePicture,
     suspended,
+    email,
+    phone,
+    provider,
     forceReloadAds,
     handleProfileUpdate,
     handleReactivated,

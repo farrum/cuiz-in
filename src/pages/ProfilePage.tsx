@@ -16,6 +16,9 @@ const ProfilePage: React.FC = () => {
     userId,
     profilePicture,
     suspended,
+    email,
+    phone,
+    provider,
     forceReloadAds,
     handleProfileUpdate,
     handleReactivated,
@@ -50,6 +53,9 @@ const ProfilePage: React.FC = () => {
               username={username}
               userUpi={userUpi}
               profilePicture={profilePicture}
+              email={email}
+              phone={phone}
+              provider={provider}
               forceReloadAds={forceReloadAds}
               onProfileUpdate={handleProfileUpdate}
             />

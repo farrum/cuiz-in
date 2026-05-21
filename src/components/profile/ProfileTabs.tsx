@@ -17,30 +17,45 @@ import { Palette, Flame } from 'lucide-react';
 interface ProfileTabsProps {
   userId: string | null;
   username: string | null;
+  displayName: string | null;
   userUpi?: string;
   profilePicture: string;
+  email?: string | null;
+  phone?: string | null;
+  provider?: string;
   forceReloadAds?: number;
   onProfileUpdate?: (data: {
     displayName?: string;
     upiId?: string;
     profilePicture?: string;
+    email?: string;
+    phone?: string;
+    username?: string;
   }) => void;
 }
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   userId,
   username,
+  displayName,
   userUpi,
   profilePicture,
+  email,
+  phone,
+  provider,
   onProfileUpdate,
 }) => {
   return (
     <div className="space-y-6">
       <ProfileHeader
         username={username}
+        displayName={displayName}
         profilePicture={profilePicture}
         userId={userId}
         userUpi={userUpi}
+        email={email}
+        phone={phone}
+        provider={provider}
         onProfileUpdate={onProfileUpdate}
       />
       

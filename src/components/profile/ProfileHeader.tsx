@@ -11,21 +11,32 @@ import ProfileEditor from './editor/ProfileEditor';
 
 interface ProfileHeaderProps {
   username: string | null;
+  displayName: string | null;
   profilePicture: string;
   userId: string | null;
   userUpi?: string;
+  email?: string | null;
+  phone?: string | null;
+  provider?: string;
   onProfileUpdate?: (data: {
     displayName?: string;
     upiId?: string;
     profilePicture?: string;
+    email?: string;
+    phone?: string;
+    username?: string;
   }) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   username,
+  displayName,
   profilePicture,
   userId,
   userUpi = '',
+  email = '',
+  phone = '',
+  provider = 'email',
   onProfileUpdate,
 }) => {
   const navigate = useNavigate();
@@ -72,21 +83,25 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="w-16 h-16">
-            <AvatarImage src={profilePicture} alt={username || 'User'} />
+            <AvatarImage src={profilePicture} alt={displayName || username || 'User'} />
             <AvatarFallback>
-              {username ? username.charAt(0).toUpperCase() : 'U'}
+              {displayName ? displayName.charAt(0).toUpperCase() : (username ? username.charAt(0).toUpperCase() : 'U')}
             </AvatarFallback>
           </Avatar>
           
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold">{username}</h2>
+              <h2 className="text-xl font-semibold">{displayName || username}</h2>
               {userId && onProfileUpdate && (
                 <ProfileEditor
                   userName={username || ''}
+                  displayName={displayName || ''}
                   userUpi={userUpi}
                   userId={userId}
                   profilePicture={profilePicture}
+                  email={email}
+                  phone={phone}
+                  provider={provider}
                   onProfileUpdate={onProfileUpdate}
                 />
               )}

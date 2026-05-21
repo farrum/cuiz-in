@@ -15,6 +15,9 @@ const Profile: React.FC = () => {
     userUpi,
     userId,
     profilePicture,
+    email,
+    phone,
+    provider,
     forceReloadAds,
     handleProfileUpdate,
   } = useProfileData();
@@ -39,6 +42,9 @@ const Profile: React.FC = () => {
               username={username}
               userUpi={userUpi}
               profilePicture={profilePicture}
+              email={email}
+              phone={phone}
+              provider={provider}
               forceReloadAds={forceReloadAds}
               onProfileUpdate={handleProfileUpdate}
             />
