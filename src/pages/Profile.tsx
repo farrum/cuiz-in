@@ -12,6 +12,7 @@ const Profile: React.FC = () => {
   
   const {
     username,
+    displayName,
     userUpi,
     userId,
     profilePicture,
@@ -40,6 +41,7 @@ const Profile: React.FC = () => {
             <ProfileTabs
               userId={displayUserId}
               username={username}
+              displayName={displayName}
               userUpi={userUpi}
               profilePicture={profilePicture}
               email={email}

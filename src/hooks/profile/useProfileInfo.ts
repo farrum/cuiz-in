@@ -29,7 +29,7 @@ export const useProfileInfo = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, suspended, upi_id, profile_picture, display_name, email, phone, provider')
+        .select('username, suspended, upi_id, profile_picture, display_name, email, phone')
         .eq('id', storedUserId)
         .maybeSingle();
         
@@ -42,7 +42,7 @@ export const useProfileInfo = () => {
         let finalDisplayName = data.display_name || '';
         let finalEmail = data.email || '';
         let finalPhone = data.phone || '';
-        let finalProvider = data.provider || 'email';
+        let finalProvider = user?.app_metadata?.provider === 'google' ? 'google' : 'email';
         
         // Auto-sync Google credentials if they are missing from the profile
         if (user && (user.app_metadata?.provider === 'google' || finalProvider === 'google')) {
@@ -64,19 +64,13 @@ export const useProfileInfo = () => {
             finalEmail = user.email;
             needsDbUpdate = true;
           }
-          if (!data.provider || data.provider !== 'google') {
-            finalProvider = 'google';
-            needsDbUpdate = true;
-          }
-          
           if (needsDbUpdate) {
             const { error: updateError } = await supabase
               .from('profiles')
               .update({
                 profile_picture: finalProfilePicture,
                 display_name: finalDisplayName,
-                email: finalEmail,
-                provider: 'google'
+                email: finalEmail
               })
               .eq('id', storedUserId);
               
