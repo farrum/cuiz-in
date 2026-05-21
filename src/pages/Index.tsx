@@ -12,12 +12,12 @@ import ReferralPreview from '@/components/home/ReferralPreview';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
 import DailyRewardsSection from '@/components/home/DailyRewardsSection';
+import TestimonialsSection from '@/components/home/TestimonialsSection';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import AdPlaceholder from '@/components/ads/AdPlaceholder';
 
 const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
 const LatestArticlesSection = lazy(() => import('@/components/home/LatestArticlesSection'));
-const TestimonialsSection = lazy(() => import('@/components/home/TestimonialsSection'));
 const SectionLoader = () => <div className="min-h-[200px] flex items-center justify-center"><div className="animate-pulse text-muted-foreground text-sm">Loading...</div></div>;
 
 const Index: React.FC = () => {
@@ -153,9 +153,7 @@ const Index: React.FC = () => {
 
       {/* Testimonials - Lazy loaded */}
       <section className="py-6 md:py-8 px-4">
-        <Suspense fallback={<SectionLoader />}>
-          <TestimonialsSection />
-        </Suspense>
+        <TestimonialsSection />
       </section>
 
       {/* Final CTA */}
