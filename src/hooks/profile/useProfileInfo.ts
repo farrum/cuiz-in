@@ -5,16 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useToast } from '@/hooks/use-toast';
 
-type ProfileInfoRow = {
-  username: string;
-  suspended: boolean | null;
-  upi_id: string | null;
-  profile_picture: string | null;
-  display_name: string | null;
-  email: string | null;
-  phone: string | null;
-};
-
 export const useProfileInfo = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
