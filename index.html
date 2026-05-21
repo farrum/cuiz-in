@@ -38,8 +38,7 @@
     <meta name="application-name" content="CuizIN" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- Preload critical resources for faster LCP -->
-    <link rel="preload" href="/og-image-cuizin.png" as="image" type="image/png" fetchpriority="high" />
+
 
     <!-- Inline critical CSS for above-the-fold content -->
     <style>
@@ -206,18 +205,9 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- AdSense (Directly loaded for crawler visibility) -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549" crossorigin="anonymous"></script>
-    <script>
-      // AdSense Auto Ads activation. Format placement controlled in AdSense dashboard.
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-2831295465597549",
-        enable_page_level_ads: true,
-        overlays: { bottom: true }
-      });
-    </script>
 
-    <!-- Deferred Third-Party Scripts: Analytics and GTM load on first user interaction -->
+
+    <!-- Deferred Third-Party Scripts: Analytics, GTM and AdSense load on first user interaction -->
     <script>
       (function(){
         var analyticsLoaded = false;
@@ -242,6 +232,20 @@
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', 'G-3QSCS3TEE7');
+          };
+
+          // Google AdSense
+          var adsenseScript = document.createElement('script');
+          adsenseScript.async = true;
+          adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2831295465597549';
+          adsenseScript.crossOrigin = 'anonymous';
+          document.head.appendChild(adsenseScript);
+          adsenseScript.onload = function() {
+            (window.adsbygoogle = window.adsbygoogle || []).push({
+              google_ad_client: "ca-pub-2831295465597549",
+              enable_page_level_ads: true,
+              overlays: { bottom: true }
+            });
           };
         }
 
