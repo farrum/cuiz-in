@@ -476,8 +476,38 @@ const QuizQuestionPage: React.FC = () => {
             
             <QuizCard 
               question={question} 
-              onComplete={handleQuizComplete} 
+              onComplete={handleQuizComplete}
+              skipAutoNavigation
             />
+
+            {answered && (
+              <div className={`rounded-xl border p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 ${
+                answered.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                    {answered.isCorrect ? '✅ Correct!' : '❌ Not quite'}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">Next question in 5s…</span>
+                </div>
+                {!answered.isCorrect && (
+                  <p className="text-sm text-foreground mb-2">
+                    Correct answer: <strong>{question.correctAnswer}</strong>
+                  </p>
+                )}
+                {question.explanation && (
+                  <p className="text-sm text-muted-foreground mb-3">{question.explanation}</p>
+                )}
+                <Button
+                  onClick={goToNextQuestion}
+                  disabled={loadingNext}
+                  className="w-full"
+                  size="lg"
+                >
+                  {loadingNext ? 'Loading…' : 'Next Question →'}
+                </Button>
+              </div>
+            )}
             
             {/* SEO Content Bulking Block for AdSense */}
             <div className="mt-8 bg-card rounded-lg p-6 border shadow-sm">
