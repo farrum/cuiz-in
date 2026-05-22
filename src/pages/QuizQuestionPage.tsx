@@ -27,6 +27,7 @@ import {
   BreadcrumbPage
 } from '@/components/ui/breadcrumb';
 import { QuizQuestion } from '@/utils/quizData';
+import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
@@ -42,11 +43,14 @@ const QuizQuestionPage: React.FC = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [prevQuestion, setPrevQuestion] = useState<QuizQuestion | null>(null);
   const [nextQuestion, setNextQuestion] = useState<QuizQuestion | null>(null);
+  const [answered, setAnswered] = useState<{ isCorrect: boolean; selected: string } | null>(null);
+  const [loadingNext, setLoadingNext] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchQuestionData = async () => {
       setIsLoading(true);
+      setAnswered(null);
       
       try {
         // Fetch current question
@@ -185,10 +189,32 @@ const QuizQuestionPage: React.FC = () => {
   }, [questionId, questionSlug]);
 
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
-    // Use consistent slug generation
-    const answerSlug = createSlug(selectedAnswer, 50);
-    navigate(`/answer/${questionId}/${answerSlug}`);
+    // Reveal the answer inline; user can click "Next Question" or wait for auto-advance.
+    setAnswered({ isCorrect, selected: selectedAnswer });
   };
+
+  const goToNextQuestion = React.useCallback(async () => {
+    if (loadingNext) return;
+    setLoadingNext(true);
+    try {
+      let next = await getRandomQuestion();
+      if (next.id === questionId) {
+        next = await getRandomQuestion();
+      }
+      navigate(`/quiz/question/${next.id}/${createSlug(next.question, 80)}`);
+    } catch (e) {
+      console.error('Failed to load next question', e);
+    } finally {
+      setLoadingNext(false);
+    }
+  }, [loadingNext, navigate, questionId]);
+
+  // Auto-advance 5s after the user answers
+  useEffect(() => {
+    if (!answered) return;
+    const t = setTimeout(() => { goToNextQuestion(); }, 5000);
+    return () => clearTimeout(t);
+  }, [answered, goToNextQuestion]);
 
   const generateQuestionSchema = () => {
     if (!question) return null;
