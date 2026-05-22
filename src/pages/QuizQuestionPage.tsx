@@ -27,6 +27,7 @@ import {
   BreadcrumbPage
 } from '@/components/ui/breadcrumb';
 import { QuizQuestion } from '@/utils/quizData';
+import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
@@ -42,11 +43,14 @@ const QuizQuestionPage: React.FC = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [prevQuestion, setPrevQuestion] = useState<QuizQuestion | null>(null);
   const [nextQuestion, setNextQuestion] = useState<QuizQuestion | null>(null);
+  const [answered, setAnswered] = useState<{ isCorrect: boolean; selected: string } | null>(null);
+  const [loadingNext, setLoadingNext] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchQuestionData = async () => {
       setIsLoading(true);
+      setAnswered(null);
       
       try {
         // Fetch current question
@@ -185,10 +189,32 @@ const QuizQuestionPage: React.FC = () => {
   }, [questionId, questionSlug]);
 
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
-    // Use consistent slug generation
-    const answerSlug = createSlug(selectedAnswer, 50);
-    navigate(`/answer/${questionId}/${answerSlug}`);
+    // Reveal the answer inline; user can click "Next Question" or wait for auto-advance.
+    setAnswered({ isCorrect, selected: selectedAnswer });
   };
+
+  const goToNextQuestion = React.useCallback(async () => {
+    if (loadingNext) return;
+    setLoadingNext(true);
+    try {
+      let next = await getRandomQuestion();
+      if (next.id === questionId) {
+        next = await getRandomQuestion();
+      }
+      navigate(`/quiz/question/${next.id}/${createSlug(next.question, 80)}`);
+    } catch (e) {
+      console.error('Failed to load next question', e);
+    } finally {
+      setLoadingNext(false);
+    }
+  }, [loadingNext, navigate, questionId]);
+
+  // Auto-advance 5s after the user answers
+  useEffect(() => {
+    if (!answered) return;
+    const t = setTimeout(() => { goToNextQuestion(); }, 5000);
+    return () => clearTimeout(t);
+  }, [answered, goToNextQuestion]);
 
   const generateQuestionSchema = () => {
     if (!question) return null;
@@ -450,8 +476,38 @@ const QuizQuestionPage: React.FC = () => {
             
             <QuizCard 
               question={question} 
-              onComplete={handleQuizComplete} 
+              onComplete={handleQuizComplete}
+              skipAutoNavigation
             />
+
+            {answered && (
+              <div className={`rounded-xl border p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 ${
+                answered.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                    {answered.isCorrect ? '✅ Correct!' : '❌ Not quite'}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">Next question in 5s…</span>
+                </div>
+                {!answered.isCorrect && (
+                  <p className="text-sm text-foreground mb-2">
+                    Correct answer: <strong>{question.correctAnswer}</strong>
+                  </p>
+                )}
+                {question.explanation && (
+                  <p className="text-sm text-muted-foreground mb-3">{question.explanation}</p>
+                )}
+                <Button
+                  onClick={goToNextQuestion}
+                  disabled={loadingNext}
+                  className="w-full"
+                  size="lg"
+                >
+                  {loadingNext ? 'Loading…' : 'Next Question →'}
+                </Button>
+              </div>
+            )}
             
             {/* SEO Content Bulking Block for AdSense */}
             <div className="mt-8 bg-card rounded-lg p-6 border shadow-sm">

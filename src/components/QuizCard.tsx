@@ -17,13 +17,15 @@ interface QuizCardProps {
   onComplete: (isCorrect: boolean, selectedAnswer: string) => void;
   gemsMultiplier?: number;
   isChallenge?: boolean;
+  skipAutoNavigation?: boolean;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ 
   question, 
   onComplete, 
   gemsMultiplier = 1,
-  isChallenge = false
+  isChallenge = false,
+  skipAutoNavigation = false
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,7 +131,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
       onComplete(isCorrect, selectedOption);
       
       // Navigate to the answer page (only for regular quiz, not challenges)
-      if (!isChallenge) {
+      if (!isChallenge && !skipAutoNavigation) {
         // Use consistent slug generation
         const answerSlug = createSlug(selectedOption, 50);
         navigate(`/answer/${question.id}/${answerSlug}`);
