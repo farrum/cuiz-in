@@ -161,6 +161,8 @@ serve(async (req) => {
       ]
     };
 
+    const ogImageUrl = `${supabaseUrl}/functions/v1/og-image?title=${encodeURIComponent(q.question.substring(0, 120))}&category=${encodeURIComponent(createSlug(q.category))}&difficulty=${encodeURIComponent(q.difficulty || 'medium')}`;
+
     // Generate the full HTML page
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -177,7 +179,7 @@ serve(async (req) => {
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${SITE_URL}/og-image-cuizin.png">
+  <meta property="og:image" content="${ogImageUrl}">
   <meta property="og:site_name" content="${SITE_NAME}">
   
   <!-- Twitter -->
@@ -185,7 +187,7 @@ serve(async (req) => {
   <meta name="twitter:url" content="${canonicalUrl}">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image-cuizin.png">
+  <meta name="twitter:image" content="${ogImageUrl}">
   
   <!-- Robots -->
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">

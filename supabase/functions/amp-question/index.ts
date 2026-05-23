@@ -87,6 +87,10 @@ function generateAMPPage(question: any): string {
     }
   };
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://pgywvtphfidouakypdno.supabase.co';
+  const categorySlug = createSlug(question.category || 'general-knowledge');
+  const ogImageUrl = `${supabaseUrl}/functions/v1/og-image?title=${encodeURIComponent(question.question.substring(0, 120))}&category=${encodeURIComponent(categorySlug)}&difficulty=${encodeURIComponent(question.difficulty || 'medium')}`;
+
   return `<!doctype html>
 <html amp lang="en">
 <head>
@@ -103,12 +107,14 @@ function generateAMPPage(question: any): string {
   <meta property="og:description" content="Test your ${categoryText} knowledge with this ${difficultyText.toLowerCase()} quiz question!">
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="${ogImageUrl}">
   <meta property="og:site_name" content="CuizIN">
   
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${questionText}">
   <meta name="twitter:description" content="Test your ${categoryText} knowledge!">
+  <meta name="twitter:image" content="${ogImageUrl}">
   
   <!-- AMP Boilerplate -->
   <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
