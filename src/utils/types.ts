@@ -6,7 +6,7 @@ export interface QuizQuestion {
   correctAnswer?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
-  gems: number;
+  gems?: number;
   explanation: string;
   imageUrl?: string; // URL for image-based questions
   questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false'; // Type of question (default is text)
