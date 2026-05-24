@@ -21,6 +21,9 @@ import { ScratchCard } from '@/components/gamification/ScratchCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useQuizGems } from '@/hooks/quiz';
+import { TriviaWordle } from '@/components/gamification/TriviaWordle';
+import { getLocalQuestionsBatch, getRandomLocalWordle } from '@/utils/localTriviaPool';
+import { useToast } from '@/hooks/use-toast';
 
 // AdSense slot id for the inter-question interstitial ad unit.
 // Create a Display ad unit in AdSense dashboard and paste its slot id here.
@@ -40,6 +43,15 @@ const QuizPlayPage: React.FC = () => {
   const [showBossFight, setShowBossFight] = useState(false);
   const [showImageReveal, setShowImageReveal] = useState(false);
   const [scratchPrize, setScratchPrize] = useState(0);
+
+  // States for random inter-question mini-games
+  const [showRandomTrueFalse, setShowRandomTrueFalse] = useState(false);
+  const [randomTrueFalseQuestions, setRandomTrueFalseQuestions] = useState<QuizQuestion[]>([]);
+  const [showRandomFlashcards, setShowRandomFlashcards] = useState(false);
+  const [randomFlashcardQuestions, setRandomFlashcardQuestions] = useState<QuizQuestion[]>([]);
+  const [showRandomWordle, setShowRandomWordle] = useState(false);
+  const [randomWordle, setRandomWordle] = useState<{ clue: string; answer: string } | null>(null);
+  const { toast } = useToast();
 
   const { currentMode } = useGameMode();
 
@@ -65,6 +77,9 @@ const QuizPlayPage: React.FC = () => {
       setShowScratchCard(false);
       setShowBossFight(false);
       setShowImageReveal(false);
+      setShowRandomTrueFalse(false);
+      setShowRandomFlashcards(false);
+      setShowRandomWordle(false);
       try {
         if (currentMode === 'true-false' || currentMode === 'flashcards') {
           // Fetch a batch of random questions
@@ -120,6 +135,28 @@ const QuizPlayPage: React.FC = () => {
     }
   }, [navigate, questionId]);
 
+  const grantGemsForMiniGame = useCallback(async (amount: number) => {
+    if (amount <= 0) return;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        const { data } = await (supabase as any)
+          .from('profiles')
+          .select('gems_balance')
+          .eq('id', session.session.user.id)
+          .maybeSingle();
+        const currentBalance = (data as any)?.gems_balance || 0;
+        await (supabase as any)
+          .from('profiles')
+          .update({ gems_balance: currentBalance + amount })
+          .eq('id', session.session.user.id);
+        fetchGems();
+      }
+    } catch (e) {
+      console.error('Failed to grant gems for mini-game:', e);
+    }
+  }, [fetchGems]);
+
   const handleComplete = useCallback((isCorrect: boolean | number) => {
     incrementQuestionsAnswered();
     if (isCorrect) incrementStreak(); else resetStreak();
@@ -141,19 +178,37 @@ const QuizPlayPage: React.FC = () => {
     // Gamification Random Checks
     const rand = Math.random();
 
-    if (rand < 0.05 && !isInterstitialTurn) {
-      // 5% chance for Image Reveal
-      setShowImageReveal(true);
-    } else if (rand >= 0.05 && rand < 0.15 && !isInterstitialTurn) {
-      // 10% chance for Scratch Card
-      setScratchPrize(Math.floor(Math.random() * 50) + 10);
-      setShowScratchCard(true);
+    if (rand < 0.20 && !isInterstitialTurn) {
+      const gameChoice = Math.random();
+      if (gameChoice < 0.20) {
+        // 20% Scratch Card
+        setScratchPrize(Math.floor(Math.random() * 50) + 10);
+        setShowScratchCard(true);
+      } else if (gameChoice < 0.40) {
+        // 20% Image Reveal
+        setShowImageReveal(true);
+      } else if (gameChoice < 0.60) {
+        // 20% Trivia Wordle
+        const wordle = getRandomLocalWordle();
+        setRandomWordle(wordle);
+        setShowRandomWordle(true);
+      } else if (gameChoice < 0.80) {
+        // 20% True/False Swipe
+        const questions = getLocalQuestionsBatch(3);
+        setRandomTrueFalseQuestions(questions);
+        setShowRandomTrueFalse(true);
+      } else {
+        // 20% Flashcard Match
+        const questions = getLocalQuestionsBatch(4);
+        setRandomFlashcardQuestions(questions);
+        setShowRandomFlashcards(true);
+      }
     } else if (isInterstitialTurn) {
       setShowInterstitial(true);
     } else {
       goToNextQuestion();
     }
-  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems]);
+  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems, grantGemsForMiniGame]);
 
   const handleScratchComplete = async () => {
     // Backend should ideally handle this via RPC similar to process_wheel_spin
@@ -244,6 +299,82 @@ const QuizPlayPage: React.FC = () => {
               goToNextQuestion();
             }}
           />
+        ) : showRandomWordle && randomWordle ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-card border rounded-2xl p-6 md:p-8 space-y-6 animate-in zoom-in-95">
+            <div className="text-center w-full">
+              <h2 className="text-2xl font-bold text-primary mb-1 flex items-center justify-center gap-2">
+                <Sparkles className="text-yellow-500" /> Trivia Wordle <Sparkles className="text-yellow-500" />
+              </h2>
+              <p className="text-muted-foreground text-sm">Guess the secret word from the clue in 6 attempts!</p>
+            </div>
+            <TriviaWordle
+              clue={randomWordle.clue}
+              targetWord={randomWordle.answer}
+              onComplete={async (gemsEarned) => {
+                if (gemsEarned > 0) {
+                  await grantGemsForMiniGame(gemsEarned);
+                  toast({
+                    title: 'Wordle Solved!',
+                    description: `You earned ${gemsEarned} Gems!`,
+                    className: 'bg-green-50 border-green-200 text-green-800',
+                  });
+                }
+                setShowRandomWordle(false);
+                goToNextQuestion();
+              }}
+            />
+          </div>
+        ) : showRandomTrueFalse && randomTrueFalseQuestions.length > 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-card border rounded-2xl p-6 md:p-8 space-y-4 animate-in zoom-in-95">
+            <div className="text-center w-full">
+              <h2 className="text-2xl font-bold text-primary mb-1 flex items-center justify-center gap-2">
+                <Sparkles className="text-yellow-500" /> True/False Swipe <Sparkles className="text-yellow-500" />
+              </h2>
+              <p className="text-muted-foreground text-sm mb-4">Swipe right for True, left for False!</p>
+            </div>
+            <TrueFalseSwipe
+              questions={randomTrueFalseQuestions}
+              onGameComplete={async (score, total) => {
+                const gemsEarned = score * 5;
+                if (gemsEarned > 0) {
+                  await grantGemsForMiniGame(gemsEarned);
+                  toast({
+                    title: 'Swipe Complete!',
+                    description: `You got ${score}/${total} correct and earned ${gemsEarned} Gems!`,
+                    className: 'bg-green-50 border-green-200 text-green-800',
+                  });
+                }
+                setShowRandomTrueFalse(false);
+                goToNextQuestion();
+              }}
+            />
+          </div>
+        ) : showRandomFlashcards && randomFlashcardQuestions.length > 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-card border rounded-2xl p-6 md:p-8 space-y-4 animate-in zoom-in-95">
+            <div className="text-center w-full">
+              <h2 className="text-2xl font-bold text-primary mb-1 flex items-center justify-center gap-2">
+                <Sparkles className="text-yellow-500" /> Memory Match <Sparkles className="text-yellow-500" />
+              </h2>
+              <p className="text-muted-foreground text-sm mb-4">Find all matching pairs under the time limit!</p>
+            </div>
+            <FlashcardMatch
+              questions={randomFlashcardQuestions}
+              onGameComplete={async (score) => {
+                const matchesFound = score / 2;
+                const gemsEarned = matchesFound * 5;
+                if (gemsEarned > 0) {
+                  await grantGemsForMiniGame(gemsEarned);
+                  toast({
+                    title: 'Match Complete!',
+                    description: `You found ${matchesFound} matches and earned ${gemsEarned} Gems!`,
+                    className: 'bg-green-50 border-green-200 text-green-800',
+                  });
+                }
+                setShowRandomFlashcards(false);
+                goToNextQuestion();
+              }}
+            />
+          </div>
         ) : showScratchCard ? (
           <div className="flex flex-col items-center justify-center min-h-[400px] bg-card border rounded-2xl p-8 space-y-6 animate-in zoom-in-95">
             <div className="text-center">
