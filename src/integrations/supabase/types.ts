@@ -721,6 +721,7 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           email: string | null
+          gems_balance: number
           id: string
           is_admin: boolean | null
           phone: string | null
@@ -739,6 +740,7 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          gems_balance?: number
           id?: string
           is_admin?: boolean | null
           phone?: string | null
@@ -757,6 +759,7 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          gems_balance?: number
           id?: string
           is_admin?: boolean | null
           phone?: string | null
@@ -1019,6 +1022,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wheel_spins: {
+        Row: {
+          created_at: string
+          id: string
+          prize_id: string
+          prize_label: string
+          prize_value: number
+          spun_on: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prize_id: string
+          prize_label: string
+          prize_value?: number
+          spun_on?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prize_id?: string
+          prize_label?: string
+          prize_value?: number
+          spun_on?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       ad_performance_reports: {
@@ -1147,6 +1180,7 @@ export type Database = {
         Returns: boolean
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      process_wheel_spin: { Args: { user_uuid: string }; Returns: Json }
       purchase_skill_node: {
         Args: { target_skill_id: string; user_uuid: string }
         Returns: Json
