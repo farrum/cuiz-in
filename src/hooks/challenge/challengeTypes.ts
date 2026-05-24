@@ -53,7 +53,7 @@ export interface QuizQuestion {
   explanation: string;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  gems: number;
+  gems?: number;
   imageUrl?: string;
   questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false';
 }
