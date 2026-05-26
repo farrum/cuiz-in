@@ -15,6 +15,7 @@ import {
   getImageQuizColumns
 } from './components';
 import TeamQuizManagement from './team-quiz/TeamQuizManagement';
+import RefetchImagesButton from './image-quiz/RefetchImagesButton';
 
 const QuizManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('text');
@@ -116,6 +117,12 @@ const QuizManagement: React.FC = () => {
             onDifficultyChange={setSelectedDifficulty}
             categories={categories}
           />
+
+          {activeTab === 'image' && (
+            <div className="flex justify-end">
+              <RefetchImagesButton onComplete={fetchQuestions} />
+            </div>
+          )}
 
           {isLoading ? (
             <div className="flex justify-center py-10">
