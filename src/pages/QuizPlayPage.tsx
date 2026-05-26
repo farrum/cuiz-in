@@ -393,13 +393,18 @@ const QuizPlayPage: React.FC = () => {
             >
               <div className="text-center">
                 <Sparkles className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                <h3 className="text-3xl font-black text-slate-800">{scratchPrize} GEMS</h3>
-                <p className="text-sm font-bold text-green-600">You Won!</p>
+                <h3 className="text-2xl font-black text-slate-800">
+                  {scratchPrize ? scratchPrize.label : 'Revealing...'}
+                </h3>
+                <p className="text-sm font-bold text-green-600">
+                  {scratchPrize && scratchPrize.value > 0 ? 'You Won!' : scratchPrize ? 'Try again tomorrow' : ''}
+                </p>
               </div>
             </ScratchCard>
 
             <Button size="lg" className="w-full max-w-xs mt-8" onClick={() => {
               setShowScratchCard(false);
+              setScratchPrize(null);
               goToNextQuestion();
             }}>
               Continue Quiz
