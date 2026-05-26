@@ -10,6 +10,8 @@ import { AmountField, CategoryField, DifficultyField } from './ImportFormFields'
 import ImportInfoAlert from './ImportInfoAlert';
 import { getRandomImageForCategory } from './imageSelectionUtils';
 import { saveImageTriviaToDB } from './imageTriviaSaveService';
+import { supabase } from '@/integrations/supabase/client';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 interface LearnImageTriviaDialogProps {
   onSuccess: () => void;
@@ -62,17 +64,40 @@ const LearnImageTriviaDialog: React.FC<LearnImageTriviaDialogProps> = ({ onSucce
         setIsLoading(false);
         return;
       }
-      
-      const imageQuestions = questions.map(q => ({
-        ...q,
-        imageUrl: getRandomImageForCategory(q.category, q.question),
-        questionType: 'image' as const
-      }));
-      
+
       toast({
-        title: "Processing questions",
-        description: `Found ${imageQuestions.length} questions. Converting to image questions...`,
+        title: "Finding relevant images",
+        description: `Resolving images for ${questions.length} questions. This may take a minute...`,
       });
+
+      const adminUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const imageQuestions: any[] = [];
+      let resolved = 0;
+      // Sequential to respect AI rate limits
+      for (const q of questions) {
+        let imageUrl = getRandomImageForCategory(q.category, q.question);
+        try {
+          const { data, error } = await supabase.functions.invoke('resolve-question-image', {
+            body: {
+              adminUserId,
+              question: q.question,
+              correctAnswer: q.correctAnswer,
+              category: q.category,
+            },
+          });
+          if (!error && data?.imageUrl) imageUrl = data.imageUrl;
+        } catch (e) {
+          console.warn('resolve-question-image failed, using fallback', e);
+        }
+        imageQuestions.push({ ...q, imageUrl, questionType: 'image' as const });
+        resolved++;
+        if (resolved % 3 === 0) {
+          toast({
+            title: 'Finding relevant images',
+            description: `${resolved}/${questions.length} resolved...`,
+          });
+        }
+      }
       
       const result = await saveImageTriviaToDB(imageQuestions as any);
       

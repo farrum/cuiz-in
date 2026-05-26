@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.admin-reset-legacy-players]
 verify_jwt = false
+
+[functions.resolve-question-image]
+verify_jwt = false
+
+[functions.backfill-question-images]
+verify_jwt = false
