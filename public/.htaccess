@@ -11,12 +11,12 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Sitemap Proxies (Canonical) - Using [P] flag for internal proxy
+# Sitemap Proxies (Canonical - Restructured paths)
 RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]
-RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
-RewriteRule ^sitemap-cat-([a-z-]+)-sub-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [P,L]
-RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
-RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
+RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
+RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
+RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
+RewriteRule ^sitemaps/category/([a-z-]+)/sub/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [P,L]
 
 # Legacy and API Fallbacks
 RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]

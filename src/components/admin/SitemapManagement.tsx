@@ -24,10 +24,10 @@ const SitemapManagement = () => {
             <div className="space-y-2">
               <h4 className="font-medium">How it works</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-              <p>• <code>/sitemap.xml</code> → Sitemap Index (9 children)</p>
-                <p>• <code>/sitemap-main.xml</code> → Static + Blog + FAQ + Answers</p>
-                <p>• <code>/sitemap-cat-history.xml</code> → History questions</p>
-                <p>• ...8 category sitemaps total (path-based, CDN-compatible)</p>
+              <p>• <code>/sitemap.xml</code> → Sitemap Index</p>
+                <p>• <code>/sitemaps/main.xml</code> → Static + Blog + FAQ + Answers</p>
+                <p>• <code>/sitemaps/category/history/sitemap.xml</code> → History questions</p>
+                <p>• ...8 category sitemaps total (path-based, Netlify-compatible)</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -51,8 +51,8 @@ const SitemapManagement = () => {
           <div className="space-y-2">
             {[
               { label: 'Sitemap Index', url: 'https://cuiz.in/sitemap.xml' },
-              { label: 'Main (Static+Blog+FAQ+Answers)', url: 'https://cuiz.in/sitemap-main.xml' },
-              { label: 'Direct Edge Function', url: 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main' },
+              { label: 'Main (Static+Blog+FAQ+Answers)', url: 'https://cuiz.in/sitemaps/main.xml' },
+              { label: 'Direct Edge Function', url: 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main' },
             ].map((item) => (
               <div key={item.url} className="flex items-center justify-between">
                 <div>

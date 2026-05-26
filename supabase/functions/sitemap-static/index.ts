@@ -176,20 +176,20 @@ serve(async (req) => {
       xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
       // Main sitemap
-      xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
       let subCount = 0;
       for (const cat of categories) {
-        xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemap-cat-${cat}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+        xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
         const subs = subcategoriesByCategory[cat] || [];
         for (const s of subs) {
-          xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemap-cat-${cat}-sub-${s.slug}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+          xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sub/${s.slug}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
           subCount++;
         }
       }
 
       // AMP sitemap
-      xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemap-amp.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/amp.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
       xml += '</sitemapindex>';
       console.log(`Generated sitemap index: ${categories.length} categories + ${subCount} subcategories`);

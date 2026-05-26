@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, RefreshCw, Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
-const EDGE_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-main';
+const EDGE_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneXd2dHBoZmlkb3Vha3lwZG5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwMjcwOTQsImV4cCI6MjA1NzYwMzA5NH0.YazHsLiGkw-Uo-TYYAObWVzlf0HcZBDQjI5pP-F7Eco';
 
 interface SitemapCount {
@@ -18,16 +18,16 @@ interface SitemapCount {
 }
 
 const SITEMAPS = [
-  { name: 'Index', param: '' },
+  { name: 'Index', param: '?type=index' },
   { name: 'Main (Static+Blog+FAQ)', param: '?type=main' },
-  { name: 'History', param: '?cat=history' },
-  { name: 'Science', param: '?cat=science' },
-  { name: 'Geography', param: '?cat=geography' },
-  { name: 'Literature', param: '?cat=literature' },
-  { name: 'Entertainment', param: '?cat=entertainment' },
-  { name: 'Sports', param: '?cat=sports' },
-  { name: 'Technology', param: '?cat=technology' },
-  { name: 'General Knowledge', param: '?cat=general-knowledge' },
+  { name: 'History', param: '?type=category&category=history' },
+  { name: 'Science', param: '?type=category&category=science' },
+  { name: 'Geography', param: '?type=category&category=geography' },
+  { name: 'Literature', param: '?type=category&category=literature' },
+  { name: 'Entertainment', param: '?type=category&category=entertainment' },
+  { name: 'Sports', param: '?type=category&category=sports' },
+  { name: 'Technology', param: '?type=category&category=technology' },
+  { name: 'General Knowledge', param: '?type=category&category=general-knowledge' },
 ];
 
 const SitemapUrlCounter: React.FC = () => {
