@@ -42,7 +42,7 @@ const QuizPlayPage: React.FC = () => {
   const [showScratchCard, setShowScratchCard] = useState(false);
   const [showBossFight, setShowBossFight] = useState(false);
   const [showImageReveal, setShowImageReveal] = useState(false);
-  const [scratchPrize, setScratchPrize] = useState(0);
+  const [scratchPrize, setScratchPrize] = useState<{ label: string; value: number } | null>(null);
 
   // States for random inter-question mini-games
   const [showRandomTrueFalse, setShowRandomTrueFalse] = useState(false);
@@ -181,8 +181,8 @@ const QuizPlayPage: React.FC = () => {
     if (rand < 0.20 && !isInterstitialTurn) {
       const gameChoice = Math.random();
       if (gameChoice < 0.20) {
-        // 20% Scratch Card
-        setScratchPrize(Math.floor(Math.random() * 50) + 10);
+        // 20% Scratch Card - prize is determined server-side on reveal
+        setScratchPrize(null);
         setShowScratchCard(true);
       } else if (gameChoice < 0.40) {
         // 20% Image Reveal
@@ -211,14 +211,15 @@ const QuizPlayPage: React.FC = () => {
   }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems, grantGemsForMiniGame]);
 
   const handleScratchComplete = async () => {
-    // Backend should ideally handle this via RPC similar to process_wheel_spin
-    const { data: session } = await supabase.auth.getSession();
-    if (session?.session?.user) {
-      // Direct update for now, ideally wire to an RPC for strict tracking
-      const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).maybeSingle();
-      const currentBalance = (data as any)?.gems_balance || 0;
-      await (supabase as any).from('profiles').update({ gems_balance: currentBalance + scratchPrize }).eq('id', session.session.user.id);
-      fetchGems();
+    try {
+      const { data, error } = await (supabase as any).rpc('process_scratch_card', { p_context: 'quiz' });
+      if (error) throw error;
+      if (data && !data.error) {
+        setScratchPrize({ label: data.label, value: data.value });
+        fetchGems();
+      }
+    } catch (err) {
+      console.error('Scratch card error:', err);
     }
   };
 
@@ -392,13 +393,18 @@ const QuizPlayPage: React.FC = () => {
             >
               <div className="text-center">
                 <Sparkles className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                <h3 className="text-3xl font-black text-slate-800">{scratchPrize} GEMS</h3>
-                <p className="text-sm font-bold text-green-600">You Won!</p>
+                <h3 className="text-2xl font-black text-slate-800">
+                  {scratchPrize ? scratchPrize.label : 'Revealing...'}
+                </h3>
+                <p className="text-sm font-bold text-green-600">
+                  {scratchPrize && scratchPrize.value > 0 ? 'You Won!' : scratchPrize ? 'Try again tomorrow' : ''}
+                </p>
               </div>
             </ScratchCard>
 
             <Button size="lg" className="w-full max-w-xs mt-8" onClick={() => {
               setShowScratchCard(false);
+              setScratchPrize(null);
               goToNextQuestion();
             }}>
               Continue Quiz

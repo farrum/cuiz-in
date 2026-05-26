@@ -1,21 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SpinTheWheel } from '@/components/gamification/SpinTheWheel';
 import { ScratchCard } from '@/components/gamification/ScratchCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const DailyRewardsSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState('spin');
+  const [scratchPrize, setScratchPrize] = useState<{ label: string; value: number } | null>(null);
+  const [scratchState, setScratchState] = useState<'idle' | 'loading' | 'ready' | 'already' | 'unauth' | 'error'>('idle');
+  const { toast } = useToast();
 
   const handleSpinComplete = (prize: any) => {
     // In a real app, this would call Supabase to add the prize to the user's account
     console.log("Won prize:", prize);
   };
 
+  const fetchDailyScratch = async () => {
+    setScratchState('loading');
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) {
+      setScratchState('unauth');
+      return;
+    }
+    try {
+      const { data, error } = await (supabase as any).rpc('process_scratch_card', { p_context: 'daily' });
+      if (error) throw error;
+      if (data?.already_played) {
+        setScratchState('already');
+        return;
+      }
+      if (data?.error) {
+        setScratchState('error');
+        return;
+      }
+      setScratchPrize({ label: data.label, value: data.value });
+      setScratchState('ready');
+    } catch (err) {
+      console.error('Daily scratch error:', err);
+      setScratchState('error');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'scratch' && scratchState === 'idle') {
+      fetchDailyScratch();
+    }
+  }, [activeTab]);
+
   const handleScratchComplete = () => {
-    // In a real app, this would reveal and claim the prize
-    console.log("Scratch card revealed!");
+    if (scratchPrize && scratchPrize.value > 0) {
+      toast({ title: '🎉 You won!', description: `${scratchPrize.label} added to your balance.` });
+    }
   };
 
   return (
@@ -54,19 +92,37 @@ const DailyRewardsSection: React.FC = () => {
                 <h3 className="text-xl font-bold text-slate-800">Daily Scratch Card</h3>
                 <p className="text-sm text-slate-500">Scratch to reveal your prize!</p>
               </div>
-              
-              <ScratchCard 
-                width={320} 
-                height={160} 
-                onComplete={handleScratchComplete}
-                coverColor="#e2e8f0" // slate-200
-              >
-                <div className="flex flex-col items-center text-center">
-                  <Sparkles className="text-yellow-500 mb-2" size={32} />
-                  <h4 className="text-2xl font-black text-slate-800 uppercase tracking-wider">50 Gems</h4>
-                  <p className="text-sm text-green-600 font-bold">You Won!</p>
-                </div>
-              </ScratchCard>
+
+              {scratchState === 'loading' && (
+                <p className="text-sm text-slate-500">Preparing your card...</p>
+              )}
+              {scratchState === 'unauth' && (
+                <p className="text-sm text-slate-600 text-center max-w-xs">Sign in to claim your free daily scratch card!</p>
+              )}
+              {scratchState === 'already' && (
+                <p className="text-sm text-slate-600 text-center max-w-xs">You already scratched today's card. Come back tomorrow!</p>
+              )}
+              {scratchState === 'error' && (
+                <p className="text-sm text-red-600 text-center max-w-xs">Something went wrong. Please try again later.</p>
+              )}
+              {scratchState === 'ready' && scratchPrize && (
+                <ScratchCard
+                  width={320}
+                  height={160}
+                  onComplete={handleScratchComplete}
+                  coverColor="#e2e8f0"
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <Sparkles className="text-yellow-500 mb-2" size={32} />
+                    <h4 className="text-2xl font-black text-slate-800 uppercase tracking-wider">
+                      {scratchPrize.label}
+                    </h4>
+                    <p className="text-sm font-bold text-green-600">
+                      {scratchPrize.value > 0 ? 'You Won!' : 'Try again tomorrow'}
+                    </p>
+                  </div>
+                </ScratchCard>
+              )}
             </div>
           )}
         </CardContent>
