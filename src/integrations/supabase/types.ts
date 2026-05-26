@@ -858,6 +858,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scratch_card_plays: {
+        Row: {
+          context: string
+          created_at: string
+          id: string
+          played_on: string
+          prize_id: string
+          prize_label: string
+          prize_value: number
+          user_id: string
+        }
+        Insert: {
+          context: string
+          created_at?: string
+          id?: string
+          played_on?: string
+          prize_id: string
+          prize_label: string
+          prize_value?: number
+          user_id: string
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          id?: string
+          played_on?: string
+          prize_id?: string
+          prize_label?: string
+          prize_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       team_leader_earnings: {
         Row: {
           active_members: number
@@ -1180,6 +1213,7 @@ export type Database = {
         Returns: boolean
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      process_scratch_card: { Args: { p_context?: string }; Returns: Json }
       process_wheel_spin: { Args: { user_uuid: string }; Returns: Json }
       purchase_skill_node: {
         Args: { target_skill_id: string; user_uuid: string }
