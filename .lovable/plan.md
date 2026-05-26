@@ -1,45 +1,34 @@
 ## Goal
 
-Replace the hardcoded "50 gems" scratch card with a weighted random prize, enforced server-side, applied everywhere scratch cards appear (homepage daily reward + post-quiz surprise).
+Publish 4 new SEO-friendly blog posts, each weaving 5–6 internal links to real `/quiz/question/{id}/{slug}` URLs so search bots discover quiz content from blog content.
 
-## Prize table
+## Posts to create (category → linked questions)
 
-| Prize | Probability |
-|---|---|
-| Better luck next time (0) | 30% |
-| 1 gem | 30% |
-| 2 gems | 20% |
-| 5 gems | 10% |
-| 10 gems | 4% |
-| 15 gems | 3% |
-| 25 gems | 2% |
-| 50 gems | 1% |
+1. **"Cricket Trivia: Test Your Knowledge of India's Favorite Game"** (Cricket)
+   - Links to 2 cricket questions + 2 Indian sports/general questions.
+2. **"Travel the World in Questions: A Geography Quiz Tour"** (Geography)
+   - Links to 4 geography questions (Timbuktu, Sahara, longest river, etc.).
+3. **"From Mughals to Modern Times: India's Most Fascinating History Questions"** (Indian History)
+   - Links to 4 Indian-history questions (Fatehpur Sikri, Divide and Rule, Dravidian language, Indira Gandhi).
+4. **"Tech Made Simple: Everyday Technology Questions That Trip People Up"** (Technology)
+   - Links to 4 tech/science questions (WWW, Wi-Fi, unsupervised learning, table salt formula).
 
-## Backend (migration)
+Each post will use real question IDs pulled from the live `quiz_questions` table (already sampled), so the internal links work immediately.
 
-1. Insert a `scratch_prizes` config row into `gamification_settings` with the 8 prizes (`id`, `label`, `value`, `probability`).
-2. Create table `scratch_card_plays` (`id`, `user_id text`, `context text` — `'daily'` or `'quiz'`, `prize_id`, `prize_label`, `prize_value`, `played_on date`, `created_at`). RLS: users see/insert own, admins manage.
-3. Add a partial UNIQUE index on `(user_id, played_on) WHERE context = 'daily'` so only one daily card per user per day (quiz cards unlimited).
-4. Create RPC `process_scratch_card(p_context text)`:
-   - Requires `auth.uid()`.
-   - If `p_context = 'daily'`, reject if already played today.
-   - Loads prizes from `gamification_settings`, picks one weighted by `probability`.
-   - Credits `profiles.gems_balance` when `value > 0`.
-   - Inserts row in `scratch_card_plays`.
-   - Returns `{ id, label, value }`.
-   - Grant EXECUTE to `authenticated`.
+## Per-post structure
 
-## Frontend
+- 600–900 word friendly intro + 4–6 H2 sections.
+- Each H2 wraps one question link with `<a href="/quiz/question/{id}/{slug}">…</a>`.
+- Closing CTA linking to `/categories` or the relevant category page.
+- `excerpt` set for listing/SEO snippets.
+- `author = 'CuizIN Team'`, `is_published = true`, `published_at = now()`.
+- Slug + `-{random4}` suffix to match existing convention.
 
-1. **`ScratchCard.tsx`** — add optional `prize` prop (`{ label, value }`) and a `loading` state; keep existing cover/scratch animation untouched.
-2. **`DailyRewardsSection.tsx`** — on tab open (or component mount), call `process_scratch_card('daily')`, store result. If RPC returns "already played today", show a friendly "Come back tomorrow" state instead of the card. Render returned `label`/`value` under the cover. Remove the hardcoded "50 Gems".
-3. **`QuizPlayPage.tsx`** — replace the local `Math.floor(Math.random()*50)+10` and the client-side `gems_balance` update with a call to `process_scratch_card('quiz')`. Display the returned prize; gems are already credited by the RPC, so delete the client-side update block.
+## How it ships
+
+One migration that `INSERT`s the 4 rows into `public.blog_posts`. No schema or RLS change — existing public-read policy already exposes them.
 
 ## Out of scope
 
-- Scratch animation, layout, and styling stay as-is.
-- No new UI for prize history.
-
-## Approval
-
-If approved, I'll write the migration first (one tool call), wait for your confirmation, then update the three frontend files.
+- New routes, components, or sitemap edits (blog posts already feed the sitemap automatically).
+- Image generation.
