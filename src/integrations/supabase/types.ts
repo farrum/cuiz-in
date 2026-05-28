@@ -589,6 +589,39 @@ export type Database = {
         }
         Relationships: []
       }
+      motivational_messages: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          is_active: boolean
+          text: string
+          trigger_context: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          text: string
+          trigger_context?: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          text?: string
+          trigger_context?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       news_ticker: {
         Row: {
           created_at: string | null

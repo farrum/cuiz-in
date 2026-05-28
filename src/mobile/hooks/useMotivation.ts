@@ -53,6 +53,20 @@ const FALLBACK: Record<MotivationContext, MotivationMessage[]> = {
 
 let cache: MotivationMessage[] | null = null;
 
+const CONTEXT_ALIAS: Record<string, MotivationContext> = {
+  app_open: 'on_open',
+  correct_answer: 'on_correct',
+  wrong_answer: 'on_wrong',
+  streak_milestone: 'streak_milestone',
+  inactivity: 'idle',
+  low_gems: 'low_gems',
+  daily_reminder: 'daily_reminder',
+  on_open: 'on_open',
+  on_correct: 'on_correct',
+  on_wrong: 'on_wrong',
+  idle: 'idle',
+};
+
 async function fetchMessages(): Promise<MotivationMessage[]> {
   if (cache) return cache;
   try {
@@ -61,7 +75,10 @@ async function fetchMessages(): Promise<MotivationMessage[]> {
       .select('id, text, emoji, trigger_context')
       .eq('is_active', true);
     if (error || !data) return [];
-    cache = data as unknown as MotivationMessage[];
+    cache = (data as any[]).map((m) => ({
+      ...m,
+      trigger_context: CONTEXT_ALIAS[m.trigger_context] || m.trigger_context,
+    })) as MotivationMessage[];
     return cache;
   } catch { return []; }
 }
