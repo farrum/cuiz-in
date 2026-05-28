@@ -1,7 +1,17 @@
 
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import AppMobile from './mobile/AppMobile.tsx'
 import './index.css'
+
+// Platform switch: when VITE_PLATFORM=mobile (Capacitor build),
+// boot the mobile UI instead of the web app. Same Supabase backend.
+const isMobilePlatform =
+  import.meta.env.VITE_PLATFORM === 'mobile' ||
+  // Allow override via ?mobile=1 for in-browser preview / QA
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1');
+
+const RootComponent = isMobilePlatform ? AppMobile : App;
 
 const CHUNK_RELOAD_KEY = '__lov_chunk_reload__';
 const isChunkLoadError = (msg: string) =>
@@ -54,7 +64,7 @@ window.addEventListener('unhandledrejection', (event) => {
 try {
   const rootElement = document.getElementById("root");
   if (rootElement) {
-    createRoot(rootElement).render(<App />);
+    createRoot(rootElement).render(<RootComponent />);
   } else {
     console.error("Root element not found");
   }
