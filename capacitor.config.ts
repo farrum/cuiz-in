@@ -1,0 +1,25 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'app.lovable.7e6688c8dfb8442e8feda62399ade2ef',
+  appName: 'cuiz-in',
+  webDir: 'dist',
+  // Dev hot-reload from the Lovable sandbox — comment out for production builds.
+  server: {
+    url: 'https://7e6688c8-dfb8-442e-8fed-a62399ade2ef.lovableproject.com?forceHideBadge=true&mobile=1',
+    cleartext: true,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1200,
+      backgroundColor: '#0f172a',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'LIGHT',
+    },
+  },
+};
+
+export default config;
