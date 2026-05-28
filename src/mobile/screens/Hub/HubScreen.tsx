@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon } from 'lucide-react';
-import { Mascot } from '@/mobile/components/Mascot';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MotivationBubble } from '@/mobile/components/MotivationBubble';
 import { useMotivation } from '@/mobile/hooks/useMotivation';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { IdleMascot } from '@/mobile/mascots/IdleMascot';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -85,7 +85,7 @@ export default function HubScreen() {
 
       {/* Mascot + motivation */}
       <div className="relative flex items-end gap-3 mb-6">
-        <Mascot mood="happy" size={90} />
+        <IdleMascot size={96} />
         <div className="pb-2">
           <MotivationBubble message={motivation?.text || ''} emoji={motivation?.emoji} />
         </div>
