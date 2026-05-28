@@ -4,12 +4,13 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useHaptics } from '../hooks/useHaptics';
 
-const tabs = [
+type Tab = { to: string; label: string; icon: typeof Home; primary?: boolean };
+const tabs: Tab[] = [
   { to: '/hub', label: 'Home', icon: Home },
   { to: '/quiz', label: 'Play', icon: Zap, primary: true },
   { to: '/leaderboard', label: 'Ranks', icon: Trophy },
   { to: '/profile', label: 'Me', icon: User },
-] as const;
+];
 
 export function BottomTabs() {
   const haptics = useHaptics();
