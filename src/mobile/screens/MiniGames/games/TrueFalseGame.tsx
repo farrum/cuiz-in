@@ -3,7 +3,9 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { getRandomQuestion } from '@/utils/quizData';
 import type { QuizQuestion } from '@/utils/types';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
-import { Mascot } from '@/mobile/components/Mascot';
+import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
+import { characterOfTheDay } from '@/mobile/mascots/registry';
+import { moodEngine } from '@/mobile/mascots/useMoodEngine';
 
 export function TrueFalseGame() {
   const haptics = useHaptics();
@@ -20,6 +22,7 @@ export function TrueFalseGame() {
   const handleSwipe = (right: boolean) => {
     haptics(right ? 'success' : 'medium');
     setScore((s) => s + (right ? 1 : 0));
+    moodEngine.recordAnswer(right);
     load();
   };
 
@@ -40,7 +43,7 @@ export function TrueFalseGame() {
       >
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">{q.category}</p>
         <p className="font-bold text-lg mb-4">{claim}</p>
-        <Mascot mood="thinking" size={60} />
+        <MascotPlayer character={characterOfTheDay()} mood={moodEngine.snapshot().lastMood} size={64} noHalo />
       </motion.div>
       <div className="flex gap-8 mt-8">
         <button onClick={() => handleSwipe(false)} className="w-14 h-14 rounded-full bg-destructive/15 text-destructive text-2xl font-bold">✕</button>
