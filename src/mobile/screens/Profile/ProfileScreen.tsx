@@ -4,7 +4,10 @@ import { motion } from 'framer-motion';
 import { LogOut, Trophy, Sparkles, Calendar, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { Mascot } from '@/mobile/components/Mascot';
+import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
+import { IdleMascot } from '@/mobile/mascots/IdleMascot';
+import { useMoodEngine } from '@/mobile/mascots/useMoodEngine';
+import { moodFromAccuracy, characterOfTheDay } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 
@@ -12,6 +15,8 @@ export default function ProfileScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
   const { streak, questionsAnswered } = usePersistentQuizStats();
+  const { accuracy, sample } = useMoodEngine();
+  const mirrorMood = moodFromAccuracy(accuracy, sample);
   const [profile, setProfile] = useState<{ username: string; gems: number; daily: number; monthly: number } | null>(null);
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
 
@@ -45,7 +50,7 @@ export default function ProfileScreen() {
   if (!uid) {
     return (
       <div className="px-4 pt-10 pb-32 text-center">
-        <Mascot mood="happy" size={120} className="mx-auto mb-4" />
+        <MascotPlayer character={characterOfTheDay()} mood="cheer" size={140} className="mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-2">Join CuizIN</h1>
         <p className="text-muted-foreground mb-6">Sign in to save your gems, climb the leaderboard, and win monthly prizes.</p>
         <motion.button
@@ -63,12 +68,29 @@ export default function ProfileScreen() {
     <div className="px-4 pt-4 pb-32">
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
-        <Mascot mood={streak >= 3 ? 'celebrating' : 'happy'} size={80} />
+        <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
         <div>
           <h1 className="text-2xl font-bold">{profile?.username || '…'}</h1>
           <p className="text-sm text-muted-foreground">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
       </div>
+
+      {sample > 0 && (
+        <div className="mb-6 rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+          <MascotPlayer character={characterOfTheDay()} mood={mirrorMood} size={64} noHalo />
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground">Mood mirror</p>
+            <p className="font-bold text-sm">
+              {mirrorMood === 'excited' && "You're crushing it — keep going!"}
+              {mirrorMood === 'cheer' && "Solid run. One more streak?"}
+              {mirrorMood === 'neutral' && 'Steady. Play a quick round to warm up.'}
+              {mirrorMood === 'sad' && 'Tough patch. Win one to cheer me up?'}
+              {mirrorMood === 'angry' && 'Save us with a comeback! 💪'}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Last {sample} answers · {Math.round(accuracy * 100)}% accuracy</p>
+          </div>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">

@@ -1,152 +1,104 @@
 
-# CuizIN Mobile App — Hybrid Hub + Stories on Capacitor
+# Animated Mascot System — Mobile App
 
-## Goal
-Ship a native iOS + Android app from the existing repo that delivers a Duolingo-style hub opening into immersive full-screen story flows. Users, gems, streaks, leaderboard, and all business logic stay identical to the web app — only the UI shell changes.
+A rotating cast of 8 expressive characters reacts to the user's performance with mood-based animations, popping up across the whole mobile experience.
 
-## How it works (at a glance)
+## 1. Characters & Assets
 
-```text
-        ┌──────────────────────────────────────────────┐
-        │           Same Supabase backend              │
-        │  (profiles, gems, quiz_questions, streaks)   │
-        └─────────────▲────────────────────┬───────────┘
-                      │                    │
-            ┌─────────┴────────┐  ┌────────┴─────────┐
-            │   Web build      │  │  Mobile build    │
-            │ VITE_PLATFORM=   │  │ VITE_PLATFORM=   │
-            │      web         │  │     mobile       │
-            │  → src/App.tsx   │  │ → src/AppMobile  │
-            └──────────────────┘  └────────┬─────────┘
-                                            │
-                                   ┌────────┴─────────┐
-                                   │  Capacitor wraps │
-                                   │  → iOS + Android │
-                                   └──────────────────┘
+Generate 8 distinct mascots (varied silhouettes/colors — gem creature, fox, owl, robot, cat, dragon-pup, panda, alien) so the cast feels fresh on each appearance. Each character has **6 mood states**:
+
+| State | Trigger |
+|---|---|
+| `cheer` | correct answer, no prior wrong |
+| `excited` | 2+ correct streak |
+| `hype` | 5+ correct streak / milestone |
+| `neutral` | idle / hub waving |
+| `sad` | first wrong / accuracy dipping |
+| `angry` | sustained wrong streak / low accuracy |
+
+**Asset pipeline:**
+- Use `imagegen` (premium) to produce one transparent PNG per (character × mood) → 48 sprites stored in `src/mobile/assets/mascots/<name>/<mood>.png`.
+- Animate via Framer Motion: bounce, scale-pop, shake, eye-blink loops, drop-in/out, particle bursts. No real Lottie JSON in v1 (one branded look, faster to ship); the loader is built so we can swap any sprite for a Lottie JSON later without touching call sites.
+- A small `<MascotPlayer character={name} mood={mood} variant="reveal|idle|celebrate" />` component wraps the sprite with the right Motion preset.
+
+## 2. Mood Engine (`useMoodEngine`)
+
+Replaces ad-hoc state with a single hook backed by a Zustand store so every screen reads the same mood.
+
+Inputs tracked:
+- Rolling window of last **5 answers** (correct/wrong)
+- Current correct streak & wrong streak
+- Session-level "frustration score" (decays over time)
+
+Mood resolution:
 ```
-
-Same repo, same auth, same gems math — the build flag swaps the root component so the mobile bundle never ships web admin/SEO code.
-
-## v1 Scope (confirmed)
-- Core quiz loop + gems balance
-- Daily challenges, login streak, daily riddle vault
-- Leaderboard (monthly winners + user rank) + profile
-- Mini-games: spin wheel, scratch card, flashcard match, true/false swipe, boss fight
-
-## The mobile UX
-
-**Hub screen (home)** — a Duolingo-style scrollable "island map" with animated nodes for each activity. A mascot character walks the path, reacts to your streak, and pops speech bubbles with motivating messages. Gem balance floats at the top with a constant subtle shimmer; streak flame animates when tapped.
-
-**Story flows** — tapping any hub node launches a full-screen vertical story (like Instagram/your existing `/stories`):
-- Quiz story: each question is a full-screen card with a Lottie reaction on answer, confetti on correct, a shake on wrong, and auto-advance after 5s with a progress bar at the top.
-- Daily challenge story: intro card → questions → reward reveal with scratch-card animation.
-- Mini-game stories: each game gets its own themed transition (wheel spin, card flip, etc.).
-- Swipe down to exit, swipe left/right to skip when allowed.
-
-**Motivation engine** — a new `motivational_messages` table the admin can edit. Messages are surfaced contextually: after a wrong answer ("Don't stop now — your streak is one tap away!"), on app open ("You earned 47 gems yesterday. Beat it today?"), after 30s of inactivity ("The leaderboard is waiting 👀"), on streak milestones, etc. Messages render as animated speech bubbles from the mascot or as bottom-sheet pop-ups.
-
-**Animation budget** — heavy but tasteful, all 60fps:
-- Framer Motion for screen transitions, gestures, and shared-element animations between hub → story
-- Lottie React for mascot, gem earned bursts, correct/wrong feedback, level-up celebrations
-- `canvas-confetti` (already in repo) for milestone moments
-- Haptic feedback (`@capacitor/haptics`) on every meaningful tap, correct answer, gem earn, and streak save
-- Subtle parallax and scroll-linked motion on the hub map
-
-## Technical Plan
-
-### 1. Build flag + dual entry points
-- Add `VITE_PLATFORM` env var (`web` | `mobile`), default `web`.
-- `src/main.tsx` picks the root: `if (import.meta.env.VITE_PLATFORM === 'mobile') render(<AppMobile/>) else render(<App/>)`.
-- New `package.json` scripts: `build:mobile` runs Vite with the flag set, outputs to `dist/`.
-- Vite config: when `VITE_PLATFORM=mobile`, exclude admin/SEO chunks via dynamic imports already in place.
-
-### 2. New mobile shell (`src/mobile/`)
+accuracy = correct_in_window / 5
+if correct_streak >= 5     → hype
+elif correct_streak >= 2   → excited
+elif accuracy >= 0.6       → cheer (on correct) / neutral (idle)
+elif wrong_streak == 1     → sad
+elif wrong_streak == 2     → upset (sad sprite, shake motion)
+elif wrong_streak >= 3     → angry
 ```
-src/mobile/
-  AppMobile.tsx              — root with mobile router + providers
-  router.tsx                 — React Router routes: /hub, /quiz, /daily, /game/:id, /profile, /leaderboard, /onboarding, /login
-  layout/
-    MobileShell.tsx          — safe-area handling, status bar, bottom tab bar
-    BottomTabs.tsx           — Home / Play / Leaderboard / Profile (animated)
-  screens/
-    Hub/                     — island map + mascot + gem header
-    QuizStory/               — full-screen story-format quiz
-    DailyChallengeStory/
-    MiniGames/               — wheel, scratch, flashcard, true-false, boss
-    Leaderboard/
-    Profile/
-    Onboarding/              — 4-card swipeable intro (only first launch)
-  components/
-    Mascot.tsx               — Lottie mascot with mood states
-    GemCounter.tsx           — shimmering gem balance with count-up
-    StreakFlame.tsx
-    MotivationBubble.tsx
-    StoryCard.tsx, StoryProgress.tsx
-    HapticButton.tsx         — wraps Button with haptics
-  hooks/
-    useMotivation.ts         — selects context-aware messages
-    useHaptics.ts
-    useStoryGestures.ts      — swipe up/down/left/right
-  motion/
-    transitions.ts           — Framer Motion variants (hub→story, card flips)
-    lottie/                  — bundled Lottie JSON (correct, wrong, gem, level-up, mascot)
-```
+**Forgiveness rule:** answering correctly while in `angry` triggers a one-off `forgive` animation (character softens → cheers) before settling back to `cheer`. This is the "recovery" beat that keeps frustrated users hooked.
 
-### 3. Reuse, don't duplicate
-- All gems logic (`gemsService`, `validate-quiz-answer` edge function, streak hooks): **reused as-is**.
-- Supabase client, auth flow, `useQuizQuestion`, `useQuizGems`, `usePersistentQuizStats`: **reused as-is**.
-- Mobile screens are pure presentation wrappers over these existing hooks → no risk of drifting business logic.
+Thresholds live in one config object so we can tune without code edits later; admin-configurable table is **out of scope for v1** (keep it shipping fast).
 
-### 4. Capacitor integration
-Per the existing `mem://reference/mobile` memory + the Capacitor knowledge:
-- Install `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android`, `@capacitor/haptics`, `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/push-notifications`, `@capacitor/app`.
-- `capacitor.config.ts` with `appId: app.lovable.7e6688c8dfb8442e8feda62399ade2ef`, `appName: cuiz-in`, hot-reload `server.url` pointing at the Lovable preview for dev.
-- Add splash screen, app icon (generated from existing branding), status bar styling.
-- Deep links: `cuizin://` scheme for OAuth callbacks and shared challenge links.
-- Push notifications (FCM/APNs) for: daily streak reminders, "new daily challenge live", "you're #X on the leaderboard — defend it".
+## 3. Where Mascots Appear
 
-### 5. New backend additions (minimal)
-One small migration:
-- `motivational_messages` table: `id`, `trigger_context` (`on_open` | `on_wrong` | `on_correct` | `streak_milestone` | `idle` | `low_gems` | `daily_reminder`), `text`, `emoji`, `weight`, `is_active`. Admin-managed, public read.
-- `push_tokens` table: `user_id`, `token`, `platform` (`ios` | `android`), `created_at`. RLS: user owns rows.
-- New edge function `send-push-notification` (admin-triggered + cron) for streak reminders.
+| Surface | Behavior |
+|---|---|
+| **Quiz reveal** (`QuizStoryScreen`) | Random character drops in from bottom with mood matching the engine. Speech bubble pulls from `motivational_messages` filtered by the mood's trigger context. Confetti burst on `hype`. |
+| **Hub** (`HubScreen`) | A "mascot of the day" idles next to the gem counter with breathing/blink loop; taps trigger a wave + random tip. |
+| **Streak milestone** (3/7/14/30 days) | Full-screen takeover: character celebrates with confetti + scaling banner. |
+| **Daily Challenge complete** | Hype variant + gem-shower animation. |
+| **Mini-games** (`Wheel`, `Scratch`, `TrueFalse`, `Image`) | Character reacts to win/loss outcome at end of round. |
+| **Leaderboard** | Character peeks from the side when user's rank improves; sulks when it drops. |
+| **Profile** | "Mood mirror" card showing the character that represents the user's current 5-question accuracy — gentle nudge to keep playing. |
+| **Onboarding** | Two characters walk the user through 3 slides (cuts current emoji-only flow). |
+| **Idle (60s no input)** | Character pops with a `come-back` message to re-engage. |
 
-No changes to `profiles`, `quiz_questions`, `quiz_answers`, gems tables, or any existing logic.
+Random character selection uses a session-seeded shuffle so the same one doesn't appear twice in a row.
 
-### 6. Admin additions
-A small "Mobile Content" tab inside existing admin to:
-- CRUD motivational messages
-- Trigger test push notifications
-- Toggle daily-reminder cron on/off
+## 4. Motivational Copy
 
-### 7. Distribution path (App Stores)
-1. Build the mobile bundle in the sandbox (verify it runs in browser at mobile viewport).
-2. Export repo to GitHub → `npm install` → `npx cap add ios && npx cap add android` → `npm run build:mobile && npx cap sync`.
-3. iOS: open Xcode project, sign with your Apple Developer account ($99/yr), submit via TestFlight → App Store review.
-4. Android: open Android Studio, generate signed AAB, upload to Play Console ($25 one-time), internal testing → production.
+Reuses the existing `motivational_messages` table (already migrated). Add two new trigger contexts: `hype` and `forgive`. Each mascot appearance pairs sprite + a weighted random message for that mood. No DB schema change needed — just seed ~15 new rows (data insert, not migration).
 
-Requirements you'll need: Apple Developer account, Google Play Console account, app icon (1024×1024), screenshots, privacy policy URL (you already have `/privacy`), data safety declarations.
+## 5. Performance & Bundle
 
-## What I'll build in implementation (in order)
-1. Build-flag setup + empty `AppMobile.tsx` rendering a "Hello mobile" screen, verify both web and mobile builds work.
-2. Mobile shell: router, bottom tabs, safe-area, status bar, onboarding.
-3. Hub screen with mascot, animated island nodes, gem counter, streak flame.
-4. Quiz story flow (full-screen cards, gestures, Lottie reactions, haptics) wired to existing quiz hooks.
-5. Daily challenge story + leaderboard + profile screens.
-6. Mini-game stories (wheel, scratch, flashcard, true/false, boss).
-7. Motivation engine + `motivational_messages` migration + admin CRUD.
-8. Capacitor config, splash, icon, push notifications + `push_tokens` migration.
-9. Final polish, mobile-viewport QA in the sandbox, then export-to-GitHub instructions for the native builds.
+- 48 sprites at ~40 KB each (WebP, transparent) ≈ 2 MB total. Lazy-load per character; only the active character's 6 moods are kept in memory.
+- Preload the "mascot of the day" on hub mount; others load on demand.
+- All animation via Framer Motion (already installed). No new deps.
 
-## Out of scope for v1
-- Ads on mobile (your memory says ads are disabled sitewide — confirmed)
-- In-app purchases / store payments
-- Offline mode (everything still requires network — Supabase calls)
-- Web admin redesign (admin stays web-only)
+## 6. Files to Add / Edit
 
-## Questions I'd flag before building
-- **Mascot character**: do you want me to generate one (cute gem-themed character with a few mood states as Lottie animations), or do you have existing art?
-- **Push notifications**: OK to use Firebase Cloud Messaging? It requires a small Firebase project setup on your side (free tier). If you'd rather skip push in v1, I can ship in-app motivation only.
-- **Onboarding**: should brand-new installs require sign-up immediately, or allow 5 guest questions first (matches your existing web 30-question guest limit, scaled down)?
+**New:**
+- `src/mobile/mascots/registry.ts` — character list + sprite imports
+- `src/mobile/mascots/MascotPlayer.tsx` — sprite + Motion variants
+- `src/mobile/mascots/useMoodEngine.ts` — Zustand store + mood resolver
+- `src/mobile/mascots/MascotReveal.tsx` — full-screen drop-in for milestones
+- `src/mobile/mascots/IdleMascot.tsx` — hub/profile breathing loop
+- `src/mobile/assets/mascots/<8 dirs × 6 sprites>` — generated PNGs
 
-I'll wait for your go-ahead before touching any files. Once approved, the first thing I'll do is the build-flag setup and confirm both builds still work — then move through the steps above.
+**Edit:**
+- `QuizStoryScreen.tsx` — replace static reveal panel with `<MascotReveal>`
+- `HubScreen.tsx` — mount `<IdleMascot>` next to gem counter
+- `OnboardingScreen.tsx` — mascot-led slides
+- `LeaderboardScreen.tsx`, `ProfileScreen.tsx`, mini-game screens — wire mood reactions
+- `MotivationBubble.tsx` — accept `mood` + `character` props
+
+## 7. Build Order
+
+1. Generate the 48 sprites (longest step; runs in parallel).
+2. Build `useMoodEngine` + `MascotPlayer` with one character to validate the loop.
+3. Wire into `QuizStoryScreen` first (highest-impact surface).
+4. Add remaining 7 characters + rotation.
+5. Roll out to Hub → Onboarding → Mini-games → Leaderboard → Profile.
+6. Seed new motivational copy for `hype` and `forgive` contexts.
+
+## Open Questions for After Approval
+
+- **Character naming/personality** — should I just name them (Gemmy, Foxy, etc.) or do you want to provide names? Default: I'll generate friendly names.
+- **Art style** — chibi/kawaii vs. flat-modern vs. 3D-rendered look? Default: rounded chibi with gem-themed color accents to stay on-brand with CuizIN.
+
+If you want different defaults on either, tell me when you approve; otherwise I'll proceed with the defaults above.

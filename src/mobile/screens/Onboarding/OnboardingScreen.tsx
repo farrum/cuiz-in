@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mascot } from '@/mobile/components/Mascot';
+import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
+import { CHARACTERS } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 
 const SLIDES = [
-  { emoji: '💎', title: 'Earn gems', text: 'Answer questions, build streaks, watch your gem stash grow.' },
-  { emoji: '🔥', title: 'Daily streaks', text: 'Show up every day, multiply your rewards.' },
-  { emoji: '👑', title: 'Climb the ranks', text: 'Top the monthly leaderboard and win real prizes.' },
-  { emoji: '🎉', title: 'Mini-games galore', text: 'Spin wheels, scratch cards, true-or-false swipes & more.' },
+  { character: 'gemmy' as const, mood: 'cheer'   as const, title: 'Hi! I’m Gemmy.', text: 'Answer questions, build streaks, watch your gem stash grow.' },
+  { character: 'foxy'  as const, mood: 'excited' as const, title: 'Daily streaks',   text: 'Show up every day to multiply your rewards. Don’t leave us hanging!' },
+  { character: 'owlie' as const, mood: 'cheer'   as const, title: 'Climb the ranks', text: 'Top the monthly leaderboard and win real prizes — I’ll be cheering.' },
+  { character: 'draco' as const, mood: 'hype'    as const, title: 'Mini-games galore', text: 'Spin wheels, scratch cards, swipe true/false — your whole crew is waiting.' },
 ];
 
 export default function OnboardingScreen() {
@@ -33,13 +34,18 @@ export default function OnboardingScreen() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+            className="flex flex-col items-center"
           >
-            <div className="text-8xl mb-4">{slide.emoji}</div>
-            <h1 className="text-3xl font-bold mb-2">{slide.title}</h1>
+            <MascotPlayer character={slide.character} mood={slide.mood} size={180} />
+            <h1 className="text-3xl font-bold mt-4 mb-2">{slide.title}</h1>
             <p className="text-muted-foreground max-w-xs">{slide.text}</p>
           </motion.div>
         </AnimatePresence>
-        <Mascot mood="happy" size={70} className="mt-10" />
+        <div className="mt-8 flex gap-2 opacity-60">
+          {CHARACTERS.slice(0, 8).map((c, idx) => (
+            <MascotPlayer key={c.id} character={c} mood={idx === i % 4 ? 'cheer' : 'neutral'} size={28} noHalo />
+          ))}
+        </div>
       </div>
 
       <div className="pb-10">

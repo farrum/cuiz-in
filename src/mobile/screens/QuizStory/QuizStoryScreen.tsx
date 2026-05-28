@@ -10,9 +10,10 @@ import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { logGemsEarned } from '@/utils/gemsService';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { getMotivationSync } from '@/mobile/hooks/useMotivation';
-import { Mascot } from '@/mobile/components/Mascot';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
+import { MascotReveal } from '@/mobile/mascots/MascotReveal';
+import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
@@ -32,7 +33,8 @@ export default function QuizStoryScreen() {
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
   const advanceTimer = useRef<number | null>(null);
   const progressTimer = useRef<number | null>(null);
-  const motivation = isCorrect == null ? null : getMotivationSync(isCorrect ? 'on_correct' : 'on_wrong');
+  const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
+  const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
 
   const loadNext = async () => {
     setPhase('loading');
@@ -90,6 +92,9 @@ export default function QuizStoryScreen() {
     setCorrectAnswer(serverCorrectAnswer);
     setExplanation(serverExplanation);
     incrementQuestionsAnswered();
+    // Update the global mood engine and remember the resolved mood for this reveal.
+    moodEngine.recordAnswer(correct);
+    setRevealMood(moodEngine.snapshot().lastMood);
 
     if (correct) {
       haptics('success');
@@ -101,7 +106,8 @@ export default function QuizStoryScreen() {
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(next));
       const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (uid) { void logGemsEarned(earned, uid); }
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.4 }, ticks: 120 });
+      const burst = moodEngine.snapshot().correctStreak >= 5 ? 200 : moodEngine.snapshot().correctStreak >= 2 ? 130 : 80;
+      confetti({ particleCount: burst, spread: 80, origin: { y: 0.4 }, ticks: 140 });
     } else {
       haptics('error');
       resetStreak();
@@ -214,31 +220,22 @@ export default function QuizStoryScreen() {
               </div>
 
               {/* Reveal panel */}
-              <AnimatePresence>
-                {phase === 'revealing' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-6 rounded-2xl border border-border bg-card p-4 shadow-md flex items-start gap-3"
-                  >
-                    <Mascot mood={isCorrect ? 'celebrating' : 'thinking'} size={56} />
-                    <div className="flex-1">
-                      <p className={cn(
-                        'font-bold text-base mb-1',
-                        isCorrect ? 'text-emerald-600' : 'text-destructive'
-                      )}>
-                        {isCorrect ? '+' + (question.gems || 10) + ' gems!' : 'Not quite.'}
-                      </p>
-                      {motivation && (
-                        <p className="text-sm">{motivation.emoji} {motivation.text}</p>
-                      )}
-                      {explanation && (
-                        <p className="text-xs text-muted-foreground mt-2">{explanation}</p>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="mt-6">
+                <MascotReveal
+                  show={phase === 'revealing'}
+                  mood={revealMood}
+                  message={motivation?.text}
+                  emoji={motivation?.emoji}
+                  headline={
+                    isCorrect
+                      ? `+${question.gems || 10} gems!`
+                      : revealMood === 'angry' ? 'Argh!' : revealMood === 'upset' ? 'Hmm…' : 'Not quite.'
+                  }
+                  headlineClass={isCorrect ? 'text-emerald-600' : 'text-destructive'}
+                  explanation={explanation}
+                  size={92}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
