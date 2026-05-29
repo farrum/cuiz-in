@@ -752,6 +752,7 @@ export type Database = {
         Row: {
           auth_migrated: boolean | null
           created_at: string | null
+          date_of_birth: string | null
           display_name: string | null
           email: string | null
           gems_balance: number
@@ -771,6 +772,7 @@ export type Database = {
         Insert: {
           auth_migrated?: boolean | null
           created_at?: string | null
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           gems_balance?: number
@@ -790,6 +792,7 @@ export type Database = {
         Update: {
           auth_migrated?: boolean | null
           created_at?: string | null
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           gems_balance?: number
