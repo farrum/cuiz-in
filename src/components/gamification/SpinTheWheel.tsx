@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 interface Prize {
   id: string;
@@ -69,6 +70,11 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
     setIsSpinning(true);
     setWonPrize(null);
 
+    // Initial continuous fast rotation to show immediate feedback!
+    // We add 10 full spins, which it will start doing while awaiting the server.
+    const initialSpin = rotation + 360 * 10;
+    setRotation(initialSpin);
+
     let winningIndex = 0;
     
     // Secure Server-side check
@@ -92,108 +98,128 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
     } catch (err: any) {
       console.error("Spin failed:", err);
       toast({ title: 'Spin Failed', description: err.message || 'Something went wrong', variant: 'destructive' });
+      // Reset spinning state
       setIsSpinning(false);
+      // Snap back to stop the infinite spin
+      setRotation(rotation);
       return;
     }
     
-    // Calculate rotation to land on the winning segment
+    // Calculate rotation to land EXACTLY on the winning segment
     const extraSpins = 360 * 5;
-    const targetRotation = extraSpins + (360 - (winningIndex * segmentAngle)) - (segmentAngle / 2);
+    // We base the calculation on the original rotation to avoid jumping from the initialSpin
+    // Align top pointer (0 deg) to winning index
+    const targetAngle = extraSpins + (360 - (winningIndex * segmentAngle)) - (segmentAngle / 2);
+    // Add some random variance so it doesn't land exactly in the center every time
     const variance = (Math.random() - 0.5) * (segmentAngle * 0.8);
-    const finalRotation = rotation + targetRotation + variance;
+    const finalRotation = rotation + targetAngle + variance;
 
-    // Use a small timeout to ensure the `isSpinning: true` state is applied to the DOM 
-    // before we change the rotation, so the CSS transition triggers.
-    setTimeout(() => {
-      setRotation(finalRotation);
-    }, 50);
+    // Transition seamlessly to the final targeted landing position
+    setRotation(finalRotation);
 
-    // Wait for animation to finish
+    // Wait for animation to finish (the duration is set to 4 seconds)
     setTimeout(() => {
       setIsSpinning(false);
       setWonPrize(activePrizes[winningIndex]);
       if (onSpinComplete) {
         onSpinComplete(activePrizes[winningIndex]);
       }
-    }, 4050); // 4s transition time + 50ms delay
+    }, 4000);
   };
 
   return (
     <div className="flex flex-col items-center gap-6 p-6">
-      <div className="relative w-64 h-64 md:w-80 md:h-80">
-        {/* Pointer */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 z-10 w-0 h-0 
-          border-l-[12px] border-r-[12px] border-t-[24px] 
-          border-l-transparent border-r-transparent border-t-red-500 drop-shadow-md" 
+      <div className="relative w-72 h-72 md:w-80 md:h-80 my-4">
+        {/* Glow backdrop effect */}
+        <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-2xl animate-pulse" />
+
+        {/* Pointer at the Top */}
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 z-20 w-0 h-0 
+            border-l-[14px] border-r-[14px] border-t-[28px] 
+            border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-[0_4px_6px_rgba(244,63,94,0.4)]"
+          style={{ transformOrigin: 'top center' }}
         />
         
-        {/* The Wheel */}
-        <div 
-          className="w-full h-full rounded-full border-4 border-white shadow-xl overflow-hidden relative"
-          style={{
-            transform: `rotate(${rotation}deg)`,
-            transition: isSpinning ? 'transform 4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' : 'none',
-          }}
-        >
-          {activePrizes.map((prize, index) => {
-            const startAngle = index * segmentAngle;
-            return (
-              <div
-                key={prize.id}
-                className="absolute w-full h-full top-0 left-0"
-                style={{
-                  clipPath: `polygon(50% 50%, 100% 0, 100% 50%)`, // Rough approximation for CSS triangle, 
-                  // In a real app, conic-gradient is much better for arbitrary slices:
-                }}
-              />
-            );
-          })}
+        {/* The Outer Rim */}
+        <div className="w-full h-full rounded-full border-[8px] border-slate-800 bg-slate-900 shadow-2xl p-1 relative flex items-center justify-center">
           
-          {/* Conic Gradient for slices */}
-          <div 
-            className="absolute inset-0 rounded-full"
+          {/* Inner Spinning Wheel powered by Framer Motion */}
+          <motion.div
+            animate={{ rotate: rotation }}
+            transition={{ 
+              duration: isSpinning ? 4 : 0, 
+              ease: isSpinning ? [0.15, 0.85, 0.2, 1] : "linear" 
+            }}
+            className="w-full h-full rounded-full overflow-hidden relative shadow-inner"
             style={{
               background: `conic-gradient(${activePrizes.map((p, i) => 
                 `${p.color} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`
               ).join(', ')})`
             }}
-          />
+          >
+            {/* Draw Divider Lines between slices for better visibility */}
+            {activePrizes.map((_, index) => {
+              const lineAngle = index * segmentAngle;
+              return (
+                <div
+                  key={`line-${index}`}
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 bg-slate-800/20 origin-bottom"
+                  style={{
+                    transform: `rotate(${lineAngle}deg)`,
+                    transformOrigin: '50% 100%'
+                  }}
+                />
+              );
+            })}
 
-          {/* Text Labels */}
-          {activePrizes.map((prize, index) => {
-            const angle = index * segmentAngle + (segmentAngle / 2);
-            return (
-              <div
-                key={`label-${prize.id}`}
-                className="absolute w-full h-full flex justify-center items-start pt-4 text-sm font-bold text-gray-800"
-                style={{
-                  transform: `rotate(${angle}deg)`,
-                  transformOrigin: '50% 50%',
-                }}
-              >
-                <span className="block max-w-[80px] text-center truncate drop-shadow-sm">
-                  {prize.label}
-                </span>
-              </div>
-            );
-          })}
+            {/* Radial Segment text labels */}
+            {activePrizes.map((prize, index) => {
+              const textAngle = index * segmentAngle + (segmentAngle / 2);
+              return (
+                <div
+                  key={`label-${prize.id}`}
+                  className="absolute w-full h-full flex justify-center items-start pt-4 text-xs font-bold text-slate-800"
+                  style={{
+                    transform: `rotate(${textAngle}deg)`,
+                    transformOrigin: '50% 50%',
+                  }}
+                >
+                  <span className="block max-w-[75px] text-center font-extrabold truncate drop-shadow-sm select-none text-[13px]">
+                    {prize.label}
+                  </span>
+                </div>
+              );
+            })}
+          </motion.div>
 
-          {/* Center Hub */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-inner border-2 border-gray-100 flex items-center justify-center">
-            <div className="w-4 h-4 bg-gray-200 rounded-full" />
+          {/* Premium Glowing Hub in the center */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-slate-800 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-4 border-slate-700 flex items-center justify-center z-10">
+            <div className="w-6 h-6 bg-gradient-to-tr from-indigo-500 to-emerald-400 rounded-full shadow-inner flex items-center justify-center animate-spin [animation-duration:8s]">
+              <span className="text-[10px] select-none">💎</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="text-center min-h-[60px]">
+      {/* Winner Announcement */}
+      <div className="text-center min-h-[60px] flex items-center justify-center w-full">
         {wonPrize ? (
-          <div className="animate-in fade-in slide-in-from-bottom-2">
-            <p className="text-lg font-bold text-green-600">You won {wonPrize.label}!</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="flex flex-col items-center"
+          >
+            <p className="font-extrabold text-xl text-emerald-500 drop-shadow-sm">
+              🎉 You won {wonPrize.label}!
+            </p>
+          </motion.div>
         ) : (
-          <p className="text-sm text-gray-500">
-            {canSpin ? "Spin the wheel for a daily prize!" : "Come back tomorrow for another spin!"}
-          </p>
+          !isSpinning && (
+            <p className="text-sm text-slate-500 font-medium">
+              {canSpin ? "Spin the fortune wheel for a daily prize!" : "Come back tomorrow for another spin!"}
+            </p>
+          )
         )}
       </div>
 
@@ -201,7 +227,12 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
         size="lg" 
         onClick={handleSpin} 
         disabled={!canSpin || isSpinning || isLoading}
-        className="w-full max-w-xs font-bold"
+        className={cn(
+          "w-full max-w-xs font-extrabold text-base transition-all duration-200",
+          canSpin && !isSpinning && !isLoading 
+            ? "bg-gradient-to-r from-emerald-500 to-teal-600 shadow-[0_4px_14px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.4)]"
+            : ""
+        )}
       >
         {isLoading ? 'Loading...' : isSpinning ? 'Spinning...' : 'Spin Now!'}
       </Button>

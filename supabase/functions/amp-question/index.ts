@@ -48,7 +48,8 @@ function generateAMPPage(question: any): string {
 
   // Escape HTML entities
   const escapeHtml = (text: string): string => {
-    return text
+    if (!text) return '';
+    return String(text)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -63,7 +64,7 @@ function generateAMPPage(question: any): string {
   const correctAnswer = escapeHtml(question.correct_answer);
 
   // Generate structured data
-  const structuredData = {
+  const structuredData: any = {
     "@context": "https://schema.org",
     "@type": "Quiz",
     "name": questionText,
@@ -76,16 +77,19 @@ function generateAMPPage(question: any): string {
     "hasPart": {
       "@type": "Question",
       "text": questionText,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": correctAnswer
-      },
       "suggestedAnswer": options.map(opt => ({
         "@type": "Answer",
         "text": escapeHtml(opt)
       }))
     }
   };
+
+  if (correctAnswer) {
+    structuredData.hasPart.acceptedAnswer = {
+      "@type": "Answer",
+      "text": correctAnswer
+    };
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://pgywvtphfidouakypdno.supabase.co';
   const categorySlug = createSlug(question.category || 'general-knowledge');

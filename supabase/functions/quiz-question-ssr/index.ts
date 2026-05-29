@@ -13,7 +13,8 @@ const corsHeaders = {
 };
 
 function escapeHtml(text: string): string {
-  return text
+  if (!text) return '';
+  return String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -118,11 +119,13 @@ serve(async (req) => {
         "text": q.question,
         "answerCount": 1,
         "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": q.correct_answer,
-          "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
-        },
+        ...(q.correct_answer ? {
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": q.correct_answer,
+            "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+          }
+        } : {}),
         "suggestedAnswer": options.filter(opt => opt !== q.correct_answer).map(opt => ({
           "@type": "Answer",
           "text": String(opt)

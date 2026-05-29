@@ -482,10 +482,12 @@ async function buildQuestionPage(supabase: any, id: string): Promise<{html: stri
         name: q.question,
         text: q.question,
         answerCount: 1,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: q.correct_answer,
-        },
+        ...(q.correct_answer ? {
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: q.correct_answer,
+          }
+        } : {}),
       },
     },
     {
