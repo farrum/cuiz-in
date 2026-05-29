@@ -29,9 +29,9 @@ export default function LeaderboardScreen() {
           const ids = data.map((r) => r.user_id);
           const { data: profs } = await supabase
             .from('profiles')
-            .select('id, username')
+            .select('id, username, display_name')
             .in('id', ids);
-          const byId = new Map((profs || []).map((p: any) => [p.id, p.username]));
+          const byId = new Map((profs || []).map((p: any) => [p.id, p.display_name || p.username]));
           const enriched: Row[] = data.map((r: any) => ({
             user_id: r.user_id,
             username: byId.get(r.user_id) || 'Player',

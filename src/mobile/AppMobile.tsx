@@ -28,12 +28,12 @@ const queryClient = new QueryClient({
 async function hydrateMobileSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
-      supabase.from('profiles').select('username, gems:points').eq('id', userId).maybeSingle(),
+      supabase.from('profiles').select('username, display_name, gems:points').eq('id', userId).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
     if (profileResult.data) {
       localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, profileResult.data.username);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, (profileResult.data as any).display_name || profileResult.data.username);
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String((profileResult.data as any).gems ?? 0));
     }
     const roles = new Set((roleResult.data || []).map((r) => r.role).filter(Boolean));
