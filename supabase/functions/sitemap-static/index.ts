@@ -7,7 +7,7 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('S
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/xml; charset=UTF-8',
+  'content-type': 'application/xml; charset=UTF-8',
   'Cache-Control': 'public, max-age=3600, s-maxage=86400',
 };
 
@@ -169,7 +169,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
 
     if (type === 'index') {
-      // Generate sitemap index: main + category + subcategory + amp
+      // Generate sitemap index: main + category + amp (subcategory sitemaps are removed to optimize crawl budget)
       const categories = Object.keys(slugToCategoriesMap);
 
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -178,21 +178,15 @@ serve(async (req) => {
       // Main sitemap
       xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
-      let subCount = 0;
       for (const cat of categories) {
         xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
-        const subs = subcategoriesByCategory[cat] || [];
-        for (const s of subs) {
-          xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sub/${s.slug}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
-          subCount++;
-        }
       }
 
       // AMP sitemap
       xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/amp.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
       xml += '</sitemapindex>';
-      console.log(`Generated sitemap index: ${categories.length} categories + ${subCount} subcategories`);
+      console.log(`Generated streamlined sitemap index: ${categories.length} categories`);
       return new Response(xml, { headers: corsHeaders });
     }
     

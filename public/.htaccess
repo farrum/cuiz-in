@@ -11,24 +11,37 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Sitemap Proxies (Canonical - Restructured paths)
-RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]
-RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
-RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
-RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
-RewriteRule ^sitemaps/category/([a-z-]+)/sub/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [P,L]
+# Sitemap Proxies & SSR Rules (Canonical - Restructured paths)
+<IfModule mod_proxy.c>
+  RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]
+  RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
+  RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
+  RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
+  
+  # SSR for quiz question pages
+  RewriteRule ^quiz/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/$1 [P,L]
+  RewriteRule ^amp/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question/$1 [P,L]
+</IfModule>
+<IfModule !mod_proxy.c>
+  RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [R=301,L]
+  RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=301,L]
+  RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
+  RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=301,L]
+  
+  # SSR for quiz question pages (Fallback to 302 redirect for bots/SEO)
+  RewriteRule ^quiz/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/$1 [R=302,L]
+  RewriteRule ^amp/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question/$1 [R=302,L]
+</IfModule>
 
 # Legacy and API Fallbacks
-RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
-RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
-
-# Don't rewrite files or directories
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# SPA fallback for all other routes
-RewriteRule ^ index.html [L]
+<IfModule mod_proxy.c>
+  RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
+  RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [P,L]
+</IfModule>
+<IfModule !mod_proxy.c>
+  RewriteRule ^api/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
+  RewriteRule ^api/sitemap$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-index [R=301,L]
+</IfModule>
 
 # BOT DETECTION & PRERENDER ROUTING
 # Send search engines and social bots to the Edge Function prerenderer
@@ -38,7 +51,16 @@ RewriteCond %{REQUEST_URI} !^/ads\.txt$
 RewriteCond %{REQUEST_URI} !^/sitemap.*\.xml$
 RewriteCond %{REQUEST_URI} !^/favicon\.ico$
 RewriteCond %{REQUEST_URI} !^/og-image.*\.png$
-RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerender?path=/$1 [P,L]
+<IfModule mod_proxy.c>
+  RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerender?path=/$1 [P,L]
+</IfModule>
+<IfModule !mod_proxy.c>
+  RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerender?path=/$1 [R=302,L]
+</IfModule>
+
+# SPA fallback for all other routes (must be last to allow bot detection above)
+RewriteRule ^ index.html [L]
+
 
 # Security Headers
 <IfModule mod_headers.c>
