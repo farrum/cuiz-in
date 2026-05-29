@@ -18,7 +18,7 @@ export default function ProfileScreen() {
   const { streak, questionsAnswered } = usePersistentQuizStats();
   const { accuracy, sample } = useMoodEngine();
   const mirrorMood = moodFromAccuracy(accuracy, sample);
-  const [profile, setProfile] = useState<{ username: string; gems: number; daily: number; monthly: number } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; username: string; gems: number; daily: number; monthly: number } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editProfile, setEditProfile] = useState<MobileProfile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -36,6 +36,7 @@ export default function ProfileScreen() {
       ]);
       const pd = p.data as any;
       setProfile({
+        name: pd?.display_name || pd?.username || 'Player',
         username: pd?.username || 'Player',
         gems: Number(pd?.gems_balance ?? pd?.points ?? 0),
         daily: Number((d.data as any)?.points ?? 0),
@@ -87,12 +88,15 @@ export default function ProfileScreen() {
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={profile?.username || 'avatar'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
+          <img src={avatarUrl} alt={profile?.name || 'avatar'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
         ) : (
           <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
         )}
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold truncate">{profile?.username || '…'}</h1>
+          <h1 className="text-2xl font-bold truncate">{profile?.name || '…'}</h1>
+          {profile?.username && profile.username !== profile.name && (
+            <p className="text-xs text-muted-foreground/80 truncate">@{profile.username}</p>
+          )}
           <p className="text-sm text-muted-foreground">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
         <motion.button
@@ -147,7 +151,7 @@ export default function ProfileScreen() {
           onSaved={(next) => {
             setEditProfile(next);
             setAvatarUrl(next.profile_picture || '');
-            setProfile((prev) => (prev ? { ...prev, username: next.username } : prev));
+            setProfile((prev) => (prev ? { ...prev, username: next.username, name: next.display_name || next.username } : prev));
           }}
         />
       )}
