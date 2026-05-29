@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Sparkles, Calendar, Flame } from 'lucide-react';
+import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
@@ -10,6 +10,7 @@ import { useMoodEngine } from '@/mobile/mascots/useMoodEngine';
 import { moodFromAccuracy, characterOfTheDay } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
+import { ProfileEditSheet, MobileProfile } from './ProfileEditSheet';
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ export default function ProfileScreen() {
   const { accuracy, sample } = useMoodEngine();
   const mirrorMood = moodFromAccuracy(accuracy, sample);
   const [profile, setProfile] = useState<{ username: string; gems: number; daily: number; monthly: number } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editProfile, setEditProfile] = useState<MobileProfile | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
 
   useEffect(() => {
@@ -26,15 +30,29 @@ export default function ProfileScreen() {
       const today = new Date().toISOString().slice(0, 10);
       const month = new Date().toISOString().slice(0, 7);
       const [p, d, m] = await Promise.all([
-        supabase.from('profiles').select('username, points, gems_balance').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('username, points, gems_balance, display_name, email, phone, upi_id, profile_picture, date_of_birth').eq('id', uid).maybeSingle(),
         supabase.from('daily_points').select('points').eq('user_id', uid).eq('date', today).maybeSingle(),
         supabase.from('monthly_points').select('points').eq('user_id', uid).eq('month', month).maybeSingle(),
       ]);
+      const pd = p.data as any;
       setProfile({
-        username: (p.data as any)?.username || 'Player',
-        gems: Number((p.data as any)?.gems_balance ?? (p.data as any)?.points ?? 0),
+        username: pd?.username || 'Player',
+        gems: Number(pd?.gems_balance ?? pd?.points ?? 0),
         daily: Number((d.data as any)?.points ?? 0),
         monthly: Number((m.data as any)?.points ?? 0),
+      });
+      setAvatarUrl(pd?.profile_picture || '');
+      const { data: { session } } = await supabase.auth.getSession();
+      const provider = session?.user?.app_metadata?.provider === 'google' ? 'google' : 'email';
+      setEditProfile({
+        username: pd?.username || '',
+        display_name: pd?.display_name ?? null,
+        email: pd?.email ?? session?.user?.email ?? null,
+        phone: pd?.phone ?? null,
+        upi_id: pd?.upi_id ?? null,
+        profile_picture: pd?.profile_picture ?? null,
+        date_of_birth: pd?.date_of_birth ?? null,
+        provider,
       });
     })();
   }, [uid]);
@@ -68,11 +86,23 @@ export default function ProfileScreen() {
     <div className="px-4 pt-4 pb-32">
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
-        <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
-        <div>
-          <h1 className="text-2xl font-bold">{profile?.username || '…'}</h1>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={profile?.username || 'avatar'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
+        ) : (
+          <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
+        )}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold truncate">{profile?.username || '…'}</h1>
           <p className="text-sm text-muted-foreground">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setEditOpen(true)}
+          disabled={!editProfile}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-primary border border-primary/40 disabled:opacity-50"
+        >
+          <Pencil className="w-4 h-4" /> Edit
+        </motion.button>
       </div>
 
       {sample > 0 && (
@@ -107,6 +137,20 @@ export default function ProfileScreen() {
       >
         <LogOut className="w-4 h-4" /> Sign out
       </motion.button>
+
+      {editProfile && uid && (
+        <ProfileEditSheet
+          uid={uid}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          profile={editProfile}
+          onSaved={(next) => {
+            setEditProfile(next);
+            setAvatarUrl(next.profile_picture || '');
+            setProfile((prev) => (prev ? { ...prev, username: next.username } : prev));
+          }}
+        />
+      )}
     </div>
   );
 }
