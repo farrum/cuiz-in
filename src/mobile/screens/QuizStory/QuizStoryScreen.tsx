@@ -15,6 +15,7 @@ import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
+import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -35,6 +36,8 @@ export default function QuizStoryScreen() {
   const progressTimer = useRef<number | null>(null);
   const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
+  const [showInterstitial, setShowInterstitial] = useState(false);
+  const [adSeed, setAdSeed] = useState(0);
 
   const loadNext = async () => {
     setPhase('loading');
@@ -113,8 +116,14 @@ export default function QuizStoryScreen() {
       resetStreak();
     }
 
-    // Auto-advance after 5s
-    advanceTimer.current = window.setTimeout(() => loadNext(), 5000);
+    // After the 5s reveal, show a full-screen ad (if available), then advance.
+    advanceTimer.current = window.setTimeout(() => setShowInterstitial(true), 5000);
+  };
+
+  const closeInterstitial = () => {
+    setShowInterstitial(false);
+    setAdSeed((s) => s + 1);
+    loadNext();
   };
 
   useEffect(() => {
@@ -252,6 +261,8 @@ export default function QuizStoryScreen() {
           <button onClick={loadNext} className="text-primary font-semibold">Skip →</button>
         </div>
       </div>
+
+      <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={7} seed={adSeed} />
     </div>
   );
 }
