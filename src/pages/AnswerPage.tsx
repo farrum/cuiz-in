@@ -241,10 +241,12 @@ const AnswerPage: React.FC = () => {
           </Card>
         ) : question ? (
           <>
-            {/* Hidden SEO content */}
+            {/* SEO content */}
+            <div className="mb-4">
+              <h1 className="text-xl font-bold mb-1">Answer to: {question.question}</h1>
+              <p className="text-sm text-muted-foreground">Category: {question.category} · Difficulty: {question.difficulty}</p>
+            </div>
             <div className="hidden">
-              <h1>Answer to: {question.question}</h1>
-              <p>Category: {question.category}</p>
               <p>Difficulty: {question.difficulty}</p>
               <p>Selected Answer: {selectedOption}</p>
               <p>Correct: {isCorrect ? 'Yes' : 'No'}</p>
