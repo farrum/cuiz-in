@@ -70,7 +70,7 @@ export const ImageReveal: React.FC<ImageRevealProps> = ({
         >
           <img 
             src={imageToReveal} 
-            alt="Reveal" 
+            alt="Scratch to reveal the hidden reward image" 
             className="w-full h-full object-cover rounded-xl"
             crossOrigin="anonymous"
           />
