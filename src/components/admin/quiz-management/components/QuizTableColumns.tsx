@@ -74,7 +74,7 @@ export const getImageQuizColumns = (
         {row.imageUrl ? (
           <img 
             src={row.imageUrl} 
-            alt="Question" 
+            alt="Quiz question thumbnail" 
             className="h-full w-full object-contain rounded-md"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/placeholder.svg";

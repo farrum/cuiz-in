@@ -88,7 +88,7 @@ export default function ProfileScreen() {
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={profile?.name || 'avatar'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
+          <img src={avatarUrl} alt={profile?.name ? `${profile.name}'s profile picture` : 'Your profile picture'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
         ) : (
           <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
         )}

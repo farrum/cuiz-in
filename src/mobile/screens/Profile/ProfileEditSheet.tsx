@@ -173,7 +173,7 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
               <div className="relative">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border">
                   {avatar ? (
-                    <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={avatar} alt="Your profile picture" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-10 h-10 text-muted-foreground" />
                   )}

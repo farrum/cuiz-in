@@ -49,7 +49,7 @@ export function WheelGame() {
         .maybeSingle();
         
       if (data && data.config) {
-        setActivePrizes(data.config as Prize[]);
+        setActivePrizes(data.config as unknown as Prize[]);
       }
     } catch (err) {
       console.error('Failed to load dynamic wheel prizes, falling back to defaults', err);
