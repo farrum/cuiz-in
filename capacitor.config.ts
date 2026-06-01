@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.7e6688c8dfb8442e8feda62399ade2ef',
+  appId: 'com.cuizin.cuizapp',
   appName: 'cuiz-in',
   webDir: 'dist',
   // Dev hot-reload from the Lovable sandbox — comment out for production builds.
