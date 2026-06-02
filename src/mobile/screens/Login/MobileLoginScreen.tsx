@@ -26,11 +26,26 @@ export default function MobileLoginScreen() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { data: { username: username || email.split('@')[0] } },
+        const uname = (username || email.split('@')[0]).trim();
+        const { data, error } = await supabase.functions.invoke('register-user', {
+          body: {
+            username: uname,
+            displayName: uname,
+            email: email.trim(),
+            phone: '',
+            password,
+          },
         });
-        if (error) throw error;
+        if (error || !data?.success) {
+          const msg = data?.error || error?.message || 'Registration failed';
+          throw new Error(typeof msg === 'string' ? msg : 'Registration failed');
+        }
+        if (data.access_token && data.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          });
+        }
       }
       haptics('success');
       navigate('/hub');
