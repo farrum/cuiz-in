@@ -4,11 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.cuizin.cuizapp',
   appName: 'cuiz-in',
   webDir: 'dist',
-  // Dev hot-reload from the Lovable sandbox — comment out for production builds.
-  server: {
-    url: 'https://7e6688c8-dfb8-442e-8fed-a62399ade2ef.lovableproject.com?forceHideBadge=true&mobile=1',
-    cleartext: true,
-  },
+  // server: {
+  //   url: 'https://7e6688c8-dfb8-442e-8fed-a62399ade2ef.lovableproject.com?forceHideBadge=true&mobile=1',
+  //   cleartext: true,
+  // },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,
