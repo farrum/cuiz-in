@@ -20,6 +20,7 @@ import { QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getGuestQuestionsPlayed } from '@/utils/guestPlayService';
+import { trackGuestPageView } from '@/utils/guestAnalytics';
 
 const GUEST_ANSWER_WALL_THRESHOLD = 5;
 
@@ -40,6 +41,10 @@ const AnswerPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const guestQuestionsPlayed = getGuestQuestionsPlayed();
   const shouldShowAuthWall = isAuthenticated === false && guestQuestionsPlayed >= GUEST_ANSWER_WALL_THRESHOLD;
+
+  useEffect(() => {
+    trackGuestPageView();
+  }, [questionId]);
 
   useEffect(() => {
     let mounted = true;
