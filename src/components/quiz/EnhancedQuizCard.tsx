@@ -7,6 +7,7 @@ import { useQuizSounds } from '@/hooks/useQuizSounds';
 import { logGemsEarned } from '@/utils/gemsService';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
+import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
 
 // Streak bonus multipliers
@@ -139,6 +140,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
     // Check guest limits
     if (!isLoggedIn && !guestCanPlay) {
+      trackGuestEvent({ event_type: 'limit_reached' });
       setShowGuestLimitModal(true);
       return;
     }
@@ -238,6 +240,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
         });
       } else {
         incrementGuestPlay(gems);
+        trackGuestEvent({ event_type: 'answer', question_id: question.id, correct: isCorrect, points: gems });
       }
     } catch (error) {
       console.error('Error saving answer:', error);
