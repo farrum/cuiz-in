@@ -18,6 +18,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
+import { trackGuestPageView } from '@/utils/guestAnalytics';
 import { 
   Breadcrumb,
   BreadcrumbList,
@@ -46,6 +47,10 @@ const QuizQuestionPage: React.FC = () => {
   const [answered, setAnswered] = useState<{ isCorrect: boolean; selected: string } | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    trackGuestPageView();
+  }, [questionId]);
 
   useEffect(() => {
     const fetchQuestionData = async () => {
