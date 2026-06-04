@@ -31,6 +31,8 @@ import { ContentPartnerships } from '@/components/admin/partnerships';
 import SitemapManagement from '@/components/admin/SitemapManagement';
 import AdminGamificationPanel from '@/components/admin/gamification/AdminGamificationPanel';
 import { Gamepad2 } from 'lucide-react';
+import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
+import { UserSearch } from 'lucide-react';
 
 const AdminPage: React.FC = () => {
   const location = useLocation();
@@ -216,6 +218,10 @@ const AdminPage: React.FC = () => {
               <Gamepad2 className="w-4 h-4 mr-1" />
               Gamification
             </TabsTrigger>
+            <TabsTrigger value="guests">
+              <UserSearch className="w-4 h-4 mr-1" />
+              Guests
+            </TabsTrigger>
           </TabsList>
           
           <Separator className="my-6" />
@@ -297,6 +303,9 @@ const AdminPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="gamification">
             <AdminGamificationPanel />
+          </TabsContent>
+          <TabsContent value="guests">
+            <GuestActivityPanel />
           </TabsContent>
         </Tabs>
       </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
+import { trackGuestEvent } from '@/utils/guestAnalytics';
 
 import { Loader, Check, X } from 'lucide-react';
 
@@ -269,6 +270,9 @@ const UserRegistrationForm: React.FC = () => {
 
       console.log('[Registration] User created successfully:', data.user.id);
       const createdUserId = data.user.id;
+
+      // Close the anonymous funnel: this guest session converted to a user
+      trackGuestEvent({ event_type: 'registered' });
 
       // 3. Handle referral if present
       if (referralCode) {

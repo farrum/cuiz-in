@@ -24,6 +24,7 @@ import { useQuizGems } from '@/hooks/quiz';
 import { TriviaWordle } from '@/components/gamification/TriviaWordle';
 import { getLocalQuestionsBatch, getRandomLocalWordle } from '@/utils/localTriviaPool';
 import { useToast } from '@/hooks/use-toast';
+import { trackGuestPageView } from '@/utils/guestAnalytics';
 
 // AdSense slot id for the inter-question interstitial ad unit.
 // Create a Display ad unit in AdSense dashboard and paste its slot id here.
@@ -66,6 +67,11 @@ const QuizPlayPage: React.FC = () => {
   // Daily/monthly/total gems fetched from DB (refreshes after each answer)
   const [, setNextBadgeThreshold] = useState(10);
   const { dailyGems, fetchGems } = useQuizGems(setNextBadgeThreshold);
+
+  // Track anonymous page view per question
+  useEffect(() => {
+    trackGuestPageView();
+  }, [questionId]);
 
   // Fetch current question by id
   useEffect(() => {
