@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.backfill-question-images]
 verify_jwt = false
+
+[functions.track-guest-event]
+verify_jwt = false

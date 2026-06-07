@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
+import { trackGuestEvent } from '@/utils/guestAnalytics';
 
 export default function MobileLoginScreen() {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ export default function MobileLoginScreen() {
             refresh_token: data.refresh_token,
           });
         }
+        trackGuestEvent({ event_type: 'registered' });
         haptics('success');
         navigate('/hub');
       }

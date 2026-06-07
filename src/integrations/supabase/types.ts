@@ -491,6 +491,48 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_events: {
+        Row: {
+          correct: boolean | null
+          country: string | null
+          created_at: string
+          device: string | null
+          event_type: string
+          id: string
+          path: string | null
+          points: number | null
+          question_id: string | null
+          referrer: string | null
+          session_id: string
+        }
+        Insert: {
+          correct?: boolean | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          event_type: string
+          id?: string
+          path?: string | null
+          points?: number | null
+          question_id?: string | null
+          referrer?: string | null
+          session_id: string
+        }
+        Update: {
+          correct?: boolean | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          event_type?: string
+          id?: string
+          path?: string | null
+          points?: number | null
+          question_id?: string | null
+          referrer?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       login_logs: {
         Row: {
           created_at: string | null

@@ -1,4 +1,3 @@
  google.com, pub-2831295465597549, DIRECT, f08c47fec0942fa0
+
  
- # AdsTxtManager redirect (for additional ad networks)
- # https://srv.adstxtmanager.com/19390/cuiz.in

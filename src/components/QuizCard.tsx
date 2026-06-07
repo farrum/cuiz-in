@@ -11,6 +11,7 @@ import { logGemsEarned } from '@/utils/gemsService';
 import { createSlug } from '@/utils/urlUtils';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from './GuestPlayLimitModal';
+import { trackGuestEvent } from '@/utils/guestAnalytics';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -50,6 +51,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
     
     // Check if guest limit reached
     if (!isLoggedIn && !guestCanPlay) {
+      trackGuestEvent({ event_type: 'limit_reached' });
       setShowGuestLimitModal(true);
       setIsSubmitting(false);
       return;
@@ -115,6 +117,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
       } else {
         // Guest user - track session gems
         incrementGuestPlay(gemsEarned);
+        trackGuestEvent({ event_type: 'answer', question_id: question.id, correct: isCorrect, points: gemsEarned });
         
         // Show remaining plays for guests
         const remaining = getRemainingGuestPlays();
