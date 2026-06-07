@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAdPool, type AdCreative } from './adProvider';
+import { getAdSlotsByPosition } from '@/utils/adService';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 const REFRESH_MS = 30000;
 
@@ -11,12 +13,26 @@ const REFRESH_MS = 30000;
 export function TopBannerAd() {
   const [pool] = useState<AdCreative[]>(() => getAdPool('banner'));
   const [index, setIndex] = useState(0);
+  const [hasDbAd, setHasDbAd] = useState(false);
+
+  useEffect(() => {
+    const dbAds = getAdSlotsByPosition('app-banner');
+    setHasDbAd(dbAds && dbAds.length > 0);
+  }, []);
 
   useEffect(() => {
     if (pool.length <= 1) return;
     const t = window.setInterval(() => setIndex((i) => i + 1), REFRESH_MS);
     return () => window.clearInterval(t);
   }, [pool.length]);
+
+  if (hasDbAd) {
+    return (
+      <div className="px-3 pt-2">
+        <SimpleAdBanner position="app-banner" className="rounded-xl overflow-hidden" />
+      </div>
+    );
+  }
 
   if (pool.length === 0) return null;
   const ad = pool[index % pool.length];

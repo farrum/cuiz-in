@@ -13,10 +13,17 @@ RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
 # Sitemap Proxies & SSR Rules (Canonical - Restructured paths)
 <IfModule mod_proxy.c>
+  SSLProxyEngine on
   RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]
   RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
   RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
   RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
+  
+  # Support old sitemap paths for backward compatibility with Google Search Console
+  RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [P,L]
+  RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [P,L]
+  RewriteRule ^sitemap-cat-([a-z-]+)-sub-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [P,L]
+  RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [P,L]
   
   # SSR for quiz question pages
   RewriteRule ^quiz/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/$1 [P,L]
@@ -27,6 +34,12 @@ RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
   RewriteRule ^sitemaps/main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=301,L]
   RewriteRule ^sitemaps/amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
   RewriteRule ^sitemaps/category/([a-z-]+)/sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=301,L]
+  
+  # Support old sitemap paths for backward compatibility with Google Search Console
+  RewriteRule ^sitemap-main\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main [R=301,L]
+  RewriteRule ^sitemap-amp\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp [R=301,L]
+  RewriteRule ^sitemap-cat-([a-z-]+)-sub-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=subcategory&category=$1&sub=$2 [R=301,L]
+  RewriteRule ^sitemap-cat-([a-z-]+)\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=$1 [R=301,L]
   
   # SSR for quiz question pages (Fallback to 302 redirect for bots/SEO)
   RewriteRule ^quiz/question/(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/$1 [R=302,L]

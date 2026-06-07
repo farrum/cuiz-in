@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { isAllowedAdScript, containsBlockedContent } from '@/utils/adProviderScripts';
+import { containsBlockedContent } from '@/utils/adProviderScripts';
 
 /**
- * Hook to safely execute scripts from ad content
- * HARDENED: Only allows Google AdSense scripts via strict allowlist
+ * Hook to execute scripts from ad content
+ * Restored to support custom ad networks while filtering blacklisted/malicious domains.
  */
 export const useScriptExecution = (
   content: string, 
@@ -44,23 +44,29 @@ export const useScriptExecution = (
       return;
     }
 
-    // Only process Google AdSense scripts
+    // Two regex patterns to catch both inline and src scripts
+    // 1. Match script tags with src attribute
     const scriptSrcRegex = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
-    let match;
+    // 2. Match script tags with inline content
+    const scriptContentRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gmi;
+
     let executed = 0;
 
-    while ((match = scriptSrcRegex.exec(content)) !== null) {
-      const srcUrl = match[1];
+    // Process external scripts
+    let srcMatch;
+    while ((srcMatch = scriptSrcRegex.exec(content)) !== null) {
+      const srcUrl = srcMatch[1];
       
-      if (!isAllowedAdScript(srcUrl)) {
-        console.warn(`[useScriptExecution] BLOCKED non-allowlisted script: ${srcUrl}`);
+      if (containsBlockedContent(srcUrl)) {
+        console.warn(`[useScriptExecution] BLOCKED blacklisted script: ${srcUrl}`);
         continue;
       }
 
       const script = document.createElement('script');
       script.src = srcUrl;
       script.async = true;
-      script.onerror = () => console.error(`[useScriptExecution] Failed: ${srcUrl}`);
+      script.setAttribute('data-ad-script', 'true');
+      script.onerror = () => console.error(`[useScriptExecution] Failed to load external script: ${srcUrl}`);
       script.onload = () => {
         executed++;
         if (mountedRef.current) setExecutionStatus(`${executed} scripts executed`);
@@ -68,8 +74,57 @@ export const useScriptExecution = (
       container.appendChild(script);
     }
 
-    if (executed === 0 && content.includes('adsbygoogle')) {
+    // Process inline scripts (excluding script tags with src attribute)
+    let contentMatch;
+    while ((contentMatch = scriptContentRegex.exec(content)) !== null) {
+      const tagContent = contentMatch[0];
+      const scriptContent = contentMatch[1];
+
+      // Skip if it is a script tag that specifies a src attribute
+      if (tagContent.includes('src=')) {
+        continue;
+      }
+
+      if (!scriptContent || !scriptContent.trim()) {
+        continue;
+      }
+
+      // Skip service worker registrations or other suspicious calls
+      if (
+        scriptContent.includes('serviceWorker') ||
+        scriptContent.includes('ServiceWorker') ||
+        scriptContent.includes('register') ||
+        scriptContent.includes('TCPusher') ||
+        scriptContent.includes('registerSW')
+      ) {
+        console.warn('[useScriptExecution] Blocked inline script containing service worker/register call');
+        continue;
+      }
+
+      try {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.setAttribute('data-ad-script', 'true');
+        
+        // Safety replacements
+        let safeContent = scriptContent
+          .replace(/document\.write\(/g, "console.log('document.write call prevented', ")
+          .replace(/window\.open\(/g, "console.log('window.open call prevented', ");
+
+        script.text = safeContent;
+        container.appendChild(script);
+        executed++;
+      } catch (e) {
+        console.error('Error executing inline script:', e);
+      }
+    }
+
+    if (executed > 0) {
+      if (mountedRef.current) setExecutionStatus(`${executed} scripts executed`);
+    } else if (content.includes('adsbygoogle')) {
       setExecutionStatus('AdSense ready');
+    } else {
+      setExecutionStatus('No scripts executed');
     }
 
     return () => {

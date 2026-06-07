@@ -1,4 +1,9 @@
-import React from "react";
+import React, { useId } from "react";
+import { useAdvertisement } from "@/hooks/useAdvertisement";
+import { useScriptExecution } from "@/hooks/useScriptExecution";
+import AdPlaceholder from "./AdPlaceholder";
+import { cn } from "@/lib/utils";
+import { getPositionClasses } from "./adStyles";
 
 interface SimpleAdBannerProps {
   position: "top" | "middle" | "bottom" | "sidebar" | "header" | "content" | "footer";
@@ -7,16 +12,62 @@ interface SimpleAdBannerProps {
   pageSection?: string;
 }
 
-/**
- * Ads are disabled sitewide for security.
- * Keep this component as a no-op so existing placements do not load third-party scripts.
- */
 const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
-  position: _position,
-  className: _className,
-  slotId: _slotId,
+  position,
+  className,
+  slotId,
+  pageSection,
 }) => {
-  return null;
+  const uniqueId = useId().replace(/:/g, "");
+  const containerId = `ad-container-${position}-${uniqueId}`;
+
+  const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({
+    position,
+    slotId,
+    pageSection,
+  });
+
+  // Execute scripts within the ad content safely
+  const executionStatus = useScriptExecution(adContent, containerId);
+
+  // Extract size from code metadata if available (e.g. <!-- size: 300x250 -->)
+  const sizeMatch = adContent?.match(/<!-- size: (\d+x\d+) -->/);
+  const forcedSize = sizeMatch ? sizeMatch[1] : null;
+
+  return (
+    <div
+      className={cn(
+        "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
+        adLoaded ? "opacity-100" : "opacity-0",
+        getPositionClasses(position),
+        className
+      )}
+    >
+      {(!adContent || (forcedSize && adContent.replace(/<!-- size: \d+x\d+ -->/, "").trim() === "")) && (
+        <AdPlaceholder
+          position={position === "header" || position === "footer" ? "top" : (position as any)}
+          size={forcedSize as any}
+        />
+      )}
+
+      {adContent && (!forcedSize || adContent.replace(/<!-- size: \d+x\d+ -->/, "").trim() !== "") && (
+        <div
+          id={containerId}
+          className="ad-container min-h-[1px] w-full flex justify-center"
+          dangerouslySetInnerHTML={{ __html: adContent }}
+          data-ad-position={position}
+          data-ad-debug={adDebug}
+          data-execution-status={executionStatus}
+        />
+      )}
+
+      {error && process.env.NODE_ENV === "development" && (
+        <div className="text-[10px] text-destructive text-center mt-1">
+          Ad Error: {error}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default SimpleAdBanner;

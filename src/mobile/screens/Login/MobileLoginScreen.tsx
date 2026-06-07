@@ -11,7 +11,7 @@ export default function MobileLoginScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
   const { toast } = useToast();
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [mode, setMode] = useState<'sign-in' | 'sign-up' | 'forgot-password'>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -22,9 +22,22 @@ export default function MobileLoginScreen() {
     setLoading(true);
     haptics('medium');
     try {
-      if (mode === 'sign-in') {
+      if (mode === 'forgot-password') {
+        const redirectUrl = `https://cuiz.in/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: redirectUrl,
+        });
+        if (error) throw error;
+        toast({
+          title: 'Email Sent',
+          description: 'Check your inbox for the password reset link.',
+        });
+        setMode('sign-in');
+      } else if (mode === 'sign-in') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        haptics('success');
+        navigate('/hub');
       } else {
         const uname = (username || email.split('@')[0]).trim();
         const { data, error } = await supabase.functions.invoke('register-user', {
@@ -46,9 +59,9 @@ export default function MobileLoginScreen() {
             refresh_token: data.refresh_token,
           });
         }
+        haptics('success');
+        navigate('/hub');
       }
-      haptics('success');
-      navigate('/hub');
     } catch (err: any) {
       haptics('error');
       toast({ title: 'Oops', description: err.message || 'Something went wrong', variant: 'destructive' });
@@ -66,9 +79,17 @@ export default function MobileLoginScreen() {
 
       <div className="flex-1 flex flex-col justify-center">
         <div className="text-center mb-6">
-          <Mascot mood="happy" size={80} className="mx-auto mb-3" />
-          <h1 className="text-2xl font-bold">{mode === 'sign-in' ? 'Welcome back' : 'Join CuizIN'}</h1>
-          <p className="text-sm text-muted-foreground">{mode === 'sign-in' ? 'Sign in to keep your gems' : 'Start your gem-earning journey'}</p>
+          <Mascot mood={mode === 'forgot-password' ? 'thinking' : 'happy'} size={80} className="mx-auto mb-3" />
+          <h1 className="text-2xl font-bold">
+            {mode === 'sign-in' ? 'Welcome back' : mode === 'forgot-password' ? 'Forgot Password?' : 'Join CuizIN'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {mode === 'sign-in' 
+              ? 'Sign in to keep your gems' 
+              : mode === 'forgot-password' 
+                ? "Enter your email and we'll send you a reset link" 
+                : 'Start your gem-earning journey'}
+          </p>
         </div>
 
         <form onSubmit={submit} className="space-y-3">
@@ -85,27 +106,51 @@ export default function MobileLoginScreen() {
             placeholder="Email"
             className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
           />
-          <input
-            type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password" minLength={6}
-            className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
-          />
+          {mode !== 'forgot-password' && (
+            <input
+              type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password" minLength={6}
+              className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
+            />
+          )}
+          
+          {mode === 'sign-in' && (
+            <div className="text-right px-1">
+              <button
+                type="button"
+                onClick={() => setMode('forgot-password')}
+                className="text-xs text-primary hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
           <motion.button
             whileTap={{ scale: 0.97 }}
             disabled={loading}
             type="submit"
             className="w-full rounded-2xl py-3.5 font-bold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg disabled:opacity-50"
           >
-            {loading ? '…' : mode === 'sign-in' ? 'Sign in' : 'Create account'}
+            {loading ? '…' : mode === 'sign-in' ? 'Sign in' : mode === 'forgot-password' ? 'Send reset link' : 'Create account'}
           </motion.button>
         </form>
 
-        <button
-          onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
-          className="mt-5 text-sm text-muted-foreground"
-        >
-          {mode === 'sign-in' ? "No account? Sign up" : "Already have an account? Sign in"}
-        </button>
+        {mode === 'forgot-password' ? (
+          <button
+            onClick={() => setMode('sign-in')}
+            className="mt-5 text-sm text-muted-foreground hover:underline"
+          >
+            Back to Sign in
+          </button>
+        ) : (
+          <button
+            onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
+            className="mt-5 text-sm text-muted-foreground"
+          >
+            {mode === 'sign-in' ? "No account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        )}
       </div>
     </div>
   );
