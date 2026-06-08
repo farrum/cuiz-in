@@ -26,12 +26,8 @@ import { getLocalQuestionsBatch, getRandomLocalWordle } from '@/utils/localTrivi
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
 
-// AdSense slot id for the inter-question interstitial ad unit.
-// Create a Display ad unit in AdSense dashboard and paste its slot id here.
-const INTERSTITIAL_SLOT_ID = '3705941132';
-
-// Show interstitial every N answered questions; first N are warm-up.
-const INTERSTITIAL_EVERY = 2;
+// Show the inter-question ad after every answered question.
+const INTERSTITIAL_EVERY = 1;
 
 const QuizPlayPage: React.FC = () => {
   const { questionId } = useParams<{ questionId: string; questionSlug?: string }>();
@@ -181,10 +177,17 @@ const QuizPlayPage: React.FC = () => {
     // Interstitial Check
     const isInterstitialTurn = newCount > 0 && newCount % INTERSTITIAL_EVERY === 0;
 
+    // The inter-question ad takes priority so it reliably appears between
+    // the answer reveal and the next question.
+    if (isInterstitialTurn) {
+      setShowInterstitial(true);
+      return;
+    }
+
     // Gamification Random Checks
     const rand = Math.random();
 
-    if (rand < 0.20 && !isInterstitialTurn) {
+    if (rand < 0.20) {
       const gameChoice = Math.random();
       if (gameChoice < 0.20) {
         // 20% Scratch Card - prize is determined server-side on reveal
@@ -209,8 +212,6 @@ const QuizPlayPage: React.FC = () => {
         setRandomFlashcardQuestions(questions);
         setShowRandomFlashcards(true);
       }
-    } else if (isInterstitialTurn) {
-      setShowInterstitial(true);
     } else {
       goToNextQuestion();
     }
@@ -418,7 +419,6 @@ const QuizPlayPage: React.FC = () => {
           </div>
         ) : showInterstitial ? (
           <QuizInterstitial
-            slotId={INTERSTITIAL_SLOT_ID}
             onContinue={goToNextQuestion}
           />
         ) : isLoading || (!question && batchQuestions.length === 0) ? (
