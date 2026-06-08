@@ -1,57 +1,52 @@
-# Track Anonymous / Guest Activity
+# Re-enable & Manage Ads (Web + Mobile)
 
 ## Goal
-Right now guest activity lives only in the browser's localStorage, so anonymous visitors (like the Singapore traffic) never appear anywhere you can see. This adds server-side logging of guest behavior and a new admin dashboard tab to view it.
+Turn the existing (currently disabled) ad system back on so that:
+1. Only **Active** ad slots render; inactive ones are fully hidden (no empty placeholder boxes).
+2. A managed **mobile-app banner** shows at the top of every mobile screen.
+3. An **inter-question ad** appears in the same slot for **5 seconds after every answer** (web + mobile) before the next question.
+4. All slots (web + mobile + interstitial) are manageable from the existing Admin → Ads panel.
 
-## What gets tracked
-1. **Page views** — which quiz/question pages anonymous visitors open, with timestamp.
-2. **Questions answered** — each guest quiz answer: question, correct/wrong, points earned.
-3. **Session info** — country/region, device type, referrer, derived from the request (IP-based country, never stored as raw PII beyond a hashed session id).
-4. **Conversion funnel** — when a guest hits the free-play limit and whether they later registered.
+> Note: This reverses the project's previous "all ads disabled" security stance. Per your choice, slots may render **any pasted ad code** (the existing malicious-domain blocklist in `useScriptExecution`/`adProviderScripts` stays active as a safety net). Project memory will be updated to reflect ads are now enabled.
 
-All events are tied to an anonymous `session_id` (already generated client-side), not to a real user.
+## What already exists
+- `ad_slots` table + Admin manager (`AdminAdManagement`, `AdSlotTabs`, `EditAdSlotDialog`) with positions: top, middle, bottom, sidebar, app-banner, app-interstitial.
+- `SimpleAdBanner` renders slot HTML and runs scripts through the security filter.
+- Web pages already place `SimpleAdBanner` (home top/middle/bottom, quiz top/middle/bottom).
+- Mobile `TopBannerAd` (top of `MobileShell`) and `InterstitialAd` (already shown after each question in `QuizStoryScreen`) already support DB slots via `app-banner` / `app-interstitial`.
+- Web `QuizInterstitial` currently uses the no-op `AdSenseUnit`, so it shows nothing.
 
-## How it works
+## Changes
 
-### 1. Database (new table `guest_events`)
-A single events table storing one row per tracked action:
-- `session_id`, `event_type` (`page_view` | `answer` | `limit_reached` | `registered`)
-- `path`, `question_id`, `correct`, `points`, `country`, `device`, `referrer`
-- standard `id` / `created_at`
+### 1. Show active, hide inactive
+- `SimpleAdBanner`: when there is no active ad content for the slot, render **nothing** (collapse) instead of `AdPlaceholder`.
+- `Index.tsx`: remove the `AdPlaceholder` Suspense fallbacks so empty slots leave no gap.
+- Ensure active slots are loaded into `localStorage` on app start (call the existing sync routine in `adService` from app bootstrap), so rendering does not depend on opening the quiz first.
+- Align placement → position so the home-top and quiz top/bottom placements resolve to their admin slots (map `header→top`, `content→middle`, `footer→bottom` inside `SimpleAdBanner`, keeping `slotId` matching).
 
-Because guests are not authenticated, rows are **only** inserted through a server-side edge function (using the service role). RLS will allow **admins to read** and **block all client writes** — no `anon` insert grant, so the table can't be spammed directly from the browser.
+### 2. Mobile banner (managed)
+- Already mounted top-of-shell. Confirm `TopBannerAd` renders the `app-banner` DB slot when active and renders nothing otherwise. No layout change beyond enabling rendering.
 
-### 2. Edge function `track-guest-event`
-- Public endpoint (no JWT). Accepts a batch of events `{ session_id, event_type, ... }`.
-- Derives `country` from Cloudflare/Supabase request headers and `device` from the user-agent server-side (more reliable than client claims).
-- Validates input with a strict schema and inserts via service role.
-- Lightweight, fire-and-forget (failures never block the UI).
+### 3. Inter-question ad — Web
+- `QuizPlayPage`: show the interstitial **after every question** (`INTERSTITIAL_EVERY = 1`) and give it priority over the random mini-games so it reliably appears between answer and next question.
+- `QuizInterstitial`: replace the no-op `AdSenseUnit` with `SimpleAdBanner` rendering a managed interstitial slot; run a **5-second** countdown then auto-advance to the next question (Skip allowed). If no active interstitial slot exists, advance immediately (no blank screen).
 
-### 3. Client logging
-A small `guestAnalytics.ts` helper that calls the edge function. Hooks added at existing guest touch-points only (no new UI for visitors):
-- **Page view**: on quiz/question/answer page load when the visitor is not logged in.
-- **Answer**: in `QuizCard` / `EnhancedQuizCard` where guest plays are already counted (`incrementGuestPlay`).
-- **Limit reached**: where `GuestPlayLimitModal` opens.
-- **Registered**: on successful registration, send a `registered` event with the same `session_id` to close the funnel.
+### 4. Inter-question ad — Mobile
+- `InterstitialAd`: set the gate to **5 seconds** (currently 7) and confirm it renders the `app-interstitial` DB slot. Flow is already "5s reveal → ad → next question"; if no active slot, it auto-closes (already handled).
 
-The persistent `session_id` is stored in localStorage so all events from one visitor link together.
+### 5. Admin — manage all slots
+- `AdSlotTabs`: add tabs so admins can view/toggle/edit **App Banner**, **App Interstitial**, and the **Web Interstitial** slots alongside the existing top/middle/bottom/sidebar.
+- `EditAdSlotDialog`: add the web interstitial position option (app-banner / app-interstitial already present). Active toggle already controls show/hide.
 
-### 4. Admin dashboard (new "Guests" tab)
-A new tab in `AdminPage.tsx` with a `GuestActivityPanel` component showing:
-- Top stat cards: total guest sessions, page views, questions answered, limit-reached count, conversions (and conversion rate).
-- Breakdown by country and by device.
-- Recent guest events table (latest activity).
-- A date-range selector (last 24h / 7d / 30d).
-
-Data is read directly from `guest_events` via the admin's authenticated session (RLS admin-read policy).
+### 6. Memory / security
+- Update `mem://features/ads` and the index Core line: ads are **enabled**; only Active slots render; malicious-domain blocklist remains the active defense.
+- Update the security memory via the security tool to note ads render admin-pasted code by design.
 
 ## Technical notes
-- New table: `public.guest_events` with GRANTs (`SELECT` to authenticated for admin-read policy, `ALL` to service_role; no anon grant).
-- New edge function: `supabase/functions/track-guest-event/index.ts` (verify_jwt false, input-validated, service-role insert).
-- New files: `src/utils/guestAnalytics.ts`, `src/components/admin/GuestActivityPanel.tsx`.
-- Edited: `AdminPage.tsx` (tab), `QuizCard.tsx` / `EnhancedQuizCard.tsx` (answer + limit events), quiz/answer pages (page-view event), registration flow (conversion event).
-- No money/points-economy changes; tracking only. Defensive: all logging is best-effort and never blocks gameplay.
+- No DB schema change required — `ad_slots` already has `position`, `active`, `code`. Admin creates/activates the needed slots (home top, quiz top, quiz bottom, web interstitial, app banner, app interstitial) and pastes ad code.
+- `AdSenseUnit` stays a no-op (unused after the interstitial switch to `SimpleAdBanner`).
+- All ad rendering keeps the existing `useScriptExecution` security filtering (blocks known malicious domains, service-worker registration, `document.write`, etc.).
 
 ## Out of scope
-- Blocking/bot-filtering scraper traffic (separate task).
-- Any visible UI change for guests themselves.
+- Bot/scraper filtering.
+- Any change to points/economy or gameplay scoring.
