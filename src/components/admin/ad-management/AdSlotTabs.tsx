@@ -73,15 +73,18 @@ const AdSlotTabs: React.FC<AdSlotTabsProps> = ({
       </div>
 
       <Tabs defaultValue="top" className="w-full">
-        <TabsList className="grid grid-cols-5 mb-6">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-8 mb-6 h-auto">
           <TabsTrigger value="top">Top</TabsTrigger>
           <TabsTrigger value="middle">Middle</TabsTrigger>
           <TabsTrigger value="bottom">Bottom</TabsTrigger>
           <TabsTrigger value="sidebar">Sidebar</TabsTrigger>
+          <TabsTrigger value="quiz-interstitial">Web Interstitial</TabsTrigger>
+          <TabsTrigger value="app-banner">App Banner</TabsTrigger>
+          <TabsTrigger value="app-interstitial">App Interstitial</TabsTrigger>
           <TabsTrigger value="all">All Slots</TabsTrigger>
         </TabsList>
         
-        {['top', 'middle', 'bottom', 'sidebar'].map(position => (
+        {['top', 'middle', 'bottom', 'sidebar', 'quiz-interstitial', 'app-banner', 'app-interstitial'].map(position => (
           <TabsContent key={position} value={position} className="space-y-4">
             {adSlots
               .filter(slot => slot.position === position)

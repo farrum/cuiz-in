@@ -8,6 +8,7 @@ import { fetchAllAppData } from '@/integrations/supabase/client';
 import scheduledSyncService from './services/scheduledSync';
 import accountStatusService from './services/accountStatusService';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { syncAdSlotsToLocal } from '@/utils/adService';
 import React from 'react';
 
 // Eagerly load the Index page for best LCP
@@ -125,6 +126,9 @@ function App() {
         
         await fetchAllAppData();
         console.log('Initial data fetch complete');
+
+        // Load active ad slots so web + mobile ad placements can render them.
+        await syncAdSlotsToLocal();
         
         setupRealtimeSubscriptions();
         console.log('Realtime subscriptions initialized');

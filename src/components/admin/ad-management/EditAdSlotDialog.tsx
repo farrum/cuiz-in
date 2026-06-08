@@ -94,6 +94,7 @@ const EditAdSlotDialog: React.FC<EditAdSlotDialogProps> = ({
                       <SelectItem value="middle">Middle</SelectItem>
                       <SelectItem value="bottom">Bottom</SelectItem>
                       <SelectItem value="sidebar">Sidebar</SelectItem>
+                      <SelectItem value="quiz-interstitial">Web Interstitial (between questions)</SelectItem>
                       <SelectItem value="app-banner">App Banner</SelectItem>
                       <SelectItem value="app-interstitial">App Interstitial</SelectItem>
                     </SelectContent>

@@ -1,33 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { getAdSlotsByPosition } from '@/utils/adService';
 
 interface QuizInterstitialProps {
   onContinue: () => void;
-  /** Ad unit slot id from AdSense dashboard. Set in QuizPlayPage. */
-  slotId: string;
   /** Seconds before skip enables and we auto-advance. */
   countdownSeconds?: number;
 }
 
 const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
   onContinue,
-  slotId,
   countdownSeconds = 5,
 }) => {
   const [remaining, setRemaining] = useState(countdownSeconds);
 
+  // If there is no Active managed interstitial slot, don't block the quiz —
+  // advance immediately so players never see a blank break.
+  const hasAd = getAdSlotsByPosition('quiz-interstitial').length > 0;
+
   useEffect(() => {
+    if (!hasAd) onContinue();
+  }, [hasAd, onContinue]);
+
+  useEffect(() => {
+    if (!hasAd) return;
     if (remaining <= 0) {
       const t = setTimeout(onContinue, 250);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
     return () => clearTimeout(t);
-  }, [remaining, onContinue]);
+  }, [remaining, onContinue, hasAd]);
 
-  const canSkip = true; // Always skippable for AdSense policy safety.
+  if (!hasAd) return null;
 
   return (
     <div
@@ -43,7 +50,6 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
           size="sm"
           variant={remaining > 0 ? 'outline' : 'default'}
           onClick={onContinue}
-          disabled={!canSkip}
           className="gap-1"
         >
           {remaining > 0 ? `Skip in ${remaining}s` : 'Next question'}
@@ -54,16 +60,7 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
         className="w-full flex items-center justify-center"
         style={{ minHeight: 280 }}
       >
-        {slotId ? (
-          <AdSenseUnit
-            slot={slotId}
-            format="auto"
-            responsive
-            style={{ minHeight: 280, width: '100%' }}
-          />
-        ) : (
-          <div className="text-xs text-muted-foreground">Ad slot not configured</div>
-        )}
+        <SimpleAdBanner position="quiz-interstitial" slotId="quiz-interstitial" />
       </div>
     </div>
   );

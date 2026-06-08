@@ -14,7 +14,7 @@ import MobileBottomNav from '@/components/home/MobileBottomNav';
 import DailyRewardsSection from '@/components/home/DailyRewardsSection';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-import AdPlaceholder from '@/components/ads/AdPlaceholder';
+
 
 const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
 const LatestArticlesSection = lazy(() => import('@/components/home/LatestArticlesSection'));
@@ -103,7 +103,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Top of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={<AdPlaceholder position="top" />}>
+        <Suspense fallback={null}>
           <SimpleAdBanner position="header" slotId="home-top" className="rounded-xl overflow-hidden" />
         </Suspense>
       </div>
@@ -141,7 +141,7 @@ const Index: React.FC = () => {
       
       {/* Ad placement - Lazy loaded with fixed height placeholder */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={<AdPlaceholder position="middle" />}>
+        <Suspense fallback={null}>
           <SimpleAdBanner position="content" slotId="home-middle" className="rounded-xl overflow-hidden" />
         </Suspense>
       </div>
@@ -163,7 +163,7 @@ const Index: React.FC = () => {
 
       {/* Ad placement - Bottom of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={<AdPlaceholder position="bottom" />}>
+        <Suspense fallback={null}>
           <SimpleAdBanner position="footer" slotId="home-bottom" className="rounded-xl overflow-hidden" />
         </Suspense>
       </div>
