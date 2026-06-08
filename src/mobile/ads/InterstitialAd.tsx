@@ -19,7 +19,7 @@ interface InterstitialAdProps {
  * A countdown blocks skipping for `skipSeconds`, then a Skip button appears.
  * Renders nothing if no creative is available for the current user.
  */
-export function InterstitialAd({ open, onClose, skipSeconds = 7, seed = 0 }: InterstitialAdProps) {
+export function InterstitialAd({ open, onClose, skipSeconds = 5, seed = 0 }: InterstitialAdProps) {
   const [remaining, setRemaining] = useState(skipSeconds);
   const [hasDbAd, setHasDbAd] = useState(false);
   const ad = open ? pickAd('interstitial', seed) : null;

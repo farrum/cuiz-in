@@ -262,7 +262,7 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={7} seed={adSeed} />
+      <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={5} seed={adSeed} />
     </div>
   );
 }
