@@ -38,7 +38,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     <div
       className={cn(
         "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
-        adLoaded ? "opacity-100" : "opacity-0",
+        adLoaded || !adContent ? "opacity-100" : "opacity-0",
         getPositionClasses(position),
         className
       )}
