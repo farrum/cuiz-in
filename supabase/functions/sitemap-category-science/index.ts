@@ -43,7 +43,7 @@ serve(async (req) => {
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
     for (const q of allQuestions) {
       const slug = createSlug(q.question);
-      if (slug) xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/quiz/question/${q.id}/${slug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      if (slug) xml += `  <url>\n    <loc>${escapeXml(`https://cuiz.in/quiz/question/${q.id}/${CATEGORY_SLUG}/${slug}`)}</loc>\n    <lastmod>${q.created_at?.split('T')[0] || today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
     }
     xml += '</urlset>';
     console.log(`sitemap-category-${CATEGORY_SLUG}: ${allQuestions.length} URLs`);
