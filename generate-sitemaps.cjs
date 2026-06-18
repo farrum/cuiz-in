@@ -83,6 +83,9 @@ const slugToCategoriesMap = {
     'Food & Drink',
     'Food and Drinks',
     'Politics'
+  ],
+  'guinness-world-records': [
+    'Guinness World Records'
   ]
 };
 
@@ -148,6 +151,14 @@ const subcategoriesByCategory = {
     { slug: 'politics', name: 'Politics' },
     { slug: 'culture', name: 'Culture' },
     { slug: 'green-energy', name: 'Green Energy & Sustainability' },
+  ],
+  'guinness-world-records': [
+    { slug: 'human-achievements', name: 'Human Achievements' },
+    { slug: 'sports-records', name: 'Sports Records' },
+    { slug: 'nature-records', name: 'Nature & Animals' },
+    { slug: 'food-records', name: 'Food Records' },
+    { slug: 'entertainment-records', name: 'Entertainment Records' },
+    { slug: 'science-records', name: 'Science & Technology' },
   ],
 };
 

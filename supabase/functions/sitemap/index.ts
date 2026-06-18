@@ -85,6 +85,7 @@ const categoryToSlugMap: Record<string, string> = {
   'Philosophy': 'philosophy',
   'Kids': 'kids-trivia',
   'Kids Corner': 'kids-trivia',
+  'Guinness World Records': 'guinness-world-records',
 };
 
 // Valid frontend category slugs (only these will be included in sitemap)
@@ -104,7 +105,8 @@ const validCategorySlugs = [
   'environment-nature',
   'business-finance',
   'indian-mythology',
-  'philosophy'
+  'philosophy',
+  'guinness-world-records'
 ];
 
 serve(async (req) => {
