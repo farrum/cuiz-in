@@ -29,6 +29,10 @@ export const generateCanonicalUrl = (options: CanonicalUrlOptions): string => {
   // Question page canonical URL
   if (questionId && questionText) {
     const questionSlug = createSlug(questionText, 80);
+    if (category) {
+      const categorySlug = getCategorySlug(category);
+      return `${SITE_URL}/quiz/question/${questionId}/${categorySlug}/${questionSlug}`;
+    }
     return `${SITE_URL}/quiz/question/${questionId}/${questionSlug}`;
   }
 
@@ -111,7 +115,8 @@ export const generateQuestionSocialMeta = (question: {
 }, extractedKeywords?: string[]) => {
   const canonicalUrl = generateCanonicalUrl({
     questionId: question.id,
-    questionText: question.question
+    questionText: question.question,
+    category: question.category
   });
 
   const title = `${question.question.substring(0, 60)}${question.question.length > 60 ? '...' : ''} | ${question.category} Quiz`;

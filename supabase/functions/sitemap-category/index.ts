@@ -195,7 +195,7 @@ Deno.serve(async (req: any) => {
         const slug = createSlug(question.question);
         if (slug) {
           urls.push({
-            loc: `https://cuiz.in/quiz/question/${question.id}/${slug}`,
+            loc: `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${slug}`,
             lastmod: question.created_at?.split('T')[0] || today,
             changefreq: 'monthly',
             priority: '0.7'

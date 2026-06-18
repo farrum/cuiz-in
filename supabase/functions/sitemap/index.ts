@@ -200,7 +200,7 @@ serve(async (req) => {
     // Fetch quiz questions for question pages
     const { data: questions, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, correct_answer, created_at');
+      .select('id, question, category, correct_answer, created_at');
 
     if (error) {
       console.error('Error fetching quiz questions for sitemap:', error);
@@ -221,10 +221,11 @@ serve(async (req) => {
         const questionSlug = createSlug(question.question);
         
         if (questionSlug) {
+          const catSlug = categoryToSlugMap[question.category] || 'general-knowledge';
           // Question page URL only - Answer pages have noindex meta tags
           // to focus Google's crawl budget on high-value question pages
           questionUrls.push({
-            loc: `https://cuiz.in/quiz/question/${question.id}/${questionSlug}`,
+            loc: `https://cuiz.in/quiz/question/${question.id}/${catSlug}/${questionSlug}`,
             lastmod: lastmod,
             changefreq: 'monthly',
             priority: '0.7'

@@ -48,7 +48,7 @@ const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
         {questions.map(q => (
           <Card key={q.id} className="p-4 hover:shadow-md transition-shadow group">
             <Link 
-              to={`/quiz/question/${q.id}/${createSlug(q.question, 50)}`}
+              to={`/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question, 50)}`}
               className="block"
             >
               <h3 className="font-medium group-hover:text-primary transition-colors line-clamp-2">

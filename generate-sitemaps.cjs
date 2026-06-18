@@ -391,7 +391,7 @@ ${ampEntries.join('\n')}
           if (slug) {
             const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
             catEntries.push(`  <url>
-    <loc>${SITE_URL}/quiz/question/${q.id}/${escapeXml(slug)}</loc>
+    <loc>${SITE_URL}/quiz/question/${q.id}/${cat}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

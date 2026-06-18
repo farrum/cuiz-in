@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomQuestion, getBatchQuestions, QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { useGameMode } from '@/hooks/quiz/useGameMode';
 import EnhancedQuizCard from '@/components/quiz/EnhancedQuizCard';
@@ -257,7 +258,7 @@ const QuizPlayPage: React.FC = () => {
   };
 
   const canonicalUrl = question
-    ? `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`
+    ? `https://cuiz.in/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 80)}`
     : 'https://cuiz.in/quiz';
 
   return (

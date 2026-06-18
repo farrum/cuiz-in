@@ -4,6 +4,7 @@ import SEO from '@/components/SEO';
 import PageLayout from '@/components/layout/PageLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 import { Loader2 } from 'lucide-react';
 
 interface QuestionEntry {
@@ -154,7 +155,7 @@ const HtmlSitemapPage: React.FC = () => {
                     return (
                       <li key={q.id} className="py-1 border-b border-border/30">
                         <Link
-                          to={`/quiz/question/${q.id}/${questionSlug}`}
+                          to={`/quiz/question/${q.id}/${getCategorySlug(category)}/${questionSlug}`}
                           className="text-foreground hover:text-primary transition-colors"
                         >
                           {q.question}

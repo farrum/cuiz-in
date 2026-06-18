@@ -206,7 +206,7 @@ const QuizQuestionPage: React.FC = () => {
       if (next.id === questionId) {
         next = await getRandomQuestion();
       }
-      navigate(`/quiz/question/${next.id}/${createSlug(next.question, 80)}`);
+      navigate(`/quiz/question/${next.id}/${getCategorySlug(next.category)}/${createSlug(next.question, 80)}`);
     } catch (e) {
       console.error('Failed to load next question', e);
     } finally {
@@ -224,7 +224,7 @@ const QuizQuestionPage: React.FC = () => {
   const generateQuestionSchema = () => {
     if (!question) return null;
     
-    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
+    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 80)}`;
     const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
     
     // Quiz schema for educational content rich snippets
@@ -295,7 +295,7 @@ const QuizQuestionPage: React.FC = () => {
 
   // Generate QAPage schema for Q&A style rich results
   const generateQAPageSchema = () => {
-    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${createSlug(question.question, 80)}`;
+    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 80)}`;
     const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
     
     return {
@@ -359,7 +359,7 @@ const QuizQuestionPage: React.FC = () => {
     createBreadcrumbs.home(),
     createBreadcrumbs.quiz(),
     createBreadcrumbs.custom(question.category, `/categories/${categorySlug}`),
-    createBreadcrumbs.custom('Question', `/quiz/question/${questionId}/${canonicalSlug}`)
+    createBreadcrumbs.custom('Question', `/quiz/question/${questionId}/${categorySlug}/${canonicalSlug}`)
   ] : [];
 
   return (
@@ -555,7 +555,7 @@ const QuizQuestionPage: React.FC = () => {
                   className="flex items-center gap-2"
                   asChild
                 >
-                  <Link to={`/quiz/question/${prevQuestion.id}/${createSlug(prevQuestion.question, 50)}`}>
+                  <Link to={`/quiz/question/${prevQuestion.id}/${getCategorySlug(prevQuestion.category)}/${createSlug(prevQuestion.question, 50)}`}>
                     <ChevronLeft className="h-4 w-4" /> Previous Question
                   </Link>
                 </Button>
@@ -569,7 +569,7 @@ const QuizQuestionPage: React.FC = () => {
                   className="flex items-center gap-2"
                   asChild
                 >
-                  <Link to={`/quiz/question/${nextQuestion.id}/${createSlug(nextQuestion.question, 50)}`}>
+                  <Link to={`/quiz/question/${nextQuestion.id}/${getCategorySlug(nextQuestion.category)}/${createSlug(nextQuestion.question, 50)}`}>
                     Next Question <ChevronRight className="h-4 w-4" />
                   </Link>
                 </Button>

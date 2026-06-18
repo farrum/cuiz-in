@@ -346,7 +346,7 @@ ${entries.join('\n')}
         if (slug) {
           const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
           entries.push(`  <url>
-    <loc>${SITE_URL}/quiz/question/${q.id}/${escapeXml(slug)}</loc>
+    <loc>${SITE_URL}/quiz/question/${q.id}/${category}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -412,7 +412,7 @@ ${entries.join('\n')}
         if (!slug) continue;
         const lastmod = qq.created_at ? qq.created_at.split('T')[0] : today;
         entries.push(`  <url>
-    <loc>${SITE_URL}/quiz/question/${qq.id}/${escapeXml(slug)}</loc>
+    <loc>${SITE_URL}/quiz/question/${qq.id}/${category}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -16,7 +16,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
+import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
 import { generateCategorySocialMeta } from '@/utils/canonicalUrl';
 import { getSubcategories } from '@/utils/subcategoryConfig';
 import {
@@ -303,7 +303,7 @@ const CategoryDetailPage: React.FC = () => {
                       </div>
                       <div className="mt-3">
                         <Link 
-                          to={`/quiz/question/${question.id}/${createSlug(question.question, 50)}`}
+                          to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 50)}`}
                           className="text-sm text-primary hover:underline"
                         >
                           Answer this question

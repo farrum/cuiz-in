@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 import { Trophy, Play, BookOpen, Loader2 } from 'lucide-react';
 
 export interface QuizLandingConfig {
@@ -233,7 +234,7 @@ const QuizLandingPage: React.FC<{ slug: keyof typeof landingConfigs }> = ({ slug
               {questions.slice(0, 12).map((q) => (
                 <li key={q.id}>
                   <Link
-                    to={`/quiz/question/${q.id}/${createSlug(q.question)}`}
+                    to={`/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`}
                     className="block p-3 rounded-lg border border-border hover:bg-muted transition-colors text-sm"
                   >
                     {q.question}

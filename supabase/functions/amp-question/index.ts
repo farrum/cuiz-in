@@ -10,6 +10,62 @@ const corsHeaders = {
 const SITE_URL = 'https://cuiz.in';
 
 // Create URL-friendly slug from question text
+
+const categoryToSlugMap: Record<string, string> = {
+  'History': 'history',
+  'Science': 'science',
+  'Science & Nature': 'science',
+  'Science &amp; Nature': 'science',
+  'Nature': 'science',
+  'Science: Computers': 'technology',
+  'Science: Gadgets': 'technology',
+  'Science: Mathematics': 'science',
+  'Science and Technology': 'technology',
+  'Science & Technology': 'technology',
+  'Geography': 'geography',
+  'Arts & Literature': 'literature',
+  'Arts and Literature': 'literature',
+  'Entertainment: Books': 'literature',
+  'Entertainment': 'entertainment',
+  'Entertainment: Video Games': 'entertainment',
+  'Entertainment: Music': 'entertainment',
+  'Entertainment: Film': 'entertainment',
+  'Entertainment: Television': 'entertainment',
+  'Entertainment: Board Games': 'entertainment',
+  'Entertainment: Musicals &amp; Theatres': 'entertainment',
+  'Entertainment: Japanese Anime &amp; Manga': 'entertainment',
+  'Entertainment: Cartoon &amp; Animations': 'entertainment',
+  'Entertainment: Comics': 'entertainment',
+  'Celebrities': 'entertainment',
+  'Art': 'entertainment',
+  'Sports': 'sports',
+  'Cricket': 'sports',
+  'Vehicles': 'technology',
+  'General Knowledge': 'general-knowledge',
+  'Culture': 'general-knowledge',
+  'Animals': 'general-knowledge',
+  'Food & Drink': 'general-knowledge',
+  'Food and Drinks': 'general-knowledge',
+  'Mythology': 'general-knowledge',
+  'Politics': 'global-politics',
+  'Global Politics': 'global-politics',
+  'Law': 'law-justice',
+  'Law & Justice': 'law-justice',
+  'Music': 'music',
+  'Environment': 'environment-nature',
+  'Environment & Nature': 'environment-nature',
+  'Business': 'business-finance',
+  'Business & Finance': 'business-finance',
+  'Indian Mythology': 'indian-mythology',
+  'Philosophy': 'philosophy',
+  'Kids': 'kids-trivia',
+  'Kids Corner': 'kids-trivia',
+  'Guinness World Records': 'guinness-world-records',
+};
+function getCategorySlug(cat: string): string {
+  return categoryToSlugMap[cat] || 'general-knowledge';
+}
+
 function createSlug(text: string, maxLength: number = 80): string {
   return text
     .toLowerCase()
@@ -32,7 +88,7 @@ function getDifficultyColor(difficulty: string): string {
 // Generate AMP-valid HTML for a quiz question
 function generateAMPPage(question: any): string {
   const slug = createSlug(question.question);
-  const canonicalUrl = `${SITE_URL}/quiz/question/${question.id}/${slug}`;
+  const canonicalUrl = `${SITE_URL}/quiz/question/${question.id}/${getCategorySlug(question.category)}/${slug}`;
   const ampUrl = `${SITE_URL}/amp/question/${question.id}`;
   const difficultyColor = getDifficultyColor(question.difficulty);
   

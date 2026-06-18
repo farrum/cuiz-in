@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createSlug } from '@/utils/urlUtils';
-import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
+import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
 import { getSubcategory, getSubcategories } from '@/utils/subcategoryConfig';
 import {
   Breadcrumb,
@@ -172,7 +172,7 @@ const SubcategoryPage: React.FC = () => {
               <Card key={q.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <Link
-                    to={`/quiz/question/${q.id}/${createSlug(q.question, 50)}`}
+                    to={`/quiz/question/${q.id}/${categorySlug}/${createSlug(q.question, 50)}`}
                     className="font-medium hover:text-primary transition-colors"
                   >
                     {q.question}
