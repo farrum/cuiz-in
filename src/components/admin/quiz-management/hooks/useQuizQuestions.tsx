@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { QuizQuestion } from '@/utils/quizData';
+import { categoriesArray } from '@/utils/categoryData';
 
 export const useQuizQuestions = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -51,9 +52,14 @@ export const useQuizQuestions = () => {
       setQuestions(textQuestions);
       setImageQuestions(imgQuestions);
       
+      // Always include the canonical category list so admins can pick any
+      // category even before any question exists for it, plus any extra
+      // categories already present on existing questions.
+      const canonical = categoriesArray.map(c => c.name);
+      const fromQuestions = formattedQuestions.map(q => q.category).filter(Boolean);
       const uniqueCategories = Array.from(
-        new Set(formattedQuestions.map(q => q.category))
-      );
+        new Set([...canonical, ...fromQuestions])
+      ).sort();
       setCategories(uniqueCategories);
       
       toast({
