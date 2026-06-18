@@ -493,6 +493,48 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/categories/guinness-world-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/human-achievements</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/sports-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/nature-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/food-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/entertainment-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/categories/guinness-world-records/science-records</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/blog/cricket-trivia-test-your-knowledge-7421</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>monthly</changefreq>
