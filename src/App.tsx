@@ -407,6 +407,11 @@ function App() {
                   <QuizQuestionPage />
                 </Suspense>
               } />
+              <Route path="/quiz/question/:questionId/:categorySlug/:questionSlug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <QuizQuestionPage />
+                </Suspense>
+              } />
               <Route path="/quiz/play/:questionId/:questionSlug" element={
                 <Suspense fallback={<PageLoader />}>
                   <QuizPlayPage />
