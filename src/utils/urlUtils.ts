@@ -1,5 +1,8 @@
 
 /**
+import { getCategorySlug } from './categoryMapping';
+
+/**
  * Creates a SEO-friendly URL slug from a string
  * @param text The text to convert to a slug
  * @param maxLength Maximum length of the slug (optional)
@@ -29,15 +32,14 @@ export const createSlug = (text: string, maxLength?: number): string => {
 export const createQuestionUrl = (
   id: string, 
   question: string,
-  category?: string,
-  difficulty?: string
+  category?: string
 ): string => {
-  const slug = createSlug(question);
-  
-  if (category && difficulty) {
-    return `/quiz/question/${id}/${createSlug(category)}/${createSlug(difficulty)}/${slug}`;
+  const slug = createSlug(question, 80);
+
+  if (category) {
+    return `/quiz/question/${id}/${getCategorySlug(category)}/${slug}`;
   }
-  
+
   return `/quiz/question/${id}/${slug}`;
 };
 
