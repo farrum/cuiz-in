@@ -116,7 +116,7 @@ const AnswerPage: React.FC = () => {
     const answerSlug = createSlug(selectedOption, 50);
     const answerUrl = `https://cuiz.in/answer/${questionId}/${answerSlug}`;
     const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
-    const questionUrl = `https://cuiz.in/quiz/question/${questionId}/${createSlug(question.question, 80)}`;
+    const questionUrl = `https://cuiz.in/quiz/question/${questionId}/${getCategorySlug(question.category)}/${createSlug(question.question, 80)}`;
     
     return {
       '@context': 'https://schema.org',
@@ -204,7 +204,7 @@ const AnswerPage: React.FC = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/quiz/question/${questionId}/${questionSlug}`}>Question</Link>
+                    <Link to={`/quiz/question/${questionId}/${getCategorySlug(question.category)}/${questionSlug}`}>Question</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -328,7 +328,7 @@ const AnswerPage: React.FC = () => {
                         className="mt-3"
                         asChild
                       >
-                        <Link to={`/quiz/question/${q.id}/${createSlug(q.question, 50)}`}>
+                        <Link to={`/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question, 50)}`}>
                           <ArrowRight className="h-4 w-4 mr-1" /> Try This Question
                         </Link>
                       </Button>
