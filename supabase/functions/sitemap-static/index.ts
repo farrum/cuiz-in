@@ -178,7 +178,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
 
     if (type === 'index') {
-      // Generate sitemap index: main + category + amp (subcategory sitemaps are removed to optimize crawl budget)
+      // Generate sitemap index: main + category (subcategory sitemaps are removed to optimize crawl budget)
       const categories = Object.keys(slugToCategoriesMap);
 
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -190,9 +190,6 @@ serve(async (req) => {
       for (const cat of categories) {
         xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
       }
-
-      // AMP sitemap
-      xml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/amp.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
       xml += '</sitemapindex>';
       console.log(`Generated streamlined sitemap index: ${categories.length} categories`);

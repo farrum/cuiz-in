@@ -78,27 +78,9 @@ Deno.serve(async (req: any) => {
       xml += '  </sitemap>\n';
     }
     
-    // AMP sitemap
-    xml += '  <sitemap>\n';
-    xml += `    <loc>${baseUrl}/sitemap-amp.xml</loc>\n`;
-    xml += `    <lastmod>${today}</lastmod>\n`;
-    xml += '  </sitemap>\n';
-    
     xml += '</sitemapindex>';
 
     console.log(`Generated dynamic sitemap index with ${uniqueCategories.length} category sitemaps`);
-    return new Response(xml, { headers: corsHeaders });
-    
-    // AMP sitemap for all AMP question pages
-    xml += '  <sitemap>\n';
-    xml += `    <loc>${baseUrl}/sitemap-amp.xml</loc>\n`;
-    xml += `    <lastmod>${today}</lastmod>\n`;
-    xml += '  </sitemap>\n';
-    
-    xml += '</sitemapindex>';
-
-    console.log(`Generated sitemap index with ${categories.length + 1} sitemaps using cuiz.in URLs`);
-
     return new Response(xml, { headers: corsHeaders });
   } catch (error) {
     console.error('Error generating sitemap index:', error);

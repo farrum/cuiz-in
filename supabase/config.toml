@@ -27,9 +27,6 @@ verify_jwt = false
 [functions.indexnow]
 verify_jwt = false
 
-[functions.amp-question]
-verify_jwt = false
-
 [functions.quiz-question-ssr]
 verify_jwt = false
 
@@ -40,9 +37,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.sitemap-category]
-verify_jwt = false
-
-[functions.sitemap-amp]
 verify_jwt = false
 
 [functions.sitemap-static]
