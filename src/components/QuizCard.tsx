@@ -4,7 +4,6 @@ import { STORAGE_KEYS, QuizQuestion } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { getRandomMessage } from '@/utils/funMessages';
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
 import CountdownButton from './CountdownButton';
 import { logGemsEarned } from '@/utils/gemsService';
@@ -85,14 +84,6 @@ const QuizCard: React.FC<QuizCardProps> = ({
           completedQuestions.push(question.id);
           localStorage.setItem(STORAGE_KEYS.COMPLETED_QUESTIONS, JSON.stringify(completedQuestions));
         }
-        
-        // Show a fun welcome message (only for regular quiz, not challenge)
-        const welcomeMessage = getRandomMessage('welcome');
-        toast({
-          title: "Quiz Time! 🧠",
-          description: welcomeMessage.text,
-          variant: "default",
-        });
       }
       
       // Handle logged-in users
