@@ -100,6 +100,7 @@ const CATEGORIES = [
   ['sports', 'Sports'],
   ['technology', 'Technology'],
   ['general-knowledge', 'General Knowledge'],
+  ['guinness-world-records', 'Guinness World Records'],
 ];
 
 let count = 0;

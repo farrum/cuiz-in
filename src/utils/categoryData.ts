@@ -140,6 +140,14 @@ export const categoriesArray = [
     description: 'Economics, startups, and the global financial markets.',
     questionCount: 110,
     icon: '💼'
+  },
+  {
+    id: 15,
+    name: 'Guinness World Records',
+    slug: 'guinness-world-records',
+    description: 'Test your knowledge of extraordinary human achievements, amazing feats, and official world records.',
+    questionCount: 0,
+    icon: '🏆'
   }
 ];
 
@@ -479,6 +487,48 @@ export const categoryData: CategoryDataRecord = {
       { username: 'Quizmaster', gems: 2250, rank: 1 },
       { username: 'KnowledgeBank', gems: 2100, rank: 2 },
       { username: 'FactCollector', gems: 1950, rank: 3 }
+    ]
+  },
+  'guinness-world-records': {
+    name: 'Guinness World Records',
+    description: 'Test your knowledge of extraordinary human achievements, amazing feats, and official world records.',
+    longDescription: 'Dive into the fascinating world of Guinness World Records and test your knowledge of humanity\'s most extraordinary achievements. From the tallest and fastest to the oldest and most unusual, our world records quizzes cover incredible feats across sports, nature, science, food, and human endurance. Challenge yourself with questions about record holders, amazing milestones, and the iconic Guinness World Records archives.',
+    questionCount: 0,
+    icon: '🏆',
+    difficultyDistribution: {
+      easy: 40,
+      medium: 40,
+      hard: 20
+    },
+    subcategories: [
+      'Human Achievements', 'Sports Records', 'Nature Records', 'Food Records', 'Entertainment Records', 'Science Records'
+    ],
+    featuredQuestions: [
+      {
+        id: 'gwr-001',
+        question: 'Which country holds the record for the most cricket World Cup wins?',
+        difficulty: 'easy'
+      },
+      {
+        id: 'gwr-002',
+        question: 'What is the tallest mountain in the world according to Guinness World Records?',
+        difficulty: 'easy'
+      },
+      {
+        id: 'gwr-003',
+        question: 'Who holds the record for the most Olympic gold medals won by an individual athlete?',
+        difficulty: 'medium'
+      },
+      {
+        id: 'gwr-004',
+        question: 'What is the fastest land animal recorded by Guinness World Records?',
+        difficulty: 'easy'
+      }
+    ],
+    topPerformers: [
+      { username: 'RecordBreaker', gems: 0, rank: 1 },
+      { username: 'WorldRecordPro', gems: 0, rank: 2 },
+      { username: 'GuinnessGuru', gems: 0, rank: 3 }
     ]
   }
 };

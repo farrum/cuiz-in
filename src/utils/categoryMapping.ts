@@ -56,6 +56,9 @@ export const categoryToSlugMap: Record<string, string> = {
   'Food and Drinks': 'general-knowledge',
   'Mythology': 'general-knowledge',
   'Politics': 'general-knowledge',
+  
+  // Guinness World Records
+  'Guinness World Records': 'guinness-world-records',
 };
 
 // Reverse map: slug to valid category names array
@@ -73,12 +76,14 @@ export const slugToCategoriesMap: Record<string, string[]> = {
   'sports': ['Sports', 'Cricket'],
   'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles'],
   'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics'],
+  'guinness-world-records': ['Guinness World Records'],
 };
 
 // Valid frontend category slugs
 export const validCategorySlugs = [
   'history', 'science', 'geography', 'literature', 
-  'entertainment', 'sports', 'technology', 'general-knowledge'
+  'entertainment', 'sports', 'technology', 'general-knowledge',
+  'guinness-world-records'
 ];
 
 /**
@@ -115,6 +120,7 @@ export const getCategoryDisplayName = (slug: string): string => {
     'sports': 'Sports',
     'technology': 'Technology',
     'general-knowledge': 'General Knowledge',
+    'guinness-world-records': 'Guinness World Records',
   };
   return displayNames[slug] || slug;
 };
