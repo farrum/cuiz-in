@@ -16,7 +16,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
+import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
 import { generateCategorySocialMeta } from '@/utils/canonicalUrl';
 import { getSubcategories } from '@/utils/subcategoryConfig';
 import {

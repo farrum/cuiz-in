@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createSlug } from '@/utils/urlUtils';
-import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName } from '@/utils/categoryMapping';
+import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
 import { getSubcategory, getSubcategories } from '@/utils/subcategoryConfig';
 import {
   Breadcrumb,
