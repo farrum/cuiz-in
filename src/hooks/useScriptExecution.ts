@@ -44,6 +44,54 @@ export const useScriptExecution = (
       return;
     }
 
+    // ── Adsterra / highperformanceformat isolation ──────────────────────────
+    // These ads rely on a GLOBAL `atOptions` variable that invoke.js reads at
+    // runtime. Multiple slots on one page all overwrite the same global, so
+    // only one ad ever renders. Render each such ad inside its own sandboxed
+    // iframe so every slot gets an isolated window scope (and its own atOptions).
+    const isIframeKeyAd =
+      /atOptions/i.test(content) &&
+      /highperformanceformat\.com|profitableratecpm\.com|invoke\.js/i.test(content);
+
+    if (isIframeKeyAd) {
+      try {
+        // Pull width/height from the atOptions block (fallback to 728x90 banner).
+        const widthMatch = content.match(/['"]width['"]\s*:\s*(\d+)/i);
+        const heightMatch = content.match(/['"]height['"]\s*:\s*(\d+)/i);
+        const adWidth = widthMatch ? parseInt(widthMatch[1], 10) : 728;
+        const adHeight = heightMatch ? parseInt(heightMatch[1], 10) : 90;
+
+        // Strip the size-metadata comment so only the real scripts go inside.
+        const innerHtml = content.replace(/<!-- size: \d+x\d+ -->/g, '').trim();
+
+        container.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('data-ad-script', 'true');
+        iframe.width = String(adWidth);
+        iframe.height = String(adHeight);
+        iframe.scrolling = 'no';
+        iframe.frameBorder = '0';
+        iframe.style.border = '0';
+        iframe.style.maxWidth = '100%';
+        iframe.style.display = 'block';
+        iframe.style.margin = '0 auto';
+        iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;}</style></head><body>${innerHtml}</body></html>`;
+        container.appendChild(iframe);
+
+        if (mountedRef.current) setExecutionStatus('Isolated iframe ad rendered');
+      } catch (e) {
+        console.error('[useScriptExecution] Error rendering isolated ad:', e);
+        if (mountedRef.current) setExecutionStatus('Iframe ad error');
+      }
+
+      return () => {
+        const c = document.getElementById(containerId);
+        if (c) {
+          c.querySelectorAll('[data-ad-script]').forEach((s) => s.remove());
+        }
+      };
+    }
+
     // Two regex patterns to catch both inline and src scripts
     // 1. Match script tags with src attribute
     const scriptSrcRegex = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
