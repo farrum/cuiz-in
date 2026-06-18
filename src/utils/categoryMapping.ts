@@ -7,6 +7,7 @@
 export const categoryToSlugMap: Record<string, string> = {
   // History
   'History': 'history',
+  'Indian History': 'history',
   
   // Science (multiple DB categories)
   'Science': 'science',
@@ -16,8 +17,10 @@ export const categoryToSlugMap: Record<string, string> = {
   'Science: Computers': 'technology',
   'Science: Gadgets': 'technology',
   'Science: Mathematics': 'science',
+  'Mathematics': 'science',
   'Science and Technology': 'technology',
   'Science & Technology': 'technology',
+  'Technology': 'technology',
   
   // Geography
   'Geography': 'geography',
@@ -26,6 +29,8 @@ export const categoryToSlugMap: Record<string, string> = {
   'Arts & Literature': 'literature',
   'Arts and Literature': 'literature',
   'Entertainment: Books': 'literature',
+  'Literature': 'literature',
+  'Art': 'literature',
   
   // Entertainment (multiple DB categories)
   'Entertainment': 'entertainment',
@@ -39,7 +44,8 @@ export const categoryToSlugMap: Record<string, string> = {
   'Entertainment: Cartoon &amp; Animations': 'entertainment',
   'Entertainment: Comics': 'entertainment',
   'Celebrities': 'entertainment',
-  'Art': 'entertainment',
+  'Bollywood': 'entertainment',
+  'World Music': 'entertainment',
   
   // Sports
   'Sports': 'sports',
@@ -56,6 +62,9 @@ export const categoryToSlugMap: Record<string, string> = {
   'Food and Drinks': 'general-knowledge',
   'Mythology': 'general-knowledge',
   'Politics': 'general-knowledge',
+  'Current Affairs': 'general-knowledge',
+  'Global Politics': 'general-knowledge',
+  'Kids Corner': 'general-knowledge',
   
   // Guinness World Records
   'Guinness World Records': 'guinness-world-records',
@@ -63,19 +72,20 @@ export const categoryToSlugMap: Record<string, string> = {
 
 // Reverse map: slug to valid category names array
 export const slugToCategoriesMap: Record<string, string[]> = {
-  'history': ['History'],
-  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Nature', 'Science: Mathematics'],
+  'history': ['History', 'Indian History'],
+  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Nature', 'Science: Mathematics', 'Mathematics'],
   'geography': ['Geography'],
-  'literature': ['Arts & Literature', 'Arts and Literature', 'Entertainment: Books'],
+  'literature': ['Arts & Literature', 'Arts and Literature', 'Entertainment: Books', 'Art', 'Literature'],
   'entertainment': [
     'Entertainment', 'Entertainment: Video Games', 'Entertainment: Music', 
     'Entertainment: Film', 'Entertainment: Television', 'Entertainment: Board Games',
     'Entertainment: Musicals &amp; Theatres', 'Entertainment: Japanese Anime &amp; Manga',
-    'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities', 'Art'
+    'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities',
+    'Bollywood', 'World Music'
   ],
   'sports': ['Sports', 'Cricket'],
-  'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles'],
-  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics'],
+  'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles', 'Technology'],
+  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics', 'Current Affairs', 'Global Politics', 'Kids Corner'],
   'guinness-world-records': ['Guinness World Records'],
 };
 

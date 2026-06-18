@@ -30,6 +30,7 @@ const ENDGEMS = [
   { name: 'Sports', param: '?type=category&category=sports' },
   { name: 'Technology', param: '?type=category&category=technology' },
   { name: 'General Knowledge', param: '?type=category&category=general-knowledge' },
+  { name: 'Guinness World Records', param: '?type=category&category=guinness-world-records' },
 ];
 
 const SitemapValidator: React.FC = () => {
