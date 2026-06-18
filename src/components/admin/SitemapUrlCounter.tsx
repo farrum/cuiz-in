@@ -38,8 +38,10 @@ const SitemapUrlCounter: React.FC = () => {
 
   const fetchCount = async (s: typeof SITEMAPS[0]): Promise<SitemapCount> => {
     try {
-      const res = await fetch(`${EDGE_BASE}${s.param}`, {
+      const sep = s.param.includes('?') ? '&' : '?';
+      const res = await fetch(`${EDGE_BASE}${s.param}${sep}_=${Date.now()}`, {
         headers: { 'Accept': 'application/xml', 'apikey': ANON_KEY },
+        cache: 'no-store',
       });
       if (!res.ok) return { ...s, count: null, status: 'error' };
       const xml = await res.text();
