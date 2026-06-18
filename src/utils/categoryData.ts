@@ -140,6 +140,14 @@ export const categoriesArray = [
     description: 'Economics, startups, and the global financial markets.',
     questionCount: 110,
     icon: '💼'
+  },
+  {
+    id: 15,
+    name: 'Guinness World Records',
+    slug: 'guinness-world-records',
+    description: 'Test your knowledge of extraordinary human achievements, amazing feats, and official world records.',
+    questionCount: 0,
+    icon: '🏆'
   }
 ];
 
