@@ -39,10 +39,10 @@ const AIGenerateQuestionsDialog: React.FC<Props> = ({ categories, onSuccess, onC
 
   const [category, setCategory] = useState<string>('General Knowledge');
   const [subCategory, setSubCategory] = useState<string>('');
-  const [amount, setAmount] = useState<number>(10);
+  const [amount, setAmount] = useState<number>(50);
   const [difficulty, setDifficulty] = useState<string>('mixed');
   const [indiaPercent, setIndiaPercent] = useState<number>(30);
-  const [model, setModel] = useState<string>('google/gemini-2.5-flash');
+  const [model, setModel] = useState<string>('google/gemini-2.5-flash-lite');
 
   const handleGenerate = async () => {
     const adminUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
