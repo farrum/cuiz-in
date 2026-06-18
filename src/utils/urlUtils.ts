@@ -1,5 +1,3 @@
-
-/**
 import { getCategorySlug } from './categoryMapping';
 
 /**
