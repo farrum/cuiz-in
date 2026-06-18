@@ -30,6 +30,7 @@ export const categoryToSlugMap: Record<string, string> = {
   'Arts and Literature': 'literature',
   'Entertainment: Books': 'literature',
   'Literature': 'literature',
+  'Art': 'literature',
   
   // Entertainment (multiple DB categories)
   'Entertainment': 'entertainment',
@@ -43,7 +44,6 @@ export const categoryToSlugMap: Record<string, string> = {
   'Entertainment: Cartoon &amp; Animations': 'entertainment',
   'Entertainment: Comics': 'entertainment',
   'Celebrities': 'entertainment',
-  'Art': 'entertainment',
   'Bollywood': 'entertainment',
   'World Music': 'entertainment',
   
