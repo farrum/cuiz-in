@@ -1,12 +1,10 @@
 # Sitemap Index & Static Sitemap Proxies (Clean path segments)
 /sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index 302
 /sitemaps/main.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=main 302
-/sitemaps/amp.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-amp 302
 /sitemaps/category/:category/sitemap.xml https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=category&category=:category 302
 
 # SSR for quiz question pages
 /quiz/question/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/quiz-question-ssr/:splat 200!
-/amp/question/* https://pgywvtphfidouakypdno.supabase.co/functions/v1/amp-question/:splat 200!
 
 # Bot prerendering for key SEO routes (Bot User-Agent → prerender edge function)
 # NOTE: Lovable hosting has built-in SPA fallback; these rules act as
