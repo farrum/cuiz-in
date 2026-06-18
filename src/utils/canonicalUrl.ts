@@ -29,6 +29,10 @@ export const generateCanonicalUrl = (options: CanonicalUrlOptions): string => {
   // Question page canonical URL
   if (questionId && questionText) {
     const questionSlug = createSlug(questionText, 80);
+    if (category) {
+      const categorySlug = getCategorySlug(category);
+      return `${SITE_URL}/quiz/question/${questionId}/${categorySlug}/${questionSlug}`;
+    }
     return `${SITE_URL}/quiz/question/${questionId}/${questionSlug}`;
   }
 
