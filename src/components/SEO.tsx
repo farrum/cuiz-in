@@ -13,7 +13,6 @@ interface SEOProps {
   schemaData?: Record<string, any>;
   noindex?: boolean;
   keywords?: string[];
-  ampUrl?: string;
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -26,7 +25,6 @@ const SEO: React.FC<SEOProps> = ({
   schemaData = {},
   noindex = false,
   keywords = [],
-  ampUrl,
 }) => {
   const location = useLocation();
   const siteName = 'CuizIN';
@@ -101,9 +99,6 @@ const SEO: React.FC<SEOProps> = ({
       <link rel="canonical" href={pageUrl} />
       <link rel="alternate" hrefLang="en-in" href={pageUrl} />
       <link rel="alternate" hrefLang="x-default" href={pageUrl} />
-      
-      {/* AMP Link - for pages with AMP versions */}
-      {ampUrl && <link rel="amphtml" href={ampUrl} />}
       
       {/* Keywords Meta Tag */}
       {keywords && keywords.length > 0 && (
