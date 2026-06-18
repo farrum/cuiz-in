@@ -364,16 +364,10 @@
   }
 }
 
-/* Ad container styles with fixed dimensions to prevent CLS */
+/* Ad container styles. No reserved min-height so empty/unfilled slots
+   collapse instead of leaving a blank gap. */
 .ad-container {
   contain: layout style;
-  min-height: 90px;
-}
-
-@media (min-width: 768px) {
-  .ad-container {
-    min-height: 250px;
-  }
 }
 
 /* Mobile performance optimizations */
