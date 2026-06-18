@@ -30,9 +30,14 @@ const CountdownButton: React.FC<CountdownButtonProps> = ({
       
       return () => clearTimeout(timer);
     } else if (countdown === 0) {
+      // Reset immediately so a parent re-render (e.g. points update changing
+      // the onCountdownComplete reference) can't re-trigger this effect and
+      // fire the completion handler multiple times.
+      setCountdown(null);
       onCountdownComplete();
     }
-  }, [countdown, onCountdownComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown]);
 
   const handleClick = () => {
     setCountdown(initialSeconds);
