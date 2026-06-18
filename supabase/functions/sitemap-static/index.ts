@@ -16,20 +16,22 @@ const SITE_URL = 'https://cuiz.in';
 // COMPLETE category slug to database category name mapping
 // Based on actual database categories (36 total)
 const slugToCategoriesMap: Record<string, string[]> = {
-  'history': ['History'],
+  'history': ['History', 'Indian History'],
   'science': [
     'Science', 
     'Science & Nature', 
     'Science &amp; Nature',
     'Nature',
-    'Science: Mathematics'
+    'Science: Mathematics',
+    'Mathematics'
   ],
   'geography': ['Geography'],
   'literature': [
     'Art', 
     'Arts & Literature', 
     'Arts and Literature',
-    'Entertainment: Books'
+    'Entertainment: Books',
+    'Literature'
   ],
   'entertainment': [
     'Entertainment', 
@@ -46,7 +48,9 @@ const slugToCategoriesMap: Record<string, string[]> = {
     'Entertainment: Musicals &amp; Theatres',
     'Entertainment: Television', 
     'Entertainment: Video Games',
-    'Celebrities'
+    'Celebrities',
+    'Bollywood',
+    'World Music'
   ],
   'sports': ['Sports', 'Cricket'],
   'technology': [
@@ -54,7 +58,8 @@ const slugToCategoriesMap: Record<string, string[]> = {
     'Science: Gadgets', 
     'Science and Technology',
     'Science & Technology',
-    'Vehicles'
+    'Vehicles',
+    'Technology'
   ],
   'general-knowledge': [
     'General Knowledge', 
@@ -63,8 +68,12 @@ const slugToCategoriesMap: Record<string, string[]> = {
     'Culture',
     'Food & Drink',
     'Food and Drinks',
-    'Politics'
-  ]
+    'Politics',
+    'Current Affairs',
+    'Global Politics',
+    'Kids Corner'
+  ],
+  'guinness-world-records': ['Guinness World Records']
 };
 
 // Subcategory definitions — keep in sync with src/utils/subcategoryConfig.ts
