@@ -42,8 +42,10 @@ const SitemapValidator: React.FC = () => {
   const validate = async (ep: typeof ENDGEMS[0]): Promise<ValidationResult> => {
     const start = Date.now();
     try {
-      const res = await fetch(`${EDGE_BASE}${ep.param}`, {
+      const sep = ep.param.includes('?') ? '&' : '?';
+      const res = await fetch(`${EDGE_BASE}${ep.param}${sep}_=${Date.now()}`, {
         headers: { 'Accept': 'application/xml', 'apikey': ANON_KEY },
+        cache: 'no-store',
       });
       const responseTime = Date.now() - start;
       if (!res.ok) return { ...ep, urlCount: 0, status: 'error', message: `HTTP ${res.status}`, responseTime };
