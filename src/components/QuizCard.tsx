@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Brain, ZapIcon, Timer, Award, Flame } from 'lucide-react';
+import { getRandomMessage } from '@/utils/funMessages';
 import CountdownButton from './CountdownButton';
 import { logGemsEarned } from '@/utils/gemsService';
 import { createSlug } from '@/utils/urlUtils';
