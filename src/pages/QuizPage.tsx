@@ -162,7 +162,7 @@ const QuizPage: React.FC = () => {
       
       <MilestoneCelebration triggerCheck={milestoneCheckTrigger} />
       
-      <main className="flex-1 container max-w-2xl pt-4 pb-6 px-3 md:px-4">
+      <main className="flex-1 container max-w-4xl pt-4 pb-6 px-3 md:px-4">
         {/* Breadcrumb - compact */}
         <Breadcrumb className="mb-3 text-xs">
           <BreadcrumbList>
@@ -184,108 +184,116 @@ const QuizPage: React.FC = () => {
         {/* Top Ad - compact */}
         <SimpleAdBanner position="top" slotId="quiz-top" className="mb-3" />
         
-        {/* Header with mode selector */}
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
-            {config.name}
-            {currentMode === 'streak' && streak > 0 && (
-              <span className="text-primary text-base">🔥 {streak}</span>
-            )}
-          </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowGameModeSelector(prev => !prev)}
-            className="text-xs gap-1"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            Mode
-          </Button>
-        </div>
-        
-        {/* Game mode selector - collapsible */}
-        {showGameModeSelector && (
-          <div className="mb-3 animate-fade-in">
-            <GameModeSelector />
-          </div>
-        )}
-        
-        {/* Time attack game over state */}
-        {!isGameActive && currentMode === 'time-attack' && (
-          <div className="bg-card border rounded-2xl p-4 mb-3 text-center">
-            <h2 className="text-lg font-bold mb-2">⏱️ Time's Up!</h2>
-            <p className="text-sm text-muted-foreground mb-3">
-              You answered {questionsAnswered} questions in {config.timeLimit} seconds!
-            </p>
-            <Button onClick={resetGame} size="sm" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Play Again
-            </Button>
-          </div>
-        )}
-        
-        {/* Compact stats bar */}
-        <CompactStatsBar
-          questionsAnswered={questionsAnswered}
-          streak={streak}
-          dailyGems={dailyGems}
-          className="mb-4"
-        />
-        
-        {/* Main Quiz Area */}
-        {isGameActive && (
-          <QuizContent 
-            isLoading={isLoading}
-            currentQuestion={currentQuestion}
-            showMotivation={showMotivation}
-            motivationMessage={motivationMessage}
-            onQuestionComplete={handleQuestionComplete}
-            currentMode={currentMode}
-            timeRemaining={timeRemaining}
-            isGameActive={isGameActive}
-            handleTimeUp={handleTimeUp}
-            streak={streak}
-            questionsAnswered={questionsAnswered}
-            dailyGems={dailyGems}
-          />
-        )}
-        
-        {/* Guest banner */}
-        <GuestGemsBanner className="mt-4" />
-        
-        {/* Daily Challenges - compact */}
-        <div className="mt-4">
-          <DailyChallenges />
-        </div>
-        
-        {/* Middle Ad */}
-        <SimpleAdBanner position="middle" slotId="quiz-middle" className="my-4" />
-        
-        {/* Leaderboards - collapsible on mobile */}
-        <div className="mt-4">
-          <button
-            onClick={() => setShowLeaderboards(!showLeaderboards)}
-            className="w-full flex items-center justify-between p-3 rounded-xl bg-card border hover:bg-muted/50 transition-colors"
-          >
-            <span className="font-semibold flex items-center gap-2">
-              🏆 Leaderboards
-            </span>
-            {showLeaderboards ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
-          
-          {showLeaderboards && (
-            <div className="mt-3 space-y-3 animate-fade-in">
-              <MonthlyWinnersSection limit={5} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <TopPlayersSection limit={5} />
-                <LeaderboardSection />
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-9 space-y-4">
+            {/* Header with mode selector */}
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                {config.name}
+                {currentMode === 'streak' && streak > 0 && (
+                  <span className="text-primary text-base">🔥 {streak}</span>
+                )}
+              </h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGameModeSelector(prev => !prev)}
+                className="text-xs gap-1"
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+                Mode
+              </Button>
             </div>
-          )}
+            
+            {/* Game mode selector - collapsible */}
+            {showGameModeSelector && (
+              <div className="mb-3 animate-fade-in">
+                <GameModeSelector />
+              </div>
+            )}
+            
+            {/* Time attack game over state */}
+            {!isGameActive && currentMode === 'time-attack' && (
+              <div className="bg-card border rounded-2xl p-4 mb-3 text-center">
+                <h2 className="text-lg font-bold mb-2">⏱️ Time's Up!</h2>
+                <p className="text-sm text-muted-foreground mb-3">
+                  You answered {questionsAnswered} questions in {config.timeLimit} seconds!
+                </p>
+                <Button onClick={resetGame} size="sm" className="gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Play Again
+                </Button>
+              </div>
+            )}
+            
+            {/* Compact stats bar */}
+            <CompactStatsBar
+              questionsAnswered={questionsAnswered}
+              streak={streak}
+              dailyGems={dailyGems}
+              className="mb-4"
+            />
+            
+            {/* Main Quiz Area */}
+            {isGameActive && (
+              <QuizContent 
+                isLoading={isLoading}
+                currentQuestion={currentQuestion}
+                showMotivation={showMotivation}
+                motivationMessage={motivationMessage}
+                onQuestionComplete={handleQuestionComplete}
+                currentMode={currentMode}
+                timeRemaining={timeRemaining}
+                isGameActive={isGameActive}
+                handleTimeUp={handleTimeUp}
+                streak={streak}
+                questionsAnswered={questionsAnswered}
+                dailyGems={dailyGems}
+              />
+            )}
+            
+            {/* Guest banner */}
+            <GuestGemsBanner className="mt-4" />
+            
+            {/* Daily Challenges - compact */}
+            <div className="mt-4">
+              <DailyChallenges />
+            </div>
+            
+            {/* Middle Ad */}
+            <SimpleAdBanner position="middle" slotId="quiz-middle" className="my-4" />
+            
+            {/* Leaderboards - collapsible on mobile */}
+            <div className="mt-4">
+              <button
+                onClick={() => setShowLeaderboards(!showLeaderboards)}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-card border hover:bg-muted/50 transition-colors"
+              >
+                <span className="font-semibold flex items-center gap-2">
+                  🏆 Leaderboards
+                </span>
+                {showLeaderboards ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              
+              {showLeaderboards && (
+                <div className="mt-3 space-y-3 animate-fade-in">
+                  <MonthlyWinnersSection limit={5} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <TopPlayersSection limit={5} />
+                    <LeaderboardSection />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="md:col-span-3">
+            <SimpleAdBanner position="sidebar" className="sticky top-20" />
+          </div>
         </div>
         
         {/* Bottom Ad */}
