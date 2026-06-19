@@ -66,8 +66,10 @@ const GuestActivityPanel: React.FC = () => {
     }
 
     // 2. Fetch aggregated stats using RPC (uncapped)
-    const { data: statsData, error: statsError } = await supabase
-      .rpc('get_guest_activity_stats', { since_date: since });
+    const { data: statsData, error: statsError } = await (supabase.rpc as any)(
+      'get_guest_activity_stats',
+      { since_date: since }
+    );
 
     if (!statsError && statsData) {
       const s = statsData as any;

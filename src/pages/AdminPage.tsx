@@ -34,7 +34,7 @@ import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
 import { ContentPartnerships } from '@/components/admin/partnerships';
 import SitemapManagement from '@/components/admin/SitemapManagement';
-import AdminMiniGamesPanel from '@/components/admin/gamification/AdminMiniGamesPanel';
+import AdminGamificationPanel from '@/components/admin/gamification/AdminGamificationPanel';
 
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
 import { cn } from '@/lib/utils';

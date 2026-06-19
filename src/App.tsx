@@ -22,7 +22,9 @@ const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
 const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
 const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
 const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
-const MiniGamesList = React.lazy(() => import('@/pages/MiniGamesList'));
+const MiniGamesList = React.lazy(() =>
+  import('@/pages/MiniGamesList').then((m) => ({ default: m.MiniGamesList }))
+);
 
 const Profile = React.lazy(() => import("@/pages/Profile"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
