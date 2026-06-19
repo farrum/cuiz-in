@@ -104,11 +104,23 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       console.log('Starting ad slot save operation...', { isCreatingNew, values });
 
       if (isCreatingNew) {
+        // Auto-generate an ID for new slots if one wasn't provided
+        if (!values.id) {
+          const slugBase = (values.name || values.position || 'ad-slot')
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          const suffix = (crypto.randomUUID?.() || Math.random().toString(36).slice(2)).slice(0, 8);
+          values.id = `${slugBase || 'ad-slot'}-${suffix}`;
+        }
+
         // Validation for new slots
-        if (!values.id || !values.name || !values.code) {
+        if (!values.name || !values.code) {
           toast({
             title: "Validation Error",
-            description: "ID, Name, and Code are required for new slots.",
+            description: "Name and Code are required for new slots.",
             variant: "destructive"
           });
           return;
