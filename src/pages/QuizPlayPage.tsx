@@ -42,6 +42,7 @@ const QuizPlayPage: React.FC = () => {
   const [showBossFight, setShowBossFight] = useState(false);
   const [showImageReveal, setShowImageReveal] = useState(false);
   const [scratchPrize, setScratchPrize] = useState<{ label: string; value: number } | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // States for random inter-question mini-games
   const [showRandomTrueFalse, setShowRandomTrueFalse] = useState(false);
@@ -65,6 +66,17 @@ const QuizPlayPage: React.FC = () => {
   // Daily/monthly/total gems fetched from DB (refreshes after each answer)
   const [, setNextBadgeThreshold] = useState(10);
   const { dailyGems, fetchGems } = useQuizGems(setNextBadgeThreshold);
+
+  // Fetch session user on mount
+  useEffect(() => {
+    const getSessionUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    };
+    getSessionUser();
+  }, []);
 
   // Track anonymous page view per question
   useEffect(() => {
@@ -165,6 +177,15 @@ const QuizPlayPage: React.FC = () => {
     incrementQuestionsAnswered();
     if (isCorrect) incrementStreak(); else resetStreak();
 
+    // Increment daily trivia mission progress
+    if (userId) {
+      const today = new Date().toISOString().split('T')[0];
+      const key = `daily_mission_trivia_${userId}_${today}`;
+      const current = Number(localStorage.getItem(key) || '0');
+      localStorage.setItem(key, String(current + 1));
+      window.dispatchEvent(new CustomEvent('quizQuestionCompleted'));
+    }
+
     // Refresh gems from DB so the stats bar reflects today's earnings
     fetchGems();
 
@@ -217,7 +238,8 @@ const QuizPlayPage: React.FC = () => {
     } else {
       goToNextQuestion();
     }
-  }, [incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems, grantGemsForMiniGame]);
+  }, [userId, incrementQuestionsAnswered, incrementStreak, resetStreak, questionsAnswered, streak, goToNextQuestion, fetchGems, grantGemsForMiniGame]);
+
 
   const handleScratchComplete = async () => {
     try {

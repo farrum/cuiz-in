@@ -715,13 +715,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/7703a2d2-de76-49d3-b8d8-98d1e44bac66/technology/what-is-the-standard-unit-of-electrical-resistance</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/d8d47d83-c264-497e-88f6-1a0e6aad47f4/technology/what-does-mri-stand-for-in-medical-imaging</loc>
+    <loc>https://cuiz.in/quiz/question/15ceaae2-b399-4759-abb4-572f74edbe08/technology/what-is-the-main-gas-found-in-earths-atmosphere</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -733,13 +727,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/15ceaae2-b399-4759-abb4-572f74edbe08/technology/what-is-the-main-gas-found-in-earths-atmosphere</loc>
+    <loc>https://cuiz.in/quiz/question/7703a2d2-de76-49d3-b8d8-98d1e44bac66/technology/what-is-the-standard-unit-of-electrical-resistance</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://cuiz.in/quiz/question/870c3479-6c59-4f53-8a7b-2d7ab4e5d7dd/technology/which-planet-is-best-known-for-its-visible-ring-system</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/d8d47d83-c264-497e-88f6-1a0e6aad47f4/technology/what-does-mri-stand-for-in-medical-imaging</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -757,19 +757,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/56f758ba-613a-4a92-b3ac-771ce3657d7e/technology/what-does-cpu-stand-for-in-computer-terminology</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/c919ad51-d532-4dee-8fe5-ce2325600d76/technology/which-device-converts-analog-signals-to-digital-data</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/1c9c59f9-30ed-4eb1-b35c-2c194aa497c1/technology/which-planet-has-the-most-moons-in-our-solar-system</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/56f758ba-613a-4a92-b3ac-771ce3657d7e/technology/what-does-cpu-stand-for-in-computer-terminology</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -781,7 +775,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/ff5c843f-bebb-4c08-8f7c-b21ebed9a94c/technology/what-term-is-used-to-describe-a-network-that-connects-computers-worldwide</loc>
+    <loc>https://cuiz.in/quiz/question/c919ad51-d532-4dee-8fe5-ce2325600d76/technology/which-device-converts-analog-signals-to-digital-data</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -793,7 +787,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/c4afcd35-0eb5-4f46-bd82-a8b25ecb3166/technology/which-fundamental-particle-mediates-the-electromagnetic-force</loc>
+    <loc>https://cuiz.in/quiz/question/ff5c843f-bebb-4c08-8f7c-b21ebed9a94c/technology/what-term-is-used-to-describe-a-network-that-connects-computers-worldwide</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -805,7 +799,19 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/c4afcd35-0eb5-4f46-bd82-a8b25ecb3166/technology/which-fundamental-particle-mediates-the-electromagnetic-force</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/11127195-b9e0-48c9-8c78-30fb29026907/technology/what-type-of-energy-is-stored-inside-a-battery</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/56e129e6-7b93-4996-add0-79db126b5f3d/technology/which-element-is-essential-for-the-process-of-combustion</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -823,25 +829,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/56e129e6-7b93-4996-add0-79db126b5f3d/technology/which-element-is-essential-for-the-process-of-combustion</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/9f9334a4-d7cc-40c0-919f-92f903df90bd/technology/which-device-is-used-to-measure-temperature</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/46ccf22c-1dec-491f-919e-9f2e4ee1b156/technology/what-is-the-main-function-of-red-blood-cells</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/bd2604fd-259c-46ac-bcf4-c6f48275ea16/technology/which-fundamental-particle-mediates-the-electromagnetic-force</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -853,7 +841,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/edb9b810-8a97-469f-a464-41df83b48501/technology/who-formulated-the-laws-of-planetary-motion</loc>
+    <loc>https://cuiz.in/quiz/question/450b5f83-cb88-4308-a248-e73c5566ab55/technology/what-is-the-primary-purpose-of-a-catalyst-in-a-chemical-reaction</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/46ccf22c-1dec-491f-919e-9f2e4ee1b156/technology/what-is-the-main-function-of-red-blood-cells</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -865,7 +859,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/450b5f83-cb88-4308-a248-e73c5566ab55/technology/what-is-the-primary-purpose-of-a-catalyst-in-a-chemical-reaction</loc>
+    <loc>https://cuiz.in/quiz/question/bd2604fd-259c-46ac-bcf4-c6f48275ea16/technology/which-fundamental-particle-mediates-the-electromagnetic-force</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/edb9b810-8a97-469f-a464-41df83b48501/technology/who-formulated-the-laws-of-planetary-motion</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -877,7 +877,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/928002a7-b712-4b48-8da9-6aac72c9dffc/technology/what-does-dna-stand-for</loc>
+    <loc>https://cuiz.in/quiz/question/2e058c36-6343-483e-b294-f39d8babf52c/technology/which-law-states-that-energy-in-an-isolated-system-is-conserved</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -889,7 +889,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/b13f89f5-0ec7-405b-93aa-a8a2a9c15815/technology/which-technology-is-used-for-contactless-payments-using-electromagnetic-fields</loc>
+    <loc>https://cuiz.in/quiz/question/4a73cdc4-001b-4472-abde-97e48d010178/technology/who-formulated-the-laws-of-planetary-motion</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -901,19 +901,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4a73cdc4-001b-4472-abde-97e48d010178/technology/who-formulated-the-laws-of-planetary-motion</loc>
+    <loc>https://cuiz.in/quiz/question/928002a7-b712-4b48-8da9-6aac72c9dffc/technology/what-does-dna-stand-for</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/2e058c36-6343-483e-b294-f39d8babf52c/technology/which-law-states-that-energy-in-an-isolated-system-is-conserved</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/978bfb3a-79c0-4785-8ab4-ebf7c25fe427/technology/what-is-the-center-of-an-atom-called</loc>
+    <loc>https://cuiz.in/quiz/question/b13f89f5-0ec7-405b-93aa-a8a2a9c15815/technology/which-technology-is-used-for-contactless-payments-using-electromagnetic-fields</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -925,13 +919,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/d4d976ae-f727-4e37-adcd-a6210aca9668/technology/in-quantum-physics-which-principle-explains-the-impossibility-of-simultaneously</loc>
+    <loc>https://cuiz.in/quiz/question/978bfb3a-79c0-4785-8ab4-ebf7c25fe427/technology/what-is-the-center-of-an-atom-called</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/54f3eb18-410f-441f-816e-8f08a00e599d/technology/who-developed-the-theory-of-relativity</loc>
+    <loc>https://cuiz.in/quiz/question/d4d976ae-f727-4e37-adcd-a6210aca9668/technology/in-quantum-physics-which-principle-explains-the-impossibility-of-simultaneously</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -949,6 +943,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/54f3eb18-410f-441f-816e-8f08a00e599d/technology/who-developed-the-theory-of-relativity</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/0392dbbc-ae34-4f0b-8130-5f1e9095c93c/technology/what-does-http-stand-for-in-web-technology</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/81ec92e1-689f-4c44-871a-c758826e841e/technology/what-is-the-powerhouse-of-the-cell</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/ab4ac136-7e72-4ca5-8d19-c56417d5afa4/technology/which-technology-is-used-to-make-telephone-calls-over-the-internet</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
@@ -961,19 +973,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/0392dbbc-ae34-4f0b-8130-5f1e9095c93c/technology/what-does-http-stand-for-in-web-technology</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/d22d2609-69d2-4251-9e29-1f4c2132bb1a/technology/which-programming-language-was-developed-by-guido-van-rossum</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/81ec92e1-689f-4c44-871a-c758826e841e/technology/what-is-the-powerhouse-of-the-cell</loc>
+    <loc>https://cuiz.in/quiz/question/4944305a-8e8e-4f28-a53d-d297221ee14c/technology/what-is-the-center-of-an-atom-called</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -997,7 +1003,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4944305a-8e8e-4f28-a53d-d297221ee14c/technology/what-is-the-center-of-an-atom-called</loc>
+    <loc>https://cuiz.in/quiz/question/4648839f-f0c0-4f1d-8d11-76b77ab017c1/technology/what-is-h2o-commonly-known-as</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -1009,37 +1015,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4648839f-f0c0-4f1d-8d11-76b77ab017c1/technology/what-is-h2o-commonly-known-as</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/6746b095-a60e-448c-8a96-b9d77785d51b/technology/what-does-http-stand-for</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/0ab2205f-ace1-49c3-99ba-8c33f6bc9d9d/technology/which-company-is-known-for-the-iphone</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4876713f-f22e-4598-9d08-2ae22cf9428a/technology/what-is-the-term-for-unwanted-emails-often-sent-in-bulk</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/c12a5285-6063-4654-b70f-1c400c3050e4/technology/what-is-the-name-of-the-first-commercially-successful-personal-computer</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/4639d7e2-1f4b-4e2e-b3b9-d0c363bc4ff4/technology/what-is-the-programming-language-commonly-used-for-web-development</loc>
+    <loc>https://cuiz.in/quiz/question/6746b095-a60e-448c-8a96-b9d77785d51b/technology/what-does-http-stand-for</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -1051,13 +1033,25 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/4639d7e2-1f4b-4e2e-b3b9-d0c363bc4ff4/technology/what-is-the-programming-language-commonly-used-for-web-development</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/4876713f-f22e-4598-9d08-2ae22cf9428a/technology/what-is-the-term-for-unwanted-emails-often-sent-in-bulk</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/b9ba5118-201c-447a-b5ce-1a48dc50a32a/technology/what-is-the-name-of-the-virtual-assistant-developed-by-amazon</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/be84c8cf-b018-4cce-8333-e74c145e3c24/technology/what-does-www-stand-for-in-a-website-address</loc>
+    <loc>https://cuiz.in/quiz/question/c12a5285-6063-4654-b70f-1c400c3050e4/technology/what-is-the-name-of-the-first-commercially-successful-personal-computer</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -1069,7 +1063,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/9f0fcb20-c328-4fcf-afef-160a762f2af6/technology/what-does-cpu-stand-for-in-computing</loc>
+    <loc>https://cuiz.in/quiz/question/50a767e6-2d59-4bd1-b0c9-e0bf69522343/technology/what-is-the-name-of-googles-mobile-operating-system</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -1081,7 +1075,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/50a767e6-2d59-4bd1-b0c9-e0bf69522343/technology/what-is-the-name-of-googles-mobile-operating-system</loc>
+    <loc>https://cuiz.in/quiz/question/9f0fcb20-c328-4fcf-afef-160a762f2af6/technology/what-does-cpu-stand-for-in-computing</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/be84c8cf-b018-4cce-8333-e74c145e3c24/technology/what-does-www-stand-for-in-a-website-address</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

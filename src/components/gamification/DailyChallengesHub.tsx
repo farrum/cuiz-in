@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DailyRiddleVault } from './DailyRiddleVault';
 import { TriviaWordle } from './TriviaWordle';
+import { DailyMissions } from './DailyMissions';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -107,6 +108,9 @@ export const DailyChallengesHub: React.FC = () => {
 
   return (
     <div className="space-y-12 pb-12">
+      {/* Daily Missions Checklist at the Top */}
+      <DailyMissions />
+
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-slate-800 px-2">Trivia Wordle</h2>
         {hasPlayedWordle ? (

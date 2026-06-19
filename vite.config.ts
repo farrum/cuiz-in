@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -15,13 +14,13 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
     // Bundle analyzer - generates stats.html in project root
-    mode === 'production' && visualizer({
+    /* mode === 'production' && visualizer({
       filename: 'bundle-stats.html',
       open: false,
       gzipSize: true,
       brotliSize: true,
       template: 'treemap', // 'sunburst', 'treemap', 'network'
-    }),
+    }), */
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -32,7 +31,7 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunks for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
+        /* manualChunks: {
           // Core React vendor chunk
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // UI library chunk
@@ -51,7 +50,7 @@ export default defineConfig(({ mode }) => ({
           'vendor-charts': ['recharts'],
           // Form handling chunk
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-        },
+        }, */
       },
     },
     // Enable CSS code splitting

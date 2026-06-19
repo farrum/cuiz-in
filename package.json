@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node generate-sitemaps.cjs && vite build && node generate-seo-pages.cjs",
+    "build": "node generate-sitemaps.cjs && node --max-old-space-size=4096 node_modules/vite/bin/vite.js build && node generate-seo-pages.cjs",
     "build:dev": "vite build --mode development",
     "build:mobile": "cross-env VITE_PLATFORM=mobile vite build",
     "dev:mobile": "cross-env VITE_PLATFORM=mobile vite",

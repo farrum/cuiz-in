@@ -5,13 +5,12 @@ import { Activity, CheckCircle, XCircle } from "lucide-react";
 import { useSupabaseRealtime, RealtimeTable } from '@/hooks/useSupabaseRealtime';
 
 type StatusItemProps = {
-  tableName: string;
+  tableName: RealtimeTable;
   displayName: string;
-  isConnected: boolean;
-  lastUpdate: any | null;
 };
 
-const StatusItem = ({ tableName, displayName, isConnected, lastUpdate }: StatusItemProps) => {
+const StatusItem = ({ tableName, displayName }: StatusItemProps) => {
+  const { isConnected, lastUpdate } = useSupabaseRealtime(tableName);
   const [timeAgo, setTimeAgo] = useState<string>('Never');
   
   useEffect(() => {
@@ -66,13 +65,6 @@ const StatusItem = ({ tableName, displayName, isConnected, lastUpdate }: StatusI
   );
 };
 
-interface TableStatus {
-  table: RealtimeTable;
-  displayName: string;
-  isConnected: boolean;
-  lastUpdate: any | null;
-}
-
 export function RealtimeStatus() {
   const tablesToMonitor: {table: RealtimeTable, displayName: string}[] = [
     { table: 'profiles', displayName: 'User Profiles' },
@@ -85,31 +77,6 @@ export function RealtimeStatus() {
     { table: 'news_ticker', displayName: 'News Ticker' },
     { table: 'admin_notifications', displayName: 'Admin Notifications' }
   ];
-  
-  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(
-    tablesToMonitor.map(item => ({
-      table: item.table,
-      displayName: item.displayName,
-      isConnected: false,
-      lastUpdate: null
-    }))
-  );
-
-  tablesToMonitor.forEach((tableInfo, index) => {
-    const { isConnected, lastUpdate } = useSupabaseRealtime(tableInfo.table);
-    
-    useEffect(() => {
-      setTableStatuses(prev => {
-        const newStatuses = [...prev];
-        newStatuses[index] = {
-          ...newStatuses[index],
-          isConnected,
-          lastUpdate
-        };
-        return newStatuses;
-      });
-    }, [isConnected, lastUpdate]);
-  });
   
   return (
     <Card>
@@ -126,13 +93,11 @@ export function RealtimeStatus() {
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
-          {tableStatuses.map((item) => (
+          {tablesToMonitor.map((item) => (
             <StatusItem 
               key={item.table}
               tableName={item.table}
               displayName={item.displayName}
-              isConnected={item.isConnected}
-              lastUpdate={item.lastUpdate}
             />
           ))}
         </div>

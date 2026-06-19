@@ -321,40 +321,63 @@ ${mainEntries.join('\n')}
   fs.writeFileSync(path.join(sitemapsDir, 'main.xml'), mainXml);
   console.log(`Generated main sitemap with ${mainEntries.length} entries.`);
 
-  // 2. GENERATE AMP SITEMAP (sitemaps/amp.xml)
-  console.log('Generating AMP sitemap...');
-  const ampEntries = [];
-  let offset = 0;
-  const pageSize = 1000;
+  // 2. FETCH ALL QUIZ QUESTIONS (Single query batching sorted by ID)
+  console.log('Fetching all quiz questions for AMP and Category sitemaps...');
+  const allQuestions = [];
+  let from = 0;
+  const batchSize = 1000;
   let hasMore = true;
 
   while (hasMore) {
-    const { data: questions, error: qError } = await supabase
+    const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, created_at')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + pageSize - 1);
+      .select('id, question, category, created_at')
+      .order('id')
+      .range(from, from + batchSize - 1);
 
-    if (qError) {
-      console.error('Error fetching questions for AMP sitemap:', qError);
-      throw qError;
+    if (error) {
+      console.error('Error fetching quiz questions:', error);
+      throw error;
     }
 
-    if (questions && questions.length > 0) {
-      for (const q of questions) {
-        const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
-        ampEntries.push(`  <url>
+    if (data && data.length > 0) {
+      allQuestions.push(...data);
+      from += batchSize;
+      hasMore = data.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+  console.log(`Fetched ${allQuestions.length} questions successfully.`);
+
+  // Write temporary cache file for generate-seo-pages.cjs
+  const cachePath = path.join(__dirname, 'temp-questions-cache.json');
+  try {
+    fs.writeFileSync(cachePath, JSON.stringify(allQuestions), 'utf8');
+    console.log('Temporary questions cache written for SEO generator.');
+  } catch (err) {
+    console.warn('Warning: Could not write questions cache file:', err.message);
+  }
+
+  // 3. GENERATE AMP SITEMAP (sitemaps/amp.xml)
+  console.log('Generating AMP sitemap...');
+  const ampEntries = [];
+  
+  // Sort in memory by created_at DESC to put newest first
+  const sortedQuestions = [...allQuestions].sort((a, b) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  for (const q of sortedQuestions) {
+    const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
+    ampEntries.push(`  <url>
     <loc>${SITE_URL}/amp/question/${q.id}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>`);
-      }
-      offset += pageSize;
-      hasMore = questions.length === pageSize;
-    } else {
-      hasMore = false;
-    }
   }
 
   const ampXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -365,50 +388,37 @@ ${ampEntries.join('\n')}
   fs.writeFileSync(path.join(sitemapsDir, 'amp.xml'), ampXml);
   console.log(`Generated AMP sitemap with ${ampEntries.length} entries.`);
 
-  // 3. GENERATE CATEGORY SITEMAPS (sitemaps/category/[category]/sitemap.xml)
+  // 4. GENERATE CATEGORY SITEMAPS (sitemaps/category/[category]/sitemap.xml)
   const categories = Object.keys(slugToCategoriesMap);
   for (const cat of categories) {
     console.log(`Generating category sitemap for ${cat}...`);
-    const dbCategories = slugToCategoriesMap[cat];
-    const catEntries = [];
-    let catOffset = 0;
-    let catHasMore = true;
+    const dbCategories = slugToCategoriesMap[cat] || [];
+    
+    // Filter and sort in memory by created_at DESC
+    const catQuestions = allQuestions
+      .filter(q => dbCategories.includes(q.category))
+      .sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
 
+    const catEntries = [];
     const catDir = path.join(sitemapsDir, 'category', cat);
     if (!fs.existsSync(catDir)) {
       fs.mkdirSync(catDir, { recursive: true });
     }
 
-    while (catHasMore) {
-      const { data: catQuestions, error: catQError } = await supabase
-        .from('quiz_questions')
-        .select('id, question, created_at')
-        .in('category', dbCategories)
-        .order('created_at', { ascending: false })
-        .range(catOffset, catOffset + pageSize - 1);
-
-      if (catQError) {
-        console.error(`Error fetching questions for category ${cat}:`, catQError);
-        throw catQError;
-      }
-
-      if (catQuestions && catQuestions.length > 0) {
-        for (const q of catQuestions) {
-          const slug = createSlug(q.question);
-          if (slug) {
-            const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
-            catEntries.push(`  <url>
+    for (const q of catQuestions) {
+      const slug = createSlug(q.question);
+      if (slug) {
+        const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
+        catEntries.push(`  <url>
     <loc>${SITE_URL}/quiz/question/${q.id}/${cat}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`);
-          }
-        }
-        catOffset += pageSize;
-        catHasMore = catQuestions.length === pageSize;
-      } else {
-        catHasMore = false;
       }
     }
 

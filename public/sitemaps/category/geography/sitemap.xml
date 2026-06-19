@@ -2341,13 +2341,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/9c2dd9f4-b85f-42f0-ae32-96314186a210/geography/which-country-has-the-most-number-of-time-zones-when-including-its-overseas-terr</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/77997f77-104f-4dc2-ba4a-b336c24660fb/geography/which-desert-is-the-largest-cold-desert-in-the-world</loc>
+    <loc>https://cuiz.in/quiz/question/0441aad8-26cc-4a11-a4ae-640423c29b69/geography/which-ocean-surrounds-antarctica</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2359,25 +2353,25 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/97c5f05d-7d17-4513-b85f-471145eecfd2/geography/which-mountain-is-the-highest-peak-in-north-america</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/63ff4122-f67d-4ed1-a6f2-80a9a8fb9d3d/geography/what-is-the-longest-river-in-south-america</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/0441aad8-26cc-4a11-a4ae-640423c29b69/geography/which-ocean-surrounds-antarctica</loc>
+    <loc>https://cuiz.in/quiz/question/77997f77-104f-4dc2-ba4a-b336c24660fb/geography/which-desert-is-the-largest-cold-desert-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/54e72e76-9289-4760-b3df-b60880eb90d1/geography/which-continent-is-known-as-the-dark-continent</loc>
+    <loc>https://cuiz.in/quiz/question/97c5f05d-7d17-4513-b85f-471145eecfd2/geography/which-mountain-is-the-highest-peak-in-north-america</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/9c2dd9f4-b85f-42f0-ae32-96314186a210/geography/which-country-has-the-most-number-of-time-zones-when-including-its-overseas-terr</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2389,7 +2383,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/71754166-ce06-4e4f-a7e2-da56d89efbb4/geography/what-is-the-longest-river-in-the-world</loc>
+    <loc>https://cuiz.in/quiz/question/54e72e76-9289-4760-b3df-b60880eb90d1/geography/which-continent-is-known-as-the-dark-continent</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2401,7 +2395,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/ba235084-73bc-4a8c-95cd-2254ecb891fd/geography/which-country-is-known-as-the-land-of-the-rising-sun</loc>
+    <loc>https://cuiz.in/quiz/question/445f5a3b-81e8-4547-aec2-35a443b2360a/geography/which-continent-is-the-largest-by-land-area</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2413,19 +2407,25 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/560dd51e-142e-4970-9a4d-b0a1ebcafd0b/geography/which-mountain-range-forms-the-traditional-boundary-between-europe-and-asia</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/71754166-ce06-4e4f-a7e2-da56d89efbb4/geography/what-is-the-longest-river-in-the-world</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/868afbb9-6f86-4a93-8499-f5d0d0cc5eda/geography/what-is-the-capital-of-canada</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/445f5a3b-81e8-4547-aec2-35a443b2360a/geography/which-continent-is-the-largest-by-land-area</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/560dd51e-142e-4970-9a4d-b0a1ebcafd0b/geography/which-mountain-range-forms-the-traditional-boundary-between-europe-and-asia</loc>
+    <loc>https://cuiz.in/quiz/question/ba235084-73bc-4a8c-95cd-2254ecb891fd/geography/which-country-is-known-as-the-land-of-the-rising-sun</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2437,25 +2437,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/69b3a514-a9b3-4494-aa09-35b99e2e18b3/geography/which-country-is-known-to-have-the-most-islands-in-the-world</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/197fed65-b5ca-4061-a831-fd36f1bdf870/geography/what-is-the-longest-mountain-range-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/c84840b2-5cbf-4223-af54-be13e285bc45/geography/what-is-the-deepest-part-of-the-worlds-oceans</loc>
+    <loc>https://cuiz.in/quiz/question/69b3a514-a9b3-4494-aa09-35b99e2e18b3/geography/which-country-is-known-to-have-the-most-islands-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/60c3af55-948e-4428-a3e5-b8fbd090c75d/geography/which-desert-is-the-largest-in-the-world</loc>
+    <loc>https://cuiz.in/quiz/question/c84840b2-5cbf-4223-af54-be13e285bc45/geography/what-is-the-deepest-part-of-the-worlds-oceans</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2468,6 +2462,12 @@
   </url>
   <url>
     <loc>https://cuiz.in/quiz/question/3c0ae042-f6a5-4794-9f08-b4baaa968967/geography/which-south-american-country-is-the-largest-by-area</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/60c3af55-948e-4428-a3e5-b8fbd090c75d/geography/which-desert-is-the-largest-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2491,6 +2491,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/5e48e36b-4130-40a1-8ae9-989e8ab4491e/geography/what-is-the-largest-bay-in-the-world</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/b448fd55-f24d-4a13-99f8-bfa83c681341/geography/what-is-the-capital-city-of-new-zealand</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
@@ -2509,12 +2515,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/5e48e36b-4130-40a1-8ae9-989e8ab4491e/geography/what-is-the-largest-bay-in-the-world</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/0c44d6cc-1880-4231-a584-68e5b3197d84/geography/which-country-has-the-largest-land-area</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
@@ -2527,13 +2527,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/1652ace5-9040-4707-8095-2fb8a59e4b06/geography/which-island-is-the-largest-in-the-mediterranean-sea</loc>
+    <loc>https://cuiz.in/quiz/question/0eea4658-8f4a-4421-8232-bf293d757163/geography/what-is-the-capital-of-spain</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/b98c0883-979b-4f52-9557-3f58cff0b4c6/geography/what-is-the-largest-island-in-the-world</loc>
+    <loc>https://cuiz.in/quiz/question/1652ace5-9040-4707-8095-2fb8a59e4b06/geography/which-island-is-the-largest-in-the-mediterranean-sea</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2551,6 +2551,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/8ddf7534-a87d-437c-bc73-6305b4423e27/geography/on-which-continent-is-the-sahara-desert-located</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/a72121b1-e313-49eb-bcd3-e4310f8ccc0a/geography/which-european-capital-lies-on-the-river-danube</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
@@ -2563,19 +2569,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/8ddf7534-a87d-437c-bc73-6305b4423e27/geography/on-which-continent-is-the-sahara-desert-located</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/0eea4658-8f4a-4421-8232-bf293d757163/geography/what-is-the-capital-of-spain</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/5f8d5c15-6301-4088-9d92-d9c1b1e54ebb/geography/which-european-country-officially-recognizes-four-national-languages</loc>
+    <loc>https://cuiz.in/quiz/question/b98c0883-979b-4f52-9557-3f58cff0b4c6/geography/what-is-the-largest-island-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2599,7 +2593,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/448369c9-f516-403a-a72e-921104432576/geography/which-country-is-known-as-the-land-of-the-rising-sun</loc>
+    <loc>https://cuiz.in/quiz/question/5f8d5c15-6301-4088-9d92-d9c1b1e54ebb/geography/which-european-country-officially-recognizes-four-national-languages</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2611,7 +2605,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/58196917-e1b0-40d7-bbde-1ac6a8d16a49/geography/which-river-is-the-longest-in-south-america</loc>
+    <loc>https://cuiz.in/quiz/question/448369c9-f516-403a-a72e-921104432576/geography/which-country-is-known-as-the-land-of-the-rising-sun</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2623,19 +2617,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/6ec4c3a0-c102-4400-a6a0-c6ef01545d5f/geography/which-continent-is-also-a-country</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/93ffa69f-6704-45b2-9a00-08fdf5d5e974/geography/which-desert-is-the-largest-hot-desert-in-the-world</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/670d9c7f-5b4c-46af-ad9a-1b29bfdf1468/geography/what-is-the-capital-city-of-japan</loc>
+    <loc>https://cuiz.in/quiz/question/58196917-e1b0-40d7-bbde-1ac6a8d16a49/geography/which-river-is-the-longest-in-south-america</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2647,7 +2629,31 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/4c7b14e8-77ce-4985-8dde-e9c6787a259f/geography/which-country-has-the-most-natural-lakes-than-any-other</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/670d9c7f-5b4c-46af-ad9a-1b29bfdf1468/geography/what-is-the-capital-city-of-japan</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/6ec4c3a0-c102-4400-a6a0-c6ef01545d5f/geography/which-continent-is-also-a-country</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/873e0e78-5968-466d-8cd9-d2cd864fa3f2/geography/which-river-is-the-longest-in-europe</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/93ffa69f-6704-45b2-9a00-08fdf5d5e974/geography/which-desert-is-the-largest-hot-desert-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2659,25 +2665,25 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4c7b14e8-77ce-4985-8dde-e9c6787a259f/geography/which-country-has-the-most-natural-lakes-than-any-other</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/789e06a0-7a62-477b-b549-83e9398647bc/geography/which-us-state-is-known-as-the-lone-star-state</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/82b66baf-d1fa-4d4c-923a-2b02063c38fe/geography/which-is-the-smallest-country-in-the-world-by-area</loc>
+    <loc>https://cuiz.in/quiz/question/181c0a5d-4785-4b05-82a0-c86ef49dd6e3/geography/the-strait-of-gibraltar-separates-spain-from-which-african-country</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/181c0a5d-4785-4b05-82a0-c86ef49dd6e3/geography/the-strait-of-gibraltar-separates-spain-from-which-african-country</loc>
+    <loc>https://cuiz.in/quiz/question/73aefe5e-174c-45b9-a33c-2c119bd3330d/geography/which-river-flows-through-paris</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/82b66baf-d1fa-4d4c-923a-2b02063c38fe/geography/which-is-the-smallest-country-in-the-world-by-area</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2695,13 +2701,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/73aefe5e-174c-45b9-a33c-2c119bd3330d/geography/which-river-flows-through-paris</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/767d27af-82f1-48b0-9ba8-804c32a22fb0/geography/which-country-has-the-largest-population-in-the-world</loc>
+    <loc>https://cuiz.in/quiz/question/393c5af4-474a-47dd-9d5d-81c6c9c750fc/geography/which-continent-is-known-as-the-dark-continent</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2713,7 +2713,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/393c5af4-474a-47dd-9d5d-81c6c9c750fc/geography/which-continent-is-known-as-the-dark-continent</loc>
+    <loc>https://cuiz.in/quiz/question/767d27af-82f1-48b0-9ba8-804c32a22fb0/geography/which-country-has-the-largest-population-in-the-world</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2725,13 +2725,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/dda9256a-5eaf-4c6f-a3e5-93f614a2b933/geography/what-is-the-highest-waterfall-in-the-world</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/dae5cf86-200c-4a7e-897b-2be25888ac94/geography/which-country-is-the-smallest-in-the-world-by-land-area</loc>
+    <loc>https://cuiz.in/quiz/question/2c67aa32-5848-4640-8b03-d5dbe43c9c10/geography/which-mountain-range-separates-europe-from-asia</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2743,19 +2737,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/9658a271-d238-4de3-8e15-cb7480db3bb0/geography/what-is-the-largest-lake-in-the-world-by-surface-area</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/882ed4a6-84c9-4b17-87fd-3516964ae1b7/geography/which-desert-is-the-largest-hot-desert-in-the-world</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/2c67aa32-5848-4640-8b03-d5dbe43c9c10/geography/which-mountain-range-separates-europe-from-asia</loc>
+    <loc>https://cuiz.in/quiz/question/9658a271-d238-4de3-8e15-cb7480db3bb0/geography/what-is-the-largest-lake-in-the-world-by-surface-area</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/dae5cf86-200c-4a7e-897b-2be25888ac94/geography/which-country-is-the-smallest-in-the-world-by-land-area</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2767,19 +2761,25 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/dda9256a-5eaf-4c6f-a3e5-93f614a2b933/geography/what-is-the-highest-waterfall-in-the-world</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/7643435a-7ebc-4485-b42e-92ba1c898b50/geography/what-is-the-longest-river-in-the-world</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/c5270d32-e0b9-4ed7-99ee-6dbda0a82026/geography/which-continent-is-known-as-the-land-down-under</loc>
+    <loc>https://cuiz.in/quiz/question/c17345a3-2100-4456-85cb-8a251e69036a/geography/what-is-the-capital-city-of-france</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/c17345a3-2100-4456-85cb-8a251e69036a/geography/what-is-the-capital-city-of-france</loc>
+    <loc>https://cuiz.in/quiz/question/c5270d32-e0b9-4ed7-99ee-6dbda0a82026/geography/which-continent-is-known-as-the-land-down-under</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -2833,13 +2833,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/acf824e8-7c6c-4de8-922f-53312859f322/geography/what-is-the-capital-city-of-argentina</loc>
+    <loc>https://cuiz.in/quiz/question/851b71ef-0043-43bc-802a-1a0e62225fcc/geography/which-country-is-home-to-the-great-barrier-reef-the-worlds-largest-coral-reef-sy</loc>
     <lastmod>2025-03-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/851b71ef-0043-43bc-802a-1a0e62225fcc/geography/which-country-is-home-to-the-great-barrier-reef-the-worlds-largest-coral-reef-sy</loc>
+    <loc>https://cuiz.in/quiz/question/acf824e8-7c6c-4de8-922f-53312859f322/geography/what-is-the-capital-city-of-argentina</loc>
     <lastmod>2025-03-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

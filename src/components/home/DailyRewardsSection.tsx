@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { SpinTheWheel } from '@/components/gamification/SpinTheWheel';
 import { ScratchCard } from '@/components/gamification/ScratchCard';
+import { CoinFlip } from '@/components/gamification/CoinFlip';
+import { DiceRoll } from '@/components/gamification/DiceRoll';
+import { LuckyCardDraw } from '@/components/gamification/LuckyCardDraw';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, Sparkles } from 'lucide-react';
@@ -69,9 +72,12 @@ const DailyRewardsSection: React.FC = () => {
       <Card className="border-2 border-purple-100 shadow-xl shadow-purple-100/20">
         <CardHeader className="bg-purple-50/50 border-b border-purple-100 rounded-t-xl pb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-              <TabsTrigger value="spin" className="font-bold">Spin The Wheel</TabsTrigger>
-              <TabsTrigger value="scratch" className="font-bold">Scratch Card</TabsTrigger>
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5">
+              <TabsTrigger value="spin" className="font-bold text-xs">Spin Wheel</TabsTrigger>
+              <TabsTrigger value="scratch" className="font-bold text-xs">Scratch Card</TabsTrigger>
+              <TabsTrigger value="coin" className="font-bold text-xs">Coin Flip</TabsTrigger>
+              <TabsTrigger value="dice" className="font-bold text-xs">Dice Roll</TabsTrigger>
+              <TabsTrigger value="card" className="font-bold text-xs">Lucky Card</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -123,6 +129,24 @@ const DailyRewardsSection: React.FC = () => {
                   </div>
                 </ScratchCard>
               )}
+            </div>
+          )}
+
+          {activeTab === 'coin' && (
+            <div className="relative z-10 w-full animate-in fade-in zoom-in-95 duration-300">
+              <CoinFlip />
+            </div>
+          )}
+
+          {activeTab === 'dice' && (
+            <div className="relative z-10 w-full animate-in fade-in zoom-in-95 duration-300">
+              <DiceRoll />
+            </div>
+          )}
+
+          {activeTab === 'card' && (
+            <div className="relative z-10 w-full animate-in fade-in zoom-in-95 duration-300">
+              <LuckyCardDraw />
             </div>
           )}
         </CardContent>
