@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     // Fetch all users with service role (bypasses RLS)
     const { data: users, error: usersError } = await supabaseAdmin
       .from('profiles')
-      .select('id, username, display_name, phone, gems_balance, profile_picture, suspended, created_at, email, auth_migrated')
+      .select('id, username, display_name, phone, points, profile_picture, suspended, created_at, email, auth_migrated')
       .order('created_at', { ascending: false });
 
     if (usersError) {
@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
 
     const mappedUsers = (users || []).map((user: any) => ({
       ...user,
-      gems: user.gems_balance || 0,
+      gems: user.points || 0,
+      gems_balance: user.points || 0,
     }));
 
     return new Response(
