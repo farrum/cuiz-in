@@ -42,6 +42,7 @@ const AIGenerateQuestionsDialog: React.FC<Props> = ({ categories, onSuccess, onC
   const [amount, setAmount] = useState<number>(50);
   const [difficulty, setDifficulty] = useState<string>('mixed');
   const [indiaPercent, setIndiaPercent] = useState<number>(30);
+  const [imagePercent, setImagePercent] = useState<number>(0);
   const [model, setModel] = useState<string>('google/gemini-2.5-flash-lite');
 
   const handleGenerate = async () => {
@@ -56,16 +57,16 @@ const AIGenerateQuestionsDialog: React.FC<Props> = ({ categories, onSuccess, onC
     }
     setLoading(true); setError(null);
     try {
-      toast({ title: 'Generating questions', description: `Asking Lovable AI for ${amount} ${category} questions...` });
+      toast({ title: 'Generating questions', description: `Asking Lovable AI for ${amount} ${category} questions${imagePercent > 0 ? ' (resolving images may take a minute)' : ''}...` });
       const { data, error: fnError } = await supabase.functions.invoke('ai-generate-questions', {
-        body: { adminUserId, category: category.trim(), subCategory: subCategory.trim(), amount, difficulty, indiaPercent, model },
+        body: { adminUserId, category: category.trim(), subCategory: subCategory.trim(), amount, difficulty, indiaPercent, imagePercent, model },
       });
       if (fnError) throw new Error(fnError.message || 'Generation failed');
-      const res = data as { saved: number; duplicates: number; errors: number; generated: number; indiaSpecific: number; error?: string };
+      const res = data as { saved: number; duplicates: number; errors: number; generated: number; indiaSpecific: number; imagesResolved?: number; error?: string };
       if (res?.error) throw new Error(res.error);
       toast({
         title: 'Done!',
-        description: `Saved ${res.saved} new questions (${res.indiaSpecific} India-specific, ${res.duplicates} duplicates, ${res.errors} errors).`,
+        description: `Saved ${res.saved} new questions (${res.indiaSpecific} India-specific, ${res.imagesResolved ?? 0} with images, ${res.duplicates} duplicates, ${res.errors} errors).`,
       });
       if (res.saved > 0) onSuccess();
     } catch (e) {
