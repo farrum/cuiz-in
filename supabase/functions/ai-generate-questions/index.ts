@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { resolveImage } from "../_shared/imageResolver.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +14,7 @@ interface GeneratedQuestion {
   category: string;
   explanation: string;
   isIndiaSpecific: boolean;
+  isImageQuestion?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -26,6 +28,7 @@ Deno.serve(async (req) => {
       amount = 10,
       difficulty = "mixed",
       indiaPercent = 30,
+      imagePercent = 0,
       model = "google/gemini-2.5-flash",
     } = await req.json();
 
@@ -37,6 +40,7 @@ Deno.serve(async (req) => {
 
     const n = Math.min(Math.max(parseInt(String(amount), 10) || 10, 1), 50);
     const indiaPct = Math.min(Math.max(parseInt(String(indiaPercent), 10) || 0, 0), 100);
+    const imagePct = Math.min(Math.max(parseInt(String(imagePercent), 10) || 0, 0), 100);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,6 +64,7 @@ Deno.serve(async (req) => {
     }
 
     const indiaCount = Math.round((n * indiaPct) / 100);
+    const imageCount = Math.round((n * imagePct) / 100);
     const subCatLine = subCategory ? `Sub-topic focus: ${subCategory}.` : "";
     const diffLine = difficulty === "mixed"
       ? "Vary difficulty across easy, medium, hard."
@@ -74,6 +79,8 @@ ${diffLine}
 
 At least ${indiaCount} of the ${n} questions MUST be India-specific (about Indian history, geography, culture, sports, cinema, politics, science, current affairs, languages, food, festivals, or notable Indian people). Mark these with isIndiaSpecific: true. The remaining questions should be globally relevant and have isIndiaSpecific: false.
 
+At least ${imageCount} of the ${n} questions MUST be "image questions" — questions about a single, concrete, visually-recognizable subject (a person, place, landmark, animal, object, logo, flag, or artwork) where the correct answer is that depictable subject, so a representative image can be shown. Phrase these so an image of the subject makes sense (e.g. "Which monument is this?", "Identify this scientist", "Which animal is shown?"). Mark these with isImageQuestion: true; all other questions have isImageQuestion: false.
+
 Return ONLY valid JSON matching this exact schema:
 {
   "questions": [
@@ -84,7 +91,8 @@ Return ONLY valid JSON matching this exact schema:
       "difficulty": "easy" | "medium" | "hard",
       "category": "${category}",
       "explanation": "string",
-      "isIndiaSpecific": boolean
+      "isIndiaSpecific": boolean,
+      "isImageQuestion": boolean
     }
   ]
 }`;
@@ -144,6 +152,7 @@ Return ONLY valid JSON matching this exact schema:
       category,
       explanation: typeof q.explanation === "string" ? q.explanation.trim() : "",
       isIndiaSpecific: Boolean(q.isIndiaSpecific),
+      isImageQuestion: Boolean(q.isImageQuestion),
     }));
 
     if (validQuestions.length === 0) {
@@ -154,10 +163,31 @@ Return ONLY valid JSON matching this exact schema:
     // Insert into DB, skipping duplicates by exact question match
     let saved = 0, duplicates = 0, errors = 0;
     const indiaSaved = { count: 0 };
+    let imagesResolved = 0;
+    // Ensure we resolve images for at least imageCount questions even if the
+    // model under-marked them: top up from the remaining questions.
+    const flagged = validQuestions.filter((q) => q.isImageQuestion);
+    if (flagged.length < imageCount) {
+      for (const q of validQuestions) {
+        if (flagged.length >= imageCount) break;
+        if (!q.isImageQuestion) { q.isImageQuestion = true; flagged.push(q); }
+      }
+    }
     for (const q of validQuestions) {
       const { data: existing } = await supabase
         .from("quiz_questions").select("id").eq("question", q.question).maybeSingle();
       if (existing) { duplicates++; continue; }
+
+      let imageUrl: string | null = null;
+      if (q.isImageQuestion && imagesResolved < imageCount) {
+        try {
+          const r = await resolveImage(q.question, q.correctAnswer, q.category);
+          imageUrl = r.imageUrl;
+          if (imageUrl) imagesResolved++;
+        } catch (e) {
+          console.error("image resolve failed for question:", q.question, e);
+        }
+      }
 
       const { error } = await supabase.from("quiz_questions").insert({
         question: q.question,
@@ -167,7 +197,8 @@ Return ONLY valid JSON matching this exact schema:
         category: q.category,
         explanation: q.explanation,
         points: q.difficulty === "easy" ? 2 : q.difficulty === "medium" ? 3 : 4,
-        question_type: "text",
+        question_type: imageUrl ? "image" : "text",
+        image_url: imageUrl,
       });
       if (error) {
         console.error("Insert error:", error);
@@ -183,6 +214,8 @@ Return ONLY valid JSON matching this exact schema:
       generated: validQuestions.length,
       indiaSpecific: indiaSaved.count,
       requestedIndiaMin: indiaCount,
+      imagesResolved,
+      requestedImageMin: imageCount,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
     console.error("Error:", error);
