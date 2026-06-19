@@ -68,6 +68,12 @@ const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
   </Suspense>
 );
 
+// Redirect legacy AMP question URLs (/amp/question/:id) to the real question page
+const AmpQuestionRedirect: React.FC = () => {
+  const { questionId } = useParams();
+  return <Navigate to={`/quiz/play/${questionId}`} replace />;
+};
+
 /**
  * Hydrate localStorage cache from a valid Supabase session user.
  * This is called both on init and on auth state changes.
