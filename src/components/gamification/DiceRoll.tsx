@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
+import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Coins, Sparkles } from 'lucide-react';
+import { Coins, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const faceRotations = {
@@ -59,6 +60,7 @@ const DieFace: React.FC<{ value: number }> = ({ value }) => {
 export const DiceRoll: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
+  const [isSuspended, setIsSuspended] = useState<boolean>(false);
   
   const [diceState, setDiceState] = useState<'idle' | 'rolling' | 'result'>('idle');
   const [diceValues, setDiceValues] = useState<[number, number]>([1, 1]);
@@ -101,6 +103,12 @@ export const DiceRoll: React.FC = () => {
     };
     
     fetchUser();
+
+    const checkStatus = async () => {
+      const active = await checkMinigameStatus('dice');
+      setIsSuspended(!active);
+    };
+    checkStatus();
     
     // Listen for gems updates
     const handleGemsUpdated = () => {
@@ -145,6 +153,9 @@ export const DiceRoll: React.FC = () => {
     const missionKey = `daily_mission_dice_roll_${userId}_${today}`;
     localStorage.setItem(missionKey, 'true');
     window.dispatchEvent(new CustomEvent('diceRollPlayed'));
+
+    // Track stats
+    await incrementMinigamePlays('dice');
 
     // Generate random roll
     const d1 = Math.floor(Math.random() * 6) + 1;
@@ -231,6 +242,18 @@ export const DiceRoll: React.FC = () => {
     setDiceRotation2({ x: 0, y: 0 });
     setMessage('Roll the dice to earn gems! Double 6 wins jackpot.');
   };
+
+  if (isSuspended) {
+    return (
+      <div className="flex flex-col items-center gap-4 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm text-center">
+        <AlertCircle className="w-12 h-12 text-rose-500 animate-bounce" />
+        <h3 className="text-lg font-black text-slate-800">Game Suspended</h3>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          This game is temporarily suspended by the administrator. Please check back later!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
