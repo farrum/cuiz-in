@@ -54,3 +54,33 @@ export const incrementMinigamePlays = async (gameId: string) => {
     console.error('Error incrementing play count:', e);
   }
 };
+
+export const setMinigameSuspended = async (gameId: string, suspended: boolean) => {
+  try {
+    const { data } = await supabase
+      .from('gamification_settings')
+      .select('config')
+      .eq('setting_type', 'minigames_status')
+      .maybeSingle();
+
+    let currentConfig: Record<string, MinigameStatus> = {};
+    if (data && data.config) {
+      currentConfig = data.config as Record<string, MinigameStatus>;
+    }
+
+    const currentStats = currentConfig[gameId] || { active: true, plays: 0 };
+    currentConfig[gameId] = {
+      ...currentStats,
+      active: !suspended,
+    };
+
+    await supabase
+      .from('gamification_settings')
+      .upsert({
+        setting_type: 'minigames_status',
+        config: currentConfig,
+      }, { onConflict: 'setting_type' });
+  } catch (e) {
+    console.error('Error setting minigame suspension:', e);
+  }
+};

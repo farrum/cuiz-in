@@ -110,6 +110,7 @@ const Header: React.FC = () => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/categories', label: 'Categories', icon: BookOpen },
     { path: '/faq', label: 'FAQ', icon: HelpCircle },
+    { path: '/minigames', label: 'Games', icon: Play },
   ];
 
   const loggedInNavItems = [

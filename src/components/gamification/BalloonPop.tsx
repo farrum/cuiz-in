@@ -81,6 +81,7 @@ export const BalloonPop: React.FC = () => {
   useEffect(() => {
     if (gameState !== 'playing') return;
 
+    // Use a stable interval to animate balloons upward. Updated to avoid overwriting pop state.
     const interval = setInterval(() => {
       setBalloons(prev => {
         // Move balloons up
@@ -89,14 +90,14 @@ export const BalloonPop: React.FC = () => {
           y: b.y + b.speed,
         }));
 
-        // Filter out off-screen balloons and spawn new ones
-        const active = moved.filter(b => b.y < 350);
-        
+        // Filter out off-screen balloons (y >= 350) and spawn new ones if needed
+        const active = moved.filter(b => b.y < 350 && !b.popped);
+
+        // Spawn new balloon if there are fewer than 5 active ones
         if (active.length < 5 && Math.random() < 0.3) {
           const typeRoll = Math.random();
           let type: 'normal' | 'gold' | 'bomb' = 'normal';
           let color = 'bg-red-400';
-          
           if (typeRoll < 0.15) {
             type = 'gold';
             color = 'bg-yellow-400';
@@ -107,7 +108,6 @@ export const BalloonPop: React.FC = () => {
             const colors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-pink-400', 'bg-purple-400'];
             color = colors[Math.floor(Math.random() * colors.length)];
           }
-
           active.push({
             id: Date.now() + Math.random(),
             type,
@@ -118,7 +118,6 @@ export const BalloonPop: React.FC = () => {
             speed: Math.random() * 1.5 + 1,
           });
         }
-
         return active;
       });
     }, 30);
@@ -292,7 +291,12 @@ export const BalloonPop: React.FC = () => {
               left: `${b.x}%`,
               bottom: `${b.y}px`,
             }}
-            onClick={() => handlePop(b.id)}
+            // Prevent handling clicks when game ended or no darts left
+            onClick={(e) => {
+              e.stopPropagation();
+              if (gameState !== 'playing' || dartsLeft <= 0) return;
+              handlePop(b.id);
+            }}
           >
             {/* Balloon Node Content */}
             <span className="text-xl font-bold select-none">

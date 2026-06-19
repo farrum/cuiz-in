@@ -21,7 +21,8 @@ import AuthCallback from "@/pages/AuthCallback";
 const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
 const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
 const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
-const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
+const MiniGamesList = React.lazy(() => import('@/pages/MiniGamesList'));
+
 const Profile = React.lazy(() => import("@/pages/Profile"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
@@ -451,11 +452,12 @@ function App() {
                 </Suspense>
               } />
               
-              <Route path="*" element={
+                            <Route path="/minigames" element={
                 <Suspense fallback={<PageLoader />}>
-                  <NotFound />
+                  <MiniGamesList />
                 </Suspense>
               } />
+
             </Routes>
           </Router>
         </ThemeProvider>
