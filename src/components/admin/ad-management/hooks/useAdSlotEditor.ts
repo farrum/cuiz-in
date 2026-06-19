@@ -104,11 +104,16 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       console.log('Starting ad slot save operation...', { isCreatingNew, values });
 
       if (isCreatingNew) {
+        // Auto-generate a valid UUID for new slots (the id column is type uuid)
+        if (!values.id) {
+          values.id = crypto.randomUUID();
+        }
+
         // Validation for new slots
-        if (!values.id || !values.name || !values.code) {
+        if (!values.name || !values.code) {
           toast({
             title: "Validation Error",
-            description: "ID, Name, and Code are required for new slots.",
+            description: "Name and Code are required for new slots.",
             variant: "destructive"
           });
           return;
