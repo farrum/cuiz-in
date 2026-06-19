@@ -429,6 +429,10 @@ function App() {
                 </Suspense>
               } />
 
+              {/* Legacy AMP URLs — redirect to the standard question page */}
+              <Route path="/amp/question/:questionId" element={<AmpQuestionRedirect />} />
+              <Route path="/amp/question/:questionId/*" element={<AmpQuestionRedirect />} />
+
               {/* SEO landing pages targeting high-volume Indian search queries */}
               <Route path="/cricket-quiz" element={
                 <Suspense fallback={<PageLoader />}>
