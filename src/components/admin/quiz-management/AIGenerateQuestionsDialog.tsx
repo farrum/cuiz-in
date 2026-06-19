@@ -144,6 +144,21 @@ const AIGenerateQuestionsDialog: React.FC<Props> = ({ categories, onSuccess, onC
         </div>
 
         <div className="md:col-span-2">
+          <Label className="text-sm flex items-center justify-between">
+            <span>Image questions share</span>
+            <span className="font-semibold text-primary">{imagePercent}%</span>
+          </Label>
+          <Slider
+            value={[imagePercent]} min={0} max={100} step={10}
+            onValueChange={(v) => setImagePercent(v[0])}
+            className="mt-2"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            {Math.round((amount * imagePercent) / 100)} of {amount} questions will use a relevant image (AI-generated or from open sources). Resolving images adds time to the run.
+          </p>
+        </div>
+
+        <div className="md:col-span-2">
           <Label className="text-sm">AI Model</Label>
           <Select value={model} onValueChange={setModel}>
             <SelectTrigger><SelectValue /></SelectTrigger>
