@@ -21,6 +21,7 @@ import AuthCallback from "@/pages/AuthCallback";
 const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
 const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
 const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
+const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
 const MiniGamesList = React.lazy(() => import('@/pages/MiniGamesList'));
 
 const Profile = React.lazy(() => import("@/pages/Profile"));
