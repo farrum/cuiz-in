@@ -73,7 +73,8 @@ const slugToCategoriesMap: Record<string, string[]> = {
     'Global Politics',
     'Kids Corner'
   ],
-  'guinness-world-records': ['Guinness World Records']
+  'guinness-world-records': ['Guinness World Records'],
+  'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama']
 };
 
 // Subcategory definitions — keep in sync with src/utils/subcategoryConfig.ts
@@ -140,6 +141,10 @@ const subcategoriesByCategory: Record<string, SubDef[]> = {
     { slug: 'politics', name: 'Politics', dbCategories: ['Politics'] },
     { slug: 'culture', name: 'Culture', dbCategories: ['Culture'] },
     { slug: 'green-energy', name: 'Green Energy & Sustainability', keywords: ['solar', 'wind energy', 'renewable', 'sustainability', 'climate', 'carbon', 'greenhouse', 'hydro', 'geothermal', 'biofuel', 'recycling'] },
+  ],
+  'k-pop-k-drama': [
+    { slug: 'k-pop-music', name: 'K-Pop Music', dbCategories: ['K-Pop Music', 'K-Pop & K-Drama'], keywords: ['k-pop', 'kpop', 'bts', 'blackpink', 'exo', 'twice', 'music', 'album', 'song'] },
+    { slug: 'korean-drama', name: 'Korean Drama', dbCategories: ['Korean Drama', 'K-Pop & K-Drama'], keywords: ['drama', 'k-drama', 'kdrama', 'squid game', 'crash landing', 'actor', 'actress', 'series'] }
   ],
 };
 

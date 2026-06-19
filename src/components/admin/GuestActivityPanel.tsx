@@ -29,54 +29,107 @@ const GuestActivityPanel: React.FC = () => {
   const [events, setEvents] = useState<GuestEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
+  const [stats, setStats] = useState<{
+    sessions: number;
+    pageViews: number;
+    answers: number;
+    limitReached: number;
+    registered: number;
+    conversionRate: number;
+    topCountries: [string, number][];
+    topDevices: [string, number][];
+  }>({
+    sessions: 0,
+    pageViews: 0,
+    answers: 0,
+    limitReached: 0,
+    registered: 0,
+    conversionRate: 0,
+    topCountries: [],
+    topDevices: [],
+  });
 
   const fetchEvents = async (rangeDays: number) => {
     setLoading(true);
     const since = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString();
-    const { data, error } = await supabase
+
+    // 1. Fetch recent activity (strictly limit to 100 rows for performance)
+    const { data: recentData, error: recentError } = await supabase
       .from('guest_events')
       .select('*')
       .gte('created_at', since)
       .order('created_at', { ascending: false })
-      .limit(1000);
-    if (!error && data) setEvents(data as GuestEvent[]);
+      .limit(100);
+
+    if (!recentError && recentData) {
+      setEvents(recentData as GuestEvent[]);
+    }
+
+    // 2. Fetch aggregated stats using RPC (uncapped)
+    const { data: statsData, error: statsError } = await supabase
+      .rpc('get_guest_activity_stats', { since_date: since });
+
+    if (!statsError && statsData) {
+      const s = statsData as any;
+      const sessions = s.sessions || 0;
+      const registered = s.registered || 0;
+      setStats({
+        sessions,
+        pageViews: s.page_views || 0,
+        answers: s.answers || 0,
+        limitReached: s.limit_reached || 0,
+        registered,
+        conversionRate: sessions > 0 ? (registered / sessions) * 100 : 0,
+        topCountries: s.top_countries || [],
+        topDevices: s.top_devices || [],
+      });
+    } else {
+      console.warn('Failed to fetch stats via RPC, falling back to client-side calculations', statsError);
+      // Fallback: If RPC fails, fetch up to 1000 events to compute fallback stats
+      const { data: fallbackData } = await supabase
+        .from('guest_events')
+        .select('*')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      const eventsToCompute = fallbackData || recentData || [];
+      const fSessions = new Set(eventsToCompute.map((e) => e.session_id));
+      const fPageViews = eventsToCompute.filter((e) => e.event_type === 'page_view').length;
+      const fAnswers = eventsToCompute.filter((e) => e.event_type === 'answer').length;
+      const fLimitReached = eventsToCompute.filter((e) => e.event_type === 'limit_reached').length;
+      const fRegistered = eventsToCompute.filter((e) => e.event_type === 'registered').length;
+      const fConversionRate = fSessions.size > 0 ? (fRegistered / fSessions.size) * 100 : 0;
+
+      const byCountry: Record<string, number> = {};
+      const byDevice: Record<string, number> = {};
+      for (const e of eventsToCompute) {
+        const c = e.country || 'unknown';
+        const d = e.device || 'unknown';
+        byCountry[c] = (byCountry[c] || 0) + 1;
+        byDevice[d] = (byDevice[d] || 0) + 1;
+      }
+      const topCountries = Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const topDevices = Object.entries(byDevice).sort((a, b) => b[1] - a[1]);
+
+      setStats({
+        sessions: fSessions.size,
+        pageViews: fPageViews,
+        answers: fAnswers,
+        limitReached: fLimitReached,
+        registered: fRegistered,
+        conversionRate: fConversionRate,
+        topCountries,
+        topDevices,
+      });
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEvents(days);
   }, [days]);
-
-  const stats = useMemo(() => {
-    const sessions = new Set(events.map((e) => e.session_id));
-    const pageViews = events.filter((e) => e.event_type === 'page_view').length;
-    const answers = events.filter((e) => e.event_type === 'answer').length;
-    const limitReached = events.filter((e) => e.event_type === 'limit_reached').length;
-    const registered = events.filter((e) => e.event_type === 'registered').length;
-    const conversionRate = sessions.size > 0 ? (registered / sessions.size) * 100 : 0;
-
-    const byCountry: Record<string, number> = {};
-    const byDevice: Record<string, number> = {};
-    for (const e of events) {
-      const c = e.country || 'unknown';
-      const d = e.device || 'unknown';
-      byCountry[c] = (byCountry[c] || 0) + 1;
-      byDevice[d] = (byDevice[d] || 0) + 1;
-    }
-    const topCountries = Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    const topDevices = Object.entries(byDevice).sort((a, b) => b[1] - a[1]);
-
-    return {
-      sessions: sessions.size,
-      pageViews,
-      answers,
-      limitReached,
-      registered,
-      conversionRate,
-      topCountries,
-      topDevices,
-    };
-  }, [events]);
 
   const statCards = [
     { label: 'Guest Sessions', value: stats.sessions, icon: Users },

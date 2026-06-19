@@ -3859,7 +3859,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/120e275c-6eff-4845-9a7d-1514ee1c5433/science/which-renewable-energy-source-harnesses-the-earths-internal-heat</loc>
+    <loc>https://cuiz.in/quiz/question/39a9bf82-2719-4f98-b07d-c160ed478192/science/what-term-describes-the-gradual-rise-in-the-earths-average-temperature</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3871,13 +3871,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/595a3260-19c4-4a85-a493-d7fe00bba5c4/science/which-greenhouse-gas-is-most-associated-with-human-activities</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/39a9bf82-2719-4f98-b07d-c160ed478192/science/what-term-describes-the-gradual-rise-in-the-earths-average-temperature</loc>
+    <loc>https://cuiz.in/quiz/question/120e275c-6eff-4845-9a7d-1514ee1c5433/science/which-renewable-energy-source-harnesses-the-earths-internal-heat</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3895,19 +3889,13 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/595a3260-19c4-4a85-a493-d7fe00bba5c4/science/which-greenhouse-gas-is-most-associated-with-human-activities</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/3642085d-214b-48e4-a676-93ac131f3104/science/what-process-do-plants-use-to-convert-sunlight-into-energy</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/cc3507a6-b999-44eb-b62a-1a8ddaabfbfd/science/what-term-describes-animals-that-travel-seasonally-from-one-region-to-another</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/7dd26ae9-3fe7-4718-89ea-58248176ce8e/science/what-is-the-process-of-water-vapor-turning-into-liquid-called</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3919,7 +3907,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/2d4cd601-68cd-46b9-a8c9-5bb6d3901f31/science/which-biome-is-characterized-by-permanently-frozen-ground-called-permafrost</loc>
+    <loc>https://cuiz.in/quiz/question/30a03e57-af30-410c-9b22-25f5d2ca1a5c/science/what-is-the-study-of-interactions-between-organisms-and-their-environment-called</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3931,7 +3919,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/30a03e57-af30-410c-9b22-25f5d2ca1a5c/science/what-is-the-study-of-interactions-between-organisms-and-their-environment-called</loc>
+    <loc>https://cuiz.in/quiz/question/7dd26ae9-3fe7-4718-89ea-58248176ce8e/science/what-is-the-process-of-water-vapor-turning-into-liquid-called</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3943,7 +3931,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/67651a9a-794f-43a2-affd-e8c43e0af558/science/what-term-describes-the-long-term-patterns-of-weather-in-a-region</loc>
+    <loc>https://cuiz.in/quiz/question/2d4cd601-68cd-46b9-a8c9-5bb6d3901f31/science/which-biome-is-characterized-by-permanently-frozen-ground-called-permafrost</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/cc3507a6-b999-44eb-b62a-1a8ddaabfbfd/science/what-term-describes-animals-that-travel-seasonally-from-one-region-to-another</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3955,7 +3949,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/4dee5b27-6459-4a97-b228-499313686355/science/what-does-biodiversity-refer-to</loc>
+    <loc>https://cuiz.in/quiz/question/67651a9a-794f-43a2-affd-e8c43e0af558/science/what-term-describes-the-long-term-patterns-of-weather-in-a-region</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3967,13 +3961,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/ee6b0b74-b06e-4ca8-a228-caaff9ad108b/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
+    <loc>https://cuiz.in/quiz/question/9e8af392-4f99-481b-bc8e-2d670123e45b/science/what-process-allows-plants-to-convert-sunlight-into-energy</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/9e8af392-4f99-481b-bc8e-2d670123e45b/science/what-process-allows-plants-to-convert-sunlight-into-energy</loc>
+    <loc>https://cuiz.in/quiz/question/ee6b0b74-b06e-4ca8-a228-caaff9ad108b/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -3985,19 +3979,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/834e0b86-2771-40e0-ae6f-26403326562f/science/what-process-allows-plants-to-convert-sunlight-into-energy</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/b169da44-060b-4044-be2d-f3dce4e6ee96/science/which-layer-of-the-earths-atmosphere-is-primarily-responsible-for-burning-up-met</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/fbc915d9-aef5-40a8-a6ed-34d129947b49/science/what-term-describes-the-long-term-patterns-of-weather-in-a-region</loc>
+    <loc>https://cuiz.in/quiz/question/4dee5b27-6459-4a97-b228-499313686355/science/what-does-biodiversity-refer-to</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4009,13 +3991,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/a265f96e-bda2-4ddd-94ec-b17b1744b410/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/353afda1-90fb-40fc-b859-fd3ff625f5bc/science/which-gas-is-chiefly-responsible-for-trapping-heat-in-the-earths-atmosphere</loc>
+    <loc>https://cuiz.in/quiz/question/b169da44-060b-4044-be2d-f3dce4e6ee96/science/which-layer-of-the-earths-atmosphere-is-primarily-responsible-for-burning-up-met</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4027,13 +4003,31 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/5d831f02-b975-4f54-bef6-0e0052a3bdb1/science/what-term-is-used-for-a-species-found-only-in-a-specific-geographic-region</loc>
+    <loc>https://cuiz.in/quiz/question/fbc915d9-aef5-40a8-a6ed-34d129947b49/science/what-term-describes-the-long-term-patterns-of-weather-in-a-region</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/6706f760-6a55-4435-8ea2-98b1724df911/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
+    <loc>https://cuiz.in/quiz/question/a265f96e-bda2-4ddd-94ec-b17b1744b410/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/834e0b86-2771-40e0-ae6f-26403326562f/science/what-process-allows-plants-to-convert-sunlight-into-energy</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/353afda1-90fb-40fc-b859-fd3ff625f5bc/science/which-gas-is-chiefly-responsible-for-trapping-heat-in-the-earths-atmosphere</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/5d831f02-b975-4f54-bef6-0e0052a3bdb1/science/what-term-is-used-for-a-species-found-only-in-a-specific-geographic-region</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4045,7 +4039,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/41de0c6a-1421-42ba-bc39-a80db3c4b535/science/which-renewable-energy-source-harnesses-energy-from-moving-water</loc>
+    <loc>https://cuiz.in/quiz/question/233e1de3-f0e8-4211-91b5-63bb4d3ac042/science/which-international-agreement-was-designed-to-protect-the-ozone-layer</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/6706f760-6a55-4435-8ea2-98b1724df911/science/which-process-involves-the-gradual-breakdown-of-rocks-by-natural-forces</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4057,13 +4057,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/233e1de3-f0e8-4211-91b5-63bb4d3ac042/science/which-international-agreement-was-designed-to-protect-the-ozone-layer</loc>
+    <loc>https://cuiz.in/quiz/question/cdcca246-a099-4c37-bb8c-d41add21880f/science/which-gas-is-chiefly-responsible-for-trapping-heat-in-the-earths-atmosphere</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/cdcca246-a099-4c37-bb8c-d41add21880f/science/which-gas-is-chiefly-responsible-for-trapping-heat-in-the-earths-atmosphere</loc>
+    <loc>https://cuiz.in/quiz/question/41de0c6a-1421-42ba-bc39-a80db3c4b535/science/which-renewable-energy-source-harnesses-energy-from-moving-water</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/a788315a-f09e-4d14-ade0-e2f993e8618b/science/which-phenomenon-is-responsible-for-the-northern-lights</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4081,7 +4087,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/a788315a-f09e-4d14-ade0-e2f993e8618b/science/which-phenomenon-is-responsible-for-the-northern-lights</loc>
+    <loc>https://cuiz.in/quiz/question/dad6536e-83fd-4f38-a944-1cc9a3e25063/science/which-is-the-largest-species-of-bear</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/0db3dab0-e018-47dc-a948-2ca3b72e77de/science/what-gas-do-plants-absorb-for-photosynthesis</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4099,25 +4111,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/0db3dab0-e018-47dc-a948-2ca3b72e77de/science/what-gas-do-plants-absorb-for-photosynthesis</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/dad6536e-83fd-4f38-a944-1cc9a3e25063/science/which-is-the-largest-species-of-bear</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/a79e2a45-e26d-4364-a135-ced0ddd6ddd8/science/what-term-describes-the-disappearance-of-species-from-a-region-or-the-planet</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/752f898e-6b5c-4b59-ad45-5f483d352b0e/science/which-biome-is-characterized-by-permafrost-and-low-temperatures</loc>
+    <loc>https://cuiz.in/quiz/question/b1e36db6-384d-4817-a341-d65aeb59d5f8/science/what-term-describes-species-that-are-native-and-restricted-to-a-specific-geograp</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4129,13 +4123,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/b1e36db6-384d-4817-a341-d65aeb59d5f8/science/what-term-describes-species-that-are-native-and-restricted-to-a-specific-geograp</loc>
-    <lastmod>2025-03-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/953639bb-6281-4d22-b7ff-e04e9d0b94fa/science/which-gas-is-primarily-responsible-for-the-greenhouse-effect</loc>
+    <loc>https://cuiz.in/quiz/question/142d38b9-797c-415e-baf4-1b0669a126a5/science/which-international-agreement-primarily-focuses-on-protecting-the-ozone-layer</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4147,7 +4135,19 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/142d38b9-797c-415e-baf4-1b0669a126a5/science/which-international-agreement-primarily-focuses-on-protecting-the-ozone-layer</loc>
+    <loc>https://cuiz.in/quiz/question/752f898e-6b5c-4b59-ad45-5f483d352b0e/science/which-biome-is-characterized-by-permafrost-and-low-temperatures</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/a79e2a45-e26d-4364-a135-ced0ddd6ddd8/science/what-term-describes-the-disappearance-of-species-from-a-region-or-the-planet</loc>
+    <lastmod>2025-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/953639bb-6281-4d22-b7ff-e04e9d0b94fa/science/which-gas-is-primarily-responsible-for-the-greenhouse-effect</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4159,7 +4159,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/da8d5ca0-02b7-4cb6-a46c-8cc2ad670e78/science/which-international-agreement-was-designed-to-phase-out-substances-that-deplete</loc>
+    <loc>https://cuiz.in/quiz/question/f022d24b-1b01-4f19-aa03-63a01abdf471/science/what-term-describes-the-long-term-patterns-of-weather-in-a-particular-area</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4171,7 +4171,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/f022d24b-1b01-4f19-aa03-63a01abdf471/science/what-term-describes-the-long-term-patterns-of-weather-in-a-particular-area</loc>
+    <loc>https://cuiz.in/quiz/question/da8d5ca0-02b7-4cb6-a46c-8cc2ad670e78/science/which-international-agreement-was-designed-to-phase-out-substances-that-deplete</loc>
     <lastmod>2025-03-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4195,49 +4195,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://cuiz.in/quiz/question/8399be1e-a100-4bd9-9287-4affeef08a6f/science/what-is-the-process-by-which-plants-make-their-own-food</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/e9d441d3-83b1-441e-9199-3b60bd3fe003/science/what-is-the-speed-of-light-in-a-vacuum</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/eeb510fb-bf64-4bd7-ad45-b6dc264c4dcb/science/which-animal-is-the-largest-mammal-on-earth</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/15b1833e-aae3-4b8b-adbb-c95675f1cdef/science/what-is-the-scientific-name-for-the-study-of-fossils</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/001dd668-f7e6-4ebc-931f-11528a659d3c/science/what-is-the-basic-unit-of-heredity</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/a95717ff-6d34-4d43-8978-1d595667a881/science/what-is-the-boiling-point-of-water-at-standard-atmospheric-pressure</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://cuiz.in/quiz/question/e05368b6-fbba-44bf-9100-e387daa835f3/science/which-planet-in-our-solar-system-has-the-most-moons</loc>
-    <lastmod>2025-03-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://cuiz.in/quiz/question/b989efd0-cc58-47ff-acc3-7b41f7cf235b/science/what-is-the-chemical-symbol-for-oxygen</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -4249,7 +4207,49 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://cuiz.in/quiz/question/15b1833e-aae3-4b8b-adbb-c95675f1cdef/science/what-is-the-scientific-name-for-the-study-of-fossils</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://cuiz.in/quiz/question/fce40f01-baa8-47d2-9e95-16173ebfce24/science/what-is-the-powerhouse-of-the-cell</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/e9d441d3-83b1-441e-9199-3b60bd3fe003/science/what-is-the-speed-of-light-in-a-vacuum</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/8399be1e-a100-4bd9-9287-4affeef08a6f/science/what-is-the-process-by-which-plants-make-their-own-food</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/a95717ff-6d34-4d43-8978-1d595667a881/science/what-is-the-boiling-point-of-water-at-standard-atmospheric-pressure</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/001dd668-f7e6-4ebc-931f-11528a659d3c/science/what-is-the-basic-unit-of-heredity</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/eeb510fb-bf64-4bd7-ad45-b6dc264c4dcb/science/which-animal-is-the-largest-mammal-on-earth</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://cuiz.in/quiz/question/b989efd0-cc58-47ff-acc3-7b41f7cf235b/science/what-is-the-chemical-symbol-for-oxygen</loc>
     <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

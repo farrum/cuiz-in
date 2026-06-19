@@ -68,6 +68,11 @@ export const categoryToSlugMap: Record<string, string> = {
   
   // Guinness World Records
   'Guinness World Records': 'guinness-world-records',
+
+  // K-Pop & K-Drama
+  'K-Pop Music': 'k-pop-k-drama',
+  'Korean Drama': 'k-pop-k-drama',
+  'K-Pop & K-Drama': 'k-pop-k-drama',
 };
 
 // Reverse map: slug to valid category names array
@@ -87,13 +92,14 @@ export const slugToCategoriesMap: Record<string, string[]> = {
   'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles', 'Technology'],
   'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics', 'Current Affairs', 'Global Politics', 'Kids Corner'],
   'guinness-world-records': ['Guinness World Records'],
+  'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama'],
 };
 
 // Valid frontend category slugs
 export const validCategorySlugs = [
   'history', 'science', 'geography', 'literature', 
   'entertainment', 'sports', 'technology', 'general-knowledge',
-  'guinness-world-records'
+  'guinness-world-records', 'k-pop-k-drama'
 ];
 
 /**
@@ -131,6 +137,7 @@ export const getCategoryDisplayName = (slug: string): string => {
     'technology': 'Technology',
     'general-knowledge': 'General Knowledge',
     'guinness-world-records': 'Guinness World Records',
+    'k-pop-k-drama': 'K-Pop & K-Drama',
   };
   return displayNames[slug] || slug;
 };

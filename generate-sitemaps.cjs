@@ -86,6 +86,9 @@ const slugToCategoriesMap = {
   ],
   'guinness-world-records': [
     'Guinness World Records'
+  ],
+  'k-pop-k-drama': [
+    'K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama'
   ]
 };
 
@@ -159,6 +162,10 @@ const subcategoriesByCategory = {
     { slug: 'food-records', name: 'Food Records' },
     { slug: 'entertainment-records', name: 'Entertainment Records' },
     { slug: 'science-records', name: 'Science & Technology' },
+  ],
+  'k-pop-k-drama': [
+    { slug: 'k-pop-music', name: 'K-Pop Music' },
+    { slug: 'korean-drama', name: 'Korean Drama' },
   ],
 };
 

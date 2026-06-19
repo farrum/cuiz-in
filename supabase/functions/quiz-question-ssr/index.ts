@@ -101,6 +101,9 @@ const categoryToSlugMap: Record<string, string> = {
   'Kids': 'kids-trivia',
   'Kids Corner': 'kids-trivia',
   'Guinness World Records': 'guinness-world-records',
+  'K-Pop Music': 'k-pop-k-drama',
+  'Korean Drama': 'k-pop-k-drama',
+  'K-Pop & K-Drama': 'k-pop-k-drama',
 };
 function getCategorySlug(cat: string): string {
   return categoryToSlugMap[cat] || 'general-knowledge';
@@ -146,6 +149,15 @@ serve(async (req) => {
     }
 
     const q = question as QuizQuestion;
+    
+    // Fetch related questions in the same category (crawl paths)
+    const { data: related } = await supabase
+      .from('quiz_questions')
+      .select('id, question, category')
+      .eq('category', q.category)
+      .neq('id', q.id)
+      .limit(6);
+
     const options = Array.isArray(q.options) ? q.options : [];
     const slug = createSlug(q.question);
     const canonicalUrl = `${SITE_URL}/quiz/question/${q.id}/${getCategorySlug(q.category)}/${slug}`;
@@ -316,8 +328,18 @@ serve(async (req) => {
     
     <section style="margin-top:32px;">
       <h2 style="font-size:18px;margin-bottom:16px;">More ${escapeHtml(q.category)} Questions</h2>
-      <a href="${SITE_URL}/categories/${createSlug(q.category)}" class="cta">
-        Browse ${escapeHtml(q.category)} Trivia
+      <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.6; margin-bottom: 20px;">
+        ${(related || []).map((r: any) => {
+          const rSlug = createSlug(r.question);
+          return `<li style="margin-bottom: 8px;">
+            <a href="${SITE_URL}/quiz/question/${r.id}/${getCategorySlug(r.category)}/${rSlug}" style="color: #a78bfa; text-decoration: none;">
+              ${escapeHtml(r.question)}
+            </a>
+          </li>`;
+        }).join('')}
+      </ul>
+      <a href="${SITE_URL}/categories/${getCategorySlug(q.category)}" class="cta">
+        Browse All ${escapeHtml(q.category)} Trivia
       </a>
     </section>
     

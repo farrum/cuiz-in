@@ -148,6 +148,14 @@ export const categoriesArray = [
     description: 'Test your knowledge of extraordinary human achievements, amazing feats, and official world records.',
     questionCount: 0,
     icon: '🏆'
+  },
+  {
+    id: 16,
+    name: 'K-Pop & K-Drama',
+    slug: 'k-pop-k-drama',
+    description: 'Test your knowledge on K-Pop music, groups, and popular Korean dramas.',
+    questionCount: 84,
+    icon: '🇰🇷'
   }
 ];
 
@@ -529,6 +537,38 @@ export const categoryData: CategoryDataRecord = {
       { username: 'RecordBreaker', gems: 0, rank: 1 },
       { username: 'WorldRecordPro', gems: 0, rank: 2 },
       { username: 'GuinnessGuru', gems: 0, rank: 3 }
+    ]
+  },
+  'k-pop-k-drama': {
+    name: 'K-Pop & K-Drama',
+    description: 'Test your knowledge on K-Pop music, groups, and popular Korean dramas.',
+    longDescription: 'Dive into the world of Hallyu with our K-Pop & K-Drama quizzes! Challenge yourself on your favorite Korean music groups, lyrics, actors, dramas, and entertainment culture. From iconic tracks by BTS, Blackpink, and TWICE to hit dramas like Squid Game, Crash Landing on You, and Goblin, test your knowledge and see if you are a true fan.',
+    questionCount: 84,
+    icon: '🇰🇷',
+    difficultyDistribution: {
+      easy: 40,
+      medium: 40,
+      hard: 20
+    },
+    subcategories: [
+      'K-Pop Music', 'Korean Drama'
+    ],
+    featuredQuestions: [
+      {
+        id: 'kpop-001',
+        question: 'Which K-Pop group released the hit song "Dynamite" in 2020?',
+        difficulty: 'easy'
+      },
+      {
+        id: 'kpop-002',
+        question: 'In Squid Game, what is the game played in the final round?',
+        difficulty: 'medium'
+      }
+    ],
+    topPerformers: [
+      { username: 'HallyuStar', gems: 1280, rank: 1 },
+      { username: 'KdramaWatcher', gems: 1190, rank: 2 },
+      { username: 'BtsArmy', gems: 1090, rank: 3 }
     ]
   }
 };

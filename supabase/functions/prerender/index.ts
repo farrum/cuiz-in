@@ -29,7 +29,7 @@ const corsHeaders = {
 };
 
 const BOT_REGEX =
-  /(googlebot|bingbot|yandex|baiduspider|duckduckbot|slurp|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|embedly|whatsapp|telegrambot|applebot|pinterest|redditbot|discordbot|slackbot|w3c_validator|ia_archiver|ahrefsbot|semrushbot|petalbot|chrome-lighthouse)/i;
+  /(googlebot|bingbot|yandex|baiduspider|duckduckbot|slurp|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|embedly|whatsapp|telegrambot|applebot|pinterest|redditbot|discordbot|slackbot|w3c_validator|ia_archiver|ahrefsbot|semrushbot|petalbot|chrome-lighthouse|gptbot|chatgpt|openai|bytespider)/i;
 
 function isBot(ua: string | null): boolean {
   if (!ua) return false;
@@ -192,6 +192,9 @@ const categoryToSlugMap: Record<string, string> = {
   'Kids': 'kids-trivia',
   'Kids Corner': 'kids-trivia',
   'Guinness World Records': 'guinness-world-records',
+  'K-Pop Music': 'k-pop-k-drama',
+  'Korean Drama': 'k-pop-k-drama',
+  'K-Pop & K-Drama': 'k-pop-k-drama',
 };
 function getCategorySlug(cat: string): string {
   return categoryToSlugMap[cat] || 'general-knowledge';
@@ -564,6 +567,107 @@ async function buildQuestionPage(supabase: any, id: string): Promise<{html: stri
   return { html: htmlWithKeywords, status: 200 };
 }
 
+async function fetchAllQuestions(supabase: any) {
+  const { count, error: countError } = await supabase
+    .from("quiz_questions")
+    .select("id", { count: "exact", head: true });
+  
+  if (countError || count === null) {
+    console.error("Error fetching count:", countError);
+    return [];
+  }
+
+  const batchSize = 1000;
+  const promises = [];
+  for (let from = 0; from < count; from += batchSize) {
+    const to = from + batchSize - 1;
+    promises.push(
+      supabase
+        .from("quiz_questions")
+        .select("id, question, category")
+        .order("category", { ascending: true })
+        .order("created_at", { ascending: false })
+        .range(from, to)
+    );
+  }
+
+  const results = await Promise.all(promises);
+  let allQuestions: any[] = [];
+  for (const res of results) {
+    if (res.error) {
+      console.error("Error fetching batch:", res.error);
+      continue;
+    }
+    if (res.data) {
+      allQuestions = allQuestions.concat(res.data);
+    }
+  }
+  return allQuestions;
+}
+
+async function buildAllQuestionsPage(supabase: any): Promise<string> {
+  const allQuestions = await fetchAllQuestions(supabase);
+  
+  const grouped: Record<string, any[]> = {};
+  allQuestions.forEach((q: any) => {
+    const cat = q.category || 'Uncategorized';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(q);
+  });
+
+  const sortedCategories = Object.keys(grouped).sort();
+  const totalCount = allQuestions.length;
+
+  const categoryNavItems = sortedCategories
+    .map(cat => `<a href="#cat-${slugify(cat)}" class="tag" style="margin: 4px;">${escapeHtml(cat)} (${grouped[cat].length})</a>`)
+    .join(" ");
+
+  const categorySections = sortedCategories
+    .map(cat => {
+      const questionsList = grouped[cat]
+        .map(q => {
+          const questionSlug = slugify(q.question);
+          return `<li><a href="${SITE_URL}/quiz/question/${q.id}/${getCategorySlug(cat)}/${questionSlug}">${escapeHtml(q.question)}</a></li>`;
+        })
+        .join("");
+      return `<section id="cat-${slugify(cat)}" style="margin-bottom: 24px;">
+        <h2 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+          ${escapeHtml(cat)} <span style="font-size: 14px; font-weight: normal; color: #64748b;">(${grouped[cat].length} questions)</span>
+        </h2>
+        <ul class="list">${questionsList}</ul>
+      </section>`;
+    })
+    .join("");
+
+  const body = `
+    <nav class="bc"><a href="${SITE_URL}/">Home</a> &rsaquo; All Questions</nav>
+    <h1>All Quiz Questions & Answers</h1>
+    <p>Complete directory of ${totalCount.toLocaleString()} quiz questions across ${sortedCategories.length} categories.</p>
+    
+    <div style="margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
+      <h3>Jump to Category</h3>
+      <div style="display: flex; flex-wrap: wrap;">${categoryNavItems}</div>
+    </div>
+
+    ${categorySections}
+  `;
+
+  return htmlShell({
+    title: `All ${totalCount.toLocaleString()} Quiz Questions & Answers | CuizIN`,
+    description: `Complete directory of ${totalCount.toLocaleString()} quiz questions and answers. Browse by category — History, Science, Sports, Entertainment, Geography, and more.`,
+    canonical: `${SITE_URL}/all-questions`,
+    body,
+    schema: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'All Quiz Questions - HTML Sitemap',
+      description: `Complete directory of ${totalCount.toLocaleString()} quiz questions and answers on CuizIN. Browse all questions by category.`,
+      url: `${SITE_URL}/all-questions`,
+      numberOfItems: totalCount,
+    }
+  });
+}
+
 // ---------- Router ----------
 
 Deno.serve(async (req: Request) => {
@@ -594,6 +698,9 @@ Deno.serve(async (req: Request) => {
     }
     if (cleanPath === "/categories" || cleanPath === "/categories/") {
       return htmlResponse(await buildCategoriesIndex(supabase));
+    }
+    if (cleanPath === "/all-questions" || cleanPath === "/all-questions/") {
+      return htmlResponse(await buildAllQuestionsPage(supabase));
     }
     const catMatch = cleanPath.match(/^\/categories\/([^\/]+)\/?$/);
     if (catMatch) {

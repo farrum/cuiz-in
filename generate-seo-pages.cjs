@@ -101,6 +101,7 @@ const CATEGORIES = [
   ['technology', 'Technology'],
   ['general-knowledge', 'General Knowledge'],
   ['guinness-world-records', 'Guinness World Records'],
+  ['k-pop-k-drama', 'K-Pop & K-Drama'],
 ];
 
 let count = 0;
