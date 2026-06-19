@@ -7,6 +7,7 @@ import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSche
 import { extractKeywords } from '@/services/keywordService';
 import PageLayout from '@/components/layout/PageLayout';
 import QuizCard from '@/components/QuizCard';
+import ImageQuizContent from '@/components/quiz/ImageQuizContent';
 import { Button } from '@/components/ui/button';
 import { 
   ChevronLeft, 
@@ -473,11 +474,18 @@ const QuizQuestionPage: React.FC = () => {
               </ul>
             </div>
             
-            <QuizCard 
-              question={question} 
-              onComplete={handleQuizComplete}
-              skipAutoNavigation
-            />
+            {question.questionType === 'image' ? (
+              <ImageQuizContent
+                question={question}
+                onComplete={(isCorrect, selectedOption) => handleQuizComplete(isCorrect, selectedOption)}
+              />
+            ) : (
+              <QuizCard 
+                question={question} 
+                onComplete={handleQuizComplete}
+                skipAutoNavigation
+              />
+            )}
 
             {answered && (
               <div className={`rounded-xl border p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 ${

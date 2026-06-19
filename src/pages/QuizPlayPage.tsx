@@ -8,6 +8,7 @@ import { getCategorySlug } from '@/utils/categoryMapping';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { useGameMode } from '@/hooks/quiz/useGameMode';
 import EnhancedQuizCard from '@/components/quiz/EnhancedQuizCard';
+import ImageQuizContent from '@/components/quiz/ImageQuizContent';
 import { TrueFalseSwipe } from '@/components/gamification/TrueFalseSwipe';
 import { FlashcardMatch } from '@/components/gamification/FlashcardMatch';
 import { BossFight } from '@/components/gamification/BossFight';
@@ -433,6 +434,11 @@ const QuizPlayPage: React.FC = () => {
           <FlashcardMatch
             questions={batchQuestions}
             onGameComplete={(score) => handleComplete(score)}
+          />
+        ) : question?.questionType === 'image' ? (
+          <ImageQuizContent
+            question={question}
+            onComplete={(isCorrect, selectedOption) => handleComplete(isCorrect)}
           />
         ) : (
           <div data-no-auto-ads="true">

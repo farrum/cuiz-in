@@ -96,12 +96,14 @@ export const getRandomImageQuizQuestion = (): QuizQuestion => {
   let imageIndex = Math.floor(Math.random() * placeholderImages.length);
   
   // Try to match the image to the question category
-  if (baseQuestion.category === "Animals" && randomQuestionIndex <= 4) {
-    imageIndex = randomQuestionIndex; // Use the first 5 images for animal questions
+  if (baseQuestion.category === "Animals") {
+    if (randomQuestionIndex === 0) imageIndex = 0; // Deer
+    else if (randomQuestionIndex === 1) imageIndex = 3; // Tabby cat
+    else if (randomQuestionIndex === 4) imageIndex = 4; // Bee
   } else if (baseQuestion.category === "Architecture") {
-    imageIndex = 10 + (randomQuestionIndex % 5); // Use the architecture images
+    imageIndex = 11; // Architecture (white building)
   } else if (baseQuestion.category === "Technology") {
-    imageIndex = 15; // Use the technology image
+    imageIndex = 14; // Laptop electronics
   }
   
   const imageUrl = placeholderImages[imageIndex];

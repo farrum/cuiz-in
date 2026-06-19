@@ -81,11 +81,6 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
 
 // Get a random question (with preference for unanswered questions)
 export const getRandomQuestion = async (): Promise<QuizQuestion> => {
-  // Randomly decide if we should show an image question
-  if (shouldShowImageQuestion()) {
-    return getRandomImageQuizQuestion();
-  }
-  
   // Try to get the latest questions from Supabase
   let questions = await fetchQuizQuestions();
   
@@ -112,9 +107,33 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
     availableQuestions = questions;
   }
   
+  // Randomly decide if we should show an image question
+  if (shouldShowImageQuestion()) {
+    // 1. Try to get unanswered image questions from Supabase
+    const availableImageQuestions = availableQuestions.filter(q => q.questionType === 'image');
+    if (availableImageQuestions.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableImageQuestions.length);
+      return availableImageQuestions[randomIndex];
+    }
+    
+    // 2. Fall back to already completed image questions from Supabase
+    const allImageQuestions = questions.filter(q => q.questionType === 'image');
+    if (allImageQuestions.length > 0) {
+      const randomIndex = Math.floor(Math.random() * allImageQuestions.length);
+      return allImageQuestions[randomIndex];
+    }
+    
+    // 3. Last fallback: client-side mock questions
+    return getRandomImageQuizQuestion();
+  }
+  
+  // Preference for text-based questions if we shouldn't show an image question
+  const availableTextQuestions = availableQuestions.filter(q => q.questionType !== 'image');
+  const chooseFrom = availableTextQuestions.length > 0 ? availableTextQuestions : availableQuestions;
+  
   // Randomly select a question
-  const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-  return availableQuestions[randomIndex];
+  const randomIndex = Math.floor(Math.random() * chooseFrom.length);
+  return chooseFrom[randomIndex];
 };
 
 // Get a batch of random questions
