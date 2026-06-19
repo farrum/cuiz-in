@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { HelmetProvider } from 'react-helmet-async';
@@ -67,6 +67,12 @@ const LazyProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children 
     <ProtectedRoute>{children}</ProtectedRoute>
   </Suspense>
 );
+
+// Redirect legacy AMP question URLs (/amp/question/:id) to the real question page
+const AmpQuestionRedirect: React.FC = () => {
+  const { questionId } = useParams();
+  return <Navigate to={`/quiz/play/${questionId}`} replace />;
+};
 
 /**
  * Hydrate localStorage cache from a valid Supabase session user.
@@ -422,6 +428,10 @@ function App() {
                   <QuizPlayPage />
                 </Suspense>
               } />
+
+              {/* Legacy AMP URLs — redirect to the standard question page */}
+              <Route path="/amp/question/:questionId" element={<AmpQuestionRedirect />} />
+              <Route path="/amp/question/:questionId/*" element={<AmpQuestionRedirect />} />
 
               {/* SEO landing pages targeting high-volume Indian search queries */}
               <Route path="/cricket-quiz" element={
