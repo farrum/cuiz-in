@@ -104,16 +104,9 @@ export const useAdSlotEditor = (adSlots: AdSlot[], setAdSlots: (slots: AdSlot[])
       console.log('Starting ad slot save operation...', { isCreatingNew, values });
 
       if (isCreatingNew) {
-        // Auto-generate an ID for new slots if one wasn't provided
+        // Auto-generate a valid UUID for new slots (the id column is type uuid)
         if (!values.id) {
-          const slugBase = (values.name || values.position || 'ad-slot')
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-          const suffix = (crypto.randomUUID?.() || Math.random().toString(36).slice(2)).slice(0, 8);
-          values.id = `${slugBase || 'ad-slot'}-${suffix}`;
+          values.id = crypto.randomUUID();
         }
 
         // Validation for new slots
