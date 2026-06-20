@@ -33,7 +33,10 @@ Deno.serve(async (req) => {
       if (user) adminUserId = user.id;
     }
 
-    // Legacy body.adminUserId fallback removed for security
+    // Fallback: accept adminUserId from body, validated server-side below
+    if (!adminUserId && body.adminUserId) {
+      adminUserId = body.adminUserId;
+    }
 
     if (!adminUserId) {
       return new Response(
