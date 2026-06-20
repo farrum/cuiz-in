@@ -27,10 +27,9 @@ Deno.serve(async (req) => {
     let adminUserId: string | null = null;
 
     if (authHeader.startsWith('Bearer ')) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } }
-      });
-      const { data: { user } } = await supabaseAuth.auth.getUser();
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+      if (userErr) console.error('getUser error:', userErr.message);
       if (user) adminUserId = user.id;
     }
 
