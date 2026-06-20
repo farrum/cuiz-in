@@ -224,6 +224,9 @@
         var analyticsLoaded = false;
         function loadAnalytics() {
           if (analyticsLoaded) return;
+          // Do not track admin/internal routes in Analytics or GTM
+          var p = window.location.pathname || '';
+          if (p.indexOf('/admin') === 0 || p.indexOf('/admin-login') === 0 || p.indexOf('/team-dashboard') === 0) return;
           analyticsLoaded = true;
 
           // Google Tag Manager
