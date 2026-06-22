@@ -5,7 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { QuizQuestion } from '@/utils/quizData';
 import { getRandomMessage } from '@/utils/funMessages';
-import { getRandomImageQuizQuestion } from '@/utils/imageQuizUtils';
 import { createSlug } from '@/utils/urlUtils';
 
 export const useQuizAnswer = (questionId: string | undefined, selectedOption: string | undefined) => {
