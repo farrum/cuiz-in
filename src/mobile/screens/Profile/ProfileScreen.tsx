@@ -155,6 +155,23 @@ export default function ProfileScreen() {
         <StatCard icon={Calendar} label="Answered" value={String(questionsAnswered)} color="from-emerald-500 to-teal-500" />
       </div>
 
+      {/* Reports */}
+      <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Your reports</h2>
+      <div className="space-y-3 mb-6">
+        <ReportRow
+          title="Today"
+          attempted={reports?.dayAttempted ?? 0}
+          correct={reports?.dayCorrect ?? 0}
+          gems={profile?.daily ?? 0}
+        />
+        <ReportRow
+          title="This month"
+          attempted={reports?.monthAttempted ?? 0}
+          correct={reports?.monthCorrect ?? 0}
+          gems={profile?.monthly ?? 0}
+        />
+      </div>
+
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={signOut}
@@ -191,5 +208,31 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="font-bold text-lg">{value}</p>
     </motion.div>
+  );
+}
+
+function ReportRow({ title, attempted, correct, gems }: { title: string; attempted: number; correct: number; gems: number }) {
+  const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-bold text-sm">{title}</p>
+        <span className="text-xs text-muted-foreground">{accuracy}% accuracy</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-lg font-bold">{attempted}</p>
+          <p className="text-[11px] text-muted-foreground">Attempted</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-emerald-600">{correct}</p>
+          <p className="text-[11px] text-muted-foreground">Correct</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-amber-600">{gems.toLocaleString()}</p>
+          <p className="text-[11px] text-muted-foreground">Gems</p>
+        </div>
+      </div>
+    </div>
   );
 }
