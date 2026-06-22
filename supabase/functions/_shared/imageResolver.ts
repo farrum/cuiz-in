@@ -99,30 +99,6 @@ async function generateAiImage(prompt: string): Promise<string | null> {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
-        model: "openai/dall-e-3",
-        prompt,
-        size: "1024x1024",
-        quality: "standard",
-        n: 1,
-      }),
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      const b64: string | undefined = data?.data?.[0]?.b64_json;
-      if (b64) return uploadToSupabase(b64);
-    } else {
-      console.warn("dall-e-3 failed, falling back to dall-e-2:", resp.status, await resp.text());
-    }
-  } catch (e) {
-    console.error("dall-e-3 exception", e);
-  }
-
-  // Fallback to dall-e-2
-  try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-      body: JSON.stringify({
         model: "openai/gpt-image-2",
         prompt,
         size: "1024x1024",
@@ -131,14 +107,14 @@ async function generateAiImage(prompt: string): Promise<string | null> {
       }),
     });
     if (!resp.ok) {
-      console.error("ai image gen fallback failed:", resp.status, await resp.text());
+      console.error("ai image gen failed:", resp.status, await resp.text());
       return null;
     }
     const data = await resp.json();
     const b64: string | undefined = data?.data?.[0]?.b64_json;
     if (b64) return uploadToSupabase(b64);
   } catch (e) {
-    console.error("ai gen fallback exception", e);
+    console.error("ai gen exception", e);
   }
   return null;
 }
@@ -148,21 +124,23 @@ export async function resolveImage(question: string, correctAnswer: string, cate
   try { subj = await extractSubject(question, correctAnswer, category); }
   catch (e) { console.error("subject extract error", e); }
 
-  // 1. Prioritize AI generation using the custom, context-aware prompt from Gemini
-  if (subj?.image_prompt) {
-    try {
-      const aiUrl = await generateAiImage(subj.image_prompt);
-      if (aiUrl) return { imageUrl: aiUrl, source: "ai" };
-    } catch (e) { console.error("ai gen error", e); }
-  }
-
-  // 2. Fallback to Wikipedia lookup if AI generation failed
+  // 1. Prioritize Wikipedia lookup — it is fast (~1s) and free, which keeps the
+  //    overall run well within the function time limit. AI generation (slow,
+  //    ~10-15s each) is only used as a fallback below.
   const queries = [subj?.wiki_query, subj?.subject, correctAnswer].filter(Boolean) as string[];
   for (const q of queries) {
     try {
       const url = await wikiImage(q);
       if (url) return { imageUrl: url, source: "wikipedia" };
     } catch (e) { console.error("wiki error", q, e); }
+  }
+
+  // 2. Fallback to AI generation using the custom, context-aware prompt.
+  if (subj?.image_prompt) {
+    try {
+      const aiUrl = await generateAiImage(subj.image_prompt);
+      if (aiUrl) return { imageUrl: aiUrl, source: "ai" };
+    } catch (e) { console.error("ai gen error", e); }
   }
 
   // 3. Last resort AI generation using basic prompt fallback

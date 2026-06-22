@@ -173,22 +173,39 @@ Return ONLY valid JSON matching this exact schema:
         if (!q.isImageQuestion) { q.isImageQuestion = true; flagged.push(q); }
       }
     }
-    for (const q of validQuestions) {
+    // 1. Dedup check (parallel) to find which questions are new.
+    const dupChecks = await Promise.all(validQuestions.map(async (q) => {
       const { data: existing } = await supabase
         .from("quiz_questions").select("id").eq("question", q.question).maybeSingle();
-      if (existing) { duplicates++; continue; }
+      return Boolean(existing);
+    }));
+    const newQuestions = validQuestions.filter((_, i) => {
+      if (dupChecks[i]) { duplicates++; return false; }
+      return true;
+    });
 
-      let imageUrl: string | null = null;
-      if (q.isImageQuestion && imagesResolved < imageCount) {
+    // 2. Resolve images (bounded concurrency) only for the new questions we
+    //    plan to keep, up to imageCount. Image generation is the slow step, so
+    //    running it sequentially for many questions would exceed the function
+    //    time limit; cap concurrency to stay within limits while staying fast.
+    const imageTargets = newQuestions.filter((q) => q.isImageQuestion).slice(0, imageCount);
+    const imageMap = new Map<GeneratedQuestion, string>();
+    const CONCURRENCY = 4;
+    for (let i = 0; i < imageTargets.length; i += CONCURRENCY) {
+      const batch = imageTargets.slice(i, i + CONCURRENCY);
+      await Promise.all(batch.map(async (q) => {
         try {
           const r = await resolveImage(q.question, q.correctAnswer, q.category);
-          imageUrl = r.imageUrl;
-          if (imageUrl) imagesResolved++;
+          if (r.imageUrl) { imageMap.set(q, r.imageUrl); imagesResolved++; }
         } catch (e) {
           console.error("image resolve failed for question:", q.question, e);
         }
-      }
+      }));
+    }
 
+    // 3. Insert all new questions (parallel).
+    await Promise.all(newQuestions.map(async (q) => {
+      const imageUrl = imageMap.get(q) ?? null;
       const { error } = await supabase.from("quiz_questions").insert({
         question: q.question,
         options: q.options,
@@ -207,7 +224,7 @@ Return ONLY valid JSON matching this exact schema:
         saved++;
         if (q.isIndiaSpecific) indiaSaved.count++;
       }
-    }
+    }));
 
     return new Response(JSON.stringify({
       saved, duplicates, errors,
