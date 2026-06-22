@@ -6,6 +6,7 @@ const STATS_KEY = 'cuizin_quiz_stats';
 interface QuizStats {
   streak: number;
   questionsAnswered: number;
+  correctAnswered: number;
   lastDate: string; // YYYY-MM-DD format for daily reset
 }
 
@@ -14,6 +15,7 @@ const getTodayDate = () => new Date().toISOString().split('T')[0];
 const getDefaultStats = (): QuizStats => ({
   streak: 0,
   questionsAnswered: 0,
+  correctAnswered: 0,
   lastDate: getTodayDate()
 });
 
@@ -49,16 +51,18 @@ const saveStats = (stats: QuizStats) => {
 export const usePersistentQuizStats = () => {
   const [streak, setStreakState] = useState(() => loadStats().streak);
   const [questionsAnswered, setQuestionsAnsweredState] = useState(() => loadStats().questionsAnswered);
+  const [correctAnswered, setCorrectAnsweredState] = useState(() => loadStats().correctAnswered);
   
   // Persist to localStorage whenever values change
   useEffect(() => {
     const stats: QuizStats = {
       streak,
       questionsAnswered,
+      correctAnswered,
       lastDate: getTodayDate()
     };
     saveStats(stats);
-  }, [streak, questionsAnswered]);
+  }, [streak, questionsAnswered, correctAnswered]);
   
   // Check for day change on visibility change (user returns to tab)
   useEffect(() => {
@@ -69,6 +73,7 @@ export const usePersistentQuizStats = () => {
         if (stored.streak === 0 && stored.questionsAnswered === 0) {
           setStreakState(0);
           setQuestionsAnsweredState(0);
+          setCorrectAnsweredState(0);
         }
       }
     };
@@ -102,6 +107,10 @@ export const usePersistentQuizStats = () => {
   const incrementQuestionsAnswered = useCallback(() => {
     setQuestionsAnsweredState(prev => prev + 1);
   }, []);
+
+  const incrementCorrectAnswered = useCallback(() => {
+    setCorrectAnsweredState(prev => prev + 1);
+  }, []);
   
   // Sync with database value if higher (in case user answered on another device)
   const syncWithDatabase = useCallback((dbQuestionsAnswered: number) => {
@@ -113,11 +122,13 @@ export const usePersistentQuizStats = () => {
   return {
     streak,
     questionsAnswered,
+    correctAnswered,
     setStreak,
     setQuestionsAnswered,
     incrementStreak,
     resetStreak,
     incrementQuestionsAnswered,
+    incrementCorrectAnswered,
     syncWithDatabase
   };
 };
