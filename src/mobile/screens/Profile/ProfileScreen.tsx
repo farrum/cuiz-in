@@ -19,6 +19,10 @@ export default function ProfileScreen() {
   const { accuracy, sample } = useMoodEngine();
   const mirrorMood = moodFromAccuracy(accuracy, sample);
   const [profile, setProfile] = useState<{ name: string; username: string; gems: number; daily: number; monthly: number } | null>(null);
+  const [reports, setReports] = useState<{
+    dayAttempted: number; dayCorrect: number;
+    monthAttempted: number; monthCorrect: number;
+  } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editProfile, setEditProfile] = useState<MobileProfile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -42,6 +46,23 @@ export default function ProfileScreen() {
         daily: Number((d.data as any)?.points ?? 0),
         monthly: Number((m.data as any)?.points ?? 0),
       });
+
+      // Questions attempted / correct — today and this month
+      const dayStart = `${today}T00:00:00.000Z`;
+      const monthStart = `${month}-01T00:00:00.000Z`;
+      const [dAtt, dCorr, mAtt, mCorr] = await Promise.all([
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('answered_at', dayStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('correct', true).gte('answered_at', dayStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('answered_at', monthStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('correct', true).gte('answered_at', monthStart),
+      ]);
+      setReports({
+        dayAttempted: dAtt.count ?? 0,
+        dayCorrect: dCorr.count ?? 0,
+        monthAttempted: mAtt.count ?? 0,
+        monthCorrect: mCorr.count ?? 0,
+      });
+
       setAvatarUrl(pd?.profile_picture || '');
       const { data: { session } } = await supabase.auth.getSession();
       const provider = session?.user?.app_metadata?.provider === 'google' ? 'google' : 'email';
