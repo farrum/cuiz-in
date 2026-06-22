@@ -121,7 +121,9 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
     availableQuestions = questions;
   }
   
-  // Randomly decide if we should show an image question
+  // Randomly decide if we should show an image question.
+  // Only ever serve real image questions from Supabase — never the old
+  // hardcoded placeholder/mock image questions.
   if (shouldShowImageQuestion()) {
     // 1. Try to get unanswered image questions from Supabase
     const availableImageQuestions = availableQuestions.filter(q => q.questionType === 'image');
@@ -136,9 +138,7 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
       const randomIndex = Math.floor(Math.random() * allImageQuestions.length);
       return allImageQuestions[randomIndex];
     }
-    
-    // 3. Last fallback: client-side mock questions
-    return getRandomImageQuizQuestion();
+    // If no real image questions exist, fall through to text questions below.
   }
   
   // Preference for text-based questions if we shouldn't show an image question
