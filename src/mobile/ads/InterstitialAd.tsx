@@ -4,6 +4,10 @@ import { X } from 'lucide-react';
 import { pickAd } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { NetworkAdFrame } from './NetworkAdFrame';
+
+/** Adsterra 300x250 placement shown between quiz questions. */
+const ADSTERRA_KEY = '2036014d5863f79efb5b419b47c4b810';
 
 interface InterstitialAdProps {
   open: boolean;
@@ -23,6 +27,9 @@ export function InterstitialAd({ open, onClose, skipSeconds = 5, seed = 0 }: Int
   const [remaining, setRemaining] = useState(skipSeconds);
   const [hasDbAd, setHasDbAd] = useState(false);
   const ad = open ? pickAd('interstitial', seed) : null;
+  // A network (Adsterra) creative is always available, so the interstitial
+  // always has something to render.
+  const hasNetworkAd = true;
 
   useEffect(() => {
     if (open) {
@@ -34,7 +41,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 5, seed = 0 }: Int
   }, [open]);
 
   useEffect(() => {
-    if (!open || (!ad && !hasDbAd)) return;
+    if (!open || (!ad && !hasDbAd && !hasNetworkAd)) return;
     setRemaining(skipSeconds);
     const t = window.setInterval(() => {
       setRemaining((r) => {
@@ -47,14 +54,14 @@ export function InterstitialAd({ open, onClose, skipSeconds = 5, seed = 0 }: Int
 
   // If there's nothing to show, immediately resolve so the quiz keeps flowing.
   useEffect(() => {
-    if (open && !ad && !hasDbAd) onClose();
+    if (open && !ad && !hasDbAd && !hasNetworkAd) onClose();
   }, [open, ad, hasDbAd, onClose]);
 
   const canSkip = remaining <= 0;
 
   return (
     <AnimatePresence>
-      {open && (hasDbAd || ad) && (
+      {open && (hasDbAd || ad || hasNetworkAd) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -84,6 +91,30 @@ export function InterstitialAd({ open, onClose, skipSeconds = 5, seed = 0 }: Int
               
               <div className="w-full max-w-sm p-4 bg-white rounded-2xl flex justify-center items-center shadow-2xl overflow-hidden">
                 <SimpleAdBanner position="app-interstitial" />
+              </div>
+            </div>
+          ) : hasNetworkAd ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-black/90 text-white relative">
+              <div className="absolute top-3 left-3 text-[10px] font-bold uppercase bg-black/50 px-2 py-1 rounded">
+                Ad
+              </div>
+              <div className="absolute top-3 right-3">
+                {canSkip ? (
+                  <button
+                    onClick={onClose}
+                    className="flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full"
+                  >
+                    Skip <X className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <span className="text-xs font-semibold bg-white/10 px-3 py-1.5 rounded-full">
+                    Skip in {remaining}s
+                  </span>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl p-3 shadow-2xl overflow-hidden">
+                <NetworkAdFrame adKey={ADSTERRA_KEY} width={300} height={250} />
               </div>
             </div>
           ) : (
