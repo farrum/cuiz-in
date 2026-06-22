@@ -1286,6 +1286,16 @@ export type Database = {
           question: string
         }[]
       }
+      get_monthly_leaderboard: {
+        Args: { _limit?: number; _month?: string }
+        Returns: {
+          display_name: string
+          points: number
+          profile_picture: string
+          user_id: string
+          username: string
+        }[]
+      }
       has_user_been_active_in_days: {
         Args: { p_days: number; p_user_id: string }
         Returns: boolean
