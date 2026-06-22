@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
 import { CHARACTERS } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 
 const SLIDES = [
   { character: 'gemmy' as const, mood: 'cheer'   as const, title: 'Hi! I’m Gemmy.', text: 'Answer questions, build streaks, watch your gem stash grow.' },
@@ -26,6 +27,15 @@ export default function OnboardingScreen() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-primary/15 via-background to-purple-500/15 px-6">
+      <motion.img
+        src="/cuizin-logo.png"
+        alt="CuizIN logo"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+        className="h-12 w-auto mx-auto mt-6"
+        style={{ marginTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+      />
       <div className="flex-1 flex flex-col items-center justify-center text-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -48,7 +58,7 @@ export default function OnboardingScreen() {
         </div>
       </div>
 
-      <div className="pb-10">
+      <div className="pb-6">
         <div className="flex justify-center gap-1.5 mb-6">
           {SLIDES.map((_, j) => (
             <span
@@ -64,6 +74,11 @@ export default function OnboardingScreen() {
         >
           {i < SLIDES.length - 1 ? 'Next' : "Let's go!"}
         </motion.button>
+      </div>
+
+      {/* Rotating banner ad */}
+      <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+        <TopBannerAd />
       </div>
     </div>
   );

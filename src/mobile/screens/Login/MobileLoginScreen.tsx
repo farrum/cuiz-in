@@ -7,6 +7,7 @@ import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
+import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 
 export default function MobileLoginScreen() {
   const navigate = useNavigate();
@@ -78,6 +79,15 @@ export default function MobileLoginScreen() {
       <button onClick={() => navigate(-1)} className="self-start p-2 -ml-2 rounded-full hover:bg-muted" aria-label="Back">
         <ArrowLeft className="w-5 h-5" />
       </button>
+
+      <motion.img
+        src="/cuizin-logo.png"
+        alt="CuizIN logo"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+        className="h-12 w-auto mx-auto mt-2"
+      />
 
       <div className="flex-1 flex flex-col justify-center">
         <div className="text-center mb-6">
@@ -153,6 +163,11 @@ export default function MobileLoginScreen() {
             {mode === 'sign-in' ? "No account? Sign up" : "Already have an account? Sign in"}
           </button>
         )}
+      </div>
+
+      {/* Rotating banner ad */}
+      <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+        <TopBannerAd />
       </div>
     </div>
   );
