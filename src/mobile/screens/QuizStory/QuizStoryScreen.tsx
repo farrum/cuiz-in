@@ -26,7 +26,7 @@ const PREF_KEY = 'quiz_story_prefs';
 export default function QuizStoryScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
-  const { streak, questionsAnswered, incrementStreak, resetStreak, incrementQuestionsAnswered } = usePersistentQuizStats();
+  const { streak, questionsAnswered, correctAnswered, incrementStreak, resetStreak, incrementQuestionsAnswered, incrementCorrectAnswered } = usePersistentQuizStats();
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
   const [phase, setPhase] = useState<Phase>('loading');
   const [selected, setSelected] = useState<string | null>(null);
@@ -145,6 +145,7 @@ export default function QuizStoryScreen() {
       if (correct) {
         haptics('success');
         incrementStreak();
+        incrementCorrectAnswered();
         const earned = question.gems || 10;
         setSessionGems((g) => g + earned);
         const next = gems + earned;
