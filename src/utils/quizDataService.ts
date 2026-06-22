@@ -79,10 +79,24 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
   }
 };
 
+export interface QuestionFilter {
+  category?: string | null;
+  difficulty?: 'easy' | 'medium' | 'hard' | null;
+}
+
 // Get a random question (with preference for unanswered questions)
-export const getRandomQuestion = async (): Promise<QuizQuestion> => {
+export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQuestion> => {
   // Try to get the latest questions from Supabase
   let questions = await fetchQuizQuestions();
+
+  // Apply user-selected category / difficulty preferences when provided
+  if (filter && (filter.category || filter.difficulty)) {
+    const filtered = questions.filter(q =>
+      (!filter.category || q.category === filter.category) &&
+      (!filter.difficulty || q.difficulty === filter.difficulty)
+    );
+    if (filtered.length > 0) questions = filtered;
+  }
   
   if (questions.length === 0) {
     // If no questions are available, return a default question
@@ -134,6 +148,12 @@ export const getRandomQuestion = async (): Promise<QuizQuestion> => {
   // Randomly select a question
   const randomIndex = Math.floor(Math.random() * chooseFrom.length);
   return chooseFrom[randomIndex];
+};
+
+// Get the list of distinct categories available in the question pool
+export const getAvailableCategories = async (): Promise<string[]> => {
+  const questions = await fetchQuizQuestions();
+  return Array.from(new Set(questions.map(q => q.category).filter(Boolean))).sort();
 };
 
 // Get a batch of random questions
