@@ -73,6 +73,18 @@ export default function HubScreen() {
         transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
       />
 
+      {/* Brand */}
+      <div className="relative flex justify-center mb-3">
+        <motion.img
+          src="/cuizin-logo.png"
+          alt="CuizIN"
+          className="h-9 w-auto"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+
       {/* Header */}
       <div className="relative flex items-center justify-between mb-4">
         <div>
