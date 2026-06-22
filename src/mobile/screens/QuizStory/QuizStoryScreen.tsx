@@ -292,6 +292,17 @@ export default function QuizStoryScreen() {
       {/* Rotating banner ad */}
       <TopBannerAd />
 
+      {/* Preferences button */}
+      <div className="px-4 pt-2">
+        <button
+          onClick={() => setPrefsOpen(true)}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card px-4 py-3 text-sm font-semibold hover:bg-muted transition-colors"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          {category || 'All categories'} · {difficulty ? difficulty[0].toUpperCase() + difficulty.slice(1) : 'Any level'}
+        </button>
+      </div>
+
       {/* Session summary footer */}
       <div
         className="px-4 py-3 border-t border-border bg-card/80 backdrop-blur"
@@ -305,6 +316,86 @@ export default function QuizStoryScreen() {
       </div>
 
       <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={5} seed={adSeed} />
+
+      {/* Preferences sheet */}
+      <AnimatePresence>
+        {prefsOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPrefsOpen(false)}
+          >
+            <motion.div
+              className="bg-background rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold">Quiz preferences</h3>
+                <button onClick={() => setPrefsOpen(false)} aria-label="Close" className="p-1.5 rounded-full hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Difficulty</p>
+              <div className="grid grid-cols-4 gap-2 mb-5">
+                {([null, 'easy', 'medium', 'hard'] as const).map((d) => (
+                  <button
+                    key={d ?? 'any'}
+                    onClick={() => setDifficulty(d)}
+                    className={cn(
+                      'rounded-xl px-3 py-2 text-sm font-semibold border-2 capitalize transition-colors',
+                      difficulty === d ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                    )}
+                  >
+                    {d ?? 'Any'}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
+              <div className="space-y-2 mb-5">
+                <button
+                  onClick={() => setCategory(null)}
+                  className={cn(
+                    'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold border-2 transition-colors',
+                    category === null ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                  )}
+                >
+                  All categories
+                  {category === null && <Check className="w-4 h-4" />}
+                </button>
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCategory(c)}
+                    className={cn(
+                      'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold border-2 transition-colors',
+                      category === c ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                    )}
+                  >
+                    {c}
+                    {category === c && <Check className="w-4 h-4" />}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => applyPrefs(category, difficulty)}
+                className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 text-sm"
+              >
+                Apply &amp; continue
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
