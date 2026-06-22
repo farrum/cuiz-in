@@ -341,7 +341,7 @@ export default function QuizStoryScreen() {
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
       >
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span><strong className="text-foreground">{questionsAnswered}</strong> answered</span>
+          <span>Today: <strong className="text-foreground">{questionsAnswered}</strong> attempted · <strong className="text-emerald-600">{correctAnswered}</strong> correct</span>
           <span>Session: <strong className="text-amber-600">+{sessionGems} 💎</strong></span>
           <button onClick={loadNext} className="text-primary font-semibold">Skip →</button>
         </div>
