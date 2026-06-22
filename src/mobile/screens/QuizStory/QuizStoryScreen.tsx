@@ -142,6 +142,22 @@ export default function QuizStoryScreen() {
       moodEngine.recordAnswer(correct);
       setRevealMood(moodEngine.snapshot().lastMood);
 
+      // Persist the attempt so profile reports (attempted/correct) populate.
+      {
+        const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (uid) {
+          void supabase.from('quiz_answers').insert({
+            user_id: uid,
+            question_id: question.id,
+            selected_answer: option,
+            correct,
+            points_earned: correct ? (question.gems || 10) : 0,
+          }).then(({ error }) => {
+            if (error) console.error('[QuizStory] failed to log answer', error);
+          });
+        }
+      }
+
       if (correct) {
         haptics('success');
         incrementStreak();
