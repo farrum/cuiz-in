@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -49,6 +50,9 @@ export default function MiniGameScreen() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex-1 overflow-y-auto p-4">
         {body}
       </motion.div>
+      <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+        <TopBannerAd />
+      </div>
     </div>
   );
 }
