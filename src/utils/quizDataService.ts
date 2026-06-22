@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from './types';
 import { STORAGE_KEYS } from './constants';
-import { getRandomImageQuizQuestion, shouldShowImageQuestion } from './imageQuizUtils';
+import { shouldShowImageQuestion } from './imageQuizUtils';
 
 // Mock quiz questions for fallback
 export const quizQuestions: QuizQuestion[] = [
