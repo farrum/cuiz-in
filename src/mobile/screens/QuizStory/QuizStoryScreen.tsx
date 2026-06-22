@@ -16,6 +16,7 @@ import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
+import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -249,6 +250,9 @@ export default function QuizStoryScreen() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Rotating banner ad */}
+      <TopBannerAd />
 
       {/* Session summary footer */}
       <div
