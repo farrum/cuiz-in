@@ -7,9 +7,7 @@ export function MobileShell() {
   const location = useLocation();
   return (
     <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
-      <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <TopBannerAd />
-      </div>
+      <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
       <div
         className="flex-1 overflow-y-auto overflow-x-hidden"
       >
@@ -26,6 +24,7 @@ export function MobileShell() {
           </motion.div>
         </AnimatePresence>
       </div>
+      <TopBannerAd />
       <BottomTabs />
     </div>
   );
