@@ -124,21 +124,23 @@ export async function resolveImage(question: string, correctAnswer: string, cate
   try { subj = await extractSubject(question, correctAnswer, category); }
   catch (e) { console.error("subject extract error", e); }
 
-  // 1. Prioritize AI generation using the custom, context-aware prompt from Gemini
-  if (subj?.image_prompt) {
-    try {
-      const aiUrl = await generateAiImage(subj.image_prompt);
-      if (aiUrl) return { imageUrl: aiUrl, source: "ai" };
-    } catch (e) { console.error("ai gen error", e); }
-  }
-
-  // 2. Fallback to Wikipedia lookup if AI generation failed
+  // 1. Prioritize Wikipedia lookup — it is fast (~1s) and free, which keeps the
+  //    overall run well within the function time limit. AI generation (slow,
+  //    ~10-15s each) is only used as a fallback below.
   const queries = [subj?.wiki_query, subj?.subject, correctAnswer].filter(Boolean) as string[];
   for (const q of queries) {
     try {
       const url = await wikiImage(q);
       if (url) return { imageUrl: url, source: "wikipedia" };
     } catch (e) { console.error("wiki error", q, e); }
+  }
+
+  // 2. Fallback to AI generation using the custom, context-aware prompt.
+  if (subj?.image_prompt) {
+    try {
+      const aiUrl = await generateAiImage(subj.image_prompt);
+      if (aiUrl) return { imageUrl: aiUrl, source: "ai" };
+    } catch (e) { console.error("ai gen error", e); }
   }
 
   // 3. Last resort AI generation using basic prompt fallback
