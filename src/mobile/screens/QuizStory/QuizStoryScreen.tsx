@@ -280,8 +280,28 @@ export default function QuizStoryScreen() {
 
               {/* Reveal panel */}
               <div className="mt-6">
+                {/* Suspense while we check the answer */}
+                <AnimatePresence>
+                  {phase === 'revealing' && !revealReady && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-4 py-4"
+                    >
+                      <span className="flex gap-1">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+                      </span>
+                      <span className="text-sm font-semibold">
+                        Hold on… are you sure? Checking your answer 🤔
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <MascotReveal
-                  show={phase === 'revealing'}
+                  show={phase === 'revealing' && revealReady}
                   mood={revealMood}
                   message={motivation?.text}
                   emoji={motivation?.emoji}
