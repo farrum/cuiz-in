@@ -35,6 +35,7 @@ export default function QuizStoryScreen() {
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
   const advanceTimer = useRef<number | null>(null);
   const progressTimer = useRef<number | null>(null);
+  const answerCount = useRef(0);
   const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
   const [showInterstitial, setShowInterstitial] = useState(false);
@@ -117,8 +118,14 @@ export default function QuizStoryScreen() {
       resetStreak();
     }
 
-    // After the 5s reveal, show a full-screen ad (if available), then advance.
-    advanceTimer.current = window.setTimeout(() => setShowInterstitial(true), 5000);
+    // After the 5s reveal, show a full-screen ad every 3rd question (more ad
+    // views without interrupting every single question), otherwise advance.
+    answerCount.current += 1;
+    const showAd = answerCount.current % 3 === 0;
+    advanceTimer.current = window.setTimeout(() => {
+      if (showAd) setShowInterstitial(true);
+      else loadNext();
+    }, 5000);
   };
 
   const closeInterstitial = () => {
