@@ -99,30 +99,6 @@ async function generateAiImage(prompt: string): Promise<string | null> {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
       body: JSON.stringify({
-        model: "openai/dall-e-3",
-        prompt,
-        size: "1024x1024",
-        quality: "standard",
-        n: 1,
-      }),
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      const b64: string | undefined = data?.data?.[0]?.b64_json;
-      if (b64) return uploadToSupabase(b64);
-    } else {
-      console.warn("dall-e-3 failed, falling back to dall-e-2:", resp.status, await resp.text());
-    }
-  } catch (e) {
-    console.error("dall-e-3 exception", e);
-  }
-
-  // Fallback to dall-e-2
-  try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-      body: JSON.stringify({
         model: "openai/gpt-image-2",
         prompt,
         size: "1024x1024",
@@ -131,14 +107,14 @@ async function generateAiImage(prompt: string): Promise<string | null> {
       }),
     });
     if (!resp.ok) {
-      console.error("ai image gen fallback failed:", resp.status, await resp.text());
+      console.error("ai image gen failed:", resp.status, await resp.text());
       return null;
     }
     const data = await resp.json();
     const b64: string | undefined = data?.data?.[0]?.b64_json;
     if (b64) return uploadToSupabase(b64);
   } catch (e) {
-    console.error("ai gen fallback exception", e);
+    console.error("ai gen exception", e);
   }
   return null;
 }
