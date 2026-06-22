@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, SlidersHorizontal, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { getRandomQuestion, STORAGE_KEYS } from '@/utils/quizData';
+import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
 import type { QuizQuestion } from '@/utils/types';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { logGemsEarned } from '@/utils/gemsService';
@@ -19,6 +19,9 @@ import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
+
+type Difficulty = 'easy' | 'medium' | 'hard';
+const PREF_KEY = 'quiz_story_prefs';
 
 export default function QuizStoryScreen() {
   const navigate = useNavigate();
@@ -40,6 +43,19 @@ export default function QuizStoryScreen() {
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [adSeed, setAdSeed] = useState(0);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState<string | null>(() => {
+    try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}').category ?? null; } catch { return null; }
+  });
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(() => {
+    try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}').difficulty ?? null; } catch { return null; }
+  });
+
+  const categoryRef = useRef(category);
+  const difficultyRef = useRef(difficulty);
+  categoryRef.current = category;
+  difficultyRef.current = difficulty;
 
   const loadNext = async () => {
     setPhase('loading');
@@ -49,7 +65,7 @@ export default function QuizStoryScreen() {
     setExplanation('');
     setProgress(0);
     try {
-      const q = await getRandomQuestion();
+      const q = await getRandomQuestion({ category: categoryRef.current, difficulty: difficultyRef.current });
       setQuestion(q);
       setPhase('asking');
     } catch (e) {
@@ -59,6 +75,21 @@ export default function QuizStoryScreen() {
   };
 
   useEffect(() => { loadNext(); /* eslint-disable-next-line */ }, []);
+
+  // Load available categories for the preferences picker
+  useEffect(() => {
+    getAvailableCategories().then(setCategories).catch(() => {});
+  }, []);
+
+  const applyPrefs = (nextCategory: string | null, nextDifficulty: Difficulty | null) => {
+    setCategory(nextCategory);
+    setDifficulty(nextDifficulty);
+    categoryRef.current = nextCategory;
+    difficultyRef.current = nextDifficulty;
+    localStorage.setItem(PREF_KEY, JSON.stringify({ category: nextCategory, difficulty: nextDifficulty }));
+    setPrefsOpen(false);
+    loadNext();
+  };
 
   // Progress ring while asking — 20s soft timer (no penalty, just nudge)
   useEffect(() => {
