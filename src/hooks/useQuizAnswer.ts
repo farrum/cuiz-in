@@ -78,13 +78,6 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
               const imageQuestions = JSON.parse(cachedImageQuestions);
               foundQuestion = imageQuestions.find((q: QuizQuestion) => q.id === questionId);
             }
-            
-            // If still not found, we might need to recreate it (for demo purposes)
-            if (!foundQuestion) {
-              // This creates a sample image question for demonstration
-              foundQuestion = getRandomImageQuizQuestion();
-              foundQuestion.id = questionId; // Override with the ID we're looking for
-            }
           }
         }
         
