@@ -31,6 +31,7 @@ export default function QuizStoryScreen() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [revealReady, setRevealReady] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
   const [sessionGems, setSessionGems] = useState(0);
@@ -61,6 +62,7 @@ export default function QuizStoryScreen() {
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);
+    setRevealReady(false);
     setCorrectAnswer('');
     setExplanation('');
     setProgress(0);
@@ -106,6 +108,8 @@ export default function QuizStoryScreen() {
     if (phase !== 'asking' || !question) return;
     setSelected(option);
     setPhase('revealing');
+    setRevealReady(false);
+    const revealStart = Date.now();
     if (progressTimer.current) window.clearInterval(progressTimer.current);
 
     let correct = false;
@@ -124,39 +128,46 @@ export default function QuizStoryScreen() {
       console.error('[QuizStory] validate failed', err);
     }
 
-    setIsCorrect(correct);
-    setCorrectAnswer(serverCorrectAnswer);
-    setExplanation(serverExplanation);
-    incrementQuestionsAnswered();
-    // Update the global mood engine and remember the resolved mood for this reveal.
-    moodEngine.recordAnswer(correct);
-    setRevealMood(moodEngine.snapshot().lastMood);
-
-    if (correct) {
-      haptics('success');
-      incrementStreak();
-      const earned = question.gems || 10;
-      setSessionGems((g) => g + earned);
-      const next = gems + earned;
-      setGems(next);
-      localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(next));
-      const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      if (uid) { void logGemsEarned(earned, uid); }
-      const burst = moodEngine.snapshot().correctStreak >= 5 ? 200 : moodEngine.snapshot().correctStreak >= 2 ? 130 : 80;
-      confetti({ particleCount: burst, spread: 80, origin: { y: 0.4 }, ticks: 140 });
-    } else {
-      haptics('error');
-      resetStreak();
-    }
-
-    // After the 5s reveal, show a full-screen ad every 3rd question (more ad
-    // views without interrupting every single question), otherwise advance.
-    answerCount.current += 1;
-    const showAd = answerCount.current % 3 === 0;
+    // Keep a short suspense window ("Hold on… checking your answer") so the
+    // real result is never flashed instantly. Reveal after at least 2.5s.
+    const elapsed = Date.now() - revealStart;
+    const wait = Math.max(0, 2500 - elapsed);
     advanceTimer.current = window.setTimeout(() => {
-      if (showAd) setShowInterstitial(true);
-      else loadNext();
-    }, 5000);
+      setIsCorrect(correct);
+      setCorrectAnswer(serverCorrectAnswer);
+      setExplanation(serverExplanation);
+      setRevealReady(true);
+      incrementQuestionsAnswered();
+      // Update the global mood engine and remember the resolved mood for this reveal.
+      moodEngine.recordAnswer(correct);
+      setRevealMood(moodEngine.snapshot().lastMood);
+
+      if (correct) {
+        haptics('success');
+        incrementStreak();
+        const earned = question.gems || 10;
+        setSessionGems((g) => g + earned);
+        const next = gems + earned;
+        setGems(next);
+        localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(next));
+        const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (uid) { void logGemsEarned(earned, uid); }
+        const burst = moodEngine.snapshot().correctStreak >= 5 ? 200 : moodEngine.snapshot().correctStreak >= 2 ? 130 : 80;
+        confetti({ particleCount: burst, spread: 80, origin: { y: 0.4 }, ticks: 140 });
+      } else {
+        haptics('error');
+        resetStreak();
+      }
+
+      // After the 5s reveal, show a full-screen ad every 3rd question (more ad
+      // views without interrupting every single question), otherwise advance.
+      answerCount.current += 1;
+      const showAd = answerCount.current % 3 === 0;
+      advanceTimer.current = window.setTimeout(() => {
+        if (showAd) setShowInterstitial(true);
+        else loadNext();
+      }, 5000);
+    }, wait);
   };
 
   const closeInterstitial = () => {
