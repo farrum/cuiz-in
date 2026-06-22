@@ -3,11 +3,21 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import AppMobile from './mobile/AppMobile.tsx'
 import './index.css'
+import { Capacitor } from '@capacitor/core'
 
 // Platform switch: when VITE_PLATFORM=mobile (Capacitor build),
+// or when running inside a native Capacitor shell (iOS/Android),
 // boot the mobile UI instead of the web app. Same Supabase backend.
 const isMobilePlatform =
   import.meta.env.VITE_PLATFORM === 'mobile' ||
+  // Auto-detect native Capacitor runtime so any build shows the hub on-device
+  (() => {
+    try {
+      return Capacitor.isNativePlatform();
+    } catch {
+      return false;
+    }
+  })() ||
   // Allow override via ?mobile=1 for in-browser preview / QA
   (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1');
 
