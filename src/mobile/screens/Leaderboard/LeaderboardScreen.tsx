@@ -18,23 +18,15 @@ export default function LeaderboardScreen() {
     (async () => {
       try {
         const month = new Date().toISOString().slice(0, 7);
-        const { data } = await supabase
-          .from('monthly_points')
-          .select('user_id, points')
-          .eq('month', month)
-          .order('points', { ascending: false })
-          .limit(50);
+        const { data } = await supabase.rpc('get_monthly_leaderboard', {
+          _month: month,
+          _limit: 50,
+        });
 
         if (data && data.length) {
-          const ids = data.map((r) => r.user_id);
-          const { data: profs } = await supabase
-            .from('profiles')
-            .select('id, username, display_name')
-            .in('id', ids);
-          const byId = new Map((profs || []).map((p: any) => [p.id, p.display_name || p.username]));
           const enriched: Row[] = data.map((r: any) => ({
             user_id: r.user_id,
-            username: byId.get(r.user_id) || 'Player',
+            username: r.display_name || r.username || 'Player',
             points: Number(r.points || 0),
           }));
           setRows(enriched);
