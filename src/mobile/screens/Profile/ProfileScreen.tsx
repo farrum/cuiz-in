@@ -19,6 +19,10 @@ export default function ProfileScreen() {
   const { accuracy, sample } = useMoodEngine();
   const mirrorMood = moodFromAccuracy(accuracy, sample);
   const [profile, setProfile] = useState<{ name: string; username: string; gems: number; daily: number; monthly: number } | null>(null);
+  const [reports, setReports] = useState<{
+    dayAttempted: number; dayCorrect: number;
+    monthAttempted: number; monthCorrect: number;
+  } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editProfile, setEditProfile] = useState<MobileProfile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
@@ -42,6 +46,23 @@ export default function ProfileScreen() {
         daily: Number((d.data as any)?.points ?? 0),
         monthly: Number((m.data as any)?.points ?? 0),
       });
+
+      // Questions attempted / correct — today and this month
+      const dayStart = `${today}T00:00:00.000Z`;
+      const monthStart = `${month}-01T00:00:00.000Z`;
+      const [dAtt, dCorr, mAtt, mCorr] = await Promise.all([
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('answered_at', dayStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('correct', true).gte('answered_at', dayStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('answered_at', monthStart),
+        supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('correct', true).gte('answered_at', monthStart),
+      ]);
+      setReports({
+        dayAttempted: dAtt.count ?? 0,
+        dayCorrect: dCorr.count ?? 0,
+        monthAttempted: mAtt.count ?? 0,
+        monthCorrect: mCorr.count ?? 0,
+      });
+
       setAvatarUrl(pd?.profile_picture || '');
       const { data: { session } } = await supabase.auth.getSession();
       const provider = session?.user?.app_metadata?.provider === 'google' ? 'google' : 'email';
@@ -134,6 +155,23 @@ export default function ProfileScreen() {
         <StatCard icon={Calendar} label="Answered" value={String(questionsAnswered)} color="from-emerald-500 to-teal-500" />
       </div>
 
+      {/* Reports */}
+      <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Your reports</h2>
+      <div className="space-y-3 mb-6">
+        <ReportRow
+          title="Today"
+          attempted={reports?.dayAttempted ?? 0}
+          correct={reports?.dayCorrect ?? 0}
+          gems={profile?.daily ?? 0}
+        />
+        <ReportRow
+          title="This month"
+          attempted={reports?.monthAttempted ?? 0}
+          correct={reports?.monthCorrect ?? 0}
+          gems={profile?.monthly ?? 0}
+        />
+      </div>
+
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={signOut}
@@ -170,5 +208,31 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="font-bold text-lg">{value}</p>
     </motion.div>
+  );
+}
+
+function ReportRow({ title, attempted, correct, gems }: { title: string; attempted: number; correct: number; gems: number }) {
+  const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-bold text-sm">{title}</p>
+        <span className="text-xs text-muted-foreground">{accuracy}% accuracy</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-lg font-bold">{attempted}</p>
+          <p className="text-[11px] text-muted-foreground">Attempted</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-emerald-600">{correct}</p>
+          <p className="text-[11px] text-muted-foreground">Correct</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-amber-600">{gems.toLocaleString()}</p>
+          <p className="text-[11px] text-muted-foreground">Gems</p>
+        </div>
+      </div>
+    </div>
   );
 }
