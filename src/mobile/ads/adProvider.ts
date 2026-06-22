@@ -26,11 +26,13 @@ export interface AdCreative {
   href?: string;
 }
 
-/** Sample creatives shown to admins so they can preview the ad operation. */
-const SAMPLE_BANNERS: AdCreative[] = [
-  { id: 'sb1', slot: 'banner', sample: true, headline: 'Your Brand Here', body: 'Reach thousands of quiz players daily', cta: 'Advertise', bg: 'from-indigo-500 to-purple-600' },
-  { id: 'sb2', slot: 'banner', sample: true, headline: 'Boost Your Reach', body: 'Premium banner placement on CuizIN', cta: 'Learn more', bg: 'from-emerald-500 to-teal-600' },
-  { id: 'sb3', slot: 'banner', sample: true, headline: 'Sponsored Slot', body: 'Engage active, curious minds', cta: 'Get started', bg: 'from-orange-500 to-pink-600' },
+/** House banners shown to all users until a real ad network is wired up. */
+const HOUSE_BANNERS: AdCreative[] = [
+  { id: 'hb1', slot: 'banner', headline: 'Climb the Leaderboard', body: 'Answer daily to earn gems & rank up', cta: 'Play now', bg: 'from-indigo-500 to-purple-600' },
+  { id: 'hb2', slot: 'banner', headline: 'Daily Challenge Live', body: 'Fresh questions every day on CuizIN', cta: 'Take it', bg: 'from-emerald-500 to-teal-600' },
+  { id: 'hb3', slot: 'banner', headline: 'Invite Friends', body: 'Challenge your friends to a quiz duel', cta: 'Share', bg: 'from-orange-500 to-pink-600' },
+  { id: 'hb4', slot: 'banner', headline: 'Beat Your Streak', body: 'Keep your answer streak alive today', cta: 'Continue', bg: 'from-sky-500 to-blue-600' },
+  { id: 'hb5', slot: 'banner', headline: 'Explore Categories', body: 'Science, History, Music & more', cta: 'Browse', bg: 'from-fuchsia-500 to-rose-600' },
 ];
 
 const SAMPLE_INTERSTITIALS: AdCreative[] = [
@@ -64,7 +66,8 @@ export function isAdminUser(): boolean {
 export function getAdPool(slot: AdSlot): AdCreative[] {
   const live = fetchLiveAds(slot);
   if (live.length > 0) return live;
-  if (isAdminUser()) return slot === 'banner' ? SAMPLE_BANNERS : SAMPLE_INTERSTITIALS;
+  if (slot === 'banner') return HOUSE_BANNERS;
+  if (isAdminUser()) return SAMPLE_INTERSTITIALS;
   return [];
 }
 

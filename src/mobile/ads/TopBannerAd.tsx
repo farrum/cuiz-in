@@ -4,7 +4,7 @@ import { getAdPool, type AdCreative } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
-const REFRESH_MS = 30000;
+const REFRESH_MS = 5000;
 
 /**
  * Thin banner ad (rendered at the bottom, above the tab bar) that
