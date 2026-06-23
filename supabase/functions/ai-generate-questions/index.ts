@@ -17,6 +17,50 @@ interface GeneratedQuestion {
   isImageQuestion?: boolean;
 }
 
+/**
+ * Escapes stray (unescaped) double-quote characters that appear *inside* JSON
+ * string values. A quote is treated as a structural string terminator only
+ * when the next non-whitespace character is one of : , } ] (or end of input);
+ * any other quote inside a string is an accidental inner quote and gets escaped.
+ * This salvages otherwise-valid JSON that the model breaks by writing phrases
+ * like the "Three Khans" inside a question.
+ */
+function repairJsonQuotes(input: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (!inString) {
+      out += ch;
+      if (ch === '"') inString = true;
+      continue;
+    }
+    // inside a string
+    if (ch === "\\") {
+      // keep escape sequence intact
+      out += ch + (input[i + 1] ?? "");
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      // peek next non-whitespace char to decide if this closes the string
+      let j = i + 1;
+      while (j < input.length && /\s/.test(input[j])) j++;
+      const next = input[j];
+      if (next === undefined || next === ":" || next === "," || next === "}" || next === "]") {
+        out += ch;
+        inString = false;
+      } else {
+        // accidental inner quote -> escape it
+        out += '\\"';
+      }
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
