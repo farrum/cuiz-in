@@ -17,6 +17,50 @@ interface GeneratedQuestion {
   isImageQuestion?: boolean;
 }
 
+/**
+ * Escapes stray (unescaped) double-quote characters that appear *inside* JSON
+ * string values. A quote is treated as a structural string terminator only
+ * when the next non-whitespace character is one of : , } ] (or end of input);
+ * any other quote inside a string is an accidental inner quote and gets escaped.
+ * This salvages otherwise-valid JSON that the model breaks by writing phrases
+ * like the "Three Khans" inside a question.
+ */
+function repairJsonQuotes(input: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (!inString) {
+      out += ch;
+      if (ch === '"') inString = true;
+      continue;
+    }
+    // inside a string
+    if (ch === "\\") {
+      // keep escape sequence intact
+      out += ch + (input[i + 1] ?? "");
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      // peek next non-whitespace char to decide if this closes the string
+      let j = i + 1;
+      while (j < input.length && /\s/.test(input[j])) j++;
+      const next = input[j];
+      if (next === undefined || next === ":" || next === "," || next === "}" || next === "]") {
+        out += ch;
+        inString = false;
+      } else {
+        // accidental inner quote -> escape it
+        out += '\\"';
+      }
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -70,7 +114,7 @@ Deno.serve(async (req) => {
       ? "Vary difficulty across easy, medium, hard."
       : `All questions should be ${difficulty} difficulty.`;
 
-    const systemPrompt = `You are an expert quiz writer creating high-quality multiple-choice trivia questions. Every question must have exactly 4 options with only ONE clearly correct answer. Questions must be factually accurate, unambiguous, and self-contained. Provide a one-to-two sentence explanation citing the relevant fact. Do not produce duplicate questions. Avoid offensive, political, or adult content. Use plain text only — no HTML, markdown, emojis, or quotes around options.`;
+    const systemPrompt = `You are an expert quiz writer creating high-quality multiple-choice trivia questions. Every question must have exactly 4 options with only ONE clearly correct answer. Questions must be factually accurate, unambiguous, and self-contained. Provide a one-to-two sentence explanation citing the relevant fact. Do not produce duplicate questions. Avoid offensive, political, or adult content. Use plain text only — no HTML, markdown, emojis. CRITICAL JSON RULE: never use the double-quote character (") anywhere inside any string value (question, options, correctAnswer, explanation). If you must quote a word or phrase, use single quotes (') instead. Using double quotes inside text breaks the JSON and is forbidden.`;
 
     const userPrompt = `Generate exactly ${n} unique multiple-choice quiz questions.
 Category: ${category}
@@ -131,10 +175,20 @@ Return ONLY valid JSON matching this exact schema:
     const aiData = await aiResp.json();
     const content: string = aiData?.choices?.[0]?.message?.content ?? "{}";
     let parsed: { questions?: GeneratedQuestion[] } = {};
-    try { parsed = JSON.parse(content); } catch (e) {
-      console.error("JSON parse error:", e, content);
-      return new Response(JSON.stringify({ error: "AI returned invalid JSON" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    try {
+      parsed = JSON.parse(content);
+    } catch (_e) {
+      // The model sometimes emits unescaped double quotes inside string values
+      // (e.g. a phrase like the "Three Khans"), which makes the whole response
+      // invalid JSON and previously failed the entire run. Repair stray inner
+      // quotes and retry before giving up.
+      try {
+        parsed = JSON.parse(repairJsonQuotes(content));
+      } catch (e2) {
+        console.error("JSON parse error (even after repair):", e2, content);
+        return new Response(JSON.stringify({ error: "AI returned invalid JSON" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const raw = Array.isArray(parsed.questions) ? parsed.questions : [];
