@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
@@ -46,6 +46,7 @@ async function hydrateMobileSession(userId: string) {
 
 function AppMobile() {
   const [booted, setBooted] = useState(false);
+  const [authed, setAuthed] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -54,7 +55,10 @@ function AppMobile() {
     (async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) await hydrateMobileSession(data.session.user.id);
+        if (data?.session?.user) {
+          setAuthed(true);
+          await hydrateMobileSession(data.session.user.id);
+        }
       } finally {
         if (mounted) setBooted(true);
       }
@@ -62,8 +66,10 @@ function AppMobile() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
+        setAuthed(true);
         setTimeout(() => hydrateMobileSession(session.user.id), 0);
       } else if (event === 'SIGNED_OUT') {
+        setAuthed(false);
         [STORAGE_KEYS.USER_ID, STORAGE_KEYS.USER_NAME, STORAGE_KEYS.USER_GEMS, STORAGE_KEYS.USER_ROLE]
           .forEach((k) => localStorage.removeItem(k));
       }
@@ -88,14 +94,16 @@ function AppMobile() {
               <Routes>
                 <Route path="/onboarding" element={<OnboardingScreen />} />
                 <Route path="/login" element={<MobileLoginScreen />} />
-                <Route element={<MobileShell />}>
-                  <Route path="/hub" element={<HubScreen />} />
-                  <Route path="/leaderboard" element={<LeaderboardScreen />} />
-                  <Route path="/profile" element={<ProfileScreen />} />
+                <Route element={<RequireAuth authed={authed} />}>
+                  <Route element={<MobileShell />}>
+                    <Route path="/hub" element={<HubScreen />} />
+                    <Route path="/leaderboard" element={<LeaderboardScreen />} />
+                    <Route path="/profile" element={<ProfileScreen />} />
+                  </Route>
+                  <Route path="/quiz" element={<QuizStoryScreen />} />
+                  <Route path="/daily" element={<DailyChallengeStoryScreen />} />
+                  <Route path="/game/:gameId" element={<MiniGameScreen />} />
                 </Route>
-                <Route path="/quiz" element={<QuizStoryScreen />} />
-                <Route path="/daily" element={<DailyChallengeStoryScreen />} />
-                <Route path="/game/:gameId" element={<MiniGameScreen />} />
                 <Route path="/" element={<Navigate to="/hub" replace />} />
                 <Route path="*" element={<Navigate to="/hub" replace />} />
               </Routes>
