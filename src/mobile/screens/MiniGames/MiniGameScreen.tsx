@@ -69,9 +69,10 @@ export default function MiniGameScreen() {
             .eq('setting_type', 'daily_challenges')
             .maybeSingle();
 
-          if (settingData?.config?.riddle_text) {
-            setRiddleText(settingData.config.riddle_text);
-            setRiddleAnswer(settingData.config.riddle_answer || '');
+          const cfg = settingData?.config as { riddle_text?: string; riddle_answer?: string } | null;
+          if (cfg?.riddle_text) {
+            setRiddleText(cfg.riddle_text);
+            setRiddleAnswer(cfg.riddle_answer || '');
           }
         } catch (err) {
           console.error('Failed to load riddle config:', err);
