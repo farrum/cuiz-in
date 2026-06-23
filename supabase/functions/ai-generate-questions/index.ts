@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       ? "Vary difficulty across easy, medium, hard."
       : `All questions should be ${difficulty} difficulty.`;
 
-    const systemPrompt = `You are an expert quiz writer creating high-quality multiple-choice trivia questions. Every question must have exactly 4 options with only ONE clearly correct answer. Questions must be factually accurate, unambiguous, and self-contained. Provide a one-to-two sentence explanation citing the relevant fact. Do not produce duplicate questions. Avoid offensive, political, or adult content. Use plain text only — no HTML, markdown, emojis, or quotes around options.`;
+    const systemPrompt = `You are an expert quiz writer creating high-quality multiple-choice trivia questions. Every question must have exactly 4 options with only ONE clearly correct answer. Questions must be factually accurate, unambiguous, and self-contained. Provide a one-to-two sentence explanation citing the relevant fact. Do not produce duplicate questions. Avoid offensive, political, or adult content. Use plain text only — no HTML, markdown, emojis. CRITICAL JSON RULE: never use the double-quote character (") anywhere inside any string value (question, options, correctAnswer, explanation). If you must quote a word or phrase, use single quotes (') instead. Using double quotes inside text breaks the JSON and is forbidden.`;
 
     const userPrompt = `Generate exactly ${n} unique multiple-choice quiz questions.
 Category: ${category}
