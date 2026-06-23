@@ -25,6 +25,9 @@ const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage
 const MiniGamesList = React.lazy(() =>
   import('@/pages/MiniGamesList').then((m) => ({ default: m.MiniGamesList }))
 );
+const MiniGamePlayPage = React.lazy(() =>
+  import('@/pages/MiniGamePlayPage').then((m) => ({ default: m.MiniGamePlayPage }))
+);
 
 const Profile = React.lazy(() => import("@/pages/Profile"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
@@ -458,6 +461,11 @@ function App() {
                             <Route path="/minigames" element={
                 <Suspense fallback={<PageLoader />}>
                   <MiniGamesList />
+                </Suspense>
+              } />
+              <Route path="/minigames/:gameId" element={
+                <Suspense fallback={<PageLoader />}>
+                  <MiniGamePlayPage />
                 </Suspense>
               } />
 

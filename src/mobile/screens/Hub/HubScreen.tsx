@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon } from 'lucide-react';
+import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MotivationBubble } from '@/mobile/components/MotivationBubble';
@@ -20,15 +20,24 @@ type Node = {
   icon: typeof Calendar;
   color: string;
   hint?: string;
+  badge?: string;
 };
 
-const NODES: Node[] = [
-  { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-primary via-purple-500 to-pink-500', hint: 'Earn 10 gems / correct' },
-  { id: 'daily', label: 'Daily Challenge', to: '/daily', icon: Calendar, color: 'from-orange-500 to-red-500', hint: '2x gems today' },
-  { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', icon: Disc3, color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day' },
-  { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', icon: ScrollText, color: 'from-amber-400 to-orange-600', hint: 'Mystery gems' },
-  { id: 'true-false', label: 'True / False', to: '/game/true-false', icon: Swords, color: 'from-sky-400 to-blue-600', hint: 'Swipe to play' },
-  { id: 'image', label: 'Image Trivia', to: '/game/image', icon: ImageIcon, color: 'from-violet-500 to-fuchsia-600', hint: 'Guess the picture' },
+const FEATURED_MODES: Node[] = [
+  { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-primary via-purple-500 to-pink-500', hint: 'Answer questions, build streaks & earn gems' },
+  { id: 'daily', label: 'Daily Challenge', to: '/daily', icon: Calendar, color: 'from-orange-500 to-red-500', hint: 'Complete the daily special for 2x rewards!' },
+];
+
+const GRID_GAMES: Node[] = [
+  { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', icon: Disc3, color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day', badge: 'Daily' },
+  { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', icon: ScrollText, color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
+  { id: 'true-false', label: 'True / False', to: '/game/true-false', icon: Swords, color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
+  { id: 'image', label: 'Image Trivia', to: '/game/image', icon: ImageIcon, color: 'from-violet-500 to-fuchsia-600', hint: 'Visual trivia puzzles', badge: 'Image' },
+  { id: 'balloon', label: 'Balloon Pop', to: '/game/balloon', icon: Target, color: 'from-pink-400 to-rose-600', hint: 'Arcade balloon popping', badge: 'Hot' },
+  { id: 'slot', label: 'Slot Machine', to: '/game/slot', icon: Coins, color: 'from-red-500 to-amber-500', hint: 'Test matching luck', badge: 'Lucky' },
+  { id: 'plinko', label: 'Plinko Board', to: '/game/plinko', icon: Dices, color: 'from-green-400 to-emerald-600', hint: 'Bounce chips for prizes', badge: 'Fun' },
+  { id: 'rps', label: 'Rock Paper Scissors', to: '/game/rps', icon: Gamepad2, color: 'from-purple-500 to-indigo-600', hint: 'Gesture battle vs AI', badge: 'Battle' },
+  { id: 'treasure', label: 'Treasure Chest', to: '/game/treasure', icon: Gift, color: 'from-yellow-400 to-orange-500', hint: 'Open mystery chest', badge: 'Reward' },
 ];
 
 export default function HubScreen() {
@@ -117,42 +126,86 @@ export default function HubScreen() {
         </motion.button>
       )}
 
-      {/* Island map of activity nodes */}
-      <section className="relative">
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Choose your adventure</h2>
-        <div className="relative space-y-4">
-          {NODES.map((node, i) => {
+      {/* Core Featured Modes */}
+      <section className="relative mb-6">
+        <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3.5 uppercase">Featured Modes</h2>
+        <div className="space-y-3.5">
+          {FEATURED_MODES.map((node, i) => {
             const Icon = node.icon;
-            const offset = i % 2 === 0 ? 'mr-12' : 'ml-12';
             return (
               <motion.button
                 key={node.id}
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: i * 0.07, type: 'spring', stiffness: 220, damping: 22 }}
-                whileTap={{ scale: 0.96 }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => { haptics('medium'); navigate(node.to); }}
-                className={cn(
-                  'relative w-full flex items-center gap-4 rounded-3xl p-4 text-left bg-card border border-border shadow-md',
-                  offset
-                )}
+                className="relative w-full flex items-center gap-4 rounded-[1.75rem] p-4 text-left bg-card border border-border/80 shadow-md overflow-hidden"
               >
+                {/* Visual back glow effect */}
                 <div className={cn(
-                  'flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg bg-gradient-to-br',
+                  "absolute -right-6 -bottom-6 w-32 h-32 rounded-full blur-3xl opacity-[0.08] bg-gradient-to-br",
+                  node.color
+                )} />
+
+                <div className={cn(
+                  'flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-br relative z-10',
                   node.color
                 )}>
-                  <Icon className="w-7 h-7" />
+                  <Icon className="w-6 h-6" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-base">{node.label}</p>
-                  {node.hint && <p className="text-xs text-muted-foreground mt-0.5">{node.hint}</p>}
+                <div className="flex-1 min-w-0 relative z-10">
+                  <p className="font-extrabold text-base leading-tight">{node.label}</p>
+                  {node.hint && <p className="text-[11px] text-muted-foreground mt-1 leading-normal">{node.hint}</p>}
                 </div>
                 <motion.span
-                  className="text-2xl"
+                  className="text-xl text-muted-foreground/80 relative z-10 pr-1"
                   animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                   aria-hidden
                 >→</motion.span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Mini Games Grid */}
+      <section className="relative">
+        <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3.5 uppercase">Mini Games</h2>
+        <div className="grid grid-cols-2 gap-3.5">
+          {GRID_GAMES.map((node, i) => {
+            const Icon = node.icon;
+            return (
+              <motion.button
+                key={node.id}
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: (i + 2) * 0.05, type: 'spring', stiffness: 220, damping: 22 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { haptics('medium'); navigate(node.to); }}
+                className="relative flex flex-col justify-between rounded-2xl p-4 text-left bg-card border border-border/80 shadow-md h-36 overflow-hidden"
+              >
+                {/* Small badge inside game tile */}
+                {node.badge && (
+                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                    {node.badge}
+                  </span>
+                )}
+
+                {/* Icon box */}
+                <div className={cn(
+                  'w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm',
+                  node.color
+                )}>
+                  <Icon className="w-5 h-5" />
+                </div>
+
+                {/* Info block */}
+                <div className="mt-4">
+                  <h4 className="font-extrabold text-xs text-foreground tracking-tight line-clamp-1">{node.label}</h4>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                </div>
               </motion.button>
             );
           })}

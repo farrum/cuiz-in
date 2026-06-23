@@ -132,9 +132,9 @@ export function WheelGame() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center pt-4 pb-8 w-full max-w-sm mx-auto">
+    <div className="flex flex-col items-center justify-center pb-8 w-full max-w-md mx-auto">
       {/* Dynamic Wheel Container */}
-      <div className="relative w-64 h-64 md:w-72 md:h-72 my-4">
+      <div className="relative w-80 h-80 md:w-96 md:h-96 my-4">
         {/* Glow backdrop effect */}
         <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-2xl animate-pulse" />
 

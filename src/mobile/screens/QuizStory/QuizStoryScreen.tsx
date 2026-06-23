@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -25,6 +25,8 @@ const PREF_KEY = 'quiz_story_prefs';
 
 export default function QuizStoryScreen() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isImageMode = searchParams.get('mode') === 'image' || searchParams.get('type') === 'image';
   const haptics = useHaptics();
   const { streak, questionsAnswered, correctAnswered, incrementStreak, resetStreak, incrementQuestionsAnswered, incrementCorrectAnswered } = usePersistentQuizStats();
   const [question, setQuestion] = useState<QuizQuestion | null>(null);
@@ -67,7 +69,11 @@ export default function QuizStoryScreen() {
     setExplanation('');
     setProgress(0);
     try {
-      const q = await getRandomQuestion({ category: categoryRef.current, difficulty: difficultyRef.current });
+      const q = await getRandomQuestion({ 
+        category: categoryRef.current, 
+        difficulty: difficultyRef.current,
+        questionType: isImageMode ? 'image' : null
+      });
       setQuestion(q);
       setPhase('asking');
     } catch (e) {

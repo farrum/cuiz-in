@@ -1,18 +1,88 @@
 .mini-games-list-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 3rem 1.5rem;
+}
+
+.gallery-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gallery-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--primary) / 0.15);
 }
 
 .mini-games-list-container .page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
+  font-size: 2.75rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  margin: 0;
+  background: linear-gradient(135deg, hsl(var(--foreground)) 30%, hsl(var(--muted-foreground)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page-subtitle {
+  font-size: 1.125rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .cards-masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.ad-slot-card {
+  border: 1px dashed hsl(var(--border));
+  border-radius: 1.25rem;
+  background: hsl(var(--muted) / 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.ad-slot-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground) / 0.7);
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .mini-games-list-container {
+    padding: 2rem 1rem;
+  }
+  
+  .mini-games-list-container .page-title {
+    font-size: 2rem;
+  }
+  
+  .cards-masonry {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 }

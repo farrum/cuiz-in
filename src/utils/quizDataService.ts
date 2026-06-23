@@ -82,6 +82,7 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
 export interface QuestionFilter {
   category?: string | null;
   difficulty?: 'easy' | 'medium' | 'hard' | null;
+  questionType?: 'text' | 'image' | null;
 }
 
 // Get a random question (with preference for unanswered questions)
@@ -89,11 +90,12 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
   // Try to get the latest questions from Supabase
   let questions = await fetchQuizQuestions();
 
-  // Apply user-selected category / difficulty preferences when provided
-  if (filter && (filter.category || filter.difficulty)) {
+  // Apply user-selected category / difficulty / questionType preferences when provided
+  if (filter && (filter.category || filter.difficulty || filter.questionType)) {
     const filtered = questions.filter(q =>
       (!filter.category || q.category === filter.category) &&
-      (!filter.difficulty || q.difficulty === filter.difficulty)
+      (!filter.difficulty || q.difficulty === filter.difficulty) &&
+      (!filter.questionType || q.questionType === filter.questionType)
     );
     if (filtered.length > 0) questions = filtered;
   }
@@ -119,6 +121,30 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
   // If all questions have been answered, reset or use all questions
   if (availableQuestions.length === 0) {
     availableQuestions = questions;
+  }
+  
+  // If an explicit questionType filter was provided, we strictly honor it
+  if (filter?.questionType) {
+    const typeQuestions = availableQuestions.filter(q => q.questionType === filter.questionType);
+    const chooseFrom = typeQuestions.length > 0 ? typeQuestions : questions.filter(q => q.questionType === filter.questionType);
+    if (chooseFrom.length > 0) {
+      const randomIndex = Math.floor(Math.random() * chooseFrom.length);
+      return chooseFrom[randomIndex];
+    } else if (filter.questionType === 'image') {
+      // Fallback default image question to guarantee we never return a text question
+      return {
+        id: 'default-image-question',
+        question: 'Identify the style of this abstract digital painting:',
+        options: ['Vibrant Neon Gradient', 'Monochromatic Slate', 'Dotted Pointillism', 'Structured Grid Pattern'],
+        correctAnswer: 'Vibrant Neon Gradient',
+        difficulty: 'easy',
+        category: 'Art',
+        gems: 10,
+        explanation: 'The abstract card shows a vibrant neon gradient blending hot pinks and soft oranges.',
+        imageUrl: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&auto=format&fit=crop&q=80',
+        questionType: 'image'
+      };
+    }
   }
   
   // Randomly decide if we should show an image question.

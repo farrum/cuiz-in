@@ -16,6 +16,17 @@ interface Card {
   isTrue: boolean;     // whether the shown claim is actually correct
 }
 
+function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  try {
+    const parser = new DOMParser();
+    const decoded = parser.parseFromString(str, 'text/html').body.textContent;
+    return decoded || str;
+  } catch (e) {
+    return str;
+  }
+}
+
 function buildCard(q: QuizQuestion): Card {
   const correct = q.correctAnswer || q.options?.[0] || '';
   const wrongOptions = (q.options || []).filter((o) => o && o !== correct);
@@ -89,42 +100,47 @@ export function TrueFalseGame() {
     const total = ROUND_SIZE * rounds;
     const pct = total ? Math.round((score / total) * 100) : 0;
     return (
-      <div className="flex flex-col items-center pt-8 px-4 text-center">
-        <MascotPlayer character={characterOfTheDay()} mood={pct >= 50 ? 'excited' : 'sad'} size={120} />
-        <h2 className="text-2xl font-bold mt-4">Round complete!</h2>
-        <p className="text-muted-foreground mt-1">You scored</p>
-        <p className="text-4xl font-extrabold my-2">{score}<span className="text-lg text-muted-foreground"> / {total}</span></p>
-        <p className="text-sm text-muted-foreground mb-6">{pct}% correct</p>
+      <div className="flex flex-col items-center justify-center pt-4 px-4 text-center w-full max-w-sm mx-auto">
+        <MascotPlayer character={characterOfTheDay()} mood={pct >= 50 ? 'excited' : 'sad'} size={140} />
+        <h2 className="text-3xl font-black mt-6 tracking-tight">Round complete!</h2>
+        <p className="text-muted-foreground mt-1.5 text-sm font-medium">You scored</p>
+        <p className="text-5xl font-black my-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+          {score}
+          <span className="text-xl text-muted-foreground font-semibold"> / {total}</span>
+        </p>
+        <p className="text-xs tracking-wider uppercase font-bold text-muted-foreground mb-8">
+          {pct}% questions correct
+        </p>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={extend}
-          className="w-full max-w-xs inline-flex items-center justify-center gap-2 rounded-2xl py-3 font-bold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-4 font-extrabold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg"
         >
-          <Trophy className="w-4 h-4" /> Play 20 more
+          <Trophy className="w-5 h-5" /> Play 20 more
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={restart}
-          className="w-full max-w-xs inline-flex items-center justify-center gap-2 rounded-2xl py-3 mt-3 font-semibold text-foreground border border-border"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-4 mt-3 font-bold text-foreground border border-border bg-muted/20"
         >
-          <RotateCcw className="w-4 h-4" /> Start over
+          <RotateCcw className="w-5 h-5" /> Start over
         </motion.button>
       </div>
     );
   }
 
-  if (!card) return <div className="text-center text-muted-foreground py-10">Loading…</div>;
+  if (!card) return <div className="text-center text-muted-foreground py-10 font-bold">Shuffling facts...</div>;
 
   const progress = Math.min(played, ROUND_SIZE * rounds);
   const target = ROUND_SIZE * rounds;
 
   return (
-    <div className="flex flex-col items-center pt-2">
+    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 pb-4">
       {/* Progress + score */}
-      <div className="w-72 mb-3">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span>Question {progress + 1} of {target}</span>
-          <span>Score: <strong className="text-foreground">{score}</strong></span>
+      <div className="w-full mb-5">
+        <div className="flex justify-between text-xs font-bold text-muted-foreground mb-2 px-1">
+          <span>QUESTION {progress + 1} OF {target}</span>
+          <span>SCORE: <strong className="text-foreground">{score}</strong></span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <motion.div
@@ -135,7 +151,8 @@ export function TrueFalseGame() {
         </div>
       </div>
 
-      <div className="relative">
+      {/* Main card box - enlarged to take up major space */}
+      <div className="relative w-full aspect-[4/5] min-h-[380px] max-h-[460px] flex items-center justify-center">
         <motion.div
           drag={feedback ? false : 'x'}
           dragConstraints={{ left: 0, right: 0 }}
@@ -144,64 +161,101 @@ export function TrueFalseGame() {
             if (info.offset.x > 110) answer(true);
             else if (info.offset.x < -110) answer(false);
           }}
-          className="w-72 rounded-3xl bg-card border border-border p-6 shadow-xl cursor-grab active:cursor-grabbing"
+          className="w-full h-full rounded-[2rem] bg-card border border-border p-8 shadow-2xl flex flex-col justify-between cursor-grab active:cursor-grabbing select-none"
         >
           {/* Swipe hint badges */}
-          <motion.div style={{ opacity: falseGlow }} className="absolute top-4 left-4 px-2 py-1 rounded-lg border-2 border-destructive text-destructive text-xs font-bold rotate-[-12deg]">FALSE</motion.div>
-          <motion.div style={{ opacity: trueGlow }} className="absolute top-4 right-4 px-2 py-1 rounded-lg border-2 border-emerald-500 text-emerald-600 text-xs font-bold rotate-[12deg]">TRUE</motion.div>
+          <motion.div 
+            style={{ opacity: falseGlow }} 
+            className="absolute top-6 left-6 px-3 py-1.5 rounded-xl border-2 border-destructive text-destructive text-sm font-black rotate-[-12deg]"
+          >
+            FALSE
+          </motion.div>
+          <motion.div 
+            style={{ opacity: trueGlow }} 
+            className="absolute top-6 right-6 px-3 py-1.5 rounded-xl border-2 border-emerald-500 text-emerald-600 text-sm font-black rotate-[12deg]"
+          >
+            TRUE
+          </motion.div>
 
-          <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">{card.q.category}</p>
-          <p className="font-bold text-base mb-3 leading-snug">{card.q.question}</p>
-          <div className="rounded-xl bg-muted/60 px-3 py-2 mb-4">
-            <span className="text-xs text-muted-foreground">Claimed answer</span>
-            <p className="font-semibold">"{card.claim}"</p>
+          <div className="flex-1 flex flex-col justify-center gap-6 mt-4">
+            <span className="self-center px-3 py-1 bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest rounded-full">
+              {decodeHtmlEntities(card.q.category || 'General')}
+            </span>
+            <p className="font-extrabold text-lg md:text-xl text-center leading-snug tracking-tight text-foreground select-none">
+              {decodeHtmlEntities(card.q.question)}
+            </p>
+            <div className="rounded-2xl bg-muted/50 border border-border/30 px-4 py-3 flex flex-col items-center">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                Claimed Answer
+              </span>
+              <p className="font-black text-center text-md text-foreground select-none">
+                "{decodeHtmlEntities(card.claim)}"
+              </p>
+            </div>
           </div>
-          <MascotPlayer character={characterOfTheDay()} mood={moodEngine.snapshot().lastMood} size={56} noHalo />
+
+          <div className="flex justify-center items-center mt-2">
+            <MascotPlayer character={characterOfTheDay()} mood={moodEngine.snapshot().lastMood} size={64} noHalo />
+          </div>
         </motion.div>
 
         {/* Feedback overlay */}
         <AnimatePresence>
           {feedback && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl backdrop-blur-sm"
-              style={{ background: feedback === 'correct' ? 'hsl(var(--card) / 0.85)' : 'hsl(var(--card) / 0.85)' }}
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-[2rem] backdrop-blur-md z-30"
+              style={{ background: 'hsl(var(--card) / 0.9)' }}
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${feedback === 'correct' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-destructive/20 text-destructive'}`}>
-                {feedback === 'correct' ? <Check className="w-8 h-8" /> : <X className="w-8 h-8" />}
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center ${feedback === 'correct' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-destructive/20 text-destructive'}`}>
+                {feedback === 'correct' ? <Check className="w-10 h-10" /> : <X className="w-10 h-10" />}
               </div>
-              <p className={`mt-3 font-bold text-lg ${feedback === 'correct' ? 'text-emerald-600' : 'text-destructive'}`}>
+              <p className={`mt-4 font-black text-2xl ${feedback === 'correct' ? 'text-emerald-500' : 'text-destructive'}`}>
                 {feedback === 'correct' ? 'Correct!' : 'Wrong!'}
               </p>
               {feedback === 'wrong' && (
-                <p className="text-xs text-muted-foreground mt-1 px-4 text-center">
-                  Correct answer: "{card.q.correctAnswer || card.q.options?.[0]}"
-                </p>
+                <div className="px-6 mt-3 text-center">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Correct Answer</span>
+                  <p className="font-black text-sm text-foreground">
+                    "{decodeHtmlEntities(card.q.correctAnswer || card.q.options?.[0] || '')}"
+                  </p>
+                </div>
               )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="flex gap-8 mt-8">
-        <button
-          onClick={() => answer(false)}
-          disabled={!!feedback}
-          className="w-14 h-14 rounded-full bg-destructive/15 text-destructive flex items-center justify-center disabled:opacity-40"
-        >
-          <X className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => answer(true)}
-          disabled={!!feedback}
-          className="w-14 h-14 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center disabled:opacity-40"
-        >
-          <Check className="w-6 h-6" />
-        </button>
+      {/* Larger Button Controls with labels */}
+      <div className="flex justify-center gap-12 mt-6">
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={() => answer(false)}
+            disabled={!!feedback}
+            className="w-16 h-16 rounded-full bg-destructive/10 border border-destructive/20 text-destructive flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105 shadow-md"
+          >
+            <X className="w-7 h-7" />
+          </button>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">False</span>
+        </div>
+        
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={() => answer(true)}
+            disabled={!!feedback}
+            className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105 shadow-md"
+          >
+            <Check className="w-7 h-7" />
+          </button>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">True</span>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground mt-4">Swipe right = True · left = False</p>
+      
+      <p className="text-[10px] font-semibold text-muted-foreground mt-4 uppercase tracking-wider">
+        Swipe left for FALSE · Swipe right for TRUE
+      </p>
     </div>
   );
 }

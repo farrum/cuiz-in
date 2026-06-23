@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuizGems } from './useQuizGems';
 import { useQuizQuestion } from './useQuizQuestion';
 import { useQuizMotivation } from './useQuizMotivation';
@@ -13,6 +14,9 @@ import { confetti } from '@/utils/animations';
 import { logGemsEarned } from '@/utils/gemsService';
 
 export const useQuizState = () => {
+  const [searchParams] = useSearchParams();
+  const isImageMode = searchParams.get('mode') === 'image' || searchParams.get('type') === 'image';
+
   // Use persistent stats hook for streak and questions answered
   const {
     streak,
@@ -88,7 +92,7 @@ export const useQuizState = () => {
     await syncAdSlots();
     
     // Load the first question
-    await loadNewQuestion();
+    await loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
     
     setIsGameActive(true);
   };
@@ -167,7 +171,7 @@ export const useQuizState = () => {
     await fetchGems();
     
     // Load the next question
-    await loadNewQuestion();
+    await loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
   };
   
   // Using our hook's implementation instead of redefining it
@@ -182,7 +186,7 @@ export const useQuizState = () => {
     if (currentMode === 'time-attack' && config.timeLimit) {
       setTimeRemaining(config.timeLimit);
     }
-    loadNewQuestion();
+    loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
   };
 
   return {
