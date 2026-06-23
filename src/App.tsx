@@ -16,6 +16,7 @@ import Index from "@/pages/Index";
 import LoginPage from "@/pages/LoginPage";
 import Registration from "@/pages/Registration";
 import AuthCallback from "@/pages/AuthCallback";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Lazy load non-critical pages for code splitting
 const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
@@ -58,7 +59,6 @@ const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 
 // Lazy load components that aren't needed immediately
-const ProtectedRoute = React.lazy(() => import("@/components/ProtectedRoute"));
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
 
 // Minimal loading fallback
