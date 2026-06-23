@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
@@ -24,6 +24,14 @@ const MiniGameScreen = lazy(() => import('./screens/MiniGames/MiniGameScreen'));
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
+
+function RequireAuth({ authed }: { authed: boolean }) {
+  const location = useLocation();
+  if (!authed) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+  return <Outlet />;
+}
 
 async function hydrateMobileSession(userId: string) {
   try {
