@@ -59,7 +59,6 @@ const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 
 // Lazy load components that aren't needed immediately
-const ProtectedRoute = React.lazy(() => import("@/components/ProtectedRoute"));
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
 
 // Minimal loading fallback
