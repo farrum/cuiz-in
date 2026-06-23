@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift } from 'lucide-react';
+import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
@@ -9,6 +10,7 @@ import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
 import { ImageGame } from './games/ImageGame';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import web game components to reuse directly in mobile!
 import { BalloonPop } from '@/components/gamification/BalloonPop';
@@ -16,6 +18,9 @@ import { SlotMachine } from '@/components/gamification/SlotMachine';
 import { PlinkoGame } from '@/components/gamification/PlinkoGame';
 import { RockPaperScissors } from '@/components/gamification/RockPaperScissors';
 import { TreasureChest } from '@/components/gamification/TreasureChest';
+import { CoinFlip } from '@/components/gamification/CoinFlip';
+import { DiceRoll } from '@/components/gamification/DiceRoll';
+import { DailyRiddleVault } from '@/components/gamification/DailyRiddleVault';
 
 const GAMES = [
   { id: 'wheel', title: 'Spin the Wheel', color: 'from-emerald-400 to-teal-600', bgGlow: 'bg-emerald-500/15', icon: Disc3, short: 'Spin' },
@@ -27,6 +32,9 @@ const GAMES = [
   { id: 'plinko', title: 'Plinko', color: 'from-green-400 to-emerald-600', bgGlow: 'bg-emerald-500/15', icon: Dices, short: 'Plinko' },
   { id: 'rps', title: 'Rock Paper Scissors', color: 'from-purple-500 to-indigo-600', bgGlow: 'bg-indigo-500/15', icon: Gamepad2, short: 'RPS' },
   { id: 'treasure', title: 'Treasure Chest', color: 'from-yellow-400 to-orange-500', bgGlow: 'bg-yellow-500/15', icon: Gift, short: 'Treasure' },
+  { id: 'coinflip', title: 'Coin Flip', color: 'from-amber-500 to-orange-600', bgGlow: 'bg-amber-500/15', icon: Coins, short: 'Coin Flip' },
+  { id: 'diceroll', title: 'Dice Roll', color: 'from-indigo-400 to-purple-600', bgGlow: 'bg-indigo-500/15', icon: Dices, short: 'Dice Roll' },
+  { id: 'riddlevault', title: 'Riddle Vault', color: 'from-slate-600 to-slate-900', bgGlow: 'bg-slate-500/15', icon: KeyRound, short: 'Riddle' },
 ];
 
 export default function MiniGameScreen() {
@@ -35,6 +43,75 @@ export default function MiniGameScreen() {
   const haptics = useHaptics();
   const current = GAMES.find((g) => g.id === gameId);
   const otherGames = GAMES.filter((g) => g.id !== gameId);
+
+  // States for Riddle Vault
+  const [riddleText, setRiddleText] = useState('What has keys but can\'t open locks?');
+  const [riddleAnswer, setRiddleAnswer] = useState('piano');
+  const [hasAttemptedRiddle, setHasAttemptedRiddle] = useState(false);
+  const [riddleLoading, setRiddleLoading] = useState(false);
+
+  useEffect(() => {
+    if (gameId === 'riddlevault') {
+      const loadRiddle = async () => {
+        setRiddleLoading(true);
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const riddleAttempted = localStorage.getItem(`riddle_${today}`);
+          if (riddleAttempted === 'true') {
+            setHasAttemptedRiddle(true);
+          } else {
+            setHasAttemptedRiddle(false);
+          }
+
+          const { data: settingData } = await supabase
+            .from('gamification_settings')
+            .select('config')
+            .eq('setting_type', 'daily_challenges')
+            .maybeSingle();
+
+          if (settingData?.config?.riddle_text) {
+            setRiddleText(settingData.config.riddle_text);
+            setRiddleAnswer(settingData.config.riddle_answer || '');
+          }
+        } catch (err) {
+          console.error('Failed to load riddle config:', err);
+        } finally {
+          setRiddleLoading(false);
+        }
+      };
+      loadRiddle();
+    }
+  }, [gameId]);
+
+  const handleRiddleSubmit = async (guess: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(`riddle_${today}`, 'true');
+    setHasAttemptedRiddle(true);
+
+    const isCorrect = guess.toLowerCase().trim() === riddleAnswer.toLowerCase().trim();
+    if (isCorrect) {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any)
+          .from('profiles')
+          .select('gems_balance')
+          .eq('id', session.session.user.id)
+          .maybeSingle();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentBalance = (data as any)?.gems_balance || 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from('profiles')
+          .update({ gems_balance: currentBalance + 500 })
+          .eq('id', session.session.user.id);
+        
+        window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      }
+      return { success: true, message: 'You unlocked the vault and received 500 Gems!', gemsWon: 500 };
+    }
+    return { success: false, message: 'That guess was incorrect. The vault is sealed.' };
+  };
 
   let body: React.ReactNode = (
     <div className="text-center">
@@ -51,6 +128,26 @@ export default function MiniGameScreen() {
   else if (gameId === 'plinko') body = <PlinkoGame />;
   else if (gameId === 'rps') body = <RockPaperScissors />;
   else if (gameId === 'treasure') body = <TreasureChest />;
+  else if (gameId === 'coinflip') body = <CoinFlip />;
+  else if (gameId === 'diceroll') body = <DiceRoll />;
+  else if (gameId === 'riddlevault') {
+    if (riddleLoading) {
+      body = (
+        <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-muted-foreground">Preparing daily riddle...</p>
+        </div>
+      );
+    } else {
+      body = (
+        <DailyRiddleVault
+          riddleText={riddleText}
+          hasAttemptedToday={hasAttemptedRiddle}
+          onSubmit={handleRiddleSubmit}
+        />
+      );
+    }
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
@@ -62,7 +159,7 @@ export default function MiniGameScreen() {
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className={cn('absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl', current?.bgGlow ?? 'bg-purple-500/10')}
+          className={cn('absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl', current?.bgGlow ?? 'bg-purple-50/10')}
           animate={{ scale: [1, 1.15, 1], y: [0, -25, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />

@@ -19,6 +19,9 @@ import { SpinTheWheel } from '@/components/gamification/SpinTheWheel';
 import { ScratchCard } from '@/components/gamification/ScratchCard';
 import { TrueFalseSwipe } from '@/components/gamification/TrueFalseSwipe';
 import { ImageReveal } from '@/components/gamification/ImageReveal';
+import { CoinFlip } from '@/components/gamification/CoinFlip';
+import { DiceRoll } from '@/components/gamification/DiceRoll';
+import { DailyRiddleVault } from '@/components/gamification/DailyRiddleVault';
 
 // Question Fetching for TrueFalse and Image Trivia
 import { fetchQuizQuestions } from '@/utils/quizDataService';
@@ -42,6 +45,12 @@ export const MiniGamePlayPage: React.FC = () => {
   const [scratchError, setScratchError] = useState<string | null>(null);
   const [scratchRevealed, setScratchRevealed] = useState(false);
 
+  // States for Riddle Vault
+  const [riddleText, setRiddleText] = useState('What has keys but can\'t open locks?');
+  const [riddleAnswer, setRiddleAnswer] = useState('piano');
+  const [hasAttemptedRiddle, setHasAttemptedRiddle] = useState(false);
+  const [riddleLoading, setRiddleLoading] = useState(false);
+
   // Load questions when true-false or image game is selected
   const loadQuestions = async () => {
     setLoadingQuestions(true);
@@ -64,6 +73,8 @@ export const MiniGamePlayPage: React.FC = () => {
       loadQuestions();
     } else if (gameId === 'scratch') {
       initScratchCard();
+    } else if (gameId === 'riddlevault') {
+      loadRiddle();
     }
   }, [gameId]);
 
@@ -97,6 +108,67 @@ export const MiniGamePlayPage: React.FC = () => {
     } finally {
       setScratchLoading(false);
     }
+  };
+
+  // Load Riddle from Database with local fallbacks
+  const loadRiddle = async () => {
+    setRiddleLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const riddleAttempted = localStorage.getItem(`riddle_${today}`);
+      if (riddleAttempted === 'true') {
+        setHasAttemptedRiddle(true);
+      } else {
+        setHasAttemptedRiddle(false);
+      }
+
+      const { data: settingData } = await supabase
+        .from('gamification_settings')
+        .select('config')
+        .eq('setting_type', 'daily_challenges')
+        .maybeSingle();
+
+      if (settingData?.config?.riddle_text) {
+        setRiddleText(settingData.config.riddle_text);
+        setRiddleAnswer(settingData.config.riddle_answer || '');
+      }
+    } catch (err) {
+      console.error('Failed to load riddle config:', err);
+    } finally {
+      setRiddleLoading(false);
+    }
+  };
+
+  const handleRiddleSubmit = async (guess: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(`riddle_${today}`, 'true');
+    setHasAttemptedRiddle(true);
+
+    const isCorrect = guess.toLowerCase().trim() === riddleAnswer.toLowerCase().trim();
+    if (isCorrect) {
+      // Award 500 Gems to user's profile
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data } = await (supabase as any)
+          .from('profiles')
+          .select('gems_balance')
+          .eq('id', session.session.user.id)
+          .maybeSingle();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentBalance = (data as any)?.gems_balance || 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from('profiles')
+          .update({ gems_balance: currentBalance + 500 })
+          .eq('id', session.session.user.id);
+        
+        // Dispatch gemsUpdated event
+        window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      }
+      return { success: true, message: 'You unlocked the vault and received 500 Gems!', gemsWon: 500 };
+    }
+    return { success: false, message: 'That guess was incorrect. The vault is sealed.' };
   };
 
   const handleScratchComplete = () => {
@@ -270,6 +342,26 @@ export const MiniGamePlayPage: React.FC = () => {
           />
         );
       }
+      case 'coinflip':
+        return <CoinFlip />;
+      case 'diceroll':
+        return <DiceRoll />;
+      case 'riddlevault':
+        if (riddleLoading) {
+          return (
+            <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-muted-foreground">Preparing daily riddle...</p>
+            </div>
+          );
+        }
+        return (
+          <DailyRiddleVault
+            riddleText={riddleText}
+            hasAttemptedToday={hasAttemptedRiddle}
+            onSubmit={handleRiddleSubmit}
+          />
+        );
       default:
         return <div className="text-center">Loading game component...</div>;
     }
