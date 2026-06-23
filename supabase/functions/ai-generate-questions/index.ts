@@ -131,10 +131,20 @@ Return ONLY valid JSON matching this exact schema:
     const aiData = await aiResp.json();
     const content: string = aiData?.choices?.[0]?.message?.content ?? "{}";
     let parsed: { questions?: GeneratedQuestion[] } = {};
-    try { parsed = JSON.parse(content); } catch (e) {
-      console.error("JSON parse error:", e, content);
-      return new Response(JSON.stringify({ error: "AI returned invalid JSON" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    try {
+      parsed = JSON.parse(content);
+    } catch (_e) {
+      // The model sometimes emits unescaped double quotes inside string values
+      // (e.g. a phrase like the "Three Khans"), which makes the whole response
+      // invalid JSON and previously failed the entire run. Repair stray inner
+      // quotes and retry before giving up.
+      try {
+        parsed = JSON.parse(repairJsonQuotes(content));
+      } catch (e2) {
+        console.error("JSON parse error (even after repair):", e2, content);
+        return new Response(JSON.stringify({ error: "AI returned invalid JSON" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const raw = Array.isArray(parsed.questions) ? parsed.questions : [];
