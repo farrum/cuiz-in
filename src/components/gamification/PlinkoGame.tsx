@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { Button } from '@/components/ui/button';
@@ -17,6 +19,8 @@ const CENTER_X = BOARD_WIDTH / 2;
 export const PlinkoGame: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [dropping, setDropping] = useState<boolean>(false);
   const [ballPos, setBallPos] = useState<{ x: number; y: number } | null>(null);
@@ -93,6 +97,7 @@ export const PlinkoGame: React.FC = () => {
     }
 
     setDropping(true);
+    haptics('medium');
     setMessage('Dropping ball...');
 
     // Trigger local storage tracking for daily mission progress
@@ -125,6 +130,7 @@ export const PlinkoGame: React.FC = () => {
         const nextX = currX + dir * 18; // offset on peg grid
 
         setBallPos({ x: nextX, y: nextY });
+        haptics('light');
         currX = nextX;
         currY = nextY;
         currentStep++;
@@ -132,45 +138,50 @@ export const PlinkoGame: React.FC = () => {
         // Drop to the final slot at the bottom
         const finalY = 270;
         setBallPos({ x: currX, y: finalY });
+        haptics('light');
         currY = finalY;
         currentStep++;
       } else {
         // Animation finished
         clearInterval(animateInterval);
-        setDropping(false);
 
-        // Landing bin index is determined by rightCount
         const binIndex = rightCount;
         const multiplier = MULTIPLIERS[binIndex];
         const baseAmount = isFreePlay ? 10 : betAmount;
         const reward = Math.round(baseAmount * multiplier);
 
-        if (reward > 0) {
-          await logGemsEarned(reward, userId);
-          setGemsBalance(prev => prev + reward);
-          
-          if (multiplier >= 1.5) {
-            confetti({
-              particleCount: 80,
-              spread: 60,
-              origin: { y: 0.8 }
+        showVideoAd(async () => {
+          setDropping(false);
+
+          if (reward > 0) {
+            haptics(multiplier >= 1.5 ? 'success' : 'warning');
+            await logGemsEarned(reward, userId);
+            setGemsBalance(prev => prev + reward);
+            
+            if (multiplier >= 1.5) {
+              confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.8 }
+              });
+            }
+
+            setMessage(`🎉 Landed on ${multiplier}x! You won ${reward} Gems!`);
+            toast({
+              title: '🎉 Multiplier hit!',
+              description: `Landed on ${multiplier}x slot. Awarded ${reward} gems.`,
             });
+          } else {
+            haptics('error');
+            setMessage(`Landed on ${multiplier}x. You won 0 gems.`);
           }
 
-          setMessage(`🎉 Landed on ${multiplier}x! You won ${reward} Gems!`);
-          toast({
-            title: '🎉 Multiplier hit!',
-            description: `Landed on ${multiplier}x slot. Awarded ${reward} gems.`,
-          });
-        } else {
-          setMessage(`Landed on ${multiplier}x. You won 0 gems.`);
-        }
-
-        if (isFreePlay) {
-          localStorage.setItem(`plinko_free_played_${userId}_${today}`, 'true');
-          setHasPlayedFreeToday(true);
-          setIsFreePlay(false);
-        }
+          if (isFreePlay) {
+            localStorage.setItem(`plinko_free_played_${userId}_${today}`, 'true');
+            setHasPlayedFreeToday(true);
+            setIsFreePlay(false);
+          }
+        });
       }
     }, 200);
   };
@@ -319,6 +330,7 @@ export const PlinkoGame: React.FC = () => {
           {dropping ? 'Dropping...' : 'Drop Ball'}
         </Button>
       </div>
+      {adElement}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,7 @@ export function ScratchGame() {
   const [loading, setLoading] = useState(false);
   const haptics = useHaptics();
   const { toast } = useToast();
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
 
   const reveal = async () => {
     if (revealed || loading) return;
@@ -27,10 +29,12 @@ export function ScratchGame() {
           variant: 'destructive' 
         });
       } else {
-        setPrize({ label: r.label, value: r.value || 0 });
-        setRevealed(true);
-        haptics('success');
-        if (r.value > 0) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        showVideoAd(() => {
+          setPrize({ label: r.label, value: r.value || 0 });
+          setRevealed(true);
+          haptics('success');
+          if (r.value > 0) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        });
       }
     } catch (err: any) {
       toast({ 
@@ -135,6 +139,7 @@ export function ScratchGame() {
       <p className="text-[11px] text-muted-foreground mt-4 font-semibold uppercase tracking-wider">
         Daily scratch — reset every 24 hours.
       </p>
+      {adElement}
     </div>
   );
 }

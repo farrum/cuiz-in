@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 
 interface Prize {
   id: string;
@@ -35,6 +36,7 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
   const [activePrizes, setActivePrizes] = useState<Prize[]>(prizes);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -120,10 +122,12 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
     // Wait for animation to finish (the duration is set to 4 seconds)
     setTimeout(() => {
       setIsSpinning(false);
-      setWonPrize(activePrizes[winningIndex]);
-      if (onSpinComplete) {
-        onSpinComplete(activePrizes[winningIndex]);
-      }
+      showVideoAd(() => {
+        setWonPrize(activePrizes[winningIndex]);
+        if (onSpinComplete) {
+          onSpinComplete(activePrizes[winningIndex]);
+        }
+      });
     }, 4000);
   };
 
@@ -236,6 +240,7 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
       >
         {isLoading ? 'Loading...' : isSpinning ? 'Spinning...' : 'Spin Now!'}
       </Button>
+      {adElement}
     </div>
   );
 };

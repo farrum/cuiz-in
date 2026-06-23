@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Check, X, Trophy, RotateCcw } from 'lucide-react';
 import { getRandomQuestion } from '@/utils/quizData';
@@ -44,6 +45,7 @@ export function TrueFalseGame() {
   const [rounds, setRounds] = useState(1);
   const [feedback, setFeedback] = useState<null | 'correct' | 'wrong'>(null);
   const [finished, setFinished] = useState(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-18, 18]);
@@ -76,7 +78,9 @@ export function TrueFalseGame() {
       if (nextPlayed >= ROUND_SIZE * rounds) {
         setFinished(true);
       } else {
-        load();
+        showVideoAd(() => {
+          load();
+        });
       }
     }, 1100);
   };
@@ -256,6 +260,7 @@ export function TrueFalseGame() {
       <p className="text-[10px] font-semibold text-muted-foreground mt-4 uppercase tracking-wider">
         Swipe left for FALSE · Swipe right for TRUE
       </p>
+      {adElement}
     </div>
   );
 }

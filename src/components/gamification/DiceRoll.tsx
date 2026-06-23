@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
@@ -61,6 +63,8 @@ export const DiceRoll: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [diceState, setDiceState] = useState<'idle' | 'rolling' | 'result'>('idle');
   const [diceValues, setDiceValues] = useState<[number, number]>([1, 1]);
@@ -146,6 +150,7 @@ export const DiceRoll: React.FC = () => {
     }
 
     setDiceState('rolling');
+    haptics('medium');
     setMessage('Rolling the dice...');
 
     // Trigger local storage tracking for daily mission progress
@@ -177,62 +182,67 @@ export const DiceRoll: React.FC = () => {
 
     setTimeout(async () => {
       setDiceValues([d1, d2]);
-      setDiceState('result');
+      
+      showVideoAd(async () => {
+        setDiceState('result');
 
-      const sum = d1 + d2;
-      let reward = 0;
-      let isJackpot = false;
-      let isDoubles = false;
+        const sum = d1 + d2;
+        let reward = 0;
+        let isJackpot = false;
+        let isDoubles = false;
 
-      if (d1 === 6 && d2 === 6) {
-        reward = isFreePlay ? 25 : 50; // Jackpot
-        isJackpot = true;
-      } else if (d1 === d2) {
-        reward = isFreePlay ? sum : sum * 2; // Doubles bonus
-        isDoubles = true;
-      } else {
-        reward = isFreePlay ? Math.ceil(sum / 2) : sum; // Regular reward
-      }
-
-      if (reward > 0) {
-        await logGemsEarned(reward, userId);
-        setGemsBalance(prev => prev + reward);
-        
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 }
-        });
-
-        if (isJackpot) {
-          setMessage(`🏆 JACKPOT DOUBLE 6! You won ${reward} Gems!`);
-          toast({
-            title: '🏆 JACKPOT!',
-            description: `You rolled double 6s! Awarded ${reward} gems.`,
-          });
-        } else if (isDoubles) {
-          setMessage(`🎉 DOUBLES BONUS! Rolled double ${d1}s. You won ${reward} Gems!`);
-          toast({
-            title: '🎉 Doubles Bonus!',
-            description: `Rolled double ${d1}s. Awarded ${reward} gems.`,
-          });
+        if (d1 === 6 && d2 === 6) {
+          reward = isFreePlay ? 25 : 50; // Jackpot
+          isJackpot = true;
+        } else if (d1 === d2) {
+          reward = isFreePlay ? sum : sum * 2; // Doubles bonus
+          isDoubles = true;
         } else {
-          setMessage(`✨ Rolled ${d1} and ${d2} (Total: ${sum}). You won ${reward} Gems!`);
-          toast({
-            title: '✨ You Won!',
-            description: `Total roll is ${sum}. Awarded ${reward} gems.`,
-          });
+          reward = isFreePlay ? Math.ceil(sum / 2) : sum; // Regular reward
         }
-      } else {
-        setMessage(`Rolled ${d1} and ${d2}. No gems won this time.`);
-      }
 
-      if (isFreePlay) {
-        const today = new Date().toISOString().split('T')[0];
-        localStorage.setItem(`dice_roll_free_played_${userId}_${today}`, 'true');
-        setHasPlayedFreeToday(true);
-        setIsFreePlay(false);
-      }
+        if (reward > 0) {
+          haptics('success');
+          await logGemsEarned(reward, userId);
+          setGemsBalance(prev => prev + reward);
+          
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.8 }
+          });
+
+          if (isJackpot) {
+            setMessage(`🏆 JACKPOT DOUBLE 6! You won ${reward} Gems!`);
+            toast({
+              title: '🏆 JACKPOT!',
+              description: `You rolled double 6s! Awarded ${reward} gems.`,
+            });
+          } else if (isDoubles) {
+            setMessage(`🎉 DOUBLES BONUS! Rolled double ${d1}s. You won ${reward} Gems!`);
+            toast({
+              title: '🎉 Doubles Bonus!',
+              description: `Rolled double ${d1}s. Awarded ${reward} gems.`,
+            });
+          } else {
+            setMessage(`✨ Rolled ${d1} and ${d2} (Total: ${sum}). You won ${reward} Gems!`);
+            toast({
+              title: '✨ You Won!',
+              description: `Total roll is ${sum}. Awarded ${reward} gems.`,
+            });
+          }
+        } else {
+          haptics('error');
+          setMessage(`Rolled ${d1} and ${d2}. No gems won this time.`);
+        }
+
+        if (isFreePlay) {
+          const today = new Date().toISOString().split('T')[0];
+          localStorage.setItem(`dice_roll_free_played_${userId}_${today}`, 'true');
+          setHasPlayedFreeToday(true);
+          setIsFreePlay(false);
+        }
+      });
     }, 1500);
   };
 
@@ -418,6 +428,7 @@ export const DiceRoll: React.FC = () => {
           Rolling...
         </div>
       )}
+      {adElement}
     </div>
   );
 };

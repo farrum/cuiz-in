@@ -10,6 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
 import { MobileSplash } from './components/MobileSplash';
 import { initMobilePlatform } from './platform/init';
+import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 
 // Lazy-load screens for fast first paint
 const HubScreen = lazy(() => import('./screens/Hub/HubScreen'));
@@ -98,24 +99,27 @@ function AppMobile() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={<MobileSplash />}>
-              <Routes>
-                <Route path="/onboarding" element={<OnboardingScreen />} />
-                <Route path="/login" element={<MobileLoginScreen />} />
-                <Route element={<RequireAuth authed={authed} />}>
-                  <Route element={<MobileShell />}>
-                    <Route path="/hub" element={<HubScreen />} />
-                    <Route path="/leaderboard" element={<LeaderboardScreen />} />
-                    <Route path="/profile" element={<ProfileScreen />} />
+            <MobileMusicProvider>
+              <Suspense fallback={<MobileSplash />}>
+                <Routes>
+                  <Route path="/onboarding" element={<OnboardingScreen />} />
+                  <Route path="/login" element={<MobileLoginScreen />} />
+                  <Route element={<RequireAuth authed={authed} />}>
+                    <Route element={<MobileShell />}>
+                      <Route path="/hub" element={<HubScreen />} />
+                      <Route path="/leaderboard" element={<LeaderboardScreen />} />
+                      <Route path="/profile" element={<ProfileScreen />} />
+                    </Route>
+                    <Route path="/quiz" element={<QuizStoryScreen />} />
+                    <Route path="/daily" element={<DailyChallengeStoryScreen />} />
+                    <Route path="/game/:gameId" element={<MiniGameScreen />} />
                   </Route>
-                  <Route path="/quiz" element={<QuizStoryScreen />} />
-                  <Route path="/daily" element={<DailyChallengeStoryScreen />} />
-                  <Route path="/game/:gameId" element={<MiniGameScreen />} />
-                </Route>
-                <Route path="/" element={<Navigate to="/hub" replace />} />
-                <Route path="*" element={<Navigate to="/hub" replace />} />
-              </Routes>
-            </Suspense>
+                  <Route path="/" element={<Navigate to="/hub" replace />} />
+                  <Route path="*" element={<Navigate to="/hub" replace />} />
+                </Routes>
+              </Suspense>
+              <MobileMusicPlayer />
+            </MobileMusicProvider>
           </BrowserRouter>
         </ThemeProvider>
       </QueryClientProvider>

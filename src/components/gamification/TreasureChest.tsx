@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
@@ -18,6 +20,8 @@ export const TreasureChest: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [gameState, setGameState] = useState<'idle' | 'opening' | 'revealed'>('idle');
   const [selectedChest, setSelectedChest] = useState<number | null>(null);
@@ -101,6 +105,7 @@ export const TreasureChest: React.FC = () => {
     }
 
     setGameState('opening');
+    haptics('medium');
     setSelectedChest(chestIdx);
     setMessage('Opening chest...');
 
@@ -166,44 +171,47 @@ export const TreasureChest: React.FC = () => {
     setChests(newChests);
 
     setTimeout(async () => {
-      setGameState('revealed');
-      
-      if (selectedVal > 0) {
-        await logGemsEarned(selectedVal, userId);
-        setGemsBalance(prev => prev + selectedVal);
+      showVideoAd(async () => {
+        haptics('success');
+        setGameState('revealed');
         
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 }
-        });
+        if (selectedVal > 0) {
+          await logGemsEarned(selectedVal, userId);
+          setGemsBalance(prev => prev + selectedVal);
+          
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.8 }
+          });
 
-        if (selectedRarity === 'rare') {
-          setMessage(`🏆 JACKPOT! You opened a RARE Chest and found ${selectedVal} Gems!`);
-          toast({
-            title: '🏆 RARE CHEST OPENED!',
-            description: `Congratulations! You found the rare chest and won ${selectedVal} gems.`,
-          });
-        } else if (selectedRarity === 'uncommon') {
-          setMessage(`🎉 NICE! You opened an Uncommon Chest and found ${selectedVal} Gems!`);
-          toast({
-            title: '🎉 Uncommon Chest Opened!',
-            description: `You found an Uncommon chest and won ${selectedVal} gems.`,
-          });
-        } else {
-          setMessage(`✨ You opened a Common Chest and found ${selectedVal} Gems!`);
-          toast({
-            title: '✨ Chest Opened',
-            description: `Found a Common chest. Awarded ${selectedVal} gems.`,
-          });
+          if (selectedRarity === 'rare') {
+            setMessage(`🏆 JACKPOT! You opened a RARE Chest and found ${selectedVal} Gems!`);
+            toast({
+              title: '🏆 RARE CHEST OPENED!',
+              description: `Congratulations! You found the rare chest and won ${selectedVal} gems.`,
+            });
+          } else if (selectedRarity === 'uncommon') {
+            setMessage(`🎉 NICE! You opened an Uncommon Chest and found ${selectedVal} Gems!`);
+            toast({
+              title: '🎉 Uncommon Chest Opened!',
+              description: `You found an Uncommon chest and won ${selectedVal} gems.`,
+            });
+          } else {
+            setMessage(`✨ You opened a Common Chest and found ${selectedVal} Gems!`);
+            toast({
+              title: '✨ Chest Opened',
+              description: `Found a Common chest. Awarded ${selectedVal} gems.`,
+            });
+          }
         }
-      }
 
-      if (isFreePlay) {
-        localStorage.setItem(`treasure_chest_free_played_${userId}_${today}`, 'true');
-        setHasPlayedFreeToday(true);
-        setIsFreePlay(false);
-      }
+        if (isFreePlay) {
+          localStorage.setItem(`treasure_chest_free_played_${userId}_${today}`, 'true');
+          setHasPlayedFreeToday(true);
+          setIsFreePlay(false);
+        }
+      });
     }, 1200);
   };
 
@@ -359,6 +367,7 @@ export const TreasureChest: React.FC = () => {
           Unlocking chest...
         </div>
       )}
+      {adElement}
     </div>
   );
 };

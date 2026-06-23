@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { Button } from '@/components/ui/button';
@@ -15,6 +17,8 @@ const CHOICES = [
 export const RockPaperScissors: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [gameState, setGameState] = useState<'idle' | 'battling' | 'result'>('idle');
   const [playerChoice, setPlayerChoice] = useState<string | null>(null);
@@ -93,6 +97,7 @@ export const RockPaperScissors: React.FC = () => {
     }
 
     setPlayerChoice(choice);
+    haptics('medium');
     setGameState('battling');
     setMessage('Rock... Paper... Scissors...');
 
@@ -105,7 +110,6 @@ export const RockPaperScissors: React.FC = () => {
     setTimeout(async () => {
       const oppChoice = CHOICES[Math.floor(Math.random() * CHOICES.length)].name;
       setAiChoice(oppChoice);
-      setGameState('result');
 
       let battleOutcome: 'win' | 'tie' | 'lose';
       if (choice === oppChoice) {
@@ -119,50 +123,57 @@ export const RockPaperScissors: React.FC = () => {
       } else {
         battleOutcome = 'lose';
       }
-      setResult(battleOutcome);
 
-      const baseAmount = isFreePlay ? 10 : betAmount;
+      showVideoAd(async () => {
+        setGameState('result');
+        setResult(battleOutcome);
 
-      if (battleOutcome === 'win') {
-        const reward = baseAmount * 2;
-        await logGemsEarned(reward, userId);
-        setGemsBalance(prev => prev + reward);
-        
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 }
-        });
+        const baseAmount = isFreePlay ? 10 : betAmount;
 
-        setMessage(`🎉 You Win! AI chose ${oppChoice.toUpperCase()}. Awarded ${reward} Gems!`);
-        toast({
-          title: '🎉 You Won!',
-          description: `AI chose ${oppChoice}. You won ${reward} gems.`,
-        });
-      } else if (battleOutcome === 'tie') {
-        // Return stake back to user
-        if (stake > 0) {
-          await logGemsEarned(stake, userId);
-          setGemsBalance(prev => prev + stake);
+        if (battleOutcome === 'win') {
+          haptics('success');
+          const reward = baseAmount * 2;
+          await logGemsEarned(reward, userId);
+          setGemsBalance(prev => prev + reward);
+          
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.8 }
+          });
+
+          setMessage(`🎉 You Win! AI chose ${oppChoice.toUpperCase()}. Awarded ${reward} Gems!`);
+          toast({
+            title: '🎉 You Won!',
+            description: `AI chose ${oppChoice}. You won ${reward} gems.`,
+          });
+        } else if (battleOutcome === 'tie') {
+          haptics('warning');
+          // Return stake back to user
+          if (stake > 0) {
+            await logGemsEarned(stake, userId);
+            setGemsBalance(prev => prev + stake);
+          }
+          setMessage(`🤝 Tie! AI chose ${oppChoice.toUpperCase()}. Your stake has been returned.`);
+          toast({
+            title: '🤝 Tie Game!',
+            description: 'No gems lost or gained.',
+          });
+        } else {
+          haptics('error');
+          setMessage(`😢 You Lost! AI chose ${oppChoice.toUpperCase()}. Better luck next time.`);
+          toast({
+            title: 'Better luck next time!',
+            description: `AI chose ${oppChoice}. You lost your bet.`,
+          });
         }
-        setMessage(`🤝 Tie! AI chose ${oppChoice.toUpperCase()}. Your stake has been returned.`);
-        toast({
-          title: '🤝 Tie Game!',
-          description: 'No gems lost or gained.',
-        });
-      } else {
-        setMessage(`😢 You Lost! AI chose ${oppChoice.toUpperCase()}. Better luck next time.`);
-        toast({
-          title: 'Better luck next time!',
-          description: `AI chose ${oppChoice}. You lost your bet.`,
-        });
-      }
 
-      if (isFreePlay) {
-        localStorage.setItem(`rps_free_played_${userId}_${today}`, 'true');
-        setHasPlayedFreeToday(true);
-        setIsFreePlay(false);
-      }
+        if (isFreePlay) {
+          localStorage.setItem(`rps_free_played_${userId}_${today}`, 'true');
+          setHasPlayedFreeToday(true);
+          setIsFreePlay(false);
+        }
+      });
     }, 1500);
   };
 
@@ -297,6 +308,7 @@ export const RockPaperScissors: React.FC = () => {
           Battling AI...
         </div>
       )}
+      {adElement}
     </div>
   );
 };

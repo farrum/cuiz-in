@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
@@ -13,6 +15,8 @@ export const SlotMachine: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [reels, setReels] = useState<string[]>(['💎', '💎', '💎']);
   const [spinning, setSpinning] = useState<boolean>(false);
@@ -95,6 +99,7 @@ export const SlotMachine: React.FC = () => {
     }
 
     setSpinning(true);
+    haptics('medium');
     setMessage('Spinning the reels...');
 
     // Trigger local storage tracking for daily mission progress
@@ -125,59 +130,65 @@ export const SlotMachine: React.FC = () => {
           SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
         ];
         setReels(finalReels);
-        setSpinning(false);
+        
+        showVideoAd(() => {
+          setSpinning(false);
 
-        // Check payouts
-        const baseAmount = isFreePlay ? 10 : betAmount;
-        let reward = 0;
-        let won = false;
-        let winMsg = '';
+          // Check payouts
+          const baseAmount = isFreePlay ? 10 : betAmount;
+          let reward = 0;
+          let won = false;
+          let winMsg = '';
 
-        const [r1, r2, r3] = finalReels;
+          const [r1, r2, r3] = finalReels;
 
-        if (r1 === r2 && r2 === r3) {
-          won = true;
-          if (r1 === '7️⃣') {
-            reward = baseAmount * 25; // Jackpot
-            winMsg = `🏆 JACKPOT! Triple 7s! You won ${reward} Gems!`;
-          } else if (r1 === '💎') {
-            reward = baseAmount * 15;
-            winMsg = `💎 Amazing! Triple Diamonds! You won ${reward} Gems!`;
+          if (r1 === r2 && r2 === r3) {
+            haptics('success');
+            won = true;
+            if (r1 === '7️⃣') {
+              reward = baseAmount * 25; // Jackpot
+              winMsg = `🏆 JACKPOT! Triple 7s! You won ${reward} Gems!`;
+            } else if (r1 === '💎') {
+              reward = baseAmount * 15;
+              winMsg = `💎 Amazing! Triple Diamonds! You won ${reward} Gems!`;
+            } else {
+              reward = baseAmount * 5;
+              winMsg = `🎉 Triple match! You won ${reward} Gems!`;
+            }
+          } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+            haptics('warning');
+            won = true;
+            reward = Math.round(baseAmount * 1.5);
+            winMsg = `✨ Double match! You won ${reward} Gems!`;
           } else {
-            reward = baseAmount * 5;
-            winMsg = `🎉 Triple match! You won ${reward} Gems!`;
+            haptics('error');
+            winMsg = '😢 No match. Better luck next spin!';
           }
-        } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-          won = true;
-          reward = Math.round(baseAmount * 1.5);
-          winMsg = `✨ Double match! You won ${reward} Gems!`;
-        } else {
-          winMsg = '😢 No match. Better luck next spin!';
-        }
 
-        setMessage(winMsg);
+          setMessage(winMsg);
 
-        if (won && reward > 0) {
-          logGemsEarned(reward, userId);
-          setGemsBalance(prev => prev + reward);
-          
-          confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.8 }
-          });
+          if (won && reward > 0) {
+            logGemsEarned(reward, userId);
+            setGemsBalance(prev => prev + reward);
+            
+            confetti({
+              particleCount: 80,
+              spread: 60,
+              origin: { y: 0.8 }
+            });
 
-          toast({
-            title: '🎉 Winner!',
-            description: `You won ${reward} gems from the slot machine.`,
-          });
-        }
+            toast({
+              title: '🎉 Winner!',
+              description: `You won ${reward} gems from the slot machine.`,
+            });
+          }
 
-        if (isFreePlay) {
-          localStorage.setItem(`slot_machine_free_played_${userId}_${today}`, 'true');
-          setHasPlayedFreeToday(true);
-          setIsFreePlay(false);
-        }
+          if (isFreePlay) {
+            localStorage.setItem(`slot_machine_free_played_${userId}_${today}`, 'true');
+            setHasPlayedFreeToday(true);
+            setIsFreePlay(false);
+          }
+        });
       }
     }, 100);
   };
@@ -282,6 +293,7 @@ export const SlotMachine: React.FC = () => {
           {spinning ? 'Spinning...' : 'Spin Reels'}
         </Button>
       </div>
+      {adElement}
     </div>
   );
 };

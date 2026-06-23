@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { minigames } from '@/components/gamification/minigamesData';
@@ -31,6 +32,7 @@ export const MiniGamePlayPage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const activeGame = minigames.find(g => g.id === gameId);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
 
   // States for True/False and Image trivia
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -172,10 +174,12 @@ export const MiniGamePlayPage: React.FC = () => {
   };
 
   const handleScratchComplete = () => {
-    setScratchRevealed(true);
-    if (scratchPrize && scratchPrize.value > 0) {
-      confetti({ particleCount: 100, spread: 70 });
-    }
+    showVideoAd(() => {
+      setScratchRevealed(true);
+      if (scratchPrize && scratchPrize.value > 0) {
+        confetti({ particleCount: 100, spread: 70 });
+      }
+    });
   };
 
   // Filter image questions
@@ -425,6 +429,7 @@ export const MiniGamePlayPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {adElement}
     </PageLayout>
   );
 };

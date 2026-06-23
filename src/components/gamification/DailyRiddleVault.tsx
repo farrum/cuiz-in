@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -20,25 +22,33 @@ export const DailyRiddleVault: React.FC<DailyRiddleVaultProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<'success' | 'fail' | null>(null);
   const { toast } = useToast();
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guess.trim() || isSubmitting || hasAttemptedToday) return;
 
     setIsSubmitting(true);
+    haptics('medium');
     try {
       const response = await onSubmit(guess.trim());
       
-      if (response.success) {
-        setResult('success');
-        toast({ title: 'Vault Unlocked!', description: response.message, className: 'bg-green-50' });
-      } else {
-        setResult('fail');
-        toast({ title: 'Incorrect!', description: response.message, variant: 'destructive' });
-      }
+      showVideoAd(() => {
+        if (response.success) {
+          haptics('success');
+          setResult('success');
+          toast({ title: 'Vault Unlocked!', description: response.message, className: 'bg-green-50' });
+        } else {
+          haptics('error');
+          setResult('fail');
+          toast({ title: 'Incorrect!', description: response.message, variant: 'destructive' });
+        }
+        setIsSubmitting(false);
+      });
     } catch (err) {
+      haptics('error');
       toast({ title: 'Error', description: 'Failed to verify answer.', variant: 'destructive' });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -114,6 +124,7 @@ export const DailyRiddleVault: React.FC<DailyRiddleVaultProps> = ({
       </form>
       
       <p className="text-slate-500 text-xs mt-6 uppercase tracking-wider font-bold">Prize: 500 Gems</p>
+      {adElement}
     </div>
   );
 };

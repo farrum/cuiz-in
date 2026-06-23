@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
@@ -11,6 +13,8 @@ export const CoinFlip: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [coinState, setCoinState] = useState<'idle' | 'flipping' | 'result'>('idle');
   const [userChoice, setUserChoice] = useState<'heads' | 'tails' | null>(null);
@@ -68,6 +72,7 @@ export const CoinFlip: React.FC = () => {
 
   const handleChoice = (choice: 'heads' | 'tails') => {
     if (coinState === 'flipping') return;
+    haptics('light');
     setUserChoice(choice);
   };
 
@@ -107,6 +112,7 @@ export const CoinFlip: React.FC = () => {
     }
 
     setCoinState('flipping');
+    haptics('medium');
     setMessage('Flipping the coin...');
 
     // Trigger local storage tracking for daily mission progress
@@ -122,41 +128,46 @@ export const CoinFlip: React.FC = () => {
     setTimeout(async () => {
       const outcomes: ('heads' | 'tails')[] = ['heads', 'tails'];
       const flipResult = outcomes[Math.floor(Math.random() * outcomes.length)];
-      setResult(flipResult);
-      setCoinState('result');
 
-      const won = userChoice === flipResult;
+      showVideoAd(async () => {
+        setResult(flipResult);
+        setCoinState('result');
 
-      if (won) {
-        const reward = isFreePlay ? 5 : betAmount * 2;
-        await logGemsEarned(reward, userId);
-        setGemsBalance(prev => prev + reward);
-        
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 }
-        });
+        const won = userChoice === flipResult;
 
-        setMessage(`🎉 It's ${flipResult.toUpperCase()}! You won ${reward} Gems!`);
-        toast({
-          title: '🎉 You Won!',
-          description: `Guess was correct! Awarded ${reward} gems.`,
-        });
-      } else {
-        setMessage(`😢 It's ${flipResult.toUpperCase()}! You lost your guess.`);
-        toast({
-          title: 'Better luck next time!',
-          description: `The coin landed on ${flipResult}.`,
-        });
-      }
+        if (won) {
+          haptics('success');
+          const reward = isFreePlay ? 5 : betAmount * 2;
+          await logGemsEarned(reward, userId);
+          setGemsBalance(prev => prev + reward);
+          
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.8 }
+          });
 
-      if (isFreePlay) {
-        const today = new Date().toISOString().split('T')[0];
-        localStorage.setItem(`coin_flip_free_played_${userId}_${today}`, 'true');
-        setHasPlayedFreeToday(true);
-        setIsFreePlay(false);
-      }
+          setMessage(`🎉 It's ${flipResult.toUpperCase()}! You won ${reward} Gems!`);
+          toast({
+            title: '🎉 You Won!',
+            description: `Guess was correct! Awarded ${reward} gems.`,
+          });
+        } else {
+          haptics('error');
+          setMessage(`😢 It's ${flipResult.toUpperCase()}! You lost your guess.`);
+          toast({
+            title: 'Better luck next time!',
+            description: `The coin landed on ${flipResult}.`,
+          });
+        }
+
+        if (isFreePlay) {
+          const today = new Date().toISOString().split('T')[0];
+          localStorage.setItem(`coin_flip_free_played_${userId}_${today}`, 'true');
+          setHasPlayedFreeToday(true);
+          setIsFreePlay(false);
+        }
+      });
     }, 1500);
   };
 
@@ -321,6 +332,7 @@ export const CoinFlip: React.FC = () => {
           Flipping...
         </div>
       )}
+      {adElement}
     </div>
   );
 };

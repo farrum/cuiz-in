@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
@@ -21,6 +23,8 @@ export const BalloonPop: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [gemsBalance, setGemsBalance] = useState<number>(0);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const haptics = useHaptics();
   
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'ended'>('idle');
   const [balloons, setBalloons] = useState<Balloon[]>([]);
@@ -164,6 +168,7 @@ export const BalloonPop: React.FC = () => {
     setDartsLeft(5);
     setScore(0);
     setGameState('playing');
+    haptics('medium');
     setMessage('Tap floating balloons! Darts left: 5');
   };
 
@@ -189,8 +194,10 @@ export const BalloonPop: React.FC = () => {
 
     if (hitBomb) {
       setDartsLeft(0);
+      haptics('heavy');
       endGame(score, true);
     } else if (pointAward > 0) {
+      haptics('light');
       const newScore = score + pointAward;
       setScore(newScore);
       const newDarts = dartsLeft - 1;
@@ -205,45 +212,42 @@ export const BalloonPop: React.FC = () => {
   };
 
   const endGame = async (finalScore: number, hitBomb: boolean) => {
-    setGameState('ended');
-    
-    // Payout logic:
-    // Scale points into gems payout:
-    // Free play: points * 0.5 gems (e.g. 15 points = 7 gems)
-    // Bet 5: points * 0.5 gems
-    // Bet 10: points * 1.0 gems
-    // Bet 25: points * 2.5 gems
-    const multiplier = isFreePlay ? 0.5 : (betAmount / 10);
-    const reward = Math.round(finalScore * multiplier);
-
-    if (hitBomb) {
-      setMessage(`💥 BOOM! You hit a bomb! Game over. You earned ${reward} Gems.`);
-    } else {
-      setMessage(`🎯 All darts used! You scored ${finalScore} points and earned ${reward} Gems!`);
-    }
-
-    if (reward > 0 && userId) {
-      await logGemsEarned(reward, userId);
-      setGemsBalance(prev => prev + reward);
+    showVideoAd(async () => {
+      setGameState('ended');
       
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.8 }
-      });
+      const multiplier = isFreePlay ? 0.5 : (betAmount / 10);
+      const reward = Math.round(finalScore * multiplier);
+      haptics(reward > 0 ? 'success' : 'error');
 
-      toast({
-        title: '🎉 Game Ended!',
-        description: `You earned ${reward} gems from popping balloons.`,
-      });
-    }
+      if (hitBomb) {
+        setMessage(`💥 BOOM! You hit a bomb! Game over. You earned ${reward} Gems.`);
+      } else {
+        setMessage(`🎯 All darts used! You scored ${finalScore} points and earned ${reward} Gems!`);
+      }
 
-    if (isFreePlay && userId) {
-      const today = new Date().toISOString().split('T')[0];
-      localStorage.setItem(`balloon_pop_free_played_${userId}_${today}`, 'true');
-      setHasPlayedFreeToday(true);
-      setIsFreePlay(false);
-    }
+      if (reward > 0 && userId) {
+        await logGemsEarned(reward, userId);
+        setGemsBalance(prev => prev + reward);
+        
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.8 }
+        });
+
+        toast({
+          title: '🎉 Game Ended!',
+          description: `You earned ${reward} gems from popping balloons.`,
+        });
+      }
+
+      if (isFreePlay && userId) {
+        const today = new Date().toISOString().split('T')[0];
+        localStorage.setItem(`balloon_pop_free_played_${userId}_${today}`, 'true');
+        setHasPlayedFreeToday(true);
+        setIsFreePlay(false);
+      }
+    });
   };
 
   if (isSuspended) {
@@ -371,6 +375,7 @@ export const BalloonPop: React.FC = () => {
           </Button>
         </div>
       )}
+      {adElement}
     </div>
   );
 };

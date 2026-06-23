@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
 import { pickCharacter, type Character, type Mood } from '@/mobile/mascots/registry';
 
@@ -32,6 +33,7 @@ export function WheelGame() {
   const [angle, setAngle] = useState(0);
   const [prize, setPrize] = useState<string | null>(null);
   const [reaction, setReaction] = useState<{ char: Character; mood: Mood } | null>(null);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
   const [activePrizes, setActivePrizes] = useState<Prize[]>(defaultPrizes);
   const [loading, setLoading] = useState(true);
   const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -104,24 +106,26 @@ export function WheelGame() {
       // Trigger reveal ONLY when wheel finishes spinning (3.2 seconds duration)
       setTimeout(() => {
         setSpinning(false);
-        haptics('success');
-        
-        const labelText = wonPrizeObj.value > 0 ? `${wonPrizeObj.label} (+${wonPrizeObj.value} 💎)` : wonPrizeObj.label;
-        setPrize(labelText);
+        showVideoAd(() => {
+          haptics('success');
+          
+          const labelText = wonPrizeObj.value > 0 ? `${wonPrizeObj.label} (+${wonPrizeObj.value} 💎)` : wonPrizeObj.label;
+          setPrize(labelText);
 
-        const value = wonPrizeObj.value || 0;
-        setReaction({ 
-          char: pickCharacter(), 
-          mood: value > 50 ? 'hype' : value > 0 ? 'cheer' : 'sad' 
-        });
-
-        if (value > 0) {
-          confetti({ 
-            particleCount: value > 50 ? 200 : 120, 
-            spread: 80, 
-            origin: { y: 0.45 } 
+          const value = wonPrizeObj.value || 0;
+          setReaction({ 
+            char: pickCharacter(), 
+            mood: value > 50 ? 'hype' : value > 0 ? 'cheer' : 'sad' 
           });
-        }
+
+          if (value > 0) {
+            confetti({ 
+              particleCount: value > 50 ? 200 : 120, 
+              spread: 80, 
+              origin: { y: 0.45 } 
+            });
+          }
+        });
       }, 3200);
 
     } catch (err: any) {
@@ -246,6 +250,7 @@ export function WheelGame() {
           </motion.div>
         )}
       </AnimatePresence>
+      {adElement}
     </div>
   );
 }

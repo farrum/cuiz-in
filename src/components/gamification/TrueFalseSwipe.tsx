@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { QuizQuestion } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { Check, X, Timer } from 'lucide-react';
@@ -18,6 +19,7 @@ export const TrueFalseSwipe: React.FC<TrueFalseSwipeProps> = ({
 }) => {
   const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [score, setScore] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -98,7 +100,14 @@ export const TrueFalseSwipe: React.FC<TrueFalseSwipeProps> = ({
     // Wait for animation to finish before moving to next card
     setTimeout(() => {
       setSwipeDirection(null);
-      setCurrentIndex(prev => prev + 1);
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < questions.length) {
+        showVideoAd(() => {
+          setCurrentIndex(nextIndex);
+        });
+      } else {
+        setCurrentIndex(nextIndex);
+      }
     }, 400); // 400ms CSS transition
   };
 
@@ -176,6 +185,7 @@ export const TrueFalseSwipe: React.FC<TrueFalseSwipeProps> = ({
         </button>
       </div>
       <p className="text-slate-400 text-xs mt-6">Swipe left for FALSE, swipe right for TRUE</p>
+      {adElement}
     </div>
   );
 };

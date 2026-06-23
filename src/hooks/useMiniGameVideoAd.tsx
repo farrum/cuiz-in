@@ -1,0 +1,46 @@
+import { useState } from 'react';
+import { VastVideoAd } from '@/mobile/ads/VastVideoAd';
+
+export const useMiniGameVideoAd = () => {
+  const [adActive, setAdActive] = useState(false);
+  const [onAdComplete, setOnAdComplete] = useState<(() => void) | null>(null);
+
+  const showVideoAd = (callback: () => void) => {
+    setOnAdComplete(() => callback);
+    setAdActive(true);
+  };
+
+  const handleComplete = () => {
+    setAdActive(false);
+    if (onAdComplete) {
+      onAdComplete();
+    }
+  };
+
+  const adElement = adActive ? (
+    <div className="fixed inset-0 z-[99999] bg-black/95 flex flex-col items-center justify-center p-4" data-no-auto-ads="true">
+      <div className="w-full max-w-lg flex items-center justify-between mb-4 px-2 text-white">
+        <span className="text-xs font-black tracking-widest uppercase bg-white/10 px-3 py-1 rounded-full text-slate-300">
+          Sponsored Ad
+        </span>
+        <button
+          onClick={handleComplete}
+          className="text-xs font-semibold bg-white/10 text-slate-400 hover:text-white px-4 py-2 rounded-full transition-all"
+        >
+          Skip Ad
+        </button>
+      </div>
+      <div className="w-full max-w-lg bg-black border border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center min-h-[250px] shadow-2xl relative">
+        <VastVideoAd
+          tagUrl="https://vast.yomeno.xyz/vast?spot_id=1494657"
+          onReady={() => console.log('Video ad loaded')}
+          onUnavailable={handleComplete}
+          onComplete={handleComplete}
+          className="w-full max-h-[60vh] object-contain rounded-2xl"
+        />
+      </div>
+    </div>
+  ) : null;
+
+  return { showVideoAd, adElement, adActive };
+};
