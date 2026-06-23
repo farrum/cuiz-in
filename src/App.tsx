@@ -16,6 +16,7 @@ import Index from "@/pages/Index";
 import LoginPage from "@/pages/LoginPage";
 import Registration from "@/pages/Registration";
 import AuthCallback from "@/pages/AuthCallback";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Lazy load non-critical pages for code splitting
 const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
