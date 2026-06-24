@@ -132,7 +132,24 @@ const CategoryDetailPage: React.FC = () => {
   // Use real questions if available, otherwise use featured questions from category data
   const displayQuestions = realQuestions.length > 0 
     ? realQuestions 
-    : category.featuredQuestions;
+    : (category?.featuredQuestions ?? []);
+
+  // While the category data is still resolving, render a lightweight loading state
+  // to avoid accessing properties on a null category object.
+  if (!category) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <NewsTicker className="mt-16" />
+        <main className="flex-1 container max-w-4xl pt-12 pb-16 px-4">
+          <div className="text-center py-12">
+            <div className="inline-block w-8 h-8 border-4 border-t-primary border-primary/30 rounded-full animate-spin"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   // Generate schema.org structured data for this category
   const categorySchema = {
