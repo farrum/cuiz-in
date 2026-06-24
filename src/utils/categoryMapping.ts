@@ -104,7 +104,7 @@ export const slugToCategoriesMap: Record<string, string[]> = {
     'Entertainment: Film', 'Entertainment: Television', 'Entertainment: Board Games',
     'Entertainment: Musicals &amp; Theatres', 'Entertainment: Japanese Anime &amp; Manga',
     'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities',
-    'Bollywood', 'World Music'
+    'Bollywood'
   ],
   'sports': ['Sports', 'Cricket'],
   'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles', 'Technology'],
