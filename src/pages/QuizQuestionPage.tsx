@@ -36,6 +36,13 @@ import { getCategorySlug } from '@/utils/categoryMapping';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 import RelatedQuestions from '@/components/RelatedQuestions';
 import RelatedArticles from '@/components/RelatedArticles';
+import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
+import { isUserLoggedIn } from '@/utils/guestPlayService';
+import { Flame, Sparkles } from 'lucide-react';
+
+const SESSION_STREAK_KEY = 'cuizin_web_session_streak';
+const SESSION_ANSWERED_KEY = 'cuizin_web_session_answered';
+const AUTO_ADVANCE_SECONDS = 5;
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -47,6 +54,16 @@ const QuizQuestionPage: React.FC = () => {
   const [nextQuestion, setNextQuestion] = useState<QuizQuestion | null>(null);
   const [answered, setAnswered] = useState<{ isCorrect: boolean; selected: string } | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
+  const [countdown, setCountdown] = useState(AUTO_ADVANCE_SECONDS);
+  const [streak, setStreak] = useState<number>(() => {
+    const v = Number(sessionStorage.getItem(SESSION_STREAK_KEY) || '0');
+    return Number.isFinite(v) ? v : 0;
+  });
+  const [sessionAnswered, setSessionAnswered] = useState<number>(() => {
+    const v = Number(sessionStorage.getItem(SESSION_ANSWERED_KEY) || '0');
+    return Number.isFinite(v) ? v : 0;
+  });
+  const isGuest = !isUserLoggedIn();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,6 +214,16 @@ const QuizQuestionPage: React.FC = () => {
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
     // Reveal the answer inline; user can click "Next Question" or wait for auto-advance.
     setAnswered({ isCorrect, selected: selectedAnswer });
+    setCountdown(AUTO_ADVANCE_SECONDS);
+
+    // Track an app-like running session streak across in-place navigations.
+    const newStreak = isCorrect ? streak + 1 : 0;
+    setStreak(newStreak);
+    sessionStorage.setItem(SESSION_STREAK_KEY, String(newStreak));
+
+    const newAnswered = sessionAnswered + 1;
+    setSessionAnswered(newAnswered);
+    sessionStorage.setItem(SESSION_ANSWERED_KEY, String(newAnswered));
   };
 
   const goToNextQuestion = React.useCallback(async () => {
@@ -215,11 +242,21 @@ const QuizQuestionPage: React.FC = () => {
     }
   }, [loadingNext, navigate, questionId]);
 
-  // Auto-advance 5s after the user answers
+  // Auto-advance after the user answers, with a live countdown.
   useEffect(() => {
     if (!answered) return;
-    const t = setTimeout(() => { goToNextQuestion(); }, 5000);
-    return () => clearTimeout(t);
+    setCountdown(AUTO_ADVANCE_SECONDS);
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          goToNextQuestion();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [answered, goToNextQuestion]);
 
   const generateQuestionSchema = () => {
@@ -389,6 +426,9 @@ const QuizQuestionPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* Soft, dismissible registration nudge for guests after a few questions — no login wall */}
+      {isGuest && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
         {/* Breadcrumb Navigation */}
@@ -431,6 +471,19 @@ const QuizQuestionPage: React.FC = () => {
             <Brain className="h-5 w-5" />
             {question ? `${question.category} Quiz` : 'Quiz Question'}
           </div>
+          {/* App-like engagement hook */}
+          {sessionAnswered > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {streak > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold px-2.5 py-1">
+                  <Flame className="h-3.5 w-3.5" /> {streak} in a row
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1">
+                <Sparkles className="h-3.5 w-3.5" /> {sessionAnswered} answered this session
+              </span>
+            </div>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
             {question ? question.question : 'Loading question...'}
           </h1>
@@ -495,7 +548,7 @@ const QuizQuestionPage: React.FC = () => {
                   <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                     {answered.isCorrect ? '✅ Correct!' : '❌ Not quite'}
                   </h3>
-                  <span className="text-xs text-muted-foreground">Next question in 5s…</span>
+                  <span className="text-xs text-muted-foreground">Next question in {countdown}s…</span>
                 </div>
                 {!answered.isCorrect && (
                   <p className="text-sm text-foreground mb-2">

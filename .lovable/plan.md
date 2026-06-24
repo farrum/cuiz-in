@@ -1,52 +1,43 @@
-# Re-enable & Manage Ads (Web + Mobile)
+# Keep mobile web visitors engaged (reduce bounce rate)
 
 ## Goal
-Turn the existing (currently disabled) ad system back on so that:
-1. Only **Active** ad slots render; inactive ones are fully hidden (no empty placeholder boxes).
-2. A managed **mobile-app banner** shows at the top of every mobile screen.
-3. An **inter-question ad** appears in the same slot for **5 seconds after every answer** (web + mobile) before the next question.
-4. All slots (web + mobile + interstitial) are manageable from the existing Admin → Ads panel.
+Real mobile-web visitors land on a single SEO page (a quiz question, `/all-questions`, `/stories`) and leave immediately — a "dead-end" landing. We will turn each landing page into the start of a continuous, app-like session so visitors keep playing, **without** a forced login wall and **without** breaking SEO.
 
-> Note: This reverses the project's previous "all ads disabled" security stance. Per your choice, slots may render **any pasted ad code** (the existing malicious-domain blocklist in `useScriptExecution`/`adProviderScripts` stays active as a safety net). Project memory will be updated to reflect ads are now enabled.
+> Note: ~90% of the current 95% bounce is sub-second China/Direct/mobile traffic that is almost certainly bots — no UI change affects bots. This plan targets the genuine US/IN/organic mobile segment. As agreed, we are not touching bot filtering here.
 
-## What already exists
-- `ad_slots` table + Admin manager (`AdminAdManagement`, `AdSlotTabs`, `EditAdSlotDialog`) with positions: top, middle, bottom, sidebar, app-banner, app-interstitial.
-- `SimpleAdBanner` renders slot HTML and runs scripts through the security filter.
-- Web pages already place `SimpleAdBanner` (home top/middle/bottom, quiz top/middle/bottom).
-- Mobile `TopBannerAd` (top of `MobileShell`) and `InterstitialAd` (already shown after each question in `QuizStoryScreen`) already support DB slots via `app-banner` / `app-interstitial`.
-- Web `QuizInterstitial` currently uses the no-op `AdSenseUnit`, so it shows nothing.
+## What we will build
 
-## Changes
+### 1. Continuous "keep playing" flow on the SEO question pages
+Today a visitor who lands on `/quiz/question/:id/...` answers once and hits a dead end.
+- After the answer is revealed, auto-surface a prominent **"Next question →"** card (and a short auto-advance countdown, matching the existing 5s auto-advance pattern used elsewhere).
+- The next question loads in-place (client-side), so one landing becomes a multi-question session — directly lifting pages/session and visit duration.
+- Keep the canonical SEO URL/meta for the originally landed question; subsequent questions advance via client routing.
 
-### 1. Show active, hide inactive
-- `SimpleAdBanner`: when there is no active ad content for the slot, render **nothing** (collapse) instead of `AdPlaceholder`.
-- `Index.tsx`: remove the `AdPlaceholder` Suspense fallbacks so empty slots leave no gap.
-- Ensure active slots are loaded into `localStorage` on app start (call the existing sync routine in `adService` from app bootstrap), so rendering does not depend on opening the quiz first.
-- Align placement → position so the home-top and quiz top/bottom placements resolve to their admin slots (map `header→top`, `content→middle`, `footer→bottom` inside `SimpleAdBanner`, keeping `slotId` matching).
+### 2. App-like persistent mobile bottom navigation everywhere
+- Ensure the existing `MobileBottomNav` (Home / Categories / Play / Leaderboard / Profile-or-Login) renders on every mobile web page a visitor can land on — especially `/quiz/question/...`, `/all-questions`, `/stories`, `/categories/...`. This gives a clear next tap instead of the browser back button.
+- Add comfortable bottom padding so content never hides behind the nav.
 
-### 2. Mobile banner (managed)
-- Already mounted top-of-shell. Confirm `TopBannerAd` renders the `app-banner` DB slot when active and renders nothing otherwise. No layout change beyond enabling rendering.
+### 3. Soft login (play first, prompt later) — no wall
+- Keep the current guest model: guests can play (existing 30/day guest allowance) with no login required on arrival.
+- Replace any abrupt prompts with a **non-blocking** registration nudge: a dismissible bottom sheet that appears only after the visitor has answered several questions (reuse the existing `RegistrationIncentiveModal` "after N questions" trigger), framed around saving gems/streak. Dismiss = keep playing.
 
-### 3. Inter-question ad — Web
-- `QuizPlayPage`: show the interstitial **after every question** (`INTERSTITIAL_EVERY = 1`) and give it priority over the random mini-games so it reliably appears between answer and next question.
-- `QuizInterstitial`: replace the no-op `AdSenseUnit` with `SimpleAdBanner` rendering a managed interstitial slot; run a **5-second** countdown then auto-advance to the next question (Skip allowed). If no active interstitial slot exists, advance immediately (no blank screen).
+### 4. App-like polish on mobile web
+- Smooth page/question transitions (fade/slide) so navigation feels native, not like full page reloads.
+- Immediate tap feedback on answer options and the "Next" CTA.
+- Make sure the landing question is instantly interactive (no spinner gate) on the SEO pages.
 
-### 4. Inter-question ad — Mobile
-- `InterstitialAd`: set the gate to **5 seconds** (currently 7) and confirm it renders the `app-interstitial` DB slot. Flow is already "5s reveal → ad → next question"; if no active slot, it auto-closes (already handled).
+### 5. Light-touch engagement hooks on landing
+- On the quiz question landing page, show a compact gems/streak indicator and a one-line "answer X in a row" hook to create a goal in the first few seconds.
 
-### 5. Admin — manage all slots
-- `AdSlotTabs`: add tabs so admins can view/toggle/edit **App Banner**, **App Interstitial**, and the **Web Interstitial** slots alongside the existing top/middle/bottom/sidebar.
-- `EditAdSlotDialog`: add the web interstitial position option (app-banner / app-interstitial already present). Active toggle already controls show/hide.
+## Explicitly out of scope
+- Routing mobile web users into the Capacitor `AppMobile` story UI (rejected — it forces login and loses SEO context).
+- Any forced login/registration before play.
+- Bot/China traffic filtering.
 
-### 6. Memory / security
-- Update `mem://features/ads` and the index Core line: ads are **enabled**; only Active slots render; malicious-domain blocklist remains the active defense.
-- Update the security memory via the security tool to note ads render admin-pasted code by design.
+## Will it actually help?
+Yes, for real users. The biggest bounce driver here is structural: every SEO entry point is a single-action dead end. Adding an immediate, frictionless "next question" loop plus persistent navigation is the highest-leverage change for pages/session, visit duration, and ad impressions — and it compounds with the soft-login nudge converting engaged guests into return visitors. The app-like polish reinforces the feel but the flow/nav changes carry most of the impact.
 
-## Technical notes
-- No DB schema change required — `ad_slots` already has `position`, `active`, `code`. Admin creates/activates the needed slots (home top, quiz top, quiz bottom, web interstitial, app banner, app interstitial) and pastes ad code.
-- `AdSenseUnit` stays a no-op (unused after the interstitial switch to `SimpleAdBanner`).
-- All ad rendering keeps the existing `useScriptExecution` security filtering (blocks known malicious domains, service-worker registration, `document.write`, etc.).
-
-## Out of scope
-- Bot/scraper filtering.
-- Any change to points/economy or gameplay scoring.
+## Technical notes (for implementation)
+- Primary files: `src/pages/QuizQuestionPage.tsx` / `QuizPlayPage.tsx` (auto-advance + next-question loop), `src/components/home/MobileBottomNav.tsx` and the shared `PageLayout` (render nav on all landing routes), `src/components/home/RegistrationIncentiveModal.tsx` (soft, dismissible, delayed), `src/utils/guestPlayService.ts` (already supports guest play — reuse, no wall).
+- Reuse existing patterns: 5s auto-advance, guest play counter, registration-after-N-questions trigger.
+- All changes are frontend/presentation only; no schema or backend changes. SEO meta/canonical on landing pages stays intact.
