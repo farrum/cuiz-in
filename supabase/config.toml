@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.track-guest-event]
 verify_jwt = false
+
+[functions.vast-proxy]
+verify_jwt = false
