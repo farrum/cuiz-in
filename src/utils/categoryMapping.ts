@@ -45,7 +45,6 @@ export const categoryToSlugMap: Record<string, string> = {
   'Entertainment: Comics': 'entertainment',
   'Celebrities': 'entertainment',
   'Bollywood': 'entertainment',
-  'World Music': 'entertainment',
   
   // Sports
   'Sports': 'sports',
