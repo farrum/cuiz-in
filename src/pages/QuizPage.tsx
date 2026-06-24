@@ -293,7 +293,10 @@ const QuizPage: React.FC = () => {
           </div>
           
           <div className="md:col-span-3">
-            <SidebarVideoAd className="sticky top-20" />
+            <div className="sticky top-20 space-y-4">
+              <SimpleAdBanner position="sidebar" slotId="quiz-sidebar" />
+              <SidebarVideoAd alwaysVideo />
+            </div>
           </div>
         </div>
         
