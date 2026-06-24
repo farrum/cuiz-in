@@ -7,6 +7,7 @@ import NewsTicker from '@/components/NewsTicker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { categoriesArray } from '@/utils/categoryData';
+import { getCategorySlug } from '@/utils/categoryMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
