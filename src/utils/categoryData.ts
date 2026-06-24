@@ -578,7 +578,7 @@ export const categoryData: CategoryDataRecord = {
 export const getDefaultCategoryData = (categorySlug: string, basicInfo: any): CategoryData => {
   // Find the basic info for this category
   const info = basicInfo || {
-    name: categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, ' '),
+    name: getCategoryDisplayName(categorySlug),
     description: 'Test your knowledge in this exciting category.',
     questionCount: 50,
     icon: '❓'
