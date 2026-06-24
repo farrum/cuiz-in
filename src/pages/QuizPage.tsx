@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
@@ -10,6 +10,7 @@ import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
 import QuizContent from '@/components/quiz/QuizContent';
@@ -35,6 +36,11 @@ const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
   const [milestoneCheckTrigger, setMilestoneCheckTrigger] = useState(0);
   const [showLeaderboards, setShowLeaderboards] = useState(false);
+  // VAST video interstitial between questions (fills on mobile-web; on desktop
+  // the network returns no video inventory and it auto-skips harmlessly).
+  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const answeredSinceAdRef = useRef(0);
+  const nextAdThresholdRef = useRef(2 + Math.floor(Math.random() * 2)); // 2-3
   const {
     currentQuestion,
     streak,
@@ -66,6 +72,15 @@ const QuizPage: React.FC = () => {
     setTimeout(() => {
       setMilestoneCheckTrigger(prev => prev + 1);
     }, 500);
+
+    // Every 2-3 answered questions, surface a VAST video interstitial.
+    answeredSinceAdRef.current += 1;
+    if (answeredSinceAdRef.current >= nextAdThresholdRef.current) {
+      answeredSinceAdRef.current = 0;
+      nextAdThresholdRef.current = 2 + Math.floor(Math.random() * 2);
+      // Small delay so the answer feedback shows before the ad overlay.
+      setTimeout(() => showVideoAd(() => {}), 800);
+    }
   };
   
   useMonthlyReset();
