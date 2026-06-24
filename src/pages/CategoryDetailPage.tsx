@@ -309,8 +309,9 @@ const CategoryDetailPage: React.FC = () => {
               ) : displayQuestions
                 .filter(q => activeTab === 'all' || q.difficulty === activeTab)
                 .filter(q => q.question.toLowerCase().includes(searchTerm.toLowerCase()))
-                .map(question => (
-                  <Card key={question.id} className="hover:shadow-md transition-shadow">
+                .map((question, index) => (
+                  <React.Fragment key={question.id}>
+                  <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium">{question.question}</p>
@@ -328,6 +329,14 @@ const CategoryDetailPage: React.FC = () => {
                       </div>
                     </CardContent>
                   </Card>
+                  {(index + 1) % 4 === 0 && (
+                    <SimpleAdBanner
+                      position="content"
+                      slotId={`category-inline-${index + 1}`}
+                      className="my-2"
+                    />
+                  )}
+                  </React.Fragment>
                 ))}
                 
               {!loading && displayQuestions
