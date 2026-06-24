@@ -35,28 +35,22 @@ const CategoriesPage: React.FC = () => {
 
         if (error) throw error;
 
-        // Count questions per category and get unique list
-        const counts: Record<string, number> = {};
+        // Aggregate raw DB categories into the known frontend categories so each
+        // card has a proper icon, clean name and a slug that actually resolves.
+        const slugCounts: Record<string, number> = {};
         data.forEach(q => {
           if (q.category) {
-            counts[q.category] = (counts[q.category] || 0) + 1;
+            const slug = getCategorySlug(q.category);
+            slugCounts[slug] = (slugCounts[slug] || 0) + 1;
           }
         });
 
-        // Merge with static data for icons/descriptions
-        const dynamicCats = Object.keys(counts).map(catName => {
-          const staticMatch = categoriesArray.find(c => c.name.toLowerCase() === catName.toLowerCase());
-          const slug = catName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
-          
-          return {
-            id: staticMatch?.id || Math.random(),
-            name: catName,
-            slug: staticMatch?.slug || slug,
-            description: staticMatch?.description || `Explore questions in the ${catName} category.`,
-            questionCount: counts[catName],
-            icon: staticMatch?.icon || '❓'
-          };
-        });
+        const dynamicCats = categoriesArray
+          .map(c => ({
+            ...c,
+            questionCount: slugCounts[c.slug] || 0,
+          }))
+          .filter(c => c.questionCount > 0);
 
         // Sort by question count descending
         setCategories(dynamicCats.sort((a, b) => b.questionCount - a.questionCount));
