@@ -8,6 +8,13 @@ interface SidebarVideoAdProps {
   tagUrl?: string;
   /** Fallback image ad slot id. */
   slotId?: string;
+  /**
+   * When true, this slot is dedicated to video only. It will NOT render the
+   * managed image/display banner (used when a separate banner already shows
+   * elsewhere in the sidebar). It collapses to nothing when video is
+   * unavailable, avoiding duplicate/overlapping ads.
+   */
+  alwaysVideo?: boolean;
   className?: string;
 }
 
@@ -31,6 +38,7 @@ function withCacheBuster(url: string): string {
 const SidebarVideoAd: React.FC<SidebarVideoAdProps> = ({
   tagUrl = DEFAULT_VAST,
   slotId,
+  alwaysVideo = false,
   className,
 }) => {
   const [videoFailed, setVideoFailed] = useState(false);
@@ -38,6 +46,8 @@ const SidebarVideoAd: React.FC<SidebarVideoAdProps> = ({
   const resolvedTagUrl = useMemo(() => withCacheBuster(tagUrl), [tagUrl]);
 
   if (videoFailed) {
+    // Dedicated video slot: collapse instead of showing a duplicate banner.
+    if (alwaysVideo) return null;
     return (
       <SimpleAdBanner position="sidebar" slotId={slotId} className={className} />
     );
@@ -63,7 +73,7 @@ const SidebarVideoAd: React.FC<SidebarVideoAdProps> = ({
       </div>
       {/* While the video is resolving and not yet ready, keep the image ad
           visible so the slot is never blank. */}
-      {!videoReady && (
+      {!videoReady && !alwaysVideo && (
         <SimpleAdBanner position="sidebar" slotId={slotId} />
       )}
     </div>
