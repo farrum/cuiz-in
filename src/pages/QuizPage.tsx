@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
@@ -292,7 +293,7 @@ const QuizPage: React.FC = () => {
           </div>
           
           <div className="md:col-span-3">
-            <SimpleAdBanner position="sidebar" className="sticky top-20" />
+            <SidebarVideoAd className="sticky top-20" />
           </div>
         </div>
         
