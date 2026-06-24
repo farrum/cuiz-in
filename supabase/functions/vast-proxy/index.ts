@@ -38,13 +38,18 @@ function allTags(xml: string, tag: string): string[] {
   return out;
 }
 
+function extractUrl(raw: string): string | null {
+  const m = raw.match(/https?:\/\/[^\s"'<>\]]+/i);
+  return m ? m[0] : null;
+}
+
 function pickMediaFile(xml: string): string | null {
   const re = /<MediaFile([^>]*)>([\s\S]*?)<\/MediaFile>/gi;
   const candidates: { url: string; type: string; width: number }[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) {
     const attrs = m[1] || "";
-    const url = cdata(m[2]);
+    const url = extractUrl(cdata(m[2]) || "");
     if (!url) continue;
     const typeMatch = attrs.match(/type=["']([^"']+)["']/i);
     const widthMatch = attrs.match(/width=["'](\d+)["']/i);
