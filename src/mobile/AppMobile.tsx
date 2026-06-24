@@ -17,6 +17,7 @@ const HubScreen = lazy(() => import('./screens/Hub/HubScreen'));
 const QuizStoryScreen = lazy(() => import('./screens/QuizStory/QuizStoryScreen'));
 const LeaderboardScreen = lazy(() => import('./screens/Leaderboard/LeaderboardScreen'));
 const ProfileScreen = lazy(() => import('./screens/Profile/ProfileScreen'));
+const MobileTeamDashboard = lazy(() => import('./screens/Profile/MobileTeamDashboard'));
 const OnboardingScreen = lazy(() => import('./screens/Onboarding/OnboardingScreen'));
 const MobileLoginScreen = lazy(() => import('./screens/Login/MobileLoginScreen'));
 const DailyChallengeStoryScreen = lazy(() => import('./screens/DailyChallengeStory/DailyChallengeStoryScreen'));
@@ -46,7 +47,7 @@ async function hydrateMobileSession(userId: string) {
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String((profileResult.data as any).gems ?? 0));
     }
     const roles = new Set((roleResult.data || []).map((r) => r.role).filter(Boolean));
-    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') ? 'team_leader' : 'player';
+    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
   } catch (err) {
     console.error('[Mobile] hydrate error:', err);
@@ -110,6 +111,7 @@ function AppMobile() {
                       <Route path="/leaderboard" element={<LeaderboardScreen />} />
                       <Route path="/profile" element={<ProfileScreen />} />
                     </Route>
+                    <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     <Route path="/quiz" element={<QuizStoryScreen />} />
                     <Route path="/daily" element={<DailyChallengeStoryScreen />} />
                     <Route path="/game/:gameId" element={<MiniGameScreen />} />

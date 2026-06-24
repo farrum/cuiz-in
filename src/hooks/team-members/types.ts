@@ -8,6 +8,11 @@ export interface TeamMember {
   daysActive: number | string;
   joinDate: string;
   totalEarned: number;
+  role?: string;
+  directLeaderId?: string;
+  directLeaderUsername?: string;
+  questionsAnswered?: number;
+  questionsCorrect?: number;
 }
 
 export interface TeamMemberStats {

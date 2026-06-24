@@ -22,7 +22,10 @@ const TeamLeaderDashboardPage = () => {
     earnings,
     handleStatusChange,
     requestAccountAction,
-    earningsColumns
+    earningsColumns,
+    isMainTeamLeader,
+    promoteToJunior,
+    demoteToPlayer
   } = useTeamLeaderDashboard();
 
   return (
@@ -54,6 +57,7 @@ const TeamLeaderDashboardPage = () => {
               activeMembers={activeMembers}
               inactiveMembers={inactiveMembers}
               suspendedMembers={suspendedMembers}
+              teamMembers={teamMembers}
             />
             
             <TabsSection
@@ -63,6 +67,9 @@ const TeamLeaderDashboardPage = () => {
               handleStatusChange={handleStatusChange}
               requestAccountAction={requestAccountAction}
               earningsColumns={earningsColumns}
+              isMainTeamLeader={isMainTeamLeader}
+              onPromoteToJunior={promoteToJunior}
+              onDemoteToPlayer={demoteToPlayer}
             />
           </>
         )}

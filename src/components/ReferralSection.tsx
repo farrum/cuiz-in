@@ -59,7 +59,7 @@ const ReferralSection: React.FC = () => {
       setUserName(userName);
     }
     
-    if (userRole === 'team_leader' || userRole === 'teamleader') {
+    if (userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader') {
       setIsTeamLeader(true);
       console.log('User is a team leader based on role:', userRole);
     }
@@ -69,7 +69,7 @@ const ReferralSection: React.FC = () => {
       const parsedReferrals = JSON.parse(savedReferrals);
       setReferrals(parsedReferrals);
       
-      if (userRole !== 'team_leader' && userRole !== 'teamleader') {
+      if (userRole !== 'team_leader' && userRole !== 'teamleader' && userRole !== 'junior_team_leader') {
         const activeReferrals = parsedReferrals.filter((r: any) => r.status === 'active').length;
         const shouldBeTeamLeader = activeReferrals >= 10;
         
@@ -85,7 +85,7 @@ const ReferralSection: React.FC = () => {
     
     const handleRoleUpdate = () => {
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
+      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader');
       console.log('Role update received in ReferralSection, new role:', userRole);
     };
     
@@ -103,7 +103,7 @@ const ReferralSection: React.FC = () => {
     
     try {
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-      if (userRole === 'team_leader' || userRole === 'teamleader') {
+      if (userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader') {
         setIsTeamLeader(true);
         fetchTeamMembers(userId);
         calculateEarnings(userId);
@@ -120,11 +120,11 @@ const ReferralSection: React.FC = () => {
         console.error('Error checking team leader role:', error);
       } else if (data) {
         const role = data.role;
-        const isTeamLeaderRole = role === 'team_leader' || role === 'teamleader';
+        const isTeamLeaderRole = role === 'team_leader' || role === 'teamleader' || role === 'junior_team_leader';
         
         if (isTeamLeaderRole) {
           setIsTeamLeader(true);
-          localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'team_leader');
+          localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
           fetchTeamMembers(userId);
           calculateEarnings(userId);
         }
@@ -397,9 +397,11 @@ const ReferralSection: React.FC = () => {
     <div className="space-y-8">
       <div className="quiz-card">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-medium">Refer Friends</h3>
-          <div className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm">
-            {isTeamLeader ? "Team Leader" : "Regular Member"}
+          <h3 className="text-xl font-medium">{isTeamLeader ? "Invite Users to Your Team" : "Refer Friends"}</h3>
+          <div className="rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-semibold">
+            {localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' ? "Main Team Leader" : 
+             localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'junior_team_leader' ? "Junior Team Leader" : 
+             "Regular Member"}
           </div>
         </div>
         

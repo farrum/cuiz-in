@@ -17,6 +17,7 @@ const getHighestRole = (roles?: { role: string | null }[] | null): string => {
   const roleSet = new Set((roles || []).map((item) => item.role).filter(Boolean));
   if (roleSet.has('admin')) return 'admin';
   if (roleSet.has('team_leader') || roleSet.has('teamleader')) return 'team_leader';
+  if (roleSet.has('junior_team_leader')) return 'junior_team_leader';
   return 'player';
 };
 
@@ -54,7 +55,7 @@ export const useAuthCheck = () => {
         const profile = profileResult.data;
         const isSuspended = profile?.suspended || false;
         const userRole = getHighestRole(roleResult.data);
-        const isTeamLeader = userRole === 'team_leader';
+        const isTeamLeader = userRole === 'team_leader' || userRole === 'junior_team_leader';
         const isAdmin = userRole === 'admin';
         
         // Cache in localStorage for display purposes

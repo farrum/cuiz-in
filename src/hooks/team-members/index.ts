@@ -7,7 +7,7 @@ import { useTeamMemberActions } from './useTeamMemberActions';
 
 // Main hook that composes all team member functionality
 export const useTeamMembers = (teamLeaderId?: string | null) => {
-  const { teamMembers: fetchedMembers, isLoading, error } = useFetchTeamMembers(teamLeaderId);
+  const { teamMembers: fetchedMembers, isLoading, error, refreshMembers } = useFetchTeamMembers(teamLeaderId);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   
   // Set team members from fetched data
@@ -30,7 +30,8 @@ export const useTeamMembers = (teamLeaderId?: string | null) => {
     error,
     handleStatusChange,
     requestAccountAction,
-    actionInProgress
+    actionInProgress,
+    refreshMembers
   };
 };
 

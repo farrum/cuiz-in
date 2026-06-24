@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil } from 'lucide-react';
+import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil, Users, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
@@ -27,6 +27,8 @@ export default function ProfileScreen() {
   const [editProfile, setEditProfile] = useState<MobileProfile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ROLE) : null;
+  const isTeamLeader = userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader';
 
   useEffect(() => {
     if (!uid) return;
@@ -154,6 +156,30 @@ export default function ProfileScreen() {
         <StatCard icon={Flame} label="Streak" value={String(streak)} color="from-red-500 to-pink-500" />
         <StatCard icon={Calendar} label="Answered" value={String(questionsAnswered)} color="from-emerald-500 to-teal-500" />
       </div>
+
+      {isTeamLeader && (
+        <motion.div
+          whileTap={{ scale: 0.97 }}
+          onClick={() => {
+            haptics('light');
+            navigate('/team-dashboard');
+          }}
+          className="mb-6 rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 p-4 flex items-center justify-between cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-indigo-500 text-white shadow-md">
+              <Users className="w-5 h-5" />
+            </span>
+            <div>
+              <p className="font-bold text-sm">Team Control Center</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {userRole === 'junior_team_leader' ? 'Junior Team Leader' : 'Main Team Leader'} Dashboard
+              </p>
+            </div>
+          </div>
+          <ExternalLink className="w-4 h-4 text-indigo-500 animate-pulse" />
+        </motion.div>
+      )}
 
       {/* Reports */}
       <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Your reports</h2>

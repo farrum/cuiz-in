@@ -13,6 +13,7 @@ export const useTeamLeaderDashboard = () => {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [isTeamLeader, setIsTeamLeader] = useState<boolean>(false);
+  const [isMainTeamLeader, setIsMainTeamLeader] = useState<boolean>(false);
   const { 
     teamMembers, 
     activeMembers, 
@@ -20,7 +21,8 @@ export const useTeamLeaderDashboard = () => {
     suspendedMembers, 
     isLoading: membersLoading,
     handleStatusChange,
-    requestAccountAction: teamMemberRequestAction
+    requestAccountAction: teamMemberRequestAction,
+    refreshMembers
   } = useTeamMembers();
   
   const {
@@ -42,10 +44,11 @@ export const useTeamLeaderDashboard = () => {
     const checkTeamLeaderStatus = async () => {
       try {
         const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-        const isLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
+        const isLeaderRole = userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader';
         
         if (isLeaderRole) {
           setIsTeamLeader(true);
+          setIsMainTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
         } else {
           const { data, error } = await supabase
             .from('user_roles')
@@ -56,9 +59,10 @@ export const useTeamLeaderDashboard = () => {
           if (error) throw error;
           
           const role = data?.role;
-          const isLeader = role === 'team_leader' || role === 'teamleader';
+          const isLeader = role === 'team_leader' || role === 'teamleader' || role === 'junior_team_leader';
           
           setIsTeamLeader(isLeader);
+          setIsMainTeamLeader(role === 'team_leader' || role === 'teamleader');
           
           if (!isLeader) {
             toast({
@@ -78,8 +82,51 @@ export const useTeamLeaderDashboard = () => {
     checkTeamLeaderStatus();
   }, [navigate, toast]);
 
-  // This function is now redundant as we already have requestAccountAction from useTeamMembers
-  // Using the renamed version from useTeamMembers instead
+  const promoteToJunior = async (memberId: string) => {
+    try {
+      const { data, error } = await supabase
+        .rpc('promote_member_to_junior_leader', { p_member_id: memberId });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Member has been promoted to Junior Team Leader successfully.",
+      });
+      
+      if (refreshMembers) refreshMembers();
+    } catch (err: any) {
+      console.error('Error promoting member:', err);
+      toast({
+        title: "Promotion Failed",
+        description: err.message || "Failed to promote member.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const demoteToPlayer = async (memberId: string) => {
+    try {
+      const { data, error } = await supabase
+        .rpc('demote_junior_leader', { p_member_id: memberId });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Junior Team Leader has been demoted back to Player successfully.",
+      });
+      
+      if (refreshMembers) refreshMembers();
+    } catch (err: any) {
+      console.error('Error demoting member:', err);
+      toast({
+        title: "Demotion Failed",
+        description: err.message || "Failed to demote member.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const memberColumns = [
     {
@@ -163,6 +210,10 @@ export const useTeamLeaderDashboard = () => {
     handleStatusChange,
     requestAccountAction: teamMemberRequestAction, // Return the renamed function with the expected name
     memberColumns,
-    earningsColumns
+    earningsColumns,
+    refreshMembers,
+    isMainTeamLeader,
+    promoteToJunior,
+    demoteToPlayer
   };
 };

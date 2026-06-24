@@ -934,6 +934,210 @@ const TopPerformersReport = () => {
   );
 };
 
+const TeamLeaderAdminReport = () => {
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [adPerformance, setAdPerformance] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState<'leaders' | 'ads'>('leaders');
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const { data: leadersData, error: leadersError } = await supabase
+        .rpc('admin_get_all_team_leaders_performance');
+        
+      if (leadersError) throw leadersError;
+      
+      const { data: adsData, error: adsError } = await supabase
+        .rpc('admin_get_team_ad_performance');
+        
+      if (adsError) throw adsError;
+      
+      setLeaders(leadersData || []);
+      setAdPerformance(adsData || []);
+    } catch (error) {
+      console.error('Error fetching admin team reports:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load team and ad performance reports",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const leaderColumns = [
+    { header: 'Team Leader', accessorKey: 'leader_username', cell: (row: any) => (
+      <div>
+        <div className="font-semibold">@{row.leader_username}</div>
+        <div className="text-xs text-muted-foreground">{row.leader_display_name}</div>
+      </div>
+    )},
+    { header: 'Role', accessorKey: 'role', cell: (row: any) => (
+      <Badge variant="outline" className={row.role === 'junior_team_leader' ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'}>
+        {row.role === 'junior_team_leader' ? 'Junior TL' : 'Main TL'}
+      </Badge>
+    )},
+    { header: 'Parent Leader', accessorKey: 'parent_leader_username', cell: (row: any) => row.parent_leader_username ? `@${row.parent_leader_username}` : 'None' },
+    { header: 'Direct referrals', accessorKey: 'direct_team_size' },
+    { header: 'Total Team Size', accessorKey: 'total_team_size' },
+    { header: 'Plays (Team)', accessorKey: 'questions_answered' },
+    { header: 'Accuracy (Team)', accessorKey: 'accuracy', cell: (row: any) => {
+      const plays = Number(row.questions_answered) || 0;
+      const correct = Number(row.questions_correct) || 0;
+      return plays > 0 ? `${Math.round((correct / plays) * 100)}%` : '0%';
+    }},
+    { header: 'Team Last Active', accessorKey: 'last_active_date', cell: (row: any) => row.last_active_date || 'Never' }
+  ];
+
+  const adColumns = [
+    { header: 'Team Leader', accessorKey: 'leader_username', cell: (row: any) => (
+      <div>
+        <div className="font-semibold">@{row.leader_username}</div>
+        <div className="text-xs text-muted-foreground">{row.leader_display_name}</div>
+      </div>
+    )},
+    { header: 'Team Size', accessorKey: 'total_team_size' },
+    { header: 'Quiz Plays', accessorKey: 'questions_answered' },
+    { header: 'Ad Impressions', accessorKey: 'ad_impressions' },
+    { header: 'Ad Clicks', accessorKey: 'ad_clicks' },
+    { header: 'CTR', accessorKey: 'ctr', cell: (row: any) => `${row.ctr || 0.0}%` },
+    { header: 'Est. Revenue', accessorKey: 'revenue', cell: (row: any) => {
+      const imps = Number(row.ad_impressions) || 0;
+      const clicks = Number(row.ad_clicks) || 0;
+      const estRev = (imps * 0.05) + (clicks * 1.00);
+      return `₹${estRev.toFixed(2)}`;
+    }}
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Team Leaders & Ad Performance</h2>
+          <p className="text-sm text-muted-foreground">Monitor team play statistics and ad value contribution across leaders.</p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FileDownIcon className="mr-2 h-4 w-4" />
+                Export
+                <ChevronDownIcon className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => downloadCSV(leaders, 'team-leaders-performance')}>
+                Export Team Leaders Stats
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadCSV(adPerformance.map(r => ({
+                ...r,
+                revenue: ((Number(r.ad_impressions) || 0) * 0.05 + (Number(r.ad_clicks) || 0) * 1.00).toFixed(2)
+              })), 'team-ad-performance')}>
+                Export Ad Performance
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button onClick={fetchData} disabled={loading}>
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Team Leaders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold">{leaders.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Team Members</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold">
+              {leaders.reduce((sum, item) => sum + (item.role === 'team_leader' || item.role === 'teamleader' ? item.total_team_size : 0), 0)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Team Quiz Plays</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold">
+              {leaders.reduce((sum, item) => sum + (item.role === 'team_leader' || item.role === 'teamleader' ? Number(item.questions_answered) : 0), 0).toLocaleString()}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Est. Team Ad Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+              ₹{adPerformance.reduce((sum, item) => {
+                const imps = Number(item.ad_impressions) || 0;
+                const clicks = Number(item.ad_clicks) || 0;
+                return sum + (imps * 0.05) + (clicks * 1.00);
+              }, 0).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs value={activeSubTab} onValueChange={(val: any) => setActiveSubTab(val)}>
+        <TabsList>
+          <TabsTrigger value="leaders">Leaders Performance Directory</TabsTrigger>
+          <TabsTrigger value="ads">Team Ad Contribution</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="leaders" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Team Leader Hierarchies & Plays</CardTitle>
+              <CardDescription>Directory of all registered Team Leaders and Junior Team Leaders along with aggregate plays and accuracies.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={leaderColumns} 
+                data={leaders}
+                isLoading={loading}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="ads" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ad Impressions, Clicks, and Contribution</CardTitle>
+              <CardDescription>Track the click-through rates (CTR) and estimated CPC/CPM contribution of ads shown to players in each team leader hierarchy.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={adColumns} 
+                data={adPerformance}
+                isLoading={loading}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
 const AdminReports = () => {
   return (
     <Tabs defaultValue="top-performers">
@@ -967,6 +1171,10 @@ const AdminReports = () => {
           <BarChart3 className="w-4 h-4 mr-2" />
           Ad Reports
         </TabsTrigger>
+        <TabsTrigger value="team-reports" className="flex items-center">
+          <Users className="w-4 h-4 mr-2" />
+          Team & Ads
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="top-performers">
@@ -987,6 +1195,10 @@ const AdminReports = () => {
       
       <TabsContent value="ad-reports">
         <AdViewsReports />
+      </TabsContent>
+      
+      <TabsContent value="team-reports">
+        <TeamLeaderAdminReport />
       </TabsContent>
     </Tabs>
   );

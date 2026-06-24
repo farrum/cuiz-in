@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client'; 
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
-import { isUserActive } from '@/utils/accountSuspension';
 import { TeamMember } from './types';
 
 export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
@@ -30,83 +29,107 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
     return Math.max(1, Math.floor(diffTime / (24 * 60 * 60 * 1000)));
   };
 
-  useEffect(() => {
-    const fetchTeamMembers = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // Get the current user ID (team leader)
-        const userId = teamLeaderId || localStorage.getItem(STORAGE_KEYS.USER_ID);
-        
-        if (!userId) {
-          setError('User ID not found');
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch only the referred members for this team leader
-        const { data: referrals, error } = await supabase
-          .from('user_referrals')
-          .select('*')
-          .eq('referrer_id', userId);
-
-        if (error) throw error;
-        
-        if (referrals && referrals.length > 0) {
-          const membersPromises = referrals.map(async (r) => {
-            const isActive = await isUserActive(r.referred_id);
-            
-            let status = r.status;
-            
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('suspended')
-              .eq('id', r.referred_id)
-              .maybeSingle();
-              
-            if (profile?.suspended) {
-              status = 'suspended';
-            }
-            
-            return {
-              id: r.referred_id,
-              name: r.referred_name,
-              email: r.referred_email || '',
-              status: status as 'active' | 'inactive' | 'suspended',
-              lastActive: r.last_active_date || '-',
-              daysActive: calculateDaysActive(r.date, r.last_active_date || '', status),
-              joinDate: r.date,
-              totalEarned: Number(r.earnings) || 0
-            };
-          });
-          
-          const members = await Promise.all(membersPromises);
-          setTeamMembers(members);
-        } else {
-          // No referred members for this team leader
-          setTeamMembers([]);
-        }
-      } catch (err) {
-        console.error('Error fetching team members:', err);
-        setError('Failed to load team members data');
-        
-        toast({
-          title: "Error",
-          description: "Failed to load team members data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchTeamMembers = async () => {
+    setIsLoading(true);
+    setError(null);
     
+    try {
+      const userId = teamLeaderId || localStorage.getItem(STORAGE_KEYS.USER_ID);
+      
+      if (!userId) {
+        setError('User ID not found');
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch team members from hierarchy function
+      const { data: teamData, error: fetchError } = await supabase
+        .rpc('get_my_team_hierarchy');
+
+      if (fetchError) throw fetchError;
+      
+      if (teamData && teamData.length > 0) {
+        const members = teamData.map((m: any) => {
+          const status = m.status || 'inactive';
+          return {
+            id: m.member_id,
+            name: m.display_name || m.username || 'Unknown',
+            email: m.email || '',
+            status: status as 'active' | 'inactive' | 'suspended',
+            lastActive: m.last_active_date || '-',
+            daysActive: calculateDaysActive(m.join_date, m.last_active_date || '', status),
+            joinDate: m.join_date,
+            totalEarned: 0, // Earnings are aggregated at the end of the month
+            role: m.role || 'player',
+            directLeaderId: m.direct_leader_id,
+            directLeaderUsername: m.direct_leader_username,
+            questionsAnswered: Number(m.questions_answered) || 0,
+            questionsCorrect: Number(m.questions_correct) || 0
+          };
+        });
+        setTeamMembers(members);
+      } else {
+        setTeamMembers([]);
+      }
+    } catch (err) {
+      console.error('Error fetching team members:', err);
+      setError('Failed to load team members data');
+      
+      toast({
+        title: "Error",
+        description: "Failed to load team members data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTeamMembers();
-  }, [teamLeaderId, toast]);
+  }, [teamLeaderId]);
+
+  // Set up real-time subscription for questions answered
+  useEffect(() => {
+    console.log('[Realtime] Subscribing to quiz_answers PostgreSQL changes...');
+    
+    const channel = supabase
+      .channel('team-answers-realtime-monitor')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'quiz_answers' },
+        (payload: any) => {
+          const newAnswer = payload.new;
+          if (newAnswer && newAnswer.user_id) {
+            setTeamMembers(prev => 
+              prev.map(member => {
+                if (member.id === newAnswer.user_id) {
+                  return {
+                    ...member,
+                    questionsAnswered: (member.questionsAnswered || 0) + 1,
+                    questionsCorrect: newAnswer.correct 
+                      ? (member.questionsCorrect || 0) + 1 
+                      : (member.questionsCorrect || 0)
+                  };
+                }
+                return member;
+              })
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[Realtime] Unsubscribing from quiz_answers...');
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return { 
     teamMembers,
     isLoading,
     error,
+    refreshMembers: fetchTeamMembers
   };
 };

@@ -100,7 +100,7 @@ async function hydrateUserFromSession(userId: string) {
     }
 
     const roles = new Set((roleResult.data || []).map((item) => item.role).filter(Boolean));
-    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') || roles.has('teamleader') ? 'team_leader' : 'player';
+    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') || roles.has('teamleader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
 
     if (role === 'admin') {

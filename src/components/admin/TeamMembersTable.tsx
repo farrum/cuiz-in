@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -42,8 +41,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Key, MoreHorizontal, CheckSquare, UserCheck, UserX, Ban } from 'lucide-react';
-import { TeamMember } from '@/hooks/useTeamMembers';
+import { Key, MoreHorizontal, CheckSquare, UserCheck, UserX, Ban, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { TeamMember } from '@/hooks/team-members/types';
 
 interface TeamMembersTableProps {
   teamMembers: TeamMember[];
@@ -51,14 +50,20 @@ interface TeamMembersTableProps {
   onStatusChange: (memberId: string, status: 'active' | 'inactive' | 'suspended') => void;
   onResetPassword?: (memberId: string) => void;
   onRequestAction?: (memberId: string, action: 'suspend' | 'reactivate') => void;
+  isMainTeamLeader?: boolean;
+  onPromoteToJunior?: (memberId: string) => void;
+  onDemoteToPlayer?: (memberId: string) => void;
 }
 
 const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
-  teamMembers,
+  teamMembers = [],
   isLoading,
   onStatusChange,
   onResetPassword,
-  onRequestAction
+  onRequestAction,
+  isMainTeamLeader = false,
+  onPromoteToJunior,
+  onDemoteToPlayer
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -217,7 +222,7 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
         </div>
       )}
         
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -231,115 +236,164 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
                   aria-label="Select all members"
                 />
               </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead>Member</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Direct Leader</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Questions Answered</TableHead>
+              <TableHead>Accuracy</TableHead>
               <TableHead>Join Date</TableHead>
               <TableHead>Last Active</TableHead>
-              <TableHead>Days Active</TableHead>
-              <TableHead>Total Earned</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={10} className="text-center py-8">
                   No team members found
                 </TableCell>
               </TableRow>
             ) : (
-              currentMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <Checkbox 
-                      checked={selectedMembers.includes(member.id)}
-                      onCheckedChange={(checked) => 
-                        handleSelectMember(member.id, checked as boolean)
-                      }
-                      aria-label={`Select ${member.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>{member.name}</TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell>
-                    {member.status === 'active' && (
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
-                    )}
-                    {member.status === 'inactive' && (
-                      <Badge variant="outline" className="bg-gray-100 text-gray-800">
-                        Inactive
-                      </Badge>
-                    )}
-                    {member.status === 'suspended' && (
-                      <Badge variant="destructive">Suspended</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{member.joinDate}</TableCell>
-                  <TableCell>{member.lastActive}</TableCell>
-                  <TableCell>{member.daysActive}</TableCell>
-                  <TableCell>₹{member.totalEarned}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {onRequestAction ? (
-                          <>
-                            {member.status !== 'suspended' && (
-                              <DropdownMenuItem 
-                                onClick={() => handleRequestAction(member.id, 'suspend')}
-                                className="text-red-600"
-                              >
-                                Request Suspension
-                              </DropdownMenuItem>
-                            )}
-                            {member.status === 'suspended' && (
-                              <DropdownMenuItem 
-                                onClick={() => handleRequestAction(member.id, 'reactivate')}
-                                className="text-green-600"
-                              >
-                                Request Reactivation
-                              </DropdownMenuItem>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {member.status !== 'active' && (
-                              <DropdownMenuItem 
-                                onClick={() => onStatusChange(member.id, 'active')}
-                                className="text-green-600"
-                              >
-                                Activate
-                              </DropdownMenuItem>
-                            )}
-                            {member.status !== 'suspended' && (
-                              <DropdownMenuItem 
-                                onClick={() => onStatusChange(member.id, 'suspended')}
-                                className="text-red-600"
-                              >
-                                Suspend
-                              </DropdownMenuItem>
-                            )}
-                          </>
-                        )}
-                        {onResetPassword && (
-                          <DropdownMenuItem 
-                            onClick={() => handleResetPassword(member.id)}
-                            className="flex items-center"
-                          >
-                            <Key className="mr-2 h-4 w-4" />
-                            Reset Password
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+              currentMembers.map((member) => {
+                const totalAnswers = member.questionsAnswered || 0;
+                const totalCorrect = member.questionsCorrect || 0;
+                const accuracy = totalAnswers > 0 ? Math.round((totalCorrect / totalAnswers) * 100) : 0;
+
+                return (
+                  <TableRow key={member.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-800/20">
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedMembers.includes(member.id)}
+                        onCheckedChange={(checked) => 
+                          handleSelectMember(member.id, checked as boolean)
+                        }
+                        aria-label={`Select ${member.name}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold">{member.name}</div>
+                      <div className="text-xs text-muted-foreground">{member.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      {member.role === 'junior_team_leader' ? (
+                        <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200">
+                          Junior TL
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-slate-50 text-slate-500">
+                          Player
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {member.directLeaderUsername ? (
+                        <span className="text-xs font-semibold text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-2 py-1 rounded">
+                          @{member.directLeaderUsername}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Direct</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {member.status === 'active' && (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Active</Badge>
+                      )}
+                      {member.status === 'inactive' && (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400">
+                          Inactive
+                        </Badge>
+                      )}
+                      {member.status === 'suspended' && (
+                        <Badge variant="destructive">Suspended</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-bold text-xs">{totalAnswers.toLocaleString()} plays</TableCell>
+                    <TableCell className="font-semibold text-xs text-teal-600 dark:text-teal-400">{accuracy}%</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{member.joinDate}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{member.lastActive}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {/* Promotion / Demotion Actions */}
+                          {isMainTeamLeader && member.role !== 'junior_team_leader' && onPromoteToJunior && (
+                            <DropdownMenuItem 
+                              onClick={() => onPromoteToJunior(member.id)}
+                              className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-2"
+                            >
+                              <ShieldCheck className="h-4 w-4" />
+                              Promote to Junior TL
+                            </DropdownMenuItem>
+                          )}
+                          {isMainTeamLeader && member.role === 'junior_team_leader' && onDemoteToPlayer && (
+                            <DropdownMenuItem 
+                              onClick={() => onDemoteToPlayer(member.id)}
+                              className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-2"
+                            >
+                              <ShieldAlert className="h-4 w-4" />
+                              Demote to Player
+                            </DropdownMenuItem>
+                          )}
+
+                          {onRequestAction ? (
+                            <>
+                              {member.status !== 'suspended' && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleRequestAction(member.id, 'suspend')}
+                                  className="text-red-600"
+                                >
+                                  Request Suspension
+                                </DropdownMenuItem>
+                              )}
+                              {member.status === 'suspended' && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleRequestAction(member.id, 'reactivate')}
+                                  className="text-green-600"
+                                >
+                                  Request Reactivation
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {member.status !== 'active' && (
+                                <DropdownMenuItem 
+                                  onClick={() => onStatusChange(member.id, 'active')}
+                                  className="text-green-600"
+                                >
+                                  Activate
+                                </DropdownMenuItem>
+                              )}
+                              {member.status !== 'suspended' && (
+                                <DropdownMenuItem 
+                                  onClick={() => onStatusChange(member.id, 'suspended')}
+                                  className="text-red-600"
+                                >
+                                  Suspend
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+                          {onResetPassword && (
+                            <DropdownMenuItem 
+                              onClick={() => handleResetPassword(member.id)}
+                              className="flex items-center"
+                            >
+                              <Key className="mr-2 h-4 w-4" />
+                              Reset Password
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

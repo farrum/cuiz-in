@@ -37,7 +37,7 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
     // Guard for team leader dashboard
     if (isAuthenticated && location.pathname.startsWith('/team-dashboard')) {
       // Normalize role check to include both variations of team leader role
-      const isTeamLeaderRole = userRole === 'team_leader' || userRole === 'teamleader';
+      const isTeamLeaderRole = userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader';
       
       // Only allow access if user has team_leader role
       if (!isTeamLeaderRole && userRole !== 'admin') {

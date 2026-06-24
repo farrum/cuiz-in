@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Users, CalendarDays } from 'lucide-react';
@@ -14,6 +13,9 @@ interface TabsSectionProps {
   handleStatusChange: (userId: string, status: string) => Promise<void>;
   requestAccountAction: (memberId: string, action: 'suspend' | 'reactivate') => Promise<void>;
   earningsColumns: any[];
+  isMainTeamLeader?: boolean;
+  onPromoteToJunior?: (memberId: string) => void;
+  onDemoteToPlayer?: (memberId: string) => void;
 }
 
 const TabsSection: React.FC<TabsSectionProps> = ({
@@ -23,6 +25,9 @@ const TabsSection: React.FC<TabsSectionProps> = ({
   handleStatusChange,
   requestAccountAction,
   earningsColumns,
+  isMainTeamLeader = false,
+  onPromoteToJunior,
+  onDemoteToPlayer
 }) => {
   return (
     <Tabs defaultValue="members" className="mb-8">
@@ -55,6 +60,9 @@ const TabsSection: React.FC<TabsSectionProps> = ({
               isLoading={membersLoading} 
               onStatusChange={handleStatusChange}
               onRequestAction={requestAccountAction}
+              isMainTeamLeader={isMainTeamLeader}
+              onPromoteToJunior={onPromoteToJunior}
+              onDemoteToPlayer={onDemoteToPlayer}
             />
           </CardContent>
         </Card>
