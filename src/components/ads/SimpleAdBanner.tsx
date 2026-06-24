@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,21 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
 }) => {
   const uniqueId = useId().replace(/:/g, "");
   const resolvedPosition = POSITION_MAP[position] || position;
-  const containerId = `ad-container-${resolvedPosition}-${uniqueId}`;
+
+  // Auto-refresh standard banners every 10s while the page stays open. Bumping
+  // the nonce changes the container id + remounts the inner node so the ad
+  // creative/scripts re-execute and a fresh impression is served.
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        setRefreshNonce((n) => n + 1);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const containerId = `ad-container-${resolvedPosition}-${uniqueId}-${refreshNonce}`;
 
   const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({
     position: resolvedPosition,
@@ -74,6 +88,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     >
       <div
         id={containerId}
+        key={containerId}
         className="ad-container min-h-[1px] w-full flex justify-center"
         dangerouslySetInnerHTML={{ __html: adContent }}
         data-ad-position={resolvedPosition}
