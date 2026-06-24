@@ -1,5 +1,6 @@
 
 // This file contains all quiz categories data
+import { getCategoryDisplayName } from '@/utils/categoryMapping';
 
 export type CategoryData = {
   name: string;
