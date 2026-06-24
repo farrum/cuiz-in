@@ -132,7 +132,7 @@ const CategoryDetailPage: React.FC = () => {
   // Use real questions if available, otherwise use featured questions from category data
   const displayQuestions = realQuestions.length > 0 
     ? realQuestions 
-    : category.featuredQuestions;
+    : (category?.featuredQuestions ?? []);
   
   // Generate schema.org structured data for this category
   const categorySchema = {
