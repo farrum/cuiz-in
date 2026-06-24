@@ -39,7 +39,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* Left Column - Text & CTA */}
-        <div className="text-center lg:text-left space-y-6 animate-fade-in" role="main">
+        <div className="text-center lg:text-left space-y-4 animate-fade-in lg:self-start" role="main">
           {/* Social proof badge */}
           <div className="inline-flex items-center gap-2 social-proof-badge">
             <span className="relative flex h-2 w-2">
@@ -50,7 +50,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           </div>
 
           {/* Main heading */}
-          <div className="space-y-4" id="hero-heading">
+          <div className="space-y-3" id="hero-heading">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
               Play Quizzes,{' '}
               <span className="bg-gradient-to-r from-primary via-[hsl(var(--quiz-purple))] to-accent bg-clip-text text-transparent">
@@ -94,6 +94,16 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
                 Create Account
               </Button>
             )}
+          </div>
+
+          {/* Banner ad below CTA */}
+          <div className="w-full max-w-md mx-auto lg:mx-0">
+            <SimpleAdBanner 
+              position="content" 
+              slotId="hero-left-banner" 
+              pageSection="hero-left"
+              className="rounded-xl overflow-hidden" 
+            />
           </div>
 
           {/* Guest plays info */}
