@@ -181,14 +181,14 @@ const CategoriesPage: React.FC = () => {
                     </CardContent>
                   </Card>
                   {(index + 1) % 4 === 0 && index !== categories.length - 1 && (
-                    <div className="col-span-2 lg:col-span-3 xl:col-span-4 my-2 flex justify-center">
+                    <Card className="flex items-center justify-center overflow-hidden">
                       <SimpleAdBanner
                         position="content"
                         slotId={`categories-inline-${Math.floor((index + 1) / 4)}`}
                         pageSection="categories-grid"
-                        className="w-full max-w-[350px] min-h-[250px] flex items-center justify-center"
+                        className="w-full h-full flex items-center justify-center"
                       />
-                    </div>
+                    </Card>
                   )}
                 </React.Fragment>
               ))}
