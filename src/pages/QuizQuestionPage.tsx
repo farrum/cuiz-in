@@ -426,6 +426,9 @@ const QuizQuestionPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* Soft, dismissible registration nudge for guests after a few questions — no login wall */}
+      {isGuest && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
         {/* Breadcrumb Navigation */}
@@ -468,6 +471,19 @@ const QuizQuestionPage: React.FC = () => {
             <Brain className="h-5 w-5" />
             {question ? `${question.category} Quiz` : 'Quiz Question'}
           </div>
+          {/* App-like engagement hook */}
+          {sessionAnswered > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {streak > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold px-2.5 py-1">
+                  <Flame className="h-3.5 w-3.5" /> {streak} in a row
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1">
+                <Sparkles className="h-3.5 w-3.5" /> {sessionAnswered} answered this session
+              </span>
+            </div>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
             {question ? question.question : 'Loading question...'}
           </h1>
@@ -532,7 +548,7 @@ const QuizQuestionPage: React.FC = () => {
                   <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                     {answered.isCorrect ? '✅ Correct!' : '❌ Not quite'}
                   </h3>
-                  <span className="text-xs text-muted-foreground">Next question in 5s…</span>
+                  <span className="text-xs text-muted-foreground">Next question in {countdown}s…</span>
                 </div>
                 {!answered.isCorrect && (
                   <p className="text-sm text-foreground mb-2">
