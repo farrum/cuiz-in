@@ -320,6 +320,7 @@ const QuizPage: React.FC = () => {
       </main>
       
       <Footer />
+      {adElement}
     </div>
   );
 };
