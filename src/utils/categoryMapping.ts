@@ -155,14 +155,19 @@ export const getCategorySlug = (dbCategory: string): string => {
  * Check if a slug is valid
  */
 export const isValidCategorySlug = (slug: string): boolean => {
-  return validCategorySlugs.includes(slug);
+  if (validCategorySlugs.includes(slug)) return true;
+  // Accept raw slugs generated directly from a DB category name
+  return ALL_DB_CATEGORIES.some((cat) => normalizeToSlug(cat) === slug);
 };
 
 /**
  * Get all database categories that map to a given slug
  */
 export const getCategoriesForSlug = (slug: string): string[] => {
-  return slugToCategoriesMap[slug] || [];
+  if (slugToCategoriesMap[slug]) return slugToCategoriesMap[slug];
+  // Fall back to any DB category whose normalized slug matches
+  const matches = ALL_DB_CATEGORIES.filter((cat) => normalizeToSlug(cat) === slug);
+  return matches;
 };
 
 /**
@@ -180,6 +185,19 @@ export const getCategoryDisplayName = (slug: string): string => {
     'general-knowledge': 'General Knowledge',
     'guinness-world-records': 'Guinness World Records',
     'k-pop-k-drama': 'K-Pop & K-Drama',
+    'global-politics': 'Global Politics',
+    'kids-trivia': 'Kids Corner',
+    'law-justice': 'Law & Justice',
+    'music': 'World Music',
+    'environment-nature': 'Environment',
+    'business-finance': 'Business',
   };
-  return displayNames[slug] || slug;
+  if (displayNames[slug]) return displayNames[slug];
+  // Derive a friendly name from a raw DB-category slug
+  const dbMatch = ALL_DB_CATEGORIES.find((cat) => normalizeToSlug(cat) === slug);
+  if (dbMatch) return dbMatch.replace(/&amp;/g, '&');
+  return slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 };
