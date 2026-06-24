@@ -63,8 +63,6 @@ export const categoryToSlugMap: Record<string, string> = {
   'Mythology': 'general-knowledge',
   'Politics': 'general-knowledge',
   'Current Affairs': 'general-knowledge',
-  'Global Politics': 'general-knowledge',
-  'Kids Corner': 'general-knowledge',
   
   // Guinness World Records
   'Guinness World Records': 'guinness-world-records',
@@ -73,6 +71,27 @@ export const categoryToSlugMap: Record<string, string> = {
   'K-Pop Music': 'k-pop-k-drama',
   'Korean Drama': 'k-pop-k-drama',
   'K-Pop & K-Drama': 'k-pop-k-drama',
+
+  // Global Politics
+  'Global Politics': 'global-politics',
+
+  // Kids Corner
+  'Kids Corner': 'kids-trivia',
+
+  // Law & Justice
+  'Law & Justice': 'law-justice',
+
+  // World Music
+  'World Music': 'music',
+
+  // Environment
+  'Environment': 'environment-nature',
+
+  // Business
+  'Business': 'business-finance',
+
+  // Misc geography
+  'World Landmarks': 'geography',
 };
 
 // Reverse map: slug to valid category names array
@@ -93,14 +112,38 @@ export const slugToCategoriesMap: Record<string, string[]> = {
   'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics', 'Current Affairs', 'Global Politics', 'Kids Corner'],
   'guinness-world-records': ['Guinness World Records'],
   'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama'],
+  'global-politics': ['Global Politics', 'Politics', 'Current Affairs'],
+  'kids-trivia': ['Kids Corner'],
+  'law-justice': ['Law & Justice'],
+  'music': ['World Music', 'Entertainment: Music'],
+  'environment-nature': ['Environment', 'Nature'],
+  'business-finance': ['Business'],
 };
 
 // Valid frontend category slugs
 export const validCategorySlugs = [
   'history', 'science', 'geography', 'literature', 
   'entertainment', 'sports', 'technology', 'general-knowledge',
-  'guinness-world-records', 'k-pop-k-drama'
+  'guinness-world-records', 'k-pop-k-drama',
+  'global-politics', 'kids-trivia', 'law-justice', 'music',
+  'environment-nature', 'business-finance'
 ];
+
+/**
+ * Full list of distinct DB category names. Used to resolve raw category slugs
+ * (generated directly from a DB category name) that don't match a grouped slug.
+ */
+const ALL_DB_CATEGORIES = Object.keys(categoryToSlugMap);
+
+/**
+ * Normalize a string into a slug the same way the Categories page does.
+ */
+const normalizeToSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 /**
  * Convert a database category name to a frontend slug
