@@ -56,7 +56,7 @@ const SidebarVideoAd: React.FC<SidebarVideoAdProps> = ({
           </span>
         )}
         <VastVideoAd
-          tagUrl={tagUrl}
+          tagUrl={resolvedTagUrl}
           onReady={() => setVideoReady(true)}
           onUnavailable={() => setVideoFailed(true)}
         />
