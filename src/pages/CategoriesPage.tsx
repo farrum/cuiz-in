@@ -160,25 +160,37 @@ const CategoriesPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {categories.map(category => (
-                <Card key={category.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="text-4xl mb-2">{category.icon}</div>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="truncate mr-2">{category.name}</span>
-                      <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">{category.questionCount}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="mb-4 line-clamp-2">{category.description}</CardDescription>
-                    <Link 
-                      to={`/categories/${category.slug}`} 
-                      className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 w-full"
-                    >
-                      Explore Category
-                    </Link>
-                  </CardContent>
-                </Card>
+              {categories.map((category, index) => (
+                <React.Fragment key={category.id}>
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="text-4xl mb-2">{category.icon}</div>
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="truncate mr-2">{category.name}</span>
+                        <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">{category.questionCount}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="mb-4 line-clamp-2">{category.description}</CardDescription>
+                      <Link 
+                        to={`/categories/${category.slug}`} 
+                        className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 w-full"
+                      >
+                        Explore Category
+                      </Link>
+                    </CardContent>
+                  </Card>
+                  {(index + 1) % 4 === 0 && index !== categories.length - 1 && (
+                    <div className="col-span-2 lg:col-span-3 xl:col-span-4 my-2 flex justify-center">
+                      <SimpleAdBanner
+                        position="content"
+                        slotId={`categories-inline-${Math.floor((index + 1) / 4)}`}
+                        pageSection="categories-grid"
+                        className="w-full max-w-[350px] min-h-[250px] flex items-center justify-center"
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
           )}
