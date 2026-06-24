@@ -36,6 +36,13 @@ import { getCategorySlug } from '@/utils/categoryMapping';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 import RelatedQuestions from '@/components/RelatedQuestions';
 import RelatedArticles from '@/components/RelatedArticles';
+import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
+import { isUserLoggedIn } from '@/utils/guestPlayService';
+import { Flame, Sparkles } from 'lucide-react';
+
+const SESSION_STREAK_KEY = 'cuizin_web_session_streak';
+const SESSION_ANSWERED_KEY = 'cuizin_web_session_answered';
+const AUTO_ADVANCE_SECONDS = 5;
 
 const QuizQuestionPage: React.FC = () => {
   const { questionId, questionSlug } = useParams();
@@ -47,6 +54,16 @@ const QuizQuestionPage: React.FC = () => {
   const [nextQuestion, setNextQuestion] = useState<QuizQuestion | null>(null);
   const [answered, setAnswered] = useState<{ isCorrect: boolean; selected: string } | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
+  const [countdown, setCountdown] = useState(AUTO_ADVANCE_SECONDS);
+  const [streak, setStreak] = useState<number>(() => {
+    const v = Number(sessionStorage.getItem(SESSION_STREAK_KEY) || '0');
+    return Number.isFinite(v) ? v : 0;
+  });
+  const [sessionAnswered, setSessionAnswered] = useState<number>(() => {
+    const v = Number(sessionStorage.getItem(SESSION_ANSWERED_KEY) || '0');
+    return Number.isFinite(v) ? v : 0;
+  });
+  const isGuest = !isUserLoggedIn();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,6 +214,16 @@ const QuizQuestionPage: React.FC = () => {
   const handleQuizComplete = (isCorrect: boolean, selectedAnswer: string) => {
     // Reveal the answer inline; user can click "Next Question" or wait for auto-advance.
     setAnswered({ isCorrect, selected: selectedAnswer });
+    setCountdown(AUTO_ADVANCE_SECONDS);
+
+    // Track an app-like running session streak across in-place navigations.
+    const newStreak = isCorrect ? streak + 1 : 0;
+    setStreak(newStreak);
+    sessionStorage.setItem(SESSION_STREAK_KEY, String(newStreak));
+
+    const newAnswered = sessionAnswered + 1;
+    setSessionAnswered(newAnswered);
+    sessionStorage.setItem(SESSION_ANSWERED_KEY, String(newAnswered));
   };
 
   const goToNextQuestion = React.useCallback(async () => {
@@ -215,11 +242,21 @@ const QuizQuestionPage: React.FC = () => {
     }
   }, [loadingNext, navigate, questionId]);
 
-  // Auto-advance 5s after the user answers
+  // Auto-advance after the user answers, with a live countdown.
   useEffect(() => {
     if (!answered) return;
-    const t = setTimeout(() => { goToNextQuestion(); }, 5000);
-    return () => clearTimeout(t);
+    setCountdown(AUTO_ADVANCE_SECONDS);
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          goToNextQuestion();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [answered, goToNextQuestion]);
 
   const generateQuestionSchema = () => {
