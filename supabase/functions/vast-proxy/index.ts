@@ -94,7 +94,16 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    let tagUrl = url.searchParams.get("tagUrl") || DEFAULT_VAST;
+    let tagUrl = url.searchParams.get("tagUrl");
+    if (!tagUrl && req.method === "POST") {
+      try {
+        const body = await req.json();
+        if (body?.tagUrl) tagUrl = String(body.tagUrl);
+      } catch {
+        /* no/invalid body */
+      }
+    }
+    if (!tagUrl) tagUrl = DEFAULT_VAST;
 
     // Always add a cache-buster + size hints so the network serves fresh
     // inventory instead of an empty dedupe response.
