@@ -6,6 +6,7 @@ import { Play, UserPlus, Zap, CheckCircle2 } from 'lucide-react';
 import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayService';
 import InteractiveQuizPreview from './InteractiveQuizPreview';
 import SocialProofStats from './SocialProofStats';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 
 interface HeroSectionEnhancedProps {
   isLoggedIn: boolean;
