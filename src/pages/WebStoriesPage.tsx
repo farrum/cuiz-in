@@ -308,7 +308,7 @@ const WebStoriesPage: React.FC = () => {
             </h2>
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1 flex flex-col justify-start">
               {currentStory.options.map((option, idx) => {
                 const isCorrect = option === currentStory.correctAnswer;
                 const isSelected = option === selectedAnswer;
@@ -329,7 +329,7 @@ const WebStoriesPage: React.FC = () => {
                     key={idx}
                     onClick={() => !showAnswer && handleAnswerSelect(option)}
                     disabled={showAnswer}
-                    className={`w-full p-4 rounded-xl text-left font-medium transition-all ${optionClass}`}
+                    className={`w-full p-3 rounded-xl text-left font-medium transition-all ${optionClass}`}
                   >
                     <span className="mr-3">{String.fromCharCode(65 + idx)}.</span>
                     {option}
@@ -347,7 +347,7 @@ const WebStoriesPage: React.FC = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center px-4 py-6">
+          <div className="flex justify-between items-center px-4 py-3">
             <Button
               variant="ghost"
               className="text-white hover:bg-white/20"
@@ -373,10 +373,10 @@ const WebStoriesPage: React.FC = () => {
 
           {/* CTA */}
           {showAnswer && (
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-3 -mt-2">
               <Button
                 className="w-full"
-                size="lg"
+                size="sm"
                 onClick={handleNext}
               >
                 {currentIndex < stories.length - 1 ? 'Next Question' : 'Play Full Quiz'}
