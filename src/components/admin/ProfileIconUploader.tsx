@@ -247,9 +247,9 @@ export function ProfileIconUploader() {
         
         {previewUrl && (
           <div className="border rounded p-4 flex justify-center">
-            <img 
-              src={previewUrl} 
-              alt="Icon preview" 
+            <img
+              src={previewUrl}
+              alt={`Preview of ${iconName.trim() ? iconName.trim() : 'profile icon'} image`}
               className="max-h-24 object-contain"
             />
           </div>

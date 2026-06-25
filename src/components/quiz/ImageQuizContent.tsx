@@ -175,7 +175,7 @@ const ImageQuizContent: React.FC<ImageQuizContentProps> = ({
           <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted flex items-center justify-center">
             <img
               src={question.imageUrl}
-              alt="Quiz question image"
+              alt={`${question.question} - quiz question image`}
               width={640}
               height={360}
               className="object-contain w-full h-full"

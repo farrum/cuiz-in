@@ -51,9 +51,9 @@ const PartnershipSection: React.FC = () => {
             <Card key={index} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex justify-center mb-4">
-                  <img 
-                    src={partner.logo} 
-                    alt={`${partner.name} logo`} 
+                  <img
+                    src={partner.logo}
+                    alt={`Official logo of ${partner.name}`}
                     width={64}
                     height={64}
                     className="h-16 w-16 object-contain"
