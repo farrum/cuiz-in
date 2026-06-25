@@ -45,13 +45,14 @@ const WebStoriesPage: React.FC = () => {
   const [showAd, setShowAd] = useState(false);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
 
-  // Auto-advance timer
+  // Auto-advance timer: 12 seconds per question (100 steps × 120ms).
   useEffect(() => {
     if (isPaused || showAnswer || showAd) return;
 
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 100) {
+        const next = prev + 1;
+        if (next >= 100) {
           // Auto advance to next story
           if (currentIndex < stories.length - 1) {
             goToNext();
@@ -59,9 +60,9 @@ const WebStoriesPage: React.FC = () => {
           }
           return 100;
         }
-        return prev + 2;
+        return next;
       });
-    }, 100);
+    }, 120);
 
     return () => clearInterval(interval);
   }, [isPaused, showAnswer, showAd, currentIndex, stories.length]);
