@@ -60,7 +60,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
 
         const formattedPlayers = (data?.players || []).map((player: any) => ({
           username: player.username,
-          gems: Number(player.gems || 0),
+          gems: Number(player.gems ?? player.points ?? 0),
           isCurrentUser: player.id === currentUserId
         }));
 
