@@ -308,7 +308,7 @@ const WebStoriesPage: React.FC = () => {
             </h2>
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1 flex flex-col justify-start">
               {currentStory.options.map((option, idx) => {
                 const isCorrect = option === currentStory.correctAnswer;
                 const isSelected = option === selectedAnswer;
@@ -329,7 +329,7 @@ const WebStoriesPage: React.FC = () => {
                     key={idx}
                     onClick={() => !showAnswer && handleAnswerSelect(option)}
                     disabled={showAnswer}
-                    className={`w-full p-4 rounded-xl text-left font-medium transition-all ${optionClass}`}
+                    className={`w-full p-3 rounded-xl text-left font-medium transition-all ${optionClass}`}
                   >
                     <span className="mr-3">{String.fromCharCode(65 + idx)}.</span>
                     {option}
