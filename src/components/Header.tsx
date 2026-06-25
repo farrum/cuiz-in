@@ -146,6 +146,8 @@ const Header: React.FC = () => {
               alt="CuizIN logo"
               width={36}
               height={36}
+              fetchPriority="high"
+              loading="eager"
               className="w-9 h-9 rounded-xl shadow-lg group-hover:scale-105 transition-transform"
             />
             <span className="text-xl font-bold">

@@ -39,7 +39,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         {/* Left Column - Text & CTA */}
-        <div className="text-center lg:text-left space-y-4 animate-fade-in" role="main">
+        <div className="text-center lg:text-left space-y-4" role="main">
           {/* Social proof badge */}
           <div className="inline-flex items-center gap-2 social-proof-badge">
             <span className="relative flex h-2 w-2">
