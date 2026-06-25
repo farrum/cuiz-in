@@ -85,7 +85,7 @@ export const useTeamLeaderDashboard = () => {
   const promoteToJunior = async (memberId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('promote_member_to_junior_leader', { p_member_id: memberId });
+        .rpc('promote_member_to_junior_leader' as any, { p_member_id: memberId });
         
       if (error) throw error;
       
@@ -108,7 +108,7 @@ export const useTeamLeaderDashboard = () => {
   const demoteToPlayer = async (memberId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('demote_junior_leader', { p_member_id: memberId });
+        .rpc('demote_junior_leader' as any, { p_member_id: memberId });
         
       if (error) throw error;
       

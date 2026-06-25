@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
 import { 
   ChevronDownIcon, 
   FileDownIcon, 
@@ -944,17 +945,17 @@ const TeamLeaderAdminReport = () => {
     setLoading(true);
     try {
       const { data: leadersData, error: leadersError } = await supabase
-        .rpc('admin_get_all_team_leaders_performance');
+        .rpc('admin_get_all_team_leaders_performance' as any);
         
       if (leadersError) throw leadersError;
       
       const { data: adsData, error: adsError } = await supabase
-        .rpc('admin_get_team_ad_performance');
+        .rpc('admin_get_team_ad_performance' as any);
         
       if (adsError) throw adsError;
       
-      setLeaders(leadersData || []);
-      setAdPerformance(adsData || []);
+      setLeaders((leadersData as any) || []);
+      setAdPerformance((adsData as any) || []);
     } catch (error) {
       console.error('Error fetching admin team reports:', error);
       toast({

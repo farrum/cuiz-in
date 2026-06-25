@@ -6,6 +6,10 @@ import { createSlug } from '@/utils/urlUtils';
 import { ChevronLeft, ChevronRight, X, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
+
+const STORY_AD_TAG = 'https://vast.yomeno.xyz/vast?spot_id=1494657';
+const AD_EVERY = 2;
 
 interface StoryQuestion {
   id: string;
@@ -38,19 +42,19 @@ const WebStoriesPage: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showAd, setShowAd] = useState(false);
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
 
   // Auto-advance timer
   useEffect(() => {
-    if (isPaused || showAnswer) return;
+    if (isPaused || showAnswer || showAd) return;
 
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           // Auto advance to next story
           if (currentIndex < stories.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-            setShowAnswer(false);
-            setSelectedAnswer(null);
+            goToNext();
             return 0;
           }
           return 100;
@@ -60,7 +64,7 @@ const WebStoriesPage: React.FC = () => {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPaused, showAnswer, currentIndex, stories.length]);
+  }, [isPaused, showAnswer, showAd, currentIndex, stories.length]);
 
   // Reset progress when story changes
   useEffect(() => {
@@ -143,10 +147,30 @@ const WebStoriesPage: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+  // Advance to the next story, inserting a video ad slide after every 2 questions.
+  const goToNext = () => {
+    if (currentIndex >= stories.length - 1) return;
+    const nextIndex = currentIndex + 1;
+    if ((currentIndex + 1) % AD_EVERY === 0) {
+      setPendingIndex(nextIndex);
+      setShowAd(true);
+      setIsPaused(true);
+      return;
     }
+    setCurrentIndex(nextIndex);
+  };
+
+  const closeAd = () => {
+    setShowAd(false);
+    setIsPaused(false);
+    if (pendingIndex !== null) {
+      setCurrentIndex(pendingIndex);
+      setPendingIndex(null);
+    }
+  };
+
+  const handleNext = () => {
+    goToNext();
   };
 
   const handleAnswerSelect = async (answer: string) => {
@@ -369,6 +393,31 @@ const WebStoriesPage: React.FC = () => {
             className="absolute right-0 top-20 bottom-20 w-1/4 cursor-pointer"
             onClick={handleNext}
           />
+
+          {/* Video Ad Slide */}
+          {showAd && (
+            <div className="absolute inset-0 z-[60] bg-black flex flex-col">
+              <div className="flex items-center justify-between px-4 py-4">
+                <span className="text-[10px] font-bold tracking-widest uppercase bg-white/10 text-white/80 px-3 py-1 rounded-full">
+                  Sponsored Ad
+                </span>
+                <button
+                  onClick={closeAd}
+                  className="text-xs font-semibold bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-full transition-all"
+                >
+                  Skip Ad
+                </button>
+              </div>
+              <div className="flex-1 flex items-center justify-center px-4">
+                <ProxiedVastVideoAd
+                  tagUrl={STORY_AD_TAG}
+                  onUnavailable={closeAd}
+                  onComplete={closeAd}
+                  className="w-full max-h-[70vh] object-contain rounded-2xl"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

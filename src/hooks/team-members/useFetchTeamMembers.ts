@@ -44,12 +44,12 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
 
       // Fetch team members from hierarchy function
       const { data: teamData, error: fetchError } = await supabase
-        .rpc('get_my_team_hierarchy');
+        .rpc('get_my_team_hierarchy' as any);
 
       if (fetchError) throw fetchError;
       
-      if (teamData && teamData.length > 0) {
-        const members = teamData.map((m: any) => {
+      if (teamData && (teamData as any).length > 0) {
+        const members = (teamData as any).map((m: any) => {
           const status = m.status || 'inactive';
           return {
             id: m.member_id,
