@@ -347,7 +347,7 @@ const WebStoriesPage: React.FC = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center px-4 py-6">
+          <div className="flex justify-between items-center px-4 py-3">
             <Button
               variant="ghost"
               className="text-white hover:bg-white/20"
@@ -373,10 +373,10 @@ const WebStoriesPage: React.FC = () => {
 
           {/* CTA */}
           {showAnswer && (
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-3 -mt-2">
               <Button
                 className="w-full"
-                size="lg"
+                size="sm"
                 onClick={handleNext}
               >
                 {currentIndex < stories.length - 1 ? 'Next Question' : 'Play Full Quiz'}
