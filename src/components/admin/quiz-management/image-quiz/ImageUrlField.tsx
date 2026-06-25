@@ -51,7 +51,7 @@ const ImageUrlField: React.FC<ImageUrlFieldProps> = ({ form, previewImage, setPr
                 <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
                   <img
                     src={previewImage}
-                    alt="Question image preview"
+                    alt="Preview of the image for this quiz question"
                     className="object-contain w-full h-full"
                     onError={() => {
                       toast({
