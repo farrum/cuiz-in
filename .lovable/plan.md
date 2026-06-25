@@ -1,43 +1,33 @@
-# Keep mobile web visitors engaged (reduce bounce rate)
+# Add Video Ads to Web Stories
 
-## Goal
-Real mobile-web visitors land on a single SEO page (a quiz question, `/all-questions`, `/stories`) and leave immediately — a "dead-end" landing. We will turn each landing page into the start of a continuous, app-like session so visitors keep playing, **without** a forced login wall and **without** breaking SEO.
+We get strong traffic to `/stories` but currently show no ads there. This adds a full-screen, skippable video ad "slide" into the story flow after every 2 story questions, matching the immersive story format.
 
-> Note: ~90% of the current 95% bounce is sub-second China/Direct/mobile traffic that is almost certainly bots — no UI change affects bots. This plan targets the genuine US/IN/organic mobile segment. As agreed, we are not touching bot filtering here.
+## Behavior
 
-## What we will build
+- After the user finishes every 2nd question (after Q2, Q4, Q6, …), show a video ad slide before the next question.
+- The ad is a VAST video (same network already used in mini-games / sidebar), played muted with autoplay.
+- A "Sponsored" label and a "Skip" control are shown. Skipping (or the video completing) advances to the next question.
+- If no video inventory is available (`onUnavailable`), the ad slide is skipped automatically and the user proceeds straight to the next question — no blank gap.
+- The ad does not break the story progress bars; it appears as an overlay between question transitions.
 
-### 1. Continuous "keep playing" flow on the SEO question pages
-Today a visitor who lands on `/quiz/question/:id/...` answers once and hits a dead end.
-- After the answer is revealed, auto-surface a prominent **"Next question →"** card (and a short auto-advance countdown, matching the existing 5s auto-advance pattern used elsewhere).
-- The next question loads in-place (client-side), so one landing becomes a multi-question session — directly lifting pages/session and visit duration.
-- Keep the canonical SEO URL/meta for the originally landed question; subsequent questions advance via client routing.
+## How it works (technical)
 
-### 2. App-like persistent mobile bottom navigation everywhere
-- Ensure the existing `MobileBottomNav` (Home / Categories / Play / Leaderboard / Profile-or-Login) renders on every mobile web page a visitor can land on — especially `/quiz/question/...`, `/all-questions`, `/stories`, `/categories/...`. This gives a clear next tap instead of the browser back button.
-- Add comfortable bottom padding so content never hides behind the nav.
+File: `src/pages/WebStoriesPage.tsx`
 
-### 3. Soft login (play first, prompt later) — no wall
-- Keep the current guest model: guests can play (existing 30/day guest allowance) with no login required on arrival.
-- Replace any abrupt prompts with a **non-blocking** registration nudge: a dismissible bottom sheet that appears only after the visitor has answered several questions (reuse the existing `RegistrationIncentiveModal` "after N questions" trigger), framed around saving gems/streak. Dismiss = keep playing.
+- Reuse the existing `ProxiedVastVideoAd` component (resolves VAST through the `vast-proxy` edge function so it fills on desktop too) with the default tag URL `https://vast.yomeno.xyz/vast?spot_id=1494657`.
+- Add state: `showAd` (boolean) and a `pendingIndex` (the question index to move to once the ad closes).
+- Create a single `goToNext()` helper used by both the auto-advance timer and the manual next button:
+  - Compute the next index.
+  - If the just-completed question count is a multiple of 2 (`(currentIndex + 1) % 2 === 0`) and there is a next question, set `pendingIndex` and `showAd = true` instead of advancing immediately. Pause the auto-advance timer while the ad is up.
+  - Otherwise advance normally.
+- Add a `closeAd()` helper that sets `currentIndex = pendingIndex`, clears `showAd`, and resets progress/answer state.
+- Render an ad overlay (full-screen `fixed inset-0 z-[60] bg-black` within the story container) when `showAd` is true, containing:
+  - "Sponsored Ad" label + "Skip Ad" button (calls `closeAd`).
+  - `<ProxiedVastVideoAd tagUrl=... onUnavailable={closeAd} onComplete={closeAd} />`.
+- Wire the existing auto-advance `useEffect` and the manual Next button / right-tap navigation to go through `goToNext()` so the ad cadence is consistent regardless of how the user advances. Pause the progress timer while `showAd` is true.
 
-### 4. App-like polish on mobile web
-- Smooth page/question transitions (fade/slide) so navigation feels native, not like full page reloads.
-- Immediate tap feedback on answer options and the "Next" CTA.
-- Make sure the landing question is instantly interactive (no spinner gate) on the SEO pages.
+No backend or schema changes are needed — the VAST proxy edge function already exists.
 
-### 5. Light-touch engagement hooks on landing
-- On the quiz question landing page, show a compact gems/streak indicator and a one-line "answer X in a row" hook to create a goal in the first few seconds.
+## Note
 
-## Explicitly out of scope
-- Routing mobile web users into the Capacitor `AppMobile` story UI (rejected — it forces login and loses SEO context).
-- Any forced login/registration before play.
-- Bot/China traffic filtering.
-
-## Will it actually help?
-Yes, for real users. The biggest bounce driver here is structural: every SEO entry point is a single-action dead end. Adding an immediate, frictionless "next question" loop plus persistent navigation is the highest-leverage change for pages/session, visit duration, and ad impressions — and it compounds with the soft-login nudge converting engaged guests into return visitors. The app-like polish reinforces the feel but the flow/nav changes carry most of the impact.
-
-## Technical notes (for implementation)
-- Primary files: `src/pages/QuizQuestionPage.tsx` / `QuizPlayPage.tsx` (auto-advance + next-question loop), `src/components/home/MobileBottomNav.tsx` and the shared `PageLayout` (render nav on all landing routes), `src/components/home/RegistrationIncentiveModal.tsx` (soft, dismissible, delayed), `src/utils/guestPlayService.ts` (already supports guest play — reuse, no wall).
-- Reuse existing patterns: 5s auto-advance, guest play counter, registration-after-N-questions trigger.
-- All changes are frontend/presentation only; no schema or backend changes. SEO meta/canonical on landing pages stays intact.
+The "every 2 questions" cadence and the VAST spot are easy to tune later if you want a different frequency or ad source.
