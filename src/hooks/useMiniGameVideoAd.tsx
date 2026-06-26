@@ -1,9 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { VastVideoAd } from '@/mobile/ads/VastVideoAd';
+
+const SKIP_SECONDS = 5;
 
 export const useMiniGameVideoAd = () => {
   const [adActive, setAdActive] = useState(false);
   const [onAdComplete, setOnAdComplete] = useState<(() => void) | null>(null);
+  const [remaining, setRemaining] = useState(SKIP_SECONDS);
+
+  useEffect(() => {
+    if (!adActive) return;
+    setRemaining(SKIP_SECONDS);
+    const t = window.setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) { window.clearInterval(t); return 0; }
+        return r - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [adActive]);
+
+  const canSkip = remaining <= 0;
 
   const showVideoAd = (callback: () => void) => {
     setOnAdComplete(() => callback);
@@ -23,19 +40,25 @@ export const useMiniGameVideoAd = () => {
         <span className="text-xs font-black tracking-widest uppercase bg-white/10 px-3 py-1 rounded-full text-slate-300">
           Sponsored Ad
         </span>
-        <button
-          onClick={handleComplete}
-          className="text-xs font-semibold bg-white/10 text-slate-400 hover:text-white px-4 py-2 rounded-full transition-all"
-        >
-          Skip Ad
-        </button>
+        {canSkip ? (
+          <button
+            onClick={handleComplete}
+            className="text-xs font-semibold bg-white/10 text-slate-400 hover:text-white px-4 py-2 rounded-full transition-all"
+          >
+            Skip Ad
+          </button>
+        ) : (
+          <span className="text-xs font-semibold bg-white/10 text-slate-400 px-4 py-2 rounded-full">
+            Skip in {remaining}s
+          </span>
+        )}
       </div>
       <div className="w-full max-w-lg bg-black border border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center min-h-[250px] shadow-2xl relative">
         <VastVideoAd
           tagUrl="https://vast.yomeno.xyz/vast?spot_id=1494657"
           onReady={() => console.log('Video ad loaded')}
-          onUnavailable={handleComplete}
-          onComplete={handleComplete}
+          onUnavailable={() => { if (canSkip) handleComplete(); }}
+          onComplete={() => { if (canSkip) handleComplete(); }}
           className="w-full max-h-[60vh] object-contain rounded-2xl"
         />
       </div>
