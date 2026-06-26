@@ -7,6 +7,7 @@ export const useMiniGameVideoAd = () => {
   const [adActive, setAdActive] = useState(false);
   const [onAdComplete, setOnAdComplete] = useState<(() => void) | null>(null);
   const [remaining, setRemaining] = useState(SKIP_SECONDS);
+  const [pendingClose, setPendingClose] = useState(false);
 
   useEffect(() => {
     if (!adActive) return;
@@ -24,15 +25,28 @@ export const useMiniGameVideoAd = () => {
 
   const showVideoAd = (callback: () => void) => {
     setOnAdComplete(() => callback);
+    setPendingClose(false);
     setAdActive(true);
   };
 
   const handleComplete = () => {
     setAdActive(false);
+    setPendingClose(false);
     if (onAdComplete) {
       onAdComplete();
     }
   };
+
+  // If the video ends or has no inventory before the 5s minimum elapses,
+  // close automatically as soon as the skip window opens.
+  const markFinished = () => {
+    if (canSkip) handleComplete();
+    else setPendingClose(true);
+  };
+
+  useEffect(() => {
+    if (adActive && canSkip && pendingClose) handleComplete();
+  }, [adActive, canSkip, pendingClose]);
 
   const adElement = adActive ? (
     <div className="fixed inset-0 z-[99999] bg-black/95 flex flex-col items-center justify-center p-4" data-no-auto-ads="true">
@@ -57,8 +71,8 @@ export const useMiniGameVideoAd = () => {
         <VastVideoAd
           tagUrl="https://vast.yomeno.xyz/vast?spot_id=1494657"
           onReady={() => console.log('Video ad loaded')}
-          onUnavailable={() => { if (canSkip) handleComplete(); }}
-          onComplete={() => { if (canSkip) handleComplete(); }}
+          onUnavailable={markFinished}
+          onComplete={markFinished}
           className="w-full max-h-[60vh] object-contain rounded-2xl"
         />
       </div>
