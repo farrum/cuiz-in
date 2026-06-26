@@ -25,9 +25,14 @@ function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
       try {
         return await factory();
       } catch (err2) {
-        const key = 'chunk-reload-once';
-        if (!sessionStorage.getItem(key)) {
-          sessionStorage.setItem(key, '1');
+        // Only guard against a *reload loop* within a short window. After that
+        // window passes a fresh deploy is allowed to trigger another reload, so
+        // the page self-heals instead of staying permanently broken.
+        const key = 'chunk-reload-at';
+        const now = Date.now();
+        const last = Number(sessionStorage.getItem(key) || '0');
+        if (!last || now - last > 10000) {
+          sessionStorage.setItem(key, String(now));
           window.location.reload();
           // Return a never-resolving promise while the page reloads.
           return await new Promise<T>(() => {});
