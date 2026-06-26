@@ -28,10 +28,18 @@ export const quizQuestions: QuizQuestion[] = [
   }
 ];
 
-// Get questions from localStorage
+// Get questions from localStorage (never throws on corrupted/oversized data)
 export const getQuestionsFromLocalStorage = (): QuizQuestion[] => {
-  const storedQuestions = localStorage.getItem(STORAGE_KEYS.QUIZ_QUESTIONS);
-  return storedQuestions ? JSON.parse(storedQuestions) : quizQuestions;
+  try {
+    const storedQuestions = localStorage.getItem(STORAGE_KEYS.QUIZ_QUESTIONS);
+    if (!storedQuestions) return quizQuestions;
+    const parsed = JSON.parse(storedQuestions);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : quizQuestions;
+  } catch (e) {
+    console.error('Corrupted cached questions, clearing cache', e);
+    try { localStorage.removeItem(STORAGE_KEYS.QUIZ_QUESTIONS); } catch { /* ignore */ }
+    return quizQuestions;
+  }
 };
 
 // Fetch quiz questions from Supabase
@@ -65,8 +73,12 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
         createdAt: q.created_at
       }));
       
-      // Save to localStorage
-      localStorage.setItem(STORAGE_KEYS.QUIZ_QUESTIONS, JSON.stringify(questions));
+      // Save to localStorage (ignore quota errors so a full cache never blocks play)
+      try {
+        localStorage.setItem(STORAGE_KEYS.QUIZ_QUESTIONS, JSON.stringify(questions));
+      } catch (e) {
+        console.warn('Could not cache questions to localStorage (quota?)', e);
+      }
       
       return questions;
     }
@@ -114,8 +126,16 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
     };
   }
   
-  // Filter out questions the user has already completed
-  const completedQuestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS) || '[]');
+  // Filter out questions the user has already completed (never throw on bad data)
+  let completedQuestions: string[] = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.COMPLETED_QUESTIONS);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) completedQuestions = parsed;
+  } catch (e) {
+    console.error('Corrupted completed-questions list, resetting', e);
+    try { localStorage.removeItem(STORAGE_KEYS.COMPLETED_QUESTIONS); } catch { /* ignore */ }
+  }
   let availableQuestions = questions.filter(q => !completedQuestions.includes(q.id));
   
   // If all questions have been answered, reset or use all questions
