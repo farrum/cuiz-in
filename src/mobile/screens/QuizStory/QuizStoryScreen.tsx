@@ -185,7 +185,7 @@ export default function QuizStoryScreen() {
       // After the 5s reveal, show a full-screen ad every 3rd question (more ad
       // views without interrupting every single question), otherwise advance.
       answerCount.current += 1;
-      const showAd = answerCount.current % 3 === 0;
+      const showAd = answerCount.current % 2 === 0;
       advanceTimer.current = window.setTimeout(() => {
         if (showAd) setShowInterstitial(true);
         else loadNext();
