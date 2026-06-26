@@ -11,6 +11,33 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { syncAdSlotsToLocal } from '@/utils/adService';
 import React from 'react';
 
+// Resilient lazy loader: a "Failed to fetch dynamically imported module" error
+// usually means the user is running an old build whose chunk no longer exists
+// (after a deploy) or a transient network hiccup. Retry once, then force a
+// one-time hard reload to pull the fresh chunk instead of showing an error.
+function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>
+) {
+  return React.lazy(async () => {
+    try {
+      return await factory();
+    } catch (err) {
+      try {
+        return await factory();
+      } catch (err2) {
+        const key = 'chunk-reload-once';
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          window.location.reload();
+          // Return a never-resolving promise while the page reloads.
+          return await new Promise<T>(() => {});
+        }
+        throw err2;
+      }
+    }
+  });
+}
+
 // Eagerly load the Index page for best LCP
 import Index from "@/pages/Index";
 import LoginPage from "@/pages/LoginPage";
@@ -19,18 +46,18 @@ import AuthCallback from "@/pages/AuthCallback";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Lazy load non-critical pages for code splitting
-const QuizPage = React.lazy(() => import("@/pages/QuizPage"));
-const AnswerPage = React.lazy(() => import("@/pages/AnswerPage"));
-const ReferralPage = React.lazy(() => import("@/pages/ReferralPage"));
-const ReferralProgramPage = React.lazy(() => import("@/pages/ReferralProgramPage"));
-const MiniGamesList = React.lazy(() =>
+const QuizPage = lazyWithRetry(() => import("@/pages/QuizPage"));
+const AnswerPage = lazyWithRetry(() => import("@/pages/AnswerPage"));
+const ReferralPage = lazyWithRetry(() => import("@/pages/ReferralPage"));
+const ReferralProgramPage = lazyWithRetry(() => import("@/pages/ReferralProgramPage"));
+const MiniGamesList = lazyWithRetry(() =>
   import('@/pages/MiniGamesList').then((m) => ({ default: m.MiniGamesList }))
 );
-const MiniGamePlayPage = React.lazy(() =>
+const MiniGamePlayPage = lazyWithRetry(() =>
   import('@/pages/MiniGamePlayPage').then((m) => ({ default: m.MiniGamePlayPage }))
 );
 
-const Profile = React.lazy(() => import("@/pages/Profile"));
+const Profile = lazyWithRetry(() => import("@/pages/Profile"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
 const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
