@@ -246,10 +246,10 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       console.error('Error saving answer:', error);
     }
 
-    // Auto-advance after feedback (5s to allow reading explanation)
+    // Auto-advance after feedback (10s to allow reading explanation)
     setTimeout(() => {
       onComplete(isCorrect, answer || 'timeout');
-    }, 5000);
+    }, 10000);
   };
 
   const toggleSound = () => {
