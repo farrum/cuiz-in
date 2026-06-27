@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { VastVideoAd } from '@/mobile/ads/VastVideoAd';
 
-const SKIP_SECONDS = 5;
+const SKIP_SECONDS = 10;
 
 export const useMiniGameVideoAd = () => {
   const [adActive, setAdActive] = useState(false);

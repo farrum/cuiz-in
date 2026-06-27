@@ -182,14 +182,14 @@ export default function QuizStoryScreen() {
         resetStreak();
       }
 
-      // After the 5s reveal, show a full-screen ad every 3rd question (more ad
+      // After the 10s reveal, show a full-screen ad every 2nd question (more ad
       // views without interrupting every single question), otherwise advance.
       answerCount.current += 1;
       const showAd = answerCount.current % 2 === 0;
       advanceTimer.current = window.setTimeout(() => {
         if (showAd) setShowInterstitial(true);
         else loadNext();
-      }, 5000);
+      }, 10000);
     }, wait);
   };
 
@@ -369,7 +369,7 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={5} seed={adSeed} />
+      <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={10} seed={adSeed} />
 
       {/* Preferences sheet */}
       <AnimatePresence>
