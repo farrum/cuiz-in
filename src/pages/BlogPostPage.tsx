@@ -48,7 +48,7 @@ const BlogPostPage: React.FC = () => {
             category: data.category || 'General',
             date: data.published_at ? data.published_at.split('T')[0] : data.created_at ? data.created_at.split('T')[0] : '',
             author: data.author || 'CuizIN Team',
-            readTime: data.read_time || '5 min read',
+            readTime: (data as any).read_time || '5 min read',
             content: data.content || ''
           });
         } else {
