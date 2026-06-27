@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.cuizin.cuizapp',
+  appId: 'com.geologon.cuiz',
   appName: 'cuiz-in',
   webDir: 'dist',
   // server: {

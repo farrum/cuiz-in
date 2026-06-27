@@ -1,4 +1,4 @@
-package com.cuizin.cuizapp;
+package com.geologon.cuiz;
 
 import com.getcapacitor.BridgeActivity;
 
