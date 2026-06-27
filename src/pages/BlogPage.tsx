@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
@@ -17,14 +17,58 @@ import {
 } from '@/components/ui/breadcrumb';
 
 import { blogPosts } from '@/utils/blogData';
+import { supabase } from '@/integrations/supabase/client';
 
 const BlogPage: React.FC = () => {
-  const navigate = useNavigate();
+  const [displayPosts, setDisplayPosts] = useState<any[]>(blogPosts);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Function to handle blog post click navigation
-  const handlePostClick = (slug: string) => {
-    navigate(`/blog/${slug}`);
-  };
+  useEffect(() => {
+    async function loadBlogs() {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('is_published', true)
+          .order('published_at', { ascending: false });
+
+        if (!error && data) {
+          const dbPosts = data.map((b: any) => ({
+            id: b.id,
+            slug: b.slug,
+            title: b.title,
+            excerpt: b.excerpt || '',
+            category: b.category || 'General',
+            date: b.published_at ? b.published_at.split('T')[0] : b.created_at ? b.created_at.split('T')[0] : '',
+            author: b.author || 'CuizIN Team',
+            readTime: b.read_time || '5 min read',
+            content: b.content || ''
+          }));
+
+          // Merge database posts and static posts
+          // De-duplicate by slug, favoring database version
+          const merged = [...dbPosts];
+          const dbSlugs = new Set(dbPosts.map(p => p.slug));
+
+          blogPosts.forEach(sp => {
+            if (!dbSlugs.has(sp.slug)) {
+              merged.push(sp);
+            }
+          });
+
+          // Sort by date desc
+          merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setDisplayPosts(merged);
+        }
+      } catch (err) {
+        console.error('Error fetching dynamic blogs:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadBlogs();
+  }, []);
 
   // Schema.org Blog structured data
   const blogSchema = {
@@ -33,7 +77,7 @@ const BlogPage: React.FC = () => {
     'name': 'CuizIN Blog',
     'description': 'Articles, tips, and guides about quizzes, learning strategies, and earning rewards on CuizIN.',
     'url': 'https://cuiz.in/blog',
-    'blogPost': blogPosts.map(post => ({
+    'blogPost': displayPosts.map(post => ({
       '@type': 'BlogPosting',
       'headline': post.title,
       'description': post.excerpt,
@@ -94,26 +138,26 @@ const BlogPage: React.FC = () => {
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map(post => (
-            <Card 
-              key={post.id} 
-              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" 
-              onClick={() => handlePostClick(post.slug)}
-            >
-              <CardHeader className="pb-2">
-                <div className="text-sm text-muted-foreground mb-2">{post.category} • {post.date}</div>
-                <CardTitle className="text-xl">
-                  {post.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">{post.excerpt}</CardDescription>
-              </CardContent>
-              <CardFooter className="flex justify-between border-t pt-4">
-                <span className="text-sm text-muted-foreground">{post.author}</span>
-                <span className="text-sm text-muted-foreground">{post.readTime}</span>
-              </CardFooter>
-            </Card>
+          {displayPosts.map(post => (
+            <Link key={post.slug} to={`/blog/${post.slug}`} className="block group">
+              <Card 
+                className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col border border-border bg-card text-card-foreground" 
+              >
+                <CardHeader className="pb-2">
+                  <div className="text-sm text-muted-foreground mb-2">{post.category} • {post.date}</div>
+                  <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                    {post.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <CardDescription className="text-base">{post.excerpt}</CardDescription>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t pt-4">
+                  <span className="text-sm text-muted-foreground">{post.author}</span>
+                  <span className="text-sm text-muted-foreground">{post.readTime}</span>
+                </CardFooter>
+              </Card>
+            </Link>
           ))}
         </div>
         
@@ -124,16 +168,16 @@ const BlogPage: React.FC = () => {
         
         <div className="mt-12 text-center">
           <Link 
-            to="/blog/categories" 
+            to="/categories" 
             className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 mr-4"
           >
             Browse by Category
           </Link>
           <Link 
-            to="/blog/archive" 
+            to="/faq" 
             className="inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground px-4 py-2"
           >
-            View Archive
+            View FAQ
           </Link>
         </div>
       </main>

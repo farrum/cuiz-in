@@ -279,16 +279,59 @@ async function run() {
 
   if (blogError) {
     console.error('Error fetching blog posts for sitemap:', blogError);
-  } else if (blogs) {
+  }
+
+  let staticBlogs = [];
+  const blogDataPath = path.join(__dirname, 'src', 'utils', 'blogData.ts');
+  if (fs.existsSync(blogDataPath)) {
+    try {
+      const content = fs.readFileSync(blogDataPath, 'utf8');
+      const marker = 'export const blogPosts: BlogPost[] = ';
+      const index = content.indexOf(marker);
+      if (index !== -1) {
+        let jsonStr = content.substring(index + marker.length).trim();
+        if (jsonStr.endsWith(';')) {
+          jsonStr = jsonStr.substring(0, jsonStr.length - 1).trim();
+        }
+        staticBlogs = JSON.parse(jsonStr);
+        console.log(`Loaded ${staticBlogs.length} static blogs from blogData.ts for sitemap.`);
+      } else {
+        console.warn('Warning: Could not find blogPosts marker in blogData.ts for sitemap');
+      }
+    } catch (err) {
+      console.warn('Warning: Failed to parse static blogData.ts for sitemap:', err.message);
+    }
+  }
+
+  const allBlogsMap = new Map();
+  if (blogs) {
     for (const blog of blogs) {
-      const lastmod = blog.updated_at ? blog.updated_at.split('T')[0] : today;
-      mainEntries.push(`  <url>
+      if (blog.slug) {
+        allBlogsMap.set(blog.slug, {
+          slug: blog.slug,
+          lastmod: blog.updated_at ? blog.updated_at.split('T')[0] : today
+        });
+      }
+    }
+  }
+
+  for (const staticBlog of staticBlogs) {
+    if (staticBlog.slug && !allBlogsMap.has(staticBlog.slug)) {
+      allBlogsMap.set(staticBlog.slug, {
+        slug: staticBlog.slug,
+        lastmod: staticBlog.date || today
+      });
+    }
+  }
+
+  console.log(`Including ${allBlogsMap.size} unique blogs in the sitemap.`);
+  for (const blog of allBlogsMap.values()) {
+    mainEntries.push(`  <url>
     <loc>${SITE_URL}/blog/${escapeXml(blog.slug)}</loc>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${blog.lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`);
-    }
   }
 
   // FAQs

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
@@ -20,12 +20,80 @@ import {
 } from '@/components/ui/breadcrumb';
 
 import { blogPosts } from '@/utils/blogData';
+import { supabase } from '@/integrations/supabase/client';
 
 const BlogPostPage: React.FC = () => {
   const { postSlug } = useParams<{ postSlug: string }>();
+  const [post, setPost] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Find the blog post by slug
-  const post = blogPosts.find(post => post.slug === postSlug);
+  useEffect(() => {
+    async function loadPost() {
+      try {
+        setIsLoading(true);
+        // Try fetching from database first
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('slug', postSlug)
+          .eq('is_published', true)
+          .maybeSingle();
+
+        if (!error && data) {
+          setPost({
+            id: data.id,
+            slug: data.slug,
+            title: data.title,
+            excerpt: data.excerpt || '',
+            category: data.category || 'General',
+            date: data.published_at ? data.published_at.split('T')[0] : data.created_at ? data.created_at.split('T')[0] : '',
+            author: data.author || 'CuizIN Team',
+            readTime: data.read_time || '5 min read',
+            content: data.content || ''
+          });
+        } else {
+          // Fall back to static blogPosts
+          const staticPost = blogPosts.find(p => p.slug === postSlug);
+          if (staticPost) {
+            setPost(staticPost);
+          } else {
+            setPost(null);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching blog post:', err);
+        // Fallback on exception
+        const staticPost = blogPosts.find(p => p.slug === postSlug);
+        if (staticPost) {
+          setPost(staticPost);
+        } else {
+          setPost(null);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (postSlug) {
+      loadPost();
+    }
+  }, [postSlug]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Header />
+        <NewsTicker className="mt-16" />
+        <main className="flex-grow flex items-center justify-center p-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground text-sm">Loading article...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   // If post not found, redirect to blog index
   if (!post) {

@@ -483,6 +483,98 @@ async function run() {
     count++;
   }
 
+  // 5. GENERATE INDIVIDUAL BLOG PAGES (Dynamic from Supabase + Static Fallback)
+  let dbBlogs = [];
+  if (supabaseUrl && supabaseKey) {
+    try {
+      console.log('[seo-pages] Fetching published blogs from Supabase...');
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false });
+
+      if (!error && data) {
+        dbBlogs = data.map(b => ({
+          slug: b.slug,
+          title: b.title,
+          excerpt: b.excerpt || '',
+          category: b.category || 'General',
+          date: b.published_at ? b.published_at.split('T')[0] : b.created_at ? b.created_at.split('T')[0] : '',
+          author: b.author || 'CuizIN Team',
+          readTime: b.read_time || '5 min read',
+          content: b.content || ''
+        }));
+        console.log(`[seo-pages] Fetched ${dbBlogs.length} blogs successfully from database.`);
+      } else if (error) {
+        console.warn('[seo-pages] Warning: Failed to fetch blogs from Supabase:', error.message);
+      }
+    } catch (err) {
+      console.warn('[seo-pages] Warning: Failed to connect or query blogs:', err.message);
+    }
+  }
+
+  let staticBlogs = [];
+  const blogDataPath = path.join(__dirname, 'src', 'utils', 'blogData.ts');
+  if (fs.existsSync(blogDataPath)) {
+    try {
+      const content = fs.readFileSync(blogDataPath, 'utf8');
+      const marker = 'export const blogPosts: BlogPost[] = ';
+      const index = content.indexOf(marker);
+      if (index !== -1) {
+        let jsonStr = content.substring(index + marker.length).trim();
+        if (jsonStr.endsWith(';')) {
+          jsonStr = jsonStr.substring(0, jsonStr.length - 1).trim();
+        }
+        staticBlogs = JSON.parse(jsonStr);
+        console.log(`[seo-pages] Loaded ${staticBlogs.length} static blogs from blogData.ts.`);
+      } else {
+        console.warn('[seo-pages] Warning: Could not find blogPosts marker in blogData.ts');
+      }
+    } catch (err) {
+      console.warn('[seo-pages] Warning: Failed to parse static blogData.ts:', err.message);
+    }
+  }
+
+  // Merge database blogs and static blogs (favoring database version on slug collision)
+  const allBlogs = [...dbBlogs];
+  const dbSlugs = new Set(dbBlogs.map(b => b.slug));
+  staticBlogs.forEach(sb => {
+    if (!dbSlugs.has(sb.slug)) {
+      allBlogs.push(sb);
+    }
+  });
+
+  console.log(`[seo-pages] Generating static pages for ${allBlogs.length} total blog posts...`);
+  for (const blog of allBlogs) {
+    const blogHtml = `
+      <nav class="bc"><a href="/">Home</a> &rsaquo; <a href="/blog">Blog</a> &rsaquo; ${esc(blog.title)}</nav>
+      <article>
+        <h1>${esc(blog.title)}</h1>
+        <div style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+          <span>Category: <strong>${esc(blog.category)}</strong></span> &bull; 
+          <span>Published: <strong>${esc(blog.date)}</strong></span> &bull; 
+          <span>Author: <strong>${esc(blog.author)}</strong></span> &bull; 
+          <span>Read Time: <strong>${esc(blog.readTime)}</strong></span>
+        </div>
+        <div class="content">
+          ${blog.content}
+        </div>
+      </article>
+    `;
+
+    write(`/blog/${blog.slug}`, {
+      title: `${blog.title} | CuizIN Blog`,
+      description: blog.excerpt || `${blog.title} - Read this article on the CuizIN Blog.`,
+      canonical: `${SITE_URL}/blog/${blog.slug}`,
+      bodyHtml: blogHtml
+    });
+    count++;
+  }
+
+  console.log(`[seo-pages] Successfully generated ${count} per-route static HTML files.`);
+
   // Cleanup temporary cache file if it exists
   if (fs.existsSync(cachePath)) {
     try {
