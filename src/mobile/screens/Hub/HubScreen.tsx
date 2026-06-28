@@ -54,10 +54,10 @@ export default function HubScreen() {
   useEffect(() => {
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!uid) return;
-    supabase.from('profiles').select('username, display_name, points, gems_balance').eq('id', uid).maybeSingle()
+    supabase.from('profiles').select('username, display_name, points').eq('id', uid).maybeSingle()
       .then(({ data }) => {
         if (data) {
-          const balance = (data as any).gems_balance ?? (data as any).points ?? 0;
+          const balance = (data as any).points ?? 0;
           setGems(balance);
           const dn = (data as any).display_name || (data as any).username || 'Player';
           setName(dn);

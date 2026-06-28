@@ -36,7 +36,7 @@ export default function ProfileScreen() {
       const today = new Date().toISOString().slice(0, 10);
       const month = new Date().toISOString().slice(0, 7);
       const [p, d, m] = await Promise.all([
-        supabase.from('profiles').select('username, points, gems_balance, display_name, email, phone, upi_id, profile_picture, date_of_birth').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth').eq('id', uid).maybeSingle(),
         supabase.from('daily_points').select('points').eq('user_id', uid).eq('date', today).maybeSingle(),
         supabase.from('monthly_points').select('points').eq('user_id', uid).eq('month', month).maybeSingle(),
       ]);
@@ -44,7 +44,7 @@ export default function ProfileScreen() {
       setProfile({
         name: pd?.display_name || pd?.username || 'Player',
         username: pd?.username || 'Player',
-        gems: Number(pd?.gems_balance ?? pd?.points ?? 0),
+        gems: Number(pd?.points ?? 0),
         daily: Number((d.data as any)?.points ?? 0),
         monthly: Number((m.data as any)?.points ?? 0),
       });

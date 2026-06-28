@@ -158,13 +158,13 @@ const QuizPlayPage: React.FC = () => {
       if (session?.session?.user) {
         const { data } = await (supabase as any)
           .from('profiles')
-          .select('gems_balance')
+          .select('points')
           .eq('id', session.session.user.id)
           .maybeSingle();
-        const currentBalance = (data as any)?.gems_balance || 0;
+        const currentBalance = (data as any)?.points || 0;
         await (supabase as any)
           .from('profiles')
-          .update({ gems_balance: currentBalance + amount })
+          .update({ points: currentBalance + amount })
           .eq('id', session.session.user.id);
         fetchGems();
       }
@@ -259,19 +259,19 @@ const QuizPlayPage: React.FC = () => {
       // Double the daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-        const currentBalance = (data as any)?.gems_balance || 0;
-        await (supabase as any).from('profiles').update({ gems_balance: currentBalance + dailyGems }).eq('id', session.session.user.id);
+        const { data } = await (supabase as any).from('profiles').select('points').eq('id', session.session.user.id).single();
+        const currentBalance = (data as any)?.points || 0;
+        await (supabase as any).from('profiles').update({ points: currentBalance + dailyGems }).eq('id', session.session.user.id);
         fetchGems();
       }
     } else {
       // Lose daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await (supabase as any).from('profiles').select('gems_balance').eq('id', session.session.user.id).single();
-        const currentBalance = (data as any)?.gems_balance || 0;
+        const { data } = await (supabase as any).from('profiles').select('points').eq('id', session.session.user.id).single();
+        const currentBalance = (data as any)?.points || 0;
         const newBalance = Math.max(0, currentBalance - dailyGems);
-        await (supabase as any).from('profiles').update({ gems_balance: newBalance }).eq('id', session.session.user.id);
+        await (supabase as any).from('profiles').update({ points: newBalance }).eq('id', session.session.user.id);
         fetchGems();
       }
       resetStreak();
