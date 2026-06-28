@@ -155,15 +155,15 @@ export const MiniGamePlayPage: React.FC = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data } = await (supabase as any)
           .from('profiles')
-          .select('gems_balance')
+          .select('points')
           .eq('id', session.session.user.id)
           .maybeSingle();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const currentBalance = (data as any)?.gems_balance || 0;
+        const currentBalance = (data as any)?.points || 0;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any)
           .from('profiles')
-          .update({ gems_balance: currentBalance + 500 })
+          .update({ points: currentBalance + 500 })
           .eq('id', session.session.user.id);
         
         // Dispatch gemsUpdated event

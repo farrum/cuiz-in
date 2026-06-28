@@ -33,11 +33,11 @@ export const SkillTreeContainer: React.FC<SkillTreeContainerProps> = ({ userId }
       // 3. Fetch user's gem balance
       const { data: profileData } = await (supabase as any)
         .from('profiles')
-        .select('gems_balance')
+        .select('points')
         .eq('id', userId)
         .maybeSingle();
 
-      setUserGems(profileData?.gems_balance || 0);
+      setUserGems(profileData?.points || 0);
 
       const unlockedSet = new Set<string>((unlockedData || []).map((row: any) => row.skill_id));
 
