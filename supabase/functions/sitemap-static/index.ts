@@ -17,64 +17,28 @@ const SITE_URL = 'https://cuiz.in';
 // Based on actual database categories (36 total)
 const slugToCategoriesMap: Record<string, string[]> = {
   'history': ['History', 'Indian History'],
-  'science': [
-    'Science', 
-    'Science & Nature', 
-    'Science &amp; Nature',
-    'Nature',
-    'Science: Mathematics',
-    'Mathematics'
-  ],
-  'geography': ['Geography'],
-  'literature': [
-    'Art', 
-    'Arts & Literature', 
-    'Arts and Literature',
-    'Entertainment: Books',
-    'Literature'
-  ],
+  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Science: Mathematics', 'Mathematics'],
+  'geography': ['Geography', 'World Landmarks'],
+  'literature': ['Arts & Literature', 'Arts and Literature', 'Entertainment: Books', 'Art', 'Literature'],
   'entertainment': [
-    'Entertainment', 
-    'Entertainment: Board Games', 
-    'Entertainment: Books', 
-    'Entertainment: Cartoon & Animations',
-    'Entertainment: Cartoon &amp; Animations',
-    'Entertainment: Comics', 
-    'Entertainment: Film',
-    'Entertainment: Japanese Anime & Manga',
-    'Entertainment: Japanese Anime &amp; Manga',
-    'Entertainment: Music', 
-    'Entertainment: Musicals & Theatres',
-    'Entertainment: Musicals &amp; Theatres',
-    'Entertainment: Television', 
-    'Entertainment: Video Games',
-    'Celebrities',
-    'Bollywood',
-    'World Music'
+    'Entertainment', 'Entertainment: Video Games', 
+    'Entertainment: Film', 'Entertainment: Television', 'Entertainment: Board Games',
+    'Entertainment: Musicals &amp; Theatres', 'Entertainment: Japanese Anime &amp; Manga',
+    'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities',
+    'Bollywood'
   ],
   'sports': ['Sports', 'Cricket'],
-  'technology': [
-    'Science: Computers', 
-    'Science: Gadgets', 
-    'Science and Technology',
-    'Science & Technology',
-    'Vehicles',
-    'Technology'
-  ],
-  'general-knowledge': [
-    'General Knowledge', 
-    'Mythology', 
-    'Animals', 
-    'Culture',
-    'Food & Drink',
-    'Food and Drinks',
-    'Politics',
-    'Current Affairs',
-    'Global Politics',
-    'Kids Corner'
-  ],
+  'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles', 'Technology'],
+  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks'],
   'guinness-world-records': ['Guinness World Records'],
-  'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama']
+  'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama'],
+  'global-politics': ['Global Politics', 'Politics', 'Current Affairs'],
+  'kids-trivia': ['Kids Corner'],
+  'law-justice': ['Law & Justice'],
+  'music': ['World Music', 'Entertainment: Music'],
+  'environment-nature': ['Environment', 'Nature'],
+  'business-finance': ['Business'],
+  'mythology': ['Mythology'],
 };
 
 // Subcategory definitions — keep in sync with src/utils/subcategoryConfig.ts
@@ -135,18 +99,64 @@ const subcategoriesByCategory: Record<string, SubDef[]> = {
     { slug: 'electric-vehicles', name: 'Electric Vehicles', keywords: ['tesla', 'electric vehicle', ' ev ', 'evs', 'lithium', 'battery', 'rivian', 'charging station', 'hybrid car'] },
   ],
   'general-knowledge': [
-    { slug: 'mythology', name: 'Mythology', dbCategories: ['Mythology'] },
     { slug: 'animals', name: 'Animals', dbCategories: ['Animals'] },
     { slug: 'food-drink', name: 'Food & Drink', dbCategories: ['Food & Drink', 'Food and Drinks'] },
-    { slug: 'politics', name: 'Politics', dbCategories: ['Politics'] },
     { slug: 'culture', name: 'Culture', dbCategories: ['Culture'] },
     { slug: 'green-energy', name: 'Green Energy & Sustainability', keywords: ['solar', 'wind energy', 'renewable', 'sustainability', 'climate', 'carbon', 'greenhouse', 'hydro', 'geothermal', 'biofuel', 'recycling'] },
+  ],
+  'guinness-world-records': [
+    { slug: 'human-achievements', name: 'Human Achievements', keywords: ['tallest', 'shortest', 'oldest', 'youngest', 'most', 'longest', 'fastest', 'human'] },
+    { slug: 'sports-records', name: 'Sports Records', keywords: ['olympic', 'world cup', 'record', 'athlete', 'marathon', 'swimming', 'boxing'] },
+    { slug: 'nature-records', name: 'Nature & Animals', keywords: ['animal', 'tree', 'flower', 'ocean', 'mountain', 'river', 'desert', 'largest animal'] },
+    { slug: 'food-records', name: 'Food Records', keywords: ['pizza', 'burger', 'cake', 'largest food', 'spicy', 'eating', 'cooking'] },
+    { slug: 'entertainment-records', name: 'Entertainment Records', keywords: ['movie', 'song', 'album', 'concert', 'film', 'box office', 'streaming'] },
+    { slug: 'science-records', name: 'Science & Technology', keywords: ['space', 'rocket', 'satellite', 'computer', 'robot', 'experiment', 'laboratory'] },
   ],
   'k-pop-k-drama': [
     { slug: 'k-pop-music', name: 'K-Pop Music', dbCategories: ['K-Pop Music', 'K-Pop & K-Drama'], keywords: ['k-pop', 'kpop', 'bts', 'blackpink', 'exo', 'twice', 'music', 'album', 'song'] },
     { slug: 'korean-drama', name: 'Korean Drama', dbCategories: ['Korean Drama', 'K-Pop & K-Drama'], keywords: ['drama', 'k-drama', 'kdrama', 'squid game', 'crash landing', 'actor', 'actress', 'series'] }
   ],
+  'mythology': [
+    { slug: 'greek-mythology', name: 'Greek Mythology', keywords: ['greek', 'zeus', 'hera', 'poseidon', 'hades', 'apollo', 'athena', 'hercules', 'olympus', 'perseus'] },
+    { slug: 'norse-mythology', name: 'Norse Mythology', keywords: ['norse', 'thor', 'odin', 'loki', 'valhalla', 'asgard', 'ragnarok', 'mjolnir', 'freyja'] },
+    { slug: 'egyptian-mythology', name: 'Egyptian Mythology', keywords: ['egyptian', 'isis', 'osiris', 'horus', 'ra ', 'anubis', 'pharaoh', 'sphinx', 'seth'] },
+    { slug: 'hindu-mythology', name: 'Hindu Mythology', keywords: ['hindu', 'ramayana', 'mahabharata', 'krishna', 'rama', 'shiva', 'vishnu', 'brahma', 'ganesha', 'arjuna'] },
+  ],
+  'global-politics': [
+    { slug: 'indian-politics', name: 'Indian Politics', keywords: ['india', 'modi', 'gandhi', 'nehru', 'parliament', 'lok sabha', 'bjp', 'congress'] },
+    { slug: 'world-politics', name: 'World Politics', keywords: ['us president', 'united nations', 'un ', 'treaty', 'democracy', 'election', 'minister', 'prime minister', 'senate'] },
+    { slug: 'current-affairs', name: 'Current Affairs', dbCategories: ['Current Affairs'] },
+  ],
 };
+
+const categoryToSlugMap: Record<string, string> = {};
+for (const [slug, cats] of Object.entries(slugToCategoriesMap)) {
+  for (const cat of cats) {
+    categoryToSlugMap[cat] = slug;
+  }
+}
+function getCategorySlug(cat: string): string {
+  return categoryToSlugMap[cat] || 'general-knowledge';
+}
+
+function getQuestionSubcategorySlug(dbCategory: string, questionText: string): string | undefined {
+  const parentSlug = getCategorySlug(dbCategory);
+  if (!parentSlug) return undefined;
+  
+  const subcategories = subcategoriesByCategory[parentSlug] || [];
+  for (const sub of subcategories) {
+    if (sub.dbCategories && sub.dbCategories.includes(dbCategory)) {
+      return sub.slug;
+    }
+    if (sub.keywords && sub.keywords.length > 0) {
+      const lowerText = questionText.toLowerCase();
+      if (sub.keywords.some(kw => lowerText.includes(kw.toLowerCase().replace(/[,()]/g, '')))) {
+        return sub.slug;
+      }
+    }
+  }
+  return undefined;
+}
 
 function createSlug(text: string, maxLength: number = 80): string {
   if (!text) return '';
@@ -323,7 +333,7 @@ ${entries.join('\n')}
       }
       
       // Paginate to get ALL questions (Supabase default limit is 1000)
-      const allQuestions: { id: string; question: string; created_at: string | null }[] = [];
+      const allQuestions: { id: string; question: string; category: string; created_at: string | null }[] = [];
       let offset = 0;
       const pageSize = 1000;
       let hasMore = true;
@@ -331,7 +341,7 @@ ${entries.join('\n')}
       while (hasMore) {
         const { data: questions, error } = await supabase
           .from('quiz_questions')
-          .select('id, question, created_at')
+          .select('id, question, category, created_at')
           .in('category', dbCategories)
           .order('created_at', { ascending: false })
           .range(offset, offset + pageSize - 1);
@@ -356,8 +366,12 @@ ${entries.join('\n')}
         const slug = createSlug(q.question);
         if (slug) {
           const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
+          const subSlug = getQuestionSubcategorySlug(q.category, q.question);
+          const urlPath = subSlug
+            ? `/quiz/question/${q.id}/${category}/${subSlug}/${escapeXml(slug)}`
+            : `/quiz/question/${q.id}/${category}/${escapeXml(slug)}`;
           entries.push(`  <url>
-    <loc>${SITE_URL}/quiz/question/${q.id}/${category}/${escapeXml(slug)}</loc>
+    <loc>${SITE_URL}${urlPath}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -423,7 +437,7 @@ ${entries.join('\n')}
         if (!slug) continue;
         const lastmod = qq.created_at ? qq.created_at.split('T')[0] : today;
         entries.push(`  <url>
-    <loc>${SITE_URL}/quiz/question/${qq.id}/${category}/${escapeXml(slug)}</loc>
+    <loc>${SITE_URL}/quiz/question/${qq.id}/${category}/${sub}/${escapeXml(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -1,4 +1,5 @@
 import { getCategorySlug } from './categoryMapping';
+import { getQuestionSubcategorySlug } from './subcategoryConfig';
 
 /**
  * Creates a SEO-friendly URL slug from a string
@@ -35,7 +36,12 @@ export const createQuestionUrl = (
   const slug = createSlug(question, 80);
 
   if (category) {
-    return `/quiz/question/${id}/${getCategorySlug(category)}/${slug}`;
+    const categorySlug = getCategorySlug(category);
+    const subSlug = getQuestionSubcategorySlug(category, question);
+    if (subSlug) {
+      return `/quiz/question/${id}/${categorySlug}/${subSlug}/${slug}`;
+    }
+    return `/quiz/question/${id}/${categorySlug}/${slug}`;
   }
 
   return `/quiz/question/${id}/${slug}`;

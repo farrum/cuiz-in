@@ -172,7 +172,7 @@ const SubcategoryPage: React.FC = () => {
               <Card key={q.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <Link
-                    to={`/quiz/question/${q.id}/${categorySlug}/${createSlug(q.question, 50)}`}
+                    to={`/quiz/question/${q.id}/${categorySlug}/${subSlug}/${createSlug(q.question, 50)}`}
                     className="font-medium hover:text-primary transition-colors"
                   >
                     {q.question}

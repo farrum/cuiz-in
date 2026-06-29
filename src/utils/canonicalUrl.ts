@@ -6,6 +6,7 @@
 
 import { createSlug } from './urlUtils';
 import { getCategorySlug } from './categoryMapping';
+import { getQuestionSubcategorySlug } from './subcategoryConfig';
 
 const SITE_URL = 'https://cuiz.in';
 
@@ -31,6 +32,10 @@ export const generateCanonicalUrl = (options: CanonicalUrlOptions): string => {
     const questionSlug = createSlug(questionText, 80);
     if (category) {
       const categorySlug = getCategorySlug(category);
+      const subSlug = getQuestionSubcategorySlug(category, questionText);
+      if (subSlug) {
+        return `${SITE_URL}/quiz/question/${questionId}/${categorySlug}/${subSlug}/${questionSlug}`;
+      }
       return `${SITE_URL}/quiz/question/${questionId}/${categorySlug}/${questionSlug}`;
     }
     return `${SITE_URL}/quiz/question/${questionId}/${questionSlug}`;

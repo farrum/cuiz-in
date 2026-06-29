@@ -33,6 +33,7 @@ import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
+import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 import RelatedQuestions from '@/components/RelatedQuestions';
 import RelatedArticles from '@/components/RelatedArticles';
@@ -387,12 +388,18 @@ const QuizQuestionPage: React.FC = () => {
   // Create consistent slug for canonical URL (matches sitemap generation)
   const canonicalSlug = question ? createSlug(question.question, 80) : '';
 
+  const subSlug = question ? getQuestionSubcategorySlug(question.category, question.question) : undefined;
+  const subDef = question && subSlug ? getSubcategory(categorySlug, subSlug) : undefined;
+
   // JSON-LD breadcrumbs
   const breadcrumbs = question ? [
     createBreadcrumbs.home(),
     createBreadcrumbs.quiz(),
     createBreadcrumbs.custom(question.category, `/categories/${categorySlug}`),
-    createBreadcrumbs.custom('Question', `/quiz/question/${questionId}/${categorySlug}/${canonicalSlug}`)
+    ...(subDef ? [createBreadcrumbs.custom(subDef.name, `/categories/${categorySlug}/${subSlug}`)] : []),
+    createBreadcrumbs.custom('Question', subSlug 
+      ? `/quiz/question/${questionId}/${categorySlug}/${subSlug}/${canonicalSlug}`
+      : `/quiz/question/${questionId}/${categorySlug}/${canonicalSlug}`)
   ] : [];
 
   return (
@@ -454,6 +461,16 @@ const QuizQuestionPage: React.FC = () => {
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
+                {subDef && (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to={`/categories/${categorySlug}/${subSlug}`}>{subDef.name}</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
               </>
             )}
             <BreadcrumbItem>
@@ -604,31 +621,45 @@ const QuizQuestionPage: React.FC = () => {
             
             {/* Question navigation */}
             <div className="flex justify-between mt-8">
-              {prevQuestion ? (
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  asChild
-                >
-                  <Link to={`/quiz/question/${prevQuestion.id}/${getCategorySlug(prevQuestion.category)}/${createSlug(prevQuestion.question, 50)}`}>
-                    <ChevronLeft className="h-4 w-4" /> Previous Question
-                  </Link>
-                </Button>
-              ) : (
-                <div></div>
-              )}
+              {(() => {
+                if (!prevQuestion) return <div></div>;
+                const prevCatSlug = getCategorySlug(prevQuestion.category);
+                const prevSubSlug = getQuestionSubcategorySlug(prevQuestion.category, prevQuestion.question);
+                const prevUrl = prevSubSlug
+                  ? `/quiz/question/${prevQuestion.id}/${prevCatSlug}/${prevSubSlug}/${createSlug(prevQuestion.question, 50)}`
+                  : `/quiz/question/${prevQuestion.id}/${prevCatSlug}/${createSlug(prevQuestion.question, 50)}`;
+                return (
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <Link to={prevUrl}>
+                      <ChevronLeft className="h-4 w-4" /> Previous Question
+                    </Link>
+                  </Button>
+                );
+              })()}
               
-              {nextQuestion && (
-                <Button 
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  asChild
-                >
-                  <Link to={`/quiz/question/${nextQuestion.id}/${getCategorySlug(nextQuestion.category)}/${createSlug(nextQuestion.question, 50)}`}>
-                    Next Question <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
+              {(() => {
+                if (!nextQuestion) return null;
+                const nextCatSlug = getCategorySlug(nextQuestion.category);
+                const nextSubSlug = getQuestionSubcategorySlug(nextQuestion.category, nextQuestion.question);
+                const nextUrl = nextSubSlug
+                  ? `/quiz/question/${nextQuestion.id}/${nextCatSlug}/${nextSubSlug}/${createSlug(nextQuestion.question, 50)}`
+                  : `/quiz/question/${nextQuestion.id}/${nextCatSlug}/${createSlug(nextQuestion.question, 50)}`;
+                return (
+                  <Button 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <Link to={nextUrl}>
+                      Next Question <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                );
+              })()}
             </div>
             
             <SimpleAdBanner position="content" className="my-8" />

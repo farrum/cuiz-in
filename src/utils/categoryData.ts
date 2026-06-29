@@ -157,11 +157,51 @@ export const categoriesArray = [
     description: 'Test your knowledge on K-Pop music, groups, and popular Korean dramas.',
     questionCount: 84,
     icon: '🇰🇷'
+  },
+  {
+    id: 17,
+    name: 'Mythology',
+    slug: 'mythology',
+    description: 'Test your knowledge of world myths, gods, legends, and ancient folklore.',
+    questionCount: 0,
+    icon: '🏛️'
   }
 ];
 
 // Complete category data with additional details
 export const categoryData: CategoryDataRecord = {
+  'mythology': {
+    name: 'Mythology',
+    description: 'Test your knowledge of world myths, gods, legends, and ancient folklore.',
+    longDescription: 'Explore the myths and legends that shaped ancient cultures. Our mythology quizzes cover Greek, Roman, Norse, Egyptian, and Hindu mythologies. Test your knowledge about gods, goddesses, heroes, monsters, and legendary tales.',
+    questionCount: 0,
+    icon: '🏛️',
+    difficultyDistribution: {
+      easy: 35,
+      medium: 45,
+      hard: 20
+    },
+    subcategories: [
+      'Greek Mythology', 'Norse Mythology', 'Egyptian Mythology', 'Roman Mythology', 'Hindu Mythology'
+    ],
+    featuredQuestions: [
+      {
+        id: 'myth-001',
+        question: 'Who is the king of the gods in Greek mythology?',
+        difficulty: 'easy'
+      },
+      {
+        id: 'myth-002',
+        question: 'What is the name of Thor\'s hammer in Norse mythology?',
+        difficulty: 'medium'
+      }
+    ],
+    topPerformers: [
+      { username: 'MythosMaster', gems: 1000, rank: 1 },
+      { username: 'OdinsRaven', gems: 900, rank: 2 },
+      { username: 'ZeusLightning', gems: 800, rank: 3 }
+    ]
+  },
   'history': {
     name: 'History',
     description: 'Test your knowledge of world history, important events, and historical figures.',

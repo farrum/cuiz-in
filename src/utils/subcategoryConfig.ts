@@ -5,6 +5,8 @@
 // IMPORTANT: This file is mirrored inside supabase/functions/sitemap-static so
 // the edge function can serve subcategory sitemaps. Keep them in sync.
 
+import { getCategorySlug } from './categoryMapping';
+
 export interface SubcategoryDef {
   slug: string;
   name: string;
@@ -71,10 +73,8 @@ export const subcategoriesByCategory: Record<string, SubcategoryDef[]> = {
     { slug: 'electric-vehicles', name: 'Electric Vehicles', keywords: ['tesla', 'electric vehicle', ' ev ', 'evs', 'lithium', 'battery', 'rivian', 'charging station', 'hybrid car'] },
   ],
   'general-knowledge': [
-    { slug: 'mythology', name: 'Mythology', dbCategories: ['Mythology'] },
     { slug: 'animals', name: 'Animals', dbCategories: ['Animals'] },
     { slug: 'food-drink', name: 'Food & Drink', dbCategories: ['Food & Drink', 'Food and Drinks'] },
-    { slug: 'politics', name: 'Politics', dbCategories: ['Politics'] },
     { slug: 'culture', name: 'Culture', dbCategories: ['Culture'] },
     { slug: 'green-energy', name: 'Green Energy & Sustainability', keywords: ['solar', 'wind energy', 'renewable', 'sustainability', 'climate', 'carbon', 'greenhouse', 'hydro', 'geothermal', 'biofuel', 'recycling'] },
   ],
@@ -90,6 +90,17 @@ export const subcategoriesByCategory: Record<string, SubcategoryDef[]> = {
     { slug: 'k-pop-music', name: 'K-Pop Music', dbCategories: ['K-Pop Music', 'K-Pop & K-Drama'], keywords: ['k-pop', 'kpop', 'bts', 'blackpink', 'exo', 'twice', 'music', 'album', 'song'] },
     { slug: 'korean-drama', name: 'Korean Drama', dbCategories: ['Korean Drama', 'K-Pop & K-Drama'], keywords: ['drama', 'k-drama', 'kdrama', 'squid game', 'crash landing', 'actor', 'actress', 'series'] }
   ],
+  'mythology': [
+    { slug: 'greek-mythology', name: 'Greek Mythology', keywords: ['greek', 'zeus', 'hera', 'poseidon', 'hades', 'apollo', 'athena', 'hercules', 'olympus', 'perseus'] },
+    { slug: 'norse-mythology', name: 'Norse Mythology', keywords: ['norse', 'thor', 'odin', 'loki', 'valhalla', 'asgard', 'ragnarok', 'mjolnir', 'freyja'] },
+    { slug: 'egyptian-mythology', name: 'Egyptian Mythology', keywords: ['egyptian', 'isis', 'osiris', 'horus', 'ra ', 'anubis', 'pharaoh', 'sphinx', 'seth'] },
+    { slug: 'hindu-mythology', name: 'Hindu Mythology', keywords: ['hindu', 'ramayana', 'mahabharata', 'krishna', 'rama', 'shiva', 'vishnu', 'brahma', 'ganesha', 'arjuna'] },
+  ],
+  'global-politics': [
+    { slug: 'indian-politics', name: 'Indian Politics', keywords: ['india', 'modi', 'gandhi', 'nehru', 'parliament', 'lok sabha', 'bjp', 'congress'] },
+    { slug: 'world-politics', name: 'World Politics', keywords: ['us president', 'united nations', 'un ', 'treaty', 'democracy', 'election', 'minister', 'prime minister', 'senate'] },
+    { slug: 'current-affairs', name: 'Current Affairs', dbCategories: ['Current Affairs'] },
+  ],
 };
 
 export function getSubcategories(parentSlug: string): SubcategoryDef[] {
@@ -98,4 +109,28 @@ export function getSubcategories(parentSlug: string): SubcategoryDef[] {
 
 export function getSubcategory(parentSlug: string, subSlug: string): SubcategoryDef | undefined {
   return getSubcategories(parentSlug).find((s) => s.slug === subSlug);
+}
+
+/**
+ * Resolves which subcategory slug a question belongs to
+ */
+export function getQuestionSubcategorySlug(dbCategory: string, questionText: string): string | undefined {
+  const parentSlug = getCategorySlug(dbCategory);
+  if (!parentSlug) return undefined;
+  
+  const subcategories = subcategoriesByCategory[parentSlug] || [];
+  for (const sub of subcategories) {
+    // Check dbCategories match
+    if (sub.dbCategories && sub.dbCategories.includes(dbCategory)) {
+      return sub.slug;
+    }
+    // Check keywords match
+    if (sub.keywords && sub.keywords.length > 0) {
+      const lowerText = questionText.toLowerCase();
+      if (sub.keywords.some(kw => lowerText.includes(kw.toLowerCase().replace(/[,()]/g, '')))) {
+        return sub.slug;
+      }
+    }
+  }
+  return undefined;
 }

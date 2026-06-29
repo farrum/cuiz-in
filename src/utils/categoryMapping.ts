@@ -13,7 +13,6 @@ export const categoryToSlugMap: Record<string, string> = {
   'Science': 'science',
   'Science & Nature': 'science',
   'Science &amp; Nature': 'science',
-  'Nature': 'science',
   'Science: Computers': 'technology',
   'Science: Gadgets': 'technology',
   'Science: Mathematics': 'science',
@@ -35,7 +34,7 @@ export const categoryToSlugMap: Record<string, string> = {
   // Entertainment (multiple DB categories)
   'Entertainment': 'entertainment',
   'Entertainment: Video Games': 'entertainment',
-  'Entertainment: Music': 'entertainment',
+  'Entertainment: Music': 'music',
   'Entertainment: Film': 'entertainment',
   'Entertainment: Television': 'entertainment',
   'Entertainment: Board Games': 'entertainment',
@@ -59,9 +58,6 @@ export const categoryToSlugMap: Record<string, string> = {
   'Animals': 'general-knowledge',
   'Food & Drink': 'general-knowledge',
   'Food and Drinks': 'general-knowledge',
-  'Mythology': 'general-knowledge',
-  'Politics': 'general-knowledge',
-  'Current Affairs': 'general-knowledge',
   
   // Guinness World Records
   'Guinness World Records': 'guinness-world-records',
@@ -73,6 +69,8 @@ export const categoryToSlugMap: Record<string, string> = {
 
   // Global Politics
   'Global Politics': 'global-politics',
+  'Politics': 'global-politics',
+  'Current Affairs': 'global-politics',
 
   // Kids Corner
   'Kids Corner': 'kids-trivia',
@@ -83,11 +81,15 @@ export const categoryToSlugMap: Record<string, string> = {
   // World Music
   'World Music': 'music',
 
-  // Environment
+  // Environment / Nature
   'Environment': 'environment-nature',
+  'Nature': 'environment-nature',
 
   // Business
   'Business': 'business-finance',
+
+  // Mythology
+  'Mythology': 'mythology',
 
   // Misc geography
   'World Landmarks': 'geography',
@@ -96,11 +98,11 @@ export const categoryToSlugMap: Record<string, string> = {
 // Reverse map: slug to valid category names array
 export const slugToCategoriesMap: Record<string, string[]> = {
   'history': ['History', 'Indian History'],
-  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Nature', 'Science: Mathematics', 'Mathematics'],
-  'geography': ['Geography'],
+  'science': ['Science', 'Science & Nature', 'Science &amp; Nature', 'Science: Mathematics', 'Mathematics'],
+  'geography': ['Geography', 'World Landmarks'],
   'literature': ['Arts & Literature', 'Arts and Literature', 'Entertainment: Books', 'Art', 'Literature'],
   'entertainment': [
-    'Entertainment', 'Entertainment: Video Games', 'Entertainment: Music', 
+    'Entertainment', 'Entertainment: Video Games', 
     'Entertainment: Film', 'Entertainment: Television', 'Entertainment: Board Games',
     'Entertainment: Musicals &amp; Theatres', 'Entertainment: Japanese Anime &amp; Manga',
     'Entertainment: Cartoon &amp; Animations', 'Entertainment: Comics', 'Celebrities',
@@ -108,7 +110,7 @@ export const slugToCategoriesMap: Record<string, string[]> = {
   ],
   'sports': ['Sports', 'Cricket'],
   'technology': ['Science: Computers', 'Science: Gadgets', 'Science and Technology', 'Science & Technology', 'Vehicles', 'Technology'],
-  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks', 'Mythology', 'Politics', 'Current Affairs', 'Global Politics', 'Kids Corner'],
+  'general-knowledge': ['General Knowledge', 'Culture', 'Animals', 'Food & Drink', 'Food and Drinks'],
   'guinness-world-records': ['Guinness World Records'],
   'k-pop-k-drama': ['K-Pop Music', 'Korean Drama', 'K-Pop & K-Drama'],
   'global-politics': ['Global Politics', 'Politics', 'Current Affairs'],
@@ -117,6 +119,7 @@ export const slugToCategoriesMap: Record<string, string[]> = {
   'music': ['World Music', 'Entertainment: Music'],
   'environment-nature': ['Environment', 'Nature'],
   'business-finance': ['Business'],
+  'mythology': ['Mythology'],
 };
 
 // Valid frontend category slugs
@@ -125,7 +128,7 @@ export const validCategorySlugs = [
   'entertainment', 'sports', 'technology', 'general-knowledge',
   'guinness-world-records', 'k-pop-k-drama',
   'global-politics', 'kids-trivia', 'law-justice', 'music',
-  'environment-nature', 'business-finance'
+  'environment-nature', 'business-finance', 'mythology'
 ];
 
 /**
