@@ -63,6 +63,20 @@ const WebStoriesPage: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [showAd, setShowAd] = useState(false);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  const [adRemaining, setAdRemaining] = useState(10);
+
+  // Enforce a minimum 10-second wait before the video ad can be skipped.
+  useEffect(() => {
+    if (!showAd) return;
+    setAdRemaining(10);
+    const t = setInterval(() => {
+      setAdRemaining((r) => {
+        if (r <= 1) { clearInterval(t); return 0; }
+        return r - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [showAd]);
 
   // Auto-advance timer: 12 seconds per question (100 steps × 120ms).
   useEffect(() => {
