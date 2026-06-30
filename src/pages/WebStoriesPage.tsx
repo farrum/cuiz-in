@@ -619,8 +619,8 @@ const WebStoriesPage: React.FC = () => {
                   <div className="flex-1 flex items-center justify-center px-4">
                     <ProxiedVastVideoAd
                       tagUrl={STORY_AD_TAG}
-                      onUnavailable={() => { if (adRemaining <= 0) closeAd(); }}
-                      onComplete={() => { if (adRemaining <= 0) closeAd(); }}
+                      onUnavailable={() => { if (adRemaining <= 0) closeAd(); else setAdPendingClose(true); }}
+                      onComplete={() => { if (adRemaining <= 0) closeAd(); else setAdPendingClose(true); }}
                       className="w-full max-h-[70vh] object-contain rounded-2xl"
                     />
                   </div>
