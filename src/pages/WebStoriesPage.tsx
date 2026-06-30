@@ -64,11 +64,13 @@ const WebStoriesPage: React.FC = () => {
   const [showAd, setShowAd] = useState(false);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
   const [adRemaining, setAdRemaining] = useState(10);
+  const [adPendingClose, setAdPendingClose] = useState(false);
 
   // Enforce a minimum 10-second wait before the video ad can be skipped.
   useEffect(() => {
     if (!showAd) return;
     setAdRemaining(10);
+    setAdPendingClose(false);
     const t = setInterval(() => {
       setAdRemaining((r) => {
         if (r <= 1) { clearInterval(t); return 0; }
@@ -77,6 +79,11 @@ const WebStoriesPage: React.FC = () => {
     }, 1000);
     return () => clearInterval(t);
   }, [showAd]);
+
+  // If the video finished/was unavailable before the 10s gate, auto-close once it elapses.
+  useEffect(() => {
+    if (showAd && adPendingClose && adRemaining <= 0) closeAd();
+  }, [showAd, adPendingClose, adRemaining]);
 
   // Auto-advance timer: 12 seconds per question (100 steps × 120ms).
   useEffect(() => {
