@@ -63,6 +63,27 @@ const WebStoriesPage: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [showAd, setShowAd] = useState(false);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  const [adRemaining, setAdRemaining] = useState(10);
+  const [adPendingClose, setAdPendingClose] = useState(false);
+
+  // Enforce a minimum 10-second wait before the video ad can be skipped.
+  useEffect(() => {
+    if (!showAd) return;
+    setAdRemaining(10);
+    setAdPendingClose(false);
+    const t = setInterval(() => {
+      setAdRemaining((r) => {
+        if (r <= 1) { clearInterval(t); return 0; }
+        return r - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [showAd]);
+
+  // If the video finished/was unavailable before the 10s gate, auto-close once it elapses.
+  useEffect(() => {
+    if (showAd && adPendingClose && adRemaining <= 0) closeAd();
+  }, [showAd, adPendingClose, adRemaining]);
 
   // Auto-advance timer: 12 seconds per question (100 steps × 120ms).
   useEffect(() => {
@@ -582,18 +603,24 @@ const WebStoriesPage: React.FC = () => {
                     <span className="text-[10px] font-bold tracking-widest uppercase bg-white/10 text-white/80 px-3 py-1 rounded-full">
                       Sponsored Ad
                     </span>
-                    <button
-                      onClick={closeAd}
-                      className="text-xs font-semibold bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-full transition-all"
-                    >
-                      Skip Ad
-                    </button>
+                    {adRemaining > 0 ? (
+                      <span className="text-xs font-semibold bg-white/10 text-white/50 px-4 py-2 rounded-full">
+                        Skip in {adRemaining}s
+                      </span>
+                    ) : (
+                      <button
+                        onClick={closeAd}
+                        className="text-xs font-semibold bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-full transition-all"
+                      >
+                        Skip Ad
+                      </button>
+                    )}
                   </div>
                   <div className="flex-1 flex items-center justify-center px-4">
                     <ProxiedVastVideoAd
                       tagUrl={STORY_AD_TAG}
-                      onUnavailable={closeAd}
-                      onComplete={closeAd}
+                      onUnavailable={() => { if (adRemaining <= 0) closeAd(); else setAdPendingClose(true); }}
+                      onComplete={() => { if (adRemaining <= 0) closeAd(); else setAdPendingClose(true); }}
                       className="w-full max-h-[70vh] object-contain rounded-2xl"
                     />
                   </div>

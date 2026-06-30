@@ -12,7 +12,7 @@ interface QuizInterstitialProps {
 
 const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
   onContinue,
-  countdownSeconds = 5,
+  countdownSeconds = 10,
 }) => {
   const [remaining, setRemaining] = useState(countdownSeconds);
 
