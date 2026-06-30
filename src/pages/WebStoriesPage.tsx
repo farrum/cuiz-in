@@ -596,12 +596,18 @@ const WebStoriesPage: React.FC = () => {
                     <span className="text-[10px] font-bold tracking-widest uppercase bg-white/10 text-white/80 px-3 py-1 rounded-full">
                       Sponsored Ad
                     </span>
-                    <button
-                      onClick={closeAd}
-                      className="text-xs font-semibold bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-full transition-all"
-                    >
-                      Skip Ad
-                    </button>
+                    {adRemaining > 0 ? (
+                      <span className="text-xs font-semibold bg-white/10 text-white/50 px-4 py-2 rounded-full">
+                        Skip in {adRemaining}s
+                      </span>
+                    ) : (
+                      <button
+                        onClick={closeAd}
+                        className="text-xs font-semibold bg-white/10 text-white/70 hover:text-white px-4 py-2 rounded-full transition-all"
+                      >
+                        Skip Ad
+                      </button>
+                    )}
                   </div>
                   <div className="flex-1 flex items-center justify-center px-4">
                     <ProxiedVastVideoAd
