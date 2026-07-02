@@ -1,5 +1,37 @@
 apply plugin: 'com.android.application'
 
+// ---- Auto-incrementing app version ----
+// Reads android/version.properties, bumps the version on every build:
+//   versionName goes 1.0 -> 1.1 -> ... -> 1.9 -> 2.0 -> 2.1 ...
+//   versionCode increments by 1 each build.
+def versionPropsFile = file('../version.properties')
+def autoVersionCode = 1
+def autoVersionName = "1.0"
+if (versionPropsFile.exists()) {
+    def versionProps = new Properties()
+    versionPropsFile.withInputStream { versionProps.load(it) }
+
+    def code = (versionProps['VERSION_CODE'] ?: '1').toInteger()
+    def major = (versionProps['VERSION_MAJOR'] ?: '1').toInteger()
+    def minor = (versionProps['VERSION_MINOR'] ?: '0').toInteger()
+
+    // Bump for this build
+    code += 1
+    minor += 1
+    if (minor > 9) {
+        minor = 0
+        major += 1
+    }
+
+    autoVersionCode = code
+    autoVersionName = "${major}.${minor}"
+
+    versionProps['VERSION_CODE'] = code.toString()
+    versionProps['VERSION_MAJOR'] = major.toString()
+    versionProps['VERSION_MINOR'] = minor.toString()
+    versionProps.store(versionPropsFile.newWriter(), null)
+}
+
 android {
     namespace = "com.geologon.cuiz"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +39,8 @@ android {
         applicationId "com.geologon.cuiz"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode autoVersionCode
+        versionName autoVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
