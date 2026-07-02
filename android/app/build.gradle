@@ -7,6 +7,12 @@ apply plugin: 'com.android.application'
 def versionPropsFile = file('../version.properties')
 def autoVersionCode = 1
 def autoVersionName = "1.0"
+// Only bump when an actual build/assemble/bundle task is requested,
+// so IDE syncs don't inflate the version.
+def isBuildInvocation = gradle.startParameter.taskNames.any { name ->
+    def n = name.toLowerCase()
+    n.contains('assemble') || n.contains('bundle') || n.contains('build') || n.contains('install')
+}
 if (versionPropsFile.exists()) {
     def versionProps = new Properties()
     versionPropsFile.withInputStream { versionProps.load(it) }
@@ -15,21 +21,22 @@ if (versionPropsFile.exists()) {
     def major = (versionProps['VERSION_MAJOR'] ?: '1').toInteger()
     def minor = (versionProps['VERSION_MINOR'] ?: '0').toInteger()
 
-    // Bump for this build
-    code += 1
-    minor += 1
-    if (minor > 9) {
-        minor = 0
-        major += 1
+    if (isBuildInvocation) {
+        // Bump for this build
+        code += 1
+        minor += 1
+        if (minor > 9) {
+            minor = 0
+            major += 1
+        }
+        versionProps['VERSION_CODE'] = code.toString()
+        versionProps['VERSION_MAJOR'] = major.toString()
+        versionProps['VERSION_MINOR'] = minor.toString()
+        versionProps.store(versionPropsFile.newWriter(), null)
     }
 
     autoVersionCode = code
     autoVersionName = "${major}.${minor}"
-
-    versionProps['VERSION_CODE'] = code.toString()
-    versionProps['VERSION_MAJOR'] = major.toString()
-    versionProps['VERSION_MINOR'] = minor.toString()
-    versionProps.store(versionPropsFile.newWriter(), null)
 }
 
 android {
