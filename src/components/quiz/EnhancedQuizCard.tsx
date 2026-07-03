@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp, Landmark, Star, User } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp, Landmark, Star, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { updateTotalStars } from '@/utils/rewardService';
