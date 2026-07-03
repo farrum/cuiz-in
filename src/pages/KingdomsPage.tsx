@@ -152,7 +152,7 @@ export default function KingdomsPage() {
 
   const fetchRankings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_alliance_rankings');
+      const { data, error } = await (supabase as any).rpc('get_alliance_rankings');
       if (!error && data) {
         setRankings(data as Alliance[]);
       }
@@ -216,7 +216,7 @@ export default function KingdomsPage() {
     setCreating(true);
     haptics('medium');
     try {
-      const { data } = await supabase.rpc('create_alliance', {
+      const { data } = await (supabase as any).rpc('create_alliance', {
         p_name: newName,
         p_description: newDesc,
         p_crest_emoji: newCrest,
@@ -242,7 +242,7 @@ export default function KingdomsPage() {
     if (!userId) return;
     haptics('light');
     try {
-      const { data } = await supabase.rpc('join_alliance', {
+      const { data } = await (supabase as any).rpc('join_alliance', {
         p_alliance_id: allianceId,
         p_user_id: userId
       });
@@ -270,7 +270,7 @@ export default function KingdomsPage() {
 
     haptics('warning');
     try {
-      const { data } = await supabase.rpc('leave_alliance', { p_user_id: userId });
+      const { data } = await (supabase as any).rpc('leave_alliance', { p_user_id: userId });
       const res = data as any;
 
       if (res?.error) {
@@ -294,7 +294,7 @@ export default function KingdomsPage() {
     setSendingMsg(true);
     haptics('light');
     try {
-      await supabase.from('alliance_chat').insert({
+      await (supabase as any).from('alliance_chat').insert({
         alliance_id: myAlliance.alliance_id,
         user_id: userId,
         username: username || 'Knight',

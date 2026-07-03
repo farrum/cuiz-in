@@ -161,7 +161,7 @@ export const DailyHangman: React.FC<DailyHangmanProps> = ({
 
     try {
       // Call secure claim RPC (Double Gems + 30 Stars)
-      const { data } = await supabase.rpc('claim_hangman_victory', {
+      const { data } = await (supabase as any).rpc('claim_hangman_victory', {
         user_uuid: userId,
         bid_amount: bidAmount
       });
