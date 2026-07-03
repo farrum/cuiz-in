@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Trophy, User, Zap } from 'lucide-react';
+import { Home, Trophy, User, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useHaptics } from '../hooks/useHaptics';
@@ -7,7 +7,7 @@ import { useHaptics } from '../hooks/useHaptics';
 type Tab = { to: string; label: string; icon: typeof Home; primary?: boolean };
 const tabs: Tab[] = [
   { to: '/hub', label: 'Home', icon: Home },
-  { to: '/quiz', label: 'Play', icon: Zap, primary: true },
+  { to: '/empire-quests', label: 'Quests', icon: Swords, primary: true },
   { to: '/leaderboard', label: 'Ranks', icon: Trophy },
   { to: '/profile', label: 'Me', icon: User },
 ];

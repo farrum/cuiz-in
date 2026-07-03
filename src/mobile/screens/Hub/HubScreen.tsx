@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
+import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MotivationBubble } from '@/mobile/components/MotivationBubble';
@@ -24,6 +24,8 @@ type Node = {
 };
 
 const FEATURED_MODES: Node[] = [
+  { id: 'quests', label: 'Empire Quests', to: '/empire-quests', icon: Swords, color: 'from-amber-500 via-yellow-500 to-amber-600', hint: 'Embark on historical campaigns with your battle counsel' },
+  { id: 'kingdoms', label: 'Kingdoms Dynasty', to: '/kingdoms', icon: Landmark, color: 'from-blue-600 to-indigo-500', hint: 'Establish your faction, design crests & compete in rankings' },
   { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-primary via-purple-500 to-pink-500', hint: 'Answer questions, build streaks & earn gems' },
   { id: 'daily', label: 'Daily Challenge', to: '/daily', icon: Calendar, color: 'from-orange-500 to-red-500', hint: 'Complete the daily special for 2x rewards!' },
 ];

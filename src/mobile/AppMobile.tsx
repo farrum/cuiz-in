@@ -22,6 +22,8 @@ const OnboardingScreen = lazy(() => import('./screens/Onboarding/OnboardingScree
 const MobileLoginScreen = lazy(() => import('./screens/Login/MobileLoginScreen'));
 const DailyChallengeStoryScreen = lazy(() => import('./screens/DailyChallengeStory/DailyChallengeStoryScreen'));
 const MiniGameScreen = lazy(() => import('./screens/MiniGames/MiniGameScreen'));
+const EmpireQuestsPage = lazy(() => import('../pages/EmpireQuestsPage'));
+const KingdomsPage = lazy(() => import('../pages/KingdomsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -96,7 +98,7 @@ function AppMobile() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="cuizin-mobile-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="cuizin-mobile-theme">
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -110,6 +112,8 @@ function AppMobile() {
                       <Route path="/hub" element={<HubScreen />} />
                       <Route path="/leaderboard" element={<LeaderboardScreen />} />
                       <Route path="/profile" element={<ProfileScreen />} />
+                      <Route path="/empire-quests" element={<EmpireQuestsPage />} />
+                      <Route path="/kingdoms" element={<KingdomsPage />} />
                     </Route>
                     <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     <Route path="/quiz" element={<QuizStoryScreen />} />

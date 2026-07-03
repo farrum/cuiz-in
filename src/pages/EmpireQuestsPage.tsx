@@ -374,7 +374,7 @@ export default function EmpireQuestsPage() {
 
   const startTimer = (quest: EmpireCampaign) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const startVal = quest.id === 'rome_siege' ? 6 : 15;
+    const startVal = 15;
     setTimer(startVal);
 
     timerRef.current = setInterval(() => {

@@ -42,25 +42,46 @@ export default function MobileLoginScreen() {
         navigate('/hub');
       } else {
         const uname = (username || email.split('@')[0]).trim();
-        const { data, error } = await supabase.functions.invoke('register-user', {
-          body: {
-            username: uname,
-            displayName: uname,
-            email: email.trim(),
-            phone: '',
-            password,
-          },
+        
+        // Check if username is already taken
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', uname)
+          .maybeSingle();
+
+        if (existingUser) {
+          throw new Error('Username is already taken');
+        }
+
+        // Create standard credentials account
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              username: uname,
+            }
+          }
         });
-        if (error || !data?.success) {
-          const msg = data?.error || error?.message || 'Registration failed';
-          throw new Error(typeof msg === 'string' ? msg : 'Registration failed');
+        if (error) throw error;
+
+        if (data?.user) {
+          // Create matching profile row
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              { 
+                id: data.user.id,
+                username: uname,
+                email: data.user.email,
+              }
+            ]);
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
         }
-        if (data.access_token && data.refresh_token) {
-          await supabase.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-          });
-        }
+
         trackGuestEvent({ event_type: 'registered' });
         haptics('success');
         navigate('/hub');
@@ -91,7 +112,39 @@ export default function MobileLoginScreen() {
 
       <div className="flex-1 flex flex-col justify-center">
         <div className="text-center mb-6">
-          <Mascot mood={mode === 'forgot-password' ? 'thinking' : 'happy'} size={80} className="mx-auto mb-3" />
+          {/* Kings & Advisors Royal Assembly Lineup */}
+          <div className="relative h-28 w-full flex items-center justify-center mb-6 mt-2 select-none overflow-visible">
+            {/* Left outer: Socrates */}
+            <div className="absolute left-[calc(50%-100px)] bottom-2 transform -translate-x-1/2 scale-75 opacity-60 z-0 bg-slate-900 border border-slate-800 text-cyan-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
+              <span className="text-xl">🏛️</span>
+              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Socrates</span>
+            </div>
+
+            {/* Left inner: Aryabhata */}
+            <div className="absolute left-[calc(50%-55px)] bottom-3 transform -translate-x-1/2 scale-90 opacity-80 z-10 bg-slate-900 border border-slate-800 text-amber-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
+              <span className="text-xl">📐</span>
+              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Aryabhata</span>
+            </div>
+
+            {/* Center Front: The King */}
+            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 scale-110 z-25 bg-[#fcf6ea] border-2 border-[#d4af37] text-slate-950 p-2.5 rounded-3xl shadow-xl flex flex-col items-center animate-[bounce_3s_infinite] shadow-yellow-500/10">
+              <span className="text-3xl select-none">👑</span>
+              <span className="text-[8px] uppercase font-black tracking-widest text-[#78350f] mt-0.5">The King</span>
+            </div>
+
+            {/* Right inner: Chanakya */}
+            <div className="absolute left-[calc(50%+55px)] bottom-3 transform -translate-x-1/2 scale-90 opacity-80 z-10 bg-slate-900 border border-slate-800 text-rose-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
+              <span className="text-xl">📜</span>
+              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Chanakya</span>
+            </div>
+
+            {/* Right outer: Ramanujan */}
+            <div className="absolute left-[calc(50%+100px)] bottom-2 transform -translate-x-1/2 scale-75 opacity-60 z-0 bg-slate-900 border border-slate-800 text-purple-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
+              <span className="text-xl">🧠</span>
+              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Ramanujan</span>
+            </div>
+          </div>
+
           <h1 className="text-2xl font-bold">
             {mode === 'sign-in' ? 'Welcome back' : mode === 'forgot-password' ? 'Forgot Password?' : 'Join CuizIN'}
           </h1>
