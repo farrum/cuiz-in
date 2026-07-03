@@ -13,9 +13,10 @@ import { QuizQuestion } from '@/utils/types';
 import { updateTotalStars, logStarsEarned, updateTotalGems } from '@/utils/rewardService';
 import { 
   Shield, Star, Sparkles, Coins, Swords, Landmark, MapPin, 
-  HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight
+  HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 
 // Static Campaign Definitions
