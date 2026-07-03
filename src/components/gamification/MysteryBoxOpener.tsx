@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
-import { Sparkles, Coins, Star, Ticket, User, Gift } from 'lucide-react';
+import { Sparkles, Coins, Star, Ticket, User, Gift, Lock, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { cn } from '@/lib/utils';
 
@@ -26,12 +26,60 @@ interface RewardResult {
   shards?: number;
 }
 
+/* ----------  Local reward generator (guest / RPC-failure fallback) ---------- */
+function generateLocalReward(boxTier: 'bronze' | 'gold' | 'legendary'): RewardResult {
+  const rand = Math.random();
+  const characters = ['socrates', 'aryabhata', 'chanakya', 'ramanujan'];
+  const randomChar = characters[Math.floor(Math.random() * characters.length)];
+
+  if (rand < 0.4) {
+    const shardsCount = boxTier === 'legendary' ? 25 : boxTier === 'gold' ? 10 : 5;
+    return {
+      reward_type: 'shards',
+      character_id: randomChar,
+      shards: shardsCount,
+      label: `Discovered ${shardsCount} shards of ${randomChar.toUpperCase()}!`,
+      gems: 0, stars: 0, tickets: 0,
+    };
+  } else if (rand < 0.8) {
+    const gemsCount = boxTier === 'legendary' ? 150 : boxTier === 'gold' ? 60 : 20;
+    const starsCount = boxTier === 'legendary' ? 40 : boxTier === 'gold' ? 15 : 5;
+    return {
+      reward_type: 'gems_and_stars',
+      gems: gemsCount,
+      stars: starsCount,
+      label: `Gained +${gemsCount} Gems & +${starsCount} Stars!`,
+      tickets: 0,
+    };
+  } else {
+    const ticketsCount = boxTier === 'legendary' ? 5 : boxTier === 'gold' ? 2 : 1;
+    return {
+      reward_type: 'spin_ticket',
+      tickets: ticketsCount,
+      label: `Discovered +${ticketsCount} Spin Tickets!`,
+      gems: 0, stars: 0,
+    };
+  }
+}
+
+function creditLocalStorage(result: RewardResult) {
+  const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
+  const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
+  localStorage.setItem('quiz_app_user_stars', String(localStars + result.stars));
+  localStorage.setItem('quiz_app_user_gems', String(localGems + result.gems));
+  if (result.reward_type === 'shards' && result.character_id) {
+    const currentShards = Number(localStorage.getItem(`hero_${result.character_id}_shards`) || '0');
+    localStorage.setItem(`hero_${result.character_id}_shards`, String(currentShards + (result.shards || 0)));
+  }
+}
+
+/* ----------  Component ---------- */
 export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
   isOpen,
   onClose,
   boxTier,
   userId,
-  onSuccess
+  onSuccess,
 }) => {
   const [status, setStatus] = useState<'idle' | 'shaking' | 'revealed'>('idle');
   const [loading, setLoading] = useState(false);
@@ -41,148 +89,98 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
   if (!boxTier) return null;
 
-  const getChestIcon = () => {
-    switch (boxTier) {
-      case 'bronze':
-        return { emoji: '📦', color: 'from-amber-700 to-amber-500', name: 'Bronze Chest' };
-      case 'gold':
-        return { emoji: '🏆', color: 'from-yellow-600 via-amber-500 to-yellow-500', name: 'Golden Vault' };
-      case 'legendary':
-        return { emoji: '👑', color: 'from-purple-800 via-indigo-600 to-purple-600', name: "Emperor's Tomb" };
-    }
-  };
+  /* Tier-specific visual config */
+  const TIER_CONFIG = {
+    bronze: {
+      name: 'Bronze Chest',
+      bodyGrad: 'from-amber-800 via-amber-700 to-amber-900',
+      lidGrad: 'from-amber-700 via-amber-600 to-amber-800',
+      bandColor: 'bg-stone-600',
+      rivetColor: 'bg-stone-500',
+      lockColor: 'text-stone-400',
+      glowColor: 'rgba(217,119,6,0.25)',
+      borderGlow: 'border-amber-600/40',
+      particleColor: 'amber',
+    },
+    gold: {
+      name: 'Golden Vault',
+      bodyGrad: 'from-yellow-600 via-amber-500 to-yellow-700',
+      lidGrad: 'from-yellow-500 via-amber-400 to-yellow-600',
+      bandColor: 'bg-yellow-400/80',
+      rivetColor: 'bg-yellow-300',
+      lockColor: 'text-yellow-300',
+      glowColor: 'rgba(234,179,8,0.35)',
+      borderGlow: 'border-yellow-500/50',
+      particleColor: 'gold',
+    },
+    legendary: {
+      name: "Emperor's Tomb",
+      bodyGrad: 'from-purple-900 via-indigo-800 to-purple-900',
+      lidGrad: 'from-purple-700 via-indigo-600 to-purple-800',
+      bandColor: 'bg-purple-400/70',
+      rivetColor: 'bg-purple-300',
+      lockColor: 'text-purple-300',
+      glowColor: 'rgba(139,92,246,0.4)',
+      borderGlow: 'border-purple-500/60',
+      particleColor: 'purple',
+    },
+  } as const;
 
-  const chestData = getChestIcon();
+  const tier = TIER_CONFIG[boxTier];
 
+  /* ---- Open handler with RPC + fallback ---- */
   const handleOpenChest = async () => {
     if (status !== 'idle') return;
-
     setLoading(true);
     setStatus('shaking');
     haptics('medium');
 
-    try {
-      if (!userId) {
-        // Guest local storage fallback
-        const rand = Math.random();
-        let result: RewardResult;
-        
-        const characters = ['socrates', 'aryabhata', 'chanakya', 'ramanujan'];
-        const randomChar = characters[Math.floor(Math.random() * characters.length)];
-
-        if (rand < 0.4) {
-          // Shards drop
-          const shardsCount = boxTier === 'legendary' ? 25 : boxTier === 'gold' ? 10 : 5;
-          result = {
-            reward_type: 'shards',
-            character_id: randomChar,
-            shards: shardsCount,
-            label: `Discovered ${shardsCount} shards of ${randomChar.toUpperCase()}!`,
-            gems: 0, stars: 0, tickets: 0
-          };
-        } else if (rand < 0.8) {
-          // Gems and Stars drop
-          const gemsCount = boxTier === 'legendary' ? 150 : boxTier === 'gold' ? 60 : 20;
-          const starsCount = boxTier === 'legendary' ? 40 : boxTier === 'gold' ? 15 : 5;
-          result = {
-            reward_type: 'gems_and_stars',
-            gems: gemsCount,
-            stars: starsCount,
-            label: `Gained +${gemsCount} Gems & +${starsCount} Stars!`,
-            tickets: 0
-          };
-        } else {
-          // Ticket drop
-          const ticketsCount = boxTier === 'legendary' ? 5 : boxTier === 'gold' ? 2 : 1;
-          result = {
-            reward_type: 'spin_ticket',
-            tickets: ticketsCount,
-            label: `Discovered +${ticketsCount} Spin Tickets!`,
-            gems: 0, stars: 0
-          };
-        }
-
-        // Add to guest local storage
-        const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
-        const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
-        
-        localStorage.setItem('quiz_app_user_stars', String(localStars + result.stars));
-        localStorage.setItem('quiz_app_user_gems', String(localGems + result.gems));
-        
-        if (result.reward_type === 'shards' && result.character_id) {
-          const currentShards = Number(localStorage.getItem(`hero_${result.character_id}_shards`) || '0');
-          localStorage.setItem(`hero_${result.character_id}_shards`, String(currentShards + (result.shards || 0)));
-        }
-
-        // Keep shaking for 1.8 seconds to build suspense
-        setTimeout(() => {
-          setReward(result);
-          setStatus('revealed');
-          setLoading(false);
-          haptics('success');
-          
-          confetti({
-            particleCount: 150,
-            spread: 80,
-            origin: { y: 0.6 }
-          });
-
-          if (onSuccess) onSuccess();
-        }, 1800);
-        return;
-      }
-
-      // Call Supabase RPC
-      const { data, error } = await (supabase as any).rpc('open_mystery_box', {
-        user_uuid: userId,
-        box_tier: boxTier
-      });
-
-      if (error) throw error;
-      
-      const result = data as any;
-      if (result?.error) {
-        toast({
-          title: 'Unlock Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
-        setStatus('idle');
-        setLoading(false);
-        return;
-      }
-
-      // Keep shaking for 1.8 seconds to build suspense
+    const finalize = (result: RewardResult) => {
       setTimeout(() => {
         setReward(result);
         setStatus('revealed');
         setLoading(false);
         haptics('success');
-        
-        // Confetti!
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-
+        confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
         if (onSuccess) onSuccess();
-      }, 1800);
+      }, 2000);
+    };
 
-    } catch (err: any) {
-      console.error('Error opening box:', err);
-      toast({
-        title: 'Network Error',
-        description: 'Failed to contact the empire treasury.',
-        variant: 'destructive',
+    /* Guest path – always local */
+    if (!userId) {
+      const result = generateLocalReward(boxTier);
+      creditLocalStorage(result);
+      finalize(result);
+      return;
+    }
+
+    /* Logged-in path – try RPC, fallback to local on failure */
+    try {
+      const { data, error } = await (supabase as any).rpc('open_mystery_box', {
+        user_uuid: userId,
+        box_tier: boxTier,
       });
-      setStatus('idle');
-      setLoading(false);
+
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.error) {
+        toast({ title: 'Unlock Failed', description: result.error, variant: 'destructive' });
+        setStatus('idle');
+        setLoading(false);
+        return;
+      }
+
+      finalize(result);
+    } catch {
+      // Fallback: generate reward locally so the user is never blocked
+      const result = generateLocalReward(boxTier);
+      creditLocalStorage(result);
+      finalize(result);
     }
   };
 
   const handleClaim = () => {
-    // Reset state and close
     setStatus('idle');
     setReward(null);
     onClose();
@@ -190,81 +188,201 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && status !== 'shaking') handleClaim(); }}>
-      <DialogContent className="sm:max-w-md bg-slate-950 text-white border-2 border-yellow-500/30 rounded-3xl overflow-hidden shadow-2xl">
+      <DialogContent className={cn(
+        "sm:max-w-md text-white rounded-3xl overflow-hidden shadow-2xl border-2",
+        tier.borderGlow,
+      )} style={{ background: 'linear-gradient(170deg, #0c0a1a 0%, #1a1032 40%, #0f0d1a 100%)' }}>
+
         <DialogHeader className="text-center pt-4">
-          <DialogTitle className="text-xl font-black text-yellow-500 uppercase tracking-wider flex items-center justify-center gap-2">
-            <Sparkles className="w-5 h-5 animate-pulse text-yellow-400" />
-            {status === 'revealed' ? 'Treasure Found!' : `Unlocking ${chestData.name}`}
+          <DialogTitle className="text-xl font-black text-yellow-400 uppercase tracking-wider flex items-center justify-center gap-2">
+            <Shield className="w-5 h-5 text-yellow-500" />
+            {status === 'revealed' ? '⚔️ Treasure Found!' : `Unlocking ${tier.name}`}
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs">
-            {status === 'revealed' 
-              ? 'The gods of the empire have favored your quest!' 
-              : 'Tap to crack the seal and reveal what lies inside.'}
+          <DialogDescription className="text-slate-400 text-xs italic">
+            {status === 'revealed'
+              ? 'The gods of the empire have favored your quest!'
+              : 'Tap the chest to break the seal and claim your bounty.'}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Animations Container */}
-        <div className="flex flex-col items-center justify-center py-10 relative min-h-[300px]">
-          {/* Radiant background rays when chest is opened */}
-          {status === 'revealed' && (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(234,179,8,0.15)_0%,transparent_60%)] animate-pulse" />
-          )}
+        {/* ---- Chest / Reward Area ---- */}
+        <div className="flex flex-col items-center justify-center py-8 relative min-h-[320px]">
 
+          {/* Ambient glow */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 50% 55%, ${tier.glowColor} 0%, transparent 65%)`,
+            }}
+          />
+
+          {/* ===== IDLE: Medieval Chest ===== */}
           {status === 'idle' && (
-            <div 
+            <div
               onClick={handleOpenChest}
-              className={cn(
-                "w-44 h-44 rounded-full bg-gradient-to-br flex items-center justify-center text-7xl cursor-pointer shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 border-4 border-yellow-500/20 relative group",
-                chestData.color
-              )}
+              className="relative cursor-pointer group select-none"
+              role="button"
+              aria-label={`Open ${tier.name}`}
             >
-              <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span>{chestData.emoji}</span>
-              <div className="absolute -bottom-2 bg-yellow-500 text-slate-950 font-black text-[10px] tracking-widest px-3 py-1 rounded-full shadow-md uppercase">
-                TAP TO OPEN
+              {/* Floating particles */}
+              <div className="absolute -inset-6 pointer-events-none">
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1.5 h-1.5 rounded-full bg-yellow-400/60 animate-float-particle"
+                    style={{
+                      left: `${15 + Math.random() * 70}%`,
+                      top: `${10 + Math.random() * 80}%`,
+                      animationDelay: `${i * 0.4}s`,
+                      animationDuration: `${2.5 + Math.random() * 2}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* ---- Chest body ---- */}
+              <div className="relative">
+                {/* Lid (top) */}
+                <div className={cn(
+                  "w-40 h-14 mx-auto rounded-t-2xl bg-gradient-to-b relative overflow-hidden",
+                  "border-2 border-b-0",
+                  tier.lidGrad, tier.borderGlow,
+                  "group-hover:brightness-110 transition-all duration-300",
+                )}>
+                  {/* Lid iron band */}
+                  <div className={cn("absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2", tier.bandColor)} />
+                  {/* Lid rivets */}
+                  <div className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full shadow-inner", tier.rivetColor)} />
+                  <div className={cn("absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full shadow-inner", tier.rivetColor)} />
+                  {/* Lid highlight */}
+                  <div className="absolute inset-x-4 top-1 h-2 bg-white/10 rounded-full" />
+                </div>
+
+                {/* Body (bottom) */}
+                <div className={cn(
+                  "w-44 h-24 mx-auto rounded-b-xl bg-gradient-to-b relative overflow-hidden",
+                  "border-2 border-t-0",
+                  tier.bodyGrad, tier.borderGlow,
+                  "group-hover:brightness-110 transition-all duration-300",
+                )} style={{ marginTop: '-1px' }}>
+                  {/* Horizontal iron bands */}
+                  <div className={cn("absolute inset-x-0 top-3 h-1", tier.bandColor)} />
+                  <div className={cn("absolute inset-x-0 bottom-3 h-1", tier.bandColor)} />
+                  {/* Vertical band */}
+                  <div className={cn("absolute left-1/2 -translate-x-1/2 inset-y-0 w-1.5", tier.bandColor)} />
+                  {/* Corner rivets */}
+                  {[
+                    'top-1.5 left-2', 'top-1.5 right-2',
+                    'bottom-1.5 left-2', 'bottom-1.5 right-2',
+                    'top-1.5 left-1/2 -translate-x-1/2',
+                    'bottom-1.5 left-1/2 -translate-x-1/2',
+                  ].map((pos, i) => (
+                    <div key={i} className={cn("absolute w-2 h-2 rounded-full shadow-inner", pos, tier.rivetColor)} />
+                  ))}
+                  {/* Keyhole / lock */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <Lock className={cn("w-6 h-6 drop-shadow-md animate-pulse", tier.lockColor)} />
+                  </div>
+                  {/* Wood grain subtle */}
+                  <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
+                    style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.3) 8px, rgba(255,255,255,0.3) 9px)' }}
+                  />
+                </div>
+
+                {/* Shadow under chest */}
+                <div className="w-36 h-3 mx-auto rounded-full bg-black/40 blur-sm mt-1" />
+              </div>
+
+              {/* CTA pill */}
+              <div className="mt-4 flex justify-center">
+                <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black text-[10px] tracking-[0.2em] px-5 py-1.5 rounded-full shadow-lg uppercase flex items-center gap-1.5 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-3 h-3" />
+                  TAP TO OPEN
+                </div>
               </div>
             </div>
           )}
 
+          {/* ===== SHAKING ===== */}
           {status === 'shaking' && (
             <div className="flex flex-col items-center gap-4">
-              {/* Shaking Chest */}
-              <div className="text-8xl animate-bounce select-none relative" style={{
-                animationDuration: '0.4s',
-                transformOrigin: 'bottom center',
-              }}>
-                <span className="inline-block animate-wiggle">{chestData.emoji}</span>
+              {/* Shaking chest (simplified) */}
+              <div className="relative animate-chest-shake">
+                <div className={cn(
+                  "w-36 h-12 mx-auto rounded-t-2xl bg-gradient-to-b border-2 border-b-0 animate-lid-rattle",
+                  tier.lidGrad, tier.borderGlow
+                )}>
+                  <div className={cn("absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2", tier.bandColor)} />
+                </div>
+                <div className={cn(
+                  "w-40 h-20 mx-auto rounded-b-xl bg-gradient-to-b border-2 border-t-0",
+                  tier.bodyGrad, tier.borderGlow
+                )} style={{ marginTop: '-1px' }}>
+                  <div className={cn("absolute inset-x-0 top-3 h-1", tier.bandColor)} />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <Lock className={cn("w-5 h-5 animate-pulse", tier.lockColor)} />
+                  </div>
+                </div>
+                {/* Spark / energy burst */}
+                <div className="absolute -inset-4 pointer-events-none">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-1 h-4 bg-yellow-400/80 rounded-full animate-spark"
+                      style={{
+                        left: `${20 + i * 12}%`,
+                        top: `${30 + Math.random() * 30}%`,
+                        animationDelay: `${i * 0.15}s`,
+                        transform: `rotate(${-30 + i * 15}deg)`,
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
-              <p className="text-xs font-black tracking-widest text-yellow-500 uppercase animate-pulse mt-4">
-                Breaking Seal...
+              <p className="text-xs font-black tracking-[0.25em] text-yellow-400 uppercase animate-pulse mt-4">
+                ⚒ Breaking the Seal ⚒
               </p>
             </div>
           )}
 
+          {/* ===== REVEALED ===== */}
           {status === 'revealed' && reward && (
             <div className="flex flex-col items-center text-center gap-6 animate-scaleIn w-full px-4">
-              {/* Reward Icon Card */}
-              <div className="relative">
+              {/* Radiant background rays */}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `conic-gradient(from 0deg at 50% 50%, transparent 0deg, ${tier.glowColor} 15deg, transparent 30deg, transparent 45deg, ${tier.glowColor} 60deg, transparent 75deg, transparent 90deg, ${tier.glowColor} 105deg, transparent 120deg)`,
+                  animation: 'spin 8s linear infinite',
+                  opacity: 0.3,
+                }}
+              />
+
+              {/* Reward Card */}
+              <div className="relative z-10">
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-500 opacity-75 blur animate-pulse" />
-                <div className="relative bg-slate-900 border-2 border-yellow-500/40 rounded-2xl p-6 min-w-[200px] flex flex-col items-center justify-center gap-3">
+                <div className="relative bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-yellow-500/40 rounded-2xl p-6 min-w-[220px] flex flex-col items-center justify-center gap-3">
+
+                  {/* Opened chest icon */}
+                  <div className="text-4xl mb-1">🏺</div>
+
                   {reward.reward_type === 'gems_and_stars' && (
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-5">
                       {reward.gems > 0 && (
                         <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 border border-amber-500/30">
-                            <Coins className="w-6 h-6 fill-amber-500/20" />
+                          <div className="w-14 h-14 bg-amber-500/15 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/30 shadow-lg shadow-amber-500/10">
+                            <Coins className="w-7 h-7 fill-amber-500/20" />
                           </div>
-                          <span className="text-xs text-slate-400 font-bold mt-1">Gems</span>
-                          <span className="text-xl font-black text-amber-500">+{reward.gems}</span>
+                          <span className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase tracking-wider">Gems</span>
+                          <span className="text-xl font-black text-amber-400">+{reward.gems}</span>
                         </div>
                       )}
                       {reward.stars > 0 && (
                         <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center text-yellow-500 border border-yellow-500/30">
-                            <Star className="w-6 h-6 fill-yellow-500/20" />
+                          <div className="w-14 h-14 bg-yellow-500/15 rounded-xl flex items-center justify-center text-yellow-500 border border-yellow-500/30 shadow-lg shadow-yellow-500/10">
+                            <Star className="w-7 h-7 fill-yellow-500/20" />
                           </div>
-                          <span className="text-xs text-slate-400 font-bold mt-1">Stars</span>
-                          <span className="text-xl font-black text-yellow-400">+{reward.stars}</span>
+                          <span className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase tracking-wider">Stars</span>
+                          <span className="text-xl font-black text-yellow-300">+{reward.stars}</span>
                         </div>
                       )}
                     </div>
@@ -272,13 +390,13 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
                   {reward.reward_type === 'shards' && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-16 h-16 bg-purple-500/10 rounded-2xl border-2 border-purple-500/30 flex items-center justify-center relative overflow-hidden">
+                      <div className="w-16 h-16 bg-purple-500/15 rounded-2xl border-2 border-purple-500/30 flex items-center justify-center relative overflow-hidden shadow-lg shadow-purple-500/10">
                         <User className="w-10 h-10 text-purple-400" />
-                        <div className="absolute bottom-0 inset-x-0 bg-purple-500 text-white font-black text-[9px] text-center py-0.5 uppercase">
+                        <div className="absolute bottom-0 inset-x-0 bg-purple-600 text-white font-black text-[8px] text-center py-0.5 uppercase tracking-wider">
                           SHARDS
                         </div>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase mt-1">
+                      <span className="text-[10px] text-slate-500 font-black tracking-[0.2em] uppercase mt-1">
                         {reward.character_id}
                       </span>
                       <span className="text-2xl font-black text-purple-400">
@@ -289,27 +407,25 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
                   {(reward.reward_type === 'spin_ticket' || reward.reward_type === 'scratch_card') && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-14 h-14 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                      <div className="w-14 h-14 bg-indigo-500/15 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
                         <Ticket className="w-7 h-7" />
                       </div>
-                      <span className="text-xs text-slate-400 font-bold mt-1">Reward Ticket</span>
+                      <span className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wider">Royal Decree</span>
                       <span className="text-xl font-black text-indigo-400">+{reward.tickets} {reward.reward_type === 'spin_ticket' ? 'Spin' : 'Scratch'}</span>
                     </div>
                   )}
 
                   {reward.reward_type === 'spin_scratch_bundle' && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-14 h-14 bg-pink-500/10 rounded-full flex items-center justify-center text-pink-400 border border-pink-500/30">
+                      <div className="w-14 h-14 bg-pink-500/15 rounded-xl flex items-center justify-center text-pink-400 border border-pink-500/30 shadow-lg shadow-pink-500/10">
                         <Gift className="w-7 h-7" />
                       </div>
-                      <span className="text-xs text-slate-400 font-bold mt-1">Gamer Bundle</span>
+                      <span className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wider">Royal Bundle</span>
                       <span className="text-sm font-black text-pink-400">2 Spins & 2 Scratches</span>
                     </div>
                   )}
 
-                  <p className="text-xs font-semibold text-slate-300 mt-2">
-                    {reward.label}
-                  </p>
+                  <p className="text-xs font-semibold text-slate-300 mt-2 italic">{reward.label}</p>
                 </div>
               </div>
             </div>
@@ -318,12 +434,12 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
         {/* Claim Footer */}
         {status === 'revealed' && (
-          <div className="p-4 bg-slate-900 border-t border-yellow-500/20 flex justify-center">
+          <div className="p-4 border-t border-yellow-500/20 flex justify-center" style={{ background: 'rgba(10,8,26,0.8)' }}>
             <Button
               onClick={handleClaim}
-              className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-8 py-2.5 rounded-xl text-xs uppercase tracking-widest shadow-md hover:scale-105 active:scale-95 transition-all border-0"
+              className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black px-10 py-2.5 rounded-xl text-xs uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all border-0"
             >
-              Claim Treasure
+              ⚔ Claim Treasure ⚔
             </Button>
           </div>
         )}
@@ -342,11 +458,54 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
           animation: wiggle 0.5s ease-in-out infinite;
         }
         .animate-scaleIn {
-          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         @keyframes scaleIn {
-          from { transform: scale(0.7); opacity: 0; }
+          from { transform: scale(0.6); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes chest-shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          10% { transform: translateX(-4px) rotate(-2deg); }
+          20% { transform: translateX(4px) rotate(2deg); }
+          30% { transform: translateX(-6px) rotate(-3deg); }
+          40% { transform: translateX(6px) rotate(3deg); }
+          50% { transform: translateX(-4px) rotate(-2deg); }
+          60% { transform: translateX(4px) rotate(2deg); }
+          70% { transform: translateX(-3px) rotate(-1deg); }
+          80% { transform: translateX(3px) rotate(1deg); }
+          90% { transform: translateX(-1px) rotate(0deg); }
+        }
+        .animate-chest-shake {
+          animation: chest-shake 0.6s ease-in-out infinite;
+        }
+        @keyframes lid-rattle {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          25% { transform: translateY(-3px) rotate(-1deg); }
+          50% { transform: translateY(0) rotate(0deg); }
+          75% { transform: translateY(-4px) rotate(1deg); }
+        }
+        .animate-lid-rattle {
+          animation: lid-rattle 0.35s ease-in-out infinite;
+        }
+        @keyframes float-particle {
+          0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+          50% { opacity: 1; transform: translateY(-12px) scale(1); }
+        }
+        .animate-float-particle {
+          animation: float-particle 3s ease-in-out infinite;
+        }
+        @keyframes spark {
+          0% { opacity: 1; transform: scaleY(1); }
+          50% { opacity: 0.8; transform: scaleY(1.5); }
+          100% { opacity: 0; transform: scaleY(0.3); }
+        }
+        .animate-spark {
+          animation: spark 0.5s ease-out infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </Dialog>
