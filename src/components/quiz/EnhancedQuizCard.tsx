@@ -86,6 +86,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
   const { toast } = useToast();
+  const haptics = useHaptics();
   const [userStars, setUserStars] = useState<number>(0);
   const [heroes, setHeroes] = useState<any[]>([]);
   const [socratesUsed, setSocratesUsed] = useState(false);
