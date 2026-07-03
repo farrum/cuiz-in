@@ -97,6 +97,7 @@ export default function EmpireQuestsPage() {
 
   // Active Gameplay state
   const [activeQuest, setActiveQuest] = useState<EmpireCampaign | null>(null);
+  const [selectedMapQuest, setSelectedMapQuest] = useState<EmpireCampaign | null>(null);
   const [questQuestions, setQuestQuestions] = useState<QuizQuestion[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -904,68 +905,174 @@ export default function EmpireQuestsPage() {
             {/* TAB CONTENT: QUESTS */}
             {activeTab === 'quests' && (
               <div className="space-y-6">
-                <div className="text-center max-w-md mx-auto mb-8">
-                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Active Campaigns</h2>
-                  <p className="text-xs text-slate-400 mt-1">Conquer regional campaigns to amass stars and find rare loot vaults.</p>
+                <div className="text-center max-w-md mx-auto mb-6">
+                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Campaign War Room</h2>
+                  <p className="text-xs text-slate-400 mt-1">Navigate the conquests map. Break the fog of war and launch regional battles.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {CAMPAIGNS.map((quest) => (
-                    <div 
-                      key={quest.id}
-                      className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between hover:border-yellow-500/20 transition-all shadow-md group relative overflow-hidden"
-                    >
-                      {/* Glow background on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/5 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  {/* Map Scroll Canvas (Takes 2 columns) */}
+                  <div className="lg:col-span-2 relative bg-slate-950 border-4 border-double border-yellow-500/25 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4">
+                    {/* Retro Grid Background */}
+                    <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
+                    
+                    {/* SVG Map Lines */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-yellow-500/10 stroke-[2]">
+                      {/* Connections */}
+                      <line x1="20%" y1="30%" x2="75%" y2="40%" strokeDasharray="5,5" />
+                      <line x1="20%" y1="30%" x2="35%" y2="75%" strokeDasharray="5,5" />
+                      <line x1="75%" y1="40%" x2="70%" y2="70%" strokeDasharray="5,5" />
+                      <line x1="35%" y1="75%" x2="70%" y2="70%" strokeDasharray="5,5" />
+                    </svg>
 
-                      <div>
-                        {/* Title Row */}
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="text-3xl">{quest.emoji}</span>
+                    {/* Coordinates & Compass */}
+                    <div className="absolute top-4 left-4 text-[9px] font-black text-slate-600 uppercase tracking-widest font-mono select-none">
+                      LAT: 41.9028° N | LON: 12.4964° E
+                    </div>
+                    <div className="absolute bottom-4 right-4 text-3xl opacity-25 animate-[spin_40s_linear_infinite] select-none">
+                      🧭
+                    </div>
+
+                    {/* Campaign Pins mapping */}
+                    {CAMPAIGNS.map((quest, index) => {
+                      const isLocked = userStars < quest.entryCost;
+                      const coords = [
+                        { left: "20%", top: "30%" }, // Rome
+                        { left: "75%", top: "40%" }, // Persia
+                        { left: "35%", top: "75%" }, // Alexander
+                        { left: "70%", top: "70%" }  // Gupta
+                      ][index];
+
+                      const isSelected = selectedMapQuest?.id === quest.id;
+
+                      return (
+                        <div
+                          key={quest.id}
+                          style={{ left: coords.left, top: coords.top }}
+                          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10"
+                        >
+                          <button
+                            onClick={() => {
+                              haptics('light');
+                              audioManager.playSFX('click');
+                              setSelectedMapQuest(quest);
+                            }}
+                            className={cn(
+                              "w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
+                              isLocked 
+                                ? "bg-slate-905 border-slate-800 text-slate-500 scale-95" 
+                                : isSelected
+                                ? "bg-yellow-500 border-yellow-400 text-slate-950 scale-110 shadow-yellow-500/20 ring-4 ring-yellow-500/20"
+                                : "bg-slate-900 border-yellow-500/30 text-yellow-500 hover:border-yellow-400 hover:scale-105"
+                            )}
+                          >
+                            {isLocked ? (
+                              <Lock className="w-4 h-4 text-slate-650" />
+                            ) : (
+                              <span>{quest.emoji}</span>
+                            )}
+                            
+                            {/* Star entry mini label */}
+                            {quest.entryCost > 0 && (
+                              <span className="absolute -bottom-2 bg-slate-950 text-[7px] font-black uppercase text-yellow-500 border border-yellow-500/20 px-1 rounded">
+                                {quest.entryCost}★
+                              </span>
+                            )}
+                          </button>
+
+                          {/* Hover Tooltip */}
+                          <div className="absolute top-14 bg-slate-900 border border-slate-850 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider text-slate-200 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-20">
+                            {quest.name} {isLocked && '🔒'}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Campaign Panel Details Card (Takes 1 column) */}
+                  <div className="bg-slate-900 border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md flex flex-col justify-between">
+                    {selectedMapQuest ? (
+                      <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
+                        <div>
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="text-4xl">{selectedMapQuest.emoji}</span>
                             <div>
-                              <h3 className="font-extrabold text-white text-base tracking-tight">{quest.name}</h3>
+                              <h3 className="font-extrabold text-white text-base tracking-tight leading-tight">
+                                {selectedMapQuest.name}
+                              </h3>
                               <span className={cn(
-                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border mt-1 inline-block",
-                                quest.difficulty === 'Easy' ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" :
-                                quest.difficulty === 'Medium' ? "border-yellow-500/20 bg-yellow-500/10 text-yellow-400" :
-                                quest.difficulty === 'Hard' ? "border-red-500/20 bg-red-500/10 text-red-400" :
-                                "border-purple-500/20 bg-purple-500/10 text-purple-400"
+                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border mt-1.5 inline-block",
+                                selectedMapQuest.difficulty === 'Easy' ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400" :
+                                selectedMapQuest.difficulty === 'Medium' ? "border-yellow-500/25 bg-yellow-500/10 text-yellow-400" :
+                                selectedMapQuest.difficulty === 'Hard' ? "border-red-500/25 bg-red-500/10 text-red-400" :
+                                "border-purple-500/25 bg-purple-500/10 text-purple-400"
                               )}>
-                                {quest.difficulty}
+                                {selectedMapQuest.difficulty}
                               </span>
                             </div>
                           </div>
 
-                          <div className="text-right">
-                            <span className="text-[9px] uppercase font-bold text-slate-500 block">Entry Fee</span>
-                            <span className="text-xs font-black text-yellow-400">
-                              {quest.entryCost > 0 ? `${quest.entryCost} Stars` : 'FREE'}
-                            </span>
+                          <div className="space-y-4 text-xs">
+                            <p className="text-slate-400 leading-relaxed">
+                              "{selectedMapQuest.description}"
+                            </p>
+
+                            <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-850 space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-500 font-bold uppercase text-[9px]">Entry Tax</span>
+                                <span className="text-yellow-400 font-black">
+                                  {selectedMapQuest.entryCost > 0 ? `${selectedMapQuest.entryCost} Stars` : 'FREE'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-500 font-bold uppercase text-[9px]">Ruleset</span>
+                                <span className="text-slate-300 font-black">{selectedMapQuest.rules}</span>
+                              </div>
+                              <div className="flex justify-between items-center border-t border-slate-900 pt-2 mt-2">
+                                <span className="text-slate-500 font-bold uppercase text-[9px]">Cargo Reward</span>
+                                <span className="text-amber-500 font-black">{selectedMapQuest.rewardLabel}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <p className="text-slate-400 text-xs leading-relaxed mb-4 mt-2">
-                          {quest.description}
+                        <div className="space-y-2 pt-4">
+                          <Button
+                            onClick={() => {
+                              const isLocked = userStars < selectedMapQuest.entryCost;
+                              if (isLocked) {
+                                toast({
+                                  title: "Fog of War Active!",
+                                  description: `You need at least ${selectedMapQuest.entryCost} Stars to launch this campaign.`,
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              handleLaunchQuest(selectedMapQuest);
+                            }}
+                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-3 rounded-xl uppercase tracking-widest text-xs border-0 shadow-md"
+                          >
+                            Launch Quest
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => setSelectedMapQuest(null)} 
+                            className="w-full text-slate-500 hover:text-slate-300 text-[10px] uppercase font-black tracking-wider"
+                          >
+                            Close Panel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center h-full py-12 text-slate-500 animate-in fade-in duration-300">
+                        <MapPin className="w-8 h-8 text-yellow-500/30 mb-3" />
+                        <h4 className="text-xs uppercase font-black text-slate-400 tracking-wider mb-1">Conquest Panel</h4>
+                        <p className="text-[11px] text-slate-500 max-w-[180px] leading-relaxed">
+                          Select a regional pin on the war map to reveal campaign rules and deploy troops.
                         </p>
                       </div>
-
-                      {/* Footer Cost & Action */}
-                      <div className="border-t border-slate-850 pt-4 flex justify-between items-center gap-3 mt-4">
-                        <div>
-                          <span className="text-[9px] uppercase font-bold text-slate-500 block">Victory Cargo</span>
-                          <span className="text-xs font-black text-amber-500">{quest.rewardLabel}</span>
-                        </div>
-
-                        <Button
-                          onClick={() => handleLaunchQuest(quest)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs uppercase tracking-widest transition-all scale-100 hover:scale-105 border-0"
-                        >
-                          Launch Quest
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
             )}

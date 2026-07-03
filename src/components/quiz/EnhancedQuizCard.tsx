@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuizSounds } from '@/hooks/useQuizSounds';
+import { audioManager } from '@/utils/audioManager';
 import { logGemsEarned } from '@/utils/gemsService';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
@@ -204,6 +205,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       setTimerStarted(true);
     }
 
+    haptics('light');
     if (soundEnabled) playSelectSound();
     setSelectedAnswer(answer);
     processAnswer(answer);
@@ -248,10 +250,17 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       });
     }
     
-    // Play sound
+    // Play sound & trigger haptics
     if (answer !== null) {
-      if (isCorrect && soundEnabled) playCorrectSound();
-      else if (!isCorrect && soundEnabled) playWrongSound();
+      if (isCorrect) {
+        haptics('success');
+        audioManager.playSFX('correct');
+        if (soundEnabled) playCorrectSound();
+      } else {
+        haptics('warning');
+        audioManager.playSFX('wrong');
+        if (soundEnabled) playWrongSound();
+      }
     }
 
     // Calculate gems with streak bonus
@@ -606,6 +615,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                       }
                       const { data: { session } } = await supabase.auth.getSession();
                       if (session?.user) {
+                        haptics('medium');
+                        audioManager.playSFX('socrates');
                         await updateTotalStars(-cost, session.user.id);
                         setUserStars(prev => prev - cost);
                         setSocratesUsed(true);
@@ -634,6 +645,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                       }
                       const { data: { session } } = await supabase.auth.getSession();
                       if (session?.user) {
+                        haptics('medium');
+                        audioManager.playSFX('aryabhata');
                         await updateTotalStars(-cost, session.user.id);
                         setUserStars(prev => prev - cost);
                         setAryabhataUsed(true);
@@ -660,6 +673,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                       }
                       const { data: { session } } = await supabase.auth.getSession();
                       if (session?.user) {
+                        haptics('medium');
+                        audioManager.playSFX('chanakya');
                         await updateTotalStars(-cost, session.user.id);
                         setUserStars(prev => prev - cost);
                         setChanakyaUsed(true);
@@ -686,6 +701,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                       }
                       const { data: { session } } = await supabase.auth.getSession();
                       if (session?.user) {
+                        haptics('medium');
+                        audioManager.playSFX('ramanujan');
                         await updateTotalStars(-cost, session.user.id);
                         setUserStars(prev => prev - cost);
                         setRamanujanUsed(true);

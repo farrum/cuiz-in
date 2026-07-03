@@ -114,12 +114,28 @@ export const HeroDashboardCard: React.FC<HeroDashboardCardProps> = ({
     }
   };
 
+  const getCardStyle = () => {
+    if (isLocked) {
+      return "border-slate-800 opacity-70 hover:opacity-100 hover:border-slate-700 bg-slate-900/60";
+    }
+    switch (hero.level) {
+      case 1:
+        return "border-amber-800/40 bg-slate-900/90 shadow-md hover:border-amber-700/60";
+      case 2:
+        return "border-slate-500/40 bg-slate-900/95 shadow-lg shadow-slate-500/5 hover:border-slate-400";
+      case 3:
+        return "border-cyan-500/40 bg-slate-900 shadow-xl shadow-cyan-500/10 hover:border-cyan-400 border-2";
+      case 4:
+        return "border-yellow-500 bg-slate-900 shadow-2xl shadow-yellow-500/25 hover:border-yellow-400 border-4 border-double";
+      default:
+        return "border-slate-850";
+    }
+  };
+
   return (
     <div className={cn(
-      "w-full bg-slate-900 border-2 rounded-3xl overflow-hidden transition-all duration-300 relative group flex flex-col justify-between shadow-lg",
-      isLocked 
-        ? "border-slate-800 opacity-80 hover:opacity-100 hover:border-slate-700" 
-        : "border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-yellow-500/5"
+      "w-full rounded-3xl overflow-hidden transition-all duration-300 relative group flex flex-col justify-between border",
+      getCardStyle()
     )}>
       
       {/* Top Banner Gradient & Level Badge */}

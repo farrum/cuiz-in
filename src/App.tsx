@@ -90,6 +90,7 @@ const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
 const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 const EmpireQuestsPage = React.lazy(() => import("@/pages/EmpireQuestsPage"));
+const KingdomsPage = React.lazy(() => import("@/pages/KingdomsPage"));
 
 // Lazy load components that aren't needed immediately
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
@@ -157,12 +158,31 @@ function clearUserCache() {
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize the app
   useEffect(() => {
     const initializeApp = async () => {
       try {
         console.log('Initializing app...');
         
+        // Hide status bar on native mobile Capacitor shells
+        try {
+          const { StatusBar } = await import('@capacitor/status-bar');
+          await StatusBar.hide();
+          console.log("Capacitor Status Bar hidden successfully.");
+        } catch (e) {
+          console.log("Capacitor Status Bar hide not supported on this platform.");
+        }
+
+        // Initialize Background Music (BGM) on first user interaction
+        const startBgmOnInteraction = () => {
+          import('@/utils/audioManager').then(({ audioManager }) => {
+            audioManager.startBGM();
+          });
+          document.removeEventListener('click', startBgmOnInteraction);
+          document.removeEventListener('keydown', startBgmOnInteraction);
+        };
+        document.addEventListener('click', startBgmOnInteraction);
+        document.addEventListener('keydown', startBgmOnInteraction);
+
         const { data: sessionData } = await supabase.auth.getSession();
         
         if (sessionData?.session?.user) {
@@ -507,6 +527,12 @@ function App() {
               <Route path="/empire-quests" element={
                 <LazyProtectedRoute>
                   <EmpireQuestsPage />
+                </LazyProtectedRoute>
+              } />
+
+              <Route path="/kingdoms" element={
+                <LazyProtectedRoute>
+                  <KingdomsPage />
                 </LazyProtectedRoute>
               } />
 

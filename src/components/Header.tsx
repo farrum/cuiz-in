@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle } from 'lucide-react';
+import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -116,6 +116,7 @@ const Header: React.FC = () => {
   const loggedInNavItems = [
     { path: '/quiz', label: 'Play', icon: Award },
     { path: '/empire-quests', label: 'Quests', icon: Target },
+    { path: '/kingdoms', label: 'Kingdoms', icon: Landmark },
     { path: '/profile', label: 'Profile', icon: User },
   ];
 
