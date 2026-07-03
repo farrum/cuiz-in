@@ -115,7 +115,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             // stars
-            const { data: profile } = await supabase
+            const { data: profile } = await (supabase as any)
               .from('profiles')
               .select('stars')
               .eq('id', session.user.id)
@@ -125,7 +125,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             }
 
             // characters
-            const { data: chars } = await supabase
+            const { data: chars } = await (supabase as any)
               .from('user_characters')
               .select('character_id, level')
               .eq('user_id', session.user.id);
@@ -305,7 +305,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           await logGemsEarned(gems, userId);
         }
         
-        await supabase.from('quiz_answers').insert({
+        await (supabase as any).from('quiz_answers').insert({
           user_id: userId,
           question_id: question.id,
           selected_answer: answer || 'timeout',

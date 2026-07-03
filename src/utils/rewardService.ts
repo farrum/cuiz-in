@@ -9,7 +9,7 @@ export const updateTotalStars = async (stars: number, userId?: string | null) =>
   
   try {
     // Get current stars
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('stars')
       .eq('id', userId)
@@ -24,7 +24,7 @@ export const updateTotalStars = async (stars: number, userId?: string | null) =>
     const newTotal = Number(currentStars) + stars;
     
     // Update stars in database
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (supabase as any)
       .from('profiles')
       .update({ stars: newTotal })
       .eq('id', userId);

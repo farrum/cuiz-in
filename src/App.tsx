@@ -124,7 +124,7 @@ async function hydrateUserFromSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
       (supabase as any).from('profiles').select('username, gems:points, stars').eq('id', userId).maybeSingle(),
-      supabase.from('user_roles').select('role').eq('user_id', userId),
+      (supabase as any).from('user_roles').select('role').eq('user_id', userId),
     ]);
 
     if (profileResult.data) {

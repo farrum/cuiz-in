@@ -49,7 +49,7 @@ export const DailyHangman: React.FC<DailyHangmanProps> = ({
   const fetchBalancesAndCouncil = async () => {
     if (!userId) return;
     try {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('gems:points, stars')
         .eq('id', userId)
@@ -60,7 +60,7 @@ export const DailyHangman: React.FC<DailyHangmanProps> = ({
       }
 
       // Check if Socrates is unlocked
-      const { data: char } = await supabase
+      const { data: char } = await (supabase as any)
         .from('user_characters')
         .select('level')
         .eq('user_id', userId)
