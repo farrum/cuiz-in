@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp, Landmark, Star, User } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp, Landmark, Star, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { updateTotalStars } from '@/utils/rewardService';
@@ -14,6 +14,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 
 // Streak bonus multipliers
 const STREAK_BONUSES = [
@@ -114,7 +115,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           // stars
-          const { data: profile } = await supabase
+          const { data: profile } = await (supabase as any)
             .from('profiles')
             .select('stars')
             .eq('id', session.user.id)
@@ -124,7 +125,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           }
 
           // characters
-          const { data: chars } = await supabase
+          const { data: chars } = await (supabase as any)
             .from('user_characters')
             .select('character_id, level')
             .eq('user_id', session.user.id);
@@ -314,7 +315,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           await logGemsEarned(gems, userId);
         }
         
-        await supabase.from('quiz_answers').insert({
+        await (supabase as any).from('quiz_answers').insert({
           user_id: userId,
           question_id: question.id,
           selected_answer: answer || 'timeout',

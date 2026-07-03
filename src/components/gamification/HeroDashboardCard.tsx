@@ -91,7 +91,7 @@ export const HeroDashboardCard: React.FC<HeroDashboardCardProps> = ({
     haptics('medium');
 
     try {
-      const { data, error } = await supabase.rpc('upgrade_character', {
+      const { data, error } = await (supabase as any).rpc('upgrade_character', {
         user_uuid: userId,
         char_id: hero.id
       });

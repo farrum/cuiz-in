@@ -13,9 +13,10 @@ import { QuizQuestion } from '@/utils/types';
 import { updateTotalStars, logStarsEarned, updateTotalGems } from '@/utils/rewardService';
 import { 
   Shield, Star, Sparkles, Coins, Swords, Landmark, MapPin, 
-  HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight
+  HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 
 // Static Campaign Definitions
@@ -188,7 +189,7 @@ export default function EmpireQuestsPage() {
       setUserId(session.user.id);
 
       // Fetch points (gems) and stars
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('gems:points, stars')
         .eq('id', session.user.id)
@@ -202,7 +203,7 @@ export default function EmpireQuestsPage() {
       }
 
       // Fetch user characters
-      const { data: chars } = await supabase
+      const { data: chars } = await (supabase as any)
         .from('user_characters')
         .select('*')
         .eq('user_id', session.user.id);
@@ -597,7 +598,7 @@ export default function EmpireQuestsPage() {
 
       // Award Chest
       try {
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from('profiles')
           .select('scratch_cards, spin_tickets')
           .eq('id', userId)

@@ -133,7 +133,7 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
       }
 
       // Call Supabase RPC
-      const { data, error } = await supabase.rpc('open_mystery_box', {
+      const { data, error } = await (supabase as any).rpc('open_mystery_box', {
         user_uuid: userId,
         box_tier: boxTier
       });
