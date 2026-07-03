@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, Loader2, Clock, Award, Brain, ZapIcon, Flame, Volume2, VolumeX, TrendingUp, Landmark, Star, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { updateTotalStars } from '@/utils/rewardService';
 import { cn } from '@/lib/utils';
 import { QuizQuestion, STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +83,17 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [showStreakBonus, setShowStreakBonus] = useState(false);
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
+  const { toast } = useToast();
+  const [userStars, setUserStars] = useState<number>(0);
+  const [heroes, setHeroes] = useState<any[]>([]);
+  const [socratesUsed, setSocratesUsed] = useState(false);
+  const [aryabhataUsed, setAryabhataUsed] = useState(false);
+  const [chanakyaUsed, setChanakyaUsed] = useState(false);
+  const [ramanujanUsed, setRamanujanUsed] = useState(false);
+  const [eliminatedOptions, setEliminatedOptions] = useState<string[]>([]);
+  const [isShieldActive, setIsShieldActive] = useState(false);
+  const [smartClue, setSmartClue] = useState<string | null>(null);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
   
@@ -89,6 +103,46 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const isLoggedIn = isUserLoggedIn();
   const guestCanPlay = canGuestPlay();
   const remainingPlays = getRemainingGuestPlays();
+
+  // Reset/fetch lifelines and states when question changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      const loadHeroes = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            // stars
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('stars')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (profile) {
+              setUserStars(profile.stars || 0);
+            }
+
+            // characters
+            const { data: chars } = await supabase
+              .from('user_characters')
+              .select('character_id, level')
+              .eq('user_id', session.user.id);
+            setHeroes(chars || []);
+          }
+        } catch (e) {
+          console.error('Failed to load heroes on quiz card', e);
+        }
+      };
+      loadHeroes();
+    }
+    
+    setSocratesUsed(false);
+    setAryabhataUsed(false);
+    setChanakyaUsed(false);
+    setRamanujanUsed(false);
+    setEliminatedOptions([]);
+    setSmartClue(null);
+    setIsShieldActive(false);
+  }, [question.id, isLoggedIn]);
 
   // Reset state when question changes
   useEffect(() => {
@@ -184,6 +238,16 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       }
     }
     
+    // Apply Chanakya Shield if answer is incorrect and shield is active
+    if (!isCorrect && isShieldActive) {
+      isCorrect = true;
+      setIsShieldActive(false);
+      toast({
+        title: "🛡️ Streak Shielded!",
+        description: `Chanakya's shield absorbed the mistake! Correct answer was: ${serverCorrectAnswer || question.correctAnswer}`,
+      });
+    }
+    
     // Play sound
     if (answer !== null) {
       if (isCorrect && soundEnabled) playCorrectSound();
@@ -260,6 +324,9 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
   const getOptionStyle = (option: string) => {
     if (!isAnswered) {
+      if (ramanujanUsed && option === question.correctAnswer) {
+        return 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/15 border-2';
+      }
       return 'border-border hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-[0.98]';
     }
 
@@ -457,43 +524,183 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             {question.question}
           </h3>
 
+          {/* Shield Status Effect */}
+          {isShieldActive && (
+            <div className="bg-indigo-500/10 border border-indigo-500/30 p-2.5 rounded-2xl text-xs text-indigo-400 font-semibold text-center mb-4 flex items-center justify-center gap-1.5 animate-pulse">
+              <Shield className="w-4 h-4 text-indigo-400 fill-indigo-400/20" />
+              <span>Chanakya's Diplomatic Shield is active!</span>
+            </div>
+          )}
+
+          {/* Smart Hint Card */}
+          {smartClue && (
+            <div className="bg-purple-950/10 border border-purple-500/30 p-3 rounded-2xl text-xs text-purple-400 font-semibold text-center animate-pulse mb-4">
+              🧠 Ramanujan's Formula: The answer is "{smartClue}".
+            </div>
+          )}
+
           {/* Options */}
           <div className="space-y-3">
-            {question.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(option)}
-                disabled={isAnswered}
-                className={cn(
-                  "w-full flex items-center justify-between p-3.5 md:p-4 rounded-xl border-2 transition-all duration-200 text-left",
-                  getOptionStyle(option)
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors",
-                    isAnswered && option === question.correctAnswer
-                      ? "bg-accent text-accent-foreground"
-                      : isAnswered && option === selectedAnswer
-                      ? "bg-destructive text-destructive-foreground"
-                      : selectedAnswer === option
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  )}>
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                  <span className="font-medium">{option}</span>
-                </div>
+            {question.options.map((option, index) => {
+              if (eliminatedOptions.includes(option)) return null;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(option)}
+                  disabled={isAnswered}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3.5 md:p-4 rounded-xl border-2 transition-all duration-200 text-left",
+                    getOptionStyle(option)
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors",
+                      isAnswered && option === question.correctAnswer
+                        ? "bg-accent text-accent-foreground"
+                        : isAnswered && option === selectedAnswer
+                        ? "bg-destructive text-destructive-foreground"
+                        : selectedAnswer === option
+                        ? "bg-primary text-primary-foreground"
+                        : !isAnswered && ramanujanUsed && option === question.correctAnswer
+                        ? "bg-purple-500 text-white"
+                        : "bg-muted"
+                    )}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="font-medium">{option}</span>
+                  </div>
 
-                {isAnswered && option === question.correctAnswer && (
-                  <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
-                )}
-                {isAnswered && option === selectedAnswer && option !== question.correctAnswer && (
-                  <XCircle className="w-5 h-5 text-destructive shrink-0" />
-                )}
-              </button>
-            ))}
+                  {isAnswered && option === question.correctAnswer && (
+                    <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
+                  )}
+                  {isAnswered && option === selectedAnswer && option !== question.correctAnswer && (
+                    <XCircle className="w-5 h-5 text-destructive shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {/* Council Lifelines */}
+          {isLoggedIn && !isAnswered && !isChallenge && heroes.some(h => h.level > 0) && (
+            <div className="border-t border-muted/50 pt-4 mt-6">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-black tracking-wider mb-3">
+                <Landmark className="w-3.5 h-3.5 text-yellow-500" />
+                <span>Council Lifelines</span>
+                <span className="ml-auto text-yellow-500 font-bold flex items-center gap-1 text-[9px]">
+                  <Star className="w-3 h-3 fill-yellow-500/10 text-yellow-550" /> {userStars} stars
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {/* Socrates */}
+                {heroes.find(h => h.character_id === 'socrates')?.level > 0 && (
+                  <Button
+                    size="sm"
+                    disabled={socratesUsed}
+                    onClick={async () => {
+                      const cost = 15;
+                      if (userStars < cost) {
+                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
+                        return;
+                      }
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user) {
+                        await updateTotalStars(-cost, session.user.id);
+                        setUserStars(prev => prev - cost);
+                        setSocratesUsed(true);
+                        const wrongs = question.options.filter(o => o !== question.correctAnswer);
+                        const toEliminate = wrongs.sort(() => 0.5 - Math.random()).slice(0, 2);
+                        setEliminatedOptions(toEliminate);
+                      }
+                    }}
+                    className="bg-slate-900 border border-slate-800 text-cyan-400 hover:text-cyan-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                  >
+                    <span>🏛️ Socrates</span>
+                    <span className="text-[7px] text-muted-foreground">50/50 (15★)</span>
+                  </Button>
+                )}
+
+                {/* Aryabhata */}
+                {heroes.find(h => h.character_id === 'aryabhata')?.level > 0 && (
+                  <Button
+                    size="sm"
+                    disabled={aryabhataUsed}
+                    onClick={async () => {
+                      const cost = 20;
+                      if (userStars < cost) {
+                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
+                        return;
+                      }
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user) {
+                        await updateTotalStars(-cost, session.user.id);
+                        setUserStars(prev => prev - cost);
+                        setAryabhataUsed(true);
+                        setTimeRemaining(prev => prev + 15);
+                      }
+                    }}
+                    className="bg-slate-900 border border-slate-800 text-amber-400 hover:text-amber-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                  >
+                    <span>📐 Aryabhata</span>
+                    <span className="text-[7px] text-muted-foreground">+15s (20★)</span>
+                  </Button>
+                )}
+
+                {/* Chanakya */}
+                {heroes.find(h => h.character_id === 'chanakya')?.level > 0 && (
+                  <Button
+                    size="sm"
+                    disabled={chanakyaUsed}
+                    onClick={async () => {
+                      const cost = 25;
+                      if (userStars < cost) {
+                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
+                        return;
+                      }
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user) {
+                        await updateTotalStars(-cost, session.user.id);
+                        setUserStars(prev => prev - cost);
+                        setChanakyaUsed(true);
+                        setIsShieldActive(true);
+                      }
+                    }}
+                    className="bg-slate-900 border border-slate-800 text-rose-400 hover:text-rose-350 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                  >
+                    <span>📜 Chanakya</span>
+                    <span className="text-[7px] text-muted-foreground">Shield (25★)</span>
+                  </Button>
+                )}
+
+                {/* Ramanujan */}
+                {heroes.find(h => h.character_id === 'ramanujan')?.level > 0 && (
+                  <Button
+                    size="sm"
+                    disabled={ramanujanUsed}
+                    onClick={async () => {
+                      const cost = 35;
+                      if (userStars < cost) {
+                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
+                        return;
+                      }
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user) {
+                        await updateTotalStars(-cost, session.user.id);
+                        setUserStars(prev => prev - cost);
+                        setRamanujanUsed(true);
+                        setSmartClue(question.correctAnswer);
+                      }
+                    }}
+                    className="bg-slate-900 border border-slate-800 text-purple-400 hover:text-purple-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                  >
+                    <span>🧠 Ramanujan</span>
+                    <span className="text-[7px] text-muted-foreground">Hint (35★)</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Feedback / Gems earned with streak bonus info */}
           {isAnswered && gemsEarned !== null && (

@@ -374,37 +374,37 @@ export const MiniGamePlayPage: React.FC = () => {
 
   return (
     <PageLayout showNewsTicker={true}>
-      <div className="min-h-screen bg-muted/10 pb-12">
+      <div className="min-h-screen bg-[#090d16] pb-12">
         {/* Navigation / Header bar */}
-        <div className="bg-card border-b border-border py-4 px-6 sticky top-16 z-30 shadow-sm">
+        <div className="bg-slate-950 border-b border-yellow-500/10 py-4 px-6 sticky top-16 z-30 shadow-md">
           <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-            <Link to="/minigames" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/minigames" className="flex items-center gap-2 text-sm font-black text-yellow-500/70 hover:text-yellow-400 transition-colors uppercase tracking-wider">
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Gallery</span>
             </Link>
-
+ 
             {/* Title / Badge */}
             {activeGame && (
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{activeGame.emoji}</span>
                 <div>
-                  <h1 className="text-lg font-bold leading-tight">{activeGame.name}</h1>
-                  <p className="text-xs text-muted-foreground">{activeGame.description}</p>
+                  <h1 className="text-lg font-black leading-tight text-white uppercase tracking-wider">{activeGame.name}</h1>
+                  <p className="text-xs text-slate-400">{activeGame.description}</p>
                 </div>
               </div>
             )}
-
+ 
             {/* Quick Game Mode Tab Selector */}
-            <div className="flex items-center gap-1.5 overflow-x-auto bg-muted p-1 rounded-xl">
+            <div className="flex items-center gap-1.5 overflow-x-auto bg-slate-900 border border-slate-800 p-1 rounded-xl">
               {minigames.map(g => (
                 <button
                   key={g.id}
                   onClick={() => navigate(`/minigames/${g.id}`)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all",
+                    "px-3 py-1.5 rounded-lg text-xs font-black whitespace-nowrap transition-all uppercase tracking-wider",
                     g.id === gameId
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-yellow-500 text-slate-950 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
                   )}
                 >
                   <span className="mr-1">{g.emoji}</span>
@@ -414,17 +414,17 @@ export const MiniGamePlayPage: React.FC = () => {
             </div>
           </div>
         </div>
-
+ 
         {/* Main Game Screen */}
         <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col items-center justify-center">
-          <div className="w-full bg-card border rounded-3xl p-6 md:p-10 shadow-lg min-h-[450px] flex items-center justify-center">
+          <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-xl shadow-yellow-500/5 min-h-[450px] flex items-center justify-center">
             {renderGameContent()}
           </div>
           
           {/* Ad slot directly underneath the game */}
           <div className="mt-8 w-full max-w-md flex flex-col items-center">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-2">Sponsored Advertisement</div>
-            <div className="border border-dashed p-4 rounded-2xl bg-muted/20 w-full flex justify-center items-center min-h-[280px]">
+            <div className="text-[10px] text-yellow-500/50 uppercase tracking-widest font-black mb-2">Sponsored Advertisement</div>
+            <div className="border-2 border-double border-yellow-500/25 p-4 rounded-2xl bg-slate-950/40 w-full flex justify-center items-center min-h-[280px]">
               <SimpleAdBanner position="middle" />
             </div>
           </div>

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Outfit:wght@400;650;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -14,18 +15,18 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Deep Blue */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Imperial Gold */
+    --primary: 45 93% 47%;
+    --primary-foreground: 222 47% 11%;
 
-    /* Secondary - Soft Purple */
+    /* Secondary - Soft charcoal */
     --secondary: 250 30% 95%;
     --secondary-foreground: 250 30% 25%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 220 13% 38%;
 
-    /* Accent - Vibrant Green (money/success) */
+    /* Accent - Vibrant Green */
     --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
 
@@ -34,7 +35,7 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 221 83% 53%;
+    --ring: 45 93% 47%;
 
     --radius: 0.75rem;
 
@@ -45,62 +46,62 @@
     --quiz-purple: 250 75% 60%;
     
     /* Gradient Colors */
-    --gradient-start: 221 83% 53%;
-    --gradient-end: 250 75% 60%;
+    --gradient-start: 45 93% 47%;
+    --gradient-end: 25 90% 45%;
     --gradient-accent: 142 76% 36%;
 
     /* Sidebar styles */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 9% 46%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 222 47% 11%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-ring: 45 93% 47%;
   }
 
   .dark {
-    --background: 222 47% 8%;
+    --background: 222 30% 7%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 25% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 222 25% 10%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary - Deep Blue */
-    --primary: 221 83% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Imperial Gold */
+    --primary: 45 93% 47%;
+    --primary-foreground: 222 47% 11%;
 
-    /* Secondary - Soft Purple */
-    --secondary: 250 30% 20%;
-    --secondary-foreground: 250 30% 90%;
+    /* Secondary - Soft charcoal */
+    --secondary: 220 14% 15%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 220 14% 18%;
     --muted-foreground: 220 9% 65%;
 
-    /* Accent - Vibrant Green (money/success) */
+    /* Accent - Vibrant Green */
     --accent: 142 76% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
-    --ring: 221 83% 60%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 45 93% 47%;
 
     /* Sidebar styles */
-    --sidebar-background: 222 47% 11%;
+    --sidebar-background: 222 25% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 222 47% 11%;
     --sidebar-accent: 220 14% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 14% 20%;
-    --sidebar-ring: 221 83% 60%;
+    --sidebar-border: 220 14% 18%;
+    --sidebar-ring: 45 93% 47%;
   }
 }
 
@@ -110,25 +111,32 @@
   }
 
   body {
+    font-family: 'Outfit', sans-serif;
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv03" on;
   }
 
+  h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.05em;
+  }
+
   h1 {
-    @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
+    @apply text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight;
   }
 
   h2 {
-    @apply text-2xl sm:text-3xl font-bold tracking-tight;
+    @apply text-2xl sm:text-3xl font-black tracking-tight;
   }
 
   h3 {
-    @apply text-xl sm:text-2xl font-semibold tracking-tight;
+    @apply text-xl sm:text-2xl font-extrabold tracking-tight;
   }
 
   h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-extrabold tracking-tight;
   }
+}
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
@@ -408,4 +416,34 @@ body.no-ad-anchor {
 /* Hide AdSense slots until they are actually filled to avoid blank gaps. */
 ins.adsbygoogle[data-ad-status="unfilled"] {
   display: none !important;
+}
+
+/* Empire Quest Bevel Double Border */
+.gold-border-double {
+  border-style: double !important;
+  border-width: 4px !important;
+  border-color: rgba(234, 179, 8, 0.45) !important;
+  background-color: rgba(15, 23, 42, 0.7) !important;
+}
+
+/* Parchment Scroll styling */
+.parchment-scroll {
+  background-color: #fcf6ea !important;
+  color: #1e1b18 !important;
+  border: 4px double #d4af37 !important;
+  box-shadow: inset 0 0 30px rgba(139, 92, 26, 0.12), 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Empire gold button */
+.btn-empire-gold {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+  color: #020617 !important;
+  font-weight: 800 !important;
+  border: 2.5px solid #fef08a !important;
+  box-shadow: 0 4px 10px rgba(234, 179, 8, 0.25) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+.btn-empire-gold:hover {
+  transform: translateY(-1px) scale(1.01) !important;
+  box-shadow: 0 6px 15px rgba(234, 179, 8, 0.35) !important;
 }

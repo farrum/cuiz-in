@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   USER_ID: 'quiz_app_user_id',
   USER_NAME: 'quiz_app_user_name',
   USER_GEMS: 'quiz_app_user_gems',
+  USER_STARS: 'quiz_app_user_stars',
   USER_ROLE: 'quiz_app_user_role',
   COMPLETED_QUESTIONS: 'quiz_app_completed_questions',
   QUIZ_QUESTIONS: 'quiz_app_quiz_questions',

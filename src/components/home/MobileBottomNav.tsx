@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Brain, Trophy, User, Grid3X3 } from 'lucide-react';
+import { Home, Brain, Trophy, User, Grid3X3, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
@@ -13,7 +13,9 @@ const MobileBottomNav: React.FC = () => {
     { icon: Home, label: 'Home', path: '/' },
     { icon: Grid3X3, label: 'Categories', path: '/categories' },
     { icon: Brain, label: 'Play', path: '/quiz', primary: true },
-    { icon: Trophy, label: 'Leaderboard', path: '/referral' },
+    isLoggedIn
+      ? { icon: Target, label: 'Quests', path: '/empire-quests' }
+      : { icon: Trophy, label: 'Leaderboard', path: '/referral' },
     { icon: User, label: isLoggedIn ? 'Profile' : 'Login', path: isLoggedIn ? '/profile' : '/login' },
   ];
 

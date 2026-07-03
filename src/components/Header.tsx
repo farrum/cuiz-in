@@ -115,6 +115,7 @@ const Header: React.FC = () => {
 
   const loggedInNavItems = [
     { path: '/quiz', label: 'Play', icon: Award },
+    { path: '/empire-quests', label: 'Quests', icon: Target },
     { path: '/profile', label: 'Profile', icon: User },
   ];
 
@@ -150,8 +151,8 @@ const Header: React.FC = () => {
               loading="eager"
               className="w-9 h-9 rounded-xl shadow-lg group-hover:scale-105 transition-transform"
             />
-            <span className="text-xl font-bold">
-              Cuiz<span className="text-primary">IN</span>
+            <span className="text-xl font-black font-serif tracking-widest text-slate-800 dark:text-white">
+              CUIZ<span className="text-yellow-500">IN</span>
             </span>
           </Link>
 
@@ -163,10 +164,10 @@ const Header: React.FC = () => {
                 to={item.path}
                 aria-current={location.pathname === item.path ? "page" : undefined}
                 className={cn(
-                  "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "px-3 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider",
                   location.pathname === item.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-yellow-500 bg-yellow-500/10 border-b-2 border-yellow-500 rounded-b-none"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
                 )}
               >
                 {item.label}

@@ -1,0 +1,1085 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import PageLayout from '@/components/layout/PageLayout';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { HeroDashboardCard, HeroData } from '@/components/gamification/HeroDashboardCard';
+import { MysteryBoxOpener } from '@/components/gamification/MysteryBoxOpener';
+import { DailyHangman } from '@/components/gamification/DailyHangman';
+import { fetchQuizQuestions } from '@/utils/quizDataService';
+import { QuizQuestion } from '@/utils/types';
+import { updateTotalStars, logStarsEarned, updateTotalGems } from '@/utils/rewardService';
+import { 
+  Shield, Star, Sparkles, Coins, Swords, Landmark, MapPin, 
+  HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { cn } from '@/lib/utils';
+
+// Static Campaign Definitions
+interface EmpireCampaign {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Legendary';
+  category: string;
+  rules: string;
+  entryCost: number;
+  rewardType: 'bronze' | 'gold' | 'legendary';
+  rewardLabel: string;
+  emoji: string;
+}
+
+const CAMPAIGNS: EmpireCampaign[] = [
+  {
+    id: 'rome_siege',
+    name: "Siege of Rome",
+    description: "The barbarian horde approaches. Speed is your only salvation! Answer all questions rapidly.",
+    difficulty: "Easy",
+    category: "General",
+    rules: "Time Attack: 6 seconds per question",
+    entryCost: 0,
+    rewardType: "bronze",
+    rewardLabel: "Bronze Chest",
+    emoji: "🏛️"
+  },
+  {
+    id: 'persia_trial',
+    name: "Persian Riddle Vault",
+    description: "Sling solutions in the palace of Persepolis. Lifelines are disabled by royal decree.",
+    difficulty: "Medium",
+    category: "Riddles",
+    rules: "No lifelines permitted",
+    entryCost: 20,
+    rewardType: "bronze",
+    rewardLabel: "Bronze Chest + 30 Stars",
+    emoji: "🏺"
+  },
+  {
+    id: 'alexander_conquest',
+    name: "Alexander's Campaign",
+    description: "Conquer the known world. A true Emperor makes no mistakes. Complete a perfect streak.",
+    difficulty: "Hard",
+    category: "History",
+    rules: "Sudden Death: 1 wrong answer defeats you",
+    entryCost: 40,
+    rewardType: "gold",
+    rewardLabel: "Golden Vault",
+    emoji: "⚔️"
+  },
+  {
+    id: 'gupta_library',
+    name: "Gupta Library Trial",
+    description: "Prove your academic worth at Nalanda University by solving advanced scientific questions.",
+    difficulty: "Legendary",
+    category: "Science",
+    rules: "Advanced content, double shard drop chance",
+    entryCost: 100,
+    rewardType: "legendary",
+    rewardLabel: "Emperor's Tomb",
+    emoji: "📜"
+  }
+];
+
+export default function EmpireQuestsPage() {
+  const [activeTab, setActiveTab] = useState<'quests' | 'hangman' | 'chests' | 'heroes'>('quests');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userStars, setUserStars] = useState(0);
+  const [userGems, setUserGems] = useState(0);
+  const [heroes, setHeroes] = useState<HeroData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Mystery Box Opener state
+  const [openerOpen, setOpenerOpen] = useState(false);
+  const [selectedBoxTier, setSelectedBoxTier] = useState<'bronze' | 'gold' | 'legendary' | null>(null);
+
+  // Active Gameplay state
+  const [activeQuest, setActiveQuest] = useState<EmpireCampaign | null>(null);
+  const [questQuestions, setQuestQuestions] = useState<QuizQuestion[]>([]);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [score, setScore] = useState(0);
+  const [timer, setTimer] = useState(15);
+  const [gameplayStatus, setGameplayStatus] = useState<'idle' | 'playing' | 'ended'>('idle');
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+
+  // Active Hero State for Lifelines in Game
+  const [socratesUsed, setSocratesUsed] = useState(false);
+  const [aryabhataUsed, setAryabhataUsed] = useState(false);
+  const [chanakyaUsed, setChanakyaUsed] = useState(false);
+  const [ramanujanUsed, setRamanujanUsed] = useState(false);
+  const [eliminatedOptions, setEliminatedOptions] = useState<string[]>([]);
+  const [smartClue, setSmartClue] = useState<string | null>(null);
+  const [isShieldActive, setIsShieldActive] = useState(false);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
+  const haptics = useHaptics();
+
+  const fetchUserData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+      setUserId(session.user.id);
+
+      // Fetch points (gems) and stars
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('gems:points, stars')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        setUserGems(profile.gems || 0);
+        setUserStars(profile.stars || 0);
+        localStorage.setItem('quiz_app_user_gems', String(profile.gems || 0));
+        localStorage.setItem('quiz_app_user_stars', String(profile.stars || 0));
+      }
+
+      // Fetch user characters
+      const { data: chars } = await supabase
+        .from('user_characters')
+        .select('*')
+        .eq('user_id', session.user.id);
+
+      const dbCharsMap = new Map<string, any>();
+      chars?.forEach(c => {
+        dbCharsMap.set(c.character_id, c);
+      });
+
+      // Default static characters list
+      const staticHeroes: HeroData[] = [
+        {
+          id: 'socrates',
+          name: "Socrates",
+          emoji: "🏛️",
+          gradient: "from-blue-600 to-cyan-500",
+          title: "Counsel of Logic",
+          abilityName: "Philosophical 50/50",
+          abilityDesc: "Uses Socratic questioning to eliminate two incorrect options from the question.",
+          starCost: 15,
+          level: dbCharsMap.get('socrates')?.level ?? 0,
+          shards: dbCharsMap.get('socrates')?.shards_collected ?? 0,
+        },
+        {
+          id: 'aryabhata',
+          name: "Aryabhata",
+          emoji: "📐",
+          gradient: "from-yellow-600 to-amber-500",
+          title: "Royal Astronomer",
+          abilityName: "Cosmic Time Freeze",
+          abilityDesc: "Pauses the cosmic orbits, adding +15 seconds to the quiz timer.",
+          starCost: 20,
+          level: dbCharsMap.get('aryabhata')?.level ?? 0,
+          shards: dbCharsMap.get('aryabhata')?.shards_collected ?? 0,
+        },
+        {
+          id: 'chanakya',
+          name: "Chanakya",
+          emoji: "📜",
+          gradient: "from-red-650 to-orange-500",
+          title: "Imperial Advisor",
+          abilityName: "Strategist's Shield",
+          abilityDesc: "Protects your empire: prevents streak loss and penalty on an incorrect answer.",
+          starCost: 25,
+          level: dbCharsMap.get('chanakya')?.level ?? 0,
+          shards: dbCharsMap.get('chanakya')?.shards_collected ?? 0,
+        },
+        {
+          id: 'ramanujan',
+          name: "Ramanujan",
+          emoji: "🧠",
+          gradient: "from-purple-700 to-pink-500",
+          title: "Number Mystic",
+          abilityName: "Intuitive Equation",
+          abilityDesc: "Applies raw genius to highlight the correct option and show its mathematical truth.",
+          starCost: 35,
+          level: dbCharsMap.get('ramanujan')?.level ?? 0,
+          shards: dbCharsMap.get('ramanujan')?.shards_collected ?? 0,
+        }
+      ];
+
+      setHeroes(staticHeroes);
+    } catch (err) {
+      console.error("Error loading user characters:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+
+    const handleGemsUpdate = () => fetchUserData();
+    window.addEventListener('gemsUpdated', handleGemsUpdate);
+    window.addEventListener('starsUpdated', handleGemsUpdate);
+
+    return () => {
+      window.removeEventListener('gemsUpdated', handleGemsUpdate);
+      window.removeEventListener('starsUpdated', handleGemsUpdate);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  // Purchase Chest using Stars
+  const handleBuyChest = (tier: 'bronze' | 'gold' | 'legendary') => {
+    if (!userId) {
+      toast({
+        title: "Login required",
+        description: "Please sign in to buy chests.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    let cost = 0;
+    if (tier === 'bronze') cost = 50;
+    else if (tier === 'gold') cost = 150;
+    else if (tier === 'legendary') cost = 400;
+
+    if (userStars < cost) {
+      toast({
+        title: "Treasury Empty!",
+        description: `You need ${cost} Stars to buy this chest. Play Quests to earn Stars!`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Trigger purchase animation opener
+    setSelectedBoxTier(tier);
+    setOpenerOpen(true);
+  };
+
+  // Launch Campaign Quest
+  const handleLaunchQuest = async (quest: EmpireCampaign) => {
+    if (!userId) {
+      toast({
+        title: "Login required",
+        description: "Please login to embark on quests.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (quest.entryCost > 0 && userStars < quest.entryCost) {
+      toast({
+        title: "Invasion Prevented!",
+        description: `Embarking costs ${quest.entryCost} Stars. Earn more stars first.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Deduct entry fee
+      if (quest.entryCost > 0) {
+        await updateTotalStars(-quest.entryCost, userId);
+      }
+
+      // Fetch questions
+      const q = await fetchQuizQuestions();
+      const shuffled = [...q].sort(() => 0.5 - Math.random()).slice(0, 5); // 5 questions for quest
+      
+      setQuestQuestions(shuffled);
+      setActiveQuest(quest);
+      setCurrentQIndex(0);
+      setScore(0);
+      setGameplayStatus('playing');
+      setFeedbackMsg("The invasion begins! Solve the cards.");
+      
+      // Reset Hero parameters
+      setSocratesUsed(false);
+      setAryabhataUsed(false);
+      setChanakyaUsed(false);
+      setRamanujanUsed(false);
+      setEliminatedOptions([]);
+      setSmartClue(null);
+      setIsShieldActive(false);
+
+      startTimer(quest);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Could not establish server connection to load cards.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startTimer = (quest: EmpireCampaign) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    const startVal = quest.id === 'rome_siege' ? 6 : 15;
+    setTimer(startVal);
+
+    timerRef.current = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          handleTimeOut();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleTimeOut = () => {
+    haptics('warning');
+    setHasAnswered(true);
+    setIsCorrect(false);
+    setFeedbackMsg("⏳ Time has expired! Siege engines breached!");
+    
+    // Alexander campaign is Sudden Death: time out = failure
+    if (activeQuest?.id === 'alexander_conquest') {
+      setTimeout(() => {
+        endQuest(false);
+      }, 1500);
+    }
+  };
+
+  // Use Socrates Lifeline (50/50)
+  const handleUseSocrates = async () => {
+    const soc = heroes.find(h => h.id === 'socrates');
+    if (!soc || soc.level === 0) {
+      toast({ title: "Hero Locked", description: "Unlock Socrates from chests first!", variant: "destructive" });
+      return;
+    }
+    if (socratesUsed) return;
+    if (userStars < soc.starCost) {
+      toast({ title: "No Stars", description: "Not enough Stars to recruit lifeline.", variant: "destructive" });
+      return;
+    }
+
+    haptics('medium');
+    await updateTotalStars(-soc.starCost, userId);
+    setSocratesUsed(true);
+
+    const question = questQuestions[currentQIndex];
+    // Find wrong answers
+    const wrongAnswers = question.options.filter(o => o !== question.correctAnswer);
+    // Randomly pick two to eliminate
+    const shuffledWrong = wrongAnswers.sort(() => 0.5 - Math.random()).slice(0, 2);
+    setEliminatedOptions(shuffledWrong);
+
+    toast({
+      title: "Socrates' Wisdom",
+      description: "Two illogical options eliminated from the scroll.",
+    });
+  };
+
+  // Use Aryabhata Lifeline (Time Freeze)
+  const handleUseAryabhata = async () => {
+    const ary = heroes.find(h => h.id === 'aryabhata');
+    if (!ary || ary.level === 0) {
+      toast({ title: "Hero Locked", description: "Unlock Aryabhata from chests first!", variant: "destructive" });
+      return;
+    }
+    if (aryabhataUsed) return;
+    if (userStars < ary.starCost) {
+      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      return;
+    }
+
+    haptics('medium');
+    await updateTotalStars(-ary.starCost, userId);
+    setAryabhataUsed(true);
+
+    // Boost timer by 15 seconds
+    setTimer(prev => prev + 15);
+    toast({
+      title: "Astronomical Shift",
+      description: "Aryabhata aligned the stars to add +15 seconds!",
+    });
+  };
+
+  // Use Chanakya Lifeline (Shield)
+  const handleUseChanakya = async () => {
+    const chan = heroes.find(h => h.id === 'chanakya');
+    if (!chan || chan.level === 0) {
+      toast({ title: "Hero Locked", description: "Unlock Chanakya first!", variant: "destructive" });
+      return;
+    }
+    if (chanakyaUsed) return;
+    if (userStars < chan.starCost) {
+      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      return;
+    }
+
+    haptics('medium');
+    await updateTotalStars(-chan.starCost, userId);
+    setChanakyaUsed(true);
+    setIsShieldActive(true);
+
+    toast({
+      title: "Chanakya's Diplomacy",
+      description: "Imperial Shield active! Next incorrect answer will be blockaded.",
+    });
+  };
+
+  // Use Ramanujan Lifeline (Smart Hint)
+  const handleUseRamanujan = async () => {
+    const ram = heroes.find(h => h.id === 'ramanujan');
+    if (!ram || ram.level === 0) {
+      toast({ title: "Hero Locked", description: "Unlock Ramanujan first!", variant: "destructive" });
+      return;
+    }
+    if (ramanujanUsed) return;
+    if (userStars < ram.starCost) {
+      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      return;
+    }
+
+    haptics('medium');
+    await updateTotalStars(-ram.starCost, userId);
+    setRamanujanUsed(true);
+
+    const question = questQuestions[currentQIndex];
+    setSmartClue(`The correct equation outcome is: "${question.correctAnswer}". Reason: ${question.explanation || 'It fits the logic.'}`);
+
+    toast({
+      title: "Ramanujan's Equation",
+      description: "The mathematical truth has been revealed!",
+    });
+  };
+
+  const handleSelectAnswer = async (option: string) => {
+    if (hasAnswered) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    setSelectedOption(option);
+    setHasAnswered(true);
+
+    const currentQuestion = questQuestions[currentQIndex];
+    
+    // Call server validator
+    let checkCorrect = false;
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
+        body: { question_id: currentQuestion.id, selected_answer: option }
+      });
+      if (!error && data) {
+        checkCorrect = !!data.is_correct;
+      } else {
+        // Local fallback
+        checkCorrect = option === currentQuestion.correctAnswer;
+      }
+    } catch (err) {
+      checkCorrect = option === currentQuestion.correctAnswer;
+    }
+
+    setIsCorrect(checkCorrect);
+
+    if (checkCorrect) {
+      haptics('success');
+      setScore(prev => prev + 1);
+      setFeedbackMsg("⚔️ Victory! Siege tower advanced.");
+    } else {
+      if (isShieldActive) {
+        haptics('success');
+        setIsShieldActive(false);
+        setIsCorrect(true); // Treat as correct for game progression
+        setFeedbackMsg("🛡️ Chanakya Shield Absorbed! You survived the strike.");
+        toast({ title: "Shield Absorbed", description: "Your streak was saved by Chanakya's diplomacy!" });
+      } else {
+        haptics('error');
+        setFeedbackMsg(`❌ Defeat! Correct answer: ${currentQuestion.correctAnswer}`);
+        
+        // Alexander campaign is Sudden Death: fail immediately
+        if (activeQuest?.id === 'alexander_conquest') {
+          setTimeout(() => {
+            endQuest(false);
+          }, 1800);
+          return;
+        }
+      }
+    }
+  };
+
+  const handleNextQuestion = () => {
+    setHasAnswered(false);
+    setSelectedOption(null);
+    setEliminatedOptions([]);
+    setSmartClue(null);
+
+    const nextIndex = currentQIndex + 1;
+    if (nextIndex < questQuestions.length) {
+      setCurrentQIndex(nextIndex);
+      startTimer(activeQuest!);
+      setFeedbackMsg(`Question ${nextIndex + 1}/${questQuestions.length}`);
+    } else {
+      // Finished all questions!
+      const minPass = activeQuest?.id === 'alexander_conquest' ? 5 : 3;
+      const passed = score >= minPass;
+      endQuest(passed);
+    }
+  };
+
+  const endQuest = async (passed: boolean) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setGameplayStatus('ended');
+
+    if (passed && activeQuest) {
+      haptics('success');
+      confetti({ particleCount: 100, spread: 70 });
+      
+      // Earn stars
+      let starReward = 20;
+      if (activeQuest.id === 'persia_trial') starReward = 50;
+      else if (activeQuest.id === 'alexander_conquest') starReward = 80;
+      else if (activeQuest.id === 'gupta_library') starReward = 150;
+
+      await logStarsEarned(starReward, userId);
+
+      // Award Chest
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('scratch_cards, spin_tickets')
+          .eq('id', userId)
+          .single();
+
+        // Save chest to open
+        setSelectedBoxTier(activeQuest.rewardType);
+        setOpenerOpen(true);
+      } catch (err) {
+        console.error(err);
+      }
+
+      toast({
+        title: "✨ QUEST VICTORIOUS!",
+        description: `Successfully completed ${activeQuest.name}! Earned ${starReward} Stars and a ${activeQuest.rewardLabel}.`,
+      });
+    } else {
+      haptics('error');
+      toast({
+        title: "Quest Defeated",
+        description: "Your army retreated. Upgrade your heroes and try again!",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exitGameplay = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setGameplayStatus('idle');
+    setActiveQuest(null);
+    setQuestQuestions([]);
+    fetchUserData();
+  };
+
+  return (
+    <PageLayout showNewsTicker={true}>
+      <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+        
+        {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
+        <div className="bg-slate-900 border-b-2 border-yellow-500/20 py-4 px-6 sticky top-16 z-30 shadow-md">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
+              <div>
+                <h1 className="text-lg font-black tracking-tight text-white uppercase">Empire Quests</h1>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">War Room & Council Chambers</p>
+              </div>
+            </div>
+
+            {/* Balances Display */}
+            <div className="flex gap-4">
+              <div className="bg-slate-950 border border-amber-500/20 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <Coins className="w-4 h-4 text-amber-500 fill-amber-500/10" />
+                <div>
+                  <span className="text-[9px] font-bold text-slate-500 block uppercase leading-none">Gems</span>
+                  <span className="text-xs font-black text-amber-500">{userGems}</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950 border border-yellow-500/20 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500/10 animate-pulse" />
+                <div>
+                  <span className="text-[9px] font-bold text-slate-500 block uppercase leading-none">Stars</span>
+                  <span className="text-xs font-black text-yellow-400">{userStars}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* LOADING INDICATOR */}
+        {loading && gameplayStatus === 'idle' ? (
+          <div className="flex flex-col items-center justify-center p-24">
+            <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Consulting the Scribes...</p>
+          </div>
+        ) : gameplayStatus === 'playing' ? (
+          
+          /* ACTIVE IMMERSIVE QUEST PLAY INTERFACE */
+          <div className="max-w-4xl mx-auto px-4 mt-8">
+            <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
+              
+              {/* Shield Status Effect Overlay */}
+              {isShieldActive && (
+                <div className="absolute inset-0 border-4 border-indigo-500/20 pointer-events-none animate-pulse rounded-2xl" />
+              )}
+
+              {/* Progress and Timer header */}
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+                <Button variant="ghost" size="sm" onClick={exitGameplay} className="text-slate-400 hover:text-white uppercase tracking-wider text-[10px] font-black">
+                  🏳️ Retreat
+                </Button>
+
+                <div className="text-center">
+                  <span className="text-xs font-black uppercase text-yellow-500 tracking-widest block">
+                    {activeQuest?.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">
+                    Question {currentQIndex + 1} of {questQuestions.length}
+                  </span>
+                </div>
+
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-xl font-black text-xs border uppercase tracking-wider",
+                  timer <= 3 ? "bg-red-500/10 border-red-500/30 text-red-500 animate-ping" : "bg-slate-950 border-slate-800 text-slate-350"
+                )}>
+                  <Timer className="w-4 h-4" />
+                  <span>{timer}s</span>
+                </div>
+              </div>
+
+              {/* Question Screen */}
+              {questQuestions[currentQIndex] && (
+                <div className="space-y-6">
+                  {/* Category badge */}
+                  <div className="flex justify-center">
+                    <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-yellow-500">
+                      {questQuestions[currentQIndex].category}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg md:text-xl font-bold text-center text-white leading-relaxed max-w-2xl mx-auto font-serif px-2">
+                    {questQuestions[currentQIndex].question}
+                  </h3>
+
+                  {/* Smart Hint Card */}
+                  {smartClue && (
+                    <div className="bg-purple-950/20 border border-purple-500/30 p-3 rounded-2xl text-xs text-purple-400 font-semibold max-w-lg mx-auto text-center animate-pulse">
+                      🧠 Ramanujan's Formula: {smartClue}
+                    </div>
+                  )}
+
+                  {/* Options List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto pt-4">
+                    {questQuestions[currentQIndex].options.map((option) => {
+                      const isEliminated = eliminatedOptions.includes(option);
+                      const isSelected = selectedOption === option;
+                      const showResult = hasAnswered;
+                      
+                      // Highlight green if selected/correct
+                      const isOptionCorrect = option === questQuestions[currentQIndex].correctAnswer;
+                      
+                      if (isEliminated) return <div key={option} className="hidden" />;
+
+                      return (
+                        <button
+                          key={option}
+                          disabled={hasAnswered}
+                          onClick={() => handleSelectAnswer(option)}
+                          className={cn(
+                            "w-full text-left p-4 rounded-2xl border-2 font-bold text-sm transition-all duration-200 select-none",
+                            showResult
+                              ? isOptionCorrect
+                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-md shadow-emerald-500/5"
+                                : isSelected
+                                  ? "bg-red-500/10 border-red-500 text-red-400"
+                                  : "bg-slate-950 border-slate-900 text-slate-500 opacity-50"
+                              : isSelected
+                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-400"
+                                : "bg-slate-950 border-slate-800 text-slate-350 hover:bg-slate-850 hover:border-slate-700"
+                          )}
+                        >
+                          <span className="mr-3 text-yellow-500/40 text-xs font-black">●</span>
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Interactive Gameplay Banner / Console log */}
+                  <div className="text-center py-4">
+                    <p className={cn(
+                      "text-xs font-black uppercase tracking-wider",
+                      hasAnswered 
+                        ? isCorrect 
+                          ? "text-emerald-500" 
+                          : "text-red-500"
+                        : "text-slate-400"
+                    )}>
+                      {feedbackMsg}
+                    </p>
+                  </div>
+
+                  {/* Next card trigger */}
+                  {hasAnswered && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        onClick={handleNextQuestion}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-6 py-2.5 rounded-xl text-xs uppercase tracking-widest scale-100 hover:scale-105 active:scale-95 transition-all border-0"
+                      >
+                        Next Card <ArrowRight className="w-4 h-4 ml-1.5" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* COUNCIL LIFELINES PANEL */}
+                  {activeQuest?.id !== 'persia_trial' && (
+                    <div className="border-t border-slate-800 pt-6 mt-8">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center mb-4">
+                        Activate Council Lifelines
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+                        {/* Socrates Button */}
+                        <Button
+                          disabled={socratesUsed || hasAnswered || heroes.find(h => h.id === 'socrates')?.level === 0}
+                          onClick={handleUseSocrates}
+                          className={cn(
+                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
+                            socratesUsed
+                              ? "bg-slate-950 text-slate-600"
+                              : "bg-slate-900 text-cyan-400 hover:bg-slate-850"
+                          )}
+                        >
+                          <span className="text-sm">🏛️ Socrates</span>
+                          <span className="text-[8px] font-black text-slate-500 mt-0.5">50/50 (15 ★)</span>
+                        </Button>
+
+                        {/* Aryabhata Button */}
+                        <Button
+                          disabled={aryabhataUsed || hasAnswered || heroes.find(h => h.id === 'aryabhata')?.level === 0}
+                          onClick={handleUseAryabhata}
+                          className={cn(
+                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
+                            aryabhataUsed
+                              ? "bg-slate-950 text-slate-600"
+                              : "bg-slate-900 text-amber-400 hover:bg-slate-850"
+                          )}
+                        >
+                          <span className="text-sm">📐 Aryabhata</span>
+                          <span className="text-[8px] font-black text-slate-500 mt-0.5">+15s (20 ★)</span>
+                        </Button>
+
+                        {/* Chanakya Button */}
+                        <Button
+                          disabled={chanakyaUsed || hasAnswered || heroes.find(h => h.id === 'chanakya')?.level === 0}
+                          onClick={handleUseChanakya}
+                          className={cn(
+                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
+                            chanakyaUsed
+                              ? "bg-slate-950 text-slate-600"
+                              : "bg-slate-900 text-rose-450 hover:bg-slate-850"
+                          )}
+                        >
+                          <span className="text-sm">📜 Chanakya</span>
+                          <span className="text-[8px] font-black text-slate-500 mt-0.5">Shield (25 ★)</span>
+                        </Button>
+
+                        {/* Ramanujan Button */}
+                        <Button
+                          disabled={ramanujanUsed || hasAnswered || heroes.find(h => h.id === 'ramanujan')?.level === 0}
+                          onClick={handleUseRamanujan}
+                          className={cn(
+                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
+                            ramanujanUsed
+                              ? "bg-slate-950 text-slate-600"
+                              : "bg-slate-900 text-purple-400 hover:bg-slate-850"
+                          )}
+                        >
+                          <span className="text-sm">🧠 Ramanujan</span>
+                          <span className="text-[8px] font-black text-slate-500 mt-0.5">Smart Hint (35 ★)</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : gameplayStatus === 'ended' ? (
+          
+          /* QUEST COMPLETED SUMMARY */
+          <div className="max-w-md mx-auto px-4 mt-12 text-center">
+            <div className="bg-slate-900 border-2 border-yellow-500/20 rounded-3xl p-8 shadow-2xl">
+              <span className="text-6xl mb-4 block">
+                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? '🏆' : '💀'}
+              </span>
+              <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-2">
+                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? 'Quest Successful!' : 'Quest Defeated'}
+              </h2>
+              <p className="text-slate-400 text-sm mb-6">
+                You correctly answered <span className="font-extrabold text-yellow-500">{score}</span> out of {questQuestions.length} trivia cards.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? (
+                  <p className="text-xs text-yellow-400 font-semibold animate-pulse mb-2">
+                    A {activeQuest?.rewardLabel} has been awarded to your cargo!
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mb-2">
+                    Upgrade your characters in the council chamber to unlock lifelines.
+                  </p>
+                )}
+
+                <Button onClick={exitGameplay} className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-3 rounded-xl uppercase tracking-widest text-xs border-0">
+                  Return to Map
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          
+          /* STANDARD WAR ROOM TABS */
+          <div className="max-w-6xl mx-auto px-4 mt-8">
+            
+            {/* TABS TACTICAL SELECTOR */}
+            <div className="flex justify-center border-b border-slate-800 mb-8">
+              <div className="flex gap-2 bg-slate-900/60 p-1 rounded-2xl border border-slate-850">
+                <button
+                  onClick={() => setActiveTab('quests')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    activeTab === 'quests' 
+                      ? "bg-yellow-500 text-slate-950 shadow-md font-black" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  ⚔️ Quests Map
+                </button>
+                <button
+                  onClick={() => setActiveTab('hangman')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    activeTab === 'hangman' 
+                      ? "bg-yellow-500 text-slate-950 shadow-md" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  💀 Hangman
+                </button>
+                <button
+                  onClick={() => setActiveTab('chests')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    activeTab === 'chests' 
+                      ? "bg-yellow-500 text-slate-950 shadow-md" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  📦 Chest Shop
+                </button>
+                <button
+                  onClick={() => setActiveTab('heroes')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    activeTab === 'heroes' 
+                      ? "bg-yellow-500 text-slate-950 shadow-md" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  🏛️ Counsel
+                </button>
+              </div>
+            </div>
+
+            {/* TAB CONTENT: QUESTS */}
+            {activeTab === 'quests' && (
+              <div className="space-y-6">
+                <div className="text-center max-w-md mx-auto mb-8">
+                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Active Campaigns</h2>
+                  <p className="text-xs text-slate-400 mt-1">Conquer regional campaigns to amass stars and find rare loot vaults.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {CAMPAIGNS.map((quest) => (
+                    <div 
+                      key={quest.id}
+                      className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between hover:border-yellow-500/20 transition-all shadow-md group relative overflow-hidden"
+                    >
+                      {/* Glow background on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/5 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                      <div>
+                        {/* Title Row */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl">{quest.emoji}</span>
+                            <div>
+                              <h3 className="font-extrabold text-white text-base tracking-tight">{quest.name}</h3>
+                              <span className={cn(
+                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border mt-1 inline-block",
+                                quest.difficulty === 'Easy' ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" :
+                                quest.difficulty === 'Medium' ? "border-yellow-500/20 bg-yellow-500/10 text-yellow-400" :
+                                quest.difficulty === 'Hard' ? "border-red-500/20 bg-red-500/10 text-red-400" :
+                                "border-purple-500/20 bg-purple-500/10 text-purple-400"
+                              )}>
+                                {quest.difficulty}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-[9px] uppercase font-bold text-slate-500 block">Entry Fee</span>
+                            <span className="text-xs font-black text-yellow-400">
+                              {quest.entryCost > 0 ? `${quest.entryCost} Stars` : 'FREE'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-slate-400 text-xs leading-relaxed mb-4 mt-2">
+                          {quest.description}
+                        </p>
+                      </div>
+
+                      {/* Footer Cost & Action */}
+                      <div className="border-t border-slate-850 pt-4 flex justify-between items-center gap-3 mt-4">
+                        <div>
+                          <span className="text-[9px] uppercase font-bold text-slate-500 block">Victory Cargo</span>
+                          <span className="text-xs font-black text-amber-500">{quest.rewardLabel}</span>
+                        </div>
+
+                        <Button
+                          onClick={() => handleLaunchQuest(quest)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs uppercase tracking-widest transition-all scale-100 hover:scale-105 border-0"
+                        >
+                          Launch Quest
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: HANGMAN */}
+            {activeTab === 'hangman' && (
+              <div className="space-y-6">
+                <DailyHangman userId={userId} onRefreshBalances={fetchUserData} />
+              </div>
+            )}
+
+            {/* TAB CONTENT: CHESTS */}
+            {activeTab === 'chests' && (
+              <div className="space-y-6">
+                <div className="text-center max-w-md mx-auto mb-8">
+                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Empire Treasury Shop</h2>
+                  <p className="text-xs text-slate-400 mt-1">Exchange your gathered star tokens to purchase mystery reward vaults.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Bronze Card */}
+                  <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-700 to-amber-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                      📦
+                    </div>
+                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Bronze Chest</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                      Contains minor Gems & Stars. Socrates/Aryabhata shards.
+                    </p>
+                    <Button 
+                      onClick={() => handleBuyChest('bronze')}
+                      className="w-full bg-slate-950 hover:bg-slate-850 text-yellow-400 font-extrabold border border-yellow-500/25 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider"
+                    >
+                      50 Stars
+                    </Button>
+                  </div>
+
+                  {/* Gold Card */}
+                  <div className="bg-slate-900 border-2 border-yellow-500/20 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-lg relative group">
+                    {/* Rare badge */}
+                    <span className="absolute -top-3 bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                      Highly Popular
+                    </span>
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-600 via-amber-500 to-yellow-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-yellow-400/20 group-hover:scale-105 transition-transform duration-300">
+                      🏆
+                    </div>
+                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Golden Vault</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                      Excellent value. Medium gems, stars. High chance of Chanakya shards.
+                    </p>
+                    <Button 
+                      onClick={() => handleBuyChest('gold')}
+                      className="w-full bg-yellow-505 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs uppercase tracking-widest border-0"
+                    >
+                      150 Stars
+                    </Button>
+                  </div>
+
+                  {/* Legendary Card */}
+                  <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-800 via-indigo-600 to-purple-600 flex items-center justify-center text-5xl mb-4 shadow-inner border border-purple-500/20 group-hover:scale-105 transition-transform duration-300">
+                      👑
+                    </div>
+                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Emperor's Tomb</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                      Legendary drops. Major Gems & Stars. High shards count for any hero.
+                    </p>
+                    <Button 
+                      onClick={() => handleBuyChest('legendary')}
+                      className="w-full bg-slate-950 hover:bg-slate-850 text-yellow-400 font-extrabold border border-yellow-500/25 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider"
+                    >
+                      400 Stars
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: HEROES */}
+            {activeTab === 'heroes' && (
+              <div className="space-y-6">
+                <div className="text-center max-w-md mx-auto mb-8">
+                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Intellectual Counsel</h2>
+                  <p className="text-xs text-slate-400 mt-1">Unlock and upgrade historical counselors. Leveling up boosts their lifeline powers.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {heroes.map((hero) => (
+                    <HeroDashboardCard
+                      key={hero.id}
+                      hero={hero}
+                      userId={userId}
+                      onRefresh={fetchUserData}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* MYSTERY BOX REVEAL ANIMATOR SYSTEM */}
+      <MysteryBoxOpener
+        isOpen={openerOpen}
+        onClose={() => {
+          setOpenerOpen(false);
+          setSelectedBoxTier(null);
+          fetchUserData();
+        }}
+        boxTier={selectedBoxTier}
+        userId={userId}
+        onSuccess={fetchUserData}
+      />
+    </PageLayout>
+  );
+}

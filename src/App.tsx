@@ -89,6 +89,7 @@ const TeamLeaderDashboardPage = React.lazy(() => import("@/pages/TeamLeaderDashb
 const QuizQuestionPage = React.lazy(() => import("@/pages/QuizQuestionPage"));
 const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
+const EmpireQuestsPage = React.lazy(() => import("@/pages/EmpireQuestsPage"));
 
 // Lazy load components that aren't needed immediately
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
@@ -121,7 +122,7 @@ const AmpQuestionRedirect: React.FC = () => {
 async function hydrateUserFromSession(userId: string) {
   try {
     const [profileResult, roleResult] = await Promise.all([
-      supabase.from('profiles').select('username, gems:points').eq('id', userId).maybeSingle(),
+      supabase.from('profiles').select('username, gems:points, stars').eq('id', userId).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
 
@@ -129,6 +130,7 @@ async function hydrateUserFromSession(userId: string) {
       localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, profileResult.data.username);
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(profileResult.data.gems ?? 0));
+      localStorage.setItem(STORAGE_KEYS.USER_STARS, String(profileResult.data.stars ?? 0));
     }
 
     const roles = new Set((roleResult.data || []).map((item) => item.role).filter(Boolean));
@@ -147,6 +149,7 @@ function clearUserCache() {
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);
   localStorage.removeItem(STORAGE_KEYS.USER_GEMS);
+  localStorage.removeItem(STORAGE_KEYS.USER_STARS);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
 }
@@ -499,6 +502,12 @@ function App() {
                 <Suspense fallback={<PageLoader />}>
                   <MiniGamePlayPage />
                 </Suspense>
+              } />
+              
+              <Route path="/empire-quests" element={
+                <LazyProtectedRoute>
+                  <EmpireQuestsPage />
+                </LazyProtectedRoute>
               } />
 
             </Routes>
