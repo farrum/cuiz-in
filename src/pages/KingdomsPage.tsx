@@ -10,6 +10,7 @@ import {
   PlusCircle, LogOut, Search, Info, Flame, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CoatOfArmsShield } from '@/components/gamification/CoatOfArmsShield';
 
 interface Alliance {
   alliance_id: string;
@@ -50,7 +51,10 @@ export default function KingdomsPage() {
   // Alliance creation form
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newCrest, setNewCrest] = useState('🦁');
+  const [newPattern, setNewPattern] = useState('solid');
+  const [newColorA, setNewColorA] = useState('sable');
+  const [newColorB, setNewColorB] = useState('or');
+  const [newCharge, setNewCharge] = useState('🦁');
   const [creating, setCreating] = useState(false);
 
   // Chat states
@@ -216,10 +220,11 @@ export default function KingdomsPage() {
     setCreating(true);
     haptics('medium');
     try {
+      const computedCrest = `${newPattern}|${newColorA}-${newColorB}|${newCharge}`;
       const { data } = await supabase.rpc('create_alliance', {
         p_name: newName,
         p_description: newDesc,
-        p_crest_emoji: newCrest,
+        p_crest_emoji: computedCrest,
         p_user_id: userId
       });
 
@@ -359,9 +364,7 @@ export default function KingdomsPage() {
                 {/* Kingdom Header Card */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
                   <div className="flex items-center gap-4">
-                    <span className="text-5xl bg-slate-950 w-16 h-16 rounded-2xl flex items-center justify-center border border-yellow-500/20">
-                      {myAlliance.crest_emoji}
-                    </span>
+                    <CoatOfArmsShield crestString={myAlliance.crest_emoji} size="lg" />
                     <div>
                       <h2 className="text-lg font-black uppercase font-serif text-white">{myAlliance.name}</h2>
                       <p className="text-xs text-slate-400 mt-0.5">"{myAlliance.description}"</p>
@@ -523,30 +526,84 @@ export default function KingdomsPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-1">
-                        <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1">Crest Emoji</label>
-                        <select
-                          value={newCrest}
-                          onChange={(e) => setNewCrest(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-yellow-500/50 appearance-none text-center"
-                        >
-                          {["🦁", "🐉", "🛡️", "⚔️", "🦅", "🐺", "👑", "🏹", "🦄", "🏔️"].map(emoji => (
-                            <option key={emoji} value={emoji}>{emoji}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="col-span-2">
-                        <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1">Dynastic Decree (Description)</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Conquest and academic supremacy."
-                          value={newDesc}
-                          onChange={(e) => setNewDesc(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                    <div className="bg-slate-950 border border-slate-850 p-4 rounded-2xl flex items-center justify-between gap-4">
+                      <div className="flex flex-col items-center">
+                        <label className="text-[9px] uppercase font-black tracking-wider text-slate-500 mb-2">Coat of Arms Preview</label>
+                        <CoatOfArmsShield 
+                          crestString={`${newPattern}|${newColorA}-${newColorB}|${newCharge}`} 
+                          size="lg" 
+                          className="bg-slate-900 rounded-2xl p-1 border border-yellow-500/10 shadow-inner"
                         />
                       </div>
+
+                      <div className="flex-1 grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Shield Layout</label>
+                          <select
+                            value={newPattern}
+                            onChange={(e) => setNewPattern(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                          >
+                            <option value="solid">Solid</option>
+                            <option value="vertical">Vertical Split</option>
+                            <option value="diagonal">Diagonal Split</option>
+                            <option value="cross">Four Quadrants</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Charge Emblem</label>
+                          <select
+                            value={newCharge}
+                            onChange={(e) => setNewCharge(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                          >
+                            {["🦁", "🐉", "🛡️", "⚔️", "🦅", "🐺", "👑", "🏹", "🦄", "🏔️"].map(emoji => (
+                              <option key={emoji} value={emoji}>{emoji}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Primary Color</label>
+                          <select
+                            value={newColorA}
+                            onChange={(e) => setNewColorA(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                          >
+                            <option value="sable">Obsidian Black</option>
+                            <option value="gules">Crimson Red</option>
+                            <option value="azure">Sapphire Blue</option>
+                            <option value="or">Imperial Gold</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Secondary Color</label>
+                          <select
+                            value={newColorB}
+                            onChange={(e) => setNewColorB(e.target.value)}
+                            disabled={newPattern === 'solid'}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50 disabled:opacity-40"
+                          >
+                            <option value="or">Imperial Gold</option>
+                            <option value="gules">Crimson Red</option>
+                            <option value="azure">Sapphire Blue</option>
+                            <option value="sable">Obsidian Black</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1">Dynastic Decree (Description)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Conquest and academic supremacy."
+                        value={newDesc}
+                        onChange={(e) => setNewDesc(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                      />
                     </div>
 
                     <Button
@@ -588,7 +645,7 @@ export default function KingdomsPage() {
                             className="bg-slate-950/40 border border-slate-850 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3 hover:border-yellow-500/10 transition-colors"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-3xl bg-slate-950 p-2 rounded-xl border border-slate-850">{all.crest_emoji}</span>
+                              <CoatOfArmsShield crestString={all.crest_emoji} size="md" />
                               <div>
                                 <h4 className="font-extrabold text-white text-xs">{all.name}</h4>
                                 <p className="text-[10px] text-slate-500 max-w-[220px]">"{all.description}"</p>
@@ -651,7 +708,7 @@ export default function KingdomsPage() {
                       )}>
                         {rank}
                       </span>
-                      <span className="text-xl">{all.crest_emoji}</span>
+                      <CoatOfArmsShield crestString={all.crest_emoji} size="sm" />
                       <div>
                         <span className="font-extrabold text-xs block text-slate-200">{all.name}</span>
                         <span className="text-[9px] text-slate-500 flex items-center gap-1">

@@ -55,13 +55,83 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
   const chestData = getChestIcon();
 
   const handleOpenChest = async () => {
-    if (status !== 'idle' || !userId) return;
+    if (status !== 'idle') return;
 
     setLoading(true);
     setStatus('shaking');
     haptics('medium');
 
     try {
+      if (!userId) {
+        // Guest local storage fallback
+        const rand = Math.random();
+        let result: RewardResult;
+        
+        const characters = ['socrates', 'aryabhata', 'chanakya', 'ramanujan'];
+        const randomChar = characters[Math.floor(Math.random() * characters.length)];
+
+        if (rand < 0.4) {
+          // Shards drop
+          const shardsCount = boxTier === 'legendary' ? 25 : boxTier === 'gold' ? 10 : 5;
+          result = {
+            reward_type: 'shards',
+            character_id: randomChar,
+            shards: shardsCount,
+            label: `Discovered ${shardsCount} shards of ${randomChar.toUpperCase()}!`,
+            gems: 0, stars: 0, tickets: 0
+          };
+        } else if (rand < 0.8) {
+          // Gems and Stars drop
+          const gemsCount = boxTier === 'legendary' ? 150 : boxTier === 'gold' ? 60 : 20;
+          const starsCount = boxTier === 'legendary' ? 40 : boxTier === 'gold' ? 15 : 5;
+          result = {
+            reward_type: 'gems_and_stars',
+            gems: gemsCount,
+            stars: starsCount,
+            label: `Gained +${gemsCount} Gems & +${starsCount} Stars!`,
+            tickets: 0
+          };
+        } else {
+          // Ticket drop
+          const ticketsCount = boxTier === 'legendary' ? 5 : boxTier === 'gold' ? 2 : 1;
+          result = {
+            reward_type: 'spin_ticket',
+            tickets: ticketsCount,
+            label: `Discovered +${ticketsCount} Spin Tickets!`,
+            gems: 0, stars: 0
+          };
+        }
+
+        // Add to guest local storage
+        const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
+        const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
+        
+        localStorage.setItem('quiz_app_user_stars', String(localStars + result.stars));
+        localStorage.setItem('quiz_app_user_gems', String(localGems + result.gems));
+        
+        if (result.reward_type === 'shards' && result.character_id) {
+          const currentShards = Number(localStorage.getItem(`hero_${result.character_id}_shards`) || '0');
+          localStorage.setItem(`hero_${result.character_id}_shards`, String(currentShards + (result.shards || 0)));
+        }
+
+        // Keep shaking for 1.8 seconds to build suspense
+        setTimeout(() => {
+          setReward(result);
+          setStatus('revealed');
+          setLoading(false);
+          haptics('success');
+          
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 }
+          });
+
+          if (onSuccess) onSuccess();
+        }, 1800);
+        return;
+      }
+
       // Call Supabase RPC
       const { data, error } = await supabase.rpc('open_mystery_box', {
         user_uuid: userId,

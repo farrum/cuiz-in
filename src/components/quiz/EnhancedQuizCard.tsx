@@ -10,6 +10,7 @@ import { useQuizSounds } from '@/hooks/useQuizSounds';
 import { audioManager } from '@/utils/audioManager';
 import { logGemsEarned } from '@/utils/gemsService';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
+import { useHaptics } from '@/mobile/hooks/useHaptics';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
@@ -76,8 +77,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [timerStarted, setTimerStarted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(DIFFICULTY_CONFIG[difficulty].timer);
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    const stored = localStorage.getItem('cuizin_sound_enabled');
-    return stored !== 'false';
+    return audioManager.isSfxEnabled();
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [gemsEarned, setGemsEarned] = useState<number | null>(null);
@@ -85,6 +85,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
   const { toast } = useToast();
+  const haptics = useHaptics();
   const [userStars, setUserStars] = useState<number>(0);
   const [heroes, setHeroes] = useState<any[]>([]);
   const [socratesUsed, setSocratesUsed] = useState(false);
@@ -94,6 +95,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [eliminatedOptions, setEliminatedOptions] = useState<string[]>([]);
   const [isShieldActive, setIsShieldActive] = useState(false);
   const [smartClue, setSmartClue] = useState<string | null>(null);
+  const [counselorDialogue, setCounselorDialogue] = useState<{ name: string; avatar: string; quote: string } | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
@@ -107,34 +109,42 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
   // Reset/fetch lifelines and states when question changes
   useEffect(() => {
-    if (isLoggedIn) {
-      const loadHeroes = async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            // stars
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('stars')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            if (profile) {
-              setUserStars(profile.stars || 0);
-            }
-
-            // characters
-            const { data: chars } = await supabase
-              .from('user_characters')
-              .select('character_id, level')
-              .eq('user_id', session.user.id);
-            setHeroes(chars || []);
+    const loadHeroes = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // stars
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('stars')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          if (profile) {
+            setUserStars(profile.stars || 0);
           }
-        } catch (e) {
-          console.error('Failed to load heroes on quiz card', e);
+
+          // characters
+          const { data: chars } = await supabase
+            .from('user_characters')
+            .select('character_id, level')
+            .eq('user_id', session.user.id);
+          setHeroes(chars || []);
+        } else {
+          // Guest local storage fallback
+          const localHeroes = [
+            { character_id: 'socrates', level: Number(localStorage.getItem('hero_socrates_level') || '0') },
+            { character_id: 'aryabhata', level: Number(localStorage.getItem('hero_aryabhata_level') || '0') },
+            { character_id: 'chanakya', level: Number(localStorage.getItem('hero_chanakya_level') || '0') },
+            { character_id: 'ramanujan', level: Number(localStorage.getItem('hero_ramanujan_level') || '0') },
+          ];
+          setHeroes(localHeroes);
+          setUserStars(Number(localStorage.getItem('quiz_app_user_stars') || '50'));
         }
-      };
-      loadHeroes();
-    }
+      } catch (e) {
+        console.error('Failed to load heroes on quiz card', e);
+      }
+    };
+    loadHeroes();
     
     setSocratesUsed(false);
     setAryabhataUsed(false);
@@ -142,6 +152,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     setRamanujanUsed(false);
     setEliminatedOptions([]);
     setSmartClue(null);
+    setCounselorDialogue(null);
     setIsShieldActive(false);
   }, [question.id, isLoggedIn]);
 
@@ -329,6 +340,15 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     localStorage.setItem('cuizin_sound_enabled', String(newValue));
+    
+    // Sync with the global audioManager (muting BGM and SFX)
+    if (newValue) {
+      if (!audioManager.isBgmEnabled()) audioManager.toggleBGM();
+      if (!audioManager.isSfxEnabled()) audioManager.toggleSFX();
+    } else {
+      if (audioManager.isBgmEnabled()) audioManager.toggleBGM();
+      if (audioManager.isSfxEnabled()) audioManager.toggleSFX();
+    }
   };
 
   const getOptionStyle = (option: string) => {
@@ -548,6 +568,17 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           )}
 
+          {/* Counselor Dialogue Box */}
+          {counselorDialogue && (
+            <div className="bg-[#fcf6ea] text-[#1e1b18] border-4 border-double border-[#d4af37] p-3 rounded-2xl text-xs font-semibold animate-in slide-in-from-top duration-300 mb-4 shadow-md flex items-start gap-3">
+              <span className="text-3xl bg-slate-900/10 p-1.5 rounded-xl border border-slate-900/5 select-none">{counselorDialogue.avatar}</span>
+              <div className="text-left">
+                <span className="font-extrabold uppercase text-[9px] tracking-wider text-[#78350f] block mb-0.5">{counselorDialogue.name}'s counsel</span>
+                <p className="italic text-slate-700 leading-relaxed text-[11px]">"{counselorDialogue.quote}"</p>
+              </div>
+            </div>
+          )}
+
           {/* Options */}
           <div className="space-y-3">
             {question.options.map((option, index) => {
@@ -592,7 +623,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           </div>
 
           {/* Council Lifelines */}
-          {isLoggedIn && !isAnswered && !isChallenge && heroes.some(h => h.level > 0) && (
+          {!isAnswered && !isChallenge && heroes.some(h => h.level > 0) && (
             <div className="border-t border-muted/50 pt-4 mt-6">
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-black tracking-wider mb-3">
                 <Landmark className="w-3.5 h-3.5 text-yellow-500" />
@@ -613,17 +644,20 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                         toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
                         return;
                       }
+                      haptics('medium');
+                      audioManager.playSFX('socrates');
+                      setCounselorDialogue({
+                        name: 'Socrates',
+                        avatar: '🏛️',
+                        quote: 'An unexamined choice is not worth choosing, Knight. Let us discard two falsehoods.'
+                      });
                       const { data: { session } } = await supabase.auth.getSession();
-                      if (session?.user) {
-                        haptics('medium');
-                        audioManager.playSFX('socrates');
-                        await updateTotalStars(-cost, session.user.id);
-                        setUserStars(prev => prev - cost);
-                        setSocratesUsed(true);
-                        const wrongs = question.options.filter(o => o !== question.correctAnswer);
-                        const toEliminate = wrongs.sort(() => 0.5 - Math.random()).slice(0, 2);
-                        setEliminatedOptions(toEliminate);
-                      }
+                      await updateTotalStars(-cost, session?.user?.id);
+                      setUserStars(prev => prev - cost);
+                      setSocratesUsed(true);
+                      const wrongs = question.options.filter(o => o !== question.correctAnswer);
+                      const toEliminate = wrongs.sort(() => 0.5 - Math.random()).slice(0, 2);
+                      setEliminatedOptions(toEliminate);
                     }}
                     className="bg-slate-900 border border-slate-800 text-cyan-400 hover:text-cyan-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
                   >
@@ -643,15 +677,18 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                         toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
                         return;
                       }
+                      haptics('medium');
+                      audioManager.playSFX('aryabhata');
+                      setCounselorDialogue({
+                        name: 'Aryabhata',
+                        avatar: '📐',
+                        quote: 'Time, like the movement of stars, can be bent. Take 15 more seconds.'
+                      });
                       const { data: { session } } = await supabase.auth.getSession();
-                      if (session?.user) {
-                        haptics('medium');
-                        audioManager.playSFX('aryabhata');
-                        await updateTotalStars(-cost, session.user.id);
-                        setUserStars(prev => prev - cost);
-                        setAryabhataUsed(true);
-                        setTimeRemaining(prev => prev + 15);
-                      }
+                      await updateTotalStars(-cost, session?.user?.id);
+                      setUserStars(prev => prev - cost);
+                      setAryabhataUsed(true);
+                      setTimeRemaining(prev => prev + 15);
                     }}
                     className="bg-slate-900 border border-slate-800 text-amber-400 hover:text-amber-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
                   >
@@ -671,15 +708,18 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                         toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
                         return;
                       }
+                      haptics('medium');
+                      audioManager.playSFX('chanakya');
+                      setCounselorDialogue({
+                        name: 'Chanakya',
+                        avatar: '📜',
+                        quote: "A king's best shield is foresight. Your streak is protected."
+                      });
                       const { data: { session } } = await supabase.auth.getSession();
-                      if (session?.user) {
-                        haptics('medium');
-                        audioManager.playSFX('chanakya');
-                        await updateTotalStars(-cost, session.user.id);
-                        setUserStars(prev => prev - cost);
-                        setChanakyaUsed(true);
-                        setIsShieldActive(true);
-                      }
+                      await updateTotalStars(-cost, session?.user?.id);
+                      setUserStars(prev => prev - cost);
+                      setChanakyaUsed(true);
+                      setIsShieldActive(true);
                     }}
                     className="bg-slate-900 border border-slate-800 text-rose-400 hover:text-rose-350 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
                   >
@@ -699,15 +739,18 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                         toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
                         return;
                       }
+                      haptics('medium');
+                      audioManager.playSFX('ramanujan');
+                      setCounselorDialogue({
+                        name: 'Ramanujan',
+                        avatar: '🧠',
+                        quote: `The equation of truth points directly to: "${question.correctAnswer}"!`
+                      });
                       const { data: { session } } = await supabase.auth.getSession();
-                      if (session?.user) {
-                        haptics('medium');
-                        audioManager.playSFX('ramanujan');
-                        await updateTotalStars(-cost, session.user.id);
-                        setUserStars(prev => prev - cost);
-                        setRamanujanUsed(true);
-                        setSmartClue(question.correctAnswer);
-                      }
+                      await updateTotalStars(-cost, session?.user?.id);
+                      setUserStars(prev => prev - cost);
+                      setRamanujanUsed(true);
+                      setSmartClue(question.correctAnswer);
                     }}
                     className="bg-slate-900 border border-slate-800 text-purple-400 hover:text-purple-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
                   >

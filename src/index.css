@@ -446,3 +446,13 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   transform: translateY(-1px) scale(1.01) !important;
   box-shadow: 0 6px 15px rgba(234, 179, 8, 0.35) !important;
 }
+
+/* Fluttering wind animation for banners */
+@keyframes wind {
+  0%, 100% { transform: rotate(0deg) skewY(0deg); }
+  50% { transform: rotate(1.5deg) skewY(0.5deg) translateY(0.5px); }
+}
+.animate-wind {
+  animation: wind 5s ease-in-out infinite;
+  transform-origin: top center;
+}

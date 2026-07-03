@@ -125,6 +125,63 @@ export default function EmpireQuestsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
+        // Guest local storage fallback
+        const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
+        const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
+        setUserGems(localGems);
+        setUserStars(localStars);
+
+        const staticHeroes: HeroData[] = [
+          {
+            id: 'socrates',
+            name: "Socrates",
+            emoji: "🏛️",
+            gradient: "from-blue-600 to-cyan-500",
+            title: "Counsel of Logic",
+            abilityName: "Philosophical 50/50",
+            abilityDesc: "Uses Socratic questioning to eliminate two incorrect options from the question.",
+            starCost: 15,
+            level: Number(localStorage.getItem('hero_socrates_level') || '0'),
+            shards: Number(localStorage.getItem('hero_socrates_shards') || '0'),
+          },
+          {
+            id: 'aryabhata',
+            name: "Aryabhata",
+            emoji: "📐",
+            gradient: "from-yellow-600 to-amber-500",
+            title: "Royal Astronomer",
+            abilityName: "Cosmic Time Freeze",
+            abilityDesc: "Pauses the cosmic orbits, adding +15 seconds to the quiz timer.",
+            starCost: 20,
+            level: Number(localStorage.getItem('hero_aryabhata_level') || '0'),
+            shards: Number(localStorage.getItem('hero_aryabhata_shards') || '0'),
+          },
+          {
+            id: 'chanakya',
+            name: "Chanakya",
+            emoji: "📜",
+            gradient: "from-red-650 to-orange-500",
+            title: "Imperial Advisor",
+            abilityName: "Strategist's Shield",
+            abilityDesc: "Protects your empire: prevents streak loss and penalty on an incorrect answer.",
+            starCost: 25,
+            level: Number(localStorage.getItem('hero_chanakya_level') || '0'),
+            shards: Number(localStorage.getItem('hero_chanakya_shards') || '0'),
+          },
+          {
+            id: 'ramanujan',
+            name: "Ramanujan",
+            emoji: "🧠",
+            gradient: "from-purple-700 to-pink-500",
+            title: "Number Mystic",
+            abilityName: "Intuitive Equation",
+            abilityDesc: "Applies raw genius to highlight the correct option and show its mathematical truth.",
+            starCost: 35,
+            level: Number(localStorage.getItem('hero_ramanujan_level') || '0'),
+            shards: Number(localStorage.getItem('hero_ramanujan_shards') || '0'),
+          }
+        ];
+        setHeroes(staticHeroes);
         setLoading(false);
         return;
       }
@@ -261,15 +318,6 @@ export default function EmpireQuestsPage() {
 
   // Launch Campaign Quest
   const handleLaunchQuest = async (quest: EmpireCampaign) => {
-    if (!userId) {
-      toast({
-        title: "Login required",
-        description: "Please login to embark on quests.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (quest.entryCost > 0 && userStars < quest.entryCost) {
       toast({
         title: "Invasion Prevented!",
@@ -284,7 +332,10 @@ export default function EmpireQuestsPage() {
     try {
       // Deduct entry fee
       if (quest.entryCost > 0) {
-        await updateTotalStars(-quest.entryCost, userId);
+        await updateTotalStars(-quest.entryCost, userId || undefined);
+        if (!userId) {
+          setUserStars(prev => prev - quest.entryCost);
+        }
       }
 
       // Fetch questions

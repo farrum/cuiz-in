@@ -57,11 +57,33 @@ export const HeroDashboardCard: React.FC<HeroDashboardCardProps> = ({
   
   const handleUpgrade = async () => {
     if (!userId) {
+      haptics('medium');
+      const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
+      if (localStars < reqs.stars) {
+        toast({ title: 'Treasury Empty', description: `Requires ${reqs.stars} Stars.`, variant: 'destructive' });
+        return;
+      }
+      if (hero.shards < reqs.shards) {
+        toast({ title: 'Insufficient Shards', description: `Requires ${reqs.shards} shards.`, variant: 'destructive' });
+        return;
+      }
+
+      // Deduct stars & shards locally
+      localStorage.setItem('quiz_app_user_stars', String(localStars - reqs.stars));
+      localStorage.setItem(`hero_${hero.id}_level`, String(hero.level + 1));
+      localStorage.setItem(`hero_${hero.id}_shards`, String(hero.shards - reqs.shards));
+
+      haptics('success');
+      confetti({ particleCount: 80, spread: 60, colors: ['#eab308', '#a855f7', '#ffffff'] });
+
       toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to recruit or upgrade characters.',
-        variant: 'destructive',
+        title: isLocked ? '🏆 HERO RECRUITED!' : '⚡ HERO LEVELED UP!',
+        description: isLocked 
+          ? `You have recruited ${hero.name} to your local counsel!`
+          : `Leveled ${hero.name} up to Level ${hero.level + 1}!`,
       });
+
+      onRefresh();
       return;
     }
 
