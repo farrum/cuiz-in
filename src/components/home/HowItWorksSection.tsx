@@ -52,10 +52,10 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
     <section className={cn("w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", className)}>
       {/* Section header */}
       <div className="text-center mb-12">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white font-serif" style={{ fontFamily: "'Cinzel', serif" }}>
           How It Works
         </h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+        <p className="text-stone-300 text-lg max-w-2xl mx-auto">
           Start playing in 4 simple steps. It's completely free!
         </p>
       </div>
@@ -63,7 +63,7 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
       {/* Steps */}
       <div className="relative">
         {/* Connection line - desktop only */}
-        <div className="hidden lg:block absolute top-16 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary via-[hsl(var(--quiz-purple))] to-accent opacity-20" />
+        <div className="hidden lg:block absolute top-16 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-amber-500 to-yellow-500 opacity-20" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (
@@ -73,7 +73,7 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
               style={{ animationDelay: `${index * 0.15}s` }}
             >
               {/* Step number */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-card border-2 border-primary flex items-center justify-center text-xs font-bold text-primary z-10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-stone-900 border-2 border-amber-500 flex items-center justify-center text-xs font-bold text-amber-500 z-10">
                 {index + 1}
               </div>
 
@@ -86,14 +86,14 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
               </div>
 
               {/* Content */}
-              <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <h3 className="text-lg font-bold mb-2 text-stone-100 font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{step.title}</h3>
+              <p className="text-sm text-stone-300 leading-relaxed">
                 {step.description}
               </p>
 
               {/* Arrow for mobile */}
               {index < steps.length - 1 && (
-                <ArrowRight className="w-6 h-6 text-muted-foreground/30 mx-auto mt-4 lg:hidden" />
+                <ArrowRight className="w-6 h-6 text-stone-500/30 mx-auto mt-4 lg:hidden" />
               )}
             </div>
           ))}
@@ -105,7 +105,7 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ className }) => {
         <Button 
           size="lg"
           onClick={() => navigate(isLoggedIn ? '/quiz' : '/register')}
-          className="gradient-primary text-white px-8 py-6 text-lg btn-shine"
+          className="medieval-btn text-stone-950 px-8 py-6 text-lg hover:scale-105 active:scale-95 transition-all border-0 font-black"
         >
           {isLoggedIn ? 'Play Now' : "Get Started Now — It's Free!"}
         </Button>

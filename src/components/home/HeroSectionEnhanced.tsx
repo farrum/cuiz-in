@@ -51,7 +51,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
           {/* Main heading */}
           <div className="space-y-3" id="hero-heading">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight font-serif" style={{ fontFamily: "'Cinzel', serif" }}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight font-serif text-white" style={{ fontFamily: "'Cinzel', serif" }}>
               Swear Your Allegiance,<br />
               <span className="text-amber-500">
                 Test Your Knowledge
