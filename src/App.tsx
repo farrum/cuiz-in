@@ -163,13 +163,14 @@ function App() {
       try {
         console.log('Initializing app...');
         
-        // Hide status bar on native mobile Capacitor shells
+        // Immersive edge-to-edge fullscreen overlay mode on native mobile Capacitor shells
         try {
           const { StatusBar } = await import('@capacitor/status-bar');
+          await StatusBar.setOverlaysWebView({ overlay: true });
           await StatusBar.hide();
-          console.log("Capacitor Status Bar hidden successfully.");
+          console.log("Capacitor Status Bar configured edge-to-edge successfully.");
         } catch (e) {
-          console.log("Capacitor Status Bar hide not supported on this platform.");
+          console.log("Capacitor Status Bar settings not supported on this platform.");
         }
 
         // Initialize Background Music (BGM) on first user interaction

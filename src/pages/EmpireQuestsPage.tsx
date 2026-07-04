@@ -61,28 +61,112 @@ const CAMPAIGNS: EmpireCampaign[] = [
     emoji: "🏺"
   },
   {
-    id: 'alexander_conquest',
-    name: "Alexander's Campaign",
-    description: "Conquer the known world. A true Emperor makes no mistakes. Complete a perfect streak.",
-    difficulty: "Hard",
-    category: "History",
-    rules: "Sudden Death: 1 wrong answer defeats you",
-    entryCost: 40,
-    rewardType: "gold",
-    rewardLabel: "Golden Vault",
-    emoji: "⚔️"
-  },
-  {
     id: 'gupta_library',
     name: "Gupta Library Trial",
     description: "Prove your academic worth at Nalanda University by solving advanced scientific questions.",
     difficulty: "Legendary",
     category: "Science",
     rules: "Advanced content, double shard drop chance",
-    entryCost: 100,
+    entryCost: 40,
     rewardType: "legendary",
     rewardLabel: "Emperor's Tomb",
     emoji: "📜"
+  },
+  {
+    id: 'alexander_conquest',
+    name: "Alexander's Campaign",
+    description: "Conquer the known world. A true Emperor makes no mistakes. Complete a perfect streak.",
+    difficulty: "Hard",
+    category: "History",
+    rules: "Sudden Death: 1 wrong answer defeats you",
+    entryCost: 60,
+    rewardType: "gold",
+    rewardLabel: "Golden Vault",
+    emoji: "⚔️"
+  },
+  {
+    id: 'nile_dynasty',
+    name: "Nile Dynasty",
+    description: "Navigate the secrets of the pharaohs and unlock the treasure chambers of Giza.",
+    difficulty: "Medium",
+    category: "Mythology",
+    rules: "Pharaoh's Curse: Half time limit",
+    entryCost: 80,
+    rewardType: "gold",
+    rewardLabel: "Golden Vault",
+    emoji: "👑"
+  },
+  {
+    id: 'viking_voyage',
+    name: "Viking Voyage",
+    description: "Sail the stormy northern seas. Defy Odin's wrath and solve geography challenges.",
+    difficulty: "Medium",
+    category: "Geography",
+    rules: "Storm Mode: Question text shakes occasionally",
+    entryCost: 100,
+    rewardType: "bronze",
+    rewardLabel: "Bronze Chest + 40 Stars",
+    emoji: "⛵"
+  },
+  {
+    id: 'ottoman_siege',
+    name: "Ottoman Siege",
+    description: "Defend the massive fortress walls of Constantinople under heavy artillery fire.",
+    difficulty: "Hard",
+    category: "History",
+    rules: "Fortress Guard: Lose double stars on defeat",
+    entryCost: 120,
+    rewardType: "gold",
+    rewardLabel: "Golden Vault",
+    emoji: "🛡️"
+  },
+  {
+    id: 'mongol_steppes',
+    name: "Mongol Steppes",
+    description: "Ride with Genghis Khan's horde. Speed and precision are essential to secure victory.",
+    difficulty: "Hard",
+    category: "General",
+    rules: "Nomadic Pursuit: Rapid question timer",
+    entryCost: 140,
+    rewardType: "gold",
+    rewardLabel: "Golden Vault",
+    emoji: "🏹"
+  },
+  {
+    id: 'mesoamerica_temple',
+    name: "Mesoamerica Temple",
+    description: "Scale the step pyramids of the Aztecs to recover the legendary solar calendars.",
+    difficulty: "Legendary",
+    category: "Riddles",
+    rules: "Sun Stone: No advisor aid allowed",
+    entryCost: 160,
+    rewardType: "legendary",
+    rewardLabel: "Emperor's Tomb",
+    emoji: "🏺"
+  },
+  {
+    id: 'camelot_trials',
+    name: "Camelot Trials",
+    description: "Sit at the Round Table and prove your chivalric knowledge in logic and myths.",
+    difficulty: "Easy",
+    category: "Mythology",
+    rules: "Knight's Shield: Free first mistake",
+    entryCost: 180,
+    rewardType: "bronze",
+    rewardLabel: "Bronze Chest + 60 Stars",
+    emoji: "🏰"
+  },
+  {
+    id: 'imperial_dynasty',
+    name: "Imperial Dynasty",
+    description: "The ultimate coronation! Rise to become the unchallenged master of the global quiz empire.",
+    difficulty: "Legendary",
+    category: "General",
+    rules: "Emperor's Crown: Complete 15 perfect questions",
+    entryCost: 200,
+    rewardType: "legendary",
+    rewardLabel: "Imperial Crown Chest",
+    emoji: "👑"
   }
 ];
 
@@ -1000,24 +1084,70 @@ export default function EmpireQuestsPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
-                  <div className="lg:col-span-2 relative bg-slate-950 border-4 border-double border-yellow-500/25 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4">
-                    {/* Retro Grid Background */}
-                    <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
+                  {/* Map Scroll Canvas (Takes 2 columns) */}
+                  <div 
+                    className="lg:col-span-2 relative border-4 border-double border-amber-900/60 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4"
+                    style={{ background: "radial-gradient(circle, #f5e4bf 0%, #dbbf88 100%)" }}
+                  >
+                    {/* Old Map Grid overlay */}
+                    <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#5b4228_1px,transparent_1px),linear-gradient(to_bottom,#5b4228_1px,transparent_1px)] bg-[size:32px_32px]" />
                     
-                    {/* SVG Map Lines */}
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-yellow-500/10 stroke-[2]">
-                      {/* Connections */}
-                      <line x1="20%" y1="30%" x2="75%" y2="40%" strokeDasharray="5,5" />
-                      <line x1="20%" y1="30%" x2="35%" y2="75%" strokeDasharray="5,5" />
-                      <line x1="75%" y1="40%" x2="70%" y2="70%" strokeDasharray="5,5" />
-                      <line x1="35%" y1="75%" x2="70%" y2="70%" strokeDasharray="5,5" />
+                    {/* SVG Map Lines (Roads) */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-amber-900/40 stroke-[3.5]">
+                      {/* Compass Rose lines */}
+                      <line x1="50%" y1="0%" x2="50%" y2="100%" strokeDasharray="3,6" opacity="0.15" />
+                      <line x1="0%" y1="50%" x2="100%" y2="50%" strokeDasharray="3,6" opacity="0.15" />
+
+                      {/* Map illustrations */}
+                      <text x="8%" y="82%" className="opacity-30 text-4xl select-none" fill="#5b4228">🐙</text>
+                      <text x="78%" y="18%" className="opacity-25 text-3xl select-none" fill="#5b4228">🐉</text>
+                      <text x="44%" y="74%" className="opacity-30 text-5xl select-none animate-[bounce_8s_infinite_ease-in-out]" fill="#5b4228">⛵</text>
+                      <text x="18%" y="54%" className="opacity-20 text-3xl select-none" fill="#5b4228">⛵</text>
+                      
+                      <text x="4%" y="14%" className="opacity-25 text-2xl select-none">⛰️</text>
+                      <text x="68%" y="8%" className="opacity-20 text-3xl select-none">⛰️</text>
+                      <text x="92%" y="88%" className="opacity-25 text-4xl select-none">⛰️</text>
+                      
+                      <text x="54%" y="42%" className="opacity-20 text-2xl select-none">🌲</text>
+                      <text x="72%" y="52%" className="opacity-20 text-xl select-none">🌲</text>
+
+                      {/* Dashed Road Connections between all 11 Stops */}
+                      {[
+                        { left: "15%", top: "25%" }, // Rome
+                        { left: "32%", top: "40%" }, // Persia
+                        { left: "24%", top: "68%" }, // Gupta
+                        { left: "48%", top: "55%" }, // Alexander
+                        { left: "40%", top: "82%" }, // Nile
+                        { left: "60%", top: "28%" }, // Viking
+                        { left: "76%", top: "42%" }, // Ottoman
+                        { left: "66%", top: "65%" }, // Mongol
+                        { left: "88%", top: "52%" }, // Mesoamerica
+                        { left: "52%", top: "15%" }, // Camelot
+                        { left: "82%", top: "82%" }  // Imperial
+                      ].map((coord, idx, arr) => {
+                        if (idx === arr.length - 1) return null;
+                        const nextCoord = arr[idx + 1];
+                        return (
+                          <line 
+                            key={`road-${idx}`}
+                            x1={coord.left} 
+                            y1={coord.top} 
+                            x2={nextCoord.left} 
+                            y2={nextCoord.top} 
+                            stroke="#8c5825" 
+                            strokeWidth="3.5" 
+                            strokeDasharray="6,5" 
+                            className="drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)] opacity-80" 
+                          />
+                        );
+                      })}
                     </svg>
 
                     {/* Coordinates & Compass */}
-                    <div className="absolute top-4 left-4 text-[9px] font-black text-slate-600 uppercase tracking-widest font-mono select-none">
-                      LAT: 41.9028° N | LON: 12.4964° E
+                    <div className="absolute top-4 left-4 text-[9px] font-black text-amber-900/60 uppercase tracking-widest font-mono select-none">
+                      EUROPA MAP | LAT: 41.9° N | LON: 12.4° E
                     </div>
-                    <div className="absolute bottom-4 right-4 text-3xl opacity-25 animate-[spin_40s_linear_infinite] select-none">
+                    <div className="absolute bottom-4 right-4 text-3xl opacity-20 animate-[spin_40s_linear_infinite] select-none">
                       🧭
                     </div>
 
@@ -1025,10 +1155,17 @@ export default function EmpireQuestsPage() {
                     {CAMPAIGNS.map((quest, index) => {
                       const isLocked = userStars < quest.entryCost;
                       const coords = [
-                        { left: "20%", top: "30%" }, // Rome
-                        { left: "75%", top: "40%" }, // Persia
-                        { left: "35%", top: "75%" }, // Alexander
-                        { left: "70%", top: "70%" }  // Gupta
+                        { left: "15%", top: "25%" }, // Rome
+                        { left: "32%", top: "40%" }, // Persia
+                        { left: "24%", top: "68%" }, // Gupta
+                        { left: "48%", top: "55%" }, // Alexander
+                        { left: "40%", top: "82%" }, // Nile
+                        { left: "60%", top: "28%" }, // Viking
+                        { left: "76%", top: "42%" }, // Ottoman
+                        { left: "66%", top: "65%" }, // Mongol
+                        { left: "88%", top: "52%" }, // Mesoamerica
+                        { left: "52%", top: "15%" }, // Camelot
+                        { left: "82%", top: "82%" }  // Imperial
                       ][index];
 
                       const isSelected = selectedMapQuest?.id === quest.id;
@@ -1046,12 +1183,12 @@ export default function EmpireQuestsPage() {
                               setSelectedMapQuest(quest);
                             }}
                             className={cn(
-                              "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-lg border-2 relative",
+                              "w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
                               isLocked 
-                                ? "bg-slate-905 border-slate-800 text-slate-500 scale-95" 
+                                ? "bg-stone-900/90 border-stone-850 text-stone-500 scale-90" 
                                 : isSelected
-                                ? "bg-yellow-500 border-yellow-400 text-slate-950 scale-110 shadow-yellow-500/25 ring-4 ring-yellow-500/35"
-                                : "bg-slate-900 border-yellow-500/30 text-yellow-500 hover:border-yellow-400 hover:scale-105"
+                                ? "bg-amber-500 border-amber-400 text-stone-950 scale-110 shadow-amber-500/25 ring-4 ring-amber-500/35"
+                                : "bg-stone-950 border-amber-600 text-amber-500 hover:border-amber-400 hover:scale-105"
                             )}
                           >
                             {isLocked ? (
