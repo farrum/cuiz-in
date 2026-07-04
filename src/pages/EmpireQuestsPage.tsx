@@ -8,6 +8,8 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { HeroDashboardCard, HeroData } from '@/components/gamification/HeroDashboardCard';
 import { MysteryBoxOpener } from '@/components/gamification/MysteryBoxOpener';
 import { DailyHangman } from '@/components/gamification/DailyHangman';
+import { minigames } from '@/components/gamification/minigamesData';
+import { MiniGameCard } from '@/components/gamification/MiniGameCard';
 import { fetchQuizQuestions } from '@/utils/quizDataService';
 import { QuizQuestion } from '@/utils/types';
 import { updateTotalStars, logStarsEarned, updateTotalGems } from '@/utils/rewardService';
@@ -954,7 +956,7 @@ export default function EmpireQuestsPage() {
                       : "text-stone-400 hover:text-stone-200"
                   )}
                 >
-                  💀 Hangman
+                  🎮 Tavern Games
                 </button>
                 <button
                   onClick={() => setActiveTab('chests')}
@@ -1165,8 +1167,42 @@ export default function EmpireQuestsPage() {
 
             {/* TAB CONTENT: HANGMAN */}
             {activeTab === 'hangman' && (
-              <div className="space-y-6">
-                <DailyHangman userId={userId} onRefreshBalances={fetchUserData} />
+              <div className="space-y-10">
+                {/* Featured: Daily Hangman Battle */}
+                <div className="space-y-4">
+                  <div className="text-center max-w-md mx-auto">
+                    <span className="text-[10px] bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full border border-amber-500/20 font-black uppercase tracking-widest">
+                      Featured Tavern Game
+                    </span>
+                    <h2 className="text-lg font-black uppercase tracking-widest text-white mt-2">Word Guessing Duel</h2>
+                    <p className="text-xs text-slate-400 mt-1">Defeat the hangman to claim raw gems and unlock key campaign tokens.</p>
+                  </div>
+                  <DailyHangman userId={userId} onRefreshBalances={fetchUserData} />
+                </div>
+
+                <hr className="border-stone-850" />
+
+                {/* Arcade: Tavern mini games gallery */}
+                <div className="space-y-6">
+                  <div className="text-center max-w-md mx-auto">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-amber-500">Tavern Mini-Games</h3>
+                    <p className="text-[11px] text-slate-400 mt-1">Try your luck or test your swift reflexes to gain coins & resources.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {minigames.map((game) => (
+                      <MiniGameCard
+                        key={game.id}
+                        id={game.id}
+                        name={game.name}
+                        description={game.description}
+                        emoji={game.emoji}
+                        gradient={game.gradient}
+                        playCount={game.playCount}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

@@ -79,19 +79,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
+    <div className="wooden-door p-6 shadow-xl text-stone-100">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Avatar className="w-16 h-16">
+          <Avatar className="w-16 h-16 border-2 border-amber-600/40">
             <AvatarImage src={profilePicture} alt={displayName || username || 'User'} />
-            <AvatarFallback>
+            <AvatarFallback className="bg-stone-900 text-amber-500 font-serif">
               {displayName ? displayName.charAt(0).toUpperCase() : (username ? username.charAt(0).toUpperCase() : 'U')}
             </AvatarFallback>
           </Avatar>
           
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold">{displayName || username}</h2>
+              <h2 className="text-xl font-black text-white font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{displayName || username}</h2>
               {userId && onProfileUpdate && (
                 <ProfileEditor
                   userName={username || ''}
@@ -106,21 +106,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 />
               )}
             </div>
-            <p className="text-sm text-muted-foreground">Joined {joinedDate}</p>
+            <p className="text-xs text-stone-400 mt-1 uppercase tracking-wider font-bold">Joined {joinedDate}</p>
           </div>
         </div>
 
-        <Button variant="outline" className="gap-2" onClick={handleLogout}>
-          <LogOut className="h-4 w-4" />
+        <Button variant="outline" className="gap-2 border-stone-850 hover:bg-stone-900 text-stone-300" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 text-red-500" />
           Log Out
         </Button>
       </div>
 
       <div className="flex gap-4 mt-4">
-        <div className="bg-blue-50 rounded-md px-4 py-1 text-sm">
+        <div className="bg-stone-950/80 border border-stone-800 text-stone-300 rounded-xl px-4 py-1.5 text-xs font-black uppercase tracking-wider">
           29 questions answered
         </div>
-        <div className="bg-blue-50 text-blue-600 rounded-md px-4 py-1 text-sm">
+        <div className="bg-amber-950/40 border border-amber-800/30 text-amber-500 rounded-xl px-4 py-1.5 text-xs font-black uppercase tracking-wider">
           Active Player
         </div>
       </div>
