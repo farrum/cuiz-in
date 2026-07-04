@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, SlidersHorizontal, Check } from 'lucide-react';
+import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -209,14 +209,18 @@ export default function QuizStoryScreen() {
   const exit = () => navigate('/hub');
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/10 overflow-hidden">
-      {/* Top bar */}
+    <div className="fixed inset-0 flex flex-col stone-wall overflow-hidden">
+      {/* Torch ambience */}
+      <div className="torch-glow-ambient absolute top-0 left-0" style={{ width: 100, height: 100, opacity: 0.35 }} />
+      <div className="torch-glow-ambient absolute top-0 right-0" style={{ width: 100, height: 100, opacity: 0.35, animationDelay: '0.8s' }} />
+
+      {/* Top bar — iron strip */}
       <div
         className="relative flex items-center justify-between px-4 py-2"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
       >
-        <button onClick={exit} aria-label="Close" className="p-2 -ml-2 rounded-full hover:bg-muted">
-          <X className="w-5 h-5" />
+        <button onClick={exit} aria-label="Close" className="p-2 -ml-2 rounded-xl iron-frame hover:bg-stone-800/60">
+          <X className="w-5 h-5 text-stone-300" />
         </button>
         <div className="flex items-center gap-2">
           <StreakFlame streak={streak} />
@@ -224,10 +228,10 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1 mx-4 rounded-full bg-muted overflow-hidden">
+      {/* Molten gold progress bar */}
+      <div className="h-1.5 mx-4 rounded-full overflow-hidden" style={{ background: 'hsl(25 15% 15%)' }}>
         <motion.div
-          className="h-full bg-gradient-to-r from-primary to-purple-500"
+          className="h-full rounded-full molten-gold"
           animate={{ width: `${phase === 'asking' ? progress : 100}%` }}
           transition={{ duration: 0.1 }}
         />
@@ -246,13 +250,13 @@ export default function QuizStoryScreen() {
               className="flex-1 flex flex-col"
             >
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">
-                  {question.category}
+                <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-2.5 py-1 rounded-lg bg-amber-900/40 text-amber-400 border border-amber-700/30">
+                  <Shield className="w-3 h-3 inline mr-1 -mt-0.5" />{question.category}
                 </span>
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                <span className="text-[10px] uppercase tracking-[0.15em] font-bold px-2 py-1 rounded-lg bg-stone-800/60 text-stone-400 border border-stone-700/30">
                   {question.difficulty}
                 </span>
-                <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-amber-600">
+                <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-amber-500">
                   <Sparkles className="w-3 h-3" /> +{question.gems || 10}
                 </span>
               </div>
@@ -261,13 +265,13 @@ export default function QuizStoryScreen() {
                 <motion.img
                   src={question.imageUrl}
                   alt=""
-                  className="w-full max-h-64 object-cover rounded-2xl mb-4 shadow-md"
+                  className="w-full max-h-64 object-cover rounded-2xl mb-4 shadow-md iron-frame"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                 />
               )}
 
-              <h2 className="text-2xl font-bold leading-snug mb-6">{question.question}</h2>
+              <h2 className="text-xl font-bold leading-snug mb-5 text-stone-100 font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{question.question}</h2>
 
               <div className="space-y-3">
                 {question.options.map((opt, i) => {
@@ -285,14 +289,13 @@ export default function QuizStoryScreen() {
                       disabled={phase !== 'asking'}
                       onClick={() => handleAnswer(opt)}
                       className={cn(
-                        'w-full text-left rounded-2xl px-4 py-4 font-semibold border-2 transition-all',
-                        'bg-card border-border',
-                        isSelected && phase === 'revealing' && !isCorrect && 'border-destructive bg-destructive/10',
-                        isThisCorrect && 'border-emerald-500 bg-emerald-500/10',
-                        isThisWrong && 'border-destructive bg-destructive/10 animate-[shake_0.4s]',
+                        'w-full text-left rounded-2xl px-4 py-4 font-semibold transition-all wooden-door text-stone-200',
+                        isSelected && phase === 'revealing' && !isCorrect && '!border-red-700 !bg-red-900/30',
+                        isThisCorrect && '!border-emerald-600 !bg-emerald-900/30',
+                        isThisWrong && '!border-red-700 !bg-red-900/30 animate-[shake_0.4s]',
                       )}
                     >
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-muted text-xs font-bold mr-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black mr-3 iron-frame bg-stone-800 text-amber-400">
                         {String.fromCharCode(65 + i)}
                       </span>
                       {opt}
@@ -310,15 +313,11 @@ export default function QuizStoryScreen() {
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-4 py-4"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-4 parchment-card"
                     >
-                      <span className="flex gap-1">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce" />
-                      </span>
-                      <span className="text-sm font-semibold">
-                        Hold on… are you sure? Checking your answer 🤔
+                      <Scroll className="w-5 h-5 text-amber-800 animate-pulse flex-shrink-0" />
+                      <span className="text-sm font-semibold text-stone-800">
+                        The court scribe reviews your answer… ⚔️
                       </span>
                     </motion.div>
                   )}
@@ -350,22 +349,22 @@ export default function QuizStoryScreen() {
       <div className="px-4 pt-2">
         <button
           onClick={() => setPrefsOpen(true)}
-          className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-border bg-card px-4 py-3 text-sm font-semibold hover:bg-muted transition-colors"
+          className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold wooden-door text-stone-300 hover:text-stone-100 transition-colors"
         >
-          <SlidersHorizontal className="w-4 h-4" />
-          {category || 'All categories'} · {difficulty ? difficulty[0].toUpperCase() + difficulty.slice(1) : 'Any level'}
+          <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+          {category || 'All realms'} · {difficulty ? difficulty[0].toUpperCase() + difficulty.slice(1) : 'Any trial'}
         </button>
       </div>
 
       {/* Session summary footer */}
       <div
-        className="px-4 py-3 border-t border-border bg-card/80 backdrop-blur"
+        className="px-4 py-3 wooden-door"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
       >
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Today: <strong className="text-foreground">{questionsAnswered}</strong> attempted · <strong className="text-emerald-600">{correctAnswered}</strong> correct</span>
-          <span>Session: <strong className="text-amber-600">+{sessionGems} 💎</strong></span>
-          <button onClick={loadNext} className="text-primary font-semibold">Skip →</button>
+        <div className="flex items-center justify-between text-xs text-stone-400">
+          <span>⚔️ <strong className="text-stone-200">{questionsAnswered}</strong> battles · <strong className="text-emerald-500">{correctAnswered}</strong> victories</span>
+          <span>Spoils: <strong className="text-amber-500">+{sessionGems} 💎</strong></span>
+          <button onClick={loadNext} className="text-amber-400 font-bold uppercase tracking-wider text-[10px]">Skip →</button>
         </div>
       </div>
 
@@ -382,7 +381,7 @@ export default function QuizStoryScreen() {
             onClick={() => setPrefsOpen(false)}
           >
             <motion.div
-              className="bg-background rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto"
+              className="stone-wall rounded-t-3xl p-5 max-h-[80vh] overflow-y-auto border-t-2 border-amber-800/40"
               style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -391,21 +390,21 @@ export default function QuizStoryScreen() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Quiz preferences</h3>
-                <button onClick={() => setPrefsOpen(false)} aria-label="Close" className="p-1.5 rounded-full hover:bg-muted">
-                  <X className="w-5 h-5" />
+                <h3 className="text-lg font-bold text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>Quest Preferences</h3>
+                <button onClick={() => setPrefsOpen(false)} aria-label="Close" className="p-1.5 rounded-xl iron-frame hover:bg-stone-800/60">
+                  <X className="w-5 h-5 text-stone-300" />
                 </button>
               </div>
 
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Difficulty</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-2">Trial Difficulty</p>
               <div className="grid grid-cols-4 gap-2 mb-5">
                 {([null, 'easy', 'medium', 'hard'] as const).map((d) => (
                   <button
                     key={d ?? 'any'}
                     onClick={() => setDifficulty(d)}
                     className={cn(
-                      'rounded-xl px-3 py-2 text-sm font-semibold border-2 capitalize transition-colors',
-                      difficulty === d ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                      'rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-colors wooden-door text-stone-300',
+                      difficulty === d && '!border-amber-600 !text-amber-400',
                     )}
                   >
                     {d ?? 'Any'}
@@ -413,38 +412,38 @@ export default function QuizStoryScreen() {
                 ))}
               </div>
 
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-2">Knowledge Realm</p>
               <div className="space-y-2 mb-5">
                 <button
                   onClick={() => setCategory(null)}
                   className={cn(
-                    'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold border-2 transition-colors',
-                    category === null ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                    'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors wooden-door text-stone-300',
+                    category === null && '!border-amber-600 !text-amber-400',
                   )}
                 >
-                  All categories
-                  {category === null && <Check className="w-4 h-4" />}
+                  All realms
+                  {category === null && <Check className="w-4 h-4 text-amber-400" />}
                 </button>
                 {categories.map((c) => (
                   <button
                     key={c}
                     onClick={() => setCategory(c)}
                     className={cn(
-                      'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold border-2 transition-colors',
-                      category === c ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card',
+                      'w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors wooden-door text-stone-300',
+                      category === c && '!border-amber-600 !text-amber-400',
                     )}
                   >
                     {c}
-                    {category === c && <Check className="w-4 h-4" />}
+                    {category === c && <Check className="w-4 h-4 text-amber-400" />}
                   </button>
                 ))}
               </div>
 
               <button
                 onClick={() => applyPrefs(category, difficulty)}
-                className="w-full rounded-2xl bg-primary text-primary-foreground font-bold py-3.5 text-sm"
+                className="w-full rounded-2xl py-3.5 text-sm medieval-btn"
               >
-                Apply &amp; continue
+                ⚔️ Apply &amp; March On
               </button>
             </motion.div>
           </motion.div>

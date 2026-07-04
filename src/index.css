@@ -62,25 +62,26 @@
   }
 
   .dark {
-    --background: 222 30% 7%;
-    --foreground: 210 40% 98%;
+    /* Castle interior — warm stone undertones */
+    --background: 25 18% 6%;
+    --foreground: 38 30% 92%;
 
-    --card: 222 25% 10%;
-    --card-foreground: 210 40% 98%;
+    --card: 28 15% 10%;
+    --card-foreground: 38 30% 92%;
 
-    --popover: 222 25% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 28 15% 10%;
+    --popover-foreground: 38 30% 92%;
 
     /* Primary - Imperial Gold */
     --primary: 45 93% 47%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 25 40% 8%;
 
-    /* Secondary - Soft charcoal */
-    --secondary: 220 14% 15%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Aged stone */
+    --secondary: 30 10% 15%;
+    --secondary-foreground: 38 30% 92%;
 
-    --muted: 220 14% 18%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 30 10% 16%;
+    --muted-foreground: 35 12% 55%;
 
     /* Accent - Vibrant Green */
     --accent: 142 76% 42%;
@@ -89,18 +90,19 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 18%;
-    --input: 220 14% 18%;
+    /* Oxidised iron borders */
+    --border: 35 15% 18%;
+    --input: 35 15% 18%;
     --ring: 45 93% 47%;
 
     /* Sidebar styles */
-    --sidebar-background: 222 25% 10%;
-    --sidebar-foreground: 210 40% 98%;
+    --sidebar-background: 28 15% 10%;
+    --sidebar-foreground: 38 30% 92%;
     --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 220 14% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 14% 18%;
+    --sidebar-primary-foreground: 25 40% 8%;
+    --sidebar-accent: 30 10% 16%;
+    --sidebar-accent-foreground: 38 30% 92%;
+    --sidebar-border: 35 15% 18%;
     --sidebar-ring: 45 93% 47%;
   }
 }
@@ -456,3 +458,227 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   animation: wind 5s ease-in-out infinite;
   transform-origin: top center;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MEDIEVAL DESIGN SYSTEM — Castle / Kingdom Utilities
+   ═══════════════════════════════════════════════════════════ */
+
+/* Stone wall texture — repeating stone blocks via CSS gradients */
+.stone-wall {
+  background-color: hsl(25 18% 6%);
+  background-image:
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(255,255,255,0.015) 60px,
+      rgba(255,255,255,0.015) 61px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 41px
+    );
+  background-size: 120px 80px, 120px 80px, 120px 80px, 120px 80px;
+}
+
+/* Heavy wooden panel with oak grain */
+.wooden-door {
+  background: linear-gradient(180deg, hsl(25 35% 18%) 0%, hsl(25 30% 14%) 100%);
+  border: 3px solid hsl(35 20% 25%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.5);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 18px,
+      rgba(255,255,255,0.02) 18px,
+      rgba(255,255,255,0.02) 19px
+    );
+  position: relative;
+}
+.wooden-door::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Torch flame glow — animated flickering warm radial */
+@keyframes torch-flicker {
+  0%, 100% { opacity: 0.7; transform: scale(1) translateY(0); }
+  25% { opacity: 0.9; transform: scale(1.05) translateY(-1px); }
+  50% { opacity: 0.6; transform: scale(0.97) translateY(1px); }
+  75% { opacity: 0.85; transform: scale(1.02) translateY(-0.5px); }
+}
+.torch-glow {
+  width: 24px;
+  height: 32px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(ellipse at center, rgba(255,160,40,0.9) 0%, rgba(255,100,20,0.6) 40%, transparent 70%);
+  filter: blur(3px);
+  animation: torch-flicker 2s ease-in-out infinite;
+}
+.torch-glow-ambient {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,140,30,0.12) 0%, transparent 70%);
+  animation: torch-flicker 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Iron frame — double-border with studded look */
+.iron-frame {
+  border: 3px double hsl(35 15% 28%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    0 2px 8px rgba(0,0,0,0.4);
+  position: relative;
+}
+.iron-frame::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid rgba(180,160,120,0.1);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Medieval button — gold-leaf with embossed edges */
+.medieval-btn {
+  background: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(35 85% 42%) 100%);
+  color: hsl(25 40% 8%);
+  font-weight: 800;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 2px solid hsl(48 80% 60%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset 0 -2px 0 rgba(0,0,0,0.15),
+    0 4px 12px rgba(234,179,8,0.25);
+  transition: all 0.2s ease;
+}
+.medieval-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -2px 0 rgba(0,0,0,0.15),
+    0 6px 20px rgba(234,179,8,0.35);
+}
+.medieval-btn:active {
+  transform: translateY(0px);
+}
+
+/* Castle archway — rounded arch for headers */
+.castle-archway {
+  border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+  border: 3px solid hsl(35 15% 22%);
+  border-bottom: none;
+  background: linear-gradient(180deg, hsl(28 15% 12%) 0%, transparent 100%);
+}
+
+/* Iron rivet / stud */
+.iron-rivet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, hsl(35 10% 45%), hsl(35 10% 25%));
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.05);
+}
+
+/* Shield portrait frame */
+.shield-frame {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 2px solid hsl(35 20% 30%);
+}
+
+/* Parchment card styling (light interior for readability) */
+.parchment-card {
+  background: linear-gradient(170deg, #f5ecd7 0%, #e8dcc4 100%);
+  color: #2c2416;
+  border: 2px solid #c4a96a;
+  box-shadow:
+    inset 0 0 20px rgba(139,92,26,0.08),
+    0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Molten gold progress bar */
+@keyframes molten-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.molten-gold {
+  background: linear-gradient(90deg, #b8860b, #eab308, #fef08a, #eab308, #b8860b);
+  background-size: 200% 100%;
+  animation: molten-flow 2s linear infinite;
+}
+
+/* 🎆 Medieval micro-animations & aesthetics */
+
+/* Spark Embers Drift */
+@keyframes spark-drift {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px) translateX(var(--drift-x, 15px)) scale(0.2);
+    opacity: 0;
+  }
+}
+.torch-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f59e0b, #ef4444);
+  pointer-events: none;
+  animation: spark-drift 2.5s ease-out infinite;
+}
+
+/* Gleaming Gold Button Overlay */
+.medieval-btn {
+  position: relative;
+  overflow: hidden;
+}
+.medieval-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: none;
+}
+.medieval-btn:hover::after {
+  left: 150%;
+  transition: all 0.75s ease-in-out;
+}
+
+/* Scroll Unroll Origin Utility */
+.scroll-unroll-container {
+  transform-origin: top center;
+}
+

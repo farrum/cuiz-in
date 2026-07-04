@@ -635,10 +635,10 @@ export default function EmpireQuestsPage() {
 
   return (
     <PageLayout showNewsTicker={true}>
-      <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+      <div className="min-h-screen stone-wall text-slate-100 pb-16">
         
         {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
-        <div className="bg-slate-900 border-b-2 border-yellow-500/20 py-4 px-6 sticky top-16 z-30 shadow-md">
+        <div className="wooden-door py-4 px-6 sticky top-16 z-30 shadow-md">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
@@ -905,15 +905,15 @@ export default function EmpireQuestsPage() {
           <div className="max-w-6xl mx-auto px-4 mt-8">
             
             {/* TABS TACTICAL SELECTOR */}
-            <div className="flex justify-center border-b border-slate-800 mb-8">
-              <div className="flex gap-2 bg-slate-900/60 p-1 rounded-2xl border border-slate-850">
+            <div className="flex justify-center mb-8">
+              <div className="flex gap-2 wooden-door p-1 rounded-2xl">
                 <button
                   onClick={() => setActiveTab('quests')}
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
                     activeTab === 'quests' 
-                      ? "bg-yellow-500 text-slate-950 shadow-md font-black" 
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "medieval-btn" 
+                      : "text-stone-400 hover:text-stone-200"
                   )}
                 >
                   ⚔️ Quests Map
@@ -923,8 +923,8 @@ export default function EmpireQuestsPage() {
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
                     activeTab === 'hangman' 
-                      ? "bg-yellow-500 text-slate-950 shadow-md" 
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "medieval-btn" 
+                      : "text-stone-400 hover:text-stone-200"
                   )}
                 >
                   💀 Hangman
@@ -934,8 +934,8 @@ export default function EmpireQuestsPage() {
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
                     activeTab === 'chests' 
-                      ? "bg-yellow-500 text-slate-950 shadow-md" 
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "medieval-btn" 
+                      : "text-stone-400 hover:text-stone-200"
                   )}
                 >
                   📦 Chest Shop
@@ -945,8 +945,8 @@ export default function EmpireQuestsPage() {
                   className={cn(
                     "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
                     activeTab === 'heroes' 
-                      ? "bg-yellow-500 text-slate-950 shadow-md" 
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "medieval-btn" 
+                      : "text-stone-400 hover:text-stone-200"
                   )}
                 >
                   🏛️ Counsel

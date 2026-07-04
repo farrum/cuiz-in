@@ -329,7 +329,7 @@ export default function KingdomsPage() {
   if (loading) {
     return (
       <PageLayout>
-        <div className="min-h-screen bg-[#090d16] flex flex-col items-center justify-center">
+        <div className="min-h-screen stone-wall flex flex-col items-center justify-center">
           <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-yellow-500/70 font-serif uppercase tracking-widest text-xs">Consulting High Council...</p>
         </div>
@@ -339,10 +339,10 @@ export default function KingdomsPage() {
 
   return (
     <PageLayout>
-      <div className="min-h-screen bg-[#090d16] pb-16 text-white font-sans">
+      <div className="min-h-screen stone-wall pb-16 text-white font-sans">
         
         {/* Banner Title */}
-        <div className="bg-slate-950 py-10 px-4 text-center border-b border-yellow-500/10">
+        <div className="wooden-door py-10 px-4 text-center">
           <Landmark className="w-10 h-10 text-yellow-500 mx-auto mb-3 animate-pulse" />
           <h1 className="text-2xl md:text-3xl font-black font-serif uppercase tracking-widest text-white">
             Grand Kingdoms Hall

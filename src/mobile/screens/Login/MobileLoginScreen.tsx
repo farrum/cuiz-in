@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Mascot } from '@/mobile/components/Mascot';
+import { MedievalKingBanner } from '@/mobile/components/MedievalKingBanner';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
@@ -31,8 +31,8 @@ export default function MobileLoginScreen() {
         });
         if (error) throw error;
         toast({
-          title: 'Email Sent',
-          description: 'Check your inbox for the password reset link.',
+          title: 'Raven Sent',
+          description: 'Check your inbox for the password reset scroll.',
         });
         setMode('sign-in');
       } else if (mode === 'sign-in') {
@@ -51,7 +51,7 @@ export default function MobileLoginScreen() {
           .maybeSingle();
 
         if (existingUser) {
-          throw new Error('Username is already taken');
+          throw new Error('That name is already claimed by another warrior');
         }
 
         // Create standard credentials account
@@ -88,17 +88,21 @@ export default function MobileLoginScreen() {
       }
     } catch (err: any) {
       haptics('error');
-      toast({ title: 'Oops', description: err.message || 'Something went wrong', variant: 'destructive' });
+      toast({ title: 'Alas!', description: err.message || 'The kingdom gates refused entry', variant: 'destructive' });
     } finally { setLoading(false); }
   };
 
   return (
     <div
-      className="fixed inset-0 flex flex-col bg-gradient-to-br from-background via-background to-primary/10 px-6"
+      className="fixed inset-0 flex flex-col stone-wall px-6"
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
     >
-      <button onClick={() => navigate(-1)} className="self-start p-2 -ml-2 rounded-full hover:bg-muted" aria-label="Back">
-        <ArrowLeft className="w-5 h-5" />
+      {/* Torch ambience */}
+      <div className="torch-glow-ambient absolute top-20 left-0" style={{ width: 120, height: 120, opacity: 0.3 }} />
+      <div className="torch-glow-ambient absolute top-20 right-0" style={{ width: 120, height: 120, opacity: 0.3, animationDelay: '1s' }} />
+
+      <button onClick={() => navigate(-1)} className="self-start p-2 -ml-2 rounded-full hover:bg-muted/20" aria-label="Back">
+        <ArrowLeft className="w-5 h-5 text-stone-400" />
       </button>
 
       <motion.img
@@ -107,75 +111,46 @@ export default function MobileLoginScreen() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-        className="h-12 w-auto mx-auto mt-2"
+        className="h-10 w-auto mx-auto mt-1"
       />
 
       <div className="flex-1 flex flex-col justify-center">
-        <div className="text-center mb-6">
-          {/* Kings & Advisors Royal Assembly Lineup */}
-          <div className="relative h-28 w-full flex items-center justify-center mb-6 mt-2 select-none overflow-visible">
-            {/* Left outer: Socrates */}
-            <div className="absolute left-[calc(50%-100px)] bottom-2 transform -translate-x-1/2 scale-75 opacity-60 z-0 bg-slate-900 border border-slate-800 text-cyan-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
-              <span className="text-xl">🏛️</span>
-              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Socrates</span>
-            </div>
+        {/* King + Advisors Banner */}
+        <MedievalKingBanner compact className="mb-4" />
 
-            {/* Left inner: Aryabhata */}
-            <div className="absolute left-[calc(50%-55px)] bottom-3 transform -translate-x-1/2 scale-90 opacity-80 z-10 bg-slate-900 border border-slate-800 text-amber-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
-              <span className="text-xl">📐</span>
-              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Aryabhata</span>
-            </div>
-
-            {/* Center Front: The King */}
-            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 scale-110 z-25 bg-[#fcf6ea] border-2 border-[#d4af37] text-slate-950 p-2.5 rounded-3xl shadow-xl flex flex-col items-center animate-[bounce_3s_infinite] shadow-yellow-500/10">
-              <span className="text-3xl select-none">👑</span>
-              <span className="text-[8px] uppercase font-black tracking-widest text-[#78350f] mt-0.5">The King</span>
-            </div>
-
-            {/* Right inner: Chanakya */}
-            <div className="absolute left-[calc(50%+55px)] bottom-3 transform -translate-x-1/2 scale-90 opacity-80 z-10 bg-slate-900 border border-slate-800 text-rose-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
-              <span className="text-xl">📜</span>
-              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Chanakya</span>
-            </div>
-
-            {/* Right outer: Ramanujan */}
-            <div className="absolute left-[calc(50%+100px)] bottom-2 transform -translate-x-1/2 scale-75 opacity-60 z-0 bg-slate-900 border border-slate-800 text-purple-400 p-2 rounded-2xl flex flex-col items-center shadow-md">
-              <span className="text-xl">🧠</span>
-              <span className="text-[7px] uppercase font-black tracking-wider mt-0.5">Ramanujan</span>
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold">
-            {mode === 'sign-in' ? 'Welcome back' : mode === 'forgot-password' ? 'Forgot Password?' : 'Join CuizIN'}
+        <div className="text-center mb-5">
+          <h1 className="text-xl font-black font-serif text-yellow-500 tracking-wide">
+            {mode === 'sign-in' ? 'Return to the Kingdom' : mode === 'forgot-password' ? 'Lost Your Seal?' : 'Pledge Your Allegiance'}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground mt-1 italic">
             {mode === 'sign-in' 
-              ? 'Sign in to keep your gems' 
+              ? 'The throne awaits your return, noble warrior' 
               : mode === 'forgot-password' 
-                ? "Enter your email and we'll send you a reset link" 
-                : 'Start your gem-earning journey'}
+                ? "We shall dispatch a raven with your new seal" 
+                : 'Join the Royal Court and begin your quest for glory'}
           </p>
         </div>
 
+        {/* Parchment form area */}
         <form onSubmit={submit} className="space-y-3">
           {mode === 'sign-up' && (
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
+              placeholder="Choose thy warrior name"
+              className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
             />
           )}
           <input
             type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
+            placeholder="Royal dispatch address (email)"
+            className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
           />
           {mode !== 'forgot-password' && (
             <input
               type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password" minLength={6}
-              className="w-full rounded-xl px-4 py-3 bg-card border border-border focus:border-primary outline-none"
+              placeholder="Secret passphrase" minLength={6}
+              className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
             />
           )}
           
@@ -184,9 +159,9 @@ export default function MobileLoginScreen() {
               <button
                 type="button"
                 onClick={() => setMode('forgot-password')}
-                className="text-xs text-primary hover:underline"
+                className="text-[11px] text-amber-500/70 hover:text-amber-400 italic"
               >
-                Forgot password?
+                Lost thy passphrase?
               </button>
             </div>
           )}
@@ -195,30 +170,33 @@ export default function MobileLoginScreen() {
             whileTap={{ scale: 0.97 }}
             disabled={loading}
             type="submit"
-            className="w-full rounded-2xl py-3.5 font-bold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg disabled:opacity-50"
+            className="w-full rounded-2xl py-3.5 medieval-btn disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? '…' : mode === 'sign-in' ? 'Sign in' : mode === 'forgot-password' ? 'Send reset link' : 'Create account'}
+            <Shield className="w-4 h-4" />
+            {loading ? '…' : mode === 'sign-in' ? 'Enter the Kingdom' : mode === 'forgot-password' ? 'Send the Raven' : 'Take the Oath'}
           </motion.button>
         </form>
 
         {mode === 'forgot-password' ? (
           <button
             onClick={() => setMode('sign-in')}
-            className="mt-5 text-sm text-muted-foreground hover:underline"
+            className="mt-5 text-sm text-muted-foreground hover:text-amber-500 italic text-center"
           >
-            Back to Sign in
+            ← Return to the gates
           </button>
         ) : (
           <button
             onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
-            className="mt-5 text-sm text-muted-foreground"
+            className="mt-5 text-[12px] text-muted-foreground text-center"
           >
-            {mode === 'sign-in' ? "No account? Sign up" : "Already have an account? Sign in"}
+            {mode === 'sign-in' 
+              ? <span>New to the realm? <span className="text-amber-500 font-bold">Pledge allegiance</span></span>
+              : <span>Already sworn? <span className="text-amber-500 font-bold">Enter the gates</span></span>}
           </button>
         )}
       </div>
 
-      {/* Rotating banner ad */}
+      {/* Banner ad */}
       <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
         <TopBannerAd />
       </div>

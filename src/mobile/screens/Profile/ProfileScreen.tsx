@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil, Users, ExternalLink } from 'lucide-react';
+import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil, Users, ExternalLink, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
@@ -93,14 +93,14 @@ export default function ProfileScreen() {
     return (
       <div className="px-4 pt-10 pb-32 text-center">
         <MascotPlayer character={characterOfTheDay()} mood="cheer" size={140} className="mx-auto mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Join CuizIN</h1>
-        <p className="text-muted-foreground mb-6">Sign in to save your gems, climb the leaderboard, and win monthly prizes.</p>
+        <h1 className="text-xl font-bold mb-2 text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>Join the Kingdom</h1>
+        <p className="text-stone-500 mb-6 text-sm">Pledge your allegiance to save gems, climb the Royal Rankings, and win monthly bounties.</p>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate('/login')}
-          className="w-full rounded-2xl py-3 font-bold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg"
+          className="w-full rounded-2xl py-3 medieval-btn"
         >
-          Sign in / Sign up
+          Enter the Realm
         </motion.button>
       </div>
     );
@@ -111,40 +111,40 @@ export default function ProfileScreen() {
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={profile?.name ? `${profile.name}'s profile picture` : 'Your profile picture'} className="w-[90px] h-[90px] rounded-full object-cover border-2 border-border" />
+          <img src={avatarUrl} alt={profile?.name ? `${profile.name}'s profile picture` : 'Your profile picture'} className="w-[90px] h-[90px] rounded-2xl object-cover iron-frame" />
         ) : (
           <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
         )}
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold truncate">{profile?.name || '…'}</h1>
+          <h1 className="text-xl font-bold truncate text-stone-100" style={{ fontFamily: "'Cinzel', serif" }}>{profile?.name || '…'}</h1>
           {profile?.username && profile.username !== profile.name && (
-            <p className="text-xs text-muted-foreground/80 truncate">@{profile.username}</p>
+            <p className="text-xs text-stone-500 truncate">@{profile.username}</p>
           )}
-          <p className="text-sm text-muted-foreground">{(profile?.gems ?? 0).toLocaleString()} gems</p>
+          <p className="text-sm text-amber-500 font-semibold">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setEditOpen(true)}
           disabled={!editProfile}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-primary border border-primary/40 disabled:opacity-50"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold iron-frame text-amber-400 disabled:opacity-50"
         >
           <Pencil className="w-4 h-4" /> Edit
         </motion.button>
       </div>
 
       {sample > 0 && (
-        <div className="mb-6 rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+        <div className="mb-6 rounded-2xl wooden-door p-4 flex items-center gap-3">
           <MascotPlayer character={characterOfTheDay()} mood={mirrorMood} size={64} noHalo />
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground">Mood mirror</p>
-            <p className="font-bold text-sm">
+            <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Court Mirror</p>
+            <p className="font-bold text-sm text-stone-200">
               {mirrorMood === 'excited' && "You're crushing it — keep going!"}
-              {mirrorMood === 'cheer' && "Solid run. One more streak?"}
+              {mirrorMood === 'cheer' && "Solid run. One more quest?"}
               {mirrorMood === 'neutral' && 'Steady. Play a quick round to warm up.'}
               {mirrorMood === 'sad' && 'Tough patch. Win one to cheer me up?'}
               {mirrorMood === 'angry' && 'Save us with a comeback! 💪'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Last {sample} answers · {Math.round(accuracy * 100)}% accuracy</p>
+            <p className="text-[11px] text-stone-500 mt-0.5">Last {sample} battles · {Math.round(accuracy * 100)}% accuracy</p>
           </div>
         </div>
       )}
@@ -182,7 +182,7 @@ export default function ProfileScreen() {
       )}
 
       {/* Reports */}
-      <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Your reports</h2>
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-3">Battle Records</h2>
       <div className="space-y-3 mb-6">
         <ReportRow
           title="Today"
@@ -201,9 +201,9 @@ export default function ProfileScreen() {
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={signOut}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 font-semibold text-destructive border border-destructive/40"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 font-semibold text-red-500 wooden-door !border-red-900/40"
       >
-        <LogOut className="w-4 h-4" /> Sign out
+        <LogOut className="w-4 h-4" /> Leave the Kingdom
       </motion.button>
 
       {editProfile && uid && (
@@ -227,12 +227,12 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
   return (
     <motion.div
       whileTap={{ scale: 0.97 }}
-      className="relative overflow-hidden rounded-2xl p-4 bg-card border border-border"
+      className="relative overflow-hidden rounded-2xl p-4 wooden-door"
     >
-      <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full bg-gradient-to-br ${color} opacity-20 blur-xl`} />
-      <Icon className="w-5 h-5 mb-2 text-primary" />
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-bold text-lg">{value}</p>
+      <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full bg-gradient-to-br ${color} opacity-15 blur-xl`} />
+      <Icon className="w-5 h-5 mb-2 text-amber-500" />
+      <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">{label}</p>
+      <p className="font-bold text-lg text-stone-200">{value}</p>
     </motion.div>
   );
 }
@@ -240,23 +240,23 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 function ReportRow({ title, attempted, correct, gems }: { title: string; attempted: number; correct: number; gems: number }) {
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="rounded-2xl wooden-door p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="font-bold text-sm">{title}</p>
-        <span className="text-xs text-muted-foreground">{accuracy}% accuracy</span>
+        <p className="font-bold text-sm text-stone-200">{title}</p>
+        <span className="text-[10px] text-stone-500 uppercase tracking-wider">{accuracy}% accuracy</span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-lg font-bold">{attempted}</p>
-          <p className="text-[11px] text-muted-foreground">Attempted</p>
+          <p className="text-lg font-bold text-stone-300">{attempted}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Battles</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-emerald-600">{correct}</p>
-          <p className="text-[11px] text-muted-foreground">Correct</p>
+          <p className="text-lg font-bold text-emerald-500">{correct}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Victories</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-amber-600">{gems.toLocaleString()}</p>
-          <p className="text-[11px] text-muted-foreground">Gems</p>
+          <p className="text-lg font-bold text-amber-500">{gems.toLocaleString()}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Gems</p>
         </div>
       </div>
     </div>

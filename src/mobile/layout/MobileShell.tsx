@@ -6,11 +6,13 @@ import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 export function MobileShell() {
   const location = useLocation();
   return (
-    <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
+    <div className="fixed inset-0 flex flex-col overflow-hidden stone-wall">
+      {/* Torch glow ambient - top corners */}
+      <div className="torch-glow-ambient top-0 left-0" style={{ width: 100, height: 100, opacity: 0.4 }} />
+      <div className="torch-glow-ambient top-0 right-0" style={{ width: 100, height: 100, opacity: 0.4, animationDelay: '1s' }} />
+
       <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
-      <div
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-      >
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -25,6 +27,8 @@ export function MobileShell() {
         </AnimatePresence>
       </div>
       <TopBannerAd />
+      {/* Iron strip separator */}
+      <div className="h-[2px] bg-gradient-to-r from-transparent via-amber-800/30 to-transparent" />
       <BottomTabs />
     </div>
   );

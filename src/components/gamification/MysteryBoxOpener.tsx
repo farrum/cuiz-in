@@ -7,6 +7,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { Sparkles, Coins, Star, Ticket, User, Gift, Lock, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { cn } from '@/lib/utils';
+import { TorchSparks } from '@/mobile/components/TorchSparks';
 
 interface MysteryBoxOpenerProps {
   isOpen: boolean;
@@ -347,42 +348,47 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
           {/* ===== REVEALED ===== */}
           {status === 'revealed' && reward && (
-            <div className="flex flex-col items-center text-center gap-6 animate-scaleIn w-full px-4">
+            <div className="flex flex-col items-center text-center gap-6 animate-scaleIn w-full px-4 relative">
+              {/* Magical TorchSparks rising from behind the reward */}
+              <div className="absolute inset-0 z-0 h-40">
+                <TorchSparks count={10} />
+              </div>
+
               {/* Radiant background rays */}
-              <div className="absolute inset-0 pointer-events-none"
+              <div className="absolute inset-0 pointer-events-none z-0"
                 style={{
                   background: `conic-gradient(from 0deg at 50% 50%, transparent 0deg, ${tier.glowColor} 15deg, transparent 30deg, transparent 45deg, ${tier.glowColor} 60deg, transparent 75deg, transparent 90deg, ${tier.glowColor} 105deg, transparent 120deg)`,
                   animation: 'spin 8s linear infinite',
-                  opacity: 0.3,
+                  opacity: 0.35,
                 }}
               />
 
-              {/* Reward Card */}
-              <div className="relative z-10">
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-500 opacity-75 blur animate-pulse" />
-                <div className="relative bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-yellow-500/40 rounded-2xl p-6 min-w-[220px] flex flex-col items-center justify-center gap-3">
+              {/* Reward Card — Parchment look with golden glowing border */}
+              <div className="relative z-10 w-full max-w-[260px] scroll-unroll-container animate-[scaleIn_0.6s_cubic-bezier(0.34,1.56,0.64,1)]">
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 opacity-90 blur shadow-[0_0_25px_rgba(234,179,8,0.5)]" />
+                <div className="relative parchment-card rounded-2xl p-6 flex flex-col items-center justify-center gap-4 border-[3px] border-amber-600">
 
                   {/* Opened chest icon */}
-                  <div className="text-4xl mb-1">🏺</div>
+                  <div className="text-5xl drop-shadow-lg filter mb-1 animate-bounce">👑</div>
 
                   {reward.reward_type === 'gems_and_stars' && (
-                    <div className="flex justify-center gap-5">
+                    <div className="flex justify-center gap-6">
                       {reward.gems > 0 && (
                         <div className="flex flex-col items-center">
-                          <div className="w-14 h-14 bg-amber-500/15 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/30 shadow-lg shadow-amber-500/10">
-                            <Coins className="w-7 h-7 fill-amber-500/20" />
+                          <div className="w-14 h-14 bg-amber-800/10 rounded-xl flex items-center justify-center text-amber-900 border border-amber-600/30 shadow-md">
+                            <Coins className="w-7 h-7 fill-amber-700/20" />
                           </div>
-                          <span className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase tracking-wider">Gems</span>
-                          <span className="text-xl font-black text-amber-400">+{reward.gems}</span>
+                          <span className="text-[9px] text-amber-900 font-black mt-1.5 uppercase tracking-wider">Gems</span>
+                          <span className="text-xl font-black text-amber-950">+{reward.gems}</span>
                         </div>
                       )}
                       {reward.stars > 0 && (
                         <div className="flex flex-col items-center">
-                          <div className="w-14 h-14 bg-yellow-500/15 rounded-xl flex items-center justify-center text-yellow-500 border border-yellow-500/30 shadow-lg shadow-yellow-500/10">
-                            <Star className="w-7 h-7 fill-yellow-500/20" />
+                          <div className="w-14 h-14 bg-amber-800/10 rounded-xl flex items-center justify-center text-amber-900 border border-amber-600/30 shadow-md">
+                            <Star className="w-7 h-7 fill-amber-700/20" />
                           </div>
-                          <span className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase tracking-wider">Stars</span>
-                          <span className="text-xl font-black text-yellow-300">+{reward.stars}</span>
+                          <span className="text-[9px] text-amber-900 font-black mt-1.5 uppercase tracking-wider">Stars</span>
+                          <span className="text-xl font-black text-amber-950">+{reward.stars}</span>
                         </div>
                       )}
                     </div>
@@ -390,16 +396,16 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
                   {reward.reward_type === 'shards' && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-16 h-16 bg-purple-500/15 rounded-2xl border-2 border-purple-500/30 flex items-center justify-center relative overflow-hidden shadow-lg shadow-purple-500/10">
-                        <User className="w-10 h-10 text-purple-400" />
-                        <div className="absolute bottom-0 inset-x-0 bg-purple-600 text-white font-black text-[8px] text-center py-0.5 uppercase tracking-wider">
+                      <div className="w-16 h-16 bg-amber-800/10 rounded-2xl border-2 border-amber-700/40 flex items-center justify-center relative overflow-hidden shadow-md">
+                        <User className="w-10 h-10 text-amber-900" />
+                        <div className="absolute bottom-0 inset-x-0 bg-amber-700 text-white font-black text-[8px] text-center py-0.5 uppercase tracking-wider">
                           SHARDS
                         </div>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-black tracking-[0.2em] uppercase mt-1">
+                      <span className="text-[10px] text-amber-900 font-black tracking-[0.2em] uppercase mt-1">
                         {reward.character_id}
                       </span>
-                      <span className="text-2xl font-black text-purple-400">
+                      <span className="text-2xl font-black text-amber-950">
                         +{reward.shards} Shards
                       </span>
                     </div>
@@ -407,25 +413,25 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
                   {(reward.reward_type === 'spin_ticket' || reward.reward_type === 'scratch_card') && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-14 h-14 bg-indigo-500/15 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+                      <div className="w-14 h-14 bg-amber-800/10 rounded-xl flex items-center justify-center text-amber-900 border border-amber-600/30 shadow-md">
                         <Ticket className="w-7 h-7" />
                       </div>
-                      <span className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wider">Royal Decree</span>
-                      <span className="text-xl font-black text-indigo-400">+{reward.tickets} {reward.reward_type === 'spin_ticket' ? 'Spin' : 'Scratch'}</span>
+                      <span className="text-[9px] text-amber-900 font-black mt-1 uppercase tracking-wider">Royal Decree</span>
+                      <span className="text-xl font-black text-amber-950">+{reward.tickets} {reward.reward_type === 'spin_ticket' ? 'Spin' : 'Scratch'}</span>
                     </div>
                   )}
 
                   {reward.reward_type === 'spin_scratch_bundle' && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-14 h-14 bg-pink-500/15 rounded-xl flex items-center justify-center text-pink-400 border border-pink-500/30 shadow-lg shadow-pink-500/10">
+                      <div className="w-14 h-14 bg-amber-800/10 rounded-xl flex items-center justify-center text-amber-900 border border-amber-600/30 shadow-md">
                         <Gift className="w-7 h-7" />
                       </div>
-                      <span className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wider">Royal Bundle</span>
-                      <span className="text-sm font-black text-pink-400">2 Spins & 2 Scratches</span>
+                      <span className="text-[9px] text-amber-900 font-black mt-1 uppercase tracking-wider">Royal Bundle</span>
+                      <span className="text-sm font-black text-amber-950">2 Spins & 2 Scratches</span>
                     </div>
                   )}
 
-                  <p className="text-xs font-semibold text-slate-300 mt-2 italic">{reward.label}</p>
+                  <p className="text-xs font-bold text-stone-700 mt-2 italic leading-relaxed">{reward.label}</p>
                 </div>
               </div>
             </div>

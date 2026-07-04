@@ -152,18 +152,18 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-col bg-background"
+          className="fixed inset-0 z-50 flex flex-col stone-wall"
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <button onClick={onClose} className="p-2 -ml-2 rounded-full active:bg-muted">
-              <X className="w-5 h-5" />
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '2px solid hsl(35 20% 20%)' }}>
+            <button onClick={onClose} className="p-2 -ml-2 rounded-xl iron-frame hover:bg-stone-800/60">
+              <X className="w-5 h-5 text-stone-300" />
             </button>
-            <h2 className="font-bold text-lg">Edit profile</h2>
+            <h2 className="font-bold text-lg text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>Edit Profile</h2>
             <div className="w-9" />
           </div>
 
@@ -171,22 +171,22 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
             {/* Avatar */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center iron-frame bg-stone-800">
                   {avatar ? (
                     <img src={avatar} alt="Your profile picture" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-10 h-10 text-muted-foreground" />
+                    <User className="w-10 h-10 text-stone-500" />
                   )}
                 </div>
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-gradient-to-r from-primary to-purple-500 text-primary-foreground flex items-center justify-center shadow-lg"
+                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-xl bg-gradient-to-r from-amber-500 to-amber-700 text-stone-900 flex items-center justify-center shadow-lg"
                 >
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
               </div>
-              <p className="text-xs text-muted-foreground">Tap the camera to change your avatar</p>
+              <p className="text-xs text-stone-500">Tap the camera to change your avatar</p>
             </div>
 
             <Section title="Profile details">
@@ -209,20 +209,20 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
             )}
 
             {form.provider !== 'email' && (
-              <p className="text-xs text-muted-foreground text-center">Email and password are managed by your sign-in provider.</p>
+              <p className="text-xs text-stone-500 text-center">Email and password are managed by your sign-in provider.</p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-border bg-background">
+          <div className="px-4 py-3" style={{ borderTop: '2px solid hsl(35 20% 20%)' }}>
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
               disabled={saving}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 font-bold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 medieval-btn disabled:opacity-60"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? 'Saving…' : 'Save Changes'}
             </motion.button>
           </div>
         </motion.div>
@@ -234,7 +234,7 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500">{title}</p>
       {children}
     </div>
   );
@@ -248,16 +248,16 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <div className={`mt-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 ${disabled ? 'opacity-60' : ''}`}>
-        <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-xs text-stone-400">{label}</span>
+      <div className={`mt-1 flex items-center gap-2 rounded-xl px-3 wooden-door ${disabled ? 'opacity-60' : ''}`}>
+        <Icon className="w-4 h-4 text-stone-500 shrink-0" />
         <input
           type={type}
           value={value}
           disabled={disabled}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed"
+          className="flex-1 bg-transparent py-3 text-sm outline-none text-stone-200 placeholder:text-stone-600 disabled:cursor-not-allowed"
         />
       </div>
     </label>

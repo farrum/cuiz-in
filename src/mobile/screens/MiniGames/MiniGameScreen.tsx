@@ -151,18 +151,15 @@ export default function MiniGameScreen() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
-      {/* Themed ambient background glows */}
+    <div className="fixed inset-0 flex flex-col stone-wall overflow-hidden">
+      {/* Torch ambience */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="torch-glow-ambient absolute top-0 left-0" style={{ width: 100, height: 100, opacity: 0.3 }} />
+        <div className="torch-glow-ambient absolute top-0 right-0" style={{ width: 100, height: 100, opacity: 0.3, animationDelay: '0.8s' }} />
         <motion.div
           className={cn('absolute -top-32 -left-32 w-80 h-80 rounded-full blur-3xl', current?.bgGlow ?? 'bg-primary/10')}
           animate={{ scale: [1, 1.2, 1], x: [0, 30, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className={cn('absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-3xl', current?.bgGlow ?? 'bg-purple-50/10')}
-          animate={{ scale: [1, 1.15, 1], y: [0, -25, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
@@ -173,13 +170,13 @@ export default function MiniGameScreen() {
       >
         <button
           onClick={() => { haptics('light'); navigate('/hub'); }}
-          className="p-2 -ml-2 rounded-full hover:bg-muted/60 transition-colors"
+          className="p-2 -ml-2 rounded-xl iron-frame hover:bg-stone-800/60 transition-colors"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 text-stone-300" />
         </button>
-        <h1 className={`font-extrabold text-lg bg-gradient-to-r ${current?.color ?? 'from-primary to-purple-500'} bg-clip-text text-transparent`}>
-          {current?.title || 'Mini-game'}
+        <h1 className="font-bold text-lg text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>
+          {current?.title || 'Tavern Games'}
         </h1>
         <div className="w-9" />
       </div>
@@ -195,8 +192,8 @@ export default function MiniGameScreen() {
 
       {/* Other Games nav bar */}
       <div className="relative z-10 px-4 pt-1 pb-1.5">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 text-center">
-          More games
+        <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-stone-500 mb-1.5 text-center">
+          More Tavern Games
         </p>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 px-1 scrollbar-none justify-start w-full max-w-full">
           {otherGames.map((g) => {
@@ -206,12 +203,12 @@ export default function MiniGameScreen() {
                 key={g.id}
                 whileTap={{ scale: 0.93 }}
                 onClick={() => { haptics('light'); navigate(`/game/${g.id}`); }}
-                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 bg-card border border-border shadow-sm transition-colors hover:bg-muted/50"
+                className="flex items-center gap-1.5 rounded-2xl px-3 py-2 wooden-door shadow-sm transition-colors"
               >
-                <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center text-white bg-gradient-to-br', g.color)}>
+                <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center text-white bg-gradient-to-br iron-frame', g.color)}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-xs font-semibold">{g.short}</span>
+                <span className="text-xs font-semibold text-stone-300">{g.short}</span>
               </motion.button>
             );
           })}

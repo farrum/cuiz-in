@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark } from 'lucide-react';
+import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark, ChevronRight } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
-import { MotivationBubble } from '@/mobile/components/MotivationBubble';
-import { useMotivation } from '@/mobile/hooks/useMotivation';
+import { MedievalKingBanner } from '@/mobile/components/MedievalKingBanner';
+import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
-import { IdleMascot } from '@/mobile/mascots/IdleMascot';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -23,14 +22,14 @@ type Node = {
   badge?: string;
 };
 
-const FEATURED_MODES: Node[] = [
-  { id: 'quests', label: 'Empire Quests', to: '/empire-quests', icon: Swords, color: 'from-amber-500 via-yellow-500 to-amber-600', hint: 'Embark on historical campaigns with your battle counsel' },
+const ROYAL_CHAMBERS: Node[] = [
+  { id: 'quests', label: 'Empire Quests', to: '/empire-quests', icon: Swords, color: 'from-amber-500 via-yellow-500 to-amber-600', hint: 'March across historical campaigns with your battle counsel' },
   { id: 'kingdoms', label: 'Kingdoms Dynasty', to: '/kingdoms', icon: Landmark, color: 'from-blue-600 to-indigo-500', hint: 'Establish your faction, design crests & compete in rankings' },
-  { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-primary via-purple-500 to-pink-500', hint: 'Answer questions, build streaks & earn gems' },
+  { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-purple-600 to-pink-500', hint: 'Answer questions, build streaks & earn gems' },
   { id: 'daily', label: 'Daily Challenge', to: '/daily', icon: Calendar, color: 'from-orange-500 to-red-500', hint: 'Complete the daily special for 2x rewards!' },
 ];
 
-const GRID_GAMES: Node[] = [
+const TAVERN_GAMES: Node[] = [
   { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', icon: Disc3, color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day', badge: 'Daily' },
   { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', icon: ScrollText, color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
   { id: 'true-false', label: 'True / False', to: '/game/true-false', icon: Swords, color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
@@ -42,16 +41,15 @@ const GRID_GAMES: Node[] = [
   { id: 'treasure', label: 'Treasure Chest', to: '/game/treasure', icon: Gift, color: 'from-yellow-400 to-orange-500', hint: 'Open mystery chest', badge: 'Reward' },
   { id: 'coinflip', label: 'Coin Flip', to: '/game/coinflip', icon: Coins, color: 'from-amber-500 to-orange-600', hint: 'Double or nothing coin', badge: 'Luck' },
   { id: 'diceroll', label: 'Dice Roll', to: '/game/diceroll', icon: Dices, color: 'from-indigo-400 to-purple-600', hint: 'High rolling dice bonus', badge: 'Hot' },
-  { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', icon: KeyRound, color: 'from-slate-600 to-slate-900', hint: 'Claim massive daily gems', badge: 'Daily' },
+  { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', icon: KeyRound, color: 'from-stone-600 to-stone-900', hint: 'Claim massive daily gems', badge: 'Daily' },
 ];
 
 export default function HubScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
-  const motivation = useMotivation('on_open');
   const { streak } = usePersistentQuizStats();
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
-  const [name, setName] = useState<string>(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Player');
+  const [name, setName] = useState<string>(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Adventurer');
 
   useEffect(() => {
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -61,7 +59,7 @@ export default function HubScreen() {
         if (data) {
           const balance = (data as any).points ?? 0;
           setGems(balance);
-          const dn = (data as any).display_name || (data as any).username || 'Player';
+          const dn = (data as any).display_name || (data as any).username || 'Adventurer';
           setName(dn);
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(balance));
           localStorage.setItem(STORAGE_KEYS.USER_NAME, dn);
@@ -73,37 +71,12 @@ export default function HubScreen() {
 
   return (
     <div className="relative min-h-full pb-32 px-4 pt-3 overflow-hidden">
-      {/* animated background blobs */}
-      <motion.div
-        aria-hidden
-        className="absolute -top-24 -left-16 w-72 h-72 rounded-full bg-primary/20 blur-3xl"
-        animate={{ scale: [1, 1.2, 1], x: [0, 20, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        aria-hidden
-        className="absolute top-32 -right-20 w-72 h-72 rounded-full bg-purple-500/20 blur-3xl"
-        animate={{ scale: [1, 1.15, 1], y: [0, -20, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-      />
 
-      {/* Brand */}
-      <div className="relative flex justify-center mb-3">
-        <motion.img
-          src="/cuizin-logo.png"
-          alt="CuizIN"
-          className="h-9 w-auto"
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        />
-      </div>
-
-      {/* Header */}
-      <div className="relative flex items-center justify-between mb-4">
+      {/* ═══ Header ═══ */}
+      <div className="relative flex items-center justify-between mb-2">
         <div>
-          <p className="text-xs text-muted-foreground">Hello,</p>
-          <h1 className="text-xl font-bold leading-tight">{name} 👋</h1>
+          <p className="text-[10px] text-muted-foreground font-serif tracking-wider uppercase">Welcome,</p>
+          <h1 className="text-lg font-black leading-tight font-serif text-yellow-500">{name}</h1>
         </div>
         <div className="flex items-center gap-2">
           <StreakFlame streak={streak} />
@@ -111,31 +84,43 @@ export default function HubScreen() {
         </div>
       </div>
 
-      {/* Mascot + motivation */}
-      <div className="relative flex items-end gap-3 mb-6">
-        <IdleMascot size={96} />
-        <div className="pb-2">
-          <MotivationBubble message={motivation?.text || ''} emoji={motivation?.emoji} />
-        </div>
-      </div>
+      {/* ═══ King's Court ═══ */}
+      <section className="relative mb-4">
+        <MedievalKingBanner compact />
+      </section>
 
+      {/* Sign-in CTA for guests */}
       {!isLoggedIn && (
         <motion.button
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => { haptics('medium'); navigate('/login'); }}
-          className="w-full mb-6 rounded-2xl p-4 text-left bg-gradient-to-r from-primary to-purple-500 text-primary-foreground shadow-lg"
+          className="w-full mb-5 rounded-2xl p-4 text-left wooden-door"
         >
-          <p className="font-bold">Sign in to save your gems</p>
-          <p className="text-xs opacity-90">Climb the leaderboard and win monthly prizes.</p>
+          <p className="font-black text-yellow-400 font-serif tracking-wide">⚔ Pledge Your Allegiance</p>
+          <p className="text-[11px] text-stone-400 mt-0.5">Sign in to save your gems & climb the rankings.</p>
         </motion.button>
       )}
 
-      {/* Core Featured Modes */}
-      <section className="relative mb-6">
-        <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3.5 uppercase">Featured Modes</h2>
-        <div className="space-y-3.5">
-          {FEATURED_MODES.map((node, i) => {
+      {/* ═══ Your Council ═══ */}
+      <section className="relative mb-5">
+        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
+          <span className="w-8 h-[1px] bg-amber-800/30" />
+          Your Battle Council
+          <span className="flex-1 h-[1px] bg-amber-800/30" />
+        </h2>
+        <MedievalAdvisors compact />
+      </section>
+
+      {/* ═══ Royal Chambers (Featured Modes) ═══ */}
+      <section className="relative mb-5">
+        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
+          <span className="w-8 h-[1px] bg-amber-800/30" />
+          Royal Chambers
+          <span className="flex-1 h-[1px] bg-amber-800/30" />
+        </h2>
+        <div className="space-y-3">
+          {ROYAL_CHAMBERS.map((node, i) => {
             const Icon = node.icon;
             return (
               <motion.button
@@ -145,72 +130,83 @@ export default function HubScreen() {
                 transition={{ delay: i * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative w-full flex items-center gap-4 rounded-[1.75rem] p-4 text-left bg-card border border-border/80 shadow-md overflow-hidden"
+                className="relative w-full flex items-center gap-4 rounded-2xl p-4 text-left wooden-door overflow-hidden group"
               >
-                {/* Visual back glow effect */}
-                <div className={cn(
-                  "absolute -right-6 -bottom-6 w-32 h-32 rounded-full blur-3xl opacity-[0.08] bg-gradient-to-br",
-                  node.color
-                )} />
+                {/* Iron handle glow */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-amber-500/5 group-hover:bg-amber-500/15 transition-colors" />
 
+                {/* Icon emblem */}
                 <div className={cn(
-                  'flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-br relative z-10',
+                  'flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg bg-gradient-to-br relative z-10 iron-frame',
                   node.color
                 )}>
                   <Icon className="w-6 h-6" />
                 </div>
+
+                {/* Text */}
                 <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-extrabold text-base leading-tight">{node.label}</p>
-                  {node.hint && <p className="text-[11px] text-muted-foreground mt-1 leading-normal">{node.hint}</p>}
+                  <p className="font-black text-sm leading-tight text-foreground font-serif">{node.label}</p>
+                  {node.hint && <p className="text-[10px] text-muted-foreground mt-0.5 leading-normal">{node.hint}</p>}
                 </div>
-                <motion.span
-                  className="text-xl text-muted-foreground/80 relative z-10 pr-1"
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  aria-hidden
-                >→</motion.span>
+
+                {/* Chevron */}
+                <ChevronRight className="w-4 h-4 text-amber-600/40 relative z-10 group-hover:text-amber-500 transition-colors" />
+
+                {/* Iron rivets on corners */}
+                <div className="absolute top-2 left-2 iron-rivet" />
+                <div className="absolute top-2 right-2 iron-rivet" />
+                <div className="absolute bottom-2 left-2 iron-rivet" />
+                <div className="absolute bottom-2 right-2 iron-rivet" />
               </motion.button>
             );
           })}
         </div>
       </section>
 
-      {/* Mini Games Grid */}
+      {/* ═══ Tavern Games ═══ */}
       <section className="relative">
-        <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3.5 uppercase">Mini Games</h2>
-        <div className="grid grid-cols-2 gap-3.5">
-          {GRID_GAMES.map((node, i) => {
+        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
+          <span className="w-8 h-[1px] bg-amber-800/30" />
+          Tavern Games
+          <span className="flex-1 h-[1px] bg-amber-800/30" />
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          {TAVERN_GAMES.map((node, i) => {
             const Icon = node.icon;
             return (
               <motion.button
                 key={node.id}
                 initial={{ opacity: 0, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: (i + 2) * 0.05, type: 'spring', stiffness: 220, damping: 22 }}
+                transition={{ delay: (i + 2) * 0.04, type: 'spring', stiffness: 220, damping: 22 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative flex flex-col justify-between rounded-2xl p-4 text-left bg-card border border-border/80 shadow-md h-36 overflow-hidden"
+                className="relative flex flex-col justify-between rounded-2xl p-4 text-left h-36 overflow-hidden wooden-door"
               >
-                {/* Small badge inside game tile */}
+                {/* Badge */}
                 {node.badge && (
-                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-wider bg-primary/15 text-primary border border-primary/25 font-serif">
                     {node.badge}
                   </span>
                 )}
 
-                {/* Icon box */}
+                {/* Icon */}
                 <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm',
+                  'w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-md iron-frame',
                   node.color
                 )}>
                   <Icon className="w-5 h-5" />
                 </div>
 
-                {/* Info block */}
+                {/* Info */}
                 <div className="mt-4">
-                  <h4 className="font-extrabold text-xs text-foreground tracking-tight line-clamp-1">{node.label}</h4>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                  <h4 className="font-black text-[11px] text-foreground tracking-tight line-clamp-1 font-serif">{node.label}</h4>
+                  <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
                 </div>
+
+                {/* Corner rivets */}
+                <div className="absolute top-1.5 left-1.5 iron-rivet" style={{ width: 6, height: 6 }} />
+                <div className="absolute bottom-1.5 right-1.5 iron-rivet" style={{ width: 6, height: 6 }} />
               </motion.button>
             );
           })}

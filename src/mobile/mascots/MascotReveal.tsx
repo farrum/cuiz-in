@@ -37,7 +37,7 @@ export function MascotReveal({ show, mood, message, emoji, headline, headlineCla
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-          className="rounded-2xl border border-border bg-card p-4 shadow-xl flex items-start gap-3"
+          className="rounded-2xl wooden-door p-4 shadow-xl flex items-start gap-3"
         >
           <MascotPlayer character={pinned} mood={mood} size={size} />
           <div className="flex-1 min-w-0">
@@ -45,12 +45,12 @@ export function MascotReveal({ show, mood, message, emoji, headline, headlineCla
               <p className={cn('font-bold text-base mb-1', headlineClass)}>{headline}</p>
             )}
             {message && (
-              <p className="text-sm leading-snug">
+              <p className="text-sm leading-snug text-stone-200">
                 {emoji && <span className="mr-1">{emoji}</span>}{message}
               </p>
             )}
             {explanation && (
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{explanation}</p>
+              <p className="text-xs text-stone-400 mt-2 leading-relaxed">{explanation}</p>
             )}
           </div>
         </motion.div>
