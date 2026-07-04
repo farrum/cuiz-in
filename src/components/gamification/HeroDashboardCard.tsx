@@ -263,19 +263,29 @@ export const HeroDashboardCard: React.FC<HeroDashboardCardProps> = ({
 
           <Button
             size="sm"
-            onClick={handleUpgrade}
-            disabled={loading || !canUpgrade}
+            onClick={() => {
+              if (!canUpgrade) {
+                toast({
+                  title: "Shards Required",
+                  description: `Collect Shards by opening chests in the Chest Shop tab. You need ${reqs.shards - hero.shards} more shards to recruit ${hero.name}.`,
+                  variant: "default"
+                });
+                return;
+              }
+              handleUpgrade();
+            }}
+            disabled={loading}
             className={cn(
               "font-black text-xs px-4 py-2 rounded-xl shadow-md border-0 uppercase tracking-widest transition-all",
               canUpgrade
                 ? "medieval-btn hover:scale-105 active:scale-95 text-stone-950"
-                : "bg-stone-800 text-stone-500 cursor-not-allowed"
+                : "bg-stone-950 text-amber-500 border border-amber-500/20 hover:bg-stone-900"
             )}
           >
             {loading ? (
               <div className="w-3.5 h-3.5 border-2 border-stone-950 border-t-transparent rounded-full animate-spin" />
             ) : isLocked ? (
-              <>Recruit</>
+              canUpgrade ? <>Recruit</> : <>Get Shards</>
             ) : (
               <span className="flex items-center gap-1">
                 <ArrowUp className="w-3 h-3" /> Upgrade

@@ -51,25 +51,31 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
           {/* Main heading */}
           <div className="space-y-3" id="hero-heading">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
-              Play Quizzes,{' '}
-              <span className="bg-gradient-to-r from-primary via-[hsl(var(--quiz-purple))] to-accent bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight font-serif" style={{ fontFamily: "'Cinzel', serif" }}>
+              Swear Your Allegiance,<br />
+              <span className="text-amber-500">
                 Test Your Knowledge
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
-              Join thousands of players competing daily. Answer questions, climb the leaderboard, and become the quiz champion.
+            <p className="text-lg sm:text-xl text-stone-300 max-w-xl mx-auto lg:mx-0">
+              Complete historic quests, recruit legendary advisors, and conquer the intellectual empires of CuizIN.
             </p>
           </div>
 
           {/* Benefits list */}
           <ul className="flex flex-wrap justify-center lg:justify-start gap-4">
-            {benefits.map((benefit, index) => (
-              <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-accent" />
-                <span>{benefit}</span>
-              </li>
-            ))}
+            <li className="flex items-center gap-2 text-sm text-stone-400">
+              <CheckCircle2 className="w-4 h-4 text-amber-500" />
+              <span>Unlock Legendary Advisors</span>
+            </li>
+            <li className="flex items-center gap-2 text-sm text-stone-400">
+              <CheckCircle2 className="w-4 h-4 text-amber-500" />
+              <span>Conquer Historic Empires</span>
+            </li>
+            <li className="flex items-center gap-2 text-sm text-stone-400">
+              <CheckCircle2 className="w-4 h-4 text-amber-500" />
+              <span>Assemble Your Alliance</span>
+            </li>
           </ul>
 
           {/* CTA Buttons */}
@@ -77,10 +83,10 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
             <Button 
               size="lg" 
               onClick={handlePlayNow}
-              className="text-lg px-8 py-6 gradient-primary text-white btn-shine pulse-glow group"
+              className="text-lg px-8 py-6 medieval-btn text-stone-950 hover:scale-105 active:scale-95 transition-transform border-0 font-black"
             >
-              <Play className="mr-2 w-5 h-5 transition-transform group-hover:scale-110" />
-              {isLoggedIn || hasStarted ? 'Continue Playing' : 'Play Free Now'}
+              <Play className="mr-2 w-5 h-5 fill-current" />
+              {isLoggedIn || hasStarted ? 'Continue Quest' : 'Embark Quest'}
             </Button>
             
             {!isLoggedIn && (
@@ -88,10 +94,10 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
                 size="lg" 
                 variant="outline" 
                 onClick={navigateToRegister}
-                className="text-lg px-8 py-6 border-2 hover:bg-primary/5 group"
+                className="text-lg px-8 py-6 border-2 border-amber-800 bg-stone-950/40 text-amber-500 hover:bg-stone-900"
               >
-                <UserPlus className="mr-2 w-5 h-5 transition-transform group-hover:scale-110" />
-                Create Account
+                <UserPlus className="mr-2 w-5 h-5" />
+                Forge Covenant
               </Button>
             )}
           </div>

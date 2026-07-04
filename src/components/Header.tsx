@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark } from 'lucide-react';
+import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark, Volume2, VolumeX } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import GuestGemsDisplay from './GuestGemsDisplay';
+import { audioManager } from '@/utils/audioManager';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [bgmEnabled, setBgmEnabled] = useState(audioManager.isBgmEnabled());
   const [todayGems, setTodayGems] = useState(0);
   const [monthlyGems, setMonthlyGems] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -105,12 +107,9 @@ const Header: React.FC = () => {
   const dailyProgress = Math.min(100, todayGems / DAILY_TARGET * 100);
   const monthlyProgress = Math.min(100, monthlyGems / MONTHLY_TARGET * 100);
 
-  // Simplified navigation
+  // Simplified navigation (decluttered - Categories, FAQ, Games moved to footer)
   const mainNavItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/categories', label: 'Categories', icon: BookOpen },
-    { path: '/faq', label: 'FAQ', icon: HelpCircle },
-    { path: '/minigames', label: 'Games', icon: Play },
   ];
 
   const loggedInNavItems = [
@@ -198,6 +197,20 @@ const Header: React.FC = () => {
               <GuestGemsDisplay className="hidden lg:flex" />
             )}
 
+            {/* Background Music Mute Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-white"
+              onClick={() => {
+                audioManager.toggleBGM();
+                setBgmEnabled(audioManager.isBgmEnabled());
+              }}
+              title={bgmEnabled ? "Mute Background Music" : "Unmute Background Music"}
+            >
+              {bgmEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-red-500" />}
+            </Button>
+
             {/* Play Now CTA - always visible */}
             <Button
               onClick={handlePlayNow}
@@ -257,6 +270,18 @@ const Header: React.FC = () => {
             ))}
             
             <div className="pt-4 space-y-2">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2"
+                onClick={() => {
+                  audioManager.toggleBGM();
+                  setBgmEnabled(audioManager.isBgmEnabled());
+                }}
+              >
+                {bgmEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-red-500" />}
+                {bgmEnabled ? 'Mute Music' : 'Unmute Music'}
+              </Button>
+
               <Button onClick={handlePlayNow} className="w-full">
                 <Play className="w-4 h-4 mr-2 fill-current" />
                 Play Now

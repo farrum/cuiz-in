@@ -143,7 +143,7 @@ export default function EmpireQuestsPage() {
             abilityDesc: "Uses Socratic questioning to eliminate two incorrect options from the question.",
             starCost: 15,
             level: Number(localStorage.getItem('hero_socrates_level') || '0'),
-            shards: Number(localStorage.getItem('hero_socrates_shards') || '0'),
+            shards: Number(localStorage.getItem('hero_socrates_shards') || '10'),
           },
           {
             id: 'aryabhata',
@@ -196,10 +196,33 @@ export default function EmpireQuestsPage() {
         .maybeSingle();
 
       if (profile) {
-        setUserGems(profile.gems || 0);
-        setUserStars(profile.stars || 0);
-        localStorage.setItem('quiz_app_user_gems', String(profile.gems || 0));
-        localStorage.setItem('quiz_app_user_stars', String(profile.stars || 0));
+        let currentGems = profile.gems || 0;
+        let currentStars = profile.stars || 0;
+
+        // Auto onboarding grant if user is completely empty
+        if (currentGems === 0 && currentStars === 0) {
+          currentGems = 50;
+          currentStars = 20; // Enough to buy a bronze chest or launch Persia campaign
+          await (supabase as any)
+            .from('profiles')
+            .update({ points: 50, stars: 20 })
+            .eq('id', session.user.id);
+          
+          // Inject 10 Socrates shards so they can recruit him immediately
+          await (supabase as any)
+            .from('user_characters')
+            .insert({
+              user_id: session.user.id,
+              character_id: 'socrates',
+              level: 0,
+              shards_collected: 10
+            });
+        }
+
+        setUserGems(currentGems);
+        setUserStars(currentStars);
+        localStorage.setItem('quiz_app_user_gems', String(currentGems));
+        localStorage.setItem('quiz_app_user_stars', String(currentStars));
       }
 
       // Fetch user characters
@@ -208,10 +231,14 @@ export default function EmpireQuestsPage() {
         .select('*')
         .eq('user_id', session.user.id);
 
+      // Make sure they have socrates shards if it is empty
       const dbCharsMap = new Map<string, any>();
       chars?.forEach(c => {
         dbCharsMap.set(c.character_id, c);
       });
+      if (chars?.length === 0) {
+        dbCharsMap.set('socrates', { level: 0, shards_collected: 10 });
+      }
 
       // Default static characters list
       const staticHeroes: HeroData[] = [
@@ -906,11 +933,11 @@ export default function EmpireQuestsPage() {
             
             {/* TABS TACTICAL SELECTOR */}
             <div className="flex justify-center mb-8">
-              <div className="flex gap-2 wooden-door p-1 rounded-2xl">
+              <div className="flex gap-2 bg-stone-900/90 border border-stone-850 p-1.5 rounded-2xl items-center shadow-lg">
                 <button
                   onClick={() => setActiveTab('quests')}
                   className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
                     activeTab === 'quests' 
                       ? "medieval-btn" 
                       : "text-stone-400 hover:text-stone-200"
@@ -921,7 +948,7 @@ export default function EmpireQuestsPage() {
                 <button
                   onClick={() => setActiveTab('hangman')}
                   className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
                     activeTab === 'hangman' 
                       ? "medieval-btn" 
                       : "text-stone-400 hover:text-stone-200"
@@ -932,7 +959,7 @@ export default function EmpireQuestsPage() {
                 <button
                   onClick={() => setActiveTab('chests')}
                   className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
                     activeTab === 'chests' 
                       ? "medieval-btn" 
                       : "text-stone-400 hover:text-stone-200"
@@ -943,7 +970,7 @@ export default function EmpireQuestsPage() {
                 <button
                   onClick={() => setActiveTab('heroes')}
                   className={cn(
-                    "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
                     activeTab === 'heroes' 
                       ? "medieval-btn" 
                       : "text-stone-400 hover:text-stone-200"
@@ -960,6 +987,13 @@ export default function EmpireQuestsPage() {
                 <div className="text-center max-w-md mx-auto mb-6">
                   <h2 className="text-lg font-black uppercase tracking-widest text-white">Campaign War Room</h2>
                   <p className="text-xs text-slate-400 mt-1">Navigate the conquests map. Break the fog of war and launch regional battles.</p>
+                </div>
+
+                {/* Tactical Instruction Parchment Box */}
+                <div className="max-w-xl mx-auto parchment-card rounded-2xl p-4 text-center shadow-md animate-pulse">
+                  <p className="text-xs font-bold leading-relaxed">
+                    ⚔️ <span className="font-extrabold text-amber-900">Decree:</span> Launch the <span className="underline">Siege of Rome</span> campaign (0 Star cost) to earn your first <span className="font-extrabold text-amber-900">20 Stars</span>! Open chests in the shop to recruit counselors.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
@@ -1010,23 +1044,23 @@ export default function EmpireQuestsPage() {
                               setSelectedMapQuest(quest);
                             }}
                             className={cn(
-                              "w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
+                              "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-lg border-2 relative",
                               isLocked 
                                 ? "bg-slate-905 border-slate-800 text-slate-500 scale-95" 
                                 : isSelected
-                                ? "bg-yellow-500 border-yellow-400 text-slate-950 scale-110 shadow-yellow-500/20 ring-4 ring-yellow-500/20"
+                                ? "bg-yellow-500 border-yellow-400 text-slate-950 scale-110 shadow-yellow-500/25 ring-4 ring-yellow-500/35"
                                 : "bg-slate-900 border-yellow-500/30 text-yellow-500 hover:border-yellow-400 hover:scale-105"
                             )}
                           >
                             {isLocked ? (
-                              <Lock className="w-4 h-4 text-slate-650" />
+                              <Lock className="w-5 h-5 text-slate-600" />
                             ) : (
                               <span>{quest.emoji}</span>
                             )}
                             
                             {/* Star entry mini label */}
                             {quest.entryCost > 0 && (
-                              <span className="absolute -bottom-2 bg-slate-950 text-[7px] font-black uppercase text-yellow-500 border border-yellow-500/20 px-1 rounded">
+                              <span className="absolute -bottom-2 bg-slate-950 text-[8px] font-black uppercase text-yellow-500 border border-yellow-500/35 px-1.5 py-0.5 rounded shadow-sm">
                                 {quest.entryCost}★
                               </span>
                             )}

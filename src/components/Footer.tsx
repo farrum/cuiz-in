@@ -94,6 +94,12 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/minigames" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Play className="w-4 h-4 mr-2" />
+                  Mini Games
+                </Link>
+              </li>
+              <li>
                 <Link to="/profile" className="text-muted-foreground hover:text-foreground flex items-center">
                   <User className="w-4 h-4 mr-2" />
                   Profile
