@@ -145,8 +145,8 @@ export default function HubScreen() {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-black text-sm leading-tight text-foreground font-serif">{node.label}</p>
-                  {node.hint && <p className="text-[10px] text-muted-foreground mt-0.5 leading-normal">{node.hint}</p>}
+                  <p className="font-black text-base leading-tight text-white font-serif">{node.label}</p>
+                  {node.hint && <p className="text-[11px] text-stone-300 font-medium mt-0.5 leading-normal">{node.hint}</p>}
                 </div>
 
                 {/* Chevron */}
@@ -165,7 +165,7 @@ export default function HubScreen() {
 
       {/* ═══ Tavern Games ═══ */}
       <section className="relative">
-        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
+        <h2 className="text-[10px] font-black tracking-[0.25em] text-stone-400 mb-3 uppercase font-serif flex items-center gap-2">
           <span className="w-8 h-[1px] bg-amber-800/30" />
           Tavern Games
           <span className="flex-1 h-[1px] bg-amber-800/30" />
@@ -185,7 +185,7 @@ export default function HubScreen() {
               >
                 {/* Badge */}
                 {node.badge && (
-                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-wider bg-primary/15 text-primary border border-primary/25 font-serif">
+                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-amber-550/15 text-amber-400 border border-amber-500/25 font-serif">
                     {node.badge}
                   </span>
                 )}
@@ -200,8 +200,8 @@ export default function HubScreen() {
 
                 {/* Info */}
                 <div className="mt-4">
-                  <h4 className="font-black text-[11px] text-foreground tracking-tight line-clamp-1 font-serif">{node.label}</h4>
-                  <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                  <h4 className="font-black text-xs text-white tracking-tight line-clamp-1 font-serif">{node.label}</h4>
+                  <p className="text-[10px] text-stone-300 font-medium mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
                 </div>
 
                 {/* Corner rivets */}

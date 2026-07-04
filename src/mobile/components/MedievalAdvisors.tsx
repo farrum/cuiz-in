@@ -113,19 +113,24 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
             initial={{ opacity: 0, y: 8, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.9 }}
-            className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 max-w-[280px] w-max"
+            className="absolute -top-24 z-30 max-w-[200px] w-max -translate-x-1/2"
+            style={{
+              left: activeId === 'socrates' ? '12.5%' : 
+                    activeId === 'aryabhata' ? '37.5%' : 
+                    activeId === 'chanakya' ? '62.5%' : '87.5%'
+            }}
           >
-            <div className="parchment-card rounded-xl px-3 py-2 text-[11px] italic leading-snug text-center shadow-xl">
+            <div className="parchment-card rounded-xl px-3 py-2 text-[10px] sm:text-[11px] italic leading-snug text-center shadow-xl border border-amber-800/40">
               {activeSpeech}
             </div>
-            <div className="w-3 h-3 parchment-card rotate-45 mx-auto -mt-1.5 border-t-0 border-l-0" />
+            <div className="w-3 h-3 bg-[#e2ccad] border border-amber-800/40 rotate-45 mx-auto -mt-1.5 border-t-0 border-l-0" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Advisor cards */}
       <div className={cn(
-        "grid gap-3",
+        "grid gap-3.5",
         compact ? "grid-cols-4" : "grid-cols-2"
       )}>
         {ADVISORS.map((advisor, i) => {
@@ -145,9 +150,9 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
               onClick={() => handleTap(advisor)}
               className={cn(
                 "relative flex flex-col items-center rounded-2xl overflow-hidden transition-all duration-300",
-                compact ? "p-2" : "p-3",
+                compact ? "p-3" : "p-4",
                 "iron-frame",
-                isActive && "ring-2 ring-primary/50"
+                isActive && "ring-2 ring-amber-500/50"
               )}
               style={{ background: `linear-gradient(180deg, hsl(28 15% 11%) 0%, hsl(25 18% 8%) 100%)` }}
             >
@@ -161,7 +166,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
               <div className={cn(
                 "relative z-10 rounded-xl overflow-hidden border-2 shadow-lg",
                 advisor.borderColor,
-                compact ? "w-12 h-12" : "w-16 h-16"
+                compact ? "w-16 h-16" : "w-20 h-20"
               )}>
                 <img
                   src={advisor.portrait}
@@ -171,22 +176,22 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
                 />
                 {/* Level badge */}
                 <div className="absolute -bottom-0.5 inset-x-0 bg-black/70 text-center">
-                  <span className="text-[7px] font-black text-yellow-400 tracking-wider">
+                  <span className="text-[8px] font-black text-yellow-400 tracking-wider">
                     LV.{level}
                   </span>
                 </div>
               </div>
 
               {/* Name & title */}
-              <div className={cn("relative z-10 text-center", compact ? "mt-1" : "mt-2")}>
+              <div className={cn("relative z-10 text-center", compact ? "mt-1.5" : "mt-2.5")}>
                 <p className={cn(
-                  "font-black text-foreground leading-tight font-serif",
-                  compact ? "text-[8px]" : "text-[11px]"
+                  "font-black text-amber-100 leading-tight font-serif",
+                  compact ? "text-[10px]" : "text-[12px]"
                 )}>
                   {advisor.name}
                 </p>
                 {!compact && (
-                  <p className="text-[9px] text-muted-foreground mt-0.5 italic">
+                  <p className="text-[10px] text-stone-400 mt-0.5 italic">
                     {advisor.title}
                   </p>
                 )}
