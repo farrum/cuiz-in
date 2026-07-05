@@ -785,7 +785,7 @@ export default function EmpireQuestsPage() {
       <div className="min-h-screen stone-wall text-slate-100 pb-16">
         
         {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
-        <div className="wooden-door py-4 px-6 sticky top-0 md:top-16 z-30 shadow-md">
+        <div className="wooden-door py-4 px-6 relative z-30 shadow-md">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
