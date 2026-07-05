@@ -54,19 +54,34 @@ serve(async (req) => {
     // Submit to all IndexNow endpoints in parallel
     const results = await Promise.allSettled(
       INDEXNOW_ENDPOINTS.map(async (endpoint) => {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-          },
-          body: JSON.stringify(payload),
-        });
-        
-        return {
-          endpoint,
-          status: response.status,
-          statusText: response.statusText,
-        };
+        // Use GET request for single URL to trigger search engines' Streaming Mode
+        if (urlsToSubmit.length === 1) {
+          const targetUrl = encodeURIComponent(urlsToSubmit[0]);
+          const keyLocationParam = encodeURIComponent(KEY_LOCATION);
+          const getUrl = `${endpoint}?url=${targetUrl}&key=${INDEXNOW_KEY}&keyLocation=${keyLocationParam}`;
+          
+          const response = await fetch(getUrl, { method: 'GET' });
+          return {
+            endpoint,
+            status: response.status,
+            statusText: response.statusText,
+          };
+        } else {
+          // Fallback to bulk POST if multiple
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+            },
+            body: JSON.stringify(payload),
+          });
+          
+          return {
+            endpoint,
+            status: response.status,
+            statusText: response.statusText,
+          };
+        }
       })
     );
 
