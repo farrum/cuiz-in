@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark, ChevronRight } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
@@ -178,7 +179,7 @@ export default function HubScreen() {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        await supabase
+        await (supabase as any)
           .from('profiles')
           .update({ 
             points: newGems, 
@@ -228,7 +229,7 @@ export default function HubScreen() {
 
     if (userKey !== 'guest') {
       try {
-        await supabase.from('profiles').update({ stars: currentStars + reward }).eq('id', userKey);
+        await (supabase as any).from('profiles').update({ stars: currentStars + reward }).eq('id', userKey);
       } catch (err) {
         console.warn("Failed to sync check-in stars to DB:", err);
       }
