@@ -14,7 +14,6 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
-import { useHaptics } from '@/mobile/hooks/useHaptics';
 
 // Streak bonus multipliers
 const STREAK_BONUSES = [
