@@ -1461,7 +1461,7 @@ export default function EmpireQuestsPage() {
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('gold')}
-                      className="w-full bg-yellow-505 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs uppercase tracking-widest border-0"
+                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs uppercase tracking-widest border-0"
                     >
                       150 Stars
                     </Button>
