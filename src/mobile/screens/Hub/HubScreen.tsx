@@ -179,7 +179,7 @@ export default function HubScreen() {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        await supabase
+        await (supabase as any)
           .from('profiles')
           .update({ 
             points: newGems, 
