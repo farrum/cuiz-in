@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { BurningTorch } from '@/components/gamification/BurningTorch';
 
 interface MedievalKingBannerProps {
   compact?: boolean;
@@ -15,18 +16,10 @@ export function MedievalKingBanner({ compact = false, className, activeSpeech, a
       <div className="absolute inset-0 castle-archway opacity-30 pointer-events-none" />
 
       {/* Torch left */}
-      <div className="absolute left-3 top-4 flex flex-col items-center">
-        <div className="torch-glow" style={{ animationDelay: '0s' }} />
-        <div className="w-1.5 h-8 bg-gradient-to-b from-amber-800 to-amber-950 rounded-b-sm mt-0.5" />
-        <div className="torch-glow-ambient -mt-12 -ml-4" />
-      </div>
+      <BurningTorch className="absolute left-3 top-2 scale-75" />
 
       {/* Torch right */}
-      <div className="absolute right-3 top-4 flex flex-col items-center">
-        <div className="torch-glow" style={{ animationDelay: '0.8s' }} />
-        <div className="w-1.5 h-8 bg-gradient-to-b from-amber-800 to-amber-950 rounded-b-sm mt-0.5" />
-        <div className="torch-glow-ambient -mt-12 -mr-4" />
-      </div>
+      <BurningTorch className="absolute right-3 top-2 scale-75" />
 
       {/* Character assembly */}
       <div className={cn(

@@ -672,6 +672,7 @@ export default function EmpireQuestsPage() {
 
     if (checkCorrect) {
       haptics('success');
+      audioManager.playSFX('victory_laughter');
       setScore(prev => prev + 1);
       setFeedbackMsg("⚔️ Victory! Siege tower advanced.");
     } else {
@@ -683,6 +684,7 @@ export default function EmpireQuestsPage() {
         toast({ title: "Shield Absorbed", description: "Your streak was saved by Chanakya's diplomacy!" });
       } else {
         haptics('error');
+        audioManager.playSFX('royal_sadness');
         setFeedbackMsg(`❌ Defeat! Correct answer: ${correctAns}`);
         
         // Alexander campaign is Sudden Death: fail immediately
@@ -1171,6 +1173,40 @@ export default function EmpireQuestsPage() {
                                 );
                               })}
                             </svg>
+
+                            {/* Marching Soldier Avatar */}
+                            {(() => {
+                              const activePinIndex = currentLevelIndex - startIdx;
+                              if (activePinIndex < 0 || activePinIndex >= visibleCampaigns.length) return null;
+                              
+                              const x = `${(activePinIndex / (visibleCampaigns.length - 1)) * 70 + 15}%`;
+                              const y = currentLevelIndex % 2 === 0 ? '25%' : '65%';
+
+                              return (
+                                <motion.div
+                                  animate={{ 
+                                    left: x, 
+                                    top: y,
+                                  }}
+                                  transition={{ 
+                                    type: 'spring', 
+                                    stiffness: 80, 
+                                    damping: 15 
+                                  }}
+                                  style={{ position: 'absolute', transform: 'translate(-50%, -50%)' }}
+                                  className="z-25 pointer-events-none"
+                                >
+                                  {/* Bobbing animated icon badge */}
+                                  <motion.div
+                                    animate={{ y: [0, -6, 0] }}
+                                    transition={{ repeat: Infinity, duration: 0.6, ease: 'easeInOut' }}
+                                    className="bg-gradient-to-br from-yellow-400 to-amber-500 text-stone-950 rounded-full w-9 h-9 border-2 border-yellow-300 flex items-center justify-center text-sm shadow-xl shadow-amber-500/40"
+                                  >
+                                    🏇
+                                  </motion.div>
+                                </motion.div>
+                              );
+                            })()}
 
                             {/* Campaign Pins */}
                             {visibleCampaigns.map((quest, index) => {

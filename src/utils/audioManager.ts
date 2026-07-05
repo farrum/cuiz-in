@@ -22,7 +22,7 @@ class GameAudioManager {
   }
 
   // Plays a synthesized sound effect using Web Audio API
-  public playSFX(type: 'click' | 'correct' | 'wrong' | 'chest' | 'socrates' | 'aryabhata' | 'chanakya' | 'ramanujan') {
+  public playSFX(type: 'click' | 'correct' | 'wrong' | 'chest' | 'socrates' | 'aryabhata' | 'chanakya' | 'ramanujan' | 'victory_laughter' | 'royal_sadness') {
     if (!this.sfxEnabled) return;
 
     try {
@@ -74,6 +74,57 @@ class GameAudioManager {
         osc.start(now);
         osc.stop(now + 0.35);
       } 
+      else if (type === 'victory_laughter') {
+        // Synthesizing a "Ha-Ha-Ha!" royal laughter sequence
+        const playHa = (delay: number, pitch: number) => {
+          try {
+            const osc2 = this.audioCtx!.createOscillator();
+            const gainNode2 = this.audioCtx!.createGain();
+            osc2.connect(gainNode2);
+            gainNode2.connect(this.audioCtx!.destination);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(pitch, now + delay);
+            osc2.frequency.exponentialRampToValueAtTime(pitch * 0.75, now + delay + 0.14);
+            
+            gainNode2.gain.setValueAtTime(0.01, now + delay);
+            gainNode2.gain.linearRampToValueAtTime(0.15, now + delay + 0.02);
+            gainNode2.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.14);
+            
+            osc2.start(now + delay);
+            osc2.stop(now + delay + 0.14);
+          } catch { /* ignore */ }
+        };
+        // 3 rapid chuckle bursts
+        playHa(0, 240);
+        playHa(0.16, 260);
+        playHa(0.32, 220);
+      }
+      else if (type === 'royal_sadness') {
+        // Synthesizing a dramatic descending minor sigh
+        const playSighTone = (freq: number, dur: number) => {
+          try {
+            const osc2 = this.audioCtx!.createOscillator();
+            const gainNode2 = this.audioCtx!.createGain();
+            osc2.connect(gainNode2);
+            gainNode2.connect(this.audioCtx!.destination);
+            
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(freq, now);
+            osc2.frequency.linearRampToValueAtTime(freq * 0.85, now + dur);
+            
+            gainNode2.gain.setValueAtTime(0.12, now);
+            gainNode2.gain.exponentialRampToValueAtTime(0.01, now + dur);
+            
+            osc2.start(now);
+            osc2.stop(now + dur);
+          } catch { /* ignore */ }
+        };
+        // Play a sad sliding minor triad
+        playSighTone(196, 0.7); // G3
+        playSighTone(233.08, 0.7); // Bb3
+        playSighTone(293.66, 0.7); // D4
+      }
       else if (type === 'chest') {
         // Sweeping space-shimmer sweep
         osc.type = 'sine';
