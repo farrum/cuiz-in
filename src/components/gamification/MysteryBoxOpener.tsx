@@ -396,10 +396,14 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
                   {reward.reward_type === 'shards' && (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-16 h-16 bg-amber-800/10 rounded-2xl border-2 border-amber-700/40 flex items-center justify-center relative overflow-hidden shadow-md">
-                        <User className="w-10 h-10 text-amber-900" />
-                        <div className="absolute bottom-0 inset-x-0 bg-amber-700 text-white font-black text-[8px] text-center py-0.5 uppercase tracking-wider">
-                          SHARDS
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-950/80 to-amber-900/60 rounded-2xl border-2 border-amber-500/40 flex items-center justify-center relative overflow-hidden shadow-lg shadow-amber-950/40">
+                        <svg viewBox="0 0 24 24" className="w-9 h-9 text-amber-400 fill-amber-500/20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2 L18 9 L12 22 L6 9 Z" />
+                          <path d="M12 2 L12 22" className="opacity-60" />
+                          <path d="M6 9 L18 9" className="opacity-60" />
+                        </svg>
+                        <div className="absolute bottom-0 inset-x-0 bg-amber-600 text-slate-950 font-black text-[8px] text-center py-0.5 uppercase tracking-widest">
+                          SHARD
                         </div>
                       </div>
                       <span className="text-[10px] text-amber-900 font-black tracking-[0.2em] uppercase mt-1">

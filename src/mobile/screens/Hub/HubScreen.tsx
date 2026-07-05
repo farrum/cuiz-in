@@ -44,24 +44,34 @@ const TAVERN_GAMES: Node[] = [
   { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', icon: KeyRound, color: 'from-stone-600 to-stone-900', hint: 'Claim massive daily gems', badge: 'Daily' },
 ];
 
+import { StarCounter } from '@/mobile/components/StarCounter';
+
 export default function HubScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
   const { streak } = usePersistentQuizStats();
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
+  const [stars, setStars] = useState<number>(() => Number(localStorage.getItem('quiz_app_user_stars') || 50));
   const [name, setName] = useState<string>(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Adventurer');
+
+  // Shared state for advisor speech bubble
+  const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!uid) return;
-    supabase.from('profiles').select('username, display_name, points').eq('id', uid).maybeSingle()
+    supabase.from('profiles').select('username, display_name, points, stars').eq('id', uid).maybeSingle()
       .then(({ data }) => {
         if (data) {
           const balance = (data as any).points ?? 0;
+          const starsBalance = (data as any).stars ?? 0;
           setGems(balance);
+          setStars(starsBalance);
           const dn = (data as any).display_name || (data as any).username || 'Adventurer';
           setName(dn);
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(balance));
+          localStorage.setItem('quiz_app_user_stars', String(starsBalance));
           localStorage.setItem(STORAGE_KEYS.USER_NAME, dn);
         }
       });
@@ -78,15 +88,16 @@ export default function HubScreen() {
           <p className="text-[10px] text-muted-foreground font-serif tracking-wider uppercase">Welcome,</p>
           <h1 className="text-lg font-black leading-tight font-serif text-yellow-500">{name}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <StreakFlame streak={streak} />
           <GemCounter value={gems} />
+          <StarCounter value={stars} />
         </div>
       </div>
 
       {/* ═══ King's Court ═══ */}
       <section className="relative mb-4">
-        <MedievalKingBanner compact />
+        <MedievalKingBanner activeSpeech={activeSpeech} activeId={activeId} compact />
       </section>
 
       {/* Sign-in CTA for guests */}
@@ -109,7 +120,18 @@ export default function HubScreen() {
           Your Battle Council
           <span className="flex-1 h-[1px] bg-amber-800/30" />
         </h2>
-        <MedievalAdvisors compact />
+        <MedievalAdvisors 
+          compact 
+          onAdvisorTap={(advisor) => {
+            const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
+            setActiveSpeech(quote);
+            setActiveId(advisor.id);
+            setTimeout(() => {
+              setActiveSpeech(null);
+              setActiveId(null);
+            }, 3500);
+          }}
+        />
       </section>
 
       {/* ═══ Royal Chambers (Featured Modes) ═══ */}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VastVideoAdProps {
   /** VAST tag URL. */
@@ -13,39 +14,6 @@ interface VastVideoAdProps {
   className?: string;
 }
 
-/** Maximum VAST wrapper redirects to follow before giving up. */
-const MAX_WRAPPERS = 4;
-
-function pickMediaFile(doc: Document): string | null {
-  const medias = Array.from(doc.querySelectorAll('MediaFile'));
-  if (medias.length === 0) return null;
-  // Prefer mp4, then any media with the largest declared width.
-  const scored = medias
-    .map((m) => ({
-      url: (m.textContent || '').trim(),
-      type: (m.getAttribute('type') || '').toLowerCase(),
-      width: Number(m.getAttribute('width') || 0),
-    }))
-    .filter((m) => m.url);
-  if (scored.length === 0) return null;
-  const mp4 = scored.filter((m) => m.type.includes('mp4'));
-  const pool = mp4.length > 0 ? mp4 : scored;
-  pool.sort((a, b) => b.width - a.width);
-  return pool[0].url;
-}
-
-function getText(doc: Document, selector: string): string | null {
-  const el = doc.querySelector(selector);
-  return el ? (el.textContent || '').trim() || null : null;
-}
-
-/**
- * Minimal client-side VAST player. Fetches the VAST XML, follows wrapper
- * redirects, plays the first MP4 media file muted, and fires impression /
- * click tracking. Any error (CORS, no inventory, no media) triggers
- * `onUnavailable` so the caller can fall back to a display ad.
- * Includes a loading spinner and 10-second loader timeout.
- */
 export function VastVideoAd({ tagUrl, onReady, onUnavailable, onComplete, className }: VastVideoAdProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
@@ -74,35 +42,31 @@ export function VastVideoAd({ tagUrl, onReady, onUnavailable, onComplete, classN
       } catch { /* ignore */ }
     };
 
-    const resolve = async (url: string, depth: number): Promise<void> => {
-      if (depth > MAX_WRAPPERS) throw new Error('too many wrappers');
-      const res = await fetch(url, { credentials: 'omit' });
-      if (!res.ok) throw new Error(`vast http ${res.status}`);
-      const text = await res.text();
-      const doc = new DOMParser().parseFromString(text, 'application/xml');
-
-      // Fire any impression beacons declared at this level.
-      doc.querySelectorAll('Impression').forEach((n) => fireBeacon((n.textContent || '').trim()));
-
-      const wrapperUri = getText(doc, 'VASTAdTagURI');
-      if (wrapperUri) return resolve(wrapperUri, depth + 1);
-
-      const media = pickMediaFile(doc);
-      if (!media) throw new Error('no media file');
-      const click = getText(doc, 'ClickThrough');
-      if (cancelled) return;
-      setMediaUrl(media);
-      setClickUrl(click);
-      setStatus('buffering');
-    };
-
-    resolve(tagUrl, 0).catch((err) => {
-      console.warn('[VastVideoAd] unavailable:', err?.message || err);
-      if (!cancelled) {
-        setStatus('failed');
-        onUnavailable?.();
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "vast-proxy",
+          { body: { tagUrl } },
+        );
+        if (cancelled) return;
+        if (error || !data?.mediaUrl) {
+          console.warn("[VastVideoAd] failed to resolve tag or empty media:", error);
+          setStatus('failed');
+          onUnavailable?.();
+          return;
+        }
+        data.impressions?.forEach((u: string) => u && fireBeacon(u));
+        setMediaUrl(data.mediaUrl);
+        setClickUrl(data.clickUrl);
+        setStatus('buffering');
+      } catch (err) {
+        console.warn("[VastVideoAd] unavailable:", err);
+        if (!cancelled) {
+          setStatus('failed');
+          onUnavailable?.();
+        }
       }
-    });
+    })();
 
     return () => {
       cancelled = true;

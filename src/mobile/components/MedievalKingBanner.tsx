@@ -1,12 +1,14 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface MedievalKingBannerProps {
   compact?: boolean;
   className?: string;
+  activeSpeech?: string | null;
+  activeId?: string | null;
 }
 
-export function MedievalKingBanner({ compact = false, className }: MedievalKingBannerProps) {
+export function MedievalKingBanner({ compact = false, className, activeSpeech, activeId }: MedievalKingBannerProps) {
   return (
     <div className={cn("relative select-none overflow-hidden", className)}>
       {/* Stone archway background */}
@@ -31,32 +33,6 @@ export function MedievalKingBanner({ compact = false, className }: MedievalKingB
         "relative flex items-end justify-center",
         compact ? "h-36 pt-6 pb-2" : "h-48 pt-8 pb-3"
       )}>
-        {/* Outer left: Socrates */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 0.7, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="absolute left-[calc(50%-105px)] bottom-3 -translate-x-1/2 z-0 text-center"
-        >
-          <div className="rounded-xl overflow-hidden border-2 border-cyan-500/40 shadow-md w-14 h-14">
-            <img src="/medieval/socrates.png" alt="Socrates" className="w-full h-full object-cover scale-110" loading="lazy" />
-          </div>
-          <p className="text-[9px] text-cyan-300 font-extrabold tracking-wider mt-1 uppercase">Socrates</p>
-        </motion.div>
-
-        {/* Inner left: Aryabhata */}
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 0.85, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="absolute left-[calc(50%-55px)] bottom-4 -translate-x-1/2 z-10 text-center"
-        >
-          <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 shadow-md w-16 h-16">
-            <img src="/medieval/aryabhata.png" alt="Aryabhata" className="w-full h-full object-cover scale-110" loading="lazy" />
-          </div>
-          <p className="text-[9px] text-amber-300 font-extrabold tracking-wider mt-1 uppercase">Aryabhata</p>
-        </motion.div>
-
         {/* THE KING — center */}
         <motion.div
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -87,33 +63,30 @@ export function MedievalKingBanner({ compact = false, className }: MedievalKingB
             👑
           </motion.span>
         </motion.div>
-
-        {/* Inner right: Chanakya */}
-        <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 0.85, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="absolute left-[calc(50%+55px)] bottom-4 -translate-x-1/2 z-10 text-center"
-        >
-          <div className="rounded-xl overflow-hidden border-2 border-rose-500/40 shadow-md w-16 h-16">
-            <img src="/medieval/chanakya.png" alt="Chanakya" className="w-full h-full object-cover scale-110" loading="lazy" />
-          </div>
-          <p className="text-[9px] text-rose-300 font-extrabold tracking-wider mt-1 uppercase">Chanakya</p>
-        </motion.div>
-
-        {/* Outer right: Ramanujan */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 0.7, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="absolute left-[calc(50%+105px)] bottom-3 -translate-x-1/2 z-0 text-center"
-        >
-          <div className="rounded-xl overflow-hidden border-2 border-purple-500/40 shadow-md w-14 h-14">
-            <img src="/medieval/ramanujan.png" alt="Ramanujan" className="w-full h-full object-cover scale-110" loading="lazy" />
-          </div>
-          <p className="text-[9px] text-purple-300 font-extrabold tracking-wider mt-1 uppercase">Ramanujan</p>
-        </motion.div>
       </div>
+
+      {/* Speech bubble */}
+      <AnimatePresence>
+        {activeSpeech && activeId && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.9 }}
+            className="absolute z-30 max-w-[185px] w-max -translate-x-1/2 left-1/2 bottom-28 drop-shadow-lg"
+          >
+            <div className="parchment-card rounded-xl px-3 py-2 text-[9px] leading-snug text-center border border-amber-800/40 font-semibold text-slate-800">
+              <div className="font-extrabold text-[8px] uppercase tracking-wider text-amber-900 mb-0.5">
+                {activeId === 'socrates' ? 'King Socrates' :
+                 activeId === 'aryabhata' ? 'King Aryabhata' :
+                 activeId === 'chanakya' ? 'Emperor Chanakya' :
+                 activeId === 'ramanujan' ? 'Prince Ramanujan' : 'The King'}
+              </div>
+              {activeSpeech}
+            </div>
+            <div className="w-2.5 h-2.5 bg-[#e2ccad] border border-amber-800/40 rotate-45 mx-auto -mt-1.5 border-t-0 border-l-0" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Heraldic banner strips */}
       <div className="flex justify-center gap-4 mt-1">

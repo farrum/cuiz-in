@@ -5,6 +5,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import NewsTicker from '@/components/NewsTicker';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
 import { cn } from '@/lib/utils';
+import { Capacitor } from '@capacitor/core';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,17 @@ interface PageLayoutProps {
   className?: string;
   containerClassName?: string;
 }
+
+const isMobile =
+  import.meta.env.VITE_PLATFORM === 'mobile' ||
+  (() => {
+    try {
+      return Capacitor.isNativePlatform();
+    } catch {
+      return false;
+    }
+  })() ||
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1');
 
 const PageLayout = ({ 
   children, 
@@ -23,13 +35,13 @@ const PageLayout = ({
 }: PageLayoutProps) => {
   return (
     <div className={cn("min-h-screen flex flex-col bg-background", className)}>
-      <Header />
+      {!isMobile && <Header />}
       
       {/* 
-        The header is 'fixed' (h-16 / 64px). 
-        We need to push everything else down so it's not hidden behind it.
+        The header is 'fixed' (h-16 / 64px) on desktop web. 
+        We only push everything else down if not on mobile.
       */}
-      <div className="flex-1 flex flex-col pt-16">
+      <div className={cn("flex-1 flex flex-col", !isMobile && "pt-16")}>
         {showNewsTicker && <NewsTicker />}
 
         <main className={cn("flex-1", containerClassName)}>
@@ -37,20 +49,22 @@ const PageLayout = ({
         </main>
       </div>
 
-      {!hidePreFooterAd && (
+      {!hidePreFooterAd && !isMobile && (
         <div className="container max-w-4xl mx-auto py-6 hidden md:block">
           <SimpleAdBanner position="footer" slotId="global-prefooter" />
         </div>
       )}
 
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      {!isMobile && (
+        <div className="hidden md:block">
+          <Footer />
+        </div>
+      )}
 
       {/* Spacer so mobile bottom nav doesn't overlap content */}
-      <div className="h-20 md:hidden" aria-hidden="true" />
+      {!isMobile && <div className="h-20 md:hidden" aria-hidden="true" />}
 
-      <MobileBottomNav />
+      {!isMobile && <MobileBottomNav />}
     </div>
   );
 };

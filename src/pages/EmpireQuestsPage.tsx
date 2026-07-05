@@ -204,12 +204,22 @@ export default function EmpireQuestsPage() {
   const [smartClue, setSmartClue] = useState<string | null>(null);
   const [isShieldActive, setIsShieldActive] = useState(false);
 
+  // Correct answer reveal and explanation states
+  const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState<string | null>(null);
+  const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
+  const [completedCampaigns, setCompletedCampaigns] = useState<string[]>([]);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
 
   const fetchUserData = async () => {
     try {
+      // Load completed campaigns from localStorage
+      const localCompleted = localStorage.getItem('completed_campaigns');
+      const completedList = localCompleted ? localCompleted.split(',') : [];
+      setCompletedCampaigns(completedList);
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         // Guest local storage fallback
@@ -221,10 +231,10 @@ export default function EmpireQuestsPage() {
         const staticHeroes: HeroData[] = [
           {
             id: 'socrates',
-            name: "Socrates",
+            name: "King Socrates",
             emoji: "🏛️",
             gradient: "from-blue-600 to-cyan-500",
-            title: "Counsel of Logic",
+            title: "The Philosopher King",
             abilityName: "Philosophical 50/50",
             abilityDesc: "Uses Socratic questioning to eliminate two incorrect options from the question.",
             starCost: 15,
@@ -233,10 +243,10 @@ export default function EmpireQuestsPage() {
           },
           {
             id: 'aryabhata',
-            name: "Aryabhata",
+            name: "King Aryabhata",
             emoji: "📐",
             gradient: "from-yellow-600 to-amber-500",
-            title: "Royal Astronomer",
+            title: "The Astronomer King",
             abilityName: "Cosmic Time Freeze",
             abilityDesc: "Pauses the cosmic orbits, adding +15 seconds to the quiz timer.",
             starCost: 20,
@@ -245,10 +255,10 @@ export default function EmpireQuestsPage() {
           },
           {
             id: 'chanakya',
-            name: "Chanakya",
+            name: "Emperor Chanakya",
             emoji: "📜",
             gradient: "from-red-650 to-orange-500",
-            title: "Imperial Advisor",
+            title: "The Strategist Emperor",
             abilityName: "Strategist's Shield",
             abilityDesc: "Protects your empire: prevents streak loss and penalty on an incorrect answer.",
             starCost: 25,
@@ -257,10 +267,10 @@ export default function EmpireQuestsPage() {
           },
           {
             id: 'ramanujan',
-            name: "Ramanujan",
+            name: "Prince Ramanujan",
             emoji: "🧠",
             gradient: "from-purple-700 to-pink-500",
-            title: "Number Mystic",
+            title: "The Prince of Numbers",
             abilityName: "Intuitive Equation",
             abilityDesc: "Applies raw genius to highlight the correct option and show its mathematical truth.",
             starCost: 35,
@@ -330,10 +340,10 @@ export default function EmpireQuestsPage() {
       const staticHeroes: HeroData[] = [
         {
           id: 'socrates',
-          name: "Socrates",
+          name: "King Socrates",
           emoji: "🏛️",
           gradient: "from-blue-600 to-cyan-500",
-          title: "Counsel of Logic",
+          title: "The Philosopher King",
           abilityName: "Philosophical 50/50",
           abilityDesc: "Uses Socratic questioning to eliminate two incorrect options from the question.",
           starCost: 15,
@@ -342,10 +352,10 @@ export default function EmpireQuestsPage() {
         },
         {
           id: 'aryabhata',
-          name: "Aryabhata",
+          name: "King Aryabhata",
           emoji: "📐",
           gradient: "from-yellow-600 to-amber-500",
-          title: "Royal Astronomer",
+          title: "The Astronomer King",
           abilityName: "Cosmic Time Freeze",
           abilityDesc: "Pauses the cosmic orbits, adding +15 seconds to the quiz timer.",
           starCost: 20,
@@ -354,10 +364,10 @@ export default function EmpireQuestsPage() {
         },
         {
           id: 'chanakya',
-          name: "Chanakya",
+          name: "Emperor Chanakya",
           emoji: "📜",
           gradient: "from-red-650 to-orange-500",
-          title: "Imperial Advisor",
+          title: "The Strategist Emperor",
           abilityName: "Strategist's Shield",
           abilityDesc: "Protects your empire: prevents streak loss and penalty on an incorrect answer.",
           starCost: 25,
@@ -366,10 +376,10 @@ export default function EmpireQuestsPage() {
         },
         {
           id: 'ramanujan',
-          name: "Ramanujan",
+          name: "Prince Ramanujan",
           emoji: "🧠",
           gradient: "from-purple-700 to-pink-500",
-          title: "Number Mystic",
+          title: "The Prince of Numbers",
           abilityName: "Intuitive Equation",
           abilityDesc: "Applies raw genius to highlight the correct option and show its mathematical truth.",
           starCost: 35,
@@ -471,6 +481,8 @@ export default function EmpireQuestsPage() {
       setEliminatedOptions([]);
       setSmartClue(null);
       setIsShieldActive(false);
+      setRevealedCorrectAnswer(null);
+      setRevealedExplanation(null);
 
       startTimer(quest);
     } catch (err) {
@@ -632,20 +644,30 @@ export default function EmpireQuestsPage() {
     
     // Call server validator
     let checkCorrect = false;
+    let correctAns = '';
+    let expl = '';
     try {
       const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
         body: { question_id: currentQuestion.id, selected_answer: option }
       });
       if (!error && data) {
         checkCorrect = !!data.is_correct;
+        correctAns = data.correct_answer || '';
+        expl = data.explanation || '';
       } else {
         // Local fallback
-        checkCorrect = option === currentQuestion.correctAnswer;
+        correctAns = currentQuestion.correctAnswer || '';
+        expl = currentQuestion.explanation || '';
+        checkCorrect = option.toLowerCase().trim() === correctAns.toLowerCase().trim();
       }
     } catch (err) {
-      checkCorrect = option === currentQuestion.correctAnswer;
+      correctAns = currentQuestion.correctAnswer || '';
+      expl = currentQuestion.explanation || '';
+      checkCorrect = option.toLowerCase().trim() === correctAns.toLowerCase().trim();
     }
 
+    setRevealedCorrectAnswer(correctAns);
+    setRevealedExplanation(expl);
     setIsCorrect(checkCorrect);
 
     if (checkCorrect) {
@@ -661,7 +683,7 @@ export default function EmpireQuestsPage() {
         toast({ title: "Shield Absorbed", description: "Your streak was saved by Chanakya's diplomacy!" });
       } else {
         haptics('error');
-        setFeedbackMsg(`❌ Defeat! Correct answer: ${currentQuestion.correctAnswer}`);
+        setFeedbackMsg(`❌ Defeat! Correct answer: ${correctAns}`);
         
         // Alexander campaign is Sudden Death: fail immediately
         if (activeQuest?.id === 'alexander_conquest') {
@@ -679,6 +701,8 @@ export default function EmpireQuestsPage() {
     setSelectedOption(null);
     setEliminatedOptions([]);
     setSmartClue(null);
+    setRevealedCorrectAnswer(null);
+    setRevealedExplanation(null);
 
     const nextIndex = currentQIndex + 1;
     if (nextIndex < questQuestions.length) {
@@ -708,6 +732,14 @@ export default function EmpireQuestsPage() {
       else if (activeQuest.id === 'gupta_library') starReward = 150;
 
       await logStarsEarned(starReward, userId);
+
+      // Add to completed campaigns
+      const updatedCompleted = [...completedCampaigns];
+      if (!updatedCompleted.includes(activeQuest.id)) {
+        updatedCompleted.push(activeQuest.id);
+        setCompletedCampaigns(updatedCompleted);
+        localStorage.setItem('completed_campaigns', updatedCompleted.join(','));
+      }
 
       // Award Chest
       try {
@@ -743,6 +775,8 @@ export default function EmpireQuestsPage() {
     setGameplayStatus('idle');
     setActiveQuest(null);
     setQuestQuestions([]);
+    setRevealedCorrectAnswer(null);
+    setRevealedExplanation(null);
     fetchUserData();
   };
 
@@ -751,7 +785,7 @@ export default function EmpireQuestsPage() {
       <div className="min-h-screen stone-wall text-slate-100 pb-16">
         
         {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
-        <div className="wooden-door py-4 px-6 sticky top-16 z-30 shadow-md">
+        <div className="wooden-door py-4 px-6 sticky top-0 md:top-16 z-30 shadow-md">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
@@ -851,8 +885,9 @@ export default function EmpireQuestsPage() {
                       const isSelected = selectedOption === option;
                       const showResult = hasAnswered;
                       
-                      // Highlight green if selected/correct
-                      const isOptionCorrect = option === questQuestions[currentQIndex].correctAnswer;
+                      const isOptionCorrect = revealedCorrectAnswer
+                        ? option.toLowerCase().trim() === revealedCorrectAnswer.toLowerCase().trim()
+                        : option === questQuestions[currentQIndex].correctAnswer;
                       
                       if (isEliminated) return <div key={option} className="hidden" />;
 
@@ -882,7 +917,7 @@ export default function EmpireQuestsPage() {
                   </div>
 
                   {/* Interactive Gameplay Banner / Console log */}
-                  <div className="text-center py-4">
+                  <div className="text-center py-4 space-y-2">
                     <p className={cn(
                       "text-xs font-black uppercase tracking-wider",
                       hasAnswered 
@@ -893,6 +928,12 @@ export default function EmpireQuestsPage() {
                     )}>
                       {feedbackMsg}
                     </p>
+                    
+                    {hasAnswered && revealedExplanation && (
+                      <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed italic animate-in fade-in duration-300">
+                        {revealedExplanation}
+                      </p>
+                    )}
                   </div>
 
                   {/* Next card trigger */}
@@ -1084,134 +1125,132 @@ export default function EmpireQuestsPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
-                  {/* Map Scroll Canvas (Takes 2 columns) */}
                   <div 
-                    className="lg:col-span-2 relative border-4 border-double border-amber-900/60 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4"
-                    style={{ background: "radial-gradient(circle, #f5e4bf 0%, #dbbf88 100%)" }}
+                    className="lg:col-span-2 relative border-4 border-double border-amber-900/40 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4"
+                    style={{ background: "radial-gradient(circle, #1e1711 0%, #0d0a08 100%)" }}
                   >
-                    {/* Old Map Grid overlay */}
-                    <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#5b4228_1px,transparent_1px),linear-gradient(to_bottom,#5b4228_1px,transparent_1px)] bg-[size:32px_32px]" />
+                    {/* Dark Grid Overlay */}
+                    <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#e2b85c_1px,transparent_1px),linear-gradient(to_bottom,#e2b85c_1px,transparent_1px)] bg-[size:30px_30px]" />
                     
-                    {/* SVG Map Lines (Roads) */}
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-amber-900/40 stroke-[3.5]">
-                      {/* Compass Rose lines */}
-                      <line x1="50%" y1="0%" x2="50%" y2="100%" strokeDasharray="3,6" opacity="0.15" />
-                      <line x1="0%" y1="50%" x2="100%" y2="50%" strokeDasharray="3,6" opacity="0.15" />
+                    {/* Sliding Map Viewport */}
+                    <div className="w-full h-full relative overflow-hidden flex items-center justify-around animate-in fade-in duration-500">
+                      {(() => {
+                        const activeIdx = CAMPAIGNS.findIndex(c => !completedCampaigns.includes(c.id));
+                        const currentLevelIndex = activeIdx === -1 ? CAMPAIGNS.length - 1 : activeIdx;
+                        
+                        const startIdx = Math.max(0, currentLevelIndex >= 2 ? currentLevelIndex - 1 : 0);
+                        const visibleCampaigns = CAMPAIGNS.slice(startIdx, startIdx + (currentLevelIndex >= 2 ? 4 : 3));
 
-                      {/* Map illustrations */}
-                      <text x="8%" y="82%" className="opacity-30 text-4xl select-none" fill="#5b4228">🐙</text>
-                      <text x="78%" y="18%" className="opacity-25 text-3xl select-none" fill="#5b4228">🐉</text>
-                      <text x="44%" y="74%" className="opacity-30 text-5xl select-none animate-[bounce_8s_infinite_ease-in-out]" fill="#5b4228">⛵</text>
-                      <text x="18%" y="54%" className="opacity-20 text-3xl select-none" fill="#5b4228">⛵</text>
-                      
-                      <text x="4%" y="14%" className="opacity-25 text-2xl select-none">⛰️</text>
-                      <text x="68%" y="8%" className="opacity-20 text-3xl select-none">⛰️</text>
-                      <text x="92%" y="88%" className="opacity-25 text-4xl select-none">⛰️</text>
-                      
-                      <text x="54%" y="42%" className="opacity-20 text-2xl select-none">🌲</text>
-                      <text x="72%" y="52%" className="opacity-20 text-xl select-none">🌲</text>
-
-                      {/* Dashed Road Connections between all 11 Stops */}
-                      {[
-                        { left: "15%", top: "25%" }, // Rome
-                        { left: "32%", top: "40%" }, // Persia
-                        { left: "24%", top: "68%" }, // Gupta
-                        { left: "48%", top: "55%" }, // Alexander
-                        { left: "40%", top: "82%" }, // Nile
-                        { left: "60%", top: "28%" }, // Viking
-                        { left: "76%", top: "42%" }, // Ottoman
-                        { left: "66%", top: "65%" }, // Mongol
-                        { left: "88%", top: "52%" }, // Mesoamerica
-                        { left: "52%", top: "15%" }, // Camelot
-                        { left: "82%", top: "82%" }  // Imperial
-                      ].map((coord, idx, arr) => {
-                        if (idx === arr.length - 1) return null;
-                        const nextCoord = arr[idx + 1];
                         return (
-                          <line 
-                            key={`road-${idx}`}
-                            x1={coord.left} 
-                            y1={coord.top} 
-                            x2={nextCoord.left} 
-                            y2={nextCoord.top} 
-                            stroke="#8c5825" 
-                            strokeWidth="3.5" 
-                            strokeDasharray="6,5" 
-                            className="drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)] opacity-80" 
-                          />
+                          <>
+                            {/* SVG Connection Roads */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-amber-500/30 stroke-[3.5]">
+                              {visibleCampaigns.map((quest, index) => {
+                                if (index === visibleCampaigns.length - 1) return null;
+                                const absoluteIndex1 = startIdx + index;
+                                const absoluteIndex2 = startIdx + index + 1;
+                                
+                                const x1 = `${(index / (visibleCampaigns.length - 1)) * 70 + 15}%`;
+                                const y1 = absoluteIndex1 % 2 === 0 ? '25%' : '65%';
+                                
+                                const x2 = `${((index + 1) / (visibleCampaigns.length - 1)) * 70 + 15}%`;
+                                const y2 = absoluteIndex2 % 2 === 0 ? '25%' : '65%';
+
+                                return (
+                                  <line 
+                                    key={`road-${quest.id}`}
+                                    x1={x1} 
+                                    y1={y1} 
+                                    x2={x2} 
+                                    y2={y2} 
+                                    stroke="#d97706" 
+                                    strokeWidth="3.5" 
+                                    strokeDasharray="6,5" 
+                                    className="drop-shadow-[0_0_8px_rgba(217,119,6,0.6)] opacity-80 transition-all duration-700" 
+                                  />
+                                );
+                              })}
+                            </svg>
+
+                            {/* Campaign Pins */}
+                            {visibleCampaigns.map((quest, index) => {
+                              const absoluteIndex = startIdx + index;
+                              const isLocked = userStars < quest.entryCost;
+                              const isSelected = selectedMapQuest?.id === quest.id;
+                              const isCompleted = completedCampaigns.includes(quest.id);
+                              
+                              const x = `${(index / (visibleCampaigns.length - 1)) * 70 + 15}%`;
+                              const y = absoluteIndex % 2 === 0 ? '25%' : '65%';
+
+                              return (
+                                <div
+                                  key={quest.id}
+                                  style={{ 
+                                    left: x, 
+                                    top: y,
+                                    position: 'absolute',
+                                    transform: 'translate(-50%, -50%)',
+                                    transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)' 
+                                  }}
+                                  className="flex flex-col items-center group z-10"
+                                >
+                                  <button
+                                    onClick={() => {
+                                      haptics('light');
+                                      audioManager.playSFX('click');
+                                      setSelectedMapQuest(quest);
+                                    }}
+                                    className={cn(
+                                      "w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
+                                      isLocked 
+                                        ? "bg-stone-900/90 border-stone-855 text-stone-500 scale-90" 
+                                        : isSelected
+                                        ? "bg-amber-500 border-amber-400 text-stone-950 scale-110 shadow-amber-500/25 ring-4 ring-amber-500/35"
+                                        : isCompleted
+                                        ? "bg-emerald-950 border-emerald-500 text-emerald-400 hover:border-emerald-300 hover:scale-105"
+                                        : "bg-stone-950 border-amber-600 text-amber-500 hover:border-amber-400 hover:scale-105"
+                                    )}
+                                  >
+                                    {isLocked ? (
+                                      <Lock className="w-5 h-5 text-slate-600" />
+                                    ) : (
+                                      <span>{quest.emoji}</span>
+                                    )}
+                                    
+                                    {/* Star entry mini label */}
+                                    {quest.entryCost > 0 && !isCompleted && (
+                                      <span className="absolute -bottom-2 bg-slate-950 text-[8px] font-black uppercase text-yellow-500 border border-yellow-500/35 px-1.5 py-0.5 rounded shadow-sm">
+                                        {quest.entryCost}★
+                                      </span>
+                                    )}
+                                    
+                                    {/* Completed checkmark */}
+                                    {isCompleted && (
+                                      <span className="absolute -bottom-2 bg-emerald-905 text-[8px] font-black uppercase text-emerald-400 border border-emerald-500/35 px-1.5 py-0.5 rounded shadow-sm">
+                                        Passed
+                                      </span>
+                                    )}
+                                  </button>
+
+                                  {/* Hover Tooltip */}
+                                  <div className="absolute top-14 bg-slate-900 border border-slate-850 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider text-slate-200 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-20">
+                                    {quest.name} {isLocked ? '🔒' : isCompleted ? '✅' : ''}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </>
                         );
-                      })}
-                    </svg>
+                      })()}
+                    </div>
 
                     {/* Coordinates & Compass */}
-                    <div className="absolute top-4 left-4 text-[9px] font-black text-amber-900/60 uppercase tracking-widest font-mono select-none">
+                    <div className="absolute top-4 left-4 text-[9px] font-black text-amber-500/40 uppercase tracking-widest font-mono select-none">
                       EUROPA MAP | LAT: 41.9° N | LON: 12.4° E
                     </div>
-                    <div className="absolute bottom-4 right-4 text-3xl opacity-20 animate-[spin_40s_linear_infinite] select-none">
+                    <div className="absolute bottom-4 right-4 text-3xl opacity-10 animate-[spin_60s_linear_infinite] select-none pointer-events-none">
                       🧭
                     </div>
-
-                    {/* Campaign Pins mapping */}
-                    {CAMPAIGNS.map((quest, index) => {
-                      const isLocked = userStars < quest.entryCost;
-                      const coords = [
-                        { left: "15%", top: "25%" }, // Rome
-                        { left: "32%", top: "40%" }, // Persia
-                        { left: "24%", top: "68%" }, // Gupta
-                        { left: "48%", top: "55%" }, // Alexander
-                        { left: "40%", top: "82%" }, // Nile
-                        { left: "60%", top: "28%" }, // Viking
-                        { left: "76%", top: "42%" }, // Ottoman
-                        { left: "66%", top: "65%" }, // Mongol
-                        { left: "88%", top: "52%" }, // Mesoamerica
-                        { left: "52%", top: "15%" }, // Camelot
-                        { left: "82%", top: "82%" }  // Imperial
-                      ][index];
-
-                      const isSelected = selectedMapQuest?.id === quest.id;
-
-                      return (
-                        <div
-                          key={quest.id}
-                          style={{ left: coords.left, top: coords.top }}
-                          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group z-10"
-                        >
-                          <button
-                            onClick={() => {
-                              haptics('light');
-                              audioManager.playSFX('click');
-                              setSelectedMapQuest(quest);
-                            }}
-                            className={cn(
-                              "w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
-                              isLocked 
-                                ? "bg-stone-900/90 border-stone-850 text-stone-500 scale-90" 
-                                : isSelected
-                                ? "bg-amber-500 border-amber-400 text-stone-950 scale-110 shadow-amber-500/25 ring-4 ring-amber-500/35"
-                                : "bg-stone-950 border-amber-600 text-amber-500 hover:border-amber-400 hover:scale-105"
-                            )}
-                          >
-                            {isLocked ? (
-                              <Lock className="w-5 h-5 text-slate-600" />
-                            ) : (
-                              <span>{quest.emoji}</span>
-                            )}
-                            
-                            {/* Star entry mini label */}
-                            {quest.entryCost > 0 && (
-                              <span className="absolute -bottom-2 bg-slate-950 text-[8px] font-black uppercase text-yellow-500 border border-yellow-500/35 px-1.5 py-0.5 rounded shadow-sm">
-                                {quest.entryCost}★
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Hover Tooltip */}
-                          <div className="absolute top-14 bg-slate-900 border border-slate-850 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider text-slate-200 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-20">
-                            {quest.name} {isLocked && '🔒'}
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
 
                   {/* Campaign Panel Details Card (Takes 1 column) */}

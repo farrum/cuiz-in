@@ -19,8 +19,8 @@ export interface Advisor {
 export const ADVISORS: Advisor[] = [
   {
     id: 'socrates',
-    name: 'Socrates',
-    title: 'The Philosopher',
+    name: 'King Socrates',
+    title: 'The Philosopher King',
     portrait: '/medieval/socrates.png',
     emoji: '🏛️',
     accentColor: 'from-cyan-500 to-teal-600',
@@ -35,8 +35,8 @@ export const ADVISORS: Advisor[] = [
   },
   {
     id: 'aryabhata',
-    name: 'Aryabhata',
-    title: 'The Mathematician',
+    name: 'King Aryabhata',
+    title: 'The Astronomer King',
     portrait: '/medieval/aryabhata.png',
     emoji: '📐',
     accentColor: 'from-amber-500 to-yellow-600',
@@ -51,8 +51,8 @@ export const ADVISORS: Advisor[] = [
   },
   {
     id: 'chanakya',
-    name: 'Chanakya',
-    title: 'The Strategist',
+    name: 'Emperor Chanakya',
+    title: 'The Strategist Emperor',
     portrait: '/medieval/chanakya.png',
     emoji: '📜',
     accentColor: 'from-rose-500 to-red-600',
@@ -67,8 +67,8 @@ export const ADVISORS: Advisor[] = [
   },
   {
     id: 'ramanujan',
-    name: 'Ramanujan',
-    title: 'The Genius',
+    name: 'Prince Ramanujan',
+    title: 'The Prince of Numbers',
     portrait: '/medieval/ramanujan.png',
     emoji: '🧠',
     accentColor: 'from-purple-500 to-violet-600',
@@ -93,10 +93,13 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleTap = (advisor: Advisor) => {
+    if (onAdvisorTap) {
+      onAdvisorTap(advisor);
+      return;
+    }
     const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
     setActiveSpeech(quote);
     setActiveId(advisor.id);
-    if (onAdvisorTap) onAdvisorTap(advisor);
 
     setTimeout(() => {
       setActiveSpeech(null);
@@ -108,7 +111,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     <div className="relative">
       {/* Speech bubble */}
       <AnimatePresence>
-        {activeSpeech && (
+        {!onAdvisorTap && activeSpeech && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
