@@ -9,14 +9,6 @@ export interface MinigameInfo {
 
 export const minigames: MinigameInfo[] = [
   {
-    id: 'balloonpop',
-    name: 'Balloon Pop',
-    description: 'Pop balloons before they escape. Fast‑paced arcade fun.',
-    emoji: '🎈',
-    gradient: 'linear-gradient(135deg, #ff5e62, #ff9966)',
-    playCount: 0,
-  },
-  {
     id: 'slotmachine',
     name: 'Slot Machine',
     description: 'Spin the reels and try your luck for big wins.',

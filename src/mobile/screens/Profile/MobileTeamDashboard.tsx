@@ -12,13 +12,12 @@ import {
   ShieldCheck, 
   ShieldAlert, 
   Ban, 
-  CheckCircle, 
-  RefreshCw,
-  Mail,
-  User,
-  Check,
+  Check, 
   X,
-  ExternalLink
+  ClipboardList,
+  Sparkles,
+  Coins,
+  Star
 } from 'lucide-react';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { BurningTorch } from '@/components/gamification/BurningTorch';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -44,8 +44,6 @@ export default function MobileTeamDashboard() {
   const {
     isTeamLeader,
     activeMembers,
-    inactiveMembers,
-    suspendedMembers,
     teamMembers = [],
     isLoading,
     isMainTeamLeader,
@@ -53,13 +51,20 @@ export default function MobileTeamDashboard() {
     demoteToPlayer,
     handleStatusChange,
     requestAccountAction,
-    refreshMembers
+    assignedTasks = [],
+    deleteTask,
+    awardBonus
   } = useTeamLeaderDashboard();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState<'all' | 'direct' | 'subteam'>('all');
+  const [filterTab, setFilterTab] = useState<'mercenaries' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+  // Grant Bonus Modal states
+  const [selectedMemberForBonus, setSelectedMemberForBonus] = useState<{ id: string, name: string } | null>(null);
+  const [bonusStars, setBonusStars] = useState(25);
+  const [bonusGems, setBonusGems] = useState(100);
 
   // AlertDialog states
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -69,7 +74,7 @@ export default function MobileTeamDashboard() {
     action: () => Promise<void>;
   } | null>(null);
 
-  const username = localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
+  const username = localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'baron';
   const inviteLink = `${window.location.origin}/register?ref=${username}`;
 
   const copyInviteLink = async () => {
@@ -77,14 +82,13 @@ export default function MobileTeamDashboard() {
       await navigator.clipboard.writeText(inviteLink);
       setCopied(true);
       toast({
-        title: "Link Copied!",
-        description: "Team invitation link copied to clipboard.",
+        title: "Scroll Copied!",
+        description: "Recruitment scroll link copied to clipboard.",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast({
         title: "Copy Failed",
-        description: "Failed to copy link. Please manually copy it.",
         variant: "destructive"
       });
     }
@@ -92,41 +96,22 @@ export default function MobileTeamDashboard() {
 
   const filteredMembers = useMemo(() => {
     return teamMembers.filter(member => {
-      // 1. Search Query Filter
       const nameMatch = member.name.toLowerCase().includes(searchQuery.toLowerCase());
       const emailMatch = member.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSearch = nameMatch || emailMatch;
-
-      if (!matchesSearch) return false;
-
-      // 2. Tab Filter
-      if (filterTab === 'direct') {
-        return !member.directLeaderUsername;
-      }
-      if (filterTab === 'subteam') {
-        return !!member.directLeaderUsername;
-      }
-
-      return true;
+      return nameMatch || emailMatch;
     });
-  }, [teamMembers, searchQuery, filterTab]);
+  }, [teamMembers, searchQuery]);
 
   const totalPlays = useMemo(() => {
-    return teamMembers.reduce((acc, m) => acc + (m.questionsAnswered || 0), 0);
+    return teamMembers.reduce((acc, m) => acc + (m.gamesPlayed || 0), 0);
   }, [teamMembers]);
-
-  const totalCorrect = useMemo(() => {
-    return teamMembers.reduce((acc, m) => acc + (m.questionsCorrect || 0), 0);
-  }, [teamMembers]);
-
-  const accuracy = totalPlays > 0 ? Math.round((totalCorrect / totalPlays) * 100) : 0;
 
   const handlePromoteClick = (memberId: string, name: string) => {
     if (!promoteToJunior) return;
     setConfirmDialog({
       open: true,
-      title: "Promote to Junior Team Leader?",
-      description: `Are you sure you want to promote ${name} to a Junior Team Leader? They will be able to recruit their own players, and their team's statistics will roll up to you.`,
+      title: "Commission as Officer?",
+      description: `Are you sure you want to promote ${name} to Officer rank? they will be authorized to lead their own sub-squads.`,
       action: async () => {
         setActionInProgress(memberId);
         await promoteToJunior(memberId);
@@ -139,8 +124,8 @@ export default function MobileTeamDashboard() {
     if (!demoteToPlayer) return;
     setConfirmDialog({
       open: true,
-      title: "Demote to Player?",
-      description: `Are you sure you want to demote ${name} back to a regular Player? They will lose their team leader privileges.`,
+      title: "Demote to Infantry?",
+      description: `Are you sure you want to demote Officer ${name} back to regular Infantry?`,
       action: async () => {
         setActionInProgress(memberId);
         await demoteToPlayer(memberId);
@@ -149,386 +134,369 @@ export default function MobileTeamDashboard() {
     });
   };
 
-  const handleStatusChangeClick = (memberId: string, name: string, currentStatus: string) => {
-    const isSuspended = currentStatus === 'suspended';
-    const action = isSuspended ? 'reactivate' : 'suspend';
-    
-    setConfirmDialog({
-      open: true,
-      title: isSuspended ? "Reactivate Member Account?" : "Suspend Member Account?",
-      description: isSuspended 
-        ? `Are you sure you want to request reactivation for ${name}?` 
-        : `Are you sure you want to request suspension for ${name}? They will be blocked from answering quizzes.`,
-      action: async () => {
-        setActionInProgress(memberId);
-        if (requestAccountAction) {
-          await requestAccountAction(memberId, action);
-        } else {
-          // Fallback if request action is not implemented directly on client/hook
-          await handleStatusChange(memberId, isSuspended ? 'active' : 'suspended');
-        }
-        setActionInProgress(null);
-      }
-    });
+  const handleGrantBonusSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMemberForBonus) return;
+    await awardBonus(selectedMemberForBonus.id, selectedMemberForBonus.name, Number(bonusStars), Number(bonusGems));
+    setSelectedMemberForBonus(null);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin mb-2" />
-        <p className="text-muted-foreground text-sm font-semibold">Loading team statistics...</p>
+      <div className="min-h-screen stone-wall flex flex-col items-center justify-center p-4 text-slate-100">
+        <div className="w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-2" />
+        <p className="text-slate-400 text-xs uppercase font-bold tracking-widest">Assembling Roster...</p>
       </div>
     );
   }
 
   if (!isTeamLeader) {
-    return null; // The hook will redirect to /profile
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-36">
+    <div className="min-h-screen stone-wall text-slate-100 pb-36 relative overflow-x-hidden">
+      
+      {/* Decorative Torches */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <BurningTorch className="absolute top-16 left-2 scale-50 opacity-40" />
+        <BurningTorch className="absolute top-16 right-2 scale-50 opacity-40" />
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3.5 flex items-center gap-3">
+      <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md">
         <motion.button 
           whileTap={{ scale: 0.92 }}
           onClick={() => navigate('/profile')}
-          className="p-1.5 rounded-full hover:bg-muted"
+          className="p-1.5 rounded-full hover:bg-stone-850"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-slate-200" />
         </motion.button>
         <div>
-          <h1 className="text-lg font-bold">Team Control Center</h1>
-          <p className="text-xs text-muted-foreground">
-            {isMainTeamLeader ? 'Main Team Leader' : 'Junior Team Leader'}
+          <h1 className="text-sm font-black uppercase text-white tracking-tight" style={{ fontFamily: "'Cinzel', serif" }}>
+            Baron War Room
+          </h1>
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+            {isMainTeamLeader ? 'Mercenary Commander' : 'Junior Officer'}
           </p>
         </div>
-        <motion.button 
-          whileTap={{ scale: 0.92 }}
-          onClick={() => refreshMembers()}
-          className="ml-auto p-1.5 rounded-full hover:bg-muted"
-          title="Refresh Data"
-        >
-          <RefreshCw className="w-4 h-4 text-muted-foreground" />
-        </motion.button>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
-        {/* Invite Card */}
-        <Card className="border border-indigo-100 dark:border-indigo-950 bg-gradient-to-br from-indigo-50/50 to-purple-50/20 dark:from-indigo-950/20 dark:to-purple-950/5 overflow-hidden">
-          <CardContent className="p-4 space-y-3">
-            <div>
-              <h3 className="font-bold text-sm text-indigo-900 dark:text-indigo-200">Invite Members to Join Your Team</h3>
-              <p className="text-xs text-indigo-700/80 dark:text-indigo-300/85 mt-0.5">
-                Share this referral link. New members automatically join under your hierarchy.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Input 
-                readOnly 
-                value={inviteLink}
-                className="bg-background text-xs h-9 border-indigo-200 dark:border-indigo-900"
-              />
-              <Button 
-                onClick={copyInviteLink} 
-                size="sm" 
-                className="h-9 gap-1.5 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shrink-0"
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="px-4 pt-4 space-y-4 relative z-10">
+        
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-card border border-border rounded-2xl p-3 flex flex-col justify-between">
+          <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-3 flex flex-col justify-between shadow-md">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Team Size</span>
-              <span className="p-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500">
-                <Users className="w-3.5 h-3.5" />
-              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Infantry Size</span>
+              <Users className="w-3.5 h-3.5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xl font-bold tracking-tight">{teamMembers.length}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Direct & sub-team</p>
+              <p className="text-xl font-black text-white">{teamMembers.length}</p>
+              <p className="text-[8px] text-slate-500 uppercase mt-0.5">Battalion count</p>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-3 flex flex-col justify-between">
+          <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-3 flex flex-col justify-between shadow-md">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Active (DAU)</span>
-              <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500">
-                <UserCheck className="w-3.5 h-3.5" />
-              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Active Duty</span>
+              <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">{activeMembers}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Playing today</p>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl p-3 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Total Plays</span>
-              <span className="p-1 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-500">
-                <Play className="w-3.5 h-3.5" />
-              </span>
-            </div>
-            <div>
-              <p className="text-xl font-bold tracking-tight">{totalPlays.toLocaleString()}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Questions answered</p>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-2xl p-3 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Team Acc.</span>
-              <span className="p-1 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-500">
-                <Award className="w-3.5 h-3.5" />
-              </span>
-            </div>
-            <div>
-              <p className="text-xl font-bold tracking-tight text-teal-600 dark:text-teal-400">{accuracy}%</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Correct answer ratio</p>
+              <p className="text-xl font-black text-emerald-400">{activeMembers}</p>
+              <p className="text-[8px] text-slate-500 uppercase mt-0.5">Online today</p>
             </div>
           </div>
         </div>
 
-        {/* Search & Tabs Header */}
-        <div className="space-y-3 pt-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search member by name or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9.5 text-sm bg-card border-border"
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-3 p-0.5 rounded-full hover:bg-muted text-muted-foreground"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Custom Mobile Filter Tabs */}
-          <div className="flex p-0.5 rounded-lg bg-slate-200/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => setFilterTab('all')}
-              className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${
-                filterTab === 'all' 
-                  ? 'bg-background shadow text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              All ({teamMembers.length})
-            </button>
-            <button
-              onClick={() => setFilterTab('direct')}
-              className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${
-                filterTab === 'direct' 
-                  ? 'bg-background shadow text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Direct ({teamMembers.filter(m => !m.directLeaderUsername).length})
-            </button>
-            <button
-              onClick={() => setFilterTab('subteam')}
-              className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${
-                filterTab === 'subteam' 
-                  ? 'bg-background shadow text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Sub-Team ({teamMembers.filter(m => !!m.directLeaderUsername).length})
-            </button>
-          </div>
+        {/* Tactical Navigation Tabs */}
+        <div className="flex p-0.5 rounded-xl bg-stone-950 border border-stone-850">
+          <button
+            onClick={() => setFilterTab('mercenaries')}
+            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+              filterTab === 'mercenaries' 
+                ? 'bg-amber-500 text-stone-950 font-black' 
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            ⚔️ Mercenaries
+          </button>
+          <button
+            onClick={() => setFilterTab('tasks')}
+            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+              filterTab === 'tasks' 
+                ? 'bg-amber-500 text-stone-950 font-black' 
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            📜 Contracts ({assignedTasks.length})
+          </button>
+          <button
+            onClick={() => setFilterTab('recruit')}
+            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+              filterTab === 'recruit' 
+                ? 'bg-amber-500 text-stone-950 font-black' 
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            📢 Recruit
+          </button>
         </div>
 
-        {/* Member Cards List */}
-        <div className="space-y-2 pt-1">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-            Members ({filteredMembers.length})
-          </h2>
-          
-          <AnimatePresence mode="popLayout">
-            {filteredMembers.length === 0 ? (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-8 bg-card border border-border rounded-2xl text-muted-foreground text-sm"
-              >
-                No members match the search or filter
-              </motion.div>
-            ) : (
-              filteredMembers.map((member) => {
-                const memberPlays = member.questionsAnswered || 0;
-                const memberCorrect = member.questionsCorrect || 0;
-                const memberAcc = memberPlays > 0 ? Math.round((memberCorrect / memberPlays) * 100) : 0;
-                const isLoadingMember = actionInProgress === member.id;
+        {/* Tab content: MERCENARIES LIST */}
+        {filterTab === 'mercenaries' && (
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-stone-500" />
+              <Input
+                type="text"
+                placeholder="Search mercenary by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9.5 text-xs bg-stone-900 border-stone-800 text-white placeholder-stone-600 rounded-xl"
+              />
+            </div>
 
-                return (
-                  <motion.div
-                    key={member.id}
-                    layoutId={member.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="bg-card border border-border rounded-2xl p-3.5 space-y-3 relative overflow-hidden"
-                  >
-                    {/* Top Row: User Meta */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-bold text-sm text-foreground truncate">{member.name}</p>
-                          {member.role === 'junior_team_leader' ? (
-                            <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900 text-[10px] px-1.5 py-0">
-                              Junior TL
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-slate-500 text-[10px] px-1.5 py-0">
-                              Player
-                            </Badge>
-                          )}
+            <div className="space-y-2">
+              <AnimatePresence mode="popLayout">
+                {filteredMembers.length === 0 ? (
+                  <div className="text-center py-8 bg-stone-900 border border-stone-800 rounded-2xl text-slate-500 font-bold uppercase tracking-wider text-xs">
+                    No mercenaries found.
+                  </div>
+                ) : (
+                  filteredMembers.map((member) => (
+                    <motion.div
+                      key={member.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="bg-stone-900/90 border border-stone-800 rounded-2xl p-3.5 space-y-3 relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-black text-sm text-white">{member.name}</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase border ${
+                              member.role === 'junior_team_leader' 
+                                ? 'bg-indigo-950/40 border-indigo-900 text-indigo-300' 
+                                : 'bg-stone-950 border-stone-800 text-slate-400'
+                            }`}>
+                              {member.role === 'junior_team_leader' ? 'Officer' : 'Infantry'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500">{member.email}</span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate">{member.email}</p>
+
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold ${
+                          member.status === 'active' ? 'text-emerald-400' : 'text-slate-500'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            member.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                          }`} />
+                          {member.status === 'active' ? 'Online' : 'Offline'}
+                        </span>
                       </div>
 
-                      {/* Status Badge */}
-                      <div>
-                        {member.status === 'active' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            Active
-                          </span>
-                        )}
-                        {member.status === 'inactive' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-900 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            Inactive
-                          </span>
-                        )}
-                        {member.status === 'suspended' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 px-2 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                            Suspended
-                          </span>
-                        )}
+                      {/* Stats Table */}
+                      <div className="grid grid-cols-3 gap-2 bg-stone-950 p-2 rounded-xl text-center text-[10px]">
+                        <div>
+                          <p className="font-bold text-white">{member.gamesPlayed}</p>
+                          <p className="text-[8px] text-slate-500">Games</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-emerald-400">{member.activePlayTime}</p>
+                          <p className="text-[8px] text-slate-500">Playtime</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-amber-500 truncate">{member.activeActivity}</p>
+                          <p className="text-[8px] text-slate-500">Activity</p>
+                        </div>
                       </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-stone-850">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase">
+                          Last: {member.lastOnline}
+                        </span>
+
+                        <div className="flex gap-2">
+                          {isMainTeamLeader && !member.directLeaderUsername && (
+                            <Button
+                              onClick={() => member.role === 'junior_team_leader' ? handleDemoteClick(member.id, member.name) : handlePromoteClick(member.id, member.name)}
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2.5 text-[10px] font-bold border-stone-700 text-stone-300 bg-stone-850"
+                            >
+                              {member.role === 'junior_team_leader' ? 'Demote' : 'Promote'}
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => setSelectedMemberForBonus({ id: member.id, name: member.name })}
+                            size="sm"
+                            className="h-7 px-2.5 text-[10px] font-black bg-yellow-500 hover:bg-yellow-600 text-stone-950"
+                          >
+                            Tribute
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+
+        {/* Tab content: CONTRACTS LIST */}
+        {filterTab === 'tasks' && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider">
+              Active Mercenary Quests
+            </h3>
+            
+            {assignedTasks.length === 0 ? (
+              <div className="text-center py-12 bg-stone-900 border border-stone-800 rounded-3xl text-slate-500 font-bold uppercase tracking-wider text-xs">
+                No active contracts. Create contracts on the web dashboard workshop!
+              </div>
+            ) : (
+              assignedTasks.map(task => (
+                <div key={task.id} className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-3 shadow-md">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-bold text-white text-xs block">{task.title}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">{task.description}</span>
                     </div>
+                    <Button 
+                      onClick={() => deleteTask(task.id)}
+                      variant="ghost" 
+                      className="text-red-400 hover:text-red-500 h-7 w-7 p-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase">
+                    <span className="bg-stone-950 border border-amber-500/25 px-2 py-0.5 rounded-lg text-amber-500">
+                      Gems: +{task.rewardGems}
+                    </span>
+                    <span className="bg-stone-950 border border-yellow-500/25 px-2 py-0.5 rounded-lg text-yellow-400">
+                      Stars: +{task.rewardStars}
+                    </span>
+                    <span className="bg-stone-950 border border-blue-500/25 px-2 py-0.5 rounded-lg text-blue-400">
+                      {task.shardType}
+                    </span>
+                  </div>
 
-                    {/* Middle Row: Referral context & Statistics */}
-                    <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-xl text-center">
-                      <div>
-                        <p className="text-xs font-bold text-foreground">{memberPlays.toLocaleString()}</p>
-                        <p className="text-[9px] text-muted-foreground">Plays</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{memberAcc}%</p>
-                        <p className="text-[9px] text-muted-foreground">Accuracy</p>
-                      </div>
-                      <div className="flex flex-col justify-center items-center truncate px-0.5">
-                        {member.directLeaderUsername ? (
-                          <>
-                            <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate max-w-full">
-                              @{member.directLeaderUsername}
-                            </p>
-                            <p className="text-[9px] text-muted-foreground">Leader</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">Direct</p>
-                            <p className="text-[9px] text-muted-foreground">Referral</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Actions (Only for Main Team Leader, or if status suspension request is allowed) */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
-                      <div className="text-[10px] text-muted-foreground">
-                        Joined: {new Date(member.joinDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
-                      </div>
-
-                      <div className="flex gap-1.5">
-                        {/* 1. Request Suspension / Reactivation (Available to all TLs) */}
-                        <Button
-                          disabled={isLoadingMember}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleStatusChangeClick(member.id, member.name, member.status)}
-                          className={`h-7 px-2 text-[11px] gap-1 hover:bg-slate-100 ${
-                            member.status === 'suspended' 
-                              ? 'text-emerald-600 hover:text-emerald-700' 
-                              : 'text-rose-600 hover:text-rose-700'
-                          }`}
-                        >
-                          <Ban className="w-3 h-3" />
-                          <span>{member.status === 'suspended' ? 'Reactivate' : 'Suspend'}</span>
-                        </Button>
-
-                        {/* 2. Promote / Demote Actions (Available only to Main Team Leader for direct players) */}
-                        {isMainTeamLeader && !member.directLeaderUsername && (
-                          <>
-                            {member.role !== 'junior_team_leader' ? (
-                              <Button
-                                disabled={isLoadingMember}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePromoteClick(member.id, member.name)}
-                                className="h-7 px-2 text-[11px] gap-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
-                              >
-                                <ShieldCheck className="w-3 h-3" />
-                                Promote
-                              </Button>
-                            ) : (
-                              <Button
-                                disabled={isLoadingMember}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDemoteClick(member.id, member.name)}
-                                className="h-7 px-2 text-[11px] gap-1 border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-950/30"
-                              >
-                                <ShieldAlert className="w-3 h-3" />
-                                Demote
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Loader overlay */}
-                    {isLoadingMember && (
-                      <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-                        <RefreshCw className="w-5 h-5 text-primary animate-spin" />
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })
+                  <div className="flex justify-between items-center text-[10px] pt-1.5 border-t border-stone-850 text-slate-500 font-semibold">
+                    <span>Assignee: {task.assignedToName}</span>
+                    <span className="text-amber-500 font-black">Target: {task.targetCount}</span>
+                  </div>
+                </div>
+              ))
             )}
-          </AnimatePresence>
-        </div>
+          </div>
+        )}
+
+        {/* Tab content: RECRUIT */}
+        {filterTab === 'recruit' && (
+          <Card className="border-4 border-double border-amber-500/25 bg-stone-900/90 text-center p-6 rounded-3xl space-y-4">
+            <CardContent className="p-0 space-y-4">
+              <Sparkles className="w-12 h-12 text-yellow-500 mx-auto animate-pulse" />
+              <div>
+                <h3 className="font-bold text-sm text-white uppercase">Recruit Infantry</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                  Share this recruitment scroll across the realm. New players automatically join your mercenary ranks!
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Input 
+                  readOnly 
+                  value={inviteLink}
+                  className="bg-stone-950 border-stone-800 text-white text-xs h-9 rounded-xl text-center"
+                />
+                <Button 
+                  onClick={copyInviteLink} 
+                  className="h-9 font-black bg-yellow-500 hover:bg-yellow-600 text-stone-950 rounded-xl border-0 flex items-center justify-center gap-1.5"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copied ? 'Copied Ledger' : 'Copy Recruitment Scroll'}</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
+
+      {/* GRANT BONUS TRIBUTE DIALOG */}
+      {selectedMemberForBonus && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-stone-900 border-4 border-double border-amber-500/35 rounded-3xl p-5 w-full max-w-xs text-slate-100 space-y-4">
+            <div className="text-center">
+              <Sparkles className="w-7 h-7 text-yellow-500 mx-auto mb-1 animate-bounce" />
+              <h3 className="text-sm font-black uppercase text-amber-500 tracking-wider">
+                Grant Tribute
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Reward <span className="text-white font-bold">{selectedMemberForBonus.name}</span> for exception service.</p>
+            </div>
+
+            <form onSubmit={handleGrantBonusSubmit} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="text-[9px] uppercase font-bold text-slate-400 block flex items-center gap-0.5">
+                  <Star className="w-3.5 h-3.5 text-yellow-400" /> Star Currency
+                </label>
+                <Input 
+                  type="number"
+                  min={1}
+                  value={bonusStars}
+                  onChange={e => setBonusStars(Number(e.target.value))}
+                  className="bg-stone-950 border-stone-800 text-white text-xs h-8.5 rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] uppercase font-bold text-slate-400 block flex items-center gap-0.5">
+                  <Coins className="w-3.5 h-3.5 text-amber-500" /> Gold Gems
+                </label>
+                <Input 
+                  type="number"
+                  min={1}
+                  value={bonusGems}
+                  onChange={e => setBonusGems(Number(e.target.value))}
+                  className="bg-stone-950 border-stone-800 text-white text-xs h-8.5 rounded-lg"
+                />
+              </div>
+
+              <div className="flex gap-2.5">
+                <Button 
+                  type="button" 
+                  onClick={() => setSelectedMemberForBonus(null)}
+                  className="flex-1 bg-stone-850 hover:bg-stone-800 text-slate-300 font-bold uppercase py-1.5 h-8.5 rounded-lg border border-stone-700"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-stone-950 font-black uppercase py-1.5 h-8.5 rounded-lg border-0"
+                >
+                  Send
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Dialog */}
       {confirmDialog && (
         <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && setConfirmDialog(null)}>
-          <AlertDialogContent className="w-[90%] max-w-sm rounded-2xl">
+          <AlertDialogContent className="w-[90%] max-w-xs rounded-3xl bg-stone-900 border border-stone-800 text-slate-100">
             <AlertDialogHeader>
-              <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
-              <AlertDialogDescription>{confirmDialog.description}</AlertDialogDescription>
+              <AlertDialogTitle className="text-amber-500 font-black uppercase tracking-wider text-sm">{confirmDialog.title}</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-400 text-xs">{confirmDialog.description}</AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="flex-row gap-2 mt-4">
-              <AlertDialogCancel onClick={() => setConfirmDialog(null)} className="flex-1 rounded-xl mt-0">
+            <AlertDialogFooter className="flex-row gap-2 mt-4 text-xs">
+              <AlertDialogCancel onClick={() => setConfirmDialog(null)} className="flex-1 rounded-xl mt-0 bg-stone-850 hover:bg-stone-800 border-stone-700 text-slate-300">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
@@ -537,7 +505,7 @@ export default function MobileTeamDashboard() {
                   setConfirmDialog(null);
                   await action();
                 }}
-                className="flex-1 rounded-xl"
+                className="flex-1 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-stone-950 font-black"
               >
                 Confirm
               </AlertDialogAction>

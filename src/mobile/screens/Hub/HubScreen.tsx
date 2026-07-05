@@ -11,6 +11,8 @@ import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
+import { audioManager } from '@/utils/audioManager';
+import { useToast } from '@/hooks/use-toast';
 
 type Node = {
   id: string;
@@ -34,7 +36,6 @@ const TAVERN_GAMES: Node[] = [
   { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', icon: ScrollText, color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
   { id: 'true-false', label: 'True / False', to: '/game/true-false', icon: Swords, color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
   { id: 'image', label: 'Image Trivia', to: '/game/image', icon: ImageIcon, color: 'from-violet-500 to-fuchsia-600', hint: 'Visual trivia puzzles', badge: 'Image' },
-  { id: 'balloon', label: 'Balloon Pop', to: '/game/balloon', icon: Target, color: 'from-pink-400 to-rose-600', hint: 'Arcade balloon popping', badge: 'Hot' },
   { id: 'slot', label: 'Slot Machine', to: '/game/slot', icon: Coins, color: 'from-red-500 to-amber-500', hint: 'Test matching luck', badge: 'Lucky' },
   { id: 'plinko', label: 'Plinko Board', to: '/game/plinko', icon: Dices, color: 'from-green-400 to-emerald-600', hint: 'Bounce chips for prizes', badge: 'Fun' },
   { id: 'rps', label: 'Rock Paper Scissors', to: '/game/rps', icon: Gamepad2, color: 'from-purple-500 to-indigo-600', hint: 'Gesture battle vs AI', badge: 'Battle' },
@@ -62,6 +63,138 @@ export default function HubScreen() {
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInRewardStars, setCheckInRewardStars] = useState(0);
   const [checkInStreak, setCheckInStreak] = useState(0);
+
+  const { toast } = useToast();
+  const [baronTasks, setBaronTasks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadTasks = () => {
+      const stored = localStorage.getItem('baron_tasks_data');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
+          const filtered = parsed.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId);
+          setBaronTasks(filtered);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+    loadTasks();
+
+    window.addEventListener('baronTasksUpdated', loadTasks);
+    return () => {
+      window.removeEventListener('baronTasksUpdated', loadTasks);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const type = customEvent.detail?.type;
+      if (!type) return;
+
+      const stored = localStorage.getItem('baron_tasks_data');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
+          let updatedAny = false;
+          const updated = parsed.map((t: any) => {
+            const matchesAssignee = t.assignedTo === 'all' || t.assignedTo === userId;
+            if (matchesAssignee && t.type === type && t.status === 'active') {
+              const newCount = t.currentCount + 1;
+              const isCompleted = newCount >= t.targetCount;
+              updatedAny = true;
+              return { 
+                ...t, 
+                currentCount: newCount,
+                status: isCompleted ? 'completed' : 'active'
+              };
+            }
+            return t;
+          });
+
+          if (updatedAny) {
+            localStorage.setItem('baron_tasks_data', JSON.stringify(updated));
+            setBaronTasks(updated.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId));
+            if (updated.some((t: any) => t.status === 'completed' && t.type === type)) {
+              toast({
+                title: "Contract Completed!",
+                description: "Open the Hub to claim your reward stars, gems, and shards!",
+              });
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+
+    window.addEventListener('baronTaskAction' as any, handleAction);
+    return () => {
+      window.removeEventListener('baronTaskAction' as any, handleAction);
+    };
+  }, [gems, stars]);
+
+  const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
+    haptics('success');
+    audioManager.playSFX('chest');
+
+    const stored = localStorage.getItem('baron_tasks_data');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const updated = parsed.map((t: any) => {
+          if (t.id === taskId) {
+            return { ...t, status: 'claimed' };
+          }
+          return t;
+        });
+        localStorage.setItem('baron_tasks_data', JSON.stringify(updated));
+        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
+        setBaronTasks(updated.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const newGems = gems + gemsReward;
+    const newStars = stars + starsReward;
+    setGems(newGems);
+    setStars(newStars);
+    localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(newGems));
+    localStorage.setItem('quiz_app_user_stars', String(newStars));
+    window.dispatchEvent(new CustomEvent('gemsUpdated'));
+
+    if (shardsReward > 0) {
+      const key = `advisor_shards_${shardType.toLowerCase()}`;
+      const curShards = Number(localStorage.getItem(key) || '0');
+      localStorage.setItem(key, String(curShards + shardsReward));
+      window.dispatchEvent(new CustomEvent('shardsUpdated'));
+    }
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            points: newGems, 
+            stars: newStars 
+          })
+          .eq('id', session.session.user.id);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+
+    toast({
+      title: "Contract Claimed!",
+      description: `Claimed +${gemsReward} Gems, +${starsReward} Stars, and +${shardsReward} ${shardType} Shards!`,
+    });
+  };
 
   const triggerDailyCheckIn = async (userKey: string, currentStars: number) => {
     const today = new Date().toISOString().split('T')[0];
@@ -243,6 +376,73 @@ export default function HubScreen() {
           })}
         </div>
       </section>
+
+      {/* ═══ Baron Contracts ═══ */}
+      {baronTasks.filter(t => t.status !== 'claimed').length > 0 && (
+        <section className="relative mb-5">
+          <h2 className="text-[10px] font-black tracking-[0.25em] text-stone-400 mb-3 uppercase font-serif flex items-center gap-2">
+            <span className="w-8 h-[1px] bg-amber-800/30" />
+            Active Baron Contracts
+            <span className="flex-1 h-[1px] bg-amber-800/30" />
+          </h2>
+          <div className="space-y-2.5">
+            {baronTasks.filter(t => t.status !== 'claimed').map((task) => (
+              <div 
+                key={task.id} 
+                className="wooden-door border border-amber-800/40 rounded-2xl p-4 shadow-md space-y-3 relative overflow-hidden"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="font-serif font-black text-sm text-yellow-500 block uppercase tracking-wider">
+                      📜 {task.title}
+                    </span>
+                    <span className="text-[10px] text-stone-300 block mt-0.5 leading-relaxed">
+                      {task.description}
+                    </span>
+                  </div>
+                  
+                  {task.status === 'completed' ? (
+                    <Button 
+                      onClick={() => handleClaimTask(task.id, task.rewardGems, task.rewardStars, task.rewardShards, task.shardType)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-stone-950 font-black py-1 h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider animate-bounce"
+                    >
+                      Claim Reward
+                    </Button>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase text-amber-500/70 tracking-widest bg-stone-950/80 px-2 py-0.5 rounded border border-stone-850">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase">
+                    <span>Progress</span>
+                    <span>{task.currentCount} / {task.targetCount}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden border border-stone-850">
+                    <div 
+                      className="h-full bg-gradient-to-r from-yellow-500 to-amber-600 transition-all duration-500"
+                      style={{ width: `${Math.min(100, (task.currentCount / task.targetCount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Rewards overview */}
+                <div className="flex gap-2.5 pt-1.5 border-t border-stone-850 text-[9px] font-bold text-slate-450 uppercase tracking-wide">
+                  <span>Rewards:</span>
+                  <span className="text-amber-500">+{task.rewardGems} Gems</span>
+                  <span className="text-yellow-400">+{task.rewardStars} Stars</span>
+                  {task.rewardShards > 0 && (
+                    <span className="text-blue-400">+{task.rewardShards} {task.shardType} Shards</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ═══ Tavern Games ═══ */}
       <section className="relative">

@@ -725,6 +725,7 @@ export default function EmpireQuestsPage() {
 
     if (passed && activeQuest) {
       haptics('success');
+      window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'quests' } }));
       confetti({ particleCount: 100, spread: 70 });
       
       // Earn stars

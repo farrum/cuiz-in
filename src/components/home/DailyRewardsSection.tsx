@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SlotMachine, TreasureChest, BalloonPop, PlinkoGame, RockPaperScissors } from '@/components/gamification';
+import { SlotMachine, TreasureChest, PlinkoGame, RockPaperScissors } from '@/components/gamification';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, Sparkles } from 'lucide-react';
@@ -21,8 +21,6 @@ const DailyRewardsSection: React.FC = () => {
         return <SlotMachine />;
       case 'chest':
         return <TreasureChest />;
-      case 'balloon':
-        return <BalloonPop />;
       case 'plinko':
         return <PlinkoGame />;
       case 'rps':
@@ -45,10 +43,9 @@ const DailyRewardsSection: React.FC = () => {
       <Card className="border-2 border-purple-100 shadow-xl shadow-purple-100/20">
         <CardHeader className="bg-purple-50/50 border-b border-purple-100 rounded-t-xl pb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5 gap-2 overflow-x-auto scrollbar-hide">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 gap-2 overflow-x-auto scrollbar-hide">
               <TabsTrigger value="slot" className="font-bold text-xs whitespace-nowrap">Slot Machine</TabsTrigger>
               <TabsTrigger value="chest" className="font-bold text-xs whitespace-nowrap">Treasure Chest</TabsTrigger>
-              <TabsTrigger value="balloon" className="font-bold text-xs whitespace-nowrap">Balloon Pop</TabsTrigger>
               <TabsTrigger value="plinko" className="font-bold text-xs whitespace-nowrap">Plinko</TabsTrigger>
               <TabsTrigger value="rps" className="font-bold text-xs whitespace-nowrap">RPS</TabsTrigger>
             </TabsList>

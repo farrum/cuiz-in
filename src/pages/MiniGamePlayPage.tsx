@@ -11,7 +11,6 @@ import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
 
 // Game Component Imports
-import { BalloonPop } from '@/components/gamification/BalloonPop';
 import { SlotMachine } from '@/components/gamification/SlotMachine';
 import { PlinkoGame } from '@/components/gamification/PlinkoGame';
 import { RockPaperScissors } from '@/components/gamification/RockPaperScissors';
@@ -198,8 +197,6 @@ export const MiniGamePlayPage: React.FC = () => {
     }
 
     switch (gameId) {
-      case 'balloonpop':
-        return <BalloonPop />;
       case 'slotmachine':
         return <SlotMachine />;
       case 'plinkogame':

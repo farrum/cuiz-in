@@ -11,9 +11,9 @@ import { TrueFalseGame } from './games/TrueFalseGame';
 import { ImageGame } from './games/ImageGame';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { BurningTorch } from '@/components/gamification/BurningTorch';
 
 // Import web game components to reuse directly in mobile!
-import { BalloonPop } from '@/components/gamification/BalloonPop';
 import { SlotMachine } from '@/components/gamification/SlotMachine';
 import { PlinkoGame } from '@/components/gamification/PlinkoGame';
 import { RockPaperScissors } from '@/components/gamification/RockPaperScissors';
@@ -27,7 +27,6 @@ const GAMES = [
   { id: 'scratch', title: 'Scratch Card', color: 'from-amber-400 to-orange-600', bgGlow: 'bg-amber-500/15', icon: ScrollText, short: 'Scratch' },
   { id: 'true-false', title: 'True or False', color: 'from-sky-400 to-blue-600', bgGlow: 'bg-sky-500/15', icon: Swords, short: 'True/False' },
   { id: 'image', title: 'Image Trivia', color: 'from-violet-500 to-fuchsia-600', bgGlow: 'bg-violet-500/15', icon: ImageIcon, short: 'Image' },
-  { id: 'balloon', title: 'Balloon Pop', color: 'from-pink-400 to-rose-600', bgGlow: 'bg-rose-500/15', icon: Target, short: 'Balloon' },
   { id: 'slot', title: 'Slot Machine', color: 'from-red-500 to-amber-500', bgGlow: 'bg-red-500/15', icon: Coins, short: 'Slot' },
   { id: 'plinko', title: 'Plinko', color: 'from-green-400 to-emerald-600', bgGlow: 'bg-emerald-500/15', icon: Dices, short: 'Plinko' },
   { id: 'rps', title: 'Rock Paper Scissors', color: 'from-purple-500 to-indigo-600', bgGlow: 'bg-indigo-500/15', icon: Gamepad2, short: 'RPS' },
@@ -82,6 +81,9 @@ export default function MiniGameScreen() {
       };
       loadRiddle();
     }
+    if (gameId && gameId !== 'riddlevault') {
+      window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'games' } }));
+    }
   }, [gameId]);
 
   const handleRiddleSubmit = async (guess: string) => {
@@ -91,6 +93,7 @@ export default function MiniGameScreen() {
 
     const isCorrect = guess.toLowerCase().trim() === riddleAnswer.toLowerCase().trim();
     if (isCorrect) {
+      window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'riddles' } }));
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,7 +114,7 @@ export default function MiniGameScreen() {
       }
       return { success: true, message: 'You unlocked the vault and received 500 Gems!', gemsWon: 500 };
     }
-    return { success: false, message: 'That guess was incorrect. The vault is sealed.' };
+    return { success: false, message: 'Incorrect answer. Try again tomorrow!' };
   };
 
   let body: React.ReactNode = (
@@ -124,7 +127,6 @@ export default function MiniGameScreen() {
   else if (gameId === 'scratch') body = <ScratchGame />;
   else if (gameId === 'true-false') body = <TrueFalseGame />;
   else if (gameId === 'image') body = <ImageGame />;
-  else if (gameId === 'balloon') body = <BalloonPop />;
   else if (gameId === 'slot') body = <SlotMachine />;
   else if (gameId === 'plinko') body = <PlinkoGame />;
   else if (gameId === 'rps') body = <RockPaperScissors />;
@@ -154,8 +156,8 @@ export default function MiniGameScreen() {
     <div className="fixed inset-0 flex flex-col stone-wall overflow-hidden">
       {/* Torch ambience */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="torch-glow-ambient absolute top-0 left-0" style={{ width: 100, height: 100, opacity: 0.3 }} />
-        <div className="torch-glow-ambient absolute top-0 right-0" style={{ width: 100, height: 100, opacity: 0.3, animationDelay: '0.8s' }} />
+        <BurningTorch className="absolute top-12 left-4 scale-75 opacity-70" />
+        <BurningTorch className="absolute top-12 right-4 scale-75 opacity-70" />
         <motion.div
           className={cn('absolute -top-32 -left-32 w-80 h-80 rounded-full blur-3xl', current?.bgGlow ?? 'bg-primary/10')}
           animate={{ scale: [1, 1.2, 1], x: [0, 30, 0] }}
@@ -185,9 +187,11 @@ export default function MiniGameScreen() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-2 min-h-0 overflow-y-auto"
+        className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-2 min-h-0 overflow-y-auto w-full"
       >
-        {body}
+        <div className="w-full max-w-md bg-stone-900/95 border-4 border-double border-amber-500/20 rounded-3xl p-6 shadow-2xl relative text-slate-100">
+          {body}
+        </div>
       </motion.div>
 
       {/* Other Games nav bar */}
