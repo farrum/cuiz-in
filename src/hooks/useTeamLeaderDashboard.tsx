@@ -96,7 +96,7 @@ export const useTeamLeaderDashboard = () => {
     try {
       // Direct award to local storage or supabase if they match active session
       // In production, we'd trigger a RPC, for this local client session we trigger DB update
-      const { data: memberProfile } = await supabase
+      const { data: memberProfile } = await (supabase as any)
         .from('profiles')
         .select('points, stars')
         .eq('id', memberId)
@@ -105,7 +105,7 @@ export const useTeamLeaderDashboard = () => {
       const currentGems = memberProfile?.points || 0;
       const currentStars = memberProfile?.stars || 0;
 
-      await supabase
+      await (supabase as any)
         .from('profiles')
         .update({ 
           points: currentGems + gems,
