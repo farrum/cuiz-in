@@ -28,6 +28,12 @@ import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { BurningTorch } from '@/components/gamification/BurningTorch';
 import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '@/components/ui/dropdown-menu';
+import { 
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -53,11 +59,14 @@ export default function MobileTeamDashboard() {
     requestAccountAction,
     assignedTasks = [],
     deleteTask,
-    awardBonus
+    awardBonus,
+    joinRequests = [],
+    approveJoinRequest,
+    rejectJoinRequest
   } = useTeamLeaderDashboard();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState<'mercenaries' | 'tasks' | 'recruit'>('mercenaries');
+  const [filterTab, setFilterTab] = useState<'mercenaries' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
@@ -221,6 +230,21 @@ export default function MobileTeamDashboard() {
           >
             ⚔️ Mercenaries
           </button>
+          {joinRequests.length > 0 && (
+            <button
+              onClick={() => setFilterTab('requests')}
+              className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all relative ${
+                filterTab === 'requests' 
+                  ? 'bg-amber-500 text-stone-950 font-black' 
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              📥 Requests
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-650 text-[8px] font-bold text-white rounded-full flex items-center justify-center border border-stone-900 animate-bounce">
+                {joinRequests.length}
+              </span>
+            </button>
+          )}
           <button
             onClick={() => setFilterTab('tasks')}
             className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
@@ -277,11 +301,14 @@ export default function MobileTeamDashboard() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-black text-sm text-white">{member.name}</span>
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase border ${
-                              member.role === 'junior_team_leader' 
-                                ? 'bg-indigo-950/40 border-indigo-900 text-indigo-300' 
-                                : 'bg-stone-950 border-stone-800 text-slate-400'
+                              member.role === 'baron' ? 'bg-amber-950/40 border-amber-900 text-amber-300' :
+                              member.role === 'knight' ? 'bg-blue-950/40 border-blue-900 text-blue-300' :
+                              member.role === 'officer' ? 'bg-indigo-950/40 border-indigo-900 text-indigo-300' :
+                              'bg-stone-950 border-stone-800 text-slate-400'
                             }`}>
-                              {member.role === 'junior_team_leader' ? 'Officer' : 'Infantry'}
+                              {member.role === 'baron' ? 'Baron' :
+                               member.role === 'knight' ? 'Knight' :
+                               member.role === 'officer' ? 'Officer' : 'Infantry'}
                             </span>
                           </div>
                           <span className="text-[10px] text-slate-500">{member.email}</span>
@@ -320,14 +347,38 @@ export default function MobileTeamDashboard() {
                         </span>
 
                         <div className="flex gap-2">
-                          {isMainTeamLeader && !member.directLeaderUsername && (
+                          {isMainTeamLeader && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2.5 text-[10px] font-bold border-stone-700 text-stone-300 bg-stone-850"
+                                >
+                                  Promote
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-stone-900 border border-stone-800 text-slate-200">
+                                <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'officer')} className="hover:bg-stone-850 text-[10px] font-bold cursor-pointer">
+                                  Officer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'knight')} className="hover:bg-stone-850 text-[10px] font-bold cursor-pointer">
+                                  Knight
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'baron')} className="hover:bg-stone-850 text-[10px] font-bold cursor-pointer">
+                                  Baron
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                          {isMainTeamLeader && member.role !== 'infantry' && (
                             <Button
-                              onClick={() => member.role === 'junior_team_leader' ? handleDemoteClick(member.id, member.name) : handlePromoteClick(member.id, member.name)}
+                              onClick={() => demoteToPlayer(member.id)}
                               variant="outline"
                               size="sm"
                               className="h-7 px-2.5 text-[10px] font-bold border-stone-700 text-stone-300 bg-stone-850"
                             >
-                              {member.role === 'junior_team_leader' ? 'Demote' : 'Promote'}
+                              Demote
                             </Button>
                           )}
                           <Button
@@ -344,6 +395,50 @@ export default function MobileTeamDashboard() {
                 )}
               </AnimatePresence>
             </div>
+          </div>
+        )}
+
+        {/* Tab content: JOIN REQUESTS */}
+        {filterTab === 'requests' && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider">
+              Pending Join Requests
+            </h3>
+            
+            {joinRequests.length === 0 ? (
+              <div className="text-center py-12 bg-stone-900 border border-stone-800 rounded-3xl text-slate-500 font-bold uppercase tracking-wider text-xs">
+                No pending requests.
+              </div>
+            ) : (
+              joinRequests.map((req: any) => (
+                <div key={req.id} className="bg-stone-900 border border-stone-800 rounded-2xl p-4 flex justify-between items-center shadow-md">
+                  <div>
+                    <h4 className="font-bold text-white text-sm">
+                      {req.profiles?.display_name || req.profiles?.username}
+                    </h4>
+                    <p className="text-[9px] text-slate-500">
+                      Requested: {new Date(req.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => approveJoinRequest(req.id)}
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 text-xs"
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      onClick={() => rejectJoinRequest(req.id)}
+                      size="sm"
+                      className="bg-red-650 hover:bg-red-700 text-white font-bold h-8 text-xs"
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 

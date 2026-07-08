@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
     // Ensure role
     const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
     if (!role) {
-      await supabase.from("user_roles").insert({ user_id: userId, role: "player" });
+      await supabase.from("user_roles").insert({ user_id: userId, role: "infantry" });
     }
 
     // 4. Get tokens for auto-login

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { MedievalKingBanner } from '@/mobile/components/MedievalKingBanner';
+import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
@@ -116,7 +116,7 @@ export default function MobileLoginScreen() {
 
       <div className="flex-1 flex flex-col justify-center">
         {/* King + Advisors Banner */}
-        <MedievalKingBanner compact className="mb-4" />
+        <MedievalCharacterBanner compact className="mb-4" />
 
         <div className="text-center mb-5">
           <h1 className="text-xl font-black font-serif text-yellow-500 tracking-wide">

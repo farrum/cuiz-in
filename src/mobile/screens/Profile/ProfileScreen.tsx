@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
   const userRole = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ROLE) : null;
-  const isTeamLeader = userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader';
+  const isTeamLeader = ['admin', 'king', 'baron', 'knight', 'officer'].includes(userRole || '');
 
   useEffect(() => {
     if (!uid) return;
@@ -173,7 +173,7 @@ export default function ProfileScreen() {
             <div>
               <p className="font-bold text-sm">Team Control Center</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {userRole === 'junior_team_leader' ? 'Junior Team Leader' : 'Main Team Leader'} Dashboard
+                {(userRole || 'infantry').toUpperCase()} Dashboard
               </p>
             </div>
           </div>

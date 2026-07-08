@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark, ChevronRight } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
-import { MedievalKingBanner } from '@/mobile/components/MedievalKingBanner';
+import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
 import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
@@ -69,72 +69,83 @@ export default function HubScreen() {
   const [baronTasks, setBaronTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadTasks = () => {
-      const stored = localStorage.getItem('baron_tasks_data');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
-          const filtered = parsed.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId);
-          setBaronTasks(filtered);
-        } catch (e) {
-          console.error(e);
-        }
+    const loadTasks = async () => {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!userId) return;
+      
+      const { data, error } = await supabase
+        .from('empire_tasks' as any)
+        .select('*')
+        .or(`assigned_to.eq.${userId},assigned_to.is.null`)
+        .neq('status', 'claimed');
+      
+      if (!error && data) {
+        const mapped = data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || '',
+          targetCount: t.target_count,
+          currentCount: t.current_count,
+          type: t.type,
+          rewardGems: t.reward_gems,
+          rewardStars: t.reward_stars,
+          rewardShards: t.reward_shards,
+          shardType: t.shard_type,
+          status: t.status,
+          assignedTo: t.assigned_to || 'all'
+        }));
+        setBaronTasks(mapped);
       }
     };
     loadTasks();
 
-    window.addEventListener('baronTasksUpdated', loadTasks);
-    return () => {
-      window.removeEventListener('baronTasksUpdated', loadTasks);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleAction = (e: Event) => {
+    const handleAction = async (e: Event) => {
       const customEvent = e as CustomEvent;
       const type = customEvent.detail?.type;
       if (!type) return;
 
-      const stored = localStorage.getItem('baron_tasks_data');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
-          let updatedAny = false;
-          const updated = parsed.map((t: any) => {
-            const matchesAssignee = t.assignedTo === 'all' || t.assignedTo === userId;
-            if (matchesAssignee && t.type === type && t.status === 'active') {
-              const newCount = t.currentCount + 1;
-              const isCompleted = newCount >= t.targetCount;
-              updatedAny = true;
-              return { 
-                ...t, 
-                currentCount: newCount,
-                status: isCompleted ? 'completed' : 'active'
-              };
-            }
-            return t;
-          });
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!userId) return;
 
-          if (updatedAny) {
-            localStorage.setItem('baron_tasks_data', JSON.stringify(updated));
-            setBaronTasks(updated.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId));
-            if (updated.some((t: any) => t.status === 'completed' && t.type === type)) {
+      try {
+        const { data: tasks, error } = await supabase
+          .from('empire_tasks' as any)
+          .select('*')
+          .eq('type', type)
+          .eq('status', 'active')
+          .or(`assigned_to.eq.${userId},assigned_to.is.null`);
+
+        if (!error && tasks) {
+          for (const task of tasks) {
+            const newCount = task.current_count + 1;
+            const isCompleted = newCount >= task.target_count;
+            
+            await supabase
+              .from('empire_tasks' as any)
+              .update({
+                current_count: newCount,
+                status: isCompleted ? 'completed' : 'active'
+              })
+              .eq('id', task.id);
+
+            if (isCompleted) {
               toast({
                 title: "Contract Completed!",
                 description: "Open the Hub to claim your reward stars, gems, and shards!",
               });
             }
           }
-        } catch (e) {
-          console.error(e);
+          loadTasks();
         }
+      } catch (err) {
+        console.error('Error handling task action:', err);
       }
     };
 
+    window.addEventListener('baronTasksUpdated', loadTasks);
     window.addEventListener('baronTaskAction' as any, handleAction);
     return () => {
+      window.removeEventListener('baronTasksUpdated', loadTasks);
       window.removeEventListener('baronTaskAction' as any, handleAction);
     };
   }, [gems, stars]);
@@ -143,22 +154,41 @@ export default function HubScreen() {
     haptics('success');
     audioManager.playSFX('chest');
 
-    const stored = localStorage.getItem('baron_tasks_data');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const updated = parsed.map((t: any) => {
-          if (t.id === taskId) {
-            return { ...t, status: 'claimed' };
-          }
-          return t;
-        });
-        localStorage.setItem('baron_tasks_data', JSON.stringify(updated));
-        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
-        setBaronTasks(updated.filter((t: any) => t.assignedTo === 'all' || t.assignedTo === userId));
-      } catch (e) {
-        console.error(e);
+    try {
+      const { error } = await supabase
+        .from('empire_tasks' as any)
+        .update({ status: 'claimed' })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      // Force reload tasks
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (userId) {
+        const { data } = await supabase
+          .from('empire_tasks' as any)
+          .select('*')
+          .or(`assigned_to.eq.${userId},assigned_to.is.null`)
+          .neq('status', 'claimed');
+        if (data) {
+          setBaronTasks(data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description || '',
+            targetCount: t.target_count,
+            currentCount: t.current_count,
+            type: t.type,
+            rewardGems: t.reward_gems,
+            rewardStars: t.reward_stars,
+            rewardShards: t.reward_shards,
+            shardType: t.shard_type,
+            status: t.status,
+            assignedTo: t.assigned_to || 'all'
+          })));
+        }
       }
+    } catch (e) {
+      console.error('Error claiming task:', e);
     }
 
     const newGems = gems + gemsReward;
@@ -288,9 +318,9 @@ export default function HubScreen() {
         </div>
       </div>
 
-      {/* ═══ King's Court ═══ */}
+      {/* ═══ King's Court / Character Banner ═══ */}
       <section className="relative mb-4">
-        <MedievalKingBanner activeSpeech={activeSpeech} activeId={activeId} compact />
+        <MedievalCharacterBanner compact />
       </section>
 
       {/* Sign-in CTA for guests */}

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'rea
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { HelmetProvider } from 'react-helmet-async';
+import { PromotionAnimation } from '@/components/PromotionAnimation';
 import { useEffect, useState, Suspense } from 'react';
 import { supabase, setupRealtimeSubscriptions } from '@/integrations/supabase/client';
 import { fetchAllAppData } from '@/integrations/supabase/client';
@@ -285,6 +286,7 @@ function App() {
       <HelmetProvider>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
           <Toaster />
+          <PromotionAnimation />
           <Router>
             <Suspense fallback={null}>
               <ScrollToTop />

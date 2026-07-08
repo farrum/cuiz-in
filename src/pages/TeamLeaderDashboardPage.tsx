@@ -24,6 +24,12 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '@/components/ui/dropdown-menu';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -39,10 +45,13 @@ const TeamLeaderDashboardPage = () => {
     assignedTasks = [],
     assignTask,
     deleteTask,
-    awardBonus
+    awardBonus,
+    joinRequests = [],
+    approveJoinRequest,
+    rejectJoinRequest
   } = useTeamLeaderDashboard();
 
-  const [activeTab, setActiveTab] = useState<'mercenaries' | 'tasks' | 'invite'>('mercenaries');
+  const [activeTab, setActiveTab] = useState<'mercenaries' | 'requests' | 'tasks' | 'invite'>('mercenaries');
   
   // Task creator state
   const [taskTitle, setTaskTitle] = useState('');
@@ -130,7 +139,7 @@ const TeamLeaderDashboardPage = () => {
     );
   }
 
-  const officersCount = teamMembers.filter(m => m.role === 'junior_team_leader').length;
+  const officersCount = teamMembers.filter(m => m.role === 'officer').length;
 
   return (
     <PageLayout showNewsTicker={false}>
@@ -224,6 +233,19 @@ const TeamLeaderDashboardPage = () => {
               >
                 ⚔️ Mercenaries
               </button>
+              {joinRequests.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all h-9 flex items-center relative ${
+                    activeTab === 'requests' ? 'medieval-btn' : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  📥 Requests
+                  <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-red-650 text-[9px] font-bold text-white rounded-full flex items-center justify-center border border-stone-900 animate-bounce">
+                    {joinRequests.length}
+                  </span>
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('tasks')}
                 className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all h-9 flex items-center ${
@@ -279,11 +301,16 @@ const TeamLeaderDashboardPage = () => {
                           </td>
                           <td className="py-4 px-3">
                             <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
-                              member.role === 'junior_team_leader' 
-                                ? 'bg-indigo-950/50 border-indigo-700 text-indigo-300' 
-                                : 'bg-stone-950/50 border-stone-700 text-slate-400'
+                              member.role === 'baron' ? 'bg-amber-950/50 border-amber-700 text-amber-300' :
+                              member.role === 'knight' ? 'bg-blue-950/50 border-blue-700 text-blue-300' :
+                              member.role === 'officer' ? 'bg-indigo-950/50 border-indigo-700 text-indigo-300' :
+                              member.role === 'admin' || member.role === 'king' ? 'bg-yellow-950/50 border-yellow-700 text-yellow-500' :
+                              'bg-stone-950/50 border-stone-700 text-slate-400'
                             }`}>
-                              {member.role === 'junior_team_leader' ? 'Officer' : 'Infantry'}
+                              {member.role === 'admin' || member.role === 'king' ? 'King' :
+                               member.role === 'baron' ? 'Baron' :
+                               member.role === 'knight' ? 'Knight' :
+                               member.role === 'officer' ? 'Officer' : 'Infantry'}
                             </span>
                           </td>
                           <td className="py-4 px-3">
@@ -307,25 +334,37 @@ const TeamLeaderDashboardPage = () => {
                           </td>
                           <td className="py-4 px-3">
                             <div className="flex gap-2">
-                              {/* Officer Promotion / Demotion */}
+                              {/* Promotion Dropdown */}
                               {isMainTeamLeader && (
-                                member.role !== 'junior_team_leader' ? (
-                                  <Button 
-                                    onClick={() => promoteToJunior(member.id)}
-                                    size="sm"
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 h-7 rounded text-[10px]"
-                                  >
-                                    Promote
-                                  </Button>
-                                ) : (
-                                  <Button 
-                                    onClick={() => demoteToPlayer(member.id)}
-                                    size="sm"
-                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 h-7 rounded text-[10px]"
-                                  >
-                                    Demote
-                                  </Button>
-                                )
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 h-7 rounded text-[10px]">
+                                      Promote
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="bg-stone-900 border border-stone-800 text-slate-200">
+                                    <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'officer')} className="hover:bg-stone-850 text-[11px] font-bold cursor-pointer">
+                                      Promote to Officer
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'knight')} className="hover:bg-stone-850 text-[11px] font-bold cursor-pointer">
+                                      Promote to Knight
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => promoteToJunior(member.id, 'baron')} className="hover:bg-stone-850 text-[11px] font-bold cursor-pointer">
+                                      Promote to Baron
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                              
+                              {/* Demote Button */}
+                              {isMainTeamLeader && member.role !== 'infantry' && (
+                                <Button 
+                                  onClick={() => demoteToPlayer(member.id)}
+                                  size="sm"
+                                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 h-7 rounded text-[10px]"
+                                >
+                                  Demote
+                                </Button>
                               )}
                               
                               {/* Grant Bonus Tribute */}
@@ -343,6 +382,60 @@ const TeamLeaderDashboardPage = () => {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: TEAM JOIN REQUESTS */}
+          {activeTab === 'requests' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-black uppercase tracking-widest text-amber-500" style={{ fontFamily: "'Cinzel', serif" }}>
+                Join Requests
+              </h2>
+              <div className="overflow-x-auto bg-stone-900/90 border-4 border-double border-amber-500/20 rounded-3xl p-4 shadow-xl">
+                {joinRequests.length === 0 ? (
+                  <p className="text-center py-12 text-slate-500 font-bold uppercase tracking-widest">
+                    No pending team join requests at this time.
+                  </p>
+                ) : (
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-stone-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                        <th className="pb-3 px-3">Mercenary</th>
+                        <th className="pb-3 px-3">Date Requested</th>
+                        <th className="pb-3 px-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-850">
+                      {joinRequests.map((req: any) => (
+                        <tr key={req.id} className="hover:bg-stone-950/20 transition-colors">
+                          <td className="py-4 px-3 text-sm font-bold text-white">
+                            {req.profiles?.display_name || req.profiles?.username}
+                          </td>
+                          <td className="py-4 px-3 text-slate-400">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-4 px-3 text-right flex justify-end gap-2">
+                            <Button 
+                              onClick={() => approveJoinRequest(req.id)}
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8"
+                            >
+                              Approve
+                            </Button>
+                            <Button 
+                              onClick={() => rejectJoinRequest(req.id)}
+                              size="sm"
+                              className="bg-red-650 hover:bg-red-700 text-white font-bold h-8"
+                            >
+                              Reject
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           )}
