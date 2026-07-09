@@ -330,6 +330,11 @@ function App() {
               <Route path="/login" element={
                 <LoginPage />
               } />
+              <Route path="/.lovable/oauth/consent" element={
+                <Suspense fallback={<PageLoader />}>
+                  <OAuthConsent />
+                </Suspense>
+              } />
               <Route path="/forgot-password" element={
                 <Suspense fallback={<PageLoader />}>
                   <ForgotPasswordPage />
