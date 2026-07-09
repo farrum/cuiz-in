@@ -10,7 +10,7 @@ const ResetLegacyPlayersButton: React.FC = () => {
   const { toast } = useToast();
 
   const handleClick = async () => {
-    if (!confirm("Reset passwords for ALL legacy 'player*' accounts to !12345@ABc?\n\nThis does not affect quizadmin or real users.")) {
+    if (!confirm("Reset passwords for ALL legacy 'player*' accounts to a unique random password each?\n\nAffected users must use the password-recovery flow to set a new password. This does not affect quizadmin or real users.")) {
       return;
     }
     setRunning(true);
@@ -28,7 +28,7 @@ const ResetLegacyPlayersButton: React.FC = () => {
       setSummary(data.summary);
       toast({
         title: 'Reset complete',
-        description: `Password set to ${data.password}. See summary below.`,
+        description: 'Each legacy account received a unique random password. Users must reset via password recovery. See summary below.',
       });
     } finally {
       setRunning(false);
@@ -42,8 +42,9 @@ const ResetLegacyPlayersButton: React.FC = () => {
         Reset legacy player passwords
       </div>
       <p className="text-xs text-muted-foreground">
-        Sets every <code>player*</code> account's password to <code>!12345@ABc</code> and provisions
-        a Supabase Auth user where missing. The current admin (quizadmin) is skipped.
+        Sets every <code>player*</code> account's password to a unique random value and provisions
+        a Supabase Auth user where missing. Passwords are not displayed; affected users must reset
+        via the password-recovery flow. The current admin (quizadmin) is skipped.
       </p>
       <Button onClick={handleClick} disabled={running} variant="secondary">
         {running ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Resetting…</> : 'Reset legacy players'}
