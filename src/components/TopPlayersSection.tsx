@@ -43,11 +43,20 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     try {
       setLoading(true);
       
-      // Check if user is admin
-      const isAdmin = localStorage.getItem('quiz_app_admin_auth') === 'true';
+      // Derive admin status from the Supabase session + database, never localStorage.
+      const { data: { user } } = await supabase.auth.getUser();
+      let isAdmin = false;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .maybeSingle();
+        isAdmin = !!profile?.is_admin;
+      }
       
-      if (isAdmin) {
-        const adminUserId = localStorage.getItem('quiz_app_user_id');
+      if (isAdmin && user) {
+        const adminUserId = user.id;
         const { data, error } = await supabase.functions.invoke('admin-get-reports', {
           body: { 
             reportType: 'top-players',
