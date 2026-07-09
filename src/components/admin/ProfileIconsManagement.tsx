@@ -91,9 +91,17 @@ const ProfileIconsManagement: React.FC = () => {
     }
     
     try {
-      // Ensure admin session authentication
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      if (!isAdminAuth) {
+      // Verify admin status from the Supabase session + database (never localStorage).
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Admin authentication required");
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!profile?.is_admin) {
         throw new Error("Admin authentication required");
       }
       
