@@ -37,7 +37,7 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
           .eq('user_id', storedUserId)
           .maybeSingle();
 
-        const userRole = roleData?.role || 'infantry';
+        const userRole = (roleData as any)?.role || 'infantry';
         setRole(userRole);
 
         // Fetch username

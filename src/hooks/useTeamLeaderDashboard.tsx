@@ -135,7 +135,7 @@ export const useTeamLeaderDashboard = () => {
 
       const newTask: BaronTask = {
         ...taskData,
-        id: data.id,
+        id: (data as any).id,
         currentCount: 0,
         status: 'active'
       };
