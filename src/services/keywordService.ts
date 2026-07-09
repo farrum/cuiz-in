@@ -67,7 +67,7 @@ export const generateMetaKeywords = async (): Promise<string[]> => {
     
     const { data: questions, error } = await supabase
       .from('quiz_questions')
-      .select('*');
+      .select('id, question, options, category, difficulty, points, image_url');
       
     if (error) throw error;
     
