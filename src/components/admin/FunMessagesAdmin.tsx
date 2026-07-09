@@ -45,17 +45,8 @@ const FunMessagesAdmin: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // First check localStorage for admin auth
-      const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      if (isAdminAuth) {
-        console.log('Admin authenticated via localStorage');
-        setIsAdmin(true);
-        setAdminCheckComplete(true);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Get current user from Supabase
+      // Always derive admin status from the Supabase session + database.
+      // localStorage is never trusted for authorization.
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -73,7 +64,7 @@ const FunMessagesAdmin: React.FC = () => {
         .from('profiles')
         .select('is_admin')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error checking admin status:', error);
@@ -82,7 +73,6 @@ const FunMessagesAdmin: React.FC = () => {
         console.log('Admin check result:', data);
         if (data?.is_admin) {
           console.log('User is confirmed as admin in database');
-          localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
           setIsAdmin(true);
         } else {
           console.log('User is not an admin in database');
