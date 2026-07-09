@@ -30,18 +30,24 @@ const AdminAdDebugPanel: React.FC<{ className?: string }> = ({ className = '' })
   
   // Check if user is admin
   useEffect(() => {
-    const checkAdmin = () => {
-      const adminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-      const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-      const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-      
-      const isAdminUser = adminAuth || userRole === 'admin' || userName === 'admin' || userName === 'quizadmin';
-      setIsAdmin(isAdminUser);
+    let active = true;
+    const checkAdmin = async () => {
+      // Verify admin status from the Supabase session + database, never localStorage.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (active) setIsAdmin(!!profile?.is_admin);
     };
     
     checkAdmin();
-    window.addEventListener('storage', checkAdmin);
-    return () => window.removeEventListener('storage', checkAdmin);
+    return () => { active = false; };
   }, []);
   
   // Load ad slots and detect provider
