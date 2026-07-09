@@ -256,7 +256,7 @@ export const seedAdditionalQuizQuestions = async (): Promise<boolean> => {
     // Check how many questions we already have
     const { count, error } = await supabase
       .from('quiz_questions')
-      .select('*', { count: 'exact', head: true });
+      .select('id', { count: 'exact', head: true });
       
     if (error) {
       console.error('Error checking question count:', error);

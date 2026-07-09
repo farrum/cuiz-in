@@ -23,7 +23,7 @@ export const fetchAllAppData = async () => {
       supabase.from('profiles' as ValidTableName).select('*').limit(500),
       supabase.from('login_logs' as ValidTableName).select('*').order('login_time', { ascending: false }).limit(100),
       supabase.from('ad_slots' as ValidTableName).select('*'),
-      supabase.from('quiz_questions' as ValidTableName).select('*').limit(200),
+      supabase.from('quiz_questions' as ValidTableName).select('id, question, options, category, difficulty, points, image_url').limit(200),
       supabase.from('ad_views' as ValidTableName).select('*').limit(100),
       supabase.from('ad_clicks' as ValidTableName).select('*').limit(100),
       supabase.from('login_streaks' as ValidTableName).select('*').limit(100),

@@ -21,15 +21,7 @@ export function ProfileIconUploader() {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        // First check if admin auth is in local storage
-        const isAdminAuth = localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-        
-        if (isAdminAuth) {
-          setIsAdmin(true);
-          return;
-        }
-        
-        // If not in localStorage, check session
+        // Always verify admin status via the Supabase session + database.
         const { data } = await supabase.auth.getSession();
         
         if (data?.session?.user) {
@@ -37,11 +29,10 @@ export function ProfileIconUploader() {
             .from('profiles')
             .select('is_admin')
             .eq('id', data.session.user.id)
-            .single();
+            .maybeSingle();
             
           if (profile?.is_admin) {
             setIsAdmin(true);
-            localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
           }
         }
       } catch (error) {

@@ -23,7 +23,7 @@ export function PromotionAnimation() {
           .eq('user_id', storedUserId)
           .maybeSingle();
 
-        const activeRole = roleData?.role || 'infantry';
+        const activeRole = (roleData as any)?.role || 'infantry';
         const lastSeenRole = localStorage.getItem('last_seen_user_role') || 'infantry';
 
         // Hierarchy hierarchy level check

@@ -6,7 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const NEW_PASSWORD = '!12345@ABc';
+// Generate a strong, unique password per user. Never hardcode or return
+// a shared password.
+function generatePassword(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  const base = btoa(String.fromCharCode(...bytes)).replace(/[^a-zA-Z0-9]/g, '');
+  // Ensure complexity requirements are met.
+  return `Aa1!${base.slice(0, 20)}`;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -88,10 +96,11 @@ serve(async (req) => {
         : `${p.username.toLowerCase().replace(/\s+/g, '')}@cuiz.local`;
 
       const existingAuth = authById.get(p.id);
+      const newPassword = generatePassword();
       try {
         if (existingAuth) {
           const { error: updErr } = await admin.auth.admin.updateUserById(p.id, {
-            password: NEW_PASSWORD,
+            password: newPassword,
             email: existingAuth.email || desiredEmail,
             email_confirm: true,
           });
@@ -106,7 +115,7 @@ serve(async (req) => {
           const { error: createErr } = await admin.auth.admin.createUser({
             id: p.id,
             email: desiredEmail,
-            password: NEW_PASSWORD,
+            password: newPassword,
             email_confirm: true,
             user_metadata: { username: p.username, display_name: p.username },
           });
@@ -128,7 +137,10 @@ serve(async (req) => {
       acc[r.status] = (acc[r.status] ?? 0) + 1; return acc;
     }, {});
 
-    return new Response(JSON.stringify({ success: true, password: NEW_PASSWORD, summary, results }), {
+    // Do NOT return plaintext passwords in the response. Each affected user
+    // received a unique random password and must reset it via the standard
+    // password-recovery flow.
+    return new Response(JSON.stringify({ success: true, summary, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: any) {

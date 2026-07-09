@@ -116,7 +116,7 @@ export default function HubScreen() {
           .or(`assigned_to.eq.${userId},assigned_to.is.null`);
 
         if (!error && tasks) {
-          for (const task of tasks) {
+          for (const task of (tasks as any[])) {
             const newCount = task.current_count + 1;
             const isCompleted = newCount >= task.target_count;
             
