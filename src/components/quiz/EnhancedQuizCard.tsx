@@ -97,7 +97,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [smartClue, setSmartClue] = useState<string | null>(null);
   const [counselorDialogue, setCounselorDialogue] = useState<{ name: string; avatar: string; quote: string } | null>(null);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTickRef = useRef<number>(0);
   
   const { playCorrectSound, playWrongSound, playTickSound, playTimeUpSound, playSelectSound } = useQuizSounds();

@@ -50,7 +50,7 @@ const InteractiveQuizPreview: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTickRef = useRef<number>(0);
 
   const { playCorrectSound, playWrongSound, playTickSound, playTimeUpSound, playSelectSound } = useQuizSounds();

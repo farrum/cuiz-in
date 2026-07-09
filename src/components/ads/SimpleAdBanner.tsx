@@ -96,7 +96,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
         data-execution-status={executionStatus}
       />
 
-      {error && process.env.NODE_ENV === "development" && (
+      {error && import.meta.env.DEV && (
         <div className="text-[10px] text-destructive text-center mt-1">
           Ad Error: {error}
         </div>

@@ -26,7 +26,7 @@ export const useAdState = () => {
   const lastFetchTimeRef = useRef<number>(0);
   const isMountedRef = useRef<boolean>(true);
   const instanceId = useRef<string>(uuidv4());
-  const adRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const adRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Setup and cleanup
   useEffect(() => {

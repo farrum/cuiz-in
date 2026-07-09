@@ -210,7 +210,7 @@ export default function EmpireQuestsPage() {
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
   const [completedCampaigns, setCompletedCampaigns] = useState<string[]>([]);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
 
