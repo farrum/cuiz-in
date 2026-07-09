@@ -17,6 +17,17 @@ const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Honor a same-origin ?next= redirect (used by the OAuth consent flow).
+  const getNextPath = (): string | null => {
+    try {
+      const raw = new URLSearchParams(window.location.search).get('next');
+      if (raw && raw.startsWith('/') && !raw.startsWith('//')) return raw;
+    } catch (_e) {
+      /* ignore */
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -107,7 +118,10 @@ const UserLogin: React.FC = () => {
 
       // Quick role check for navigation (the full hydration happens via the auth listener)
       const userRole = data.role || 'player';
-      if (userRole === 'admin') {
+      const nextPath = getNextPath();
+      if (nextPath) {
+        navigate(nextPath);
+      } else if (userRole === 'admin') {
         navigate('/admin');
       } else {
         navigate('/quiz');
