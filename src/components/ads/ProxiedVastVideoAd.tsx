@@ -38,7 +38,7 @@ const ProxiedVastVideoAd: React.FC<ProxiedVastVideoAdProps> = ({
   const [clickUrl, setClickUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<'resolving' | 'buffering' | 'playing' | 'failed'>('resolving');
   const trackedRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;

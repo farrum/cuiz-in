@@ -63,7 +63,7 @@ export function useSupabaseRealtime(
   const [lastUpdate, setLastUpdate] = useState<RealtimePayload | null>(null);
   const { toast } = useToast();
   
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPayloadHashRef = useRef<string | null>(null);
   const channelRef = useRef<any>(null);
 

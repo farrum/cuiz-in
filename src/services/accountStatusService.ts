@@ -7,7 +7,7 @@ import { checkAndSuspendInactiveAccounts } from '@/utils/accountSuspension';
  * for potential future use or additional account status checks
  */
 export const accountStatusService = {
-  checkInterval: null as NodeJS.Timeout | null,
+  checkInterval: null as ReturnType<typeof setTimeout> | null,
   
   /**
    * Start the account status checking service

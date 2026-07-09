@@ -109,7 +109,7 @@ export const useProfileEditorState = ({
           display_name: finalDisplayName,
           email: finalEmail || null,
           provider: 'google'
-        })
+        } as any)
         .eq('id', userId);
 
       if (updateError) {

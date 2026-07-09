@@ -46,7 +46,7 @@ export const useMonthlyReset = () => {
                 activeUsers.map(user => ({
                   user_id: user.id,
                   month: currentMonth,
-                  gems: 0
+                  points: 0
                 })),
                 { onConflict: 'user_id,month' }
               );
