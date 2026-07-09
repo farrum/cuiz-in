@@ -78,7 +78,7 @@ export const generateMetaKeywords = async (): Promise<string[]> => {
         id: q.id,
         question: q.question,
         options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
-        correctAnswer: q.correct_answer,
+        correctAnswer: '',
         difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
         category: q.category,
         gems: q.gems || 10,
