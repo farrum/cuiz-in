@@ -53,6 +53,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Lazy load non-critical pages for code splitting
 const QuizPage = lazyWithRetry(() => import("@/pages/QuizPage"));
+const OAuthConsent = lazyWithRetry(() => import("@/pages/OAuthConsent"));
 const AnswerPage = lazyWithRetry(() => import("@/pages/AnswerPage"));
 const ReferralPage = lazyWithRetry(() => import("@/pages/ReferralPage"));
 const ReferralProgramPage = lazyWithRetry(() => import("@/pages/ReferralProgramPage"));
@@ -328,6 +329,11 @@ function App() {
               } />
               <Route path="/login" element={
                 <LoginPage />
+              } />
+              <Route path="/.lovable/oauth/consent" element={
+                <Suspense fallback={<PageLoader />}>
+                  <OAuthConsent />
+                </Suspense>
               } />
               <Route path="/forgot-password" element={
                 <Suspense fallback={<PageLoader />}>
