@@ -256,12 +256,12 @@ const AdminLoginLogs: React.FC = () => {
       
       {isLoading ? (
         <div className="text-center py-8 border rounded-lg">
-          <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+          <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground animate-spin" />
           <p className="text-muted-foreground">Loading login logs...</p>
         </div>
       ) : filteredLogs.length === 0 ? (
         <div className="text-center py-8 border rounded-lg">
-          <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+          <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-muted-foreground">No login logs found</p>
         </div>
       ) : (

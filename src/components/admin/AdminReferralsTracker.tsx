@@ -297,7 +297,7 @@ const AdminReferralsTracker: React.FC = () => {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 animate-spin" />
+                  <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground animate-spin" />
                   Loading referrals...
                 </TableCell>
               </TableRow>

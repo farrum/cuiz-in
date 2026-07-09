@@ -446,7 +446,7 @@ const RequestsManagementPanel: React.FC = () => {
             
             {!isLoading && reactivationRequests.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <UserCheck className="h-12 w-12 mb-3 text-muted-foreground/50" />
+                <UserCheck className="h-12 w-12 mb-3 text-muted-foreground" />
                 <h3 className="font-medium text-lg">No reactivation requests</h3>
                 <p>There are no pending reactivation requests at this time.</p>
               </div>
@@ -464,7 +464,7 @@ const RequestsManagementPanel: React.FC = () => {
             
             {!isLoading && pendingPayments.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <CreditCard className="h-12 w-12 mb-3 text-muted-foreground/50" />
+                <CreditCard className="h-12 w-12 mb-3 text-muted-foreground" />
                 <h3 className="font-medium text-lg">No payment requests</h3>
                 <p>There are no pending payment requests at this time.</p>
               </div>
