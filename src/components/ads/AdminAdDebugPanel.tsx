@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bug, RefreshCw, AlertTriangle, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { STORAGE_KEYS } from '@/utils/quizData';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdSlotInfo {
   id: string;
