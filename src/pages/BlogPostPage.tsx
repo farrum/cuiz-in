@@ -220,7 +220,7 @@ const BlogPostPage: React.FC = () => {
           
           <div 
             className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || '') }}
           />
           
           {/* Middle Ad Banner */}
