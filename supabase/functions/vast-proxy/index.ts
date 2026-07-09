@@ -17,6 +17,53 @@ const MOBILE_UA =
 const DEFAULT_VAST = "https://vast.yomeno.xyz/vast?spot_id=1494657";
 const MAX_WRAPPERS = 6;
 
+// Strict allowlist of permitted ad-network hosts. Only https:// URLs whose
+// hostname matches one of these suffixes may be fetched server-side. This
+// prevents SSRF against cloud metadata endpoints and internal services.
+const ALLOWED_HOST_SUFFIXES = [
+  "yomeno.xyz",
+  "doubleclick.net",
+  "googlesyndication.com",
+  "google.com",
+  "adnxs.com",
+  "springserve.com",
+  "spotxchange.com",
+  "spotx.tv",
+];
+
+function isPrivateHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal")) return true;
+  // IPv6 loopback / link-local / unique-local
+  if (h === "::1" || h.startsWith("fe80") || h.startsWith("fc") || h.startsWith("fd")) return true;
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 0) return true;
+    if (a === 169 && b === 254) return true; // link-local / cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+  }
+  return false;
+}
+
+function isAllowedUrl(raw: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  if (isPrivateHost(host)) return false;
+  return ALLOWED_HOST_SUFFIXES.some(
+    (suffix) => host === suffix || host.endsWith(`.${suffix}`),
+  );
+}
+
 function cdata(raw: string | null): string | null {
   if (!raw) return null;
   return raw.replace(/<!\[CDATA\[/g, "").replace(/\]\]>/g, "").trim() || null;
@@ -73,11 +120,17 @@ async function resolve(
 ): Promise<{ mediaUrl: string | null; clickUrl: string | null }> {
   if (depth > MAX_WRAPPERS) return { mediaUrl: null, clickUrl: null };
 
+  // SSRF guard: only fetch allowlisted https hosts, including wrapper redirects.
+  if (!isAllowedUrl(url)) {
+    throw new Error("Blocked: URL is not an allowed ad-network host");
+  }
+
   const res = await fetch(url, {
     headers: {
       "User-Agent": MOBILE_UA,
       Accept: "application/xml,text/xml,*/*",
     },
+    redirect: "manual",
   });
   if (!res.ok) throw new Error(`vast http ${res.status}`);
   const xml = await res.text();
@@ -109,6 +162,22 @@ Deno.serve(async (req) => {
       }
     }
     if (!tagUrl) tagUrl = DEFAULT_VAST;
+
+    // Reject any tagUrl that is not an allowlisted https ad-network host.
+    if (!isAllowedUrl(tagUrl)) {
+      return new Response(
+        JSON.stringify({
+          mediaUrl: null,
+          clickUrl: null,
+          impressions: [],
+          error: "Blocked: tagUrl is not an allowed ad-network host",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     // Always add a cache-buster + size hints so the network serves fresh
     // inventory instead of an empty dedupe response.
