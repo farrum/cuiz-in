@@ -25,6 +25,7 @@ export function PromotionAnimation() {
 
         const activeRole = (roleData as any)?.role || 'infantry';
         const lastSeenRole = localStorage.getItem('last_seen_user_role') || 'infantry';
+        const acknowledgedRole = localStorage.getItem('acknowledged_rank_role') || '';
 
         // Hierarchy hierarchy level check
         const levels: Record<string, number> = {
@@ -43,7 +44,9 @@ export function PromotionAnimation() {
         localStorage.setItem('last_seen_user_role', activeRole);
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, activeRole);
 
-        if (activeLevel > lastSeenLevel) {
+        // Only celebrate a genuine upgrade that hasn't already been acknowledged
+        if (activeLevel > lastSeenLevel && acknowledgedRole !== activeRole) {
+          setCurrentRole(activeRole);
           // Trigger promotion celebration!
           let name = 'Infantry';
           if (activeRole === 'officer') name = 'Officer';
@@ -104,6 +107,14 @@ export function PromotionAnimation() {
     };
   }, []);
 
+  const handleClose = () => {
+    setShow(false);
+    // Mark this rank as acknowledged so the celebration never shows again for it
+    if (currentRole) {
+      localStorage.setItem('acknowledged_rank_role', currentRole);
+    }
+  };
+
   return (
     <AnimatePresence>
       {show && (
@@ -112,7 +123,7 @@ export function PromotionAnimation() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm select-none"
-          onClick={() => setShow(false)}
+          onClick={handleClose}
         >
           <motion.div
             initial={{ scale: 0.8, y: 50, rotate: -2 }}
@@ -161,7 +172,7 @@ export function PromotionAnimation() {
             </p>
 
             <button
-              onClick={() => setShow(false)}
+              onClick={handleClose}
               className="mt-8 w-full bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white font-black py-3 px-6 rounded-2xl text-sm uppercase tracking-widest border-2 border-yellow-500/40 shadow-lg transition-transform transform active:scale-95"
             >
               Claim Rank
