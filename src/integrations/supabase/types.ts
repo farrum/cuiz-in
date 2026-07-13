@@ -1219,6 +1219,21 @@ export type Database = {
         Args: { p_icon_id: string }
         Returns: boolean
       }
+      admin_get_all_team_leaders_performance: {
+        Args: never
+        Returns: {
+          direct_team_size: number
+          last_active_date: string
+          leader_display_name: string
+          leader_id: string
+          leader_username: string
+          parent_leader_username: string
+          questions_answered: number
+          questions_correct: number
+          role: string
+          total_team_size: number
+        }[]
+      }
       admin_get_quiz_questions: {
         Args: { p_ids?: string[] }
         Returns: {
@@ -1240,6 +1255,19 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      admin_get_team_ad_performance: {
+        Args: never
+        Returns: {
+          ad_clicks: number
+          ad_impressions: number
+          ctr: number
+          leader_display_name: string
+          leader_id: string
+          leader_username: string
+          questions_answered: number
+          total_team_size: number
+        }[]
       }
       admin_insert_profile_icon: {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
