@@ -27,10 +27,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     try {
       setIsLoading(true);
 
-      // Call edge function - include adminUserId for legacy auth
+      // Prefer the real Supabase session; fall back to legacy admin id
+      const { data: { session } } = await supabase.auth.getSession();
       const adminUserId = localStorage.getItem('quiz_app_user_id');
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
-        body: { adminUserId }
+        body: { adminUserId },
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : undefined,
       });
 
       if (error) {
