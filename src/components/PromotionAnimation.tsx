@@ -8,6 +8,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 export function PromotionAnimation() {
   const [show, setShow] = useState<boolean>(false);
   const [rankName, setRankName] = useState<string>('');
+  const [currentRole, setCurrentRole] = useState<string>('');
   
   useEffect(() => {
     // Check for rank promotion by comparing current fetched role with stored role
