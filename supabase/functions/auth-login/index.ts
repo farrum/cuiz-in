@@ -76,12 +76,20 @@ serve(async (req) => {
       }
 
       if (!profile.email) {
-        console.log("[auth-login] No email for username:", identifier);
-        await logLogin(identifier, false);
-        return new Response(
-          JSON.stringify({ success: false, error: "Account needs to be re-registered with an email address" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.log("[auth-login] Profile missing email, fetching from auth.users:", identifier);
+        const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+        const authEmail = authUser?.user?.email;
+        if (authUserError || !authEmail) {
+          console.log("[auth-login] No auth email for username:", identifier, authUserError);
+          await logLogin(identifier, false);
+          return new Response(
+            JSON.stringify({ success: false, error: "Account needs to be re-registered with an email address" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // Backfill profile email for future logins
+        await supabaseAdmin.from("profiles").update({ email: authEmail }).eq("id", profile.id);
+        profile.email = authEmail;
       }
 
       email = profile.email;
