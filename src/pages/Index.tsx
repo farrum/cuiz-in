@@ -9,6 +9,7 @@ import HowItWorksSection from '@/components/home/HowItWorksSection';
 import CallToAction from '@/components/home/CallToAction';
 import DailyStreakTracker from '@/components/home/DailyStreakTracker';
 import ReferralPreview from '@/components/home/ReferralPreview';
+import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
 import DailyRewardsSection from '@/components/home/DailyRewardsSection';
@@ -110,11 +111,12 @@ const Index: React.FC = () => {
 
       {/* Engagement Section - Streak & Referral */}
       <section className="py-6 md:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <DailyStreakTracker />
             <ReferralPreview />
           </div>
+          <DailyBountyBoard />
         </div>
       </section>
 

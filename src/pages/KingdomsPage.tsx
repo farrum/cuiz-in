@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoatOfArmsShield } from '@/components/gamification/CoatOfArmsShield';
+import { getEquippedTitle, ARMORY_ITEMS } from '@/utils/shopData';
 
 interface Alliance {
   alliance_id: string;
@@ -47,6 +48,19 @@ export default function KingdomsPage() {
   const [myRole, setMyRole] = useState<string | null>(null);
   const [members, setMembers] = useState<AllianceMember[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Active Title state
+  const [equippedTitleStr, setEquippedTitleStr] = useState('');
+
+  useEffect(() => {
+    const titleId = getEquippedTitle();
+    const item = ARMORY_ITEMS.find(i => i.id === titleId);
+    if (item) {
+      setEquippedTitleStr(item.name.replace(' Title', ''));
+    } else {
+      setEquippedTitleStr('');
+    }
+  }, []);
 
   // Alliance creation form
   const [newName, setNewName] = useState('');
@@ -339,7 +353,7 @@ export default function KingdomsPage() {
 
   return (
     <PageLayout>
-      <div className="min-h-screen stone-wall pb-16 text-white font-sans">
+      <div className="min-h-screen stone-wall pb-16 text-foreground font-sans">
         
         {/* Banner Title */}
         <div className="wooden-door py-10 px-4 text-center">
@@ -359,14 +373,14 @@ export default function KingdomsPage() {
             
             {myAlliance ? (
               // ACTIVE MEMBER VIEW (GUILD HALL)
-              <div className="bg-slate-900 border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md">
+              <div className="bg-card border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md text-card-foreground">
                 
                 {/* Kingdom Header Card */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
                   <div className="flex items-center gap-4">
                     <CoatOfArmsShield crestString={myAlliance.crest_emoji} size="lg" />
                     <div>
-                      <h2 className="text-lg font-black uppercase font-serif text-white">{myAlliance.name}</h2>
+                      <h2 className="text-lg font-black uppercase font-serif text-foreground">{myAlliance.name}</h2>
                       <p className="text-xs text-slate-400 mt-0.5">"{myAlliance.description}"</p>
                     </div>
                   </div>
@@ -418,7 +432,14 @@ export default function KingdomsPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-sm">🛡️</span>
                             <div>
-                              <span className="text-xs font-black block text-slate-200">{member.username}</span>
+                              <span className="text-xs font-black block text-slate-200">
+                                {member.username}
+                                {member.username === username && equippedTitleStr && (
+                                  <span className="ml-1.5 text-[8px] font-black uppercase text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20">
+                                    {equippedTitleStr}
+                                  </span>
+                                )}
+                              </span>
                               <span className="text-[9px] text-slate-500">Joined {new Date(member.joined_at).toLocaleDateString()}</span>
                             </div>
                           </div>
@@ -505,8 +526,8 @@ export default function KingdomsPage() {
               <div className="space-y-6">
                 
                 {/* Construction Card */}
-                <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 shadow-md">
-                  <h2 className="text-lg font-black uppercase font-serif text-white mb-2 flex items-center gap-2">
+                <div className="bg-card border border-border rounded-3xl p-6 shadow-md text-card-foreground">
+                  <h2 className="text-lg font-black uppercase font-serif text-foreground mb-2 flex items-center gap-2">
                     <PlusCircle className="text-yellow-500 w-5 h-5" /> Establish Your Dynasty
                   </h2>
                   <p className="text-xs text-slate-400 mb-6 leading-relaxed">
@@ -617,9 +638,9 @@ export default function KingdomsPage() {
                 </div>
 
                 {/* Alliance search lists */}
-                <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 shadow-md">
+                <div className="bg-card border border-border rounded-3xl p-6 shadow-md text-card-foreground">
                   <div className="flex items-center justify-between gap-4 border-b border-slate-850 pb-3 mb-4">
-                    <h2 className="text-sm font-black uppercase text-white tracking-wider">Search Kingdoms</h2>
+                    <h2 className="text-sm font-black uppercase text-foreground tracking-wider">Search Kingdoms</h2>
                     
                     <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-slate-850 max-w-[200px]">
                       <Search className="w-3.5 h-3.5 text-slate-500" />
@@ -677,8 +698,8 @@ export default function KingdomsPage() {
           </div>
 
           {/* RIGHT COLUMN: GLOBAL LEADERBOARD */}
-          <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 shadow-md h-fit">
-            <h2 className="text-sm font-black uppercase font-serif tracking-widest text-white mb-2 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-md h-fit text-card-foreground">
+            <h2 className="text-sm font-black uppercase font-serif tracking-widest text-foreground mb-2 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-500" /> Regional Hegemons
             </h2>
             <p className="text-[10px] text-slate-400 mb-6 leading-relaxed">

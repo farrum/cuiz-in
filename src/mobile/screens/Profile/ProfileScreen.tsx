@@ -11,6 +11,20 @@ import { moodFromAccuracy, characterOfTheDay } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { ProfileEditSheet, MobileProfile } from './ProfileEditSheet';
+import { cn } from '@/lib/utils';
+import {
+  ARMORY_ITEMS,
+  getUserBalances,
+  purchaseItem,
+  getPurchasedItems,
+  getEquippedItems,
+  getEquippedTitle,
+  equipItem,
+  unequipItem,
+  equipTitle,
+  unequipTitle
+} from '@/utils/shopData';
+import { Award } from 'lucide-react';
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
@@ -29,6 +43,23 @@ export default function ProfileScreen() {
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
   const userRole = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ROLE) : null;
   const isTeamLeader = ['admin', 'king', 'baron', 'knight', 'officer'].includes(userRole || '');
+
+  // Shop States
+  const [purchased, setPurchased] = useState<string[]>([]);
+  const [equipped, setEquipped] = useState<Record<string, string>>({});
+  const [equippedTitleId, setEquippedTitleId] = useState('');
+  const [shopTrigger, setShopTrigger] = useState(0);
+
+  useEffect(() => {
+    setPurchased(getPurchasedItems());
+    setEquipped(getEquippedItems());
+    setEquippedTitleId(getEquippedTitle());
+  }, [shopTrigger]);
+
+  const reloadGems = () => {
+    const { gems } = getUserBalances();
+    setProfile(prev => prev ? { ...prev, gems } : prev);
+  };
 
   useEffect(() => {
     if (!uid) return;
@@ -106,21 +137,40 @@ export default function ProfileScreen() {
     );
   }
 
+  const equippedFrame = ARMORY_ITEMS.find(item => item.id === equipped.avatar_frame);
+  const equippedWeapon = ARMORY_ITEMS.find(item => item.id === equipped.weapon);
+  const equippedShield = ARMORY_ITEMS.find(item => item.id === equipped.shield);
+  const equippedTitle = ARMORY_ITEMS.find(item => item.id === equippedTitleId);
+
   return (
     <div className="px-4 pt-4 pb-32">
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={profile?.name ? `${profile.name}'s profile picture` : 'Your profile picture'} className="w-[90px] h-[90px] rounded-2xl object-cover iron-frame" />
-        ) : (
-          <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
-        )}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold truncate text-stone-100" style={{ fontFamily: "'Cinzel', serif" }}>{profile?.name || '…'}</h1>
-          {profile?.username && profile.username !== profile.name && (
-            <p className="text-xs text-stone-500 truncate">@{profile.username}</p>
+        <div className="relative">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={profile?.name ? `${profile.name}'s profile picture` : 'Your profile picture'} className={cn("w-[90px] h-[90px] rounded-2xl object-cover iron-frame transition-all duration-300", equippedFrame?.previewClass)} />
+          ) : (
+            <IdleMascot size={90} override={streak >= 3 ? 'excited' : undefined} />
           )}
-          <p className="text-sm text-amber-500 font-semibold">{(profile?.gems ?? 0).toLocaleString()} gems</p>
+          {equippedFrame && (
+            <span className="absolute -top-2.5 -right-2.5 text-xl select-none animate-pulse filter drop-shadow">
+              {equippedFrame.emoji}
+            </span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold truncate text-stone-100 font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{profile?.name || '…'}</h1>
+            {equippedTitle && (
+              <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit mt-1 tracking-wider">
+                {equippedTitle.emoji} {equippedTitle.name.replace(' Title', '')}
+              </span>
+            )}
+          </div>
+          {profile?.username && profile.username !== profile.name && (
+            <p className="text-xs text-stone-500 truncate mt-0.5">@{profile.username}</p>
+          )}
+          <p className="text-sm text-amber-500 font-semibold mt-1">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -196,6 +246,93 @@ export default function ProfileScreen() {
           correct={reports?.monthCorrect ?? 0}
           gems={profile?.monthly ?? 0}
         />
+      </div>
+
+      {/* Royal Shop & Armory Section */}
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 mb-3 flex items-center gap-1.5 pt-2">
+        <Award className="w-3.5 h-3.5 text-yellow-500" /> Royal Shop & Enhancements
+      </h2>
+      <div className="space-y-4 mb-6">
+        <div className="bg-stone-900/90 border border-stone-850 p-4 rounded-3xl space-y-4">
+          <p className="text-xs text-stone-400 leading-relaxed">
+            Acquire virtual enhancements, customize your avatar frame, or recruit advisors to assist you in battles.
+          </p>
+          
+          <div className="grid grid-cols-1 gap-3">
+            {ARMORY_ITEMS.map((item) => {
+              const isShard = item.type === 'counselor_shard';
+              const owned = purchased.includes(item.id);
+              const isEquipped = equipped[item.type] === item.id || (item.type === 'prestige_title' && equippedTitleId === item.id);
+              
+              return (
+                <div key={item.id} className="bg-stone-950/80 border border-stone-850/80 rounded-2xl p-3 flex items-center justify-between gap-3 text-left">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl select-none">{item.emoji}</span>
+                    <div>
+                      <h4 className="text-xs font-black text-white leading-none">{item.name}</h4>
+                      <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 mt-1 inline-block uppercase leading-none">
+                        {item.effect}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    {owned && !isShard ? (
+                      isEquipped ? (
+                        <button 
+                          onClick={() => {
+                            haptics('light');
+                            if (item.type === 'prestige_title') {
+                              unequipTitle();
+                            } else {
+                              unequipItem(item.type);
+                            }
+                            setShopTrigger(p => p + 1);
+                          }}
+                          className="bg-stone-800 border border-stone-700 text-stone-300 font-extrabold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl"
+                        >
+                          Unequip
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            haptics('light');
+                            if (item.type === 'prestige_title') {
+                              equipTitle(item.id);
+                            } else {
+                              equipItem(item.id);
+                            }
+                            setShopTrigger(p => p + 1);
+                          }}
+                          className="bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-xl"
+                        >
+                          Equip
+                        </button>
+                      )
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          haptics('success');
+                          const res = purchaseItem(item.id);
+                          if (res.success) {
+                            alert(res.message);
+                            reloadGems();
+                          } else {
+                            alert(res.message);
+                          }
+                          setShopTrigger(p => p + 1);
+                        }}
+                        className="bg-slate-900 border border-yellow-500/25 text-yellow-400 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-xl flex items-center gap-1"
+                      >
+                        Buy 💎{item.costGems}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <motion.button

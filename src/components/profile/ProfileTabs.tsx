@@ -13,6 +13,17 @@ import { SkillTreeContainer } from '@/components/gamification/SkillTreeContainer
 import { DailyChallengesHub } from '@/components/gamification/DailyChallengesHub';
 import { Palette, Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import {
+  ARMORY_ITEMS,
+  getUserBalances,
+  purchaseItem,
+  getPurchasedItems,
+  getEquippedItems,
+  equipItem,
+  unequipItem
+} from '@/utils/shopData';
 
 interface ProfileTabsProps {
   userId: string | null;
@@ -45,17 +56,21 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   provider,
   onProfileUpdate,
 }) => {
+  const { toast } = useToast();
   const [gems, setGems] = useState(0);
   const [stars, setStars] = useState(0);
   const [advisors, setAdvisors] = useState<any[]>([]);
+  const [purchased, setPurchased] = useState<string[]>([]);
+  const [equipped, setEquipped] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchTreasury = async () => {
       // Fetch local storage fallbacks first
-      const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '0');
-      const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '0');
+      const { gems: localGems, stars: localStars } = getUserBalances();
       setGems(localGems);
       setStars(localStars);
+      setPurchased(getPurchasedItems());
+      setEquipped(getEquippedItems());
 
       const localSocratesLevel = Number(localStorage.getItem('hero_socrates_level') || '0');
       const localAryabhataLevel = Number(localStorage.getItem('hero_aryabhata_level') || '0');
@@ -98,7 +113,38 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
     };
 
     fetchTreasury();
+
+    const handleGemsUpdated = () => {
+      fetchTreasury();
+    };
+    window.addEventListener('gemsUpdated', handleGemsUpdated);
+    window.addEventListener('starsUpdated', handleGemsUpdated);
+    window.addEventListener('profileUpdated', handleGemsUpdated);
+    return () => {
+      window.removeEventListener('gemsUpdated', handleGemsUpdated);
+      window.removeEventListener('starsUpdated', handleGemsUpdated);
+      window.removeEventListener('profileUpdated', handleGemsUpdated);
+    };
   }, [userId]);
+
+  const handlePurchase = (itemId: string) => {
+    const res = purchaseItem(itemId);
+    if (res.success) {
+      toast({ title: "Purchase Successful", description: res.message });
+    } else {
+      toast({ title: "Purchase Failed", description: res.message, variant: "destructive" });
+    }
+  };
+
+  const handleEquip = (itemId: string) => {
+    equipItem(itemId);
+    toast({ title: "Item Equipped", description: "Your equipment has been updated." });
+  };
+
+  const handleUnequip = (type: string) => {
+    unequipItem(type);
+    toast({ title: "Item Unequipped", description: "Your equipment has been updated." });
+  };
 
   return (
     <div className="space-y-6">
@@ -163,6 +209,10 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <TabsTrigger value="daily-challenges" className="data-[state=active]:bg-amber-500 data-[state=active]:text-stone-950 text-stone-400 rounded-xl px-4 py-2 font-bold text-xs uppercase tracking-wider transition-all">
             <Flame className="w-3.5 h-3.5 mr-2 text-orange-500" />
             Daily Challenges
+          </TabsTrigger>
+          <TabsTrigger value="armory" className="data-[state=active]:bg-amber-500 data-[state=active]:text-stone-950 text-stone-400 rounded-xl px-4 py-2 font-bold text-xs uppercase tracking-wider transition-all">
+            <Award className="w-3.5 h-3.5 mr-2 text-yellow-500" />
+            Royal Shop
           </TabsTrigger>
         </TabsList>
         
@@ -249,6 +299,78 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <Card className="p-6 bg-stone-950/40 border-stone-850 text-stone-100 rounded-2xl">
             <DailyChallengesHub />
           </Card>
+        </TabsContent>
+
+        <TabsContent value="armory">
+          <div className="text-center max-w-md mx-auto mb-6 pt-2">
+            <h2 className="text-lg font-black uppercase tracking-widest text-foreground font-serif">Royal Armory & Treasury</h2>
+            <p className="text-xs text-slate-500 mt-1">Acquire virtual enhancements, customize your profile avatar frame, or recruit legendary advisors to assist in battles.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {ARMORY_ITEMS.map((item) => {
+              const isShard = item.type === 'counselor_shard';
+              const owned = purchased.includes(item.id);
+              const isEquipped = equipped[item.type] === item.id;
+              
+              return (
+                <div key={item.id} className="wooden-door p-5 rounded-2xl flex flex-col justify-between items-center text-center shadow-lg relative group transition-all hover:scale-[1.02] border-stone-800">
+                  {isEquipped && (
+                    <span className="absolute -top-3 bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md animate-pulse">
+                      Active Equipment
+                    </span>
+                  )}
+                  
+                  <div className="w-16 h-16 rounded-full bg-slate-950/80 border border-stone-800 flex items-center justify-center text-3xl mb-3 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                    {item.emoji}
+                  </div>
+                  
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-extrabold text-white text-sm tracking-tight mb-1">{item.name}</h3>
+                      <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mb-2 inline-block">
+                        {item.effect}
+                      </span>
+                      <p className="text-slate-400 text-[11px] leading-relaxed mb-4 min-h-[44px]">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="w-full mt-auto pt-2">
+                    {owned && !isShard ? (
+                      <div className="flex gap-2 w-full">
+                        {isEquipped ? (
+                          <Button 
+                            onClick={() => handleUnequip(item.type)}
+                            className="w-full bg-stone-800 hover:bg-stone-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs uppercase tracking-wider border border-stone-700"
+                          >
+                            Unequip
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={() => handleEquip(item.id)}
+                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-3 py-2 rounded-xl text-xs uppercase tracking-wider border-0 shadow-md"
+                          >
+                            Equip Item
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={() => handlePurchase(item.id)}
+                        className="w-full bg-slate-950/90 hover:bg-slate-850 text-yellow-400 font-extrabold border border-yellow-500/25 px-3 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                      >
+                        Buy for 
+                        {item.costGems > 0 && <span>💎 {item.costGems}</span>}
+                        {item.costStars > 0 && <span>⭐ {item.costStars}</span>}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -14,6 +14,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
 import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
+import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
 
 type Node = {
   id: string;
@@ -474,6 +475,11 @@ export default function HubScreen() {
           </div>
         </section>
       )}
+
+      {/* Daily Bounty Board */}
+      <section className="relative mb-5">
+        <DailyBountyBoard />
+      </section>
 
       {/* ═══ Tavern Games ═══ */}
       <section className="relative">

@@ -6,42 +6,42 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    --background: 45 25% 97%;
+    --foreground: 220 50% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 50% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 50% 15%;
 
     /* Primary - Imperial Gold */
     --primary: 45 93% 47%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 220 50% 15%;
 
-    /* Secondary - Soft charcoal */
-    --secondary: 250 30% 95%;
-    --secondary-foreground: 250 30% 25%;
+    /* Secondary - Soft Navy/charcoal */
+    --secondary: 220 25% 92%;
+    --secondary-foreground: 220 50% 25%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 13% 38%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 15% 42%;
 
     /* Accent - Vibrant Green */
     --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 355 85% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
     --ring: 45 93% 47%;
 
     --radius: 0.75rem;
 
     /* Quiz App Custom Colors */
     --quiz-green: 142 76% 36%;
-    --quiz-red: 0 84% 60%;
+    --quiz-red: 355 85% 45%;
     --quiz-gold: 45 93% 47%;
     --quiz-purple: 250 75% 60%;
     
@@ -52,57 +52,57 @@
 
     /* Sidebar styles */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 9% 46%;
+    --sidebar-foreground: 220 15% 42%;
     --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-primary-foreground: 220 50% 15%;
+    --sidebar-accent: 220 20% 95%;
+    --sidebar-accent-foreground: 220 50% 15%;
+    --sidebar-border: 220 20% 90%;
     --sidebar-ring: 45 93% 47%;
   }
 
   .dark {
-    /* Castle interior — warm stone undertones */
-    --background: 25 18% 6%;
-    --foreground: 38 30% 92%;
+    /* Royal Navy background & warm golden-tinted text */
+    --background: 220 40% 12%;
+    --foreground: 45 25% 94%;
 
-    --card: 28 15% 10%;
-    --card-foreground: 38 30% 92%;
+    --card: 220 35% 16%;
+    --card-foreground: 45 25% 94%;
 
-    --popover: 28 15% 10%;
-    --popover-foreground: 38 30% 92%;
+    --popover: 220 35% 16%;
+    --popover-foreground: 45 25% 94%;
 
     /* Primary - Imperial Gold */
     --primary: 45 93% 47%;
-    --primary-foreground: 25 40% 8%;
+    --primary-foreground: 220 50% 10%;
 
-    /* Secondary - Aged stone */
-    --secondary: 30 10% 15%;
-    --secondary-foreground: 38 30% 92%;
+    /* Secondary - Rich Navy */
+    --secondary: 220 30% 20%;
+    --secondary-foreground: 45 25% 94%;
 
-    --muted: 30 10% 16%;
-    --muted-foreground: 35 12% 55%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 220 15% 65%;
 
     /* Accent - Vibrant Green */
     --accent: 142 76% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 355 80% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Oxidised iron borders */
-    --border: 35 15% 18%;
-    --input: 35 15% 18%;
+    /* Borders matching Navy tone */
+    --border: 220 25% 22%;
+    --input: 220 25% 22%;
     --ring: 45 93% 47%;
 
     /* Sidebar styles */
-    --sidebar-background: 28 15% 10%;
-    --sidebar-foreground: 38 30% 92%;
+    --sidebar-background: 220 35% 14%;
+    --sidebar-foreground: 220 15% 75%;
     --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 25 40% 8%;
-    --sidebar-accent: 30 10% 16%;
-    --sidebar-accent-foreground: 38 30% 92%;
-    --sidebar-border: 35 15% 18%;
+    --sidebar-primary-foreground: 220 50% 10%;
+    --sidebar-accent: 220 30% 20%;
+    --sidebar-accent-foreground: 45 25% 94%;
+    --sidebar-border: 220 25% 22%;
     --sidebar-ring: 45 93% 47%;
   }
 }
@@ -465,23 +465,23 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 
 /* Stone wall texture — repeating stone blocks via CSS gradients */
 .stone-wall {
-  background-color: hsl(25 18% 6%);
+  background-color: hsl(var(--background));
   background-image:
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 60px,
-      rgba(255,255,255,0.015) 60px,
-      rgba(255,255,255,0.015) 61px
+      hsl(var(--primary) / 0.05) 60px,
+      hsl(var(--primary) / 0.05) 61px
     ),
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 40px,
-      rgba(255,255,255,0.015) 40px,
-      rgba(255,255,255,0.015) 41px
+      hsl(var(--primary) / 0.05) 40px,
+      hsl(var(--primary) / 0.05) 61px
     );
   background-size: 120px 80px, 120px 80px, 120px 80px, 120px 80px;
 }

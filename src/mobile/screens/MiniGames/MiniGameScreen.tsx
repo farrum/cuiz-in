@@ -12,6 +12,7 @@ import { ImageGame } from './games/ImageGame';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { BurningTorch } from '@/components/gamification/BurningTorch';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
 
 // Import web game components to reuse directly in mobile!
 import { SlotMachine } from '@/components/gamification/SlotMachine';
@@ -43,6 +44,9 @@ export default function MiniGameScreen() {
   const current = GAMES.find((g) => g.id === gameId);
   const otherGames = GAMES.filter((g) => g.id !== gameId);
 
+  // Gamification Play State
+  const [hasPaid, setHasPaid] = useState(false);
+
   // States for Riddle Vault
   const [riddleText, setRiddleText] = useState('What has keys but can\'t open locks?');
   const [riddleAnswer, setRiddleAnswer] = useState('piano');
@@ -50,6 +54,7 @@ export default function MiniGameScreen() {
   const [riddleLoading, setRiddleLoading] = useState(false);
 
   useEffect(() => {
+    setHasPaid(false);
     if (gameId === 'riddlevault') {
       const loadRiddle = async () => {
         setRiddleLoading(true);
@@ -85,6 +90,91 @@ export default function MiniGameScreen() {
       window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'games' } }));
     }
   }, [gameId]);
+
+  const getTodayString = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const isFirstPlayToday = () => {
+    const today = getTodayString();
+    const lastPlay = localStorage.getItem(`cuizin-last-play-${gameId}`);
+    return lastPlay !== today;
+  };
+
+  const handlePayAndStart = () => {
+    if (isFirstPlayToday()) {
+      const today = getTodayString();
+      localStorage.setItem(`cuizin-last-play-${gameId}`, today);
+      setHasPaid(true);
+    } else {
+      const { gems } = getUserBalances();
+      if (gems < 5) {
+        alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
+        return;
+      }
+      updateUserBalances(-5, 0);
+      setHasPaid(true);
+    }
+  };
+
+  const renderLaunchScreen = () => {
+    const isFree = isFirstPlayToday();
+    const { gems } = getUserBalances();
+
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-4 max-w-sm mx-auto space-y-6">
+        <span className="text-6xl animate-bounce select-none">
+          {gameId === 'wheel' && '🎡'}
+          {gameId === 'scratch' && '🎫'}
+          {gameId === 'true-false' && '⚖️'}
+          {gameId === 'image' && '🖼️'}
+          {gameId === 'slot' && '🎰'}
+          {gameId === 'plinko' && '🔴'}
+          {gameId === 'rps' && '✊'}
+          {gameId === 'treasure' && '🏴‍☠️'}
+          {gameId === 'coinflip' && '🪙'}
+          {gameId === 'diceroll' && '🎲'}
+          {gameId === 'riddlevault' && '🔑'}
+        </span>
+        <div>
+          <h2 className="text-lg font-black text-white uppercase tracking-wider">{current?.title}</h2>
+          <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
+            {gameId === 'wheel' && 'Spin the wheel of fortune to win coins, tickets, and mystery items.'}
+            {gameId === 'scratch' && 'Scratch away the golden foil to match items and win rewards.'}
+            {gameId === 'true-false' && 'Test your reflexes and knowledge in a rapid‑fire fact‑checking challenge.'}
+            {gameId === 'image' && 'Identify visual cues and images to solve trivia questions.'}
+            {gameId === 'slot' && 'Spin the reels and try your luck for big wins.'}
+            {gameId === 'plinko' && 'Drop chips and watch them bounce to random prizes.'}
+            {gameId === 'rps' && 'Classic hand‑gesture showdown against the computer.'}
+            {gameId === 'treasure' && 'Open chests for random rewards and bonuses.'}
+            {gameId === 'coinflip' && 'Double or nothing! Flip the coin and guess heads or tails to win big.'}
+            {gameId === 'diceroll' && 'Roll the high-stakes dice for multipliers, doubles bonuses, and jackpots.'}
+            {gameId === 'riddlevault' && 'Solve the daily cryptic riddle to unlock the vault and claim 500 Gems.'}
+          </p>
+        </div>
+        
+        <div className="bg-slate-950/60 border border-yellow-500/20 rounded-2xl p-4 w-full flex justify-between items-center text-left">
+          <div>
+            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Your Balance</span>
+            <span className="text-xs font-black text-amber-500 mt-1 block">💎 {gems} Gems</span>
+          </div>
+          <div className="text-right">
+            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Entry Fee</span>
+            <span className="text-xs font-black text-yellow-500 mt-1 block">
+              {isFree ? 'FREE (Daily)' : '💎 5 Gems'}
+            </span>
+          </div>
+        </div>
+
+        <button 
+          onClick={handlePayAndStart}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 active:scale-95 text-slate-950 font-black py-3 rounded-2xl text-xs uppercase tracking-widest border-0 shadow-md transition-all duration-200"
+        >
+          {isFree ? ' Start Free Play' : ' Pay 5 Gems & Play'}
+        </button>
+      </div>
+    );
+  };
 
   const handleRiddleSubmit = async (guess: string) => {
     const today = new Date().toISOString().split('T')[0];
@@ -190,7 +280,7 @@ export default function MiniGameScreen() {
         className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-2 min-h-0 overflow-y-auto w-full"
       >
         <div className="w-full max-w-md bg-stone-900/95 border-4 border-double border-amber-500/20 rounded-3xl p-6 shadow-2xl relative text-slate-100">
-          {body}
+          {hasPaid ? body : renderLaunchScreen()}
         </div>
       </motion.div>
 

@@ -786,7 +786,7 @@ export default function EmpireQuestsPage() {
 
   return (
     <PageLayout showNewsTicker={true}>
-      <div className="min-h-screen stone-wall text-slate-100 pb-16">
+      <div className="min-h-screen stone-wall text-foreground pb-16">
         
         {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
         <div className="wooden-door py-4 px-6 relative z-30 shadow-md">
@@ -830,7 +830,7 @@ export default function EmpireQuestsPage() {
           
           /* ACTIVE IMMERSIVE QUEST PLAY INTERFACE */
           <div className="max-w-4xl mx-auto px-4 mt-8">
-            <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
+            <div className="w-full bg-card border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden text-card-foreground">
               
               {/* Shield Status Effect Overlay */}
               {isShieldActive && (
@@ -1029,11 +1029,11 @@ export default function EmpireQuestsPage() {
           
           /* QUEST COMPLETED SUMMARY */
           <div className="max-w-md mx-auto px-4 mt-12 text-center">
-            <div className="bg-slate-900 border-2 border-yellow-500/20 rounded-3xl p-8 shadow-2xl">
+            <div className="bg-card border-2 border-yellow-500/20 rounded-3xl p-8 shadow-2xl text-card-foreground">
               <span className="text-6xl mb-4 block">
                 {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? '🏆' : '💀'}
               </span>
-              <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-2">
+              <h2 className="text-2xl font-black text-foreground uppercase tracking-wider mb-2">
                 {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? 'Quest Successful!' : 'Quest Defeated'}
               </h2>
               <p className="text-slate-400 text-sm mb-6">
@@ -1292,14 +1292,14 @@ export default function EmpireQuestsPage() {
                   </div>
 
                   {/* Campaign Panel Details Card (Takes 1 column) */}
-                  <div className="bg-slate-900 border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md flex flex-col justify-between">
+                  <div className="bg-card border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md flex flex-col justify-between text-card-foreground">
                     {selectedMapQuest ? (
                       <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
                         <div>
                           <div className="flex items-center gap-3 mb-4">
                             <span className="text-4xl">{selectedMapQuest.emoji}</span>
                             <div>
-                              <h3 className="font-extrabold text-white text-base tracking-tight leading-tight">
+                              <h3 className="font-extrabold text-foreground text-base tracking-tight leading-tight">
                                 {selectedMapQuest.name}
                               </h3>
                               <span className={cn(
@@ -1424,17 +1424,17 @@ export default function EmpireQuestsPage() {
             {activeTab === 'chests' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-8">
-                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Empire Treasury Shop</h2>
+                  <h2 className="text-lg font-black uppercase tracking-widest text-foreground">Empire Treasury Shop</h2>
                   <p className="text-xs text-slate-400 mt-1">Exchange your gathered star tokens to purchase mystery reward vaults.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Bronze Card */}
-                  <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group">
+                  <div className="bg-card border border-border rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group text-card-foreground">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-700 to-amber-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-amber-500/20 group-hover:scale-105 transition-transform duration-300">
                       📦
                     </div>
-                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Bronze Chest</h3>
+                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Bronze Chest</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
                       Contains minor Gems & Stars. Socrates/Aryabhata shards.
                     </p>
@@ -1447,7 +1447,7 @@ export default function EmpireQuestsPage() {
                   </div>
 
                   {/* Gold Card */}
-                  <div className="bg-slate-900 border-2 border-yellow-500/20 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-lg relative group">
+                  <div className="bg-card border-2 border-yellow-500/20 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-lg relative group text-card-foreground">
                     {/* Rare badge */}
                     <span className="absolute -top-3 bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
                       Highly Popular
@@ -1455,7 +1455,7 @@ export default function EmpireQuestsPage() {
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-600 via-amber-500 to-yellow-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-yellow-400/20 group-hover:scale-105 transition-transform duration-300">
                       🏆
                     </div>
-                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Golden Vault</h3>
+                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Golden Vault</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
                       Excellent value. Medium gems, stars. High chance of Chanakya shards.
                     </p>
@@ -1468,11 +1468,11 @@ export default function EmpireQuestsPage() {
                   </div>
 
                   {/* Legendary Card */}
-                  <div className="bg-slate-900 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group">
+                  <div className="bg-card border border-border rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group text-card-foreground">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-800 via-indigo-600 to-purple-600 flex items-center justify-center text-5xl mb-4 shadow-inner border border-purple-500/20 group-hover:scale-105 transition-transform duration-300">
                       👑
                     </div>
-                    <h3 className="font-extrabold text-white text-base tracking-tight mb-1">Emperor's Tomb</h3>
+                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Emperor's Tomb</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
                       Legendary drops. Major Gems & Stars. High shards count for any hero.
                     </p>

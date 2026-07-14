@@ -9,6 +9,7 @@ import { ArrowLeft, Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
 
 // Game Component Imports
 import { SlotMachine } from '@/components/gamification/SlotMachine';
@@ -32,6 +33,10 @@ export const MiniGamePlayPage: React.FC = () => {
   const navigate = useNavigate();
   const activeGame = minigames.find(g => g.id === gameId);
   const { showVideoAd, adElement } = useMiniGameVideoAd();
+
+  // Gamification Play State
+  const [hasPaid, setHasPaid] = useState(false);
+  const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0);
 
   // States for True/False and Image trivia
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -70,6 +75,7 @@ export const MiniGamePlayPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setHasPaid(false);
     if (gameId === 'true-false' || gameId === 'image') {
       loadQuestions();
     } else if (gameId === 'scratch') {
@@ -78,6 +84,70 @@ export const MiniGamePlayPage: React.FC = () => {
       loadRiddle();
     }
   }, [gameId]);
+
+  const getTodayString = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const isFirstPlayToday = () => {
+    const today = getTodayString();
+    const lastPlay = localStorage.getItem(`cuizin-last-play-${gameId}`);
+    return lastPlay !== today;
+  };
+
+  const handlePayAndStart = () => {
+    if (isFirstPlayToday()) {
+      // First daily play is free
+      const today = getTodayString();
+      localStorage.setItem(`cuizin-last-play-${gameId}`, today);
+      setHasPaid(true);
+    } else {
+      // Subsequent plays cost 5 Gems
+      const { gems } = getUserBalances();
+      if (gems < 5) {
+        alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
+        return;
+      }
+      updateUserBalances(-5, 0);
+      setHasPaid(true);
+      setBalanceUpdateTrigger(prev => prev + 1);
+    }
+  };
+
+  const renderLaunchScreen = () => {
+    const isFree = isFirstPlayToday();
+    const { gems } = getUserBalances();
+
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-6 max-w-sm mx-auto space-y-6 animate-in fade-in duration-300">
+        <span className="text-6xl animate-[float_4s_ease-in-out_infinite] select-none">{activeGame?.emoji}</span>
+        <div>
+          <h2 className="text-xl font-black text-white uppercase tracking-wider">{activeGame?.name}</h2>
+          <p className="text-slate-400 text-xs mt-2 leading-relaxed">{activeGame?.description}</p>
+        </div>
+        
+        <div className="bg-slate-950/60 border border-yellow-500/20 rounded-2xl p-4 w-full flex justify-between items-center text-left">
+          <div>
+            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Your Balance</span>
+            <span className="text-sm font-black text-amber-500 mt-1 block">💎 {gems} Gems</span>
+          </div>
+          <div className="text-right">
+            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Entry Fee</span>
+            <span className="text-sm font-black text-yellow-500 mt-1 block">
+              {isFree ? 'FREE (Daily)' : '💎 5 Gems'}
+            </span>
+          </div>
+        </div>
+
+        <Button 
+          onClick={handlePayAndStart}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black h-12 uppercase tracking-widest text-xs border-0 shadow-md shadow-yellow-500/10"
+        >
+          {isFree ? '🎮 Start Free Play' : '🪙 Pay 5 Gems & Play'}
+        </Button>
+      </div>
+    );
+  };
 
   // Handle scratch card init
   const initScratchCard = async () => {
@@ -415,7 +485,7 @@ export const MiniGamePlayPage: React.FC = () => {
         {/* Main Game Screen */}
         <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col items-center justify-center">
           <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-xl shadow-yellow-500/5 min-h-[450px] flex items-center justify-center">
-            {renderGameContent()}
+            {hasPaid ? renderGameContent() : renderLaunchScreen()}
           </div>
           
           {/* Ad slot directly underneath the game */}

@@ -14,6 +14,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
+import { getPotionCount, consumePotion } from '@/utils/shopData';
 
 // Streak bonus multipliers
 const STREAK_BONUSES = [
@@ -97,6 +98,56 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [smartClue, setSmartClue] = useState<string | null>(null);
   const [counselorDialogue, setCounselorDialogue] = useState<{ name: string; avatar: string; quote: string } | null>(null);
 
+  // Consumable Potions State
+  const [elixirCount, setElixirCount] = useState(0);
+  const [scribeCount, setScribeCount] = useState(0);
+
+  useEffect(() => {
+    setElixirCount(getPotionCount('elixir_time'));
+    setScribeCount(getPotionCount('scribe_ink'));
+  }, []);
+
+  const handleUseElixir = () => {
+    if (elixirCount <= 0) {
+      toast({ title: "No Elixirs Left", description: "You can purchase more Elixir of Time in the Royal Shop." });
+      return;
+    }
+    const success = consumePotion('elixir_time');
+    if (success) {
+      setElixirCount(prev => prev - 1);
+      setTimeRemaining(prev => prev + 15);
+      haptics('success');
+      toast({ title: "Elixir of Time Consumed!", description: "Timer extended by 15 seconds." });
+    }
+  };
+
+  const handleUseScribe = () => {
+    if (scribeCount <= 0) {
+      toast({ title: "No Scribe's Ink Left", description: "You can purchase more Scribe's Ink in the Royal Shop." });
+      return;
+    }
+    
+    // Find all incorrect options that are not already eliminated
+    const incorrectOptions = question.options.filter(
+      opt => opt !== question.correctAnswer && !eliminatedOptions.includes(opt)
+    );
+
+    if (incorrectOptions.length === 0) {
+      toast({ title: "All wrong answers eliminated", description: "Only the correct answer remains!" });
+      return;
+    }
+
+    const success = consumePotion('scribe_ink');
+    if (success) {
+      setScribeCount(prev => prev - 1);
+      // Pick one random incorrect option to eliminate
+      const randomOpt = incorrectOptions[Math.floor(Math.random() * incorrectOptions.length)];
+      setEliminatedOptions(prev => [...prev, randomOpt]);
+      haptics('success');
+      toast({ title: "Scribe's Ink Consumed!", description: "One wrong option has been revealed and eliminated." });
+    }
+  };
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTickRef = useRef<number>(0);
   
@@ -156,13 +207,25 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     setIsShieldActive(false);
   }, [question.id, isLoggedIn]);
 
-  // Reset state when question changes
+  // Reset states when question changes
   useEffect(() => {
     setSelectedAnswer(null);
     setIsAnswered(false);
-    setTimeRemaining(config.timer);
-    setGemsEarned(null);
-  }, [question.id, config.timer]);
+    setTimerStarted(false);
+    setTimeRemaining(DIFFICULTY_CONFIG[difficulty].timer);
+    setEliminatedOptions([]);
+    setIsShieldActive(false);
+    setSmartClue(null);
+    setCounselorDialogue(null);
+    setSocratesUsed(false);
+    setAryabhataUsed(false);
+    setChanakyaUsed(false);
+    setRamanujanUsed(false);
+    
+    // Reload potion inventory counts
+    setElixirCount(getPotionCount('elixir_time'));
+    setScribeCount(getPotionCount('scribe_ink'));
+  }, [question, difficulty]);
 
   // Timer logic
   useEffect(() => {
@@ -758,6 +821,32 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                     <span className="text-[7px] text-muted-foreground">Hint (35★)</span>
                   </Button>
                 )}
+              </div>
+
+              {/* Consumable Potions Section */}
+              <div className="flex items-center text-[10px] text-stone-500 font-black uppercase tracking-wider mb-2 mt-4 border-t border-stone-800 pt-3">
+                <span>🎒 Consumable Potions</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleUseElixir}
+                  disabled={elixirCount <= 0 || isAnswered}
+                  className="bg-slate-900 border border-slate-800 text-teal-400 hover:text-teal-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                >
+                  <span>🧪 Elixir of Time</span>
+                  <span className="text-[7px] text-muted-foreground">Owned: {elixirCount}</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleUseScribe}
+                  disabled={scribeCount <= 0 || isAnswered}
+                  className="bg-slate-900 border border-slate-800 text-purple-400 hover:text-purple-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
+                >
+                  <span>✒️ Scribe\'s Ink</span>
+                  <span className="text-[7px] text-muted-foreground">Owned: {scribeCount}</span>
+                </Button>
               </div>
             </div>
           )}

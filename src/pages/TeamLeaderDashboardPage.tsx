@@ -121,20 +121,20 @@ const TeamLeaderDashboardPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen stone-wall flex flex-col items-center justify-center text-slate-100">
+      <div className="min-h-screen stone-wall flex flex-col items-center justify-center text-foreground">
         <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Assembling War Council...</p>
+        <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">Assembling War Council...</p>
       </div>
     );
   }
 
   if (!isTeamLeader) {
     return (
-      <div className="min-h-screen stone-wall flex flex-col items-center justify-center text-slate-100 p-6 text-center">
+      <div className="min-h-screen stone-wall flex flex-col items-center justify-center text-foreground p-6 text-center">
         <MascotSad className="w-24 h-24 mb-4 text-red-500" />
         <h2 className="text-xl font-bold uppercase tracking-wide text-red-500">Access Restricted</h2>
-        <p className="text-slate-400 text-sm max-w-sm mt-2">Only recognized Barons may enter the mercenary war room.</p>
-        <Button onClick={() => navigate('/profile')} className="mt-4 bg-stone-800 border border-stone-700 text-white">Return to Castle</Button>
+        <p className="text-slate-500 text-sm max-w-sm mt-2">Only recognized Barons may enter the mercenary war room.</p>
+        <Button onClick={() => navigate('/profile')} className="mt-4 bg-stone-850 border border-slate-800 text-foreground">Return to Castle</Button>
       </div>
     );
   }
@@ -143,7 +143,7 @@ const TeamLeaderDashboardPage = () => {
 
   return (
     <PageLayout showNewsTicker={false}>
-      <div className="min-h-screen stone-wall text-slate-100 pb-16 relative">
+      <div className="min-h-screen stone-wall text-foreground pb-16 relative">
         
         {/* WAR ROOM TOP BAR */}
         <div className="wooden-door py-4 px-6 relative z-10 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
