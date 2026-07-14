@@ -51,28 +51,28 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
           {/* Main heading */}
           <div className="space-y-3" id="hero-heading">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight font-serif text-white" style={{ fontFamily: "'Cinzel', serif" }}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight font-serif text-foreground" style={{ fontFamily: "'Cinzel', serif" }}>
               Swear Your Allegiance,<br />
               <span className="text-amber-500">
                 Test Your Knowledge
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-stone-300 max-w-xl mx-auto lg:mx-0">
+            <p className="text-lg sm:text-xl text-foreground/80 max-w-xl mx-auto lg:mx-0">
               Complete historic quests, recruit legendary advisors, and conquer the intellectual empires of CuizIN.
             </p>
           </div>
 
           {/* Benefits list */}
           <ul className="flex flex-wrap justify-center lg:justify-start gap-4">
-            <li className="flex items-center gap-2 text-sm text-stone-400">
+            <li className="flex items-center gap-2 text-sm text-foreground/70">
               <CheckCircle2 className="w-4 h-4 text-amber-500" />
               <span>Unlock Legendary Advisors</span>
             </li>
-            <li className="flex items-center gap-2 text-sm text-stone-400">
+            <li className="flex items-center gap-2 text-sm text-foreground/70">
               <CheckCircle2 className="w-4 h-4 text-amber-500" />
               <span>Conquer Historic Empires</span>
             </li>
-            <li className="flex items-center gap-2 text-sm text-stone-400">
+            <li className="flex items-center gap-2 text-sm text-foreground/70">
               <CheckCircle2 className="w-4 h-4 text-amber-500" />
               <span>Assemble Your Alliance</span>
             </li>
