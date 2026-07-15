@@ -6,81 +6,24 @@
 
 @layer base {
   :root {
-    --background: 45 25% 97%;
-    --foreground: 220 50% 15%;
+    --background: 220 45% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 50% 15%;
+    --card: 220 35% 12%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 50% 15%;
-
-    /* Primary - Imperial Gold */
-    --primary: 45 93% 47%;
-    --primary-foreground: 220 50% 15%;
-
-    /* Secondary - Soft Navy/charcoal */
-    --secondary: 220 25% 92%;
-    --secondary-foreground: 220 50% 25%;
-
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 42%;
-
-    /* Accent - Vibrant Green */
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 355 85% 45%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 45 93% 47%;
-
-    --radius: 0.75rem;
-
-    /* Quiz App Custom Colors */
-    --quiz-green: 142 76% 36%;
-    --quiz-red: 355 85% 45%;
-    --quiz-gold: 45 93% 47%;
-    --quiz-purple: 250 75% 60%;
-    
-    /* Gradient Colors */
-    --gradient-start: 45 93% 47%;
-    --gradient-end: 25 90% 45%;
-    --gradient-accent: 142 76% 36%;
-
-    /* Sidebar styles */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 42%;
-    --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 220 50% 15%;
-    --sidebar-accent: 220 20% 95%;
-    --sidebar-accent-foreground: 220 50% 15%;
-    --sidebar-border: 220 20% 90%;
-    --sidebar-ring: 45 93% 47%;
-  }
-
-  .dark {
-    /* Royal Navy background & warm golden-tinted text */
-    --background: 220 40% 12%;
-    --foreground: 45 25% 94%;
-
-    --card: 220 35% 16%;
-    --card-foreground: 45 25% 94%;
-
-    --popover: 220 35% 16%;
-    --popover-foreground: 45 25% 94%;
+    --popover: 220 35% 12%;
+    --popover-foreground: 210 40% 98%;
 
     /* Primary - Imperial Gold */
-    --primary: 45 93% 47%;
-    --primary-foreground: 220 50% 10%;
+    --primary: 43 96% 56%;
+    --primary-foreground: 220 45% 8%;
 
     /* Secondary - Rich Navy */
-    --secondary: 220 30% 20%;
-    --secondary-foreground: 45 25% 94%;
+    --secondary: 220 30% 16%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 25% 18%;
+    --muted: 220 25% 14%;
     --muted-foreground: 220 15% 65%;
 
     /* Accent - Vibrant Green */
@@ -91,19 +34,71 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders matching Navy tone */
-    --border: 220 25% 22%;
-    --input: 220 25% 22%;
-    --ring: 45 93% 47%;
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
+    --ring: 43 96% 56%;
+
+    --radius: 0.75rem;
+
+    /* Quiz App Custom Colors */
+    --quiz-green: 142 76% 36%;
+    --quiz-red: 355 85% 45%;
+    --quiz-gold: 43 96% 56%;
+    --quiz-purple: 250 75% 60%;
+    
+    /* Gradient Colors */
+    --gradient-start: 43 96% 56%;
+    --gradient-end: 25 90% 45%;
+    --gradient-accent: 142 76% 36%;
 
     /* Sidebar styles */
-    --sidebar-background: 220 35% 14%;
+    --sidebar-background: 220 35% 10%;
     --sidebar-foreground: 220 15% 75%;
-    --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 220 50% 10%;
-    --sidebar-accent: 220 30% 20%;
-    --sidebar-accent-foreground: 45 25% 94%;
-    --sidebar-border: 220 25% 22%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 220 45% 8%;
+    --sidebar-accent: 220 30% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 43 96% 56%;
+  }
+
+  .dark {
+    --background: 220 45% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 35% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 35% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 43 96% 56%;
+    --primary-foreground: 220 45% 8%;
+
+    --secondary: 220 30% 16%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 25% 14%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 142 76% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 355 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
+    --ring: 43 96% 56%;
+
+    --sidebar-background: 220 35% 10%;
+    --sidebar-foreground: 220 15% 75%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 220 45% 8%;
+    --sidebar-accent: 220 30% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 43 96% 56%;
   }
 }
 
@@ -471,31 +466,30 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
     linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
 }
 
-/* Heavy wooden panel with oak grain - Light Medieval Castle Theme */
+/* Heavy wooden panel with oak grain - Redesigned for Scroll of Time */
 .wooden-door {
-  background: linear-gradient(180deg, #FCF8F2 0%, #F5ECD9 100%);
-  border: 3px solid #C4A76D;
+  background: rgba(20, 28, 48, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(251, 191, 36, 0.25);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.8),
-    inset 0 -1px 0 rgba(0,0,0,0.1),
-    0 4px 12px rgba(139,92,26,0.12);
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 18px,
-      rgba(139,92,26,0.03) 18px,
-      rgba(139,92,26,0.03) 19px
-    );
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.35);
   position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .wooden-door::before {
   content: '';
   position: absolute;
-  inset: 4px;
-  border: 1px solid rgba(139,92,26,0.06);
+  inset: 2px;
+  border: 1px solid rgba(251, 191, 36, 0.06);
   border-radius: inherit;
   pointer-events: none;
+}
+.wooden-door:hover {
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 40px rgba(251, 191, 36, 0.08);
 }
 
 /* Torch flame glow — animated flickering warm radial */
@@ -509,7 +503,7 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   width: 24px;
   height: 32px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(ellipse at center, rgba(255,160,40,0.9) 0%, rgba(255,100,20,0.6) 40%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.9) 0%, rgba(217, 119, 6, 0.6) 40%, transparent 70%);
   filter: blur(3px);
   animation: torch-flicker 2s ease-in-out infinite;
 }
@@ -518,49 +512,50 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,140,30,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.12) 0%, transparent 70%);
   animation: torch-flicker 3s ease-in-out infinite;
   pointer-events: none;
 }
 
 /* Iron frame — double-border with studded look */
 .iron-frame {
-  border: 3px double hsl(35, 15%, 28%);
+  border: 1.5px solid rgba(251, 191, 36, 0.3);
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.04),
-    0 2px 8px rgba(0,0,0,0.4);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.4);
   position: relative;
+  background: rgba(15, 22, 42, 0.6);
+  backdrop-filter: blur(8px);
 }
 .iron-frame::after {
   content: '';
   position: absolute;
   inset: -1px;
-  border: 1px solid rgba(180,160,120,0.1);
+  border: 1px solid rgba(251, 191, 36, 0.1);
   border-radius: inherit;
   pointer-events: none;
 }
 
 /* Medieval button — gold-leaf with embossed edges */
 .medieval-btn {
-  background: linear-gradient(135deg, hsl(45, 93%, 47%) 0%, hsl(35, 85%, 42%) 100%);
-  color: hsl(25, 40%, 8%);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
   font-weight: 800;
   font-family: 'Cinzel', serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: 2px solid hsl(48, 80%, 60%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.3),
-    inset 0 -2px 0 rgba(0,0,0,0.15),
-    0 4px 12px rgba(234,179,8,0.25);
-  transition: all 0.2s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 4px 12px rgba(180, 83, 9, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .medieval-btn:hover {
   transform: translateY(-1px);
+  border-color: rgba(251, 191, 36, 0.6);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.4),
-    inset 0 -2px 0 rgba(0,0,0,0.15),
-    0 6px 20px rgba(234,179,8,0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 8px 20px rgba(180, 83, 9, 0.4);
 }
 .medieval-btn:active {
   transform: translateY(0px);
@@ -569,34 +564,35 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 /* Castle archway — rounded arch for headers */
 .castle-archway {
   border-radius: 50% 50% 0 0 / 30% 30% 0 0;
-  border: 3px solid hsl(35, 15%, 22%);
+  border: 1.5px solid rgba(251, 191, 36, 0.25);
   border-bottom: none;
-  background: linear-gradient(180deg, hsl(28, 15%, 12%) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(15, 22, 42, 0.9) 0%, transparent 100%);
 }
 
 /* Iron rivet / stud */
 .iron-rivet {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, hsl(35, 10%, 45%), hsl(35, 10%, 25%));
+  background: radial-gradient(circle at 35% 35%, #fbbf24, #b45309);
   box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.05);
 }
 
 /* Shield portrait frame */
 .shield-frame {
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 2px solid hsl(35, 20%, 30%);
+  border: 1.5px solid rgba(251, 191, 36, 0.3);
 }
 
 /* Parchment card styling (light interior for readability) */
 .parchment-card {
-  background: linear-gradient(170deg, #f5ecd7 0%, #e8dcc4 100%);
-  color: #2c2416;
-  border: 2px solid #c4a96a;
+  background: rgba(15, 22, 38, 0.85);
+  backdrop-filter: blur(16px);
+  color: #f1f5f9;
+  border: 1px solid rgba(251, 191, 36, 0.2);
   box-shadow:
-    inset 0 0 20px rgba(139,92,26,0.08),
-    0 4px 12px rgba(0,0,0,0.3);
+    inset 0 0 24px rgba(251, 191, 36, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* Molten gold progress bar */

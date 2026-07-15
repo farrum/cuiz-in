@@ -56,17 +56,17 @@ export default function LeaderboardScreen() {
             #{myRank}
           </div>
           <div className="flex-1">
-            <p className="font-bold text-stone-900">{me.username} <span className="text-[10px] text-stone-600">(you)</span></p>
-            <p className="text-xs text-stone-600">{me.points.toLocaleString()} gems earned this moon</p>
+            <p className="font-bold text-stone-100">{me.username} <span className="text-[10px] text-stone-400">(you)</span></p>
+            <p className="text-xs text-stone-300">{me.points.toLocaleString()} gems earned this moon</p>
           </div>
           <Shield className="w-5 h-5 text-amber-500 fill-amber-500/20" />
         </motion.div>
       )}
 
       {loading ? (
-        <p className="text-center text-stone-600 py-10">Summoning the court records…</p>
+        <p className="text-center text-stone-350 py-10 font-semibold">Summoning the court records…</p>
       ) : rows.length === 0 ? (
-        <p className="text-center text-stone-600 py-10">No champion has claimed glory this moon. Be first!</p>
+        <p className="text-center text-stone-450 py-10 font-semibold">No champion has claimed glory this moon. Be first!</p>
       ) : (
         <ul className="space-y-2">
           {rows.map((row, i) => {
@@ -83,14 +83,14 @@ export default function LeaderboardScreen() {
                   isMe && '!border-amber-700/60'
                 )}
               >
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm iron-frame bg-stone-800">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm iron-frame bg-stone-900">
                   {rank === 1 ? <Crown className="w-4 h-4 text-yellow-400" /> :
                    rank === 2 ? <Medal className="w-4 h-4 text-slate-300" /> :
                    rank === 3 ? <Medal className="w-4 h-4 text-amber-700" /> :
                    <span className="text-stone-400">#{rank}</span>}
                 </div>
-                <p className="flex-1 font-semibold truncate text-stone-900">{row.username}</p>
-                <p className="text-sm font-bold text-amber-600 tabular-nums">{row.points.toLocaleString()} 💎</p>
+                <p className="flex-1 font-semibold truncate text-stone-100">{row.username}</p>
+                <p className="text-sm font-bold text-amber-400 tabular-nums">{row.points.toLocaleString()} 💎</p>
               </motion.li>
             );
           })}

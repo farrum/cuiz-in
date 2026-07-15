@@ -391,12 +391,12 @@ export default function HubScreen() {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-black text-base leading-tight text-stone-900 font-serif">{node.label}</p>
-                  {node.hint && <p className="text-[11px] text-stone-600 font-semibold mt-0.5 leading-normal">{node.hint}</p>}
+                  <p className="font-black text-base leading-tight text-white font-serif">{node.label}</p>
+                  {node.hint && <p className="text-[11px] text-stone-300 font-semibold mt-0.5 leading-normal">{node.hint}</p>}
                 </div>
 
                 {/* Chevron */}
-                <ChevronRight className="w-4 h-4 text-amber-800/40 relative z-10 group-hover:text-amber-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-amber-500/40 relative z-10 group-hover:text-amber-400 transition-colors" />
 
                 {/* Iron rivets on corners */}
                 <div className="absolute top-2 left-2 iron-rivet" />
@@ -421,14 +421,14 @@ export default function HubScreen() {
             {baronTasks.filter(t => t.status !== 'claimed').map((task) => (
               <div 
                 key={task.id} 
-                className="wooden-door border border-amber-800/40 rounded-2xl p-4 shadow-md space-y-3 relative overflow-hidden"
+                className="wooden-door border border-amber-850/20 rounded-2xl p-4 shadow-md space-y-3 relative overflow-hidden"
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="font-serif font-black text-sm text-amber-900 block uppercase tracking-wider">
+                    <span className="font-serif font-black text-sm text-amber-400 block uppercase tracking-wider">
                       📜 {task.title}
                     </span>
-                    <span className="text-[10px] text-stone-700 block mt-0.5 leading-relaxed font-medium">
+                    <span className="text-[10px] text-stone-300 block mt-0.5 leading-relaxed font-semibold">
                       {task.description}
                     </span>
                   </div>
@@ -449,11 +449,11 @@ export default function HubScreen() {
 
                 {/* Progress bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-stone-600">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-stone-400">
                     <span>Progress</span>
                     <span>{task.currentCount} / {task.targetCount}</span>
                   </div>
-                  <div className="h-2 bg-stone-900/10 rounded-full overflow-hidden border border-stone-800/10">
+                  <div className="h-2 bg-stone-950 rounded-full overflow-hidden border border-stone-850">
                     <div 
                       className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-350"
                       style={{ width: `${Math.min(100, (task.currentCount / task.targetCount) * 100)}%` }}
@@ -462,11 +462,11 @@ export default function HubScreen() {
                 </div>
 
                 {/* Rewards display */}
-                <div className="flex items-center gap-3 pt-1 text-[10px] font-bold text-stone-800">
+                <div className="flex items-center gap-3 pt-1 text-[10px] font-bold text-stone-300">
                   <span className="text-stone-500">Rewards:</span>
-                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-blue-600">💎 {task.rewardGems}</span>}
-                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-yellow-600">⭐ {task.rewardStars}</span>}
-                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-600">🧩 {task.rewardShards} {task.shardType}</span>}
+                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-blue-400">💎 {task.rewardGems}</span>}
+                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-yellow-400">⭐ {task.rewardStars}</span>}
+                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-400">🧩 {task.rewardShards} {task.shardType}</span>}
                 </div>
               </div>
             ))}
@@ -516,8 +516,8 @@ export default function HubScreen() {
 
                 {/* Info */}
                 <div className="mt-4">
-                  <h4 className="font-black text-xs text-stone-900 tracking-tight line-clamp-1 font-serif">{node.label}</h4>
-                  <p className="text-[10px] text-stone-600 font-semibold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                  <h4 className="font-black text-xs text-white tracking-tight line-clamp-1 font-serif">{node.label}</h4>
+                  <p className="text-[10px] text-stone-300 font-semibold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
                 </div>
 
                 {/* Corner rivets */}
