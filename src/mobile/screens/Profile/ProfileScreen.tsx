@@ -160,23 +160,23 @@ export default function ProfileScreen() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold truncate text-stone-100 font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{profile?.name || '…'}</h1>
+            <h1 className="text-xl font-bold truncate text-stone-900 font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{profile?.name || '…'}</h1>
             {equippedTitle && (
-              <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit mt-1 tracking-wider">
+              <span className="text-[9px] font-black uppercase text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit mt-1 tracking-wider">
                 {equippedTitle.emoji} {equippedTitle.name.replace(' Title', '')}
               </span>
             )}
           </div>
           {profile?.username && profile.username !== profile.name && (
-            <p className="text-xs text-stone-500 truncate mt-0.5">@{profile.username}</p>
+            <p className="text-xs text-stone-600 truncate mt-0.5">@{profile.username}</p>
           )}
-          <p className="text-sm text-amber-500 font-semibold mt-1">{(profile?.gems ?? 0).toLocaleString()} gems</p>
+          <p className="text-sm text-amber-600 font-bold mt-1">{(profile?.gems ?? 0).toLocaleString()} gems</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setEditOpen(true)}
           disabled={!editProfile}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold iron-frame text-amber-400 disabled:opacity-50"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold iron-frame text-amber-600 disabled:opacity-50"
         >
           <Pencil className="w-4 h-4" /> Edit
         </motion.button>
@@ -187,14 +187,14 @@ export default function ProfileScreen() {
           <MascotPlayer character={characterOfTheDay()} mood={mirrorMood} size={64} noHalo />
           <div className="flex-1">
             <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Court Mirror</p>
-            <p className="font-bold text-sm text-stone-200">
+            <p className="font-bold text-sm text-stone-900">
               {mirrorMood === 'excited' && "You're crushing it — keep going!"}
               {mirrorMood === 'cheer' && "Solid run. One more quest?"}
               {mirrorMood === 'neutral' && 'Steady. Play a quick round to warm up.'}
               {mirrorMood === 'sad' && 'Tough patch. Win one to cheer me up?'}
               {mirrorMood === 'angry' && 'Save us with a comeback! 💪'}
             </p>
-            <p className="text-[11px] text-stone-500 mt-0.5">Last {sample} battles · {Math.round(accuracy * 100)}% accuracy</p>
+            <p className="text-[11px] text-stone-600 mt-0.5 font-medium">Last {sample} battles · {Math.round(accuracy * 100)}% accuracy</p>
           </div>
         </div>
       )}
@@ -369,7 +369,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
       <div className={`absolute -right-4 -top-4 w-16 h-16 rounded-full bg-gradient-to-br ${color} opacity-15 blur-xl`} />
       <Icon className="w-5 h-5 mb-2 text-amber-500" />
       <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">{label}</p>
-      <p className="font-bold text-lg text-stone-200">{value}</p>
+      <p className="font-bold text-lg text-stone-900">{value}</p>
     </motion.div>
   );
 }
@@ -379,21 +379,21 @@ function ReportRow({ title, attempted, correct, gems }: { title: string; attempt
   return (
     <div className="rounded-2xl wooden-door p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="font-bold text-sm text-stone-200">{title}</p>
-        <span className="text-[10px] text-stone-500 uppercase tracking-wider">{accuracy}% accuracy</span>
+        <p className="font-bold text-sm text-stone-900">{title}</p>
+        <span className="text-[10px] text-stone-600 font-semibold uppercase tracking-wider">{accuracy}% accuracy</span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-lg font-bold text-stone-300">{attempted}</p>
-          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Battles</p>
+          <p className="text-lg font-bold text-stone-800">{attempted}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Battles</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-emerald-500">{correct}</p>
-          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Victories</p>
+          <p className="text-lg font-bold text-emerald-600">{correct}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Victories</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-amber-500">{gems.toLocaleString()}</p>
-          <p className="text-[10px] text-stone-500 uppercase tracking-wider">Gems</p>
+          <p className="text-lg font-bold text-amber-600">{gems.toLocaleString()}</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">Gems</p>
         </div>
       </div>
     </div>

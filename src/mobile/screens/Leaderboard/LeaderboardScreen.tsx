@@ -56,8 +56,8 @@ export default function LeaderboardScreen() {
             #{myRank}
           </div>
           <div className="flex-1">
-            <p className="font-bold text-stone-200">{me.username} <span className="text-[10px] text-stone-500">(you)</span></p>
-            <p className="text-xs text-stone-500">{me.points.toLocaleString()} gems earned this moon</p>
+            <p className="font-bold text-stone-900">{me.username} <span className="text-[10px] text-stone-600">(you)</span></p>
+            <p className="text-xs text-stone-600">{me.points.toLocaleString()} gems earned this moon</p>
           </div>
           <Shield className="w-5 h-5 text-amber-500 fill-amber-500/20" />
         </motion.div>
@@ -87,10 +87,10 @@ export default function LeaderboardScreen() {
                   {rank === 1 ? <Crown className="w-4 h-4 text-yellow-400" /> :
                    rank === 2 ? <Medal className="w-4 h-4 text-slate-300" /> :
                    rank === 3 ? <Medal className="w-4 h-4 text-amber-700" /> :
-                   <span className="text-stone-500">#{rank}</span>}
+                   <span className="text-stone-400">#{rank}</span>}
                 </div>
-                <p className="flex-1 font-semibold truncate text-stone-200">{row.username}</p>
-                <p className="text-sm font-bold text-amber-500 tabular-nums">{row.points.toLocaleString()} 💎</p>
+                <p className="flex-1 font-semibold truncate text-stone-900">{row.username}</p>
+                <p className="text-sm font-bold text-amber-600 tabular-nums">{row.points.toLocaleString()} 💎</p>
               </motion.li>
             );
           })}

@@ -163,8 +163,8 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
       {/* Royal Treasury Widget */}
       <div className="wooden-door p-5 shadow-xl flex items-center justify-between gap-4">
         <div className="text-left">
-          <span className="text-[10px] uppercase font-black text-amber-500/60 tracking-widest block font-serif">Royal Treasury</span>
-          <h3 className="text-sm text-stone-400 font-bold mt-0.5">Kingdom Vault Balances</h3>
+          <span className="text-[10px] uppercase font-black text-amber-800 tracking-widest block font-serif">Royal Treasury</span>
+          <h3 className="text-sm text-stone-700 font-bold mt-0.5">Kingdom Vault Balances</h3>
         </div>
         <div className="flex items-center gap-6">
           <div className="bg-stone-950/80 border border-stone-800 rounded-2xl px-5 py-2.5 flex items-center gap-3">
@@ -226,7 +226,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Advisor levels card */}
             <div className="wooden-door p-5 shadow-lg">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider font-serif mb-4 flex items-center gap-2">
+              <h4 className="text-sm font-bold text-stone-900 uppercase tracking-wider font-serif mb-4 flex items-center gap-2">
                 🏛️ Advisor Council
               </h4>
               <div className="space-y-3">
@@ -258,10 +258,10 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             {/* Campaign map progress card */}
             <div className="wooden-door p-5 shadow-lg flex flex-col justify-between">
               <div>
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider font-serif mb-2 flex items-center gap-2">
+                <h4 className="text-sm font-bold text-stone-900 uppercase tracking-wider font-serif mb-2 flex items-center gap-2">
                   🗺️ Campaign Progress
                 </h4>
-                <p className="text-xs text-stone-300 leading-relaxed mb-4">
+                <p className="text-xs text-stone-700 leading-relaxed font-semibold mb-4">
                   Advance through regional historic campaigns on the quests map, unlock advisor lifelines, and win battle stars.
                 </p>
                 <div className="bg-stone-950/60 border border-stone-800 p-4 rounded-xl space-y-2">
@@ -272,7 +272,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   <div className="w-full bg-stone-900 h-2.5 rounded-full overflow-hidden border border-stone-800">
                     <div className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (stars / 40) * 100)}%` }} />
                   </div>
-                  <span className="text-[9px] text-stone-500 block uppercase tracking-wider mt-1">{stars} / 40 Stars to unlock campaigns</span>
+                  <span className="text-[9px] text-stone-400 block uppercase tracking-wider mt-1">{stars} / 40 Stars to unlock campaigns</span>
                 </div>
               </div>
               
@@ -327,11 +327,11 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-extrabold text-white text-sm tracking-tight mb-1">{item.name}</h3>
-                      <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mb-2 inline-block">
+                      <h3 className="font-extrabold text-stone-900 text-sm tracking-tight mb-1">{item.name}</h3>
+                      <span className="text-[9px] font-black uppercase text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mb-2 inline-block">
                         {item.effect}
                       </span>
-                      <p className="text-slate-400 text-[11px] leading-relaxed mb-4 min-h-[44px]">
+                      <p className="text-stone-600 text-[11px] font-semibold leading-relaxed mb-4 min-h-[44px]">
                         {item.description}
                       </p>
                     </div>

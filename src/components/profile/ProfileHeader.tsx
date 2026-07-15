@@ -96,8 +96,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <div className={cn(
-      "wooden-door p-6 shadow-xl text-stone-100 transition-all duration-500",
-      isNavyBackdrop && "bg-gradient-to-b from-slate-900 via-blue-950 to-indigo-900 border-indigo-500/40 shadow-[inset_0_1px_20px_rgba(59,130,246,0.15)]"
+      "wooden-door p-6 shadow-xl transition-all duration-500",
+      isNavyBackdrop ? "text-stone-100 bg-gradient-to-b from-slate-900 via-blue-950 to-indigo-900 border-indigo-500/40 shadow-[inset_0_1px_20px_rgba(59,130,246,0.15)]" : "text-stone-900"
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -120,9 +120,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             )}
           </div>
           
+          {/* Text details */}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black text-white font-serif" style={{ fontFamily: "'Cinzel', serif" }}>{displayName || username}</h2>
+              <h2 className={cn(
+                "text-xl font-black font-serif",
+                isNavyBackdrop ? "text-white" : "text-stone-900"
+              )} style={{ fontFamily: "'Cinzel', serif" }}>{displayName || username}</h2>
               {userId && onProfileUpdate && (
                 <ProfileEditor
                   userName={username || ''}
@@ -137,7 +141,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 />
               )}
             </div>
-            <p className="text-xs text-stone-400 mt-1 uppercase tracking-wider font-bold">Joined {joinedDate}</p>
+            <p className={cn(
+              "text-xs uppercase tracking-wider font-bold mt-1",
+              isNavyBackdrop ? "text-stone-400" : "text-stone-600"
+            )}>Joined {joinedDate}</p>
           </div>
         </div>
 

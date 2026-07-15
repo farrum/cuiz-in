@@ -471,21 +471,21 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
     linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
 }
 
-/* Heavy wooden panel with oak grain */
+/* Heavy wooden panel with oak grain - Light Medieval Castle Theme */
 .wooden-door {
-  background: linear-gradient(180deg, hsl(25 35% 18%) 0%, hsl(25 30% 14%) 100%);
-  border: 3px solid hsl(35 20% 25%);
+  background: linear-gradient(180deg, #FCF8F2 0%, #F5ECD9 100%);
+  border: 3px solid #C4A76D;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -1px 0 rgba(0,0,0,0.3),
-    0 4px 12px rgba(0,0,0,0.5);
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -1px 0 rgba(0,0,0,0.1),
+    0 4px 12px rgba(139,92,26,0.12);
   background-image:
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 18px,
-      rgba(255,255,255,0.02) 18px,
-      rgba(255,255,255,0.02) 19px
+      rgba(139,92,26,0.03) 18px,
+      rgba(139,92,26,0.03) 19px
     );
   position: relative;
 }
@@ -493,7 +493,7 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   content: '';
   position: absolute;
   inset: 4px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(139,92,26,0.06);
   border-radius: inherit;
   pointer-events: none;
 }
@@ -525,7 +525,7 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 
 /* Iron frame — double-border with studded look */
 .iron-frame {
-  border: 3px double hsl(35 15% 28%);
+  border: 3px double hsl(35, 15%, 28%);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.04),
     0 2px 8px rgba(0,0,0,0.4);
@@ -542,13 +542,13 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 
 /* Medieval button — gold-leaf with embossed edges */
 .medieval-btn {
-  background: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(35 85% 42%) 100%);
-  color: hsl(25 40% 8%);
+  background: linear-gradient(135deg, hsl(45, 93%, 47%) 0%, hsl(35, 85%, 42%) 100%);
+  color: hsl(25, 40%, 8%);
   font-weight: 800;
   font-family: 'Cinzel', serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: 2px solid hsl(48 80% 60%);
+  border: 2px solid hsl(48, 80%, 60%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.3),
     inset 0 -2px 0 rgba(0,0,0,0.15),
@@ -569,9 +569,9 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 /* Castle archway — rounded arch for headers */
 .castle-archway {
   border-radius: 50% 50% 0 0 / 30% 30% 0 0;
-  border: 3px solid hsl(35 15% 22%);
+  border: 3px solid hsl(35, 15%, 22%);
   border-bottom: none;
-  background: linear-gradient(180deg, hsl(28 15% 12%) 0%, transparent 100%);
+  background: linear-gradient(180deg, hsl(28, 15%, 12%) 0%, transparent 100%);
 }
 
 /* Iron rivet / stud */
@@ -579,14 +579,14 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, hsl(35 10% 45%), hsl(35 10% 25%));
+  background: radial-gradient(circle at 35% 35%, hsl(35, 10%, 45%), hsl(35, 10%, 25%));
   box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.05);
 }
 
 /* Shield portrait frame */
 .shield-frame {
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 2px solid hsl(35 20% 30%);
+  border: 2px solid hsl(35, 20%, 30%);
 }
 
 /* Parchment card styling (light interior for readability) */

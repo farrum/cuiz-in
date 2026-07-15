@@ -391,12 +391,12 @@ export default function HubScreen() {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-black text-base leading-tight text-white font-serif">{node.label}</p>
-                  {node.hint && <p className="text-[11px] text-stone-300 font-medium mt-0.5 leading-normal">{node.hint}</p>}
+                  <p className="font-black text-base leading-tight text-stone-900 font-serif">{node.label}</p>
+                  {node.hint && <p className="text-[11px] text-stone-600 font-semibold mt-0.5 leading-normal">{node.hint}</p>}
                 </div>
 
                 {/* Chevron */}
-                <ChevronRight className="w-4 h-4 text-amber-600/40 relative z-10 group-hover:text-amber-500 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-amber-800/40 relative z-10 group-hover:text-amber-600 transition-colors" />
 
                 {/* Iron rivets on corners */}
                 <div className="absolute top-2 left-2 iron-rivet" />
@@ -425,10 +425,10 @@ export default function HubScreen() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="font-serif font-black text-sm text-yellow-500 block uppercase tracking-wider">
+                    <span className="font-serif font-black text-sm text-amber-900 block uppercase tracking-wider">
                       📜 {task.title}
                     </span>
-                    <span className="text-[10px] text-stone-300 block mt-0.5 leading-relaxed">
+                    <span className="text-[10px] text-stone-700 block mt-0.5 leading-relaxed font-medium">
                       {task.description}
                     </span>
                   </div>
@@ -449,26 +449,24 @@ export default function HubScreen() {
 
                 {/* Progress bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-stone-600">
                     <span>Progress</span>
                     <span>{task.currentCount} / {task.targetCount}</span>
                   </div>
-                  <div className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden border border-stone-850">
+                  <div className="h-2 bg-stone-900/10 rounded-full overflow-hidden border border-stone-800/10">
                     <div 
-                      className="h-full bg-gradient-to-r from-yellow-500 to-amber-600 transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-350"
                       style={{ width: `${Math.min(100, (task.currentCount / task.targetCount) * 100)}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Rewards overview */}
-                <div className="flex gap-2.5 pt-1.5 border-t border-stone-850 text-[9px] font-bold text-slate-450 uppercase tracking-wide">
-                  <span>Rewards:</span>
-                  <span className="text-amber-500">+{task.rewardGems} Gems</span>
-                  <span className="text-yellow-400">+{task.rewardStars} Stars</span>
-                  {task.rewardShards > 0 && (
-                    <span className="text-blue-400">+{task.rewardShards} {task.shardType} Shards</span>
-                  )}
+                {/* Rewards display */}
+                <div className="flex items-center gap-3 pt-1 text-[10px] font-bold text-stone-800">
+                  <span className="text-stone-500">Rewards:</span>
+                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-blue-600">💎 {task.rewardGems}</span>}
+                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-yellow-600">⭐ {task.rewardStars}</span>}
+                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-600">🧩 {task.rewardShards} {task.shardType}</span>}
                 </div>
               </div>
             ))}
@@ -482,10 +480,10 @@ export default function HubScreen() {
       </section>
 
       {/* ═══ Tavern Games ═══ */}
-      <section className="relative">
-        <h2 className="text-[10px] font-black tracking-[0.25em] text-stone-400 mb-3 uppercase font-serif flex items-center gap-2">
+      <section className="relative mb-5">
+        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
           <span className="w-8 h-[1px] bg-amber-800/30" />
-          Tavern Games
+          Tavern Games & Contests
           <span className="flex-1 h-[1px] bg-amber-800/30" />
         </h2>
         <div className="grid grid-cols-2 gap-3">
@@ -518,8 +516,8 @@ export default function HubScreen() {
 
                 {/* Info */}
                 <div className="mt-4">
-                  <h4 className="font-black text-xs text-white tracking-tight line-clamp-1 font-serif">{node.label}</h4>
-                  <p className="text-[10px] text-stone-300 font-medium mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                  <h4 className="font-black text-xs text-stone-900 tracking-tight line-clamp-1 font-serif">{node.label}</h4>
+                  <p className="text-[10px] text-stone-600 font-semibold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
                 </div>
 
                 {/* Corner rivets */}
