@@ -807,6 +807,7 @@ export type Database = {
           reactivation_approved_at: string | null
           reactivation_requested: boolean | null
           reactivation_requested_at: string | null
+          stars: number
           suspended: boolean | null
           upi_id: string | null
           username: string
@@ -827,6 +828,7 @@ export type Database = {
           reactivation_approved_at?: string | null
           reactivation_requested?: boolean | null
           reactivation_requested_at?: string | null
+          stars?: number
           suspended?: boolean | null
           upi_id?: string | null
           username: string
@@ -847,6 +849,7 @@ export type Database = {
           reactivation_approved_at?: string | null
           reactivation_requested?: boolean | null
           reactivation_requested_at?: string | null
+          stars?: number
           suspended?: boolean | null
           upi_id?: string | null
           username?: string
