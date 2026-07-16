@@ -148,7 +148,7 @@ export const MiniGamePlayPage: React.FC = () => {
     setTimeout(() => {
       setChestAnimState('bursting');
       import('@/utils/audioManager').then(({ audioManager }) => {
-        audioManager.playSound('win');
+        audioManager.playSFX('correct');
       });
 
       setTimeout(() => {
