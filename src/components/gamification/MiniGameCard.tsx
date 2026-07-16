@@ -111,22 +111,7 @@ export const MiniGameCard: React.FC<MiniGameCardProps> = ({ id, name, descriptio
           {emoji}
         </span>
 
-        {/* Daily Mystery Chest Indicator */}
-        {!isClaimed && animationState === 'idle' && (
-          <button 
-            onClick={handleOpenChest}
-            className="absolute top-3 right-3 z-20 flex flex-col items-center justify-center bg-amber-500 hover:bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-2xl border-2 border-amber-300 shadow-md cursor-pointer select-none transition-all duration-300 animate-[float_3s_ease-in-out_infinite] hover:scale-110"
-          >
-            <div className="text-lg leading-none mb-0.5 filter drop-shadow-sm">🧰</div>
-            <span>Daily Chest</span>
-          </button>
-        )}
-
-        {isClaimed && animationState === 'idle' && (
-          <div className="absolute top-3 right-3 z-20 bg-slate-900/60 border-2 border-slate-700/50 backdrop-blur px-3 py-1.5 rounded-xl text-[9px] font-black tracking-widest text-slate-300 uppercase select-none shadow-inner">
-            Opened Today
-          </div>
-        )}
+        {/* Daily Mystery Chest Indicator Removed */}
       </div>
 
       <div className="mini-game-content p-6 flex flex-col gap-4 flex-1">

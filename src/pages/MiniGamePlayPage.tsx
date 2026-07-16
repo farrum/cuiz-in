@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserBalances, updateUserBalances } from '@/utils/shopData';
+import { Star, Coins, Sparkles, AlertCircle } from 'lucide-react';
 
 // Game Component Imports
 import { SlotMachine } from '@/components/gamification/SlotMachine';
@@ -57,6 +58,12 @@ export const MiniGamePlayPage: React.FC = () => {
   const [hasAttemptedRiddle, setHasAttemptedRiddle] = useState(false);
   const [riddleLoading, setRiddleLoading] = useState(false);
 
+  // States for Daily Chest and Balances
+  const [userBalances, setUserBalances] = useState({ gems: 0, stars: 0 });
+  const [isChestClaimed, setIsChestClaimed] = useState(false);
+  const [chestAnimState, setChestAnimState] = useState<'idle' | 'shaking' | 'bursting' | 'revealed'>('idle');
+  const [chestReward, setChestReward] = useState<{ gems: number; stars: number } | null>(null);
+
   // Load questions when true-false or image game is selected
   const loadQuestions = async () => {
     setLoadingQuestions(true);
@@ -75,6 +82,15 @@ export const MiniGamePlayPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const fetchBalances = () => {
+      setUserBalances(getUserBalances());
+    };
+    fetchBalances();
+    window.addEventListener('gemsUpdated', fetchBalances);
+    return () => window.removeEventListener('gemsUpdated', fetchBalances);
+  }, [balanceUpdateTrigger]);
+
+  useEffect(() => {
     setHasPaid(false);
     if (gameId === 'true-false' || gameId === 'image') {
       loadQuestions();
@@ -82,6 +98,13 @@ export const MiniGamePlayPage: React.FC = () => {
       initScratchCard();
     } else if (gameId === 'riddlevault') {
       loadRiddle();
+    }
+    
+    // Check Chest Claim Status
+    const today = getTodayString();
+    if (gameId) {
+      const claimed = localStorage.getItem(`cuizin-box-claimed-${gameId}-${today}`);
+      setIsChestClaimed(claimed === 'true');
     }
   }, [gameId]);
 
@@ -112,6 +135,41 @@ export const MiniGamePlayPage: React.FC = () => {
       setHasPaid(true);
       setBalanceUpdateTrigger(prev => prev + 1);
     }
+  };
+
+  const handleOpenDailyChest = async () => {
+    if (isChestClaimed || chestAnimState !== 'idle' || !gameId) return;
+
+    setChestAnimState('shaking');
+    const gemsReward = Math.floor(Math.random() * 21) + 10;
+    const starsReward = Math.floor(Math.random() * 5) + 2;
+    setChestReward({ gems: gemsReward, stars: starsReward });
+
+    setTimeout(() => {
+      setChestAnimState('bursting');
+      import('@/utils/audioManager').then(({ audioManager }) => {
+        audioManager.playSound('win');
+      });
+
+      setTimeout(() => {
+        setChestAnimState('revealed');
+        updateUserBalances(gemsReward, starsReward);
+        setBalanceUpdateTrigger(prev => prev + 1);
+        
+        const today = getTodayString();
+        localStorage.setItem(`cuizin-box-claimed-${gameId}-${today}`, 'true');
+        
+        const questKey = `cuizin_quest_boxes_opened_${today}`;
+        const currentProgress = parseInt(localStorage.getItem(questKey) || '0');
+        localStorage.setItem(questKey, (currentProgress + 1).toString());
+
+        setTimeout(() => {
+          setIsChestClaimed(true);
+          setChestAnimState('idle');
+          setChestReward(null);
+        }, 2500);
+      }, 1200);
+    }, 1000);
   };
 
   const renderLaunchScreen = () => {
@@ -460,6 +518,48 @@ export const MiniGamePlayPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Balances */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-slate-900 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-sm">
+                  <div className="flex flex-col text-right">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-0.5">Gems</span>
+                    <span className="text-xs font-black text-amber-500 leading-none">{userBalances.gems}</span>
+                  </div>
+                  <Coins className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="flex items-center gap-2 bg-slate-900 border border-yellow-500/30 px-3 py-1.5 rounded-xl shadow-sm">
+                  <div className="flex flex-col text-right">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-0.5">Stars</span>
+                    <span className="text-xs font-black text-yellow-500 leading-none">{userBalances.stars}</span>
+                  </div>
+                  <Star className="w-5 h-5 text-yellow-500" />
+                </div>
+              </div>
+              
+              {/* Daily Chest Button */}
+              {!isChestClaimed && (
+                <button
+                  onClick={handleOpenDailyChest}
+                  className="relative group transition-transform hover:scale-110 active:scale-95"
+                >
+                  <img src="/chest.png" alt="Daily Chest" className="w-12 h-12 object-contain filter drop-shadow-md" />
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-slate-950 rounded-full animate-pulse shadow-sm z-10" />
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-amber-950 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    Daily
+                  </div>
+                </button>
+              )}
+              {isChestClaimed && (
+                <div className="relative opacity-50 grayscale transition-transform">
+                  <img src="/chest.png" alt="Daily Chest" className="w-12 h-12 object-contain" />
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-700 text-slate-300 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest whitespace-nowrap">
+                    Opened
+                  </div>
+                </div>
+              )}
+            </div>
  
             {/* Quick Game Mode Tab Selector */}
             <div className="flex items-center gap-1.5 overflow-x-auto bg-slate-900 border border-slate-800 p-1 rounded-xl">
@@ -483,7 +583,42 @@ export const MiniGamePlayPage: React.FC = () => {
         </div>
  
         {/* Main Game Screen */}
-        <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col items-center justify-center">
+        <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col items-center justify-center relative">
+          
+          {/* Full Screen Chest Overlay Animation Sequence */}
+          {chestAnimState !== 'idle' && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+              <div 
+                className={cn(
+                  "relative transition-all duration-300",
+                  chestAnimState === 'shaking' ? "animate-[bounce_0.2s_infinite]" :
+                  chestAnimState === 'bursting' ? "scale-0 opacity-0 duration-500" :
+                  chestAnimState === 'revealed' ? "hidden" : ""
+                )}
+              >
+                <img src="/chest.png" alt="Chest" className="w-48 h-48 object-contain drop-shadow-2xl" />
+              </div>
+
+              {/* Revealed Text */}
+              {chestAnimState === 'revealed' && chestReward && (
+                <div className="absolute z-50 flex flex-col items-center justify-center w-full px-4 text-center animate-in zoom-in spin-in-12 duration-500">
+                  <span className="text-6xl mb-4 drop-shadow-[0_0_20px_rgba(250,204,21,0.8)]">🏆</span>
+                  <h3 className="text-2xl font-black uppercase tracking-widest text-amber-400 mb-4 drop-shadow-lg">Daily Chest Opened!</h3>
+                  <div className="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm flex items-center justify-center gap-8 shadow-2xl">
+                    <div className="text-center">
+                      <span className="block text-4xl font-black text-blue-400 drop-shadow-md">+{chestReward.gems}</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 block">Gems</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-4xl font-black text-amber-400 drop-shadow-md">+{chestReward.stars}</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 block">Stars</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-xl shadow-yellow-500/5 min-h-[450px] flex items-center justify-center">
             {hasPaid ? renderGameContent() : renderLaunchScreen()}
           </div>

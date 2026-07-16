@@ -71,41 +71,38 @@ const Header: React.FC = () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) {
         setTodayGems(0);
-        setMonthlyGems(0);
+        setMonthlyGems(0); // Used for Stars now
         return;
       }
       
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+        const { data } = await supabase.from('profiles').select('points, stars').eq('id', userId).maybeSingle();
         
-        const [dailyResponse, monthlyResponse] = await Promise.all([
-          supabase.from('daily_points').select('gems:points').eq('user_id', userId).eq('date', today).maybeSingle(),
-          supabase.from('monthly_points').select('gems:points').eq('user_id', userId).eq('month', currentMonth).maybeSingle()
-        ]);
-        
-        setTodayGems(dailyResponse.data?.gems ?? 0);
-        setMonthlyGems(monthlyResponse.data?.gems ?? 0);
-        
+        if (data) {
+          setTodayGems(data.points ?? 0);
+          setMonthlyGems(data.stars ?? 0);
+          
+          // Update local storage too for consistency
+          localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(data.points ?? 0));
+          localStorage.setItem(STORAGE_KEYS.USER_STARS, String(data.stars ?? 0));
+        }
       } catch (error) {
-        console.error('Error fetching gems:', error);
+        console.error('Error fetching gems/stars:', error);
       }
     };
     
     if (isLoggedIn) {
       updateGems();
       window.addEventListener('gemsUpdated', updateGems);
-      const intervalId = setInterval(updateGems, 30000);
+      window.addEventListener('shardsUpdated', updateGems); // Optional, trigger generic refresh
+      const intervalId = setInterval(updateGems, 15000);
       return () => {
         window.removeEventListener('gemsUpdated', updateGems);
+        window.removeEventListener('shardsUpdated', updateGems);
         clearInterval(intervalId);
       };
     }
   }, [isLoggedIn]);
-  
-  const dailyProgress = Math.min(100, todayGems / DAILY_TARGET * 100);
-  const monthlyProgress = Math.min(100, monthlyGems / MONTHLY_TARGET * 100);
 
   // Simplified navigation (decluttered - Categories, FAQ, Games moved to footer)
   const mainNavItems = [
@@ -177,20 +174,22 @@ const Header: React.FC = () => {
 
           {/* Right side: Gems + CTA */}
           <div className="flex items-center gap-3">
-            {/* Gems display - desktop only */}
+            {/* Gems & Stars display - desktop only */}
             {isLoggedIn ? (
-              <div className="hidden lg:flex flex-col gap-1 w-36">
-                <div className="flex text-xs items-center gap-1">
-                  <Target className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs">Daily:</span>
-                  <Progress value={dailyProgress} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{todayGems.toFixed(0)}</span>
+              <div className="hidden lg:flex flex-col gap-1 w-32">
+                <div className="flex text-xs items-center justify-between gap-1 bg-sky-100/50 px-2 py-0.5 rounded-md border border-sky-200 shadow-inner">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] drop-shadow-sm">💎</span>
+                    <span className="text-[10px] font-black tracking-widest uppercase text-sky-800">Gems</span>
+                  </div>
+                  <span className="text-xs font-black text-sky-600 drop-shadow-sm">{todayGems.toFixed(0)}</span>
                 </div>
-                <div className="flex text-xs items-center gap-1">
-                  <Target className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs">Monthly:</span>
-                  <Progress value={monthlyProgress} className="h-1.5 flex-1" />
-                  <span className="text-xs text-muted-foreground">{monthlyGems.toFixed(0)}</span>
+                <div className="flex text-xs items-center justify-between gap-1 bg-amber-100/50 px-2 py-0.5 rounded-md border border-amber-200 shadow-inner">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] drop-shadow-sm">⭐</span>
+                    <span className="text-[10px] font-black tracking-widest uppercase text-amber-800">Stars</span>
+                  </div>
+                  <span className="text-xs font-black text-amber-600 drop-shadow-sm">{monthlyGems.toFixed(0)}</span>
                 </div>
               </div>
             ) : (

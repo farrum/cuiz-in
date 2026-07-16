@@ -838,23 +838,23 @@ export default function EmpireQuestsPage() {
               )}
 
               {/* Progress and Timer header */}
-              <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-                <Button variant="ghost" size="sm" onClick={exitGameplay} className="text-slate-400 hover:text-white uppercase tracking-wider text-[10px] font-black">
+              <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-6">
+                <Button variant="ghost" size="sm" onClick={exitGameplay} className="text-slate-500 hover:text-slate-800 hover:bg-slate-100 uppercase tracking-wider text-[10px] font-black">
                   🏳️ Retreat
                 </Button>
 
                 <div className="text-center">
-                  <span className="text-xs font-black uppercase text-yellow-500 tracking-widest block">
+                  <span className="text-xs font-black uppercase text-amber-600 tracking-widest block">
                     {activeQuest?.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">
                     Question {currentQIndex + 1} of {questQuestions.length}
                   </span>
                 </div>
 
                 <div className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-xl font-black text-xs border uppercase tracking-wider",
-                  timer <= 3 ? "bg-red-500/10 border-red-500/30 text-red-500 animate-ping" : "bg-slate-950 border-slate-800 text-slate-350"
+                  timer <= 3 ? "bg-red-100 border-red-200 text-red-600 animate-ping" : "bg-slate-900 border-slate-800 text-white shadow-sm"
                 )}>
                   <Timer className="w-4 h-4" />
                   <span>{timer}s</span>
@@ -871,13 +871,13 @@ export default function EmpireQuestsPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-bold text-center text-white leading-relaxed max-w-2xl mx-auto font-serif px-2">
+                  <h3 className="text-lg md:text-xl font-bold text-center text-slate-800 leading-relaxed max-w-2xl mx-auto font-serif px-2">
                     {questQuestions[currentQIndex].question}
                   </h3>
 
                   {/* Smart Hint Card */}
                   {smartClue && (
-                    <div className="bg-purple-950/20 border border-purple-500/30 p-3 rounded-2xl text-xs text-purple-400 font-semibold max-w-lg mx-auto text-center animate-pulse">
+                    <div className="bg-purple-100 border border-purple-200 p-3 rounded-2xl text-xs text-purple-800 font-bold max-w-lg mx-auto text-center animate-pulse shadow-sm">
                       🧠 Ramanujan's Formula: {smartClue}
                     </div>
                   )}
@@ -901,19 +901,19 @@ export default function EmpireQuestsPage() {
                           disabled={hasAnswered}
                           onClick={() => handleSelectAnswer(option)}
                           className={cn(
-                            "w-full text-left p-4 rounded-2xl border-2 font-bold text-sm transition-all duration-200 select-none",
+                            "w-full text-left p-4 rounded-2xl border-2 font-bold text-sm transition-all duration-200 select-none shadow-sm",
                             showResult
                               ? isOptionCorrect
-                                ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-md shadow-emerald-500/5"
+                                ? "bg-emerald-100 border-emerald-500 text-emerald-800"
                                 : isSelected
-                                  ? "bg-red-500/10 border-red-500 text-red-400"
-                                  : "bg-slate-950 border-slate-900 text-slate-500 opacity-50"
+                                  ? "bg-red-100 border-red-500 text-red-800"
+                                  : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
                               : isSelected
-                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-400"
-                                : "bg-slate-950 border-slate-800 text-slate-350 hover:bg-slate-850 hover:border-slate-700"
+                                ? "bg-amber-100 border-amber-500 text-amber-900"
+                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
                           )}
                         >
-                          <span className="mr-3 text-yellow-500/40 text-xs font-black">●</span>
+                          <span className={cn("mr-3 text-xs font-black", showResult ? (isOptionCorrect ? "text-emerald-500" : "text-slate-400") : "text-amber-500/50")}>●</span>
                           {option}
                         </button>
                       );
@@ -926,15 +926,15 @@ export default function EmpireQuestsPage() {
                       "text-xs font-black uppercase tracking-wider",
                       hasAnswered 
                         ? isCorrect 
-                          ? "text-emerald-500" 
-                          : "text-red-500"
-                        : "text-slate-400"
+                          ? "text-emerald-600" 
+                          : "text-red-600"
+                        : "text-slate-500"
                     )}>
                       {feedbackMsg}
                     </p>
                     
                     {hasAnswered && revealedExplanation && (
-                      <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed italic animate-in fade-in duration-300">
+                      <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed italic animate-in fade-in duration-300">
                         {revealedExplanation}
                       </p>
                     )}
@@ -955,7 +955,7 @@ export default function EmpireQuestsPage() {
                   {/* COUNCIL LIFELINES PANEL */}
                   {activeQuest?.id !== 'persia_trial' && (
                     <div className="border-t-2 border-primary/10 pt-6 mt-8">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center mb-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center mb-4">
                         Activate Council Lifelines
                       </h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
@@ -966,12 +966,12 @@ export default function EmpireQuestsPage() {
                           className={cn(
                             "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
                             socratesUsed || hasAnswered || heroes.find(h => h.id === 'socrates')?.level === 0
-                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
-                              : "bg-white text-cyan-600 border-2 border-cyan-200 hover:bg-cyan-50"
+                              ? "bg-slate-100 text-slate-400 shadow-none border-slate-200 hover:bg-slate-100 opacity-70"
+                              : "bg-white text-cyan-700 border-2 border-cyan-200 hover:bg-cyan-50"
                           )}
                         >
                           <span className="text-sm">🏛️ Socrates</span>
-                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">50/50 (15 ★)</span>
+                          <span className="text-[9px] font-bold text-slate-500 mt-0.5">50/50 (15 ★)</span>
                         </Button>
 
                         {/* Aryabhata Button */}
@@ -981,12 +981,12 @@ export default function EmpireQuestsPage() {
                           className={cn(
                             "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
                             aryabhataUsed || hasAnswered || heroes.find(h => h.id === 'aryabhata')?.level === 0
-                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
+                              ? "bg-slate-100 text-slate-400 shadow-none border-slate-200 hover:bg-slate-100 opacity-70"
                               : "bg-white text-amber-600 border-2 border-amber-200 hover:bg-amber-50"
                           )}
                         >
                           <span className="text-sm">📐 Aryabhata</span>
-                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">+15s (20 ★)</span>
+                          <span className="text-[9px] font-bold text-slate-500 mt-0.5">+15s (20 ★)</span>
                         </Button>
 
                         {/* Chanakya Button */}
@@ -996,12 +996,12 @@ export default function EmpireQuestsPage() {
                           className={cn(
                             "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
                             chanakyaUsed || hasAnswered || heroes.find(h => h.id === 'chanakya')?.level === 0
-                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
-                              : "bg-white text-rose-500 border-2 border-rose-200 hover:bg-rose-50"
+                              ? "bg-slate-100 text-slate-400 shadow-none border-slate-200 hover:bg-slate-100 opacity-70"
+                              : "bg-white text-rose-600 border-2 border-rose-200 hover:bg-rose-50"
                           )}
                         >
                           <span className="text-sm">📜 Chanakya</span>
-                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">Shield (25 ★)</span>
+                          <span className="text-[9px] font-bold text-slate-500 mt-0.5">Shield (25 ★)</span>
                         </Button>
 
                         {/* Ramanujan Button */}
@@ -1011,12 +1011,12 @@ export default function EmpireQuestsPage() {
                           className={cn(
                             "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
                             ramanujanUsed || hasAnswered || heroes.find(h => h.id === 'ramanujan')?.level === 0
-                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
-                              : "bg-white text-purple-600 border-2 border-purple-200 hover:bg-purple-50"
+                              ? "bg-slate-100 text-slate-400 shadow-none border-slate-200 hover:bg-slate-100 opacity-70"
+                              : "bg-white text-purple-700 border-2 border-purple-200 hover:bg-purple-50"
                           )}
                         >
                           <span className="text-sm">🧠 Ramanujan</span>
-                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">Smart Hint (35 ★)</span>
+                          <span className="text-[9px] font-bold text-slate-500 mt-0.5">Smart Hint (35 ★)</span>
                         </Button>
                       </div>
                     </div>
