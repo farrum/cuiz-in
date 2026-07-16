@@ -316,23 +316,23 @@ export const TreasureChest: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto parchment-card rounded-3xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-amber-800 font-bold text-xs bg-amber-500/10 rounded-bl-xl border-l border-b border-amber-500/25 font-mono">
-        <Coins className="w-3.5 h-3.5 text-amber-600" />
+    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto panel-3d bg-white rounded-3xl relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-primary font-bold text-xs bg-primary/10 rounded-bl-xl border-l border-b border-primary/20">
+        <Coins className="w-3.5 h-3.5 text-primary" />
         <span>{gemsBalance} Gems</span>
       </div>
 
       <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-stone-900 tracking-tight flex items-center justify-center gap-2 font-serif">
-          <Sparkles className="text-amber-600 fill-amber-500 w-5 h-5 animate-pulse" />
+        <h3 className="text-xl font-black text-foreground tracking-tight flex items-center justify-center gap-2">
+          <Sparkles className="text-primary fill-primary w-6 h-6 animate-pulse" />
           Treasure Chests
         </h3>
         {streak > 0 && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 text-[10px] font-bold mt-1.5 uppercase tracking-wide">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/10 border-2 border-secondary/20 text-secondary text-[11px] font-black mt-2 uppercase tracking-wide">
             🔥 {streak}-Day Streak ({streak >= 5 ? '1.5x' : streak >= 3 ? '1.25x' : '1.0x'} Boost)
           </div>
         )}
-        <p className="text-xs text-stone-700 mt-2 max-w-[240px] mx-auto leading-relaxed font-semibold">
+        <p className="text-xs text-muted-foreground mt-3 max-w-[240px] mx-auto leading-relaxed font-bold">
           {message}
         </p>
       </div>
@@ -349,14 +349,14 @@ export const TreasureChest: React.FC = () => {
           return (
             <div 
               key={idx} 
-              className={`flex flex-col items-center justify-center border-2 rounded-xl transition-all duration-300 p-2 relative select-none cursor-pointer ${
+              className={`flex flex-col items-center justify-center border-2 rounded-2xl transition-all duration-300 p-2 relative select-none cursor-pointer ${
                 isLocked
-                  ? 'border-stone-300 opacity-60 bg-stone-200/20 cursor-not-allowed'
+                  ? 'border-muted opacity-60 bg-muted/20 cursor-not-allowed'
                   : isSelected 
-                    ? 'border-amber-600 bg-amber-500/10' 
+                    ? 'border-primary bg-primary/10 shadow-inner' 
                     : isRevealed 
-                      ? 'border-stone-300 opacity-60 bg-stone-200/40' 
-                      : 'border-amber-850/20 hover:border-amber-600 hover:bg-amber-500/5'
+                      ? 'border-muted opacity-60 bg-muted/40' 
+                      : 'border-white hover:border-primary/50 hover:bg-primary/5 shadow-sm bg-muted/10 panel-3d'
               } ${isOpening ? 'animate-bounce' : ''}`}
               onClick={() => handleChestClick(idx)}
             >
@@ -372,18 +372,18 @@ export const TreasureChest: React.FC = () => {
               <div className="mt-2 text-center">
                 {isRevealed ? (
                   <>
-                    <span className="text-[9px] uppercase font-black text-stone-600 tracking-wider">
+                    <span className="text-[10px] uppercase font-black text-muted-foreground tracking-wider">
                       {chest?.label}
                     </span>
-                    <div className="text-xs font-extrabold text-amber-700">
+                    <div className="text-sm font-black text-primary drop-shadow-sm mt-0.5">
                       +{chest?.value}
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold text-stone-500">Chest {idx + 1}</span>
+                    <span className="text-[11px] font-black text-muted-foreground tracking-tight">Chest {idx + 1}</span>
                     {isLocked && (
-                      <span className="text-[8px] font-extrabold text-amber-700 uppercase tracking-tight mt-0.5">
+                      <span className="text-[9px] font-black text-destructive uppercase tracking-tight mt-1 bg-destructive/10 px-1.5 py-0.5 rounded-md">
                         {idx === 1 ? '10 ⭐ Req' : '25 ⭐ Req'}
                       </span>
                     )}
@@ -399,19 +399,19 @@ export const TreasureChest: React.FC = () => {
         <div className="flex flex-col gap-4 w-full">
           {/* Play Modes / Betting options */}
           <div className="flex flex-col gap-2 w-full pt-1 border-t border-amber-800/15">
-            <div className="flex justify-between items-center text-xs font-bold text-stone-700 mb-1 px-1">
-              <span>Bet Amount:</span>
-              <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
+            <div className="flex justify-between items-center text-[11px] font-bold text-muted-foreground mb-1 px-1">
+              <span className="uppercase tracking-wider">Bet Amount:</span>
+              <span className="text-foreground">{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
             </div>
 
             <div className="flex gap-2 w-full justify-between items-center bg-stone-900/5 rounded-xl p-1 border border-amber-800/10">
               <Button
                 variant={isFreePlay ? 'secondary' : 'ghost'}
                 disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
+                className={`flex-1 text-[11px] font-black h-9 rounded-xl uppercase tracking-wide transition-all ${
                   isFreePlay 
-                    ? 'bg-white shadow-sm border border-amber-800/20 text-amber-800' 
-                    : 'text-stone-600 hover:text-stone-800'
+                    ? 'panel-3d bg-white text-primary border-2 border-primary/20' 
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => setIsFreePlay(true)}
               >
@@ -422,10 +422,10 @@ export const TreasureChest: React.FC = () => {
                   <Button
                     key={amt}
                     variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
+                    className={`flex-1 text-[12px] font-black h-9 rounded-xl px-0 transition-all ${
                       !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-amber-800/20 text-stone-850' 
-                        : 'text-stone-500 hover:text-stone-700'
+                        ? 'panel-3d bg-white text-foreground border-2 border-primary/20' 
+                        : 'text-muted-foreground hover:bg-muted'
                     }`}
                     onClick={() => {
                       setIsFreePlay(false);
@@ -453,7 +453,7 @@ export const TreasureChest: React.FC = () => {
       {gameState === 'revealed' && (
         <Button
           onClick={resetGame}
-          className="w-full font-bold h-11 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-xs uppercase tracking-wider transition-all mt-2"
+          className="w-full btn-3d btn-3d-primary mt-2 uppercase"
         >
           Draw Again
         </Button>

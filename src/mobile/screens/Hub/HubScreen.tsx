@@ -304,13 +304,13 @@ export default function HubScreen() {
   const isLoggedIn = !!localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   return (
-    <div className="relative min-h-full pb-32 px-4 pt-3 overflow-hidden">
+    <div className="relative min-h-full pb-32 px-4 pt-4 overflow-hidden bg-background">
 
       {/* ═══ Header ═══ */}
-      <div className="relative flex items-center justify-between mb-2">
+      <div className="relative flex items-center justify-between mb-5">
         <div>
-          <p className="text-[10px] text-muted-foreground font-serif tracking-wider uppercase">Welcome,</p>
-          <h1 className="text-lg font-black leading-tight font-serif text-yellow-500">{name}</h1>
+          <p className="text-[11px] text-muted-foreground font-bold tracking-widest uppercase">Welcome,</p>
+          <h1 className="text-2xl font-black leading-tight text-primary drop-shadow-sm">{name}</h1>
         </div>
         <div className="flex items-center gap-1.5">
           <StreakFlame streak={streak} />
@@ -330,19 +330,19 @@ export default function HubScreen() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => { haptics('medium'); navigate('/login'); }}
-          className="w-full mb-5 rounded-2xl p-4 text-left wooden-door"
+          className="w-full mb-6 p-4 text-left panel-3d bg-white"
         >
-          <p className="font-black text-yellow-400 font-serif tracking-wide">⚔ Pledge Your Allegiance</p>
-          <p className="text-[11px] text-stone-400 mt-0.5">Sign in to save your gems & climb the rankings.</p>
+          <p className="font-black text-primary tracking-wide text-lg">⚔ Pledge Your Allegiance</p>
+          <p className="text-[12px] text-muted-foreground mt-0.5 font-bold">Sign in to save your gems & climb the rankings.</p>
         </motion.button>
       )}
 
       {/* ═══ Your Council ═══ */}
-      <section className="relative mb-5">
-        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
-          <span className="w-8 h-[1px] bg-amber-800/30" />
+      <section className="relative mb-6">
+        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
+          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
           Your Battle Council
-          <span className="flex-1 h-[1px] bg-amber-800/30" />
+          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
         </h2>
         <MedievalAdvisors 
           compact 
@@ -359,11 +359,11 @@ export default function HubScreen() {
       </section>
 
       {/* ═══ Royal Chambers (Featured Modes) ═══ */}
-      <section className="relative mb-5">
-        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
-          <span className="w-8 h-[1px] bg-amber-800/30" />
+      <section className="relative mb-6">
+        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
+          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
           Royal Chambers
-          <span className="flex-1 h-[1px] bg-amber-800/30" />
+          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
         </h2>
         <div className="space-y-3">
           {ROYAL_CHAMBERS.map((node, i) => {
@@ -376,33 +376,24 @@ export default function HubScreen() {
                 transition={{ delay: i * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative w-full flex items-center gap-4 rounded-2xl p-4 text-left wooden-door overflow-hidden group"
+                className="relative w-full flex items-center gap-4 p-4 text-left panel-3d bg-white group overflow-hidden"
               >
-                {/* Iron handle glow */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-amber-500/5 group-hover:bg-amber-500/15 transition-colors" />
-
                 {/* Icon emblem */}
                 <div className={cn(
-                  'flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg bg-gradient-to-br relative z-10 iron-frame',
+                  'flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm bg-gradient-to-br relative z-10 border-2 border-white/20',
                   node.color
                 )}>
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-6 h-6 drop-shadow-sm" />
                 </div>
 
                 {/* Text */}
                 <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-black text-base leading-tight text-white font-serif">{node.label}</p>
-                  {node.hint && <p className="text-[11px] text-stone-300 font-semibold mt-0.5 leading-normal">{node.hint}</p>}
+                  <p className="font-black text-lg text-foreground tracking-tight">{node.label}</p>
+                  <p className="text-[12px] text-muted-foreground font-bold mt-0.5 leading-tight">{node.hint}</p>
                 </div>
 
                 {/* Chevron */}
-                <ChevronRight className="w-4 h-4 text-amber-500/40 relative z-10 group-hover:text-amber-400 transition-colors" />
-
-                {/* Iron rivets on corners */}
-                <div className="absolute top-2 left-2 iron-rivet" />
-                <div className="absolute top-2 right-2 iron-rivet" />
-                <div className="absolute bottom-2 left-2 iron-rivet" />
-                <div className="absolute bottom-2 right-2 iron-rivet" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground/40 relative z-10 group-hover:text-primary transition-colors" />
               </motion.button>
             );
           })}
@@ -411,24 +402,24 @@ export default function HubScreen() {
 
       {/* ═══ Baron Contracts ═══ */}
       {baronTasks.filter(t => t.status !== 'claimed').length > 0 && (
-        <section className="relative mb-5">
-          <h2 className="text-[10px] font-black tracking-[0.25em] text-stone-400 mb-3 uppercase font-serif flex items-center gap-2">
-            <span className="w-8 h-[1px] bg-amber-800/30" />
-            Active Baron Contracts
-            <span className="flex-1 h-[1px] bg-amber-800/30" />
+        <section className="relative mb-6">
+          <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
+            <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
+            Active Contracts
+            <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {baronTasks.filter(t => t.status !== 'claimed').map((task) => (
               <div 
                 key={task.id} 
-                className="wooden-door border border-amber-850/20 rounded-2xl p-4 shadow-md space-y-3 relative overflow-hidden"
+                className="panel-3d bg-white p-4 space-y-3 relative overflow-hidden"
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="font-serif font-black text-sm text-amber-400 block uppercase tracking-wider">
+                    <span className="font-black text-sm text-primary block uppercase tracking-wider">
                       📜 {task.title}
                     </span>
-                    <span className="text-[10px] text-stone-300 block mt-0.5 leading-relaxed font-semibold">
+                    <span className="text-[12px] text-muted-foreground block mt-0.5 leading-relaxed font-bold">
                       {task.description}
                     </span>
                   </div>
@@ -436,37 +427,37 @@ export default function HubScreen() {
                   {task.status === 'completed' ? (
                     <Button 
                       onClick={() => handleClaimTask(task.id, task.rewardGems, task.rewardStars, task.rewardShards, task.shardType)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-stone-950 font-black py-1 h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider animate-bounce"
+                      className="btn-3d btn-3d-success py-1.5 h-8 px-4 text-[10px] animate-bounce"
                     >
-                      Claim Reward
+                      Claim
                     </Button>
                   ) : (
-                    <span className="text-[10px] font-black uppercase text-amber-500/70 tracking-widest bg-stone-950/80 px-2 py-0.5 rounded border border-stone-850">
+                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest bg-muted px-2 py-1 rounded-md">
                       Active
                     </span>
                   )}
                 </div>
 
                 {/* Progress bar */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-[9px] font-bold text-stone-400">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground">
                     <span>Progress</span>
                     <span>{task.currentCount} / {task.targetCount}</span>
                   </div>
-                  <div className="h-2 bg-stone-950 rounded-full overflow-hidden border border-stone-850">
+                  <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner">
                     <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-350"
+                      className="h-full bg-primary transition-all duration-300"
                       style={{ width: `${Math.min(100, (task.currentCount / task.targetCount) * 100)}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Rewards display */}
-                <div className="flex items-center gap-3 pt-1 text-[10px] font-bold text-stone-300">
-                  <span className="text-stone-500">Rewards:</span>
-                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-blue-400">💎 {task.rewardGems}</span>}
-                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-yellow-400">⭐ {task.rewardStars}</span>}
-                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-400">🧩 {task.rewardShards} {task.shardType}</span>}
+                <div className="flex items-center gap-3 pt-2 text-[11px] font-bold">
+                  <span className="text-muted-foreground">Rewards:</span>
+                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-sky-500">💎 {task.rewardGems}</span>}
+                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-amber-500">⭐ {task.rewardStars}</span>}
+                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-500">🧩 {task.rewardShards} {task.shardType}</span>}
                 </div>
               </div>
             ))}
@@ -480,11 +471,11 @@ export default function HubScreen() {
       </section>
 
       {/* ═══ Tavern Games ═══ */}
-      <section className="relative mb-5">
-        <h2 className="text-[10px] font-black tracking-[0.25em] text-muted-foreground mb-3 uppercase font-serif flex items-center gap-2">
-          <span className="w-8 h-[1px] bg-amber-800/30" />
+      <section className="relative mb-6">
+        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
+          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
           Tavern Games & Contests
-          <span className="flex-1 h-[1px] bg-amber-800/30" />
+          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
         </h2>
         <div className="grid grid-cols-2 gap-3">
           {TAVERN_GAMES.map((node, i) => {
@@ -497,32 +488,28 @@ export default function HubScreen() {
                 transition={{ delay: (i + 2) * 0.04, type: 'spring', stiffness: 220, damping: 22 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative flex flex-col justify-between rounded-2xl p-4 text-left h-36 overflow-hidden wooden-door"
+                className="relative flex flex-col justify-between p-4 text-left h-36 overflow-hidden panel-3d bg-white"
               >
                 {/* Badge */}
                 {node.badge && (
-                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-amber-550/15 text-amber-400 border border-amber-500/25 font-serif">
+                  <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-500 text-white shadow-sm">
                     {node.badge}
                   </span>
                 )}
 
                 {/* Icon */}
                 <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-md iron-frame',
+                  'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm border-2 border-white/20',
                   node.color
                 )}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5 drop-shadow-sm" />
                 </div>
 
                 {/* Info */}
                 <div className="mt-4">
-                  <h4 className="font-black text-xs text-white tracking-tight line-clamp-1 font-serif">{node.label}</h4>
-                  <p className="text-[10px] text-stone-300 font-semibold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
+                  <h4 className="font-black text-sm text-foreground tracking-tight line-clamp-1">{node.label}</h4>
+                  <p className="text-[11px] text-muted-foreground font-bold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
                 </div>
-
-                {/* Corner rivets */}
-                <div className="absolute top-1.5 left-1.5 iron-rivet" style={{ width: 6, height: 6 }} />
-                <div className="absolute bottom-1.5 right-1.5 iron-rivet" style={{ width: 6, height: 6 }} />
               </motion.button>
             );
           })}
@@ -532,21 +519,21 @@ export default function HubScreen() {
       {/* ═══ DAILY CHECK-IN MODAL ═══ */}
       <AnimatePresence>
         {showCheckInModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="wooden-door max-w-sm w-full rounded-3xl p-6 text-center border-4 border-double border-yellow-500/40 relative shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="panel-3d bg-white max-w-sm w-full p-6 text-center shadow-2xl relative"
             >
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-yellow-500 text-slate-950 rounded-full w-20 h-20 flex items-center justify-center text-4xl shadow-lg border-4 border-amber-955/20">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-400 text-white rounded-full w-20 h-20 flex items-center justify-center text-4xl shadow-lg border-4 border-white">
                 ✨
               </div>
 
-              <h3 className="text-xl font-black font-serif text-yellow-500 mt-8 mb-2 uppercase tracking-wide">
+              <h3 className="text-2xl font-black text-primary mt-10 mb-2 uppercase tracking-wide">
                 Daily Tribute!
               </h3>
-              <p className="text-xs text-stone-305 leading-relaxed mb-6">
+              <p className="text-sm font-bold text-muted-foreground leading-relaxed mb-6">
                 Your presence is requested at the King's Council. Claim your daily tribute of stars to expand your empire!
               </p>
 
@@ -561,33 +548,33 @@ export default function HubScreen() {
                     <div 
                       key={day} 
                       className={cn(
-                        "rounded-lg p-1.5 flex flex-col items-center justify-between border text-[9px] font-bold h-20 transition-all",
+                        "rounded-xl p-1 flex flex-col items-center justify-between border-2 text-[10px] font-bold h-20 transition-all",
                         isDayCompleted 
-                          ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400 opacity-60" 
+                          ? "bg-emerald-100 border-emerald-300 text-emerald-600" 
                           : isDayCurrent
-                          ? "bg-yellow-500/10 border-yellow-500 text-yellow-400 scale-105 ring-2 ring-yellow-500/30 shadow-md shadow-yellow-500/5"
-                          : "bg-slate-955/80 border-stone-850 text-stone-400"
+                          ? "bg-yellow-100 border-yellow-400 text-yellow-600 scale-105 shadow-md"
+                          : "bg-muted/50 border-muted text-muted-foreground"
                       )}
                     >
-                      <span className="opacity-60 text-[8px]">Day {day}</span>
-                      <span className="text-xs">{day === 7 ? '👑' : '⭐'}</span>
+                      <span className="opacity-70 text-[9px]">Day {day}</span>
+                      <span className="text-lg">{day === 7 ? '👑' : '⭐'}</span>
                       <span className={cn(
                         "font-black font-mono",
-                        isDayCurrent ? "text-yellow-400" : "text-stone-300"
+                        isDayCurrent ? "text-yellow-600" : "text-muted-foreground"
                       )}>+{rewardAmt}</span>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="bg-slate-955/80 border border-amber-900/30 rounded-2xl p-4 mb-6 flex items-center justify-around">
+              <div className="bg-muted/30 border-2 border-muted rounded-2xl p-4 mb-6 flex items-center justify-around">
                 <div className="text-left">
-                  <span className="text-[10px] text-stone-400 font-serif uppercase tracking-wider block">Today's Reward</span>
-                  <span className="text-xl font-black text-yellow-500 leading-tight">+{checkInRewardStars} Stars</span>
+                  <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Today's Reward</span>
+                  <span className="text-2xl font-black text-primary leading-tight">+{checkInRewardStars} Stars</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-stone-400 font-serif uppercase tracking-wider block">Current Streak</span>
-                  <span className="text-xl font-black text-amber-500 leading-tight">{checkInStreak} Days</span>
+                  <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Current Streak</span>
+                  <span className="text-2xl font-black text-secondary leading-tight">{checkInStreak} Days</span>
                 </div>
               </div>
 
@@ -596,7 +583,7 @@ export default function HubScreen() {
                   haptics('medium');
                   setShowCheckInModal(false);
                 }}
-                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-sm uppercase py-3 rounded-2xl shadow-lg border-0 transition-transform scale-100 active:scale-95"
+                className="w-full btn-3d btn-3d-primary"
               >
                 Claim Tribute
               </button>

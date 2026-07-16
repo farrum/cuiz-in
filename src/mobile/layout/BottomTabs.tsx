@@ -17,23 +17,14 @@ export function BottomTabs() {
   const location = useLocation();
   return (
     <nav
-      className="relative z-40 wooden-door"
+      className="relative z-40 bg-white"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        borderTop: '2px solid hsl(35 20% 28%)',
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderBottom: 'none',
+        borderTop: '3px solid hsl(var(--border))',
+        boxShadow: '0 -4px 10px rgba(0,0,0,0.05)'
       }}
     >
-      {/* Iron rivets across the top edge */}
-      <div className="absolute top-1 left-4 right-4 flex justify-between pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="iron-rivet" />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-around px-2 pt-3 pb-1">
+      <div className="flex items-center justify-around px-2 pt-2 pb-2">
         {tabs.map((tab) => {
           const active = location.pathname === tab.to;
           const Icon = tab.icon;
@@ -44,51 +35,43 @@ export function BottomTabs() {
               onClick={() => haptics(tab.primary ? 'medium' : 'light')}
               className={cn(
                 'flex flex-col items-center justify-center py-1 min-w-[60px] rounded-xl transition-colors relative',
-                tab.primary && '-mt-7'
+                tab.primary && '-mt-8'
               )}
             >
               {tab.primary ? (
                 <motion.div
-                  whileTap={{ scale: 0.9 }}
-                  animate={active ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.4 }}
+                  whileTap={{ scale: 0.9, y: 4 }}
+                  animate={active ? { scale: [1, 1.1, 1], y: [0, -4, 0] } : { scale: 1, y: 0 }}
+                  transition={{ duration: 0.4, type: 'spring', stiffness: 400, damping: 15 }}
                   className="relative"
                 >
-                  {/* Shield shape */}
-                  <div className="w-14 h-14 flex items-center justify-center relative">
-                    <Shield
-                      className="absolute inset-0 w-14 h-14 text-amber-600 fill-amber-900/80 drop-shadow-lg"
-                    />
-                    <Icon className="w-6 h-6 text-yellow-300 relative z-10 drop-shadow-sm" />
+                  <div className="w-16 h-16 flex items-center justify-center relative rounded-full bg-gradient-to-b from-yellow-300 to-yellow-500 border-4 border-white shadow-[0_4px_0_hsl(45,95%,45%)]">
+                    <Icon className="w-8 h-8 text-white relative z-10 drop-shadow-md" strokeWidth={2.5} />
                   </div>
-                  {/* Glowing torch indicator when active */}
-                  {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-                      <div className="torch-glow" style={{ width: 14, height: 18 }} />
-                    </div>
-                  )}
                 </motion.div>
               ) : (
                 <motion.div
-                  whileTap={{ scale: 0.85 }}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg relative"
+                  whileTap={{ scale: 0.85, y: 2 }}
+                  animate={active ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl relative"
                 >
                   <Icon className={cn(
-                    'w-5 h-5 transition-colors',
-                    active ? 'text-yellow-500' : 'text-stone-500'
-                  )} />
-                  {/* Torch flame under active tab */}
+                    'w-6 h-6 transition-colors',
+                    active ? 'text-primary drop-shadow-sm' : 'text-slate-400'
+                  )} strokeWidth={active ? 2.5 : 2} />
                   {active && (
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2">
-                      <div className="torch-glow" style={{ width: 10, height: 12 }} />
-                    </div>
+                    <motion.div 
+                      layoutId="bottom-nav-indicator"
+                      className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-primary"
+                    />
                   )}
                 </motion.div>
               )}
               <span className={cn(
-                'text-[9px] mt-0.5 font-black tracking-widest uppercase',
-                active ? 'text-yellow-500' : 'text-stone-500',
-                'font-serif'
+                'text-[10px] mt-1 font-bold tracking-wide uppercase',
+                active ? 'text-primary' : 'text-slate-400',
+                'font-sans'
               )}>
                 {tab.label}
               </span>

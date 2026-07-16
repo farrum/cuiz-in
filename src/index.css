@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Outfit:wght@400;650;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,99 +6,104 @@
 
 @layer base {
   :root {
-    --background: 220 45% 8%;
-    --foreground: 210 40% 98%;
+    /* Bright Sky Blue Background */
+    --background: 200 80% 90%; 
+    --foreground: 220 50% 20%; 
 
-    --card: 220 35% 12%;
-    --card-foreground: 210 40% 98%;
+    /* Warm Ivory / Light Wood for Cards */
+    --card: 40 80% 95%; 
+    --card-foreground: 220 50% 20%; 
 
-    --popover: 220 35% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 40 80% 95%;
+    --popover-foreground: 220 50% 20%; 
 
-    /* Primary - Imperial Gold */
-    --primary: 43 96% 56%;
-    --primary-foreground: 220 45% 8%;
+    /* Primary - Vibrant Juicy Gold */
+    --primary: 45 95% 55%; 
+    --primary-foreground: 220 60% 15%; 
 
-    /* Secondary - Rich Navy */
-    --secondary: 220 30% 16%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Lush Green */
+    --secondary: 140 70% 45%; 
+    --secondary-foreground: 0 0% 100%; 
 
-    --muted: 220 25% 14%;
-    --muted-foreground: 220 15% 65%;
+    /* Muted - Soft Blue Grey */
+    --muted: 200 40% 85%; 
+    --muted-foreground: 210 30% 45%; 
 
-    /* Accent - Vibrant Green */
-    --accent: 142 76% 42%;
+    /* Accent - Bright Cerulean Blue */
+    --accent: 200 90% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 355 80% 50%;
+    /* Destructive - Punchy Red */
+    --destructive: 350 85% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders matching Navy tone */
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 43 96% 56%;
+    /* Borders */
+    --border: 200 40% 75%;
+    --input: 200 40% 75%;
+    --ring: 45 95% 55%;
 
-    --radius: 0.75rem;
+    --radius: 1.25rem;
 
     /* Quiz App Custom Colors */
-    --quiz-green: 142 76% 36%;
-    --quiz-red: 355 85% 45%;
-    --quiz-gold: 43 96% 56%;
-    --quiz-purple: 250 75% 60%;
+    --quiz-green: 140 70% 45%;
+    --quiz-red: 350 85% 60%;
+    --quiz-gold: 45 95% 55%;
+    --quiz-purple: 270 75% 65%;
     
     /* Gradient Colors */
-    --gradient-start: 43 96% 56%;
-    --gradient-end: 25 90% 45%;
-    --gradient-accent: 142 76% 36%;
+    --gradient-start: 200 90% 60%;
+    --gradient-end: 190 85% 50%;
+    --gradient-accent: 140 70% 45%;
 
     /* Sidebar styles */
-    --sidebar-background: 220 35% 10%;
-    --sidebar-foreground: 220 15% 75%;
-    --sidebar-primary: 43 96% 56%;
-    --sidebar-primary-foreground: 220 45% 8%;
-    --sidebar-accent: 220 30% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 25% 20%;
-    --sidebar-ring: 43 96% 56%;
+    --sidebar-background: 200 70% 92%;
+    --sidebar-foreground: 220 50% 20%;
+    --sidebar-primary: 45 95% 55%;
+    --sidebar-primary-foreground: 220 60% 15%;
+    --sidebar-accent: 140 70% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 200 40% 75%;
+    --sidebar-ring: 45 95% 55%;
   }
 
   .dark {
-    --background: 220 45% 8%;
-    --foreground: 210 40% 98%;
+    /* Sunset/Twilight aesthetic for dark mode, still vibrant */
+    --background: 220 50% 30%;
+    --foreground: 0 0% 100%;
 
-    --card: 220 35% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 40% 20%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 220 35% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 40% 20%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 43 96% 56%;
-    --primary-foreground: 220 45% 8%;
+    --primary: 45 95% 55%;
+    --primary-foreground: 220 60% 15%;
 
-    --secondary: 220 30% 16%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 140 60% 40%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 25% 14%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 220 30% 40%;
+    --muted-foreground: 210 20% 80%;
 
-    --accent: 142 76% 42%;
+    --accent: 200 80% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 355 80% 50%;
+    --destructive: 350 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 43 96% 56%;
+    --border: 220 30% 45%;
+    --input: 220 30% 45%;
+    --ring: 45 95% 55%;
 
-    --sidebar-background: 220 35% 10%;
-    --sidebar-foreground: 220 15% 75%;
-    --sidebar-primary: 43 96% 56%;
-    --sidebar-primary-foreground: 220 45% 8%;
-    --sidebar-accent: 220 30% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 25% 20%;
-    --sidebar-ring: 43 96% 56%;
+    --sidebar-background: 220 45% 25%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 45 95% 55%;
+    --sidebar-primary-foreground: 220 60% 15%;
+    --sidebar-accent: 140 60% 40%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 30% 45%;
+    --sidebar-ring: 45 95% 55%;
   }
 }
 
@@ -108,30 +113,32 @@
   }
 
   body {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Nunito', sans-serif;
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv03" on;
+    background-image: 
+      radial-gradient(circle at 10% 20%, hsl(var(--primary) / 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, hsl(var(--accent) / 0.05) 0%, transparent 40%);
   }
 
   h1, h2, h3, h4, h5, h6, .font-serif {
-    font-family: 'Cinzel', serif;
-    letter-spacing: 0.05em;
+    font-family: 'Fredoka', sans-serif;
+    letter-spacing: 0.02em;
   }
 
   h1 {
-    @apply text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight;
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
   }
 
   h2 {
-    @apply text-2xl sm:text-3xl font-black tracking-tight;
+    @apply text-2xl sm:text-3xl font-bold tracking-tight;
   }
 
   h3 {
-    @apply text-xl sm:text-2xl font-extrabold tracking-tight;
+    @apply text-xl sm:text-2xl font-bold tracking-tight;
   }
 
   h4, h5, h6 {
-    @apply font-extrabold tracking-tight;
+    @apply font-bold tracking-tight;
   }
 
   /* Custom scrollbar */
@@ -455,189 +462,130 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MEDIEVAL DESIGN SYSTEM — Castle / Kingdom Utilities
+   ROYAL KINGDOM DESIGN SYSTEM — 3D Casual Game Utilities
    ═══════════════════════════════════════════════════════════ */
 
-/* Stone wall texture — clean premium radial glow instead of harsh grid lines */
-.stone-wall {
-  background-color: hsl(var(--background));
-  background-image: 
-    radial-gradient(circle at 50% 25%, hsl(var(--primary) / 0.05) 0%, transparent 60%),
-    linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
-}
-
-/* Heavy wooden panel with oak grain - Redesigned for Scroll of Time */
-.wooden-door {
-  background: rgba(20, 28, 48, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(251, 191, 36, 0.25);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.35);
+/* 3D Panel - Chunky container with a top highlight and thick bottom shadow */
+.panel-3d {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 8px 0 rgba(0, 0, 0, 0.15),
+    inset 0 4px 0 rgba(255, 255, 255, 0.6),
+    0 12px 20px rgba(0, 0, 0, 0.15);
   position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.wooden-door::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border: 1px solid rgba(251, 191, 36, 0.06);
-  border-radius: inherit;
-  pointer-events: none;
-}
-.wooden-door:hover {
-  border-color: rgba(251, 191, 36, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 12px 40px rgba(251, 191, 36, 0.08);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 8px; /* Leave space for the 3D bottom edge */
 }
 
-/* Torch flame glow — animated flickering warm radial */
-@keyframes torch-flicker {
-  0%, 100% { opacity: 0.7; transform: scale(1) translateY(0); }
-  25% { opacity: 0.9; transform: scale(1.05) translateY(-1px); }
-  50% { opacity: 0.6; transform: scale(0.97) translateY(1px); }
-  75% { opacity: 0.85; transform: scale(1.02) translateY(-0.5px); }
-}
-.torch-glow {
-  width: 24px;
-  height: 32px;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.9) 0%, rgba(217, 119, 6, 0.6) 40%, transparent 70%);
-  filter: blur(3px);
-  animation: torch-flicker 2s ease-in-out infinite;
-}
-.torch-glow-ambient {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.12) 0%, transparent 70%);
-  animation: torch-flicker 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Iron frame — double-border with studded look */
-.iron-frame {
-  border: 1.5px solid rgba(251, 191, 36, 0.3);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.4);
+/* 3D Button Base */
+.btn-3d {
   position: relative;
-  background: rgba(15, 22, 42, 0.6);
-  backdrop-filter: blur(8px);
-}
-.iron-frame::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border: 1px solid rgba(251, 191, 36, 0.1);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* Medieval button — gold-leaf with embossed edges */
-.medieval-btn {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  color: #ffffff;
-  font-weight: 800;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.12em;
+  border-radius: 1rem;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
   text-transform: uppercase;
-  border: 1px solid rgba(251, 191, 36, 0.35);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 4px 12px rgba(180, 83, 9, 0.25);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.medieval-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgba(251, 191, 36, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 8px 20px rgba(180, 83, 9, 0.4);
-}
-.medieval-btn:active {
-  transform: translateY(0px);
+  letter-spacing: 0.05em;
+  color: white;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 12px 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  /* The "3D" depth is achieved via box-shadow */
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Castle archway — rounded arch for headers */
-.castle-archway {
-  border-radius: 50% 50% 0 0 / 30% 30% 0 0;
-  border: 1.5px solid rgba(251, 191, 36, 0.25);
-  border-bottom: none;
-  background: linear-gradient(180deg, rgba(15, 22, 42, 0.9) 0%, transparent 100%);
+.btn-3d:active {
+  transform: translateY(6px); /* Push down into the shadow */
 }
 
-/* Iron rivet / stud */
-.iron-rivet {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fbbf24, #b45309);
-  box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.05);
+/* Button Variants */
+.btn-3d-primary {
+  background: linear-gradient(180deg, #FFD54F 0%, #FFB300 100%);
+  box-shadow: 
+    0 6px 0 #FF8F00,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 8px 12px rgba(0, 0, 0, 0.2);
+}
+.btn-3d-primary:active {
+  box-shadow: 
+    0 0px 0 #FF8F00,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Shield portrait frame */
-.shield-frame {
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 1.5px solid rgba(251, 191, 36, 0.3);
+.btn-3d-secondary {
+  background: linear-gradient(180deg, #4DD0E1 0%, #00ACC1 100%);
+  box-shadow: 
+    0 6px 0 #00838F,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 8px 12px rgba(0, 0, 0, 0.2);
+}
+.btn-3d-secondary:active {
+  box-shadow: 
+    0 0px 0 #00838F,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Parchment card styling (light interior for readability) */
-.parchment-card {
-  background: rgba(15, 22, 38, 0.85);
-  backdrop-filter: blur(16px);
-  color: #f1f5f9;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  box-shadow:
-    inset 0 0 24px rgba(251, 191, 36, 0.04),
-    0 8px 32px rgba(0, 0, 0, 0.5);
+.btn-3d-success {
+  background: linear-gradient(180deg, #81C784 0%, #4CAF50 100%);
+  box-shadow: 
+    0 6px 0 #2E7D32,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 8px 12px rgba(0, 0, 0, 0.2);
+}
+.btn-3d-success:active {
+  box-shadow: 
+    0 0px 0 #2E7D32,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Molten gold progress bar */
-@keyframes molten-flow {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+.btn-3d-danger {
+  background: linear-gradient(180deg, #E57373 0%, #F44336 100%);
+  box-shadow: 
+    0 6px 0 #C62828,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 8px 12px rgba(0, 0, 0, 0.2);
 }
-.molten-gold {
-  background: linear-gradient(90deg, #b8860b, #eab308, #fef08a, #eab308, #b8860b);
-  background-size: 200% 100%;
-  animation: molten-flow 2s linear infinite;
-}
-
-/* 🎆 Medieval micro-animations & aesthetics */
-
-/* Spark Embers Drift */
-@keyframes spark-drift {
-  0% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-100px) translateX(var(--drift-x, 15px)) scale(0.2);
-    opacity: 0;
-  }
-}
-.torch-spark {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #f59e0b, #ef4444);
-  pointer-events: none;
-  animation: spark-drift 2.5s ease-out infinite;
+.btn-3d-danger:active {
+  box-shadow: 
+    0 0px 0 #C62828,
+    inset 0 4px 0 rgba(255, 255, 255, 0.5),
+    0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Gleaming Gold Button Overlay */
-.medieval-btn {
+/* 3D Text Styling */
+.text-3d {
+  font-family: 'Fredoka', sans-serif;
+  color: white;
+  text-shadow: 
+    0 3px 0 rgba(0,0,0,0.2),
+    0 0 10px rgba(0,0,0,0.1);
+  -webkit-text-stroke: 1px rgba(0,0,0,0.1);
+}
+
+/* Fun bounce animation for new achievements or dialogs */
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in {
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Shiny gleam effect */
+.shiny-overlay {
   position: relative;
   overflow: hidden;
 }
-.medieval-btn::after {
+.shiny-overlay::after {
   content: '';
   position: absolute;
   top: 0;
@@ -647,19 +595,15 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.4),
     transparent
   );
   transform: skewX(-20deg);
-  transition: none;
+  animation: shiny-sweep 3s ease-in-out infinite;
 }
-.medieval-btn:hover::after {
-  left: 150%;
-  transition: all 0.75s ease-in-out;
-}
-
-/* Scroll Unroll Origin Utility */
-.scroll-unroll-container {
-  transform-origin: top center;
+@keyframes shiny-sweep {
+  0% { left: -150%; }
+  15% { left: 150%; }
+  100% { left: 150%; }
 }
 

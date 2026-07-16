@@ -6,20 +6,16 @@ import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 export function MobileShell() {
   const location = useLocation();
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden stone-wall">
-      {/* Torch glow ambient - top corners */}
-      <div className="torch-glow-ambient top-0 left-0" style={{ width: 100, height: 100, opacity: 0.4 }} />
-      <div className="torch-glow-ambient top-0 right-0" style={{ width: 100, height: 100, opacity: 0.4, animationDelay: '1s' }} />
-
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -10 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="min-h-full"
           >
             <Outlet />
@@ -27,8 +23,6 @@ export function MobileShell() {
         </AnimatePresence>
       </div>
       <TopBannerAd />
-      {/* Iron strip separator */}
-      <div className="h-[2px] bg-gradient-to-r from-transparent via-amber-800/30 to-transparent" />
       <BottomTabs />
     </div>
   );

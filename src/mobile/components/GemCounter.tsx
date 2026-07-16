@@ -16,17 +16,16 @@ export function GemCounter({ value }: { value: number }) {
   return (
     <motion.div
       whileTap={{ scale: 0.95 }}
-      className="relative flex items-center gap-2 rounded-full px-4 py-1.5 bg-gradient-to-r from-amber-400/20 via-yellow-300/20 to-amber-400/20 border border-amber-400/40 shadow-sm overflow-hidden"
+      className="relative flex items-center gap-2 rounded-full px-4 py-1.5 bg-card border-2 border-white shadow-[0_4px_0_rgba(0,0,0,0.1)] overflow-hidden"
     >
       <motion.span
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
         animate={{ x: ['-100%', '200%'] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
-        style={{ mixBlendMode: 'overlay' }}
       />
-      <Gem className="w-4 h-4 text-amber-500 relative z-10" />
-      <span className="font-bold text-sm text-foreground relative z-10 tabular-nums">{display}</span>
+      <Gem className="w-5 h-5 text-quiz-gold relative z-10 drop-shadow-sm fill-quiz-gold" strokeWidth={2} />
+      <span className="font-bold text-sm text-foreground relative z-10 tabular-nums tracking-wide">{display}</span>
     </motion.div>
   );
 }

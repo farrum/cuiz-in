@@ -40,35 +40,39 @@ export default function LeaderboardScreen() {
   }, [uid]);
 
   return (
-    <div className="px-4 pt-4 pb-32">
-      <h1 className="text-xl font-bold mb-1 text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>
-        <Crown className="w-5 h-5 inline mr-2 -mt-0.5 text-yellow-500" />Royal Rankings
+    <div className="px-4 pt-4 pb-32 bg-background min-h-full">
+      <h1 className="text-2xl font-black mb-1 text-primary">
+        <Crown className="w-6 h-6 inline mr-2 -mt-1 text-primary drop-shadow-sm" />Royal Rankings
       </h1>
-      <p className="text-xs text-stone-500 mb-5 tracking-wide">Top champions of the realm this moon</p>
+      <p className="text-sm text-muted-foreground font-bold mb-6 tracking-wide">Top champions of the realm this moon</p>
 
       {myRank && me && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 rounded-2xl p-4 wooden-door flex items-center gap-3 !border-amber-700/60"
+          className="mb-6 panel-3d bg-primary/10 flex items-center gap-3 border-2 border-primary"
         >
-          <div className="w-10 h-10 rounded-xl iron-frame bg-amber-900/60 text-amber-400 flex items-center justify-center font-black text-sm">
+          <div className="w-12 h-12 rounded-xl shadow-sm bg-primary text-white flex items-center justify-center font-black text-lg border-2 border-primary-foreground/20">
             #{myRank}
           </div>
           <div className="flex-1">
-            <p className="font-bold text-stone-100">{me.username} <span className="text-[10px] text-stone-400">(you)</span></p>
-            <p className="text-xs text-stone-300">{me.points.toLocaleString()} gems earned this moon</p>
+            <p className="font-black text-foreground text-lg tracking-tight">{me.username} <span className="text-[11px] text-muted-foreground uppercase">(you)</span></p>
+            <p className="text-sm font-bold text-primary mt-0.5">{me.points.toLocaleString()} gems earned this moon</p>
           </div>
-          <Shield className="w-5 h-5 text-amber-500 fill-amber-500/20" />
+          <Shield className="w-6 h-6 text-primary drop-shadow-sm" />
         </motion.div>
       )}
 
       {loading ? (
-        <p className="text-center text-stone-350 py-10 font-semibold">Summoning the court records…</p>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground font-black uppercase tracking-widest text-sm animate-pulse">Summoning the court records…</p>
+        </div>
       ) : rows.length === 0 ? (
-        <p className="text-center text-stone-450 py-10 font-semibold">No champion has claimed glory this moon. Be first!</p>
+        <div className="text-center py-12 panel-3d bg-white">
+          <p className="text-muted-foreground font-bold">No champion has claimed glory this moon. Be first!</p>
+        </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {rows.map((row, i) => {
             const rank = i + 1;
             const isMe = row.user_id === uid;
@@ -79,18 +83,18 @@ export default function LeaderboardScreen() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.02 }}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl p-3 wooden-door',
-                  isMe && '!border-amber-700/60'
+                  'flex items-center gap-3 panel-3d p-3',
+                  isMe ? 'bg-primary/5 border-2 border-primary' : 'bg-white'
                 )}
               >
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm iron-frame bg-stone-900">
-                  {rank === 1 ? <Crown className="w-4 h-4 text-yellow-400" /> :
-                   rank === 2 ? <Medal className="w-4 h-4 text-slate-300" /> :
-                   rank === 3 ? <Medal className="w-4 h-4 text-amber-700" /> :
-                   <span className="text-stone-400">#{rank}</span>}
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shadow-sm border-2 border-white bg-muted text-muted-foreground">
+                  {rank === 1 ? <Crown className="w-5 h-5 text-yellow-500 drop-shadow-sm" /> :
+                   rank === 2 ? <Medal className="w-5 h-5 text-slate-400 drop-shadow-sm" /> :
+                   rank === 3 ? <Medal className="w-5 h-5 text-amber-600 drop-shadow-sm" /> :
+                   <span>#{rank}</span>}
                 </div>
-                <p className="flex-1 font-semibold truncate text-stone-100">{row.username}</p>
-                <p className="text-sm font-bold text-amber-400 tabular-nums">{row.points.toLocaleString()} 💎</p>
+                <p className="flex-1 font-black truncate text-foreground tracking-tight">{row.username}</p>
+                <p className="text-base font-black text-primary tabular-nums tracking-wide">{row.points.toLocaleString()} 💎</p>
               </motion.li>
             );
           })}
