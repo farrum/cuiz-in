@@ -235,23 +235,23 @@ export default function KingdomsPage() {
     haptics('medium');
     try {
       const computedCrest = `${newPattern}|${newColorA}-${newColorB}|${newCharge}`;
-      const { data } = await (supabase as any).rpc('create_alliance', {
+      const { data, error } = await (supabase as any).rpc('create_alliance', {
         p_name: newName,
         p_description: newDesc,
         p_crest_emoji: computedCrest,
         p_user_id: userId
       });
 
-      const res = data as any;
-      if (res?.error) {
-        toast({ title: "Construction Failed", description: res.error, variant: "destructive" });
+      if (error) {
+        toast({ title: "Construction Failed", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Kingdom Established!", description: `The Kingdom of ${newName} is built.` });
         audioManager.playSFX('chest');
         await initKingdoms();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setCreating(false);
     }
@@ -261,20 +261,19 @@ export default function KingdomsPage() {
     if (!userId) return;
     haptics('light');
     try {
-      const { data } = await (supabase as any).rpc('join_alliance', {
+      const { data, error } = await (supabase as any).rpc('join_alliance', {
         p_alliance_id: allianceId,
         p_user_id: userId
       });
 
-      const res = data as any;
-      if (res?.error) {
-        toast({ title: "Siege Blocked", description: res.error, variant: "destructive" });
+      if (error) {
+        toast({ title: "Siege Blocked", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Allegiance Sworn!", description: `You have joined the forces of ${allianceName}.` });
         audioManager.playSFX('click');
         await initKingdoms();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -289,19 +288,18 @@ export default function KingdomsPage() {
 
     haptics('warning');
     try {
-      const { data } = await (supabase as any).rpc('leave_alliance', { p_user_id: userId });
-      const res = data as any;
+      const { data, error } = await (supabase as any).rpc('leave_alliance', { p_user_id: userId });
 
-      if (res?.error) {
-        toast({ title: "Command Failed", description: res.error, variant: "destructive" });
+      if (error) {
+        toast({ title: "Command Failed", description: error.message, variant: "destructive" });
       } else {
         toast({
-          title: res.dissolved ? "Kingdom dissolved" : "Sworn treaty broken",
-          description: res.dissolved ? "Your castle lies in ruins." : "You left the alliance."
+          title: data?.dissolved ? "Kingdom dissolved" : "Sworn treaty broken",
+          description: data?.dissolved ? "Your castle lies in ruins." : "You left the alliance."
         });
         await initKingdoms();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
