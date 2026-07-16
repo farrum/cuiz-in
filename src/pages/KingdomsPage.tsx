@@ -423,6 +423,137 @@ export default function KingdomsPage() {
     );
   }
 
+  const renderDynastyForm = (isUpdate = false) => (
+    <div className="panel-3d bg-white border-2 border-primary/20 rounded-3xl p-6 shadow-md relative overflow-hidden text-foreground mb-8">
+      <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+      
+      <h2 className="text-xl font-black uppercase font-serif text-primary mb-2 flex items-center gap-2 relative z-10 drop-shadow-sm">
+        <PlusCircle className="text-amber-500 w-6 h-6" /> {isUpdate ? 'Update Your Dynasty' : 'Establish Your Dynasty'}
+      </h2>
+      <p className="text-xs text-slate-500 font-semibold mb-6 leading-relaxed relative z-10">
+        {isUpdate ? 'Modify your castle name, update your decree, and re-design your crest.' : 'Construct your own castle, name your legion, select your crest, and recruit knights to conquer weekly charts.'}
+      </p>
+
+      <div className="space-y-5 relative z-10">
+        <div>
+          <label className="text-[11px] uppercase font-black tracking-wider text-slate-600 block mb-2">Kingdom Name</label>
+          <input
+            type="text"
+            maxLength={20}
+            placeholder="e.g. Byzantine Legacy"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 shadow-inner placeholder-slate-400 transition-colors"
+          />
+        </div>
+
+        <div className="bg-slate-50 border-2 border-slate-200 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
+          <div className="flex flex-col items-center">
+            <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 mb-3">Coat of Arms Preview</label>
+            <CoatOfArmsShield 
+              crestString={`${newPattern}|${newColorA}-${newColorB}|${newCharge}`} 
+              size="lg" 
+              className="bg-white rounded-2xl p-2 border-2 border-slate-200 shadow-md transform hover:scale-105 transition-transform"
+            />
+          </div>
+
+          <div className="flex-1 grid grid-cols-2 gap-4 w-full">
+            <div>
+              <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Shield Layout</label>
+              <select
+                value={newPattern}
+                onChange={(e) => setNewPattern(e.target.value)}
+                className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
+              >
+                <option value="solid">Solid</option>
+                <option value="vertical">Vertical Split</option>
+                <option value="diagonal">Diagonal Split</option>
+                <option value="cross">Four Quadrants</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Charge Emblem</label>
+              <select
+                value={newCharge}
+                onChange={(e) => setNewCharge(e.target.value)}
+                className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
+              >
+                {["🦁", "🐉", "🛡️", "⚔️", "🦅", "🐺", "👑", "🏹", "🦄", "🏔️", "⚜️", "⚓"].map(emoji => (
+                  <option key={emoji} value={emoji}>{emoji}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Primary Color</label>
+              <select
+                value={newColorA}
+                onChange={(e) => setNewColorA(e.target.value)}
+                className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
+              >
+                <option value="sable">Obsidian Black</option>
+                <option value="gules">Crimson Red</option>
+                <option value="azure">Sapphire Blue</option>
+                <option value="or">Imperial Gold</option>
+                <option value="vert">Emerald Green</option>
+                <option value="purpure">Royal Purple</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Secondary Color</label>
+              <select
+                value={newColorB}
+                onChange={(e) => setNewColorB(e.target.value)}
+                disabled={newPattern === 'solid'}
+                className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm disabled:opacity-50 disabled:bg-slate-100"
+              >
+                <option value="or">Imperial Gold</option>
+                <option value="gules">Crimson Red</option>
+                <option value="azure">Sapphire Blue</option>
+                <option value="sable">Obsidian Black</option>
+                <option value="vert">Emerald Green</option>
+                <option value="purpure">Royal Purple</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[11px] uppercase font-black tracking-wider text-slate-600 block mb-2">Dynastic Decree (Description)</label>
+          <input
+            type="text"
+            placeholder="e.g. Conquest and academic supremacy."
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 shadow-inner placeholder-slate-400 transition-colors"
+          />
+        </div>
+
+        <div className="flex gap-4 mt-2">
+          {isUpdate && (
+            <Button
+              onClick={() => setIsEditing(false)}
+              disabled={creating}
+              variant="outline"
+              className="w-1/3 h-12 text-sm uppercase tracking-widest bg-slate-100 border-slate-200 text-slate-600 font-bold hover:bg-slate-200 rounded-xl"
+            >
+              Cancel
+            </Button>
+          )}
+          <Button
+            onClick={isUpdate ? handleUpdateAlliance : handleCreateAlliance}
+            disabled={creating}
+            className={cn(isUpdate ? "w-2/3" : "w-full", "btn-3d btn-3d-primary h-12 text-sm uppercase tracking-widest rounded-xl")}
+          >
+            {creating ? 'Consulting Masons...' : (isUpdate ? 'Save Updates' : 'Erect Castle keep')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <PageLayout>
       <div className="min-h-screen bg-[#f4faff] pb-16 text-foreground font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
