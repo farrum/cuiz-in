@@ -106,26 +106,26 @@ export function TrueFalseGame() {
     return (
       <div className="flex flex-col items-center justify-center pt-4 px-4 text-center w-full max-w-sm mx-auto">
         <MascotPlayer character={characterOfTheDay()} mood={pct >= 50 ? 'excited' : 'sad'} size={140} />
-        <h2 className="text-3xl font-black mt-6 tracking-tight">Round complete!</h2>
-        <p className="text-muted-foreground mt-1.5 text-sm font-medium">You scored</p>
-        <p className="text-5xl font-black my-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-black mt-6 tracking-tight text-primary">Round complete!</h2>
+        <p className="text-muted-foreground mt-1.5 text-sm font-bold">You scored</p>
+        <p className="text-5xl font-black my-4 text-primary">
           {score}
-          <span className="text-xl text-muted-foreground font-semibold"> / {total}</span>
+          <span className="text-xl text-muted-foreground font-black"> / {total}</span>
         </p>
-        <p className="text-xs tracking-wider uppercase font-bold text-muted-foreground mb-8">
+        <p className="text-[11px] tracking-widest uppercase font-black text-muted-foreground mb-8">
           {pct}% questions correct
         </p>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={extend}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-4 font-extrabold text-primary-foreground bg-gradient-to-r from-primary to-purple-500 shadow-lg"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 font-black uppercase text-base btn-3d btn-3d-primary"
         >
           <Trophy className="w-5 h-5" /> Play 20 more
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={restart}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-4 mt-3 font-bold text-foreground border border-border bg-muted/20"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 mt-3 font-black uppercase text-base panel-3d bg-white text-muted-foreground border-2 border-muted-foreground/20 hover:bg-muted"
         >
           <RotateCcw className="w-5 h-5" /> Start over
         </motion.button>
@@ -238,22 +238,22 @@ export function TrueFalseGame() {
           <button
             onClick={() => answer(false)}
             disabled={!!feedback}
-            className="w-16 h-16 rounded-full bg-destructive/10 border border-destructive/20 text-destructive flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105 shadow-md"
+            className="w-16 h-16 rounded-full btn-3d bg-white border-2 border-destructive/20 text-destructive flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
           >
-            <X className="w-7 h-7" />
+            <X className="w-8 h-8 drop-shadow-sm" />
           </button>
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">False</span>
+          <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">False</span>
         </div>
         
         <div className="flex flex-col items-center gap-1.5">
           <button
             onClick={() => answer(true)}
             disabled={!!feedback}
-            className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105 shadow-md"
+            className="w-16 h-16 rounded-full btn-3d bg-white border-2 border-emerald-500/20 text-emerald-500 flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
           >
-            <Check className="w-7 h-7" />
+            <Check className="w-8 h-8 drop-shadow-sm" />
           </button>
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">True</span>
+          <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">True</span>
         </div>
       </div>
       

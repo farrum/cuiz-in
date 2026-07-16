@@ -151,7 +151,7 @@ export function WheelGame() {
         />
 
         {/* The Outer Rim */}
-        <div className="w-full h-full rounded-full border-[10px] border-slate-800 bg-slate-900 shadow-2xl p-1 relative flex items-center justify-center">
+        <div className="w-full h-full rounded-full border-[10px] border-muted-foreground/20 bg-white panel-3d p-1 relative flex items-center justify-center">
           
           {/* Inner Spinning Wheel */}
           <motion.div
@@ -170,7 +170,7 @@ export function WheelGame() {
               return (
                 <div
                   key={`line-${index}`}
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 bg-slate-800/20 origin-bottom"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 bg-muted-foreground/20 origin-bottom"
                   style={{
                     transform: `rotate(${lineAngle}deg)`,
                     transformOrigin: '50% 100%'
@@ -185,7 +185,7 @@ export function WheelGame() {
               return (
                 <div
                   key={`label-${prize.id}`}
-                  className="absolute w-full h-full flex justify-center items-start pt-4 text-xs font-bold text-slate-800"
+                  className="absolute w-full h-full flex justify-center items-start pt-4 text-xs font-bold text-foreground"
                   style={{
                     transform: `rotate(${textAngle}deg)`,
                     transformOrigin: '50% 50%',
@@ -200,7 +200,7 @@ export function WheelGame() {
           </motion.div>
 
           {/* Premium Glowing Hub */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-slate-800 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-4 border-slate-700 flex items-center justify-center z-10">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-4 border-muted flex items-center justify-center z-10">
             <div className="w-6 h-6 bg-gradient-to-tr from-indigo-500 to-emerald-400 rounded-full shadow-inner flex items-center justify-center animate-spin [animation-duration:8s]">
               <span className="text-[10px] select-none">💎</span>
             </div>
@@ -212,7 +212,7 @@ export function WheelGame() {
       <button
         onClick={spin} 
         disabled={spinning || loading}
-        className="mt-6 rounded-2xl px-10 py-4 font-extrabold text-white text-base bg-gradient-to-r from-emerald-500 to-teal-600 shadow-[0_4px_14px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.4)] disabled:opacity-50 transition-all select-none w-full max-w-[240px] transform active:scale-95 duration-100"
+        className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base btn-3d btn-3d-primary w-full max-w-[240px]"
       >
         {loading ? 'Loading...' : spinning ? 'Spinning…' : 'Spin (1/day)'}
       </button>
@@ -229,7 +229,7 @@ export function WheelGame() {
           </motion.p>
         ) : (
           !spinning && (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm font-bold text-muted-foreground">
               {uid ? "Spin the fortune wheel to win gems!" : "Sign in to play daily!"}
             </p>
           )

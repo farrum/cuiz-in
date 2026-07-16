@@ -954,8 +954,8 @@ export default function EmpireQuestsPage() {
 
                   {/* COUNCIL LIFELINES PANEL */}
                   {activeQuest?.id !== 'persia_trial' && (
-                    <div className="border-t border-slate-800 pt-6 mt-8">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center mb-4">
+                    <div className="border-t-2 border-primary/10 pt-6 mt-8">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center mb-4">
                         Activate Council Lifelines
                       </h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
@@ -964,14 +964,14 @@ export default function EmpireQuestsPage() {
                           disabled={socratesUsed || hasAnswered || heroes.find(h => h.id === 'socrates')?.level === 0}
                           onClick={handleUseSocrates}
                           className={cn(
-                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
-                            socratesUsed
-                              ? "bg-slate-950 text-slate-600"
-                              : "bg-slate-900 text-cyan-400 hover:bg-slate-850"
+                            "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
+                            socratesUsed || hasAnswered || heroes.find(h => h.id === 'socrates')?.level === 0
+                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
+                              : "bg-white text-cyan-600 border-2 border-cyan-200 hover:bg-cyan-50"
                           )}
                         >
                           <span className="text-sm">🏛️ Socrates</span>
-                          <span className="text-[8px] font-black text-slate-500 mt-0.5">50/50 (15 ★)</span>
+                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">50/50 (15 ★)</span>
                         </Button>
 
                         {/* Aryabhata Button */}
@@ -979,14 +979,14 @@ export default function EmpireQuestsPage() {
                           disabled={aryabhataUsed || hasAnswered || heroes.find(h => h.id === 'aryabhata')?.level === 0}
                           onClick={handleUseAryabhata}
                           className={cn(
-                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
-                            aryabhataUsed
-                              ? "bg-slate-950 text-slate-600"
-                              : "bg-slate-900 text-amber-400 hover:bg-slate-850"
+                            "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
+                            aryabhataUsed || hasAnswered || heroes.find(h => h.id === 'aryabhata')?.level === 0
+                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
+                              : "bg-white text-amber-600 border-2 border-amber-200 hover:bg-amber-50"
                           )}
                         >
                           <span className="text-sm">📐 Aryabhata</span>
-                          <span className="text-[8px] font-black text-slate-500 mt-0.5">+15s (20 ★)</span>
+                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">+15s (20 ★)</span>
                         </Button>
 
                         {/* Chanakya Button */}
@@ -994,14 +994,14 @@ export default function EmpireQuestsPage() {
                           disabled={chanakyaUsed || hasAnswered || heroes.find(h => h.id === 'chanakya')?.level === 0}
                           onClick={handleUseChanakya}
                           className={cn(
-                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
-                            chanakyaUsed
-                              ? "bg-slate-950 text-slate-600"
-                              : "bg-slate-900 text-rose-450 hover:bg-slate-850"
+                            "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
+                            chanakyaUsed || hasAnswered || heroes.find(h => h.id === 'chanakya')?.level === 0
+                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
+                              : "bg-white text-rose-500 border-2 border-rose-200 hover:bg-rose-50"
                           )}
                         >
                           <span className="text-sm">📜 Chanakya</span>
-                          <span className="text-[8px] font-black text-slate-500 mt-0.5">Shield (25 ★)</span>
+                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">Shield (25 ★)</span>
                         </Button>
 
                         {/* Ramanujan Button */}
@@ -1009,14 +1009,14 @@ export default function EmpireQuestsPage() {
                           disabled={ramanujanUsed || hasAnswered || heroes.find(h => h.id === 'ramanujan')?.level === 0}
                           onClick={handleUseRamanujan}
                           className={cn(
-                            "h-14 flex flex-col justify-center items-center rounded-xl border border-slate-800 font-bold px-2 transition-all",
-                            ramanujanUsed
-                              ? "bg-slate-950 text-slate-600"
-                              : "bg-slate-900 text-purple-400 hover:bg-slate-850"
+                            "h-14 flex flex-col justify-center items-center rounded-xl font-black px-2 transition-all btn-3d",
+                            ramanujanUsed || hasAnswered || heroes.find(h => h.id === 'ramanujan')?.level === 0
+                              ? "bg-slate-200 text-slate-400 shadow-none border-slate-300 hover:bg-slate-200"
+                              : "bg-white text-purple-600 border-2 border-purple-200 hover:bg-purple-50"
                           )}
                         >
                           <span className="text-sm">🧠 Ramanujan</span>
-                          <span className="text-[8px] font-black text-slate-500 mt-0.5">Smart Hint (35 ★)</span>
+                          <span className="text-[9px] font-bold text-muted-foreground mt-0.5">Smart Hint (35 ★)</span>
                         </Button>
                       </div>
                     </div>
@@ -1029,29 +1029,29 @@ export default function EmpireQuestsPage() {
           
           /* QUEST COMPLETED SUMMARY */
           <div className="max-w-md mx-auto px-4 mt-12 text-center">
-            <div className="bg-card border-2 border-yellow-500/20 rounded-3xl p-8 shadow-2xl text-card-foreground">
-              <span className="text-6xl mb-4 block">
+            <div className="panel-3d bg-white rounded-3xl p-8 shadow-2xl border-2 border-primary/20">
+              <span className="text-6xl mb-4 block drop-shadow-sm">
                 {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? '🏆' : '💀'}
               </span>
-              <h2 className="text-2xl font-black text-foreground uppercase tracking-wider mb-2">
+              <h2 className="text-2xl font-black text-primary uppercase tracking-wider mb-2">
                 {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? 'Quest Successful!' : 'Quest Defeated'}
               </h2>
-              <p className="text-slate-400 text-sm mb-6">
-                You correctly answered <span className="font-extrabold text-yellow-500">{score}</span> out of {questQuestions.length} trivia cards.
+              <p className="text-muted-foreground font-bold text-sm mb-6">
+                You correctly answered <span className="font-black text-amber-500">{score}</span> out of {questQuestions.length} trivia cards.
               </p>
 
               <div className="flex flex-col gap-3">
                 {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? (
-                  <p className="text-xs text-yellow-400 font-semibold animate-pulse mb-2">
+                  <p className="text-xs text-emerald-500 font-black animate-pulse mb-2">
                     A {activeQuest?.rewardLabel} has been awarded to your cargo!
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-500 mb-2">
+                  <p className="text-xs text-muted-foreground font-bold mb-2">
                     Upgrade your characters in the council chamber to unlock lifelines.
                   </p>
                 )}
 
-                <Button onClick={exitGameplay} className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-3 rounded-xl uppercase tracking-widest text-xs border-0">
+                <Button onClick={exitGameplay} className="w-full btn-3d btn-3d-primary py-4 rounded-xl uppercase tracking-widest text-sm">
                   Return to Map
                 </Button>
               </div>
@@ -1064,36 +1064,36 @@ export default function EmpireQuestsPage() {
             
             {/* TABS TACTICAL SELECTOR */}
             <div className="flex justify-center mb-8">
-              <div className="flex gap-2 bg-stone-900/90 border border-stone-850 p-1.5 rounded-2xl items-center shadow-lg">
+              <div className="flex gap-2 bg-white border-2 border-primary/20 p-2 rounded-2xl items-center shadow-lg w-full max-w-2xl overflow-x-auto custom-scrollbar">
                 <button
                   onClick={() => setActiveTab('quests')}
                   className={cn(
-                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
+                    "px-4 md:px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10 whitespace-nowrap",
                     activeTab === 'quests' 
-                      ? "medieval-btn" 
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "btn-3d btn-3d-primary text-white" 
+                      : "text-muted-foreground hover:bg-muted"
                   )}
                 >
-                  ⚔️ Quests Map
+                  🗺️ Saga Map
                 </button>
                 <button
                   onClick={() => setActiveTab('hangman')}
                   className={cn(
-                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
+                    "px-4 md:px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10 whitespace-nowrap",
                     activeTab === 'hangman' 
-                      ? "medieval-btn" 
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "btn-3d btn-3d-primary text-white" 
+                      : "text-muted-foreground hover:bg-muted"
                   )}
                 >
-                  🎮 Tavern Games
+                  🎮 Mini Games
                 </button>
                 <button
                   onClick={() => setActiveTab('chests')}
                   className={cn(
-                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
+                    "px-4 md:px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10 whitespace-nowrap",
                     activeTab === 'chests' 
-                      ? "medieval-btn" 
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "btn-3d btn-3d-primary text-white" 
+                      : "text-muted-foreground hover:bg-muted"
                   )}
                 >
                   📦 Chest Shop
@@ -1101,13 +1101,13 @@ export default function EmpireQuestsPage() {
                 <button
                   onClick={() => setActiveTab('heroes')}
                   className={cn(
-                    "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10",
+                    "px-4 md:px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center h-10 whitespace-nowrap",
                     activeTab === 'heroes' 
-                      ? "medieval-btn" 
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "btn-3d btn-3d-primary text-white" 
+                      : "text-muted-foreground hover:bg-muted"
                   )}
                 >
-                  🏛️ Counsel
+                  🏛️ Heroes
                 </button>
               </div>
             </div>
@@ -1116,223 +1116,175 @@ export default function EmpireQuestsPage() {
             {activeTab === 'quests' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-6">
-                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Campaign War Room</h2>
-                  <p className="text-xs text-slate-400 mt-1">Navigate the conquests map. Break the fog of war and launch regional battles.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Saga Map</h2>
+                  <p className="text-sm font-bold text-muted-foreground mt-1">Journey through endless stages. Unlock chests and heroes.</p>
                 </div>
 
                 {/* Tactical Instruction Parchment Box */}
-                <div className="max-w-xl mx-auto parchment-card rounded-2xl p-4 text-center shadow-md animate-pulse">
-                  <p className="text-xs font-bold leading-relaxed">
-                    ⚔️ <span className="font-extrabold text-amber-900">Decree:</span> Launch the <span className="underline">Siege of Rome</span> campaign (0 Star cost) to earn your first <span className="font-extrabold text-amber-900">20 Stars</span>! Open chests in the shop to recruit counselors.
+                <div className="max-w-xl mx-auto bg-amber-50 rounded-2xl p-4 text-center shadow-md animate-pulse border-2 border-amber-200">
+                  <p className="text-xs font-bold leading-relaxed text-amber-900">
+                    ✨ <span className="font-extrabold text-amber-700">Tip:</span> Play Stage 1 (0 Star cost) to earn your first <span className="font-extrabold text-amber-700">20 Stars</span>! Open chests in the shop to recruit heroes.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
                   <div 
-                    className="lg:col-span-2 relative border-4 border-double border-amber-900/40 rounded-3xl overflow-hidden h-[340px] md:h-[450px] shadow-2xl flex items-center justify-center p-4"
-                    style={{ background: "radial-gradient(circle, #1e1711 0%, #0d0a08 100%)" }}
+                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-2xl flex items-center justify-center p-0 border-2 border-primary/20 bg-emerald-50"
                   >
-                    {/* Dark Grid Overlay */}
-                    <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#e2b85c_1px,transparent_1px),linear-gradient(to_bottom,#e2b85c_1px,transparent_1px)] bg-[size:30px_30px]" />
-                    
-                    {/* Sliding Map Viewport */}
-                    <div className="w-full h-full relative overflow-hidden flex items-center justify-around animate-in fade-in duration-500">
+                    {/* Sliding Map Viewport - Scrollable */}
+                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative flex flex-col-reverse items-center pt-[200px] pb-12 animate-in fade-in duration-500 custom-scrollbar scroll-smooth">
                       {(() => {
-                        const activeIdx = CAMPAIGNS.findIndex(c => !completedCampaigns.includes(c.id));
-                        const currentLevelIndex = activeIdx === -1 ? CAMPAIGNS.length - 1 : activeIdx;
-                        
-                        const startIdx = Math.max(0, currentLevelIndex >= 2 ? currentLevelIndex - 1 : 0);
-                        const visibleCampaigns = CAMPAIGNS.slice(startIdx, startIdx + (currentLevelIndex >= 2 ? 4 : 3));
+                        const ALL_STAGES = Array.from({ length: 100 }, (_, i) => {
+                          if (i < CAMPAIGNS.length) return CAMPAIGNS[i];
+                          const categories = ["General", "Science", "History", "Geography", "Mythology"];
+                          return {
+                            id: `procedural_stage_${i + 1}`,
+                            name: `Stage ${i + 1}`,
+                            description: `A new territory in the realm of ${categories[i % categories.length]}.`,
+                            difficulty: i % 5 === 0 ? "Hard" : "Medium",
+                            category: categories[i % categories.length],
+                            rules: "Endless progression",
+                            entryCost: 20 + Math.floor(i / 10) * 10,
+                            rewardType: "bronze",
+                            rewardLabel: "Bronze Chest",
+                            emoji: "🌟",
+                          } as EmpireCampaign;
+                        });
 
                         return (
-                          <>
-                            {/* SVG Connection Roads */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-amber-500/30 stroke-[3.5]">
-                              {visibleCampaigns.map((quest, index) => {
-                                if (index === visibleCampaigns.length - 1) return null;
-                                const absoluteIndex1 = startIdx + index;
-                                const absoluteIndex2 = startIdx + index + 1;
+                          <div className="relative w-full max-w-sm flex flex-col-reverse items-center">
+                            {/* The winding path line */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10" style={{ minHeight: '100%' }}>
+                              {ALL_STAGES.map((_, index) => {
+                                if (index === ALL_STAGES.length - 1) return null;
+                                const y1Offset = index * 120 + 60;
+                                const y2Offset = (index + 1) * 120 + 60;
                                 
-                                const x1 = `${(index / (visibleCampaigns.length - 1)) * 70 + 15}%`;
-                                const y1 = absoluteIndex1 % 2 === 0 ? '25%' : '65%';
+                                // Snake from left to right (offset 30% from center)
+                                const isLeft1 = (index % 4) === 0 || (index % 4) === 3;
+                                const isLeft2 = ((index + 1) % 4) === 0 || ((index + 1) % 4) === 3;
                                 
-                                const x2 = `${((index + 1) / (visibleCampaigns.length - 1)) * 70 + 15}%`;
-                                const y2 = absoluteIndex2 % 2 === 0 ? '25%' : '65%';
+                                const x1 = isLeft1 ? '30%' : '70%';
+                                const x2 = isLeft2 ? '30%' : '70%';
 
                                 return (
                                   <line 
-                                    key={`road-${quest.id}`}
+                                    key={`line-${index}`}
                                     x1={x1} 
-                                    y1={y1} 
+                                    y1={y1Offset} 
                                     x2={x2} 
-                                    y2={y2} 
-                                    stroke="#d97706" 
-                                    strokeWidth="3.5" 
-                                    strokeDasharray="6,5" 
-                                    className="drop-shadow-[0_0_8px_rgba(217,119,6,0.6)] opacity-80 transition-all duration-700" 
+                                    y2={y2Offset} 
+                                    stroke="#bbf7d0" 
+                                    strokeWidth="12"
+                                    strokeLinecap="round"
                                   />
                                 );
                               })}
                             </svg>
 
-                            {/* Marching Soldier Avatar */}
-                            {(() => {
-                              const activePinIndex = currentLevelIndex - startIdx;
-                              if (activePinIndex < 0 || activePinIndex >= visibleCampaigns.length) return null;
-                              
-                              const x = `${(activePinIndex / (visibleCampaigns.length - 1)) * 70 + 15}%`;
-                              const y = currentLevelIndex % 2 === 0 ? '25%' : '65%';
-
-                              return (
-                                <motion.div
-                                  animate={{ 
-                                    left: x, 
-                                    top: y,
-                                  }}
-                                  transition={{ 
-                                    type: 'spring', 
-                                    stiffness: 80, 
-                                    damping: 15 
-                                  }}
-                                  style={{ position: 'absolute', transform: 'translate(-50%, -50%)' }}
-                                  className="z-25 pointer-events-none"
-                                >
-                                  {/* Bobbing animated icon badge */}
-                                  <motion.div
-                                    animate={{ y: [0, -6, 0] }}
-                                    transition={{ repeat: Infinity, duration: 0.6, ease: 'easeInOut' }}
-                                    className="bg-gradient-to-br from-yellow-400 to-amber-500 text-stone-950 rounded-full w-9 h-9 border-2 border-yellow-300 flex items-center justify-center text-sm shadow-xl shadow-amber-500/40"
-                                  >
-                                    🏇
-                                  </motion.div>
-                                </motion.div>
-                              );
-                            })()}
-
                             {/* Campaign Pins */}
-                            {visibleCampaigns.map((quest, index) => {
-                              const absoluteIndex = startIdx + index;
-                              const isLocked = userStars < quest.entryCost;
+                            {ALL_STAGES.map((quest, index) => {
+                              const isLocked = userStars < quest.entryCost && index > 0;
                               const isSelected = selectedMapQuest?.id === quest.id;
-                              const isCompleted = completedCampaigns.includes(quest.id);
+                              const isCompleted = completedCampaigns.includes(quest.id) || (index < completedCampaigns.length);
                               
-                              const x = `${(index / (visibleCampaigns.length - 1)) * 70 + 15}%`;
-                              const y = absoluteIndex % 2 === 0 ? '25%' : '65%';
-
+                              const isLeft = (index % 4) === 0 || (index % 4) === 3;
+                              
                               return (
                                 <div
                                   key={quest.id}
-                                  style={{ 
-                                    left: x, 
-                                    top: y,
-                                    position: 'absolute',
-                                    transform: 'translate(-50%, -50%)',
-                                    transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)' 
-                                  }}
-                                  className="flex flex-col items-center group z-10"
+                                  className="relative w-full h-[120px] flex justify-center items-center group z-10"
                                 >
-                                  <button
-                                    onClick={() => {
-                                      haptics('light');
-                                      audioManager.playSFX('click');
-                                      setSelectedMapQuest(quest);
-                                    }}
-                                    className={cn(
-                                      "w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all shadow-lg border-2 relative",
-                                      isLocked 
-                                        ? "bg-stone-900/90 border-stone-855 text-stone-500 scale-90" 
-                                        : isSelected
-                                        ? "bg-amber-500 border-amber-400 text-stone-950 scale-110 shadow-amber-500/25 ring-4 ring-amber-500/35"
-                                        : isCompleted
-                                        ? "bg-emerald-950 border-emerald-500 text-emerald-400 hover:border-emerald-300 hover:scale-105"
-                                        : "bg-stone-950 border-amber-600 text-amber-500 hover:border-amber-400 hover:scale-105"
-                                    )}
+                                  <div
+                                    className={cn("absolute", isLeft ? "left-[30%]" : "right-[30%]")}
+                                    style={{ transform: "translateX(-50%)" }}
                                   >
-                                    {isLocked ? (
-                                      <Lock className="w-5 h-5 text-slate-600" />
-                                    ) : (
-                                      <span>{quest.emoji}</span>
-                                    )}
-                                    
-                                    {/* Star entry mini label */}
-                                    {quest.entryCost > 0 && !isCompleted && (
-                                      <span className="absolute -bottom-2 bg-slate-950 text-[8px] font-black uppercase text-yellow-500 border border-yellow-500/35 px-1.5 py-0.5 rounded shadow-sm">
-                                        {quest.entryCost}★
+                                    <button
+                                      onClick={() => {
+                                        haptics('light');
+                                        audioManager.playSFX('click');
+                                        setSelectedMapQuest(quest);
+                                      }}
+                                      className={cn(
+                                        "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-lg border-4 relative panel-3d",
+                                        isLocked 
+                                          ? "bg-slate-200 border-slate-300 text-slate-500 scale-90 grayscale opacity-70" 
+                                          : isSelected
+                                          ? "bg-primary border-white text-primary-foreground scale-110 shadow-primary/40 ring-4 ring-primary/20"
+                                          : isCompleted
+                                          ? "bg-emerald-400 border-white text-emerald-900 hover:scale-105 hover:bg-emerald-300"
+                                          : "bg-white border-primary text-primary hover:border-primary/80 hover:scale-105"
+                                      )}
+                                    >
+                                      {isLocked ? (
+                                        <Lock className="w-6 h-6 text-slate-400" />
+                                      ) : (
+                                        <span>{quest.emoji}</span>
+                                      )}
+                                      
+                                      {/* Stage Badge */}
+                                      <span className="absolute -bottom-3 bg-white text-xs font-black text-primary border-2 border-primary/20 px-2 py-0.5 rounded-full shadow-md w-[40px]">
+                                        {index + 1}
                                       </span>
-                                    )}
-                                    
-                                    {/* Completed checkmark */}
-                                    {isCompleted && (
-                                      <span className="absolute -bottom-2 bg-emerald-905 text-[8px] font-black uppercase text-emerald-400 border border-emerald-500/35 px-1.5 py-0.5 rounded shadow-sm">
-                                        Passed
-                                      </span>
-                                    )}
-                                  </button>
-
-                                  {/* Hover Tooltip */}
-                                  <div className="absolute top-14 bg-slate-900 border border-slate-850 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider text-slate-200 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-20">
-                                    {quest.name} {isLocked ? '🔒' : isCompleted ? '✅' : ''}
+                                    </button>
                                   </div>
                                 </div>
                               );
                             })}
-                          </>
+                          </div>
                         );
                       })()}
                     </div>
 
                     {/* Coordinates & Compass */}
-                    <div className="absolute top-4 left-4 text-[9px] font-black text-amber-500/40 uppercase tracking-widest font-mono select-none">
-                      EUROPA MAP | LAT: 41.9° N | LON: 12.4° E
-                    </div>
-                    <div className="absolute bottom-4 right-4 text-3xl opacity-10 animate-[spin_60s_linear_infinite] select-none pointer-events-none">
-                      🧭
+                    <div className="absolute top-4 left-4 text-[10px] font-black text-primary/40 uppercase tracking-widest font-mono select-none bg-white/50 px-2 py-1 rounded-lg backdrop-blur-sm">
+                      SAGA MAP | PROGRESSION
                     </div>
                   </div>
 
                   {/* Campaign Panel Details Card (Takes 1 column) */}
-                  <div className="bg-card border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md flex flex-col justify-between text-card-foreground">
+                  <div className="panel-3d bg-white rounded-3xl p-6 shadow-md flex flex-col justify-between border-2 border-primary/20 sticky top-4 h-max">
                     {selectedMapQuest ? (
                       <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
                         <div>
                           <div className="flex items-center gap-3 mb-4">
-                            <span className="text-4xl">{selectedMapQuest.emoji}</span>
+                            <span className="text-4xl drop-shadow-sm">{selectedMapQuest.emoji}</span>
                             <div>
-                              <h3 className="font-extrabold text-foreground text-base tracking-tight leading-tight">
+                              <h3 className="font-black text-foreground text-lg tracking-tight leading-tight">
                                 {selectedMapQuest.name}
                               </h3>
                               <span className={cn(
-                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border mt-1.5 inline-block",
-                                selectedMapQuest.difficulty === 'Easy' ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400" :
-                                selectedMapQuest.difficulty === 'Medium' ? "border-yellow-500/25 bg-yellow-500/10 text-yellow-400" :
-                                selectedMapQuest.difficulty === 'Hard' ? "border-red-500/25 bg-red-500/10 text-red-400" :
-                                "border-purple-500/25 bg-purple-500/10 text-purple-400"
+                                "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1.5 inline-block",
+                                selectedMapQuest.difficulty === 'Easy' ? "bg-emerald-100 text-emerald-600 border border-emerald-200" :
+                                selectedMapQuest.difficulty === 'Medium' ? "bg-amber-100 text-amber-600 border border-amber-200" :
+                                selectedMapQuest.difficulty === 'Hard' ? "bg-rose-100 text-rose-600 border border-rose-200" :
+                                "bg-purple-100 text-purple-600 border border-purple-200"
                               )}>
                                 {selectedMapQuest.difficulty}
                               </span>
                             </div>
                           </div>
 
-                          <div className="space-y-4 text-xs">
-                            <p className="text-slate-400 leading-relaxed">
+                          <div className="space-y-4 text-sm">
+                            <p className="text-muted-foreground font-bold leading-relaxed">
                               "{selectedMapQuest.description}"
                             </p>
 
-                            <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-850 space-y-2">
+                            <div className="bg-muted p-4 rounded-2xl border-2 border-muted-foreground/10 space-y-3">
                               <div className="flex justify-between items-center">
-                                <span className="text-slate-500 font-bold uppercase text-[9px]">Entry Tax</span>
-                                <span className="text-yellow-400 font-black">
+                                <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Entry Cost</span>
+                                <span className="text-primary font-black">
                                   {selectedMapQuest.entryCost > 0 ? `${selectedMapQuest.entryCost} Stars` : 'FREE'}
                                 </span>
                               </div>
                               <div className="flex justify-between items-center">
-                                <span className="text-slate-500 font-bold uppercase text-[9px]">Ruleset</span>
-                                <span className="text-slate-300 font-black">{selectedMapQuest.rules}</span>
+                                <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Ruleset</span>
+                                <span className="text-foreground font-black text-xs">{selectedMapQuest.rules}</span>
                               </div>
-                              <div className="flex justify-between items-center border-t border-slate-900 pt-2 mt-2">
-                                <span className="text-slate-500 font-bold uppercase text-[9px]">Cargo Reward</span>
-                                <span className="text-amber-500 font-black">{selectedMapQuest.rewardLabel}</span>
+                              <div className="flex justify-between items-center border-t-2 border-white/50 pt-3 mt-1">
+                                <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Cargo Reward</span>
+                                <span className="text-secondary font-black text-xs">{selectedMapQuest.rewardLabel}</span>
                               </div>
                             </div>
                           </div>
@@ -1352,9 +1304,14 @@ export default function EmpireQuestsPage() {
                               }
                               handleLaunchQuest(selectedMapQuest);
                             }}
-                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-3 rounded-xl uppercase tracking-widest text-xs border-0 shadow-md"
+                            className={cn(
+                              "w-full rounded-xl py-4 font-black uppercase tracking-wide text-base btn-3d",
+                              userStars < selectedMapQuest.entryCost
+                                ? "bg-slate-200 text-slate-400 shadow-none hover:bg-slate-200 active:scale-100" 
+                                : "btn-3d-primary"
+                            )}
                           >
-                            Launch Quest
+                            {userStars < selectedMapQuest.entryCost ? `Locked (${selectedMapQuest.entryCost}★)` : 'Embark Quest'}
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -1424,61 +1381,61 @@ export default function EmpireQuestsPage() {
             {activeTab === 'chests' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-8">
-                  <h2 className="text-lg font-black uppercase tracking-widest text-foreground">Empire Treasury Shop</h2>
-                  <p className="text-xs text-slate-400 mt-1">Exchange your gathered star tokens to purchase mystery reward vaults.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Empire Treasury Shop</h2>
+                  <p className="text-sm font-bold text-muted-foreground mt-1">Exchange your gathered star tokens to purchase mystery reward vaults.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Bronze Card */}
-                  <div className="bg-card border border-border rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group text-card-foreground">
+                  <div className="panel-3d bg-white rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group border-2 border-primary/10">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-700 to-amber-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-amber-500/20 group-hover:scale-105 transition-transform duration-300">
                       📦
                     </div>
-                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Bronze Chest</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                    <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Bronze Chest</h3>
+                    <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
                       Contains minor Gems & Stars. Socrates/Aryabhata shards.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('bronze')}
-                      className="w-full bg-slate-950 hover:bg-slate-850 text-yellow-400 font-extrabold border border-yellow-500/25 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider"
+                      className="w-full btn-3d bg-white border-2 border-primary/20 text-primary font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-wider hover:bg-muted"
                     >
                       50 Stars
                     </Button>
                   </div>
 
                   {/* Gold Card */}
-                  <div className="bg-card border-2 border-yellow-500/20 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-lg relative group text-card-foreground">
+                  <div className="panel-3d bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-lg relative group">
                     {/* Rare badge */}
-                    <span className="absolute -top-3 bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                    <span className="absolute -top-3 bg-amber-500 text-white font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
                       Highly Popular
                     </span>
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-600 via-amber-500 to-yellow-500 flex items-center justify-center text-5xl mb-4 shadow-inner border border-yellow-400/20 group-hover:scale-105 transition-transform duration-300">
                       🏆
                     </div>
-                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Golden Vault</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                    <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Golden Vault</h3>
+                    <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
                       Excellent value. Medium gems, stars. High chance of Chanakya shards.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('gold')}
-                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs uppercase tracking-widest border-0"
+                      className="w-full btn-3d btn-3d-primary font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-widest"
                     >
                       150 Stars
                     </Button>
                   </div>
 
                   {/* Legendary Card */}
-                  <div className="bg-card border border-border rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group text-card-foreground">
+                  <div className="panel-3d bg-white border-2 border-purple-200 rounded-3xl p-6 flex flex-col justify-between items-center text-center shadow-md relative group">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-800 via-indigo-600 to-purple-600 flex items-center justify-center text-5xl mb-4 shadow-inner border border-purple-500/20 group-hover:scale-105 transition-transform duration-300">
                       👑
                     </div>
-                    <h3 className="font-extrabold text-foreground text-base tracking-tight mb-1">Emperor's Tomb</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed mb-6 max-w-[200px]">
+                    <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Emperor's Tomb</h3>
+                    <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
                       Legendary drops. Major Gems & Stars. High shards count for any hero.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('legendary')}
-                      className="w-full bg-slate-950 hover:bg-slate-850 text-yellow-400 font-extrabold border border-yellow-500/25 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider"
+                      className="w-full btn-3d bg-white border-2 border-purple-300 text-purple-700 font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-wider hover:bg-purple-50"
                     >
                       400 Stars
                     </Button>
@@ -1491,8 +1448,8 @@ export default function EmpireQuestsPage() {
             {activeTab === 'heroes' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-8">
-                  <h2 className="text-lg font-black uppercase tracking-widest text-white">Intellectual Counsel</h2>
-                  <p className="text-xs text-slate-400 mt-1">Unlock and upgrade historical counselors. Leveling up boosts their lifeline powers.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Intellectual Counsel</h2>
+                  <p className="text-sm font-bold text-muted-foreground mt-1">Unlock and upgrade historical counselors. Leveling up boosts their lifeline powers.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -191,18 +191,18 @@ export const CoinFlip: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-yellow-600 font-bold text-xs bg-yellow-50 rounded-bl-xl border-l border-b border-yellow-100">
+    <div className="panel-3d flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-white rounded-3xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-amber-600 font-black text-xs bg-amber-50 rounded-bl-2xl border-l-2 border-b-2 border-amber-200">
         <Coins className="w-3.5 h-3.5" />
         <span>{gemsBalance} Gems</span>
       </div>
 
       <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-amber-500 fill-amber-500 w-5 h-5 animate-pulse" />
+        <h3 className="text-2xl font-black text-primary tracking-widest uppercase flex items-center justify-center gap-2">
+          <Sparkles className="text-amber-500 fill-amber-500 w-6 h-6 animate-pulse" />
           Coin Flip Double or Nothing
         </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
+        <p className="text-sm font-bold text-muted-foreground mt-1 max-w-[240px] mx-auto leading-relaxed">
           {message}
         </p>
       </div>
@@ -239,10 +239,10 @@ export const CoinFlip: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 w-full">
             <Button
               variant={userChoice === 'heads' ? 'default' : 'outline'}
-              className={`font-bold rounded-xl h-11 border-2 text-xs uppercase tracking-wider transition-all duration-200 ${
+              className={`font-black rounded-xl h-12 border-2 text-xs uppercase tracking-widest transition-all duration-200 btn-3d ${
                 userChoice === 'heads' 
-                  ? 'bg-amber-600 hover:bg-amber-700 border-amber-600 text-white shadow-md shadow-amber-600/10' 
-                  : 'hover:bg-slate-50 border-slate-200'
+                  ? 'btn-3d-primary' 
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm active:scale-100'
               }`}
               onClick={() => handleChoice('heads')}
             >
@@ -250,10 +250,10 @@ export const CoinFlip: React.FC = () => {
             </Button>
             <Button
               variant={userChoice === 'tails' ? 'default' : 'outline'}
-              className={`font-bold rounded-xl h-11 border-2 text-xs uppercase tracking-wider transition-all duration-200 ${
+              className={`font-black rounded-xl h-12 border-2 text-xs uppercase tracking-widest transition-all duration-200 btn-3d ${
                 userChoice === 'tails' 
-                  ? 'bg-amber-600 hover:bg-amber-700 border-amber-600 text-white shadow-md shadow-amber-600/10' 
-                  : 'hover:bg-slate-50 border-slate-200'
+                  ? 'btn-3d-primary' 
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm active:scale-100'
               }`}
               onClick={() => handleChoice('tails')}
             >
@@ -262,17 +262,17 @@ export const CoinFlip: React.FC = () => {
           </div>
 
           {/* Play Modes / Betting options */}
-          <div className="flex flex-col gap-2 w-full pt-1 border-t border-slate-100">
-            <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1 px-1">
+          <div className="flex flex-col gap-2 w-full pt-1 border-t-2 border-muted mt-2">
+            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 px-1">
               <span>Bet Amount:</span>
               <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
             </div>
 
-            <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-xl p-1 border border-slate-100">
+            <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-2xl p-1 border-2 border-slate-200">
               <Button
                 variant={isFreePlay ? 'secondary' : 'ghost'}
                 disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
+                className={`flex-1 text-[10px] font-black h-10 rounded-xl uppercase tracking-widest transition-all ${
                   isFreePlay 
                     ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
                     : 'text-slate-500 hover:text-slate-700'
@@ -286,9 +286,9 @@ export const CoinFlip: React.FC = () => {
                   <Button
                     key={amt}
                     variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
+                    className={`flex-1 text-[10px] font-black h-10 rounded-xl px-0 transition-all ${
                       !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-slate-200 text-slate-800' 
+                        ? 'bg-white shadow-sm border border-slate-200 text-primary' 
                         : 'text-slate-400 hover:text-slate-600'
                     }`}
                     onClick={() => {
@@ -302,7 +302,7 @@ export const CoinFlip: React.FC = () => {
               </div>
             </div>
             {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-slate-400 text-center font-medium mt-1">
+              <p className="text-[10px] text-muted-foreground text-center font-bold mt-1">
                 Daily free play used. Playing for gems.
               </p>
             )}
@@ -310,7 +310,7 @@ export const CoinFlip: React.FC = () => {
 
           <Button
             onClick={handleFlip}
-            className="w-full font-bold h-12 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl text-sm shadow-md shadow-amber-500/10 border-0 transition-transform active:scale-[0.98] mt-2"
+            className="w-full btn-3d btn-3d-primary font-black py-6 rounded-2xl text-lg tracking-widest uppercase shadow-md mt-4"
           >
             Flip Coin
           </Button>
@@ -320,7 +320,7 @@ export const CoinFlip: React.FC = () => {
       {coinState === 'result' && (
         <Button
           onClick={resetGame}
-          className="w-full font-bold h-11 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs uppercase tracking-wider transition-all mt-2"
+          className="w-full btn-3d bg-slate-800 hover:bg-slate-900 border-2 border-slate-950 text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest transition-all mt-4"
         >
           Play Again
         </Button>

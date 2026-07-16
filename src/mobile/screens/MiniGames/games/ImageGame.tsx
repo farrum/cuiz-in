@@ -55,7 +55,7 @@ export function ImageGame() {
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={() => navigate('/quiz?type=image')}
-          className="w-full rounded-2xl py-4 font-black text-white text-base bg-gradient-to-r from-violet-500 to-fuchsia-600 shadow-[0_6px_20px_rgba(139,92,246,0.3)] hover:shadow-[0_8px_24px_rgba(139,92,246,0.4)] active:scale-[0.98] transition-all"
+          className="w-full rounded-xl py-4 font-black text-white text-base btn-3d btn-3d-primary uppercase tracking-wide"
         >
           Play Image Quiz
         </motion.button>

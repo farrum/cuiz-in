@@ -190,18 +190,17 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open && status !== 'shaking') handleClaim(); }}>
       <DialogContent className={cn(
-        "sm:max-w-md text-white rounded-3xl overflow-hidden shadow-2xl border-2",
-        tier.borderGlow,
-      )} style={{ background: 'linear-gradient(170deg, #0c0a1a 0%, #1a1032 40%, #0f0d1a 100%)' }}>
+        "sm:max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-primary/20",
+      )}>
 
         <DialogHeader className="text-center pt-4">
-          <DialogTitle className="text-xl font-black text-yellow-400 uppercase tracking-wider flex items-center justify-center gap-2">
-            <Shield className="w-5 h-5 text-yellow-500" />
-            {status === 'revealed' ? '⚔️ Treasure Found!' : `Unlocking ${tier.name}`}
+          <DialogTitle className="text-2xl font-black text-primary uppercase tracking-wider flex items-center justify-center gap-2">
+            <Shield className="w-6 h-6 text-amber-500" />
+            {status === 'revealed' ? 'Treasure Found!' : `Unlocking ${tier.name}`}
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs italic">
+          <DialogDescription className="text-muted-foreground text-sm font-bold">
             {status === 'revealed'
-              ? 'The gods of the empire have favored your quest!'
+              ? 'The empire has favored your quest!'
               : 'Tap the chest to break the seal and claim your bounty.'}
           </DialogDescription>
         </DialogHeader>
@@ -444,12 +443,12 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
 
         {/* Claim Footer */}
         {status === 'revealed' && (
-          <div className="p-4 border-t border-yellow-500/20 flex justify-center" style={{ background: 'rgba(10,8,26,0.8)' }}>
+          <div className="p-4 border-t border-muted bg-slate-50 flex justify-center">
             <Button
               onClick={handleClaim}
-              className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black px-10 py-2.5 rounded-xl text-xs uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all border-0"
+              className="btn-3d btn-3d-primary text-white font-black px-10 py-4 rounded-xl text-sm uppercase tracking-[0.1em] shadow-lg border-0"
             >
-              ⚔ Claim Treasure ⚔
+              Claim Treasure
             </Button>
           </div>
         )}

@@ -204,30 +204,30 @@ export const PlinkoGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-yellow-600 font-bold text-xs bg-yellow-50 rounded-bl-xl border-l border-b border-yellow-100">
+    <div className="panel-3d flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-white rounded-3xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-amber-600 font-black text-xs bg-amber-50 rounded-bl-2xl border-l-2 border-b-2 border-amber-200">
         <Coins className="w-3.5 h-3.5" />
         <span>{gemsBalance} Gems</span>
       </div>
 
       <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-emerald-500 fill-emerald-500 w-5 h-5 animate-pulse" />
-          Plinko Peg Board
+        <h3 className="text-2xl font-black text-primary tracking-widest uppercase flex items-center justify-center gap-2">
+          <Sparkles className="text-emerald-500 fill-emerald-500 w-6 h-6 animate-pulse" />
+          Plinko Board
         </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
+        <p className="text-sm font-bold text-muted-foreground mt-1 max-w-[240px] mx-auto leading-relaxed">
           {message}
         </p>
       </div>
 
       {/* Plinko Board Screen */}
-      <div className="relative bg-slate-900 border rounded-2xl w-[300px] h-[320px] overflow-hidden shadow-inner flex flex-col justify-between p-2 select-none">
+      <div className="relative bg-slate-50 border-4 border-slate-200 rounded-3xl w-[300px] h-[320px] overflow-hidden shadow-inner flex flex-col justify-between p-2 select-none">
         {/* Draw Pegs */}
         <div className="absolute inset-0">
           {renderPegs().map((peg, idx) => (
             <div
               key={idx}
-              className="absolute w-2 h-2 rounded-full bg-slate-500 shadow-sm"
+              className="absolute w-2 h-2 rounded-full bg-slate-400 shadow-sm"
               style={{
                 left: `${peg.x - 4}px`,
                 top: `${peg.y - 4}px`,
@@ -238,14 +238,14 @@ export const PlinkoGame: React.FC = () => {
 
         {/* Draw Drop Point Indicator */}
         <div 
-          className="absolute top-2 w-4 h-4 border-2 border-dashed border-slate-500 rounded-full"
+          className="absolute top-2 w-4 h-4 border-2 border-dashed border-slate-400 rounded-full"
           style={{ left: `${CENTER_X - 8}px` }}
         />
 
         {/* Draw Ball */}
         {ballPos && (
           <div
-            className="absolute w-4.5 h-4.5 rounded-full bg-yellow-400 border border-yellow-600 shadow shadow-yellow-500/50 transition-all duration-200 z-10"
+            className="absolute w-4.5 h-4.5 rounded-full bg-yellow-400 border border-yellow-500 shadow-md transition-all duration-200 z-10"
             style={{
               width: '18px',
               height: '18px',
@@ -260,10 +260,10 @@ export const PlinkoGame: React.FC = () => {
           {MULTIPLIERS.map((mult, idx) => (
             <div
               key={idx}
-              className={`rounded-lg py-1 text-center font-black text-[10px] border flex flex-col items-center justify-center h-full ${
+              className={`rounded-xl py-1 text-center font-black text-xs border-2 flex flex-col items-center justify-center h-full ${
                 mult >= 1.5 
-                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' 
-                  : 'bg-slate-800/80 border-slate-700 text-slate-400'
+                  ? 'bg-emerald-100 border-emerald-300 text-emerald-600' 
+                  : 'bg-white border-slate-200 text-slate-400'
               }`}
             >
               <span>{mult}x</span>
@@ -275,17 +275,17 @@ export const PlinkoGame: React.FC = () => {
       <div className="flex flex-col gap-4 w-full">
         {/* Play Modes / Betting options */}
         {!dropping && (
-          <div className="flex flex-col gap-2 w-full pt-1 border-t border-slate-100">
-            <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1 px-1">
+          <div className="flex flex-col gap-2 w-full pt-1 border-t-2 border-muted">
+            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 px-1">
               <span>Bet Amount:</span>
               <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
             </div>
 
-            <div className="flex gap-2 w-full justify-between items-center bg-slate-55 bg-slate-50 rounded-xl p-1 border border-slate-100">
+            <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-2xl p-1 border-2 border-slate-200">
               <Button
                 variant={isFreePlay ? 'secondary' : 'ghost'}
                 disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
+                className={`flex-1 text-[10px] font-black h-10 rounded-xl uppercase tracking-widest transition-all ${
                   isFreePlay 
                     ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
                     : 'text-slate-500 hover:text-slate-700'
@@ -299,9 +299,9 @@ export const PlinkoGame: React.FC = () => {
                   <Button
                     key={amt}
                     variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
+                    className={`flex-1 text-[10px] font-black h-10 rounded-xl px-0 transition-all ${
                       !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-slate-200 text-slate-800' 
+                        ? 'bg-white shadow-sm border border-slate-200 text-primary' 
                         : 'text-slate-400 hover:text-slate-600'
                     }`}
                     onClick={() => {
@@ -315,7 +315,7 @@ export const PlinkoGame: React.FC = () => {
               </div>
             </div>
             {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-slate-400 text-center font-medium mt-1">
+              <p className="text-[10px] text-muted-foreground text-center font-bold mt-1">
                 Daily free play used. Playing for gems.
               </p>
             )}
@@ -325,7 +325,7 @@ export const PlinkoGame: React.FC = () => {
         <Button
           onClick={handleDrop}
           disabled={dropping}
-          className="w-full font-bold h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-sm shadow-md shadow-emerald-500/10 border-0 transition-transform active:scale-[0.98]"
+          className="w-full btn-3d bg-emerald-500 border-2 border-emerald-600 hover:bg-emerald-400 font-black py-6 rounded-2xl text-lg tracking-widest uppercase shadow-md text-white"
         >
           {dropping ? 'Dropping...' : 'Drop Ball'}
         </Button>

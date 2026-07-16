@@ -1,18 +1,9 @@
 .mini-game-card {
-  border: 1px solid hsl(var(--border));
-  border-radius: 1.25rem;
-  overflow: hidden;
-  background: hsl(var(--card));
-  display: flex;
-  flex-direction: column;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .mini-game-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.1);
-  border-color: hsl(var(--primary) / 0.3);
 }
 
 .mini-game-gradient-header {
@@ -40,62 +31,4 @@
 
 .mini-game-card:hover .mini-game-emoji {
   transform: scale(1.15) rotate(5deg);
-}
-
-.mini-game-content {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.mini-game-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: hsl(var(--card-foreground));
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.mini-game-description {
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: hsl(var(--muted-foreground));
-  flex: 1;
-  margin: 0;
-}
-
-.mini-game-meta {
-  display: flex;
-  align-items: center;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  margin-top: 0.25rem;
-}
-
-.play-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.play-button {
-  display: block;
-  text-align: center;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.75rem;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  font-weight: 600;
-  font-size: 0.9375rem;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px 0 hsl(var(--primary) / 0.2);
-}
-
-.play-button:hover {
-  background: hsl(var(--primary) / 0.9);
-  box-shadow: 0 4px 8px 0 hsl(var(--primary) / 0.35);
 }

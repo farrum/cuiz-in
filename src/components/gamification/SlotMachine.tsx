@@ -206,28 +206,28 @@ export const SlotMachine: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-yellow-600 font-bold text-xs bg-yellow-50 rounded-bl-xl border-l border-b border-yellow-100">
+    <div className="panel-3d flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-white rounded-3xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-amber-600 font-black text-xs bg-amber-50 rounded-bl-2xl border-l-2 border-b-2 border-amber-200">
         <Coins className="w-3.5 h-3.5" />
         <span>{gemsBalance} Gems</span>
       </div>
 
       <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-red-500 fill-red-500 w-5 h-5 animate-pulse" />
+        <h3 className="text-2xl font-black text-primary tracking-widest uppercase flex items-center justify-center gap-2">
+          <Sparkles className="text-amber-500 fill-amber-500 w-6 h-6 animate-pulse" />
           Jackpot Slots
         </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
+        <p className="text-sm font-bold text-muted-foreground mt-1 max-w-[240px] mx-auto leading-relaxed">
           {message}
         </p>
       </div>
 
       {/* Reels Visual Container */}
-      <div className="flex gap-4 bg-slate-900 border-4 border-slate-700 rounded-2xl p-4 shadow-xl w-full justify-center">
+      <div className="flex gap-4 bg-muted border-4 border-muted-foreground/20 rounded-3xl p-4 shadow-inner w-full justify-center">
         {reels.map((sym, idx) => (
           <div 
             key={idx} 
-            className={`w-16 h-20 rounded-xl bg-white border-2 border-slate-300 shadow-inner flex items-center justify-center text-4xl select-none font-bold transition-all ${
+            className={`w-16 h-20 rounded-2xl bg-white border-2 border-slate-200 shadow-md flex items-center justify-center text-4xl select-none font-black transition-all ${
               spinning ? 'animate-pulse' : ''
             }`}
           >
@@ -238,17 +238,17 @@ export const SlotMachine: React.FC = () => {
 
       <div className="flex flex-col gap-4 w-full">
         {/* Play Modes / Betting options */}
-        <div className="flex flex-col gap-2 w-full pt-1 border-t border-slate-100">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1 px-1">
+        <div className="flex flex-col gap-2 w-full pt-1 border-t-2 border-muted">
+          <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 px-1">
             <span>Cost to Spin:</span>
             <span>{isFreePlay ? 'FREE SPIN' : `${betAmount} Gems`}</span>
           </div>
 
-          <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-xl p-1 border border-slate-100">
+          <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-2xl p-1 border-2 border-slate-200">
             <Button
               variant={isFreePlay ? 'secondary' : 'ghost'}
               disabled={hasPlayedFreeToday || spinning}
-              className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
+              className={`flex-1 text-[10px] font-black h-10 rounded-xl uppercase tracking-widest transition-all ${
                 isFreePlay 
                   ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
                   : 'text-slate-500 hover:text-slate-700'
@@ -263,9 +263,9 @@ export const SlotMachine: React.FC = () => {
                   key={amt}
                   variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
                   disabled={spinning}
-                  className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
+                  className={`flex-1 text-[10px] font-black h-10 rounded-xl px-0 transition-all ${
                     !isFreePlay && betAmount === amt 
-                      ? 'bg-white shadow-sm border border-slate-200 text-slate-800' 
+                      ? 'bg-white shadow-sm border border-slate-200 text-primary' 
                       : 'text-slate-400 hover:text-slate-600'
                   }`}
                   onClick={() => {
@@ -279,7 +279,7 @@ export const SlotMachine: React.FC = () => {
             </div>
           </div>
           {hasPlayedFreeToday && isFreePlay && (
-            <p className="text-[10px] text-slate-400 text-center font-medium mt-1">
+            <p className="text-[10px] text-muted-foreground text-center font-bold mt-1">
               Daily free spin used. Spinning for gems.
             </p>
           )}
@@ -288,7 +288,7 @@ export const SlotMachine: React.FC = () => {
         <Button
           onClick={handleSpin}
           disabled={spinning}
-          className="w-full font-bold h-12 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-xl text-sm shadow-md shadow-red-500/10 border-0 transition-transform active:scale-[0.98]"
+          className="w-full btn-3d btn-3d-primary font-black py-6 rounded-2xl text-lg tracking-widest uppercase shadow-md"
         >
           {spinning ? 'Spinning...' : 'Spin Reels'}
         </Button>
