@@ -269,6 +269,125 @@ export type Database = {
         }
         Relationships: []
       }
+      alliance_chat: {
+        Row: {
+          alliance_id: string | null
+          created_at: string
+          id: string
+          message: string
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          alliance_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          alliance_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alliance_chat_alliance_id_fkey"
+            columns: ["alliance_id"]
+            isOneToOne: false
+            referencedRelation: "alliances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alliance_chat_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alliance_members: {
+        Row: {
+          alliance_id: string | null
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          alliance_id?: string | null
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          alliance_id?: string | null
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alliance_members_alliance_id_fkey"
+            columns: ["alliance_id"]
+            isOneToOne: false
+            referencedRelation: "alliances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alliance_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alliances: {
+        Row: {
+          biweekly_stars: number | null
+          created_at: string
+          crest_emoji: string | null
+          description: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          total_stars: number | null
+        }
+        Insert: {
+          biweekly_stars?: number | null
+          created_at?: string
+          crest_emoji?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          owner_id?: string | null
+          total_stars?: number | null
+        }
+        Update: {
+          biweekly_stars?: number | null
+          created_at?: string
+          crest_emoji?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string | null
+          total_stars?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alliances_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author: string | null
@@ -1277,6 +1396,15 @@ export type Database = {
         Returns: string
       }
       check_admin_access: { Args: never; Returns: boolean }
+      create_alliance: {
+        Args: {
+          p_crest_emoji: string
+          p_description: string
+          p_name: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_ad_performance_data: {
         Args: never
         Returns: {
@@ -1288,6 +1416,18 @@ export type Database = {
           impressions: number
           page_section: string
           slot_id: string
+        }[]
+      }
+      get_alliance_rankings: {
+        Args: never
+        Returns: {
+          alliance_id: string
+          biweekly_stars: number
+          crest_emoji: string
+          description: string
+          member_count: number
+          name: string
+          total_stars: number
         }[]
       }
       get_attempted_correct_answers: {
@@ -1332,6 +1472,11 @@ export type Database = {
         Returns: boolean
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      join_alliance: {
+        Args: { p_alliance_id: string; p_user_id: string }
+        Returns: Json
+      }
+      leave_alliance: { Args: { p_user_id: string }; Returns: Json }
       process_scratch_card: { Args: { p_context?: string }; Returns: Json }
       process_wheel_spin: { Args: { user_uuid: string }; Returns: Json }
       purchase_skill_node: {
