@@ -74,7 +74,7 @@ export const MiniGameCard: React.FC<MiniGameCardProps> = ({ id, name, descriptio
       
       // Play sound
       import('@/utils/audioManager').then(({ audioManager }) => {
-        audioManager.playSound('win');
+        audioManager.playSFX('correct');
       });
 
       // After particles finish (1.2s), show reveal message
