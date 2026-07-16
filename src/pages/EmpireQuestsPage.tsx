@@ -1130,8 +1130,19 @@ export default function EmpireQuestsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
                   <div 
-                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-2xl flex items-center justify-center p-0 border-2 border-primary/20 bg-emerald-50"
+                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-2xl flex items-center justify-center p-0 border-4 border-amber-700/40 bg-[#d4ebd0]"
                   >
+                    {/* Map Grid / Texture Overlay */}
+                    <div 
+                      className="absolute inset-0 opacity-30 pointer-events-none"
+                      style={{
+                        backgroundImage: `radial-gradient(#86b379 2.5px, transparent 2.5px)`,
+                        backgroundSize: '40px 40px'
+                      }}
+                    />
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                    }} />
                     {/* Sliding Map Viewport - Scrollable */}
                     <div className="w-full h-full overflow-y-auto overflow-x-hidden relative flex flex-col-reverse items-center pt-[200px] pb-12 animate-in fade-in duration-500 custom-scrollbar scroll-smooth">
                       {(() => {
@@ -1155,7 +1166,7 @@ export default function EmpireQuestsPage() {
                         return (
                           <div className="relative w-full max-w-sm flex flex-col-reverse items-center">
                             {/* The winding path line */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10" style={{ minHeight: '100%' }}>
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ minHeight: '100%' }}>
                               {ALL_STAGES.map((_, index) => {
                                 if (index === ALL_STAGES.length - 1) return null;
                                 const y1Offset = index * 120 + 60;
@@ -1169,16 +1180,14 @@ export default function EmpireQuestsPage() {
                                 const x2 = isLeft2 ? '30%' : '70%';
 
                                 return (
-                                  <line 
-                                    key={`line-${index}`}
-                                    x1={x1} 
-                                    y1={y1Offset} 
-                                    x2={x2} 
-                                    y2={y2Offset} 
-                                    stroke="#bbf7d0" 
-                                    strokeWidth="12"
-                                    strokeLinecap="round"
-                                  />
+                                  <g key={`path-${index}`}>
+                                    {/* Path shadow / base */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#9c754d" strokeWidth="28" strokeLinecap="round" />
+                                    {/* Path dirt */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#cda070" strokeWidth="20" strokeLinecap="round" />
+                                    {/* Path stones / details */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#e8ccab" strokeWidth="8" strokeDasharray="12 18" strokeLinecap="round" />
+                                  </g>
                                 );
                               })}
                             </svg>
@@ -1200,6 +1209,7 @@ export default function EmpireQuestsPage() {
                                     className={cn("absolute", isLeft ? "left-[30%]" : "right-[30%]")}
                                     style={{ transform: "translateX(-50%)" }}
                                   >
+                                    <div className="absolute -bottom-2 w-10 h-3 bg-emerald-900/40 blur-[3px] rounded-full" />
                                     <button
                                       onClick={() => {
                                         haptics('light');
@@ -1207,24 +1217,24 @@ export default function EmpireQuestsPage() {
                                         setSelectedMapQuest(quest);
                                       }}
                                       className={cn(
-                                        "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-lg border-4 relative panel-3d",
+                                        "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-xl border-4 relative panel-3d z-10",
                                         isLocked 
-                                          ? "bg-slate-200 border-slate-300 text-slate-500 scale-90 grayscale opacity-70" 
+                                          ? "bg-slate-300 border-slate-400 text-slate-500 scale-90 grayscale opacity-80 shadow-inner" 
                                           : isSelected
-                                          ? "bg-primary border-white text-primary-foreground scale-110 shadow-primary/40 ring-4 ring-primary/20"
+                                          ? "bg-primary border-amber-300 text-primary-foreground scale-110 shadow-primary/40 ring-4 ring-primary/30"
                                           : isCompleted
-                                          ? "bg-emerald-400 border-white text-emerald-900 hover:scale-105 hover:bg-emerald-300"
-                                          : "bg-white border-primary text-primary hover:border-primary/80 hover:scale-105"
+                                          ? "bg-emerald-400 border-emerald-100 text-emerald-900 hover:scale-105 hover:bg-emerald-300 shadow-emerald-500/30"
+                                          : "bg-white border-amber-400 text-primary hover:border-amber-300 hover:scale-105 shadow-amber-500/20"
                                       )}
                                     >
                                       {isLocked ? (
-                                        <Lock className="w-6 h-6 text-slate-400" />
+                                        <Lock className="w-6 h-6 text-slate-500" />
                                       ) : (
-                                        <span>{quest.emoji}</span>
+                                        <span className="drop-shadow-sm">{quest.emoji}</span>
                                       )}
                                       
                                       {/* Stage Badge */}
-                                      <span className="absolute -bottom-3 bg-white text-xs font-black text-primary border-2 border-primary/20 px-2 py-0.5 rounded-full shadow-md w-[40px]">
+                                      <span className="absolute -bottom-3 bg-white text-[10px] font-black text-amber-900 border-2 border-amber-400/50 px-2 py-0.5 rounded-full shadow-md min-w-[36px] tracking-wider">
                                         {index + 1}
                                       </span>
                                     </button>
@@ -1237,9 +1247,15 @@ export default function EmpireQuestsPage() {
                       })()}
                     </div>
 
-                    {/* Coordinates & Compass */}
-                    <div className="absolute top-4 left-4 text-[10px] font-black text-primary/40 uppercase tracking-widest font-mono select-none bg-white/50 px-2 py-1 rounded-lg backdrop-blur-sm">
-                      SAGA MAP | PROGRESSION
+                    {/* Compass / Map Decoration */}
+                    <div className="absolute top-4 left-4 z-20 flex flex-col items-center">
+                      <div className="w-12 h-12 bg-amber-100 rounded-full border-4 border-amber-800/80 shadow-lg flex items-center justify-center relative">
+                        <div className="absolute inset-1 border border-amber-800/40 rounded-full" />
+                        <span className="text-xl -translate-y-0.5 drop-shadow-sm">🧭</span>
+                      </div>
+                      <div className="mt-2 text-[9px] font-black text-amber-900 bg-amber-100/95 px-3 py-1 rounded-full shadow-md border border-amber-800/20 uppercase tracking-widest backdrop-blur-sm">
+                        Empire Map
+                      </div>
                     </div>
                   </div>
 
