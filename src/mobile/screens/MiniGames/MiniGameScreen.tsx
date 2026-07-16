@@ -137,8 +137,8 @@ export default function MiniGameScreen() {
           {gameId === 'riddlevault' && '🔑'}
         </span>
         <div>
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">{current?.title}</h2>
-          <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
+          <h2 className="text-xl font-black text-primary uppercase tracking-wider drop-shadow-sm">{current?.title}</h2>
+          <p className="text-slate-500 font-bold text-xs mt-2 leading-relaxed px-2">
             {gameId === 'wheel' && 'Spin the wheel of fortune to win coins, tickets, and mystery items.'}
             {gameId === 'scratch' && 'Scratch away the golden foil to match items and win rewards.'}
             {gameId === 'true-false' && 'Test your reflexes and knowledge in a rapid‑fire fact‑checking challenge.'}
@@ -287,7 +287,7 @@ export default function MiniGameScreen() {
         <p className="text-[11px] uppercase tracking-widest font-black text-muted-foreground mb-1.5 text-center">
           More Games
         </p>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 px-1 scrollbar-none justify-start w-full max-w-full">
+        <div className="flex items-center gap-3 overflow-x-auto pb-4 px-1 pr-14 scrollbar-none justify-start w-full max-w-full">
           {otherGames.map((g) => {
             const Icon = g.icon;
             return (
@@ -295,12 +295,12 @@ export default function MiniGameScreen() {
                 key={g.id}
                 whileTap={{ scale: 0.93 }}
                 onClick={() => { haptics('light'); navigate(`/game/${g.id}`); }}
-                className="flex items-center gap-2 rounded-2xl px-3 py-2 panel-3d bg-white transition-colors"
+                className="flex items-center gap-2 rounded-2xl px-3 py-2 btn-3d bg-white transition-colors whitespace-nowrap flex-shrink-0"
               >
-                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm', g.color)}>
+                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-white border-2 border-white/20 bg-gradient-to-br shadow-sm', g.color)}>
                   <Icon className="w-4 h-4 drop-shadow-sm" />
                 </div>
-                <span className="text-sm font-black text-foreground tracking-tight">{g.short}</span>
+                <span className="text-[13px] font-black text-slate-700 tracking-tight pr-1">{g.short}</span>
               </motion.button>
             );
           })}

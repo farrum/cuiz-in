@@ -93,6 +93,7 @@ const QuizLandingPage = React.lazy(() => import("@/pages/QuizLandingPage"));
 const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 const EmpireQuestsPage = React.lazy(() => import("@/pages/EmpireQuestsPage"));
 const KingdomsPage = React.lazy(() => import("@/pages/KingdomsPage"));
+const ShopScreen = React.lazy(() => import("@/mobile/screens/Shop/ShopScreen"));
 
 // Lazy load components that aren't needed immediately
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
@@ -542,6 +543,12 @@ function App() {
               <Route path="/kingdoms" element={
                 <LazyProtectedRoute>
                   <KingdomsPage />
+                </LazyProtectedRoute>
+              } />
+
+              <Route path="/shop" element={
+                <LazyProtectedRoute>
+                  <ShopScreen />
                 </LazyProtectedRoute>
               } />
 

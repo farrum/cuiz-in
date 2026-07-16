@@ -152,18 +152,18 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-col stone-wall"
+          className="fixed inset-0 z-[100] flex flex-col bg-slate-50 shadow-2xl"
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '2px solid hsl(35 20% 20%)' }}>
-            <button onClick={onClose} className="p-2 -ml-2 rounded-xl iron-frame hover:bg-stone-800/60">
-              <X className="w-5 h-5 text-stone-300" />
+          <div className="flex items-center justify-between px-4 py-4 bg-white shadow-sm border-b-2 border-slate-200">
+            <button onClick={onClose} className="p-2 -ml-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
+              <X className="w-5 h-5 text-slate-500" />
             </button>
-            <h2 className="font-bold text-lg text-amber-400" style={{ fontFamily: "'Cinzel', serif" }}>Edit Profile</h2>
+            <h2 className="font-black text-xl text-primary tracking-wide">Edit Profile</h2>
             <div className="w-9" />
           </div>
 
@@ -171,22 +171,22 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
             {/* Avatar */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center iron-frame bg-stone-800">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center border-4 border-white shadow-md bg-slate-100">
                   {avatar ? (
                     <img src={avatar} alt="Your profile picture" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-10 h-10 text-stone-500" />
+                    <User className="w-10 h-10 text-slate-400" />
                   )}
                 </div>
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-xl bg-gradient-to-r from-amber-500 to-amber-700 text-stone-900 flex items-center justify-center shadow-lg"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-primary/90 transition-colors"
                 >
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
               </div>
-              <p className="text-xs text-stone-500">Tap the camera to change your avatar</p>
+              <p className="text-[11px] font-bold text-slate-500">Tap the camera to change your avatar</p>
             </div>
 
             <Section title="Profile details">
@@ -209,17 +209,17 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
             )}
 
             {form.provider !== 'email' && (
-              <p className="text-xs text-stone-500 text-center">Email and password are managed by your sign-in provider.</p>
+              <p className="text-xs font-bold text-slate-400 text-center">Email and password are managed by your sign-in provider.</p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3" style={{ borderTop: '2px solid hsl(35 20% 20%)' }}>
+          <div className="px-4 py-4 bg-white border-t-2 border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
               disabled={saving}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 medieval-btn disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 btn-3d btn-3d-primary disabled:opacity-60 font-black uppercase tracking-wider text-[13px]"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {saving ? 'Saving…' : 'Save Changes'}
@@ -233,8 +233,8 @@ export function ProfileEditSheet({ uid, open, onClose, profile, onSaved }: Props
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500">{title}</p>
+    <div className="space-y-4 panel-3d bg-white p-5">
+      <p className="text-[11px] font-black uppercase tracking-widest text-primary border-b-2 border-slate-100 pb-2 mb-3">{title}</p>
       {children}
     </div>
   );
@@ -248,16 +248,16 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-stone-400">{label}</span>
-      <div className={`mt-1 flex items-center gap-2 rounded-xl px-3 wooden-door ${disabled ? 'opacity-60' : ''}`}>
-        <Icon className="w-4 h-4 text-stone-500 shrink-0" />
+      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 ml-1">{label}</span>
+      <div className={`flex items-center gap-2 rounded-xl px-4 bg-slate-50 border-2 border-slate-200 focus-within:border-primary/50 transition-colors ${disabled ? 'opacity-60' : ''}`}>
+        <Icon className="w-4 h-4 text-slate-400 shrink-0" />
         <input
           type={type}
           value={value}
           disabled={disabled}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 bg-transparent py-3 text-sm outline-none text-stone-200 placeholder:text-stone-600 disabled:cursor-not-allowed"
+          className="flex-1 bg-transparent py-3 text-sm font-bold outline-none text-slate-800 placeholder:text-slate-400 disabled:cursor-not-allowed"
         />
       </div>
     </label>

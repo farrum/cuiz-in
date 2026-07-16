@@ -94,64 +94,66 @@ export default function MobileLoginScreen() {
 
   return (
     <div
-      className="fixed inset-0 flex flex-col stone-wall px-6"
+      className="fixed inset-0 flex flex-col bg-gradient-to-b from-[#f4faff] to-white px-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed"
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
     >
-      {/* Torch ambience */}
-      <div className="torch-glow-ambient absolute top-20 left-0" style={{ width: 120, height: 120, opacity: 0.3 }} />
-      <div className="torch-glow-ambient absolute top-20 right-0" style={{ width: 120, height: 120, opacity: 0.3, animationDelay: '1s' }} />
-
-      <button onClick={() => navigate(-1)} className="self-start p-2 -ml-2 rounded-full hover:bg-muted/20" aria-label="Back">
-        <ArrowLeft className="w-5 h-5 text-stone-400" />
+      <button onClick={() => navigate(-1)} className="self-start p-2.5 rounded-full bg-white shadow-sm border-2 border-slate-100 hover:bg-slate-50 transition-colors z-10" aria-label="Back">
+        <ArrowLeft className="w-5 h-5 text-slate-600" />
       </button>
 
       <motion.img
         src="/cuizin-logo.png"
         alt="CuizIN logo"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-        className="h-10 w-auto mx-auto mt-1"
+        className="h-16 w-auto mx-auto mt-4 mb-4 drop-shadow-md relative z-10"
       />
 
-      <div className="flex-1 flex flex-col justify-center">
-        {/* King + Advisors Banner */}
-        <MedievalCharacterBanner compact className="mb-4" />
-
-        <div className="text-center mb-5">
-          <h1 className="text-xl font-black font-serif text-yellow-500 tracking-wide">
-            {mode === 'sign-in' ? 'Return to the Kingdom' : mode === 'forgot-password' ? 'Lost Your Seal?' : 'Pledge Your Allegiance'}
+      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full relative z-10">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black font-serif text-primary tracking-wide drop-shadow-sm">
+            {mode === 'sign-in' ? 'Welcome to Cuiz.in' : mode === 'forgot-password' ? 'Lost Your Password?' : 'Create Your Account'}
           </h1>
-          <p className="text-[11px] text-muted-foreground mt-1 italic">
+          <p className="text-sm font-semibold text-slate-500 mt-2">
             {mode === 'sign-in' 
-              ? 'The throne awaits your return, noble warrior' 
+              ? 'Jump back in and continue your journey' 
               : mode === 'forgot-password' 
-                ? "We shall dispatch a raven with your new seal" 
-                : 'Join the Royal Court and begin your quest for glory'}
+                ? "We'll send you a link to reset your password" 
+                : 'Join us and start earning rewards today'}
           </p>
         </div>
 
-        {/* Parchment form area */}
-        <form onSubmit={submit} className="space-y-3">
+        {/* Modern form area */}
+        <form onSubmit={submit} className="space-y-4">
           {mode === 'sign-up' && (
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose thy warrior name"
-              className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
-            />
+            <div>
+              <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Username</label>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Choose a cool username"
+                className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
+              />
+            </div>
           )}
-          <input
-            type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="Royal dispatch address (email)"
-            className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          {mode !== 'forgot-password' && (
+          <div>
+            <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Email Address</label>
             <input
-              type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="Secret passphrase" minLength={6}
-              className="w-full rounded-xl px-4 py-3 parchment-card text-sm font-medium placeholder:text-stone-500 outline-none focus:ring-2 focus:ring-primary/50"
+              type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
             />
+          </div>
+          {mode !== 'forgot-password' && (
+            <div>
+              <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Password</label>
+              <input
+                type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 6 characters" minLength={6}
+                className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
+              />
+            </div>
           )}
           
           {mode === 'sign-in' && (
@@ -159,9 +161,9 @@ export default function MobileLoginScreen() {
               <button
                 type="button"
                 onClick={() => setMode('forgot-password')}
-                className="text-[11px] text-amber-500/70 hover:text-amber-400 italic"
+                className="text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors"
               >
-                Lost thy passphrase?
+                Forgot password?
               </button>
             </div>
           )}
@@ -170,28 +172,27 @@ export default function MobileLoginScreen() {
             whileTap={{ scale: 0.97 }}
             disabled={loading}
             type="submit"
-            className="w-full rounded-2xl py-3.5 medieval-btn disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full rounded-2xl py-4 btn-3d btn-3d-primary disabled:opacity-50 flex items-center justify-center gap-2 mt-2 uppercase tracking-widest text-[13px]"
           >
-            <Shield className="w-4 h-4" />
-            {loading ? '…' : mode === 'sign-in' ? 'Enter the Kingdom' : mode === 'forgot-password' ? 'Send the Raven' : 'Take the Oath'}
+            {loading ? 'Processing...' : mode === 'sign-in' ? 'Login' : mode === 'forgot-password' ? 'Send Reset Link' : 'Create Account'}
           </motion.button>
         </form>
 
         {mode === 'forgot-password' ? (
           <button
             onClick={() => setMode('sign-in')}
-            className="mt-5 text-sm text-muted-foreground hover:text-amber-500 italic text-center"
+            className="mt-6 text-sm font-bold text-slate-500 hover:text-primary transition-colors text-center w-full"
           >
-            ← Return to the gates
+            ← Back to Login
           </button>
         ) : (
           <button
             onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
-            className="mt-5 text-[12px] text-muted-foreground text-center"
+            className="mt-6 text-[13px] font-semibold text-slate-500 text-center w-full"
           >
             {mode === 'sign-in' 
-              ? <span>New to the realm? <span className="text-amber-500 font-bold">Pledge allegiance</span></span>
-              : <span>Already sworn? <span className="text-amber-500 font-bold">Enter the gates</span></span>}
+              ? <span>Don't have an account? <span className="text-primary font-black">Sign Up</span></span>
+              : <span>Already have an account? <span className="text-primary font-black">Login</span></span>}
           </button>
         )}
       </div>

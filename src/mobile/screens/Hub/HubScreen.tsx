@@ -20,7 +20,8 @@ type Node = {
   id: string;
   label: string;
   to: string;
-  icon: typeof Calendar;
+  icon?: any;
+  emoji?: string;
   color: string;
   hint?: string;
   badge?: string;
@@ -34,17 +35,17 @@ const ROYAL_CHAMBERS: Node[] = [
 ];
 
 const TAVERN_GAMES: Node[] = [
-  { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', icon: Disc3, color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day', badge: 'Daily' },
-  { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', icon: ScrollText, color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
-  { id: 'true-false', label: 'True / False', to: '/game/true-false', icon: Swords, color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
-  { id: 'image', label: 'Image Trivia', to: '/game/image', icon: ImageIcon, color: 'from-violet-500 to-fuchsia-600', hint: 'Visual trivia puzzles', badge: 'Image' },
-  { id: 'slot', label: 'Slot Machine', to: '/game/slot', icon: Coins, color: 'from-red-500 to-amber-500', hint: 'Test matching luck', badge: 'Lucky' },
-  { id: 'plinko', label: 'Plinko Board', to: '/game/plinko', icon: Dices, color: 'from-green-400 to-emerald-600', hint: 'Bounce chips for prizes', badge: 'Fun' },
-  { id: 'rps', label: 'Rock Paper Scissors', to: '/game/rps', icon: Gamepad2, color: 'from-purple-500 to-indigo-600', hint: 'Gesture battle vs AI', badge: 'Battle' },
-  { id: 'treasure', label: 'Treasure Chest', to: '/game/treasure', icon: Gift, color: 'from-yellow-400 to-orange-500', hint: 'Open mystery chest', badge: 'Reward' },
-  { id: 'coinflip', label: 'Coin Flip', to: '/game/coinflip', icon: Coins, color: 'from-amber-500 to-orange-600', hint: 'Double or nothing coin', badge: 'Luck' },
-  { id: 'diceroll', label: 'Dice Roll', to: '/game/diceroll', icon: Dices, color: 'from-indigo-400 to-purple-600', hint: 'High rolling dice bonus', badge: 'Hot' },
-  { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', icon: KeyRound, color: 'from-stone-600 to-stone-900', hint: 'Claim massive daily gems', badge: 'Daily' },
+  { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', emoji: '🎡', color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day', badge: 'Daily' },
+  { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', emoji: '🎫', color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
+  { id: 'true-false', label: 'True / False', to: '/game/true-false', emoji: '⚖️', color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
+  { id: 'image', label: 'Image Trivia', to: '/game/image', emoji: '🖼️', color: 'from-violet-500 to-fuchsia-600', hint: 'Visual trivia puzzles', badge: 'Image' },
+  { id: 'slot', label: 'Slot Machine', to: '/game/slot', emoji: '🎰', color: 'from-red-500 to-amber-500', hint: 'Test matching luck', badge: 'Lucky' },
+  { id: 'plinko', label: 'Plinko Board', to: '/game/plinko', emoji: '🔴', color: 'from-green-400 to-emerald-600', hint: 'Bounce chips for prizes', badge: 'Fun' },
+  { id: 'rps', label: 'Rock Paper Scissors', to: '/game/rps', emoji: '✊', color: 'from-purple-500 to-indigo-600', hint: 'Gesture battle vs AI', badge: 'Battle' },
+  { id: 'treasure', label: 'Treasure Chest', to: '/game/treasure', emoji: '🏴‍☠️', color: 'from-yellow-400 to-orange-500', hint: 'Open mystery chest', badge: 'Reward' },
+  { id: 'coinflip', label: 'Coin Flip', to: '/game/coinflip', emoji: '🪙', color: 'from-amber-500 to-orange-600', hint: 'Double or nothing coin', badge: 'Luck' },
+  { id: 'diceroll', label: 'Dice Roll', to: '/game/diceroll', emoji: '🎲', color: 'from-indigo-400 to-purple-600', hint: 'High rolling dice bonus', badge: 'Hot' },
+  { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', emoji: '🔑', color: 'from-stone-600 to-stone-900', hint: 'Claim massive daily gems', badge: 'Daily' },
 ];
 
 import { StarCounter } from '@/mobile/components/StarCounter';
@@ -229,16 +230,17 @@ export default function HubScreen() {
   };
 
   const triggerDailyCheckIn = async (userKey: string, currentStars: number) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString();
     const lastCheckIn = localStorage.getItem(`last_check_in_date_${userKey}`);
     const currentStreak = Number(localStorage.getItem(`check_in_streak_${userKey}`) || '0');
 
-    if (lastCheckIn === today) return;
+    if (lastCheckIn === today || sessionStorage.getItem('daily_checkin_shown')) return;
+    sessionStorage.setItem('daily_checkin_shown', 'true');
 
     let newStreak = 1;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toLocaleDateString();
 
     if (lastCheckIn === yesterdayStr) {
       newStreak = currentStreak + 1;
@@ -499,10 +501,14 @@ export default function HubScreen() {
 
                 {/* Icon */}
                 <div className={cn(
-                  'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm border-2 border-white/20',
+                  'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm bg-gradient-to-br border-2 border-white/20',
                   node.color
                 )}>
-                  <Icon className="w-5 h-5 drop-shadow-sm" />
+                  {node.emoji ? (
+                    <span className="text-xl drop-shadow-sm">{node.emoji}</span>
+                  ) : node.icon ? (
+                    <Icon className="w-5 h-5 drop-shadow-sm" />
+                  ) : null}
                 </div>
 
                 {/* Info */}

@@ -252,92 +252,29 @@ export default function ProfileScreen() {
         />
       </div>
 
-      {/* Royal Shop & Armory Section */}
-      <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2 pt-2">
-        <Award className="w-4 h-4 text-primary" /> Royal Shop & Enhancements
-      </h2>
-      <div className="space-y-4 mb-6">
-        <div className="panel-3d bg-white p-4 space-y-4">
-          <p className="text-[12px] font-bold text-muted-foreground leading-relaxed">
-            Acquire virtual enhancements, customize your avatar frame, or recruit advisors to assist you in battles.
-          </p>
-          
-          <div className="grid grid-cols-1 gap-3">
-            {ARMORY_ITEMS.map((item) => {
-              const isShard = item.type === 'counselor_shard';
-              const owned = purchased.includes(item.id);
-              const isEquipped = equipped[item.type] === item.id || (item.type === 'prestige_title' && equippedTitleId === item.id);
-              
-              return (
-                <div key={item.id} className="bg-stone-950/80 border border-stone-850/80 rounded-2xl p-3 flex items-center justify-between gap-3 text-left">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl select-none">{item.emoji}</span>
-                    <div>
-                      <h4 className="text-xs font-black text-white leading-none">{item.name}</h4>
-                      <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 mt-1 inline-block uppercase leading-none">
-                        {item.effect}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    {owned && !isShard ? (
-                      isEquipped ? (
-                        <button 
-                          onClick={() => {
-                            haptics('light');
-                            if (item.type === 'prestige_title') {
-                              unequipTitle();
-                            } else {
-                              unequipItem(item.type);
-                            }
-                            setShopTrigger(p => p + 1);
-                          }}
-                          className="bg-stone-800 border border-stone-700 text-stone-300 font-extrabold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl"
-                        >
-                          Unequip
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => {
-                            haptics('light');
-                            if (item.type === 'prestige_title') {
-                              equipTitle(item.id);
-                            } else {
-                              equipItem(item.id);
-                            }
-                            setShopTrigger(p => p + 1);
-                          }}
-                          className="bg-yellow-500 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-xl"
-                        >
-                          Equip
-                        </button>
-                      )
-                    ) : (
-                      <button 
-                        onClick={() => {
-                          haptics('success');
-                          const res = purchaseItem(item.id);
-                          if (res.success) {
-                            alert(res.message);
-                            reloadGems();
-                          } else {
-                            alert(res.message);
-                          }
-                          setShopTrigger(p => p + 1);
-                        }}
-                        className="bg-slate-900 border border-yellow-500/25 text-yellow-400 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-xl flex items-center gap-1"
-                      >
-                        Buy 💎{item.costGems}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+      {/* Royal Shop Link */}
+      <motion.div
+        whileTap={{ scale: 0.97 }}
+        onClick={() => {
+          haptics('light');
+          navigate('/shop');
+        }}
+        className="mb-6 panel-3d bg-white p-5 flex items-center justify-between cursor-pointer border-2 border-amber-200 relative overflow-hidden group mt-4"
+      >
+        <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-400/20 rounded-full blur-2xl group-hover:bg-amber-400/40 transition-colors pointer-events-none" />
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 border-2 border-amber-200 flex items-center justify-center shadow-inner shrink-0">
+            <Award className="w-6 h-6 text-amber-500 drop-shadow-sm" />
+          </div>
+          <div>
+            <h2 className="font-black text-lg text-amber-900 uppercase tracking-wide leading-tight">Royal Shop</h2>
+            <p className="text-[10px] font-bold text-amber-700/80 uppercase tracking-widest mt-1">
+              Buy Enhancements & Avatars
+            </p>
           </div>
         </div>
-      </div>
+        <ExternalLink className="w-5 h-5 text-amber-500 relative z-10" />
+      </motion.div>
 
       <motion.button
         whileTap={{ scale: 0.97 }}
