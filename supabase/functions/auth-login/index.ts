@@ -114,11 +114,16 @@ serve(async (req) => {
     if (!tokenRes.ok) {
       console.log("[auth-login] Auth failed:", tokenJson?.error || tokenJson?.msg);
       await logLogin(resolvedUsername || identifier, false);
+      const code = tokenJson?.error_code || tokenJson?.code || tokenJson?.error;
+      const msg =
+        code === "invalid_credentials"
+          ? "Invalid email/username or password. If you recently migrated, please reset your password."
+          : "Invalid login credentials";
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Invalid login credentials",
-          code: tokenJson?.error_code || tokenJson?.code || tokenJson?.error,
+          error: msg,
+          code,
         }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
