@@ -1130,13 +1130,26 @@ export default function EmpireQuestsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
                   <div 
-                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-2xl flex items-center justify-center p-0 border-4 border-amber-700/40 bg-[#d4ebd0]"
+                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-2xl flex items-center justify-center p-0 border-4 border-amber-700/40 bg-[#c2e5b3]"
                   >
+                    {/* Rich terrain blobs */}
+                    <div 
+                      className="absolute inset-0 pointer-events-none opacity-60"
+                      style={{
+                        backgroundImage: `
+                          radial-gradient(ellipse at 10% 20%, #a7f3d0 10%, transparent 40%),
+                          radial-gradient(ellipse at 80% 60%, #86efac 15%, transparent 50%),
+                          radial-gradient(ellipse at 30% 80%, #6ee7b7 5%, transparent 35%),
+                          radial-gradient(ellipse at 90% 10%, #d9f99d 12%, transparent 40%)
+                        `,
+                        backgroundSize: '100% 100%'
+                      }}
+                    />
                     {/* Map Grid / Texture Overlay */}
                     <div 
-                      className="absolute inset-0 opacity-30 pointer-events-none"
+                      className="absolute inset-0 opacity-20 pointer-events-none"
                       style={{
-                        backgroundImage: `radial-gradient(#86b379 2.5px, transparent 2.5px)`,
+                        backgroundImage: `radial-gradient(#4ade80 2.5px, transparent 2.5px)`,
                         backgroundSize: '40px 40px'
                       }}
                     />
@@ -1209,7 +1222,7 @@ export default function EmpireQuestsPage() {
                                     className={cn("absolute", isLeft ? "left-[30%]" : "right-[30%]")}
                                     style={{ transform: "translateX(-50%)" }}
                                   >
-                                    <div className="absolute -bottom-2 w-10 h-3 bg-emerald-900/40 blur-[3px] rounded-full" />
+                                    <div className="absolute -bottom-1.5 w-12 h-4 bg-emerald-950/30 blur-[4px] rounded-full" />
                                     <button
                                       onClick={() => {
                                         haptics('light');
@@ -1217,14 +1230,14 @@ export default function EmpireQuestsPage() {
                                         setSelectedMapQuest(quest);
                                       }}
                                       className={cn(
-                                        "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all shadow-xl border-4 relative panel-3d z-10",
+                                        "w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all relative z-10 active:scale-95",
                                         isLocked 
-                                          ? "bg-slate-300 border-slate-400 text-slate-500 scale-90 grayscale opacity-80 shadow-inner" 
+                                          ? "bg-slate-300 border-t-2 border-x-2 border-b-[6px] border-slate-400 text-slate-500 scale-90 grayscale opacity-90 shadow-inner" 
                                           : isSelected
-                                          ? "bg-primary border-amber-300 text-primary-foreground scale-110 shadow-primary/40 ring-4 ring-primary/30"
+                                          ? "bg-amber-400 border-t-2 border-x-2 border-b-[6px] border-amber-600 text-amber-950 scale-110 shadow-lg shadow-amber-500/40 ring-4 ring-amber-300/50 transform -translate-y-1"
                                           : isCompleted
-                                          ? "bg-emerald-400 border-emerald-100 text-emerald-900 hover:scale-105 hover:bg-emerald-300 shadow-emerald-500/30"
-                                          : "bg-white border-amber-400 text-primary hover:border-amber-300 hover:scale-105 shadow-amber-500/20"
+                                          ? "bg-emerald-400 border-t-2 border-x-2 border-b-[6px] border-emerald-600 text-emerald-950 hover:bg-emerald-300 active:border-b-2 active:translate-y-1 shadow-md shadow-emerald-500/30"
+                                          : "bg-white border-t-2 border-x-2 border-b-[6px] border-amber-300 text-amber-600 hover:bg-amber-50 active:border-b-2 active:translate-y-1 shadow-md shadow-amber-500/20"
                                       )}
                                     >
                                       {isLocked ? (
@@ -1234,7 +1247,10 @@ export default function EmpireQuestsPage() {
                                       )}
                                       
                                       {/* Stage Badge */}
-                                      <span className="absolute -bottom-3 bg-white text-[10px] font-black text-amber-900 border-2 border-amber-400/50 px-2 py-0.5 rounded-full shadow-md min-w-[36px] tracking-wider">
+                                      <span className={cn(
+                                        "absolute -bottom-3.5 bg-white text-[11px] font-black border-2 px-2 py-0.5 rounded-full shadow-md min-w-[36px] tracking-wider transition-all",
+                                        isCompleted ? "border-emerald-500 text-emerald-700" : "border-amber-400 text-amber-700"
+                                      )}>
                                         {index + 1}
                                       </span>
                                     </button>
@@ -1260,7 +1276,11 @@ export default function EmpireQuestsPage() {
                   </div>
 
                   {/* Campaign Panel Details Card (Takes 1 column) */}
-                  <div className="panel-3d bg-white rounded-3xl p-6 shadow-md flex flex-col justify-between border-2 border-primary/20 sticky top-4 h-max">
+                  <div className="bg-[#fffdf5] rounded-3xl p-6 shadow-[0_8px_0_0_rgba(217,119,6,0.15)] border-[3px] border-amber-500/30 flex flex-col justify-between sticky top-4 h-max relative overflow-hidden">
+                    {/* Corner map decorations */}
+                    <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+                    <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+                    
                     {selectedMapQuest ? (
                       <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
                         <div>

@@ -338,7 +338,7 @@ export const TreasureChest: React.FC = () => {
       </div>
 
       {/* Chests Container */}
-      <div className="grid grid-cols-3 gap-4 w-full my-4 h-32">
+      <div className="grid grid-cols-3 gap-4 w-full my-6 h-32 relative z-10">
         {[0, 1, 2].map((idx) => {
           const chest = chests[idx];
           const isSelected = selectedChest === idx;
@@ -349,41 +349,68 @@ export const TreasureChest: React.FC = () => {
           return (
             <div 
               key={idx} 
-              className={`flex flex-col items-center justify-center border-2 rounded-2xl transition-all duration-300 p-2 relative select-none cursor-pointer ${
-                isLocked
-                  ? 'border-muted opacity-60 bg-muted/20 cursor-not-allowed'
-                  : isSelected 
-                    ? 'border-primary bg-primary/10 shadow-inner' 
-                    : isRevealed 
-                      ? 'border-muted opacity-60 bg-muted/40' 
-                      : 'border-white hover:border-primary/50 hover:bg-primary/5 shadow-sm bg-muted/10 panel-3d'
-              } ${isOpening ? 'animate-bounce' : ''}`}
+              className={cn(
+                "flex flex-col items-center justify-center rounded-2xl transition-all duration-300 p-2 relative select-none cursor-pointer group",
+                isLocked ? "opacity-70 cursor-not-allowed" :
+                isSelected ? "scale-110 drop-shadow-xl" :
+                isRevealed ? "opacity-60" : "hover:scale-110 hover:-translate-y-2",
+                isOpening && "animate-[bounce_0.5s_infinite]"
+              )}
               onClick={() => handleChestClick(idx)}
             >
-              {/* Chest Icon */}
-              <div className="text-4xl">
-                {isRevealed 
-                  ? (chest?.rarity === 'rare' ? '👑' : chest?.rarity === 'uncommon' ? '💎' : '🪙')
-                  : isLocked 
-                    ? '🔒' 
-                    : '📦'}
+              {/* Chest Graphic */}
+              <div className="relative">
+                {isRevealed ? (
+                  <div className="text-5xl drop-shadow-lg animate-in zoom-in spin-in-12 duration-500">
+                    {chest?.rarity === 'rare' ? '👑' : chest?.rarity === 'uncommon' ? '💎' : '🪙'}
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "relative w-16 h-14 rounded-xl border-b-[6px] border-x-2 border-t-2 flex flex-col items-center justify-center shadow-lg transition-colors",
+                    isLocked ? "bg-slate-400 border-slate-600 grayscale" : 
+                    idx === 0 ? "bg-[#c27b3b] border-[#8a4e1c]" : // Common (Wood)
+                    idx === 1 ? "bg-[#94a3b8] border-[#475569]" : // Uncommon (Silver)
+                    "bg-[#facc15] border-[#a16207]"               // Rare (Gold)
+                  )}>
+                    {/* Lid */}
+                    <div className="absolute top-0 w-full h-[45%] bg-white/20 rounded-t-lg border-b-2 border-black/30" />
+                    {/* Keyhole Base */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-4 bg-black/80 rounded-t-sm border-2 border-amber-300/80 z-10" />
+                    {/* Keyhole dot */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-1 h-1.5 bg-black rounded-full z-20" />
+                    
+                    {/* Lock overlay if locked */}
+                    {isLocked && (
+                      <div className="absolute -inset-2 bg-slate-900/40 rounded-xl flex items-center justify-center z-30 backdrop-blur-[1px]">
+                        <div className="bg-slate-800 p-1 rounded-full border border-slate-600">
+                          <AlertCircle className="w-4 h-4 text-slate-300" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Sparkles if rare and ready */}
+                    {!isLocked && idx === 2 && !isRevealed && (
+                      <Sparkles className="absolute -top-3 -right-3 w-5 h-5 text-yellow-400 animate-pulse drop-shadow-md z-30" />
+                    )}
+                  </div>
+                )}
               </div>
               
-              <div className="mt-2 text-center">
+              <div className="mt-3 text-center">
                 {isRevealed ? (
-                  <>
-                    <span className="text-[10px] uppercase font-black text-muted-foreground tracking-wider">
+                  <div className="animate-in slide-in-from-bottom-2 duration-300">
+                    <span className="text-[10px] uppercase font-black text-amber-700 tracking-wider">
                       {chest?.label}
                     </span>
-                    <div className="text-sm font-black text-primary drop-shadow-sm mt-0.5">
+                    <div className="text-sm font-black text-emerald-600 drop-shadow-sm mt-0.5">
                       +{chest?.value}
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center">
-                    <span className="text-[11px] font-black text-muted-foreground tracking-tight">Chest {idx + 1}</span>
+                    <span className="text-[11px] font-black text-amber-900 tracking-tight">Chest {idx + 1}</span>
                     {isLocked && (
-                      <span className="text-[9px] font-black text-destructive uppercase tracking-tight mt-1 bg-destructive/10 px-1.5 py-0.5 rounded-md">
+                      <span className="text-[9px] font-black text-white bg-slate-700 uppercase tracking-tight mt-1 px-1.5 py-0.5 rounded-md shadow-inner">
                         {idx === 1 ? '10 ⭐ Req' : '25 ⭐ Req'}
                       </span>
                     )}

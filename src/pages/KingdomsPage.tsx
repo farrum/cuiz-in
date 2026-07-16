@@ -343,9 +343,9 @@ export default function KingdomsPage() {
   if (loading) {
     return (
       <PageLayout>
-        <div className="min-h-screen stone-wall flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-yellow-500/70 font-serif uppercase tracking-widest text-xs">Consulting High Council...</p>
+        <div className="min-h-screen bg-[#f4faff] flex flex-col items-center justify-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-primary font-black font-serif uppercase tracking-widest text-xs">Consulting High Council...</p>
         </div>
       </PageLayout>
     );
@@ -353,15 +353,18 @@ export default function KingdomsPage() {
 
   return (
     <PageLayout>
-      <div className="min-h-screen stone-wall pb-16 text-foreground font-sans">
+      <div className="min-h-screen bg-[#f4faff] pb-16 text-foreground font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
         
         {/* Banner Title */}
-        <div className="wooden-door py-10 px-4 text-center">
-          <Landmark className="w-10 h-10 text-yellow-500 mx-auto mb-3 animate-pulse" />
-          <h1 className="text-2xl md:text-3xl font-black font-serif uppercase tracking-widest text-white">
+        <div className="panel-3d bg-white mx-4 mt-6 py-8 px-4 text-center rounded-3xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-400/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl" />
+          
+          <Landmark className="w-12 h-12 text-primary mx-auto mb-3 animate-[bounce_2s_infinite] relative z-10" />
+          <h1 className="text-2xl md:text-3xl font-black font-serif uppercase tracking-widest text-primary drop-shadow-sm relative z-10">
             Grand Kingdoms Hall
           </h1>
-          <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+          <p className="text-xs md:text-sm text-slate-600 font-semibold max-w-md mx-auto mt-2 leading-relaxed relative z-10">
             Form alliances with other players. Pool your bi-weekly Stars to secure territorial ranking titles and passive income buffs.
           </p>
         </div>
@@ -373,31 +376,31 @@ export default function KingdomsPage() {
             
             {myAlliance ? (
               // ACTIVE MEMBER VIEW (GUILD HALL)
-              <div className="bg-card border-4 border-double border-yellow-500/20 rounded-3xl p-6 shadow-md text-card-foreground">
+              <div className="panel-3d bg-white border-2 border-primary/20 rounded-3xl p-6 shadow-md text-foreground relative overflow-hidden">
                 
                 {/* Kingdom Header Card */}
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-100 pb-5 mb-6 relative z-10">
                   <div className="flex items-center gap-4">
                     <CoatOfArmsShield crestString={myAlliance.crest_emoji} size="lg" />
                     <div>
-                      <h2 className="text-lg font-black uppercase font-serif text-foreground">{myAlliance.name}</h2>
-                      <p className="text-xs text-slate-400 mt-0.5">"{myAlliance.description}"</p>
+                      <h2 className="text-xl font-black uppercase font-serif text-primary drop-shadow-sm">{myAlliance.name}</h2>
+                      <p className="text-xs text-slate-500 font-bold mt-0.5">"{myAlliance.description}"</p>
                     </div>
                   </div>
 
                   <div className="flex gap-4 items-center">
-                    <div className="text-center bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-850">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 block">Bi-weekly Pool</span>
-                      <span className="text-xs font-black text-yellow-500 flex items-center justify-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-yellow-500/10 text-yellow-400" />
+                    <div className="text-center bg-slate-50 px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-inner">
+                      <span className="text-[10px] uppercase font-black text-slate-500 block mb-1">Bi-weekly Pool</span>
+                      <span className="text-sm font-black text-amber-600 flex items-center justify-center gap-1.5 drop-shadow-sm">
+                        <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                         {myAlliance.biweekly_stars} ★
                       </span>
                     </div>
 
-                    <div className="text-center bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-850">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 block">Global Rank</span>
-                      <span className="text-xs font-black text-amber-500 flex items-center justify-center gap-1">
-                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                    <div className="text-center bg-slate-50 px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-inner">
+                      <span className="text-[10px] uppercase font-black text-slate-500 block mb-1">Global Rank</span>
+                      <span className="text-sm font-black text-primary flex items-center justify-center gap-1.5 drop-shadow-sm">
+                        <Trophy className="w-4 h-4 text-primary" />
                         #{getMyRank() || 'Unranked'}
                       </span>
                     </div>
@@ -405,50 +408,50 @@ export default function KingdomsPage() {
                 </div>
 
                 {/* Kingdom Perks Card */}
-                <div className="bg-slate-950 border border-slate-850 p-4 rounded-2xl mb-6">
-                  <span className="text-[9px] font-black uppercase text-yellow-500 tracking-wider flex items-center gap-1.5 mb-1.5">
-                    <Flame className="w-3.5 h-3.5" /> Active Kingdom Buffet Buff
+                <div className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl mb-6 shadow-sm relative z-10">
+                  <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider flex items-center gap-1.5 mb-1.5">
+                    <Flame className="w-4 h-4 text-amber-600" /> Active Kingdom Buff
                   </span>
-                  <p className="text-xs font-bold text-slate-200">
+                  <p className="text-sm font-bold text-amber-950">
                     {getRankBuff(getMyRank())}
                   </p>
                 </div>
 
                 {/* Grid Split: Members list & Chat Room */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                   
                   {/* Members list */}
                   <div>
-                    <h3 className="text-xs uppercase font-black text-slate-400 tracking-wider flex items-center gap-2 mb-4 border-b border-slate-850 pb-2">
-                      <Users className="w-4 h-4 text-yellow-500" /> Knights of the Kingdom ({members.length})
+                    <h3 className="text-xs uppercase font-black text-primary tracking-wider flex items-center gap-2 mb-4 border-b-2 border-slate-100 pb-2">
+                      <Users className="w-4 h-4 text-primary" /> Knights of the Kingdom ({members.length})
                     </h3>
                     
-                    <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                       {members.map(member => (
                         <div 
                           key={member.user_id} 
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-850/60"
+                          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border-2 border-slate-100 shadow-sm transition-transform hover:scale-[1.02]"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">🛡️</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl drop-shadow-sm">🛡️</span>
                             <div>
-                              <span className="text-xs font-black block text-slate-200">
+                              <span className="text-[13px] font-black block text-slate-800">
                                 {member.username}
                                 {member.username === username && equippedTitleStr && (
-                                  <span className="ml-1.5 text-[8px] font-black uppercase text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20">
+                                  <span className="ml-2 text-[9px] font-black uppercase text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
                                     {equippedTitleStr}
                                   </span>
                                 )}
                               </span>
-                              <span className="text-[9px] text-slate-500">Joined {new Date(member.joined_at).toLocaleDateString()}</span>
+                              <span className="text-[10px] text-slate-500 font-bold">Joined {new Date(member.joined_at).toLocaleDateString()}</span>
                             </div>
                           </div>
 
                           <span className={cn(
-                            "text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded",
+                            "text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg",
                             member.role === 'king' 
-                              ? "bg-yellow-500/10 border border-yellow-500/20 text-yellow-500" 
-                              : "bg-slate-800 text-slate-400"
+                              ? "bg-primary/10 border-2 border-primary/20 text-primary" 
+                              : "bg-slate-200/50 border-2 border-slate-200 text-slate-600"
                           )}>
                             {member.role === 'king' ? 'King' : 'Knight'}
                           </span>
@@ -458,27 +461,27 @@ export default function KingdomsPage() {
                   </div>
 
                   {/* Bulletin Board Chat Roll */}
-                  <div className="flex flex-col bg-slate-950 border border-slate-850 rounded-2xl p-4 min-h-[300px] max-h-[320px]">
-                    <h3 className="text-xs uppercase font-black text-slate-400 tracking-wider mb-2 border-b border-slate-900 pb-2">
+                  <div className="flex flex-col bg-slate-50 border-2 border-slate-200 rounded-3xl p-4 min-h-[300px] max-h-[320px] shadow-inner">
+                    <h3 className="text-xs uppercase font-black text-slate-600 tracking-wider mb-2 border-b-2 border-slate-200 pb-2">
                       🏰 Guard Chat Log
                     </h3>
 
                     {/* Chat roll area */}
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 my-2">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 my-2 custom-scrollbar">
                       {chatMessages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center text-[10px] text-slate-600">
+                        <div className="h-full flex flex-col items-center justify-center text-center text-[11px] font-bold text-slate-400">
                           <span>No messages on the notice board yet.</span>
                         </div>
                       ) : (
                         chatMessages.map(msg => (
-                          <div key={msg.id} className="text-xs bg-slate-900/50 p-2 rounded-lg border border-slate-850/40">
-                            <div className="flex justify-between items-center mb-0.5">
-                              <span className="font-extrabold text-yellow-500/90 text-[10px]">{msg.username}</span>
-                              <span className="text-[8px] text-slate-600">
+                          <div key={msg.id} className="text-xs bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-extrabold text-primary text-[11px]">{msg.username}</span>
+                              <span className="text-[9px] text-slate-400 font-bold">
                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
-                            <p className="text-slate-300 text-[11px] leading-relaxed">{msg.message}</p>
+                            <p className="text-slate-600 font-semibold text-[12px] leading-relaxed">{msg.message}</p>
                           </div>
                         ))
                       )}
@@ -486,36 +489,36 @@ export default function KingdomsPage() {
                     </div>
 
                     {/* Chat Input */}
-                    <form onSubmit={handleSendChatMessage} className="flex gap-1.5 mt-2 border-t border-slate-900 pt-2.5">
+                    <form onSubmit={handleSendChatMessage} className="flex gap-2 mt-3 pt-3">
                       <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Pin a message..."
                         disabled={sendingMsg}
-                        className="flex-1 bg-slate-900 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/50"
+                        className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary/50 shadow-inner"
                       />
                       <Button 
                         type="submit" 
                         size="icon" 
                         disabled={sendingMsg || !newMessage.trim()}
-                        className="h-8 w-8 bg-yellow-500 hover:bg-yellow-600 text-slate-950 rounded-lg flex items-center justify-center p-0"
+                        className="h-10 w-10 btn-3d btn-3d-primary rounded-xl flex items-center justify-center p-0 shadow-md"
                       >
-                        <Send className="w-3.5 h-3.5" />
+                        <Send className="w-4 h-4" />
                       </Button>
                     </form>
                   </div>
                 </div>
 
                 {/* Dangerous buttons */}
-                <div className="border-t border-slate-850 pt-5 mt-6 flex justify-end">
+                <div className="mt-8 flex justify-end relative z-10">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={handleLeaveAlliance} 
-                    className="text-red-400 hover:text-red-300 text-[10px] font-black uppercase flex items-center gap-1"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50 text-[11px] font-black uppercase flex items-center gap-1.5 transition-colors rounded-xl px-4 py-2"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-4 h-4" />
                     {myRole === 'king' ? 'Dissolve Kingdom' : 'Abjure Allegiance'}
                   </Button>
                 </div>
@@ -523,47 +526,49 @@ export default function KingdomsPage() {
               </div>
             ) : (
               // NOT IN ALLIANCE VIEW: SEARCH & CREATE CARDS
-              <div className="space-y-6">
+              <div className="space-y-8">
                 
                 {/* Construction Card */}
-                <div className="bg-card border border-border rounded-3xl p-6 shadow-md text-card-foreground">
-                  <h2 className="text-lg font-black uppercase font-serif text-foreground mb-2 flex items-center gap-2">
-                    <PlusCircle className="text-yellow-500 w-5 h-5" /> Establish Your Dynasty
+                <div className="panel-3d bg-white border-2 border-primary/20 rounded-3xl p-6 shadow-md relative overflow-hidden text-foreground">
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <h2 className="text-xl font-black uppercase font-serif text-primary mb-2 flex items-center gap-2 relative z-10 drop-shadow-sm">
+                    <PlusCircle className="text-amber-500 w-6 h-6" /> Establish Your Dynasty
                   </h2>
-                  <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                  <p className="text-xs text-slate-500 font-semibold mb-6 leading-relaxed relative z-10">
                     Construct your own castle, name your legion, select your crest, and recruit knights to conquer weekly charts.
                   </p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-5 relative z-10">
                     <div>
-                      <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1">Kingdom Name</label>
+                      <label className="text-[11px] uppercase font-black tracking-wider text-slate-600 block mb-2">Kingdom Name</label>
                       <input
                         type="text"
                         maxLength={20}
                         placeholder="e.g. Byzantine Legacy"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 shadow-inner placeholder-slate-400 transition-colors"
                       />
                     </div>
 
-                    <div className="bg-slate-950 border border-slate-850 p-4 rounded-2xl flex items-center justify-between gap-4">
+                    <div className="bg-slate-50 border-2 border-slate-200 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
                       <div className="flex flex-col items-center">
-                        <label className="text-[9px] uppercase font-black tracking-wider text-slate-500 mb-2">Coat of Arms Preview</label>
+                        <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 mb-3">Coat of Arms Preview</label>
                         <CoatOfArmsShield 
                           crestString={`${newPattern}|${newColorA}-${newColorB}|${newCharge}`} 
                           size="lg" 
-                          className="bg-slate-900 rounded-2xl p-1 border border-yellow-500/10 shadow-inner"
+                          className="bg-white rounded-2xl p-2 border-2 border-slate-200 shadow-md transform hover:scale-105 transition-transform"
                         />
                       </div>
 
-                      <div className="flex-1 grid grid-cols-2 gap-3">
+                      <div className="flex-1 grid grid-cols-2 gap-4 w-full">
                         <div>
-                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Shield Layout</label>
+                          <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Shield Layout</label>
                           <select
                             value={newPattern}
                             onChange={(e) => setNewPattern(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
                           >
                             <option value="solid">Solid</option>
                             <option value="vertical">Vertical Split</option>
@@ -573,11 +578,11 @@ export default function KingdomsPage() {
                         </div>
 
                         <div>
-                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Charge Emblem</label>
+                          <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Charge Emblem</label>
                           <select
                             value={newCharge}
                             onChange={(e) => setNewCharge(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
                           >
                             {["🦁", "🐉", "🛡️", "⚔️", "🦅", "🐺", "👑", "🏹", "🦄", "🏔️"].map(emoji => (
                               <option key={emoji} value={emoji}>{emoji}</option>
@@ -586,51 +591,53 @@ export default function KingdomsPage() {
                         </div>
 
                         <div>
-                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Primary Color</label>
+                          <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Primary Color</label>
                           <select
                             value={newColorA}
                             onChange={(e) => setNewColorA(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm"
                           >
                             <option value="sable">Obsidian Black</option>
                             <option value="gules">Crimson Red</option>
                             <option value="azure">Sapphire Blue</option>
                             <option value="or">Imperial Gold</option>
+                            <option value="vert">Emerald Green</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="text-[8px] uppercase font-black tracking-wider text-slate-550 block mb-1">Secondary Color</label>
+                          <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1.5">Secondary Color</label>
                           <select
                             value={newColorB}
                             onChange={(e) => setNewColorB(e.target.value)}
                             disabled={newPattern === 'solid'}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500/50 disabled:opacity-40"
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50 cursor-pointer shadow-sm disabled:opacity-50 disabled:bg-slate-100"
                           >
                             <option value="or">Imperial Gold</option>
                             <option value="gules">Crimson Red</option>
                             <option value="azure">Sapphire Blue</option>
                             <option value="sable">Obsidian Black</option>
+                            <option value="vert">Emerald Green</option>
                           </select>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-[10px] uppercase font-black tracking-wider text-slate-500 block mb-1">Dynastic Decree (Description)</label>
+                      <label className="text-[11px] uppercase font-black tracking-wider text-slate-600 block mb-2">Dynastic Decree (Description)</label>
                       <input
                         type="text"
                         placeholder="e.g. Conquest and academic supremacy."
                         value={newDesc}
                         onChange={(e) => setNewDesc(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 shadow-inner placeholder-slate-400 transition-colors"
                       />
                     </div>
 
                     <Button
                       onClick={handleCreateAlliance}
                       disabled={creating}
-                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black h-11 text-xs uppercase tracking-widest border-0 shadow-md"
+                      className="w-full btn-3d btn-3d-primary h-12 text-sm uppercase tracking-widest mt-2"
                     >
                       {creating ? 'Erecting Castle Keep...' : 'Erect Castle keep'}
                     </Button>
@@ -638,50 +645,50 @@ export default function KingdomsPage() {
                 </div>
 
                 {/* Alliance search lists */}
-                <div className="bg-card border border-border rounded-3xl p-6 shadow-md text-card-foreground">
-                  <div className="flex items-center justify-between gap-4 border-b border-slate-850 pb-3 mb-4">
-                    <h2 className="text-sm font-black uppercase text-foreground tracking-wider">Search Kingdoms</h2>
+                <div className="panel-3d bg-white border-2 border-primary/20 rounded-3xl p-6 shadow-md text-foreground relative">
+                  <div className="flex items-center justify-between gap-4 border-b-2 border-slate-100 pb-4 mb-5">
+                    <h2 className="text-lg font-black uppercase font-serif text-primary tracking-wider drop-shadow-sm">Search Kingdoms</h2>
                     
-                    <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-slate-850 max-w-[200px]">
-                      <Search className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border-2 border-slate-200 max-w-[220px] shadow-inner transition-colors focus-within:border-primary/40">
+                      <Search className="w-4 h-4 text-slate-400" />
                       <input
                         type="text"
                         placeholder="Search name..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-transparent text-[11px] text-white focus:outline-none placeholder-slate-600 w-full"
+                        className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none placeholder-slate-400 w-full"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                     {rankings.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                      <p className="text-center text-[10px] text-slate-600 py-6">No rival kingdoms found nearby.</p>
+                      <p className="text-center text-xs font-bold text-slate-400 py-8">No rival kingdoms found nearby.</p>
                     ) : (
                       rankings
                         .filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map(all => (
                           <div 
                             key={all.alliance_id}
-                            className="bg-slate-950/40 border border-slate-850 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3 hover:border-yellow-500/10 transition-colors"
+                            className="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4 hover:border-primary/30 hover:shadow-md transition-all group"
                           >
-                            <div className="flex items-center gap-3">
-                              <CoatOfArmsShield crestString={all.crest_emoji} size="md" />
+                            <div className="flex items-center gap-4">
+                              <CoatOfArmsShield crestString={all.crest_emoji} size="md" className="group-hover:scale-110 transition-transform shadow-sm" />
                               <div>
-                                <h4 className="font-extrabold text-white text-xs">{all.name}</h4>
-                                <p className="text-[10px] text-slate-500 max-w-[220px]">"{all.description}"</p>
+                                <h4 className="font-extrabold text-slate-800 text-sm drop-shadow-sm">{all.name}</h4>
+                                <p className="text-[11px] text-slate-500 font-semibold max-w-[220px] mt-0.5">"{all.description}"</p>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-5">
                               <div className="text-right">
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Members</span>
-                                <span className="text-xs font-black text-slate-200">{all.member_count}</span>
+                                <span className="text-[10px] uppercase font-black text-slate-400 block mb-0.5">Members</span>
+                                <span className="text-sm font-black text-slate-700">{all.member_count}</span>
                               </div>
                               <Button
                                 size="sm"
                                 onClick={() => handleJoinAlliance(all.alliance_id, all.name)}
-                                className="bg-slate-900 border border-slate-800 text-yellow-500 hover:text-yellow-400 text-[10px] font-black uppercase tracking-wider px-3 h-8"
+                                className="btn-3d bg-slate-800 text-white hover:bg-slate-900 text-xs font-black uppercase tracking-wider px-4 h-9"
                               >
                                 Join Kingdom
                               </Button>
@@ -698,48 +705,48 @@ export default function KingdomsPage() {
           </div>
 
           {/* RIGHT COLUMN: GLOBAL LEADERBOARD */}
-          <div className="bg-card border border-border rounded-3xl p-6 shadow-md h-fit text-card-foreground">
-            <h2 className="text-sm font-black uppercase font-serif tracking-widest text-foreground mb-2 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" /> Regional Hegemons
+          <div className="panel-3d bg-white border-2 border-primary/20 rounded-3xl p-6 shadow-md h-fit text-foreground relative overflow-hidden">
+            <h2 className="text-lg font-black uppercase font-serif tracking-widest text-primary mb-2 flex items-center gap-2 drop-shadow-sm">
+              <Trophy className="w-6 h-6 text-amber-500 drop-shadow" /> Regional Hegemons
             </h2>
-            <p className="text-[10px] text-slate-400 mb-6 leading-relaxed">
+            <p className="text-xs text-slate-500 font-semibold mb-6 leading-relaxed relative z-10">
               Global rankings based on bi-weekly gathered Stars. Buff perks apply dynamically at reset intervals.
             </p>
 
-            <div className="space-y-3.5">
+            <div className="space-y-4 relative z-10">
               {rankings.map((all, index) => {
                 const rank = index + 1;
                 return (
                   <div 
                     key={all.alliance_id}
                     className={cn(
-                      "flex items-center justify-between p-3 rounded-2xl border transition-all",
+                      "flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all shadow-sm hover:scale-[1.02]",
                       myAlliance && all.alliance_id === myAlliance.alliance_id
-                        ? "bg-yellow-500/10 border-yellow-500/40"
-                        : "bg-slate-950/40 border-slate-850"
+                        ? "bg-amber-50 border-amber-300 ring-2 ring-amber-500/20"
+                        : "bg-slate-50 border-slate-100 hover:border-primary/20"
                     )}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <span className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
-                        rank === 1 ? "bg-yellow-500 text-slate-950" :
-                        rank === 2 ? "bg-slate-300 text-slate-950" :
-                        rank === 3 ? "bg-amber-600 text-slate-950" :
-                        "bg-slate-850 text-slate-400"
+                        "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 shadow-sm border-2",
+                        rank === 1 ? "bg-yellow-400 text-amber-950 border-yellow-200" :
+                        rank === 2 ? "bg-slate-300 text-slate-900 border-slate-100" :
+                        rank === 3 ? "bg-amber-700 text-amber-50 border-amber-500" :
+                        "bg-white text-slate-400 border-slate-200"
                       )}>
                         {rank}
                       </span>
-                      <CoatOfArmsShield crestString={all.crest_emoji} size="sm" />
+                      <CoatOfArmsShield crestString={all.crest_emoji} size="sm" className="shadow-sm" />
                       <div>
-                        <span className="font-extrabold text-xs block text-slate-200">{all.name}</span>
-                        <span className="text-[9px] text-slate-500 flex items-center gap-1">
-                          <Users className="w-2.5 h-2.5" /> {all.member_count} knights
+                        <span className="font-extrabold text-[13px] block text-slate-800 drop-shadow-sm">{all.name}</span>
+                        <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 mt-0.5">
+                          <Users className="w-3 h-3 text-slate-400" /> {all.member_count} knights
                         </span>
                       </div>
                     </div>
 
-                    <span className="text-xs font-black text-yellow-500 flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-yellow-500/10 text-yellow-400" />
+                    <span className="text-sm font-black text-amber-600 flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl shadow-inner border border-slate-100">
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500 drop-shadow-sm" />
                       {all.biweekly_stars}
                     </span>
                   </div>
@@ -747,7 +754,7 @@ export default function KingdomsPage() {
               })}
 
               {rankings.length === 0 && (
-                <p className="text-center text-[10px] text-slate-600 py-6">No Dynasties recorded in the registry.</p>
+                <p className="text-center text-xs font-bold text-slate-400 py-10">No Dynasties recorded in the registry.</p>
               )}
             </div>
           </div>
