@@ -1486,6 +1486,16 @@ export type Database = {
       regenerate_sitemap: { Args: never; Returns: undefined }
       set_user_context: { Args: { user_id: string }; Returns: undefined }
       slugify_ascii: { Args: { input: string }; Returns: string }
+      update_alliance: {
+        Args: {
+          p_alliance_id: string
+          p_crest_emoji: string
+          p_description: string
+          p_name: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

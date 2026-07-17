@@ -192,6 +192,38 @@
     @apply bg-card/60 backdrop-blur-lg border border-border/30 shadow-xl;
   }
 
+  /* Apple-style frosted glass with diamond lattice backdrop */
+  .glass-diamond-bg {
+    position: relative;
+    background-color: hsl(var(--background) / 0.72);
+    background-image:
+      linear-gradient(135deg, hsl(var(--foreground) / 0.06) 25%, transparent 25%),
+      linear-gradient(225deg, hsl(var(--foreground) / 0.06) 25%, transparent 25%),
+      linear-gradient(315deg, hsl(var(--foreground) / 0.06) 25%, transparent 25%),
+      linear-gradient(45deg,  hsl(var(--foreground) / 0.06) 25%, transparent 25%);
+    background-size: 44px 44px;
+    background-position: 0 0, 22px 0, 22px -22px, 0 22px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .glass-diamond-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1200px 600px at 15% 10%, hsl(var(--primary) / 0.18), transparent 60%),
+      radial-gradient(900px 500px at 85% 90%, hsl(var(--quiz-purple, var(--primary)) / 0.16), transparent 60%),
+      linear-gradient(180deg, hsl(0 0% 0% / 0.18), hsl(0 0% 0% / 0.28));
+    z-index: 0;
+  }
+
+  .glass-diamond-bg > * {
+    position: relative;
+    z-index: 1;
+  }
+
   /* Premium gradient backgrounds */
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--quiz-purple)) 100%);
