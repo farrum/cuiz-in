@@ -171,6 +171,50 @@ const CAMPAIGNS: EmpireCampaign[] = [
   }
 ];
 
+const GearCog = ({ isLocked, isSelected }: { isLocked: boolean; isSelected: boolean }) => {
+  const gradient = isLocked ? "url(#ironGradient)" : "url(#bronzeGradient)";
+  const strokeColor = isLocked ? "#334155" : "#78350f";
+  return (
+    <svg 
+      viewBox="0 0 100 100" 
+      className={cn(
+        "w-20 h-20 drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] select-none pointer-events-none transition-all duration-300",
+        isLocked ? "animate-[spin_45s_linear_infinite]" : "animate-[spin_25s_linear_infinite]"
+      )}
+    >
+      <g fill={gradient} stroke={strokeColor} strokeWidth="2.5">
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(0 50 50)" />
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(30 50 50)" />
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(60 50 50)" />
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(90 50 50)" />
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(120 50 50)" />
+        <rect x="44" y="2" width="12" height="96" rx="3" transform="rotate(150 50 50)" />
+      </g>
+      <circle cx="50" cy="50" r="38" fill={gradient} stroke={strokeColor} strokeWidth="3" />
+      <circle cx="50" cy="50" r="28" fill="none" stroke={isLocked ? "#64748b" : "#fde047"} strokeWidth="1.5" opacity="0.6" />
+      <circle cx="50" cy="50" r="22" fill={isLocked ? "#334155" : "#7c2d12"} stroke={strokeColor} strokeWidth="2" />
+      <circle cx="50" cy="50" r="14" fill={isLocked ? "#1e293b" : "#451a03"} />
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+        const rad = (angle * Math.PI) / 180;
+        const cx = 50 + 32 * Math.cos(rad);
+        const cy = 50 + 32 * Math.sin(rad);
+        return <circle key={angle} cx={cx} cy={cy} r="2" fill={isLocked ? "#94a3b8" : "#fef08a"} />;
+      })}
+    </svg>
+  );
+};
+
+const AntiqueLock = () => (
+  <svg viewBox="0 0 100 100" className="w-10 h-10 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] select-none pointer-events-none absolute -translate-y-1">
+    <path d="M34 44 V26 A16 16 0 0 1 66 26 V44" fill="none" stroke="#64748b" strokeWidth="7" strokeLinecap="round" />
+    <path d="M34 44 V26 A16 16 0 0 1 66 26 V44" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
+    <path d="M26 40 H74 V74 A10 10 0 0 1 64 84 H36 A10 10 0 0 1 26 74 Z" fill="url(#ironGradient)" stroke="#1e293b" strokeWidth="2.5" />
+    <path d="M30 44 H70 V70 A6 6 0 0 1 64 76 H36 A6 6 0 0 1 30 70 Z" fill="none" stroke="#b45309" strokeWidth="1.5" opacity="0.7" />
+    <circle cx="50" cy="58" r="5" fill="#0f172a" />
+    <polygon points="47,58 53,58 52,72 48,72" fill="#0f172a" stroke="#475569" strokeWidth="0.5" />
+  </svg>
+);
+
 export default function EmpireQuestsPage() {
   const [activeTab, setActiveTab] = useState<'quests' | 'hangman' | 'chests' | 'heroes'>('quests');
   const [userId, setUserId] = useState<string | null>(null);
@@ -1130,31 +1174,37 @@ export default function EmpireQuestsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
                   {/* Map Scroll Canvas (Takes 2 columns) */}
                   <div 
-                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-[inset_0_0_50px_rgba(0,0,0,0.4),0_20px_35px_rgba(0,0,0,0.3)] flex items-center justify-center p-0 border-8 border-amber-955 bg-[#e2ccaa]"
+                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-[inset_0_0_50px_rgba(0,0,0,0.6),0_20px_35px_rgba(0,0,0,0.4)] flex items-center justify-center p-0 border-[10px] border-amber-955 bg-[#1b2b32]"
+                    style={{
+                      backgroundImage: "url('/steampunk_map_bg.jpg')",
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
                   >
-                    {/* Rich steampunk terrain blobs */}
-                    <div 
-                      className="absolute inset-0 pointer-events-none opacity-70"
-                      style={{
-                        backgroundImage: `
-                          radial-gradient(ellipse at 10% 20%, #305863 15%, transparent 55%),
-                          radial-gradient(ellipse at 85% 65%, #eccfa4 20%, transparent 60%),
-                          radial-gradient(ellipse at 25% 75%, #dfbf93 10%, transparent 50%),
-                          radial-gradient(ellipse at 90% 15%, #2a4f59 15%, transparent 55%),
-                          radial-gradient(ellipse at 50% 50%, #edd8b3 30%, transparent 70%)
-                        `,
-                        backgroundSize: '100% 100%'
-                      }}
-                    />
-                    {/* Map Grid / Texture Overlay */}
-                    <div 
-                      className="absolute inset-0 opacity-15 pointer-events-none"
-                      style={{
-                        backgroundImage: `radial-gradient(rgba(100, 75, 45, 0.25) 1.5px, transparent 1.5px)`,
-                        backgroundSize: '40px 40px'
-                      }}
-                    />
-                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
+                    {/* SVG Definitions for Steampunk Gradients */}
+                    <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+                      <defs>
+                        <linearGradient id="bronzeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#f59e0b" />
+                          <stop offset="30%" stopColor="#d97706" />
+                          <stop offset="70%" stopColor="#b45309" />
+                          <stop offset="100%" stopColor="#78350f" />
+                        </linearGradient>
+                        <linearGradient id="ironGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#94a3b8" />
+                          <stop offset="50%" stopColor="#475569" />
+                          <stop offset="100%" stopColor="#1e293b" />
+                        </linearGradient>
+                        <linearGradient id="copperGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#fb923c" />
+                          <stop offset="50%" stopColor="#ea580c" />
+                          <stop offset="100%" stopColor="#9a3412" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    {/* Vintage Paper Texture Overlay */}
+                    <div className="absolute inset-0 opacity-15 pointer-events-none" style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
                     }} />
                     {/* Sliding Map Viewport - Scrollable */}
@@ -1195,12 +1245,13 @@ export default function EmpireQuestsPage() {
 
                                 return (
                                   <g key={`path-${index}`}>
-                                    {/* Path shadow / base roadbed */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#543820" strokeWidth="26" strokeLinecap="round" />
-                                    {/* Inner road surface */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#9e754f" strokeWidth="18" strokeLinecap="round" />
-                                    {/* Rails / Path detail dashed ties */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#ffe4cc" strokeWidth="5" strokeDasharray="8 12" strokeLinecap="round" opacity="0.85" />
+                                    {/* Outer dark railway bed shadow */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#1a120b" strokeWidth="12" strokeLinecap="round" opacity="0.65" />
+                                    {/* Left and Right brass rails (double line effect using a thick main line with nested inner cut) */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="url(#copperGradient)" strokeWidth="8" strokeLinecap="round" />
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#1e293b" strokeWidth="4" strokeLinecap="round" />
+                                    {/* Central dashed track ties */}
+                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="url(#bronzeGradient)" strokeWidth="6" strokeDasharray="2 10" strokeLinecap="round" />
                                   </g>
                                 );
                               })}
@@ -1223,8 +1274,8 @@ export default function EmpireQuestsPage() {
                                     className={cn("absolute", isLeft ? "left-[30%]" : "right-[30%]")}
                                     style={{ transform: "translateX(-50%)" }}
                                   >
-                                    {/* Shadow under the 3D button */}
-                                    <div className="absolute -bottom-2 w-16 h-5 bg-black/30 blur-[6px] rounded-full z-0" />
+                                    {/* Shadow under the spinning gear */}
+                                    <div className="absolute -bottom-2 w-20 h-6 bg-black/40 blur-[8px] rounded-full z-0" />
                                     
                                     <button
                                       onClick={() => {
@@ -1233,61 +1284,34 @@ export default function EmpireQuestsPage() {
                                         setSelectedMapQuest(quest);
                                       }}
                                       className={cn(
-                                        "stage-btn-3d z-10",
-                                        isLocked 
-                                          ? "stage-btn-3d-locked animate-bounce-slow" 
-                                          : isSelected
-                                          ? "stage-btn-3d-active scale-110"
-                                          : isCompleted
-                                          ? "stage-btn-3d-completed"
-                                          : "stage-btn-3d-active"
+                                        "relative flex items-center justify-center transition-all duration-150 active:scale-95 z-10",
+                                        isLocked ? "scale-90 opacity-85" : isSelected ? "scale-110" : ""
                                       )}
                                     >
+                                      {/* Spinning Steampunk Gear Background */}
+                                      <GearCog isLocked={isLocked} isSelected={isSelected} />
+
                                       {isLocked ? (
-                                        /* 3D Locked Padlock with Concentric Rings */
-                                        <div className="relative w-16 h-16 flex items-center justify-center -translate-y-4">
-                                          <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-lg select-none pointer-events-none">
-                                            {/* Glowing concentric rings base */}
-                                            <ellipse cx="50" cy="80" rx="34" ry="11" fill="#475569" opacity="0.3" />
-                                            <ellipse cx="50" cy="78" rx="32" ry="10" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" />
-                                            <ellipse cx="50" cy="77" rx="22" ry="7" fill="none" stroke="#2563eb" strokeWidth="2.5" />
-                                            <ellipse cx="50" cy="76" rx="14" ry="4" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5" />
-                                            
-                                            {/* Lock floating body */}
-                                            <g className="animate-bounce-slow" style={{ transformOrigin: 'center center' }}>
-                                              {/* Shackle */}
-                                              <path d="M32 40 V24 A18 18 0 0 1 68 24 V40" fill="none" stroke="#f1f5f9" strokeWidth="8" strokeLinecap="round" />
-                                              <path d="M32 40 V24 A18 18 0 0 1 68 24 V40" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" />
-                                              {/* Padlock Body */}
-                                              <rect x="25" y="36" width="50" height="40" rx="9" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-                                              <rect x="27" y="38" width="46" height="36" rx="7" fill="none" stroke="#ffffff" strokeWidth="1.5" />
-                                              {/* Blue Stripe */}
-                                              <rect x="42" y="36" width="16" height="40" rx="2" fill="#3b82f6" />
-                                              {/* Fingerprint Circle */}
-                                              <circle cx="50" cy="54" r="5.5" fill="#1e3a8a" stroke="#93c5fd" strokeWidth="1" />
-                                              {/* Stylized Fingerprint lines */}
-                                              <path d="M48 52 A2 2 0 0 1 52 52 M47 54 A3 3 0 0 1 53 54 M49 56 A1 1 0 0 1 51 56" fill="none" stroke="#93c5fd" strokeWidth="0.8" strokeLinecap="round" />
-                                            </g>
-                                          </svg>
-                                        </div>
+                                        /* Antique Brass Padlock with keyhole */
+                                        <AntiqueLock />
                                       ) : (
                                         /* 3D Floating Stage Icon */
                                         <span className={cn(
-                                          "drop-shadow-[0_8px_4px_rgba(0,0,0,0.28)] animate-float-slow select-none pointer-events-none -translate-y-4",
-                                          isSelected ? "text-4xl" : "text-3xl"
+                                          "drop-shadow-[0_8px_4px_rgba(0,0,0,0.35)] animate-float-slow select-none pointer-events-none absolute -translate-y-2",
+                                          isSelected ? "text-3xl" : "text-2xl"
                                         )}>
                                           {quest.emoji}
                                         </span>
                                       )}
                                       
-                                      {/* Stage Badge with number at the bottom center of the button */}
+                                      {/* Stage Badge with number styled as a vintage brass plaque */}
                                       <span className={cn(
-                                        "absolute -bottom-3 bg-white text-[11px] font-black border-2 px-2.5 py-0.5 rounded-full shadow-md min-w-[34px] tracking-wider transition-all z-20",
+                                        "absolute -bottom-2.5 bg-amber-50 text-[10px] font-black border-2 px-2 py-0.5 rounded shadow-md min-w-[28px] tracking-wider transition-all z-20 uppercase font-serif",
                                         isLocked 
-                                          ? "border-slate-400 text-slate-600" 
+                                          ? "border-slate-500 text-slate-600" 
                                           : isCompleted 
-                                          ? "border-emerald-500 text-emerald-700" 
-                                          : "border-amber-500 text-amber-700"
+                                          ? "border-emerald-700 text-emerald-800" 
+                                          : "border-amber-800 text-amber-900"
                                       )}>
                                         {index + 1}
                                       </span>
