@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import PageLayout from '@/components/layout/PageLayout';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
@@ -23,7 +22,7 @@ const DisclaimerPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <PageLayout containerClassName="container max-w-4xl pt-24 pb-12 px-4">
       <SEO
         title="Game Disclaimer | CuizIN"
         description="Read the CuizIN Game Disclaimer. Understand our rewards system, content accuracy policies, and platform usage guidelines."
@@ -31,11 +30,8 @@ const DisclaimerPage: React.FC = () => {
         keywords={['disclaimer', 'game rules', 'CuizIN disclaimer', 'rewards disclaimer']}
       />
       <BreadcrumbSchema items={breadcrumbs} />
-      <Header />
-      
-      <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
-        {/* Visual Breadcrumb */}
-        <Breadcrumb className="mb-6">
+      {/* Visual Breadcrumb */}
+      <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
@@ -111,10 +107,7 @@ const DisclaimerPage: React.FC = () => {
           
           <SimpleAdBanner position="footer" className="mt-8" />
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+    </PageLayout>
   );
 };
 
