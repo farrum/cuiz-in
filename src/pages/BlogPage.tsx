@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import BreadcrumbSchema, { createBreadcrumbs } from '@/components/BreadcrumbSchema';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import NewsTicker from '@/components/NewsTicker';
+import PageLayout from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import {
@@ -96,7 +94,7 @@ const BlogPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <PageLayout showNewsTicker containerClassName="container max-w-6xl pt-12 pb-16 px-4">
       <SEO
         title="Quiz Knowledge Blog | CuizIN"
         description="Discover articles, tips, and guides about quiz strategies, learning techniques, and how to maximize your rewards on CuizIN."
@@ -106,12 +104,9 @@ const BlogPage: React.FC = () => {
         schemaData={blogSchema}
       />
       <BreadcrumbSchema items={breadcrumbs} />
-      <Header />
-      <NewsTicker className="mt-16" />
-      
-      <main className="flex-1 container max-w-6xl pt-12 pb-16 px-4">
-        {/* Visual Breadcrumb */}
-        <Breadcrumb className="mb-6">
+
+      {/* Visual Breadcrumb */}
+      <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
@@ -180,10 +175,7 @@ const BlogPage: React.FC = () => {
             View FAQ
           </Link>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+    </PageLayout>
   );
 };
 
