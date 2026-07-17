@@ -663,196 +663,132 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 }
 
 /* ═══════════════════════════════════════════════════════
-   RAILWAY MAP STYLES
+   RAILWAY MAP STYLES (Image-based 3D Steampunk)
    ═══════════════════════════════════════════════════════ */
 
-/* The Railway Track */
-.railway-track {
+/* The Railway Track (Image Texture) */
+.railway-track-bg {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 60px;
-  background: 
-    linear-gradient(to right, 
-      transparent 0%, transparent 10%, 
-      #3f3f46 10%, #27272a 18%, 
-      transparent 18%, transparent 82%, 
-      #3f3f46 82%, #27272a 90%, 
-      transparent 90%, transparent 100%
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 20px,
-      #78350f 20px,
-      #451a03 28px,
-      transparent 28px,
-      transparent 40px
-    );
+  width: 80px;
+  background-image: url('/track_asset.png');
+  background-repeat: repeat-y;
+  background-size: cover;
+  background-position: center;
   z-index: 1;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  /* The blend mode helps perfectly isolate the white background of the image */
+  mix-blend-mode: multiply;
 }
 
-/* Station Building */
-.station-building {
+/* Station Layout */
+.station-container {
   position: relative;
-  background-color: #fef3c7;
-  border: 3px solid #92400e;
-  border-radius: 4px;
-  padding: 8px 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 300px;
+}
+
+/* Station Building Side Images */
+.station-building-img {
+  width: 120px;
+  height: 120px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  mix-blend-mode: multiply;
+  transition: transform 0.2s;
   z-index: 10;
 }
-
-/* Station Roof/Canopy */
-.station-building::before {
-  content: '';
-  position: absolute;
-  top: -12px;
-  left: -8px;
-  right: -8px;
-  height: 12px;
-  background: #b41c1c;
-  border: 2px solid #7f1d1d;
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
+.station-building-left {
+  right: calc(50% + 40px);
+  background-image: url('/station_asset.png');
+  transform: scaleX(-1); /* Flip for the left side to face inwards */
+}
+.station-building-right {
+  left: calc(50% + 40px);
+  background-image: url('/station_asset.png');
+}
+.station-container:hover .station-building-img {
+  transform: scale(1.05);
+}
+.station-container:hover .station-building-left {
+  transform: scaleX(-1) scale(1.05);
+}
+.station-locked .station-building-img {
+  filter: grayscale(100%) opacity(70%);
 }
 
-/* Indian Railway Style Name Board */
-.station-nameboard {
-  background-color: #ffffff;
-  color: #1e3a8a;
-  border: 2px solid #1e3a8a;
+/* Wooden Nameboard spanning track */
+.station-wooden-plaque {
+  position: absolute;
+  z-index: 15;
+  background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
+  border: 4px solid #451a03;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 8px 32px;
+  text-align: center;
+  transform: translateY(60px); /* Position it slightly below the buildings */
+}
+.station-wooden-plaque h3 {
+  color: #fef3c7;
+  font-family: 'Georgia', serif;
   font-weight: 900;
-  padding: 4px 16px;
-  border-radius: 4px;
-  font-family: 'Arial', sans-serif;
+  font-size: 18px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 14px;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+.station-locked .station-wooden-plaque {
+  filter: grayscale(80%);
 }
 
-/* Platform Line */
-.platform-line {
-  width: 140%;
-  height: 12px;
-  background: #a8a29e;
-  border: 2px solid #57534e;
-  border-radius: 2px;
-  margin-top: 8px;
-  z-index: 5;
-}
-
-/* Victorian Gas-Lamp Signal */
-.signal-post {
+/* Semaphore Signal */
+.semaphore-signal-img {
+  width: 60px;
+  height: 120px;
+  background-image: url('/signal_asset.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   position: absolute;
-  left: -30px;
-  bottom: 0;
-  width: 6px;
-  height: 40px;
-  background: #1c1917;
-  border-radius: 3px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.signal-lantern {
-  position: absolute;
-  top: -12px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid #292524;
-  background: #000;
-}
-
-.signal-lantern.red {
-  background: #ef4444;
-  box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
-}
-
-.signal-lantern.green {
-  background: #22c55e;
-  box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e;
-  animation: signal-glow 2s infinite alternate;
-}
-
-@keyframes signal-glow {
-  from { box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
-  to { box-shadow: 0 0 15px #4ade80, 0 0 30px #4ade80; }
-}
-
-/* Detailed CSS Steam Engine */
-.steam-engine {
-  position: absolute;
-  width: 48px;
-  height: 36px;
+  mix-blend-mode: multiply;
+  right: calc(50% + 140px); /* Place to the left of the left building */
+  bottom: 60px;
   z-index: 20;
-  transition: transform 2s ease-in-out;
 }
 
-.engine-boiler {
+/* Train Root Animation */
+.train-root {
   position: absolute;
-  bottom: 6px;
-  left: 0;
-  width: 24px;
-  height: 16px;
-  background: #1f2937;
-  border-radius: 8px 0 0 0;
-  border: 1px solid #000;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 150px;
+  background-image: url('/train_asset.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  mix-blend-mode: multiply;
+  z-index: 30;
+  transition: top 2.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  filter: drop-shadow(0 20px 20px rgba(0,0,0,0.6));
 }
 
-.engine-cab {
-  position: absolute;
-  bottom: 6px;
-  right: 0;
-  width: 20px;
-  height: 24px;
-  background: #b91c1c;
-  border-radius: 4px 4px 0 0;
-  border: 1px solid #000;
+.train-moving {
+  /* Subtle wobble when moving */
+  animation: train-wobble 0.2s infinite alternate;
 }
 
-.engine-window {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 10px;
-  height: 10px;
-  background: #93c5fd;
-  border: 1px solid #1e3a8a;
-  border-radius: 2px;
+@keyframes train-wobble {
+  0% { transform: translateX(calc(-50% - 1px)); }
+  100% { transform: translateX(calc(-50% + 1px)); }
 }
-
-.engine-chimney {
-  position: absolute;
-  top: -8px;
-  left: 4px;
-  width: 8px;
-  height: 14px;
-  background: #d97706;
-  border: 1px solid #000;
-  border-radius: 2px 2px 0 0;
-}
-
-.engine-wheel {
-  position: absolute;
-  bottom: 0;
-  width: 12px;
-  height: 12px;
-  background: #ef4444;
-  border-radius: 50%;
-  border: 2px solid #000;
-}
-
-.engine-wheel-1 { left: 2px; }
-.engine-wheel-2 { left: 16px; }
-.engine-wheel-3 { right: 2px; width: 14px; height: 14px; bottom: -1px; }
 
 /* Animated Smoke */
 .smoke-puff {

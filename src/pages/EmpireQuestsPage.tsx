@@ -1157,8 +1157,8 @@ export default function EmpireQuestsPage() {
                     {/* Scrollable Map Viewport */}
                     <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center">
                       
-                      {/* CSS Railway Track running down the center */}
-                      <div className="railway-track left-1/2 -translate-x-1/2" />
+                      {/* 3D Railway Track Texture */}
+                      <div className="railway-track-bg left-1/2 -translate-x-1/2" />
                       
                       <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: 150 }}>
                         {(() => {
@@ -1179,71 +1179,75 @@ export default function EmpireQuestsPage() {
                             } as RailwayRoute;
                           });
 
-                          return ALL_STATIONS.map((station, index) => {
-                            const isLocked = userStars < station.entryCost && index > 0;
-                            const isSelected = selectedRoute?.id === station.id;
-                            const isCleared = clearedStations.includes(station.id) || (index < clearedStations.length);
-                            const isActive = !isLocked && !isCleared && (index === 0 || clearedStations.includes(ALL_STATIONS[index - 1].id));
-                            
-                            // Check if this station is the active one where the train should be parked
-                            const isCurrentTrainStation = isActive || (index === ALL_STATIONS.length - 1 && isCleared);
+                          // Determine active station for train positioning
+                          let activeIndex = 0;
+                          for (let i = 0; i < ALL_STATIONS.length; i++) {
+                            const isLocked = userStars < ALL_STATIONS[i].entryCost && i > 0;
+                            const isCleared = clearedStations.includes(ALL_STATIONS[i].id) || (i < clearedStations.length);
+                            const isActive = !isLocked && !isCleared && (i === 0 || clearedStations.includes(ALL_STATIONS[i - 1].id));
+                            if (isActive) {
+                              activeIndex = i;
+                              break;
+                            }
+                            if (isCleared && i === ALL_STATIONS.length - 1) {
+                              activeIndex = i;
+                            }
+                          }
 
-                            return (
-                              <div
-                                key={station.id}
-                                className="relative flex flex-col items-center justify-center w-full"
-                                style={{ height: 300 }} // 2 stations visible in 600px height
-                              >
-                                {/* Station click area */}
-                                <button
-                                  onClick={() => {
-                                    haptics('light');
-                                    audioManager.playSFX('click');
-                                    setSelectedMapQuest(station as any);
-                                  }}
-                                  className="group relative z-10 flex flex-col items-center focus:outline-none cursor-pointer"
-                                  style={{ width: '100%', height: '100%' }}
-                                >
-                                  {/* The Station Building Illustration */}
-                                  <div className={cn(
-                                    "station-building transition-transform duration-200 mt-auto mb-auto",
-                                    isSelected ? "scale-110 shadow-[0_0_20px_rgba(251,191,36,0.6)] border-amber-500" : "group-hover:scale-105",
-                                    isLocked ? "grayscale opacity-80" : ""
-                                  )}>
-                                    <div className="station-nameboard text-center">
-                                      {station.name}
-                                    </div>
-                                    <div className="platform-line" />
+                          return (
+                            <>
+                              {ALL_STATIONS.map((station, index) => {
+                                const isLocked = userStars < station.entryCost && index > 0;
+                                const isSelected = selectedRoute?.id === station.id;
+                                const isCleared = clearedStations.includes(station.id) || (index < clearedStations.length);
+                                const isActive = index === activeIndex;
+
+                                return (
+                                  <div
+                                    key={station.id}
+                                    className={cn("station-container cursor-pointer", isLocked && "station-locked")}
+                                    onClick={() => {
+                                      haptics('light');
+                                      audioManager.playSFX('click');
+                                      setSelectedRoute(station as any);
+                                    }}
+                                  >
+                                    {/* Left Building */}
+                                    <div className="station-building-img station-building-left" />
                                     
-                                    {/* Victorian Signal */}
-                                    <div className="signal-post">
-                                      <div className={cn(
-                                        "signal-lantern",
-                                        isLocked ? "red" : "green"
-                                      )} />
+                                    {/* Right Building */}
+                                    <div className="station-building-img station-building-right" />
+                                    
+                                    {/* Semaphore Signal (Left of the left building) */}
+                                    <div 
+                                      className="semaphore-signal-img" 
+                                      style={{ filter: isLocked ? 'hue-rotate(0deg)' : 'hue-rotate(-120deg) brightness(1.2)' }}
+                                    />
+                                    
+                                    {/* Wooden Nameboard spanning tracks */}
+                                    <div className={cn(
+                                      "station-wooden-plaque transition-all duration-300",
+                                      isSelected ? "scale-110 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.6)]" : ""
+                                    )}>
+                                      <h3>{station.name}</h3>
                                     </div>
                                   </div>
-                                </button>
-                                
-                                {/* Steam Engine - only visible at the current active station */}
-                                {isCurrentTrainStation && (
-                                  <div className="steam-engine absolute left-1/2 -translate-x-[65px] top-[135px] pointer-events-none z-[20]">
-                                    <div className="engine-boiler" />
-                                    <div className="engine-cab">
-                                      <div className="engine-window" />
-                                    </div>
-                                    <div className="engine-chimney">
-                                      <div className="smoke-puff" style={{ animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
-                                      <div className="smoke-puff" style={{ animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
-                                    </div>
-                                    <div className="engine-wheel engine-wheel-1" />
-                                    <div className="engine-wheel engine-wheel-2" />
-                                    <div className="engine-wheel engine-wheel-3" />
-                                  </div>
-                                )}
+                                );
+                              })}
+
+                              {/* 🚂 THE TRAIN - Absolute positioned for smooth animation */}
+                              <div 
+                                className="train-root train-moving"
+                                style={{
+                                  top: `${activeIndex * 300 + 150 - 75}px` // 300px per station, 150px padding-top, 75px half-height
+                                }}
+                              >
+                                {/* Smoke puffs */}
+                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
+                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
                               </div>
-                            );
-                          });
+                            </>
+                          );
                         })()}
                       </div>
                     </div>
