@@ -164,7 +164,7 @@ const Header: React.FC = () => {
                   "px-3 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider",
                   location.pathname === item.path
                     ? "text-yellow-500 bg-yellow-500/10 border-b-2 border-yellow-500 rounded-b-none"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                    : "text-white hover:text-white hover:bg-slate-900/40"
                 )}
               >
                 {item.label}
