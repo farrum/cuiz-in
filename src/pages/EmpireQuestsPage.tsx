@@ -171,55 +171,7 @@ const CAMPAIGNS: EmpireCampaign[] = [
   }
 ];
 
-const StonePedestal = ({ isLocked, isSelected, isCompleted }: { isLocked: boolean; isSelected: boolean; isCompleted: boolean }) => {
-  // Determine colors based on status
-  let sideColor = "#4b5563"; // Dark grey stone
-  let topColor = "#9ca3af";  // Light grey stone
-  let innerColor = "#cbd5e0"; // Soft inner stone
-  let trimColor = "#1f2937";  // Dark stone border
 
-  if (isSelected) {
-    sideColor = "#b45309"; // Bronze/Gold side
-    topColor = "#f59e0b";  // Golden top
-    innerColor = "#fef08a"; // Bright gold center
-    trimColor = "#78350f";
-  } else if (isCompleted) {
-    sideColor = "#047857"; // Mossy/Emerald side
-    topColor = "#10b981";  // Emerald top
-    innerColor = "#a7f3d0"; // Soft mint center
-    trimColor = "#064e3b";
-  }
-
-  return (
-    <svg 
-      viewBox="0 0 100 100" 
-      className={cn(
-        "w-20 h-20 drop-shadow-[0_8px_10px_rgba(0,0,0,0.5)] select-none pointer-events-none transition-all duration-300",
-        isSelected ? "scale-105" : ""
-      )}
-    >
-      {/* 3D Pedestal Wall/Extrusion (Side) */}
-      <path d="M15 50 C15 64, 85 64, 85 50 V60 C85 74, 15 74, 15 60 Z" fill={sideColor} stroke={trimColor} strokeWidth="3" />
-      
-      {/* Stone brick masonry details on the side */}
-      <path d="M32 55 V66 M50 57 V68 M68 55 V66" stroke={trimColor} strokeWidth="2" opacity="0.6" strokeLinecap="round" />
-      
-      {/* 3D Pedestal Surface (Top ellipse) */}
-      <ellipse cx="50" cy="50" rx="35" ry="12" fill={topColor} stroke={trimColor} strokeWidth="3" />
-      
-      {/* Castle Battlement / Rim Details (Crenels) */}
-      <path d="M18 47 L22 45 M32 43 L34 40 M66 40 L68 43 M78 45 L82 47" stroke={trimColor} strokeWidth="2.5" opacity="0.7" strokeLinecap="round" />
-      
-      {/* Inner Pedestal Stone Plate */}
-      <ellipse cx="50" cy="50" rx="27" ry="9" fill={innerColor} stroke={sideColor} strokeWidth="1.5" />
-      
-      {/* Highlight effect for selected */}
-      {isSelected && (
-        <ellipse cx="50" cy="50" rx="32" ry="10" fill="none" stroke="#fde047" strokeWidth="1.5" opacity="0.8" />
-      )}
-    </svg>
-  );
-};
 
 export default function EmpireQuestsPage() {
   const [activeTab, setActiveTab] = useState<'quests' | 'hangman' | 'chests' | 'heroes'>('quests');
@@ -1178,43 +1130,25 @@ export default function EmpireQuestsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
-                  {/* Map Scroll Canvas (Takes 2 columns) */}
+                  {/* ═══════════════════════════════════════════════════════
+                      MEDIEVAL FANTASY ROUTE MAP - Complete Rebuild
+                      ═══════════════════════════════════════════════════════ */}
                   <div 
-                    className="lg:col-span-2 relative rounded-3xl overflow-hidden h-full shadow-[inset_0_0_50px_rgba(0,0,0,0.6),0_20px_35px_rgba(0,0,0,0.4)] flex items-center justify-center p-0 border-[10px] border-amber-955 bg-[#1b2b32]"
+                    className="lg:col-span-2 relative rounded-2xl overflow-hidden h-full border-[8px] border-amber-900/70"
                     style={{
-                      backgroundImage: "url('/steampunk_map_bg.jpg')",
+                      backgroundImage: "url('/medieval_map_bg.png')",
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
+                      boxShadow: 'inset 0 0 40px rgba(0,0,0,0.4), 0 12px 30px rgba(0,0,0,0.35)',
                     }}
                   >
-                    {/* SVG Definitions for Steampunk Gradients */}
-                    <svg style={{ position: 'absolute', width: 0, height: 0 }}>
-                      <defs>
-                        <linearGradient id="bronzeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#f59e0b" />
-                          <stop offset="30%" stopColor="#d97706" />
-                          <stop offset="70%" stopColor="#b45309" />
-                          <stop offset="100%" stopColor="#78350f" />
-                        </linearGradient>
-                        <linearGradient id="ironGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#94a3b8" />
-                          <stop offset="50%" stopColor="#475569" />
-                          <stop offset="100%" stopColor="#1e293b" />
-                        </linearGradient>
-                        <linearGradient id="copperGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#fb923c" />
-                          <stop offset="50%" stopColor="#ea580c" />
-                          <stop offset="100%" stopColor="#9a3412" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-
-                    {/* Vintage Paper Texture Overlay */}
-                    <div className="absolute inset-0 opacity-15 pointer-events-none" style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                    {/* Parchment vignette overlay */}
+                    <div className="absolute inset-0 pointer-events-none z-[1]" style={{
+                      background: 'radial-gradient(ellipse at center, transparent 40%, rgba(60,30,10,0.45) 100%)',
                     }} />
-                    {/* Sliding Map Viewport - Scrollable */}
-                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative flex flex-col-reverse items-center pt-[200px] pb-12 animate-in fade-in duration-500 custom-scrollbar scroll-smooth">
+
+                    {/* Scrollable Map Viewport */}
+                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth">
                       {(() => {
                         const ALL_STAGES = Array.from({ length: 100 }, (_, i) => {
                           if (i < CAMPAIGNS.length) return CAMPAIGNS[i];
@@ -1233,121 +1167,194 @@ export default function EmpireQuestsPage() {
                           } as EmpireCampaign;
                         });
 
+                        // Each stage row height
+                        const ROW_H = 130;
+                        // Total height of the map
+                        const totalHeight = ALL_STAGES.length * ROW_H + 80;
+
+                        // Calculate X positions: snake left-right with fixed pixel offsets
+                        const getX = (index: number): number => {
+                          const pattern = index % 4;
+                          // 0 = left, 1 = right, 2 = right, 3 = left (snake shape)
+                          return (pattern === 0 || pattern === 3) ? 110 : 280;
+                        };
+                        const getY = (index: number): number => {
+                          // Bottom-up: first stage at bottom
+                          return totalHeight - (index * ROW_H + ROW_H / 2 + 40);
+                        };
+
                         return (
-                          <div className="relative w-full max-w-sm flex flex-col-reverse items-center">
-                            {/* The winding path line */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ minHeight: '100%' }}>
+                          <div className="relative" style={{ width: '100%', height: totalHeight, minWidth: 380 }}>
+                            {/* ─── SVG ROAD PATH ─── */}
+                            <svg 
+                              className="absolute inset-0 pointer-events-none" 
+                              width="100%" 
+                              height={totalHeight}
+                              viewBox={`0 0 390 ${totalHeight}`}
+                              preserveAspectRatio="xMidYMid meet"
+                            >
                               {ALL_STAGES.map((_, index) => {
                                 if (index === ALL_STAGES.length - 1) return null;
-                                const y1Offset = index * 120 + 60;
-                                const y2Offset = (index + 1) * 120 + 60;
+                                const x1 = getX(index);
+                                const y1 = getY(index);
+                                const x2 = getX(index + 1);
+                                const y2 = getY(index + 1);
                                 
-                                // Snake from left to right (offset 30% from center)
-                                const isLeft1 = (index % 4) === 0 || (index % 4) === 3;
-                                const isLeft2 = ((index + 1) % 4) === 0 || ((index + 1) % 4) === 3;
-                                
-                                const x1 = isLeft1 ? '30%' : '70%';
-                                const x2 = isLeft2 ? '30%' : '70%';
-
-                                return (
-                                  <g key={`path-${index}`}>
-                                    {/* Road border / grassy shadow dirt backing */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#3b2b1a" strokeWidth="24" strokeLinecap="round" />
-                                    {/* Cobblestone pathway main color */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#78593e" strokeWidth="18" strokeLinecap="round" />
-                                    {/* Cobblestone details (light gray paving stones) */}
-                                    <line x1={x1} y1={y1Offset} x2={x2} y2={y2Offset} stroke="#b08b68" strokeWidth="10" strokeDasharray="6 14" strokeLinecap="round" />
-                                  </g>
-                                );
+                                // For segments that go straight up (same X), draw a straight line
+                                // For segments that cross (different X), draw an L-shaped path with rounded corners
+                                if (x1 === x2) {
+                                  return (
+                                    <g key={`road-${index}`}>
+                                      {/* Dark brown road border */}
+                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#5c3d1e" strokeWidth="28" strokeLinecap="round" />
+                                      {/* Main dirt road fill */}
+                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#8B6914" strokeWidth="22" strokeLinecap="round" />
+                                      {/* White dashed center line */}
+                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f5f0e0" strokeWidth="3" strokeDasharray="8 12" strokeLinecap="round" />
+                                    </g>
+                                  );
+                                } else {
+                                  // L-shaped path: go horizontal first, then vertical (or vice versa)
+                                  const midY = (y1 + y2) / 2;
+                                  const pathD = `M${x1},${y1} L${x1},${midY} L${x2},${midY} L${x2},${y2}`;
+                                  return (
+                                    <g key={`road-${index}`}>
+                                      {/* Dark brown road border */}
+                                      <path d={pathD} fill="none" stroke="#5c3d1e" strokeWidth="28" strokeLinejoin="round" strokeLinecap="round" />
+                                      {/* Main dirt road fill */}
+                                      <path d={pathD} fill="none" stroke="#8B6914" strokeWidth="22" strokeLinejoin="round" strokeLinecap="round" />
+                                      {/* White dashed center line */}
+                                      <path d={pathD} fill="none" stroke="#f5f0e0" strokeWidth="3" strokeDasharray="8 12" strokeLinejoin="round" strokeLinecap="round" />
+                                    </g>
+                                  );
+                                }
                               })}
                             </svg>
 
-                            {/* Campaign Pins */}
+                            {/* ─── STAGE BUTTONS ─── */}
                             {ALL_STAGES.map((quest, index) => {
                               const isLocked = userStars < quest.entryCost && index > 0;
                               const isSelected = selectedMapQuest?.id === quest.id;
                               const isCompleted = completedCampaigns.includes(quest.id) || (index < completedCampaigns.length);
                               
-                              const isLeft = (index % 4) === 0 || (index % 4) === 3;
-                              
+                              const cx = getX(index);
+                              const cy = getY(index);
+
+                              // Button colors
+                              let btnGradient = '';
+                              let btnBorder = '';
+                              let btnShadow = '';
+                              let numberBg = '';
+                              let numberText = '';
+                              let numberBorder = '';
+
+                              if (isLocked) {
+                                btnGradient = 'linear-gradient(180deg, #d1d5db 0%, #9ca3af 40%, #6b7280 100%)';
+                                btnBorder = '3px solid #4b5563';
+                                btnShadow = '0 6px 0 #374151, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3)';
+                                numberBg = '#e5e7eb';
+                                numberText = '#4b5563';
+                                numberBorder = '2px solid #6b7280';
+                              } else if (isSelected) {
+                                btnGradient = 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 40%, #d97706 100%)';
+                                btnBorder = '3px solid #b45309';
+                                btnShadow = '0 6px 0 #92400e, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4), 0 0 20px rgba(251,191,36,0.4)';
+                                numberBg = '#fef3c7';
+                                numberText = '#92400e';
+                                numberBorder = '2px solid #d97706';
+                              } else if (isCompleted) {
+                                btnGradient = 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)';
+                                btnBorder = '3px solid #047857';
+                                btnShadow = '0 6px 0 #065f46, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3)';
+                                numberBg = '#d1fae5';
+                                numberText = '#065f46';
+                                numberBorder = '2px solid #047857';
+                              } else {
+                                // Active/current stage
+                                btnGradient = 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 40%, #d97706 100%)';
+                                btnBorder = '3px solid #b45309';
+                                btnShadow = '0 6px 0 #92400e, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4)';
+                                numberBg = '#fef3c7';
+                                numberText = '#92400e';
+                                numberBorder = '2px solid #d97706';
+                              }
+
                               return (
                                 <div
                                   key={quest.id}
-                                  className="relative w-full h-[120px] z-10"
+                                  className="absolute flex flex-col items-center"
+                                  style={{
+                                    left: cx,
+                                    top: cy,
+                                    transform: 'translate(-50%, -50%)',
+                                    zIndex: 10,
+                                  }}
                                 >
-                                  <div
-                                    className="absolute top-1/2"
-                                    style={{ 
-                                      left: isLeft ? "30%" : "70%", 
-                                      transform: "translate(-50%, -50%)" 
+                                  {/* Icon ABOVE the button */}
+                                  <div className="mb-1 select-none pointer-events-none" style={{ height: 32, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    {isLocked ? (
+                                      /* Heavy Medieval Iron Padlock */
+                                      <svg viewBox="0 0 48 56" width="28" height="33" className="drop-shadow-md">
+                                        {/* Shackle - thick iron */}
+                                        <path d="M12 22 V14 A12 12 0 0 1 36 14 V22" fill="none" stroke="#4b5563" strokeWidth="5" strokeLinecap="round" />
+                                        <path d="M12 22 V14 A12 12 0 0 1 36 14 V22" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
+                                        {/* Lock body - heavy iron */}
+                                        <rect x="6" y="20" width="36" height="30" rx="4" fill="#6b7280" stroke="#374151" strokeWidth="2" />
+                                        {/* Iron plate texture */}
+                                        <rect x="8" y="22" width="32" height="26" rx="3" fill="none" stroke="#9ca3af" strokeWidth="1" />
+                                        {/* Rivets */}
+                                        <circle cx="12" cy="26" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
+                                        <circle cx="36" cy="26" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
+                                        <circle cx="12" cy="44" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
+                                        <circle cx="36" cy="44" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
+                                        {/* Keyhole */}
+                                        <circle cx="24" cy="33" r="4" fill="#1f2937" />
+                                        <rect x="22.5" y="33" width="3" height="8" rx="1" fill="#1f2937" />
+                                      </svg>
+                                    ) : (
+                                      /* Stage emoji icon floating above */
+                                      <span className="text-2xl drop-shadow-lg animate-float-slow">
+                                        {quest.emoji}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* The 3D Round Button */}
+                                  <button
+                                    onClick={() => {
+                                      haptics('light');
+                                      audioManager.playSFX('click');
+                                      setSelectedMapQuest(quest);
+                                    }}
+                                    className={cn(
+                                      "relative rounded-full transition-transform duration-100 active:translate-y-[3px] active:shadow-none",
+                                      isSelected ? "scale-110" : ""
+                                    )}
+                                    style={{
+                                      width: 64,
+                                      height: 64,
+                                      background: btnGradient,
+                                      border: btnBorder,
+                                      boxShadow: btnShadow,
                                     }}
                                   >
-                                    {/* Shadow under the 3D stone pedestal */}
-                                    <div className="absolute -bottom-2 w-20 h-5 bg-black/45 blur-[8px] rounded-full z-0" />
-                                    
-                                    <button
-                                      onClick={() => {
-                                        haptics('light');
-                                        audioManager.playSFX('click');
-                                        setSelectedMapQuest(quest);
-                                      }}
-                                      className={cn(
-                                        "relative flex items-center justify-center transition-all duration-150 active:scale-95 z-10",
-                                        isLocked ? "scale-90 opacity-90" : isSelected ? "scale-110" : ""
-                                      )}
-                                    >
-                                      {/* 3D Castle Pedestal Base */}
-                                      <StonePedestal isLocked={isLocked} isSelected={isSelected} isCompleted={isCompleted} />
+                                    {/* Inner highlight ring */}
+                                    <div className="absolute inset-[4px] rounded-full border border-white/30" />
+                                    {/* Inner dark ring for depth */}
+                                    <div className="absolute inset-[8px] rounded-full border border-black/10" />
+                                  </button>
 
-                                      {isLocked ? (
-                                        /* 3D Locked Padlock with Concentric Rings (Matching your reference lock!) */
-                                        <div className="relative w-16 h-16 flex items-center justify-center absolute -translate-y-4">
-                                          <svg viewBox="0 0 100 100" className="w-13 h-13 drop-shadow-lg select-none pointer-events-none">
-                                            {/* Glowing concentric rings base */}
-                                            <ellipse cx="50" cy="80" rx="34" ry="11" fill="#475569" opacity="0.3" />
-                                            <ellipse cx="50" cy="78" rx="32" ry="10" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" />
-                                            <ellipse cx="50" cy="77" rx="22" ry="7" fill="none" stroke="#2563eb" strokeWidth="2.5" />
-                                            <ellipse cx="50" cy="76" rx="14" ry="4" fill="#dbeafe" stroke="#3b82f6" strokeWidth="1.5" />
-                                            
-                                            {/* Lock floating body */}
-                                            <g className="animate-bounce-slow" style={{ transformOrigin: 'center center' }}>
-                                              {/* Shackle */}
-                                              <path d="M32 40 V24 A18 18 0 0 1 68 24 V40" fill="none" stroke="#f1f5f9" strokeWidth="8" strokeLinecap="round" />
-                                              <path d="M32 40 V24 A18 18 0 0 1 68 24 V40" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" />
-                                              {/* Padlock Body */}
-                                              <rect x="25" y="36" width="50" height="40" rx="9" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" />
-                                              <rect x="27" y="38" width="46" height="36" rx="7" fill="none" stroke="#ffffff" strokeWidth="1.5" />
-                                              {/* Blue Stripe */}
-                                              <rect x="42" y="36" width="16" height="40" rx="2" fill="#3b82f6" />
-                                              {/* Fingerprint Circle */}
-                                              <circle cx="50" cy="54" r="5.5" fill="#1e3a8a" stroke="#93c5fd" strokeWidth="1" />
-                                              {/* Stylized Fingerprint lines */}
-                                              <path d="M48 52 A2 2 0 0 1 52 52 M47 54 A3 3 0 0 1 53 54 M49 56 A1 1 0 0 1 51 56" fill="none" stroke="#93c5fd" strokeWidth="0.8" strokeLinecap="round" />
-                                            </g>
-                                          </svg>
-                                        </div>
-                                      ) : (
-                                        /* 3D Floating Stage Icon */
-                                        <span className={cn(
-                                          "drop-shadow-[0_8px_4px_rgba(0,0,0,0.35)] animate-float-slow select-none pointer-events-none absolute -translate-y-4",
-                                          isSelected ? "text-3xl" : "text-2xl"
-                                        )}>
-                                          {quest.emoji}
-                                        </span>
-                                      )}
-                                      
-                                      {/* Stage Badge with number styled as a vintage brass plaque */}
-                                      <span className={cn(
-                                        "absolute -bottom-2 bg-amber-50 text-[10px] font-black border-2 px-2.5 py-0.5 rounded shadow-md min-w-[28px] tracking-wider transition-all z-20 uppercase font-serif",
-                                        isLocked 
-                                          ? "border-slate-500 text-slate-600" 
-                                          : isCompleted 
-                                          ? "border-emerald-700 text-emerald-800" 
-                                          : "border-amber-800 text-amber-900"
-                                      )}>
-                                        {index + 1}
-                                      </span>
-                                    </button>
+                                  {/* Stage Number Badge BELOW the button */}
+                                  <div
+                                    className="mt-1 text-[11px] font-black rounded-md px-2.5 py-0.5 shadow-sm select-none"
+                                    style={{
+                                      background: numberBg,
+                                      color: numberText,
+                                      border: numberBorder,
+                                      fontFamily: 'serif',
+                                    }}
+                                  >
+                                    {index + 1}
                                   </div>
                                 </div>
                               );
@@ -1357,13 +1364,12 @@ export default function EmpireQuestsPage() {
                       })()}
                     </div>
 
-                    {/* Compass / Map Decoration */}
-                    <div className="absolute top-4 left-4 z-20 flex flex-col items-center">
-                      <div className="w-12 h-12 bg-amber-100 rounded-full border-4 border-amber-800/80 shadow-lg flex items-center justify-center relative">
-                        <div className="absolute inset-1 border border-amber-800/40 rounded-full" />
-                        <span className="text-xl -translate-y-0.5 drop-shadow-sm">🧭</span>
+                    {/* Compass Decoration */}
+                    <div className="absolute top-3 left-3 z-20 flex flex-col items-center">
+                      <div className="w-11 h-11 bg-amber-100 rounded-full border-[3px] border-amber-900/70 shadow-lg flex items-center justify-center">
+                        <span className="text-lg drop-shadow-sm">🧭</span>
                       </div>
-                      <div className="mt-2 text-[9px] font-black text-amber-900 bg-amber-100/95 px-3 py-1 rounded-full shadow-md border border-amber-800/20 uppercase tracking-widest backdrop-blur-sm">
+                      <div className="mt-1.5 text-[8px] font-black text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full shadow border border-amber-800/20 uppercase tracking-widest">
                         Empire Map
                       </div>
                     </div>
