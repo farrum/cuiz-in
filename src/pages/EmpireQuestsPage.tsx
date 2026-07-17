@@ -23,7 +23,7 @@ import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 
 // Static Campaign Definitions
-interface EmpireCampaign {
+interface RailwayRoute {
   id: string;
   name: string;
   description: string;
@@ -36,138 +36,138 @@ interface EmpireCampaign {
   emoji: string;
 }
 
-const CAMPAIGNS: EmpireCampaign[] = [
+const ROUTES: RailwayRoute[] = [
   {
-    id: 'rome_siege',
-    name: "Siege of Rome",
-    description: "The barbarian horde approaches. Speed is your only salvation! Answer all questions rapidly.",
+    id: 'st_mumbai',
+    name: "Mumbai Central",
+    description: "The journey begins! A bustling metropolis. Answer questions rapidly to catch the express train.",
     difficulty: "Easy",
     category: "General",
     rules: "Time Attack: 6 seconds per question",
     entryCost: 0,
     rewardType: "bronze",
     rewardLabel: "Bronze Chest",
-    emoji: "🏛️"
+    emoji: "🚂"
   },
   {
-    id: 'persia_trial',
-    name: "Persian Riddle Vault",
-    description: "Sling solutions in the palace of Persepolis. Lifelines are disabled by royal decree.",
+    id: 'st_london',
+    name: "London King's Cross",
+    description: "Navigate the underground riddles. Lifelines are disabled on this historic platform.",
     difficulty: "Medium",
     category: "Riddles",
     rules: "No lifelines permitted",
     entryCost: 20,
     rewardType: "bronze",
-    rewardLabel: "Bronze Chest + 30 Stars",
-    emoji: "🏺"
+    rewardLabel: "Bronze Chest + 30 Tickets",
+    emoji: "🎫"
   },
   {
-    id: 'gupta_library',
-    name: "Gupta Library Trial",
-    description: "Prove your academic worth at Nalanda University by solving advanced scientific questions.",
+    id: 'st_jaipur',
+    name: "Jaipur Junction",
+    description: "The Pink City awaits. Prove your scientific knowledge to unlock the palace gates.",
     difficulty: "Legendary",
     category: "Science",
     rules: "Advanced content, double shard drop chance",
     entryCost: 40,
     rewardType: "legendary",
     rewardLabel: "Emperor's Tomb",
-    emoji: "📜"
+    emoji: "🔬"
   },
   {
-    id: 'alexander_conquest',
-    name: "Alexander's Campaign",
-    description: "Conquer the known world. A true Emperor makes no mistakes. Complete a perfect streak.",
+    id: 'st_grandcentral',
+    name: "Grand Central Terminal",
+    description: "The heart of New York. Make no mistakes to cross this iconic station.",
     difficulty: "Hard",
     category: "History",
     rules: "Sudden Death: 1 wrong answer defeats you",
     entryCost: 60,
     rewardType: "gold",
     rewardLabel: "Golden Vault",
-    emoji: "⚔️"
+    emoji: "🏛️"
   },
   {
-    id: 'nile_dynasty',
-    name: "Nile Dynasty",
-    description: "Navigate the secrets of the pharaohs and unlock the treasure chambers of Giza.",
+    id: 'st_chennai',
+    name: "Chennai Egmore",
+    description: "Southern express route. Navigate the mythological tales of ancient India.",
     difficulty: "Medium",
     category: "Mythology",
-    rules: "Pharaoh's Curse: Half time limit",
+    rules: "Express Mode: Half time limit",
     entryCost: 80,
     rewardType: "gold",
     rewardLabel: "Golden Vault",
-    emoji: "👑"
+    emoji: "🕌"
   },
   {
-    id: 'viking_voyage',
-    name: "Viking Voyage",
-    description: "Sail the stormy northern seas. Defy Odin's wrath and solve geography challenges.",
+    id: 'st_garedunord',
+    name: "Gare du Nord",
+    description: "Eurostar challenge! A challenging geography route across the continent.",
     difficulty: "Medium",
     category: "Geography",
-    rules: "Storm Mode: Question text shakes occasionally",
+    rules: "Turbulence Mode: Question text shakes occasionally",
     entryCost: 100,
     rewardType: "bronze",
-    rewardLabel: "Bronze Chest + 40 Stars",
-    emoji: "⛵"
+    rewardLabel: "Bronze Chest + 40 Tickets",
+    emoji: "🌍"
   },
   {
-    id: 'ottoman_siege',
-    name: "Ottoman Siege",
-    description: "Defend the massive fortress walls of Constantinople under heavy artillery fire.",
+    id: 'st_howrah',
+    name: "Howrah Junction",
+    description: "Cross the great bridge and defend your ticket under heavy scrutiny.",
     difficulty: "Hard",
     category: "History",
-    rules: "Fortress Guard: Lose double stars on defeat",
+    rules: "Ticket Check: Lose double tickets on defeat",
     entryCost: 120,
     rewardType: "gold",
     rewardLabel: "Golden Vault",
-    emoji: "🛡️"
+    emoji: "🌉"
   },
   {
-    id: 'mongol_steppes',
-    name: "Mongol Steppes",
-    description: "Ride with Genghis Khan's horde. Speed and precision are essential to secure victory.",
+    id: 'st_tokyo',
+    name: "Tokyo Station",
+    description: "The Shinkansen bullet train! Speed and precision are essential on this high-speed route.",
     difficulty: "Hard",
     category: "General",
-    rules: "Nomadic Pursuit: Rapid question timer",
+    rules: "Bullet Train: Rapid question timer",
     entryCost: 140,
     rewardType: "gold",
     rewardLabel: "Golden Vault",
-    emoji: "🏹"
+    emoji: "🚅"
   },
   {
-    id: 'mesoamerica_temple',
-    name: "Mesoamerica Temple",
-    description: "Scale the step pyramids of the Aztecs to recover the legendary solar calendars.",
+    id: 'st_newdelhi',
+    name: "New Delhi",
+    description: "The capital junction. Solve the complex riddles of the old city streets.",
     difficulty: "Legendary",
     category: "Riddles",
-    rules: "Sun Stone: No advisor aid allowed",
+    rules: "Capital Challenge: No advisor aid allowed",
     entryCost: 160,
     rewardType: "legendary",
     rewardLabel: "Emperor's Tomb",
-    emoji: "🏺"
+    emoji: "🧩"
   },
   {
-    id: 'camelot_trials',
-    name: "Camelot Trials",
-    description: "Sit at the Round Table and prove your chivalric knowledge in logic and myths.",
+    id: 'st_zurich',
+    name: "Zürich Hauptbahnhof",
+    description: "A scenic alpine route. Enjoy the view but stay sharp on mythology.",
     difficulty: "Easy",
     category: "Mythology",
-    rules: "Knight's Shield: Free first mistake",
+    rules: "Swiss Precision: Free first mistake",
     entryCost: 180,
     rewardType: "bronze",
-    rewardLabel: "Bronze Chest + 60 Stars",
-    emoji: "🏰"
+    rewardLabel: "Bronze Chest + 60 Tickets",
+    emoji: "⛰️"
   },
   {
-    id: 'imperial_dynasty',
-    name: "Imperial Dynasty",
-    description: "The ultimate coronation! Rise to become the unchallenged master of the global quiz empire.",
+    id: 'st_csmt',
+    name: "Chhatrapati Shivaji Maharaj Terminus",
+    description: "The ultimate terminus! Master the global railway network.",
     difficulty: "Legendary",
     category: "General",
-    rules: "Emperor's Crown: Complete 15 perfect questions",
+    rules: "Station Master: Complete 15 perfect questions",
     entryCost: 200,
     rewardType: "legendary",
-    rewardLabel: "Imperial Crown Chest",
-    emoji: "👑"
+    rewardLabel: "Golden Locomotive Chest",
+    emoji: "🚉"
   }
 ];
 
@@ -186,8 +186,8 @@ export default function EmpireQuestsPage() {
   const [selectedBoxTier, setSelectedBoxTier] = useState<'bronze' | 'gold' | 'legendary' | null>(null);
 
   // Active Gameplay state
-  const [activeQuest, setActiveQuest] = useState<EmpireCampaign | null>(null);
-  const [selectedMapQuest, setSelectedMapQuest] = useState<EmpireCampaign | null>(null);
+  const [activeRoute, setActiveQuest] = useState<RailwayRoute | null>(null);
+  const [selectedRoute, setSelectedMapQuest] = useState<RailwayRoute | null>(null);
   const [questQuestions, setQuestQuestions] = useState<QuizQuestion[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -210,7 +210,7 @@ export default function EmpireQuestsPage() {
   // Correct answer reveal and explanation states
   const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState<string | null>(null);
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
-  const [completedCampaigns, setCompletedCampaigns] = useState<string[]>([]);
+  const [clearedStations, setCompletedRoutes] = useState<string[]>([]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
@@ -218,10 +218,10 @@ export default function EmpireQuestsPage() {
 
   const fetchUserData = async () => {
     try {
-      // Load completed campaigns from localStorage
-      const localCompleted = localStorage.getItem('completed_campaigns');
+      // Load completed Routes from localStorage
+      const localCompleted = localStorage.getItem('cleared_stations');
       const completedList = localCompleted ? localCompleted.split(',') : [];
-      setCompletedCampaigns(completedList);
+      setCompletedRoutes(completedList);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -287,16 +287,16 @@ export default function EmpireQuestsPage() {
       }
       setUserId(session.user.id);
 
-      // Fetch points (gems) and stars
+      // Fetch points (gems) and Tickets
       const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('gems:points, stars')
+        .select('gems:points, Tickets')
         .eq('id', session.user.id)
         .maybeSingle();
 
       if (profile) {
         let currentGems = profile.gems || 0;
-        let currentStars = profile.stars || 0;
+        let currentStars = profile.Tickets || 0;
 
         // Auto onboarding grant if user is completely empty
         if (currentGems === 0 && currentStars === 0) {
@@ -304,7 +304,7 @@ export default function EmpireQuestsPage() {
           currentStars = 20; // Enough to buy a bronze chest or launch Persia campaign
           await (supabase as any)
             .from('profiles')
-            .update({ points: 50, stars: 20 })
+            .update({ points: 50, Tickets: 20 })
             .eq('id', session.user.id);
           
           // Inject 10 Socrates shards so they can recruit him immediately
@@ -413,7 +413,7 @@ export default function EmpireQuestsPage() {
     };
   }, []);
 
-  // Purchase Chest using Stars
+  // Purchase Chest using Tickets
   const handleBuyChest = (tier: 'bronze' | 'gold' | 'legendary') => {
     if (!userId) {
       toast({
@@ -432,7 +432,7 @@ export default function EmpireQuestsPage() {
     if (userStars < cost) {
       toast({
         title: "Treasury Empty!",
-        description: `You need ${cost} Stars to buy this chest. Play Quests to earn Stars!`,
+        description: `You need ${cost} Tickets to buy this chest. Play Quests to earn Tickets!`,
         variant: "destructive"
       });
       return;
@@ -443,12 +443,12 @@ export default function EmpireQuestsPage() {
     setOpenerOpen(true);
   };
 
-  // Launch Campaign Quest
-  const handleLaunchQuest = async (quest: EmpireCampaign) => {
-    if (quest.entryCost > 0 && userStars < quest.entryCost) {
+  // Launch Campaign Station
+  const handleLaunchQuest = async (Station: RailwayRoute) => {
+    if (Station.entryCost > 0 && userStars < Station.entryCost) {
       toast({
         title: "Invasion Prevented!",
-        description: `Embarking costs ${quest.entryCost} Stars. Earn more stars first.`,
+        description: `Embarking costs ${Station.entryCost} Tickets. Earn more Tickets first.`,
         variant: "destructive"
       });
       return;
@@ -458,19 +458,19 @@ export default function EmpireQuestsPage() {
 
     try {
       // Deduct entry fee
-      if (quest.entryCost > 0) {
-        await updateTotalStars(-quest.entryCost, userId || undefined);
+      if (Station.entryCost > 0) {
+        await updateTotalStars(-Station.entryCost, userId || undefined);
         if (!userId) {
-          setUserStars(prev => prev - quest.entryCost);
+          setUserStars(prev => prev - Station.entryCost);
         }
       }
 
       // Fetch questions
       const q = await fetchQuizQuestions();
-      const shuffled = [...q].sort(() => 0.5 - Math.random()).slice(0, 5); // 5 questions for quest
+      const shuffled = [...q].sort(() => 0.5 - Math.random()).slice(0, 5); // 5 questions for Station
       
       setQuestQuestions(shuffled);
-      setActiveQuest(quest);
+      setActiveQuest(Station);
       setCurrentQIndex(0);
       setScore(0);
       setGameplayStatus('playing');
@@ -487,7 +487,7 @@ export default function EmpireQuestsPage() {
       setRevealedCorrectAnswer(null);
       setRevealedExplanation(null);
 
-      startTimer(quest);
+      startTimer(Station);
     } catch (err) {
       console.error(err);
       toast({
@@ -500,7 +500,7 @@ export default function EmpireQuestsPage() {
     }
   };
 
-  const startTimer = (quest: EmpireCampaign) => {
+  const startTimer = (Station: RailwayRoute) => {
     if (timerRef.current) clearInterval(timerRef.current);
     const startVal = 15;
     setTimer(startVal);
@@ -524,7 +524,7 @@ export default function EmpireQuestsPage() {
     setFeedbackMsg("⏳ Time has expired! Siege engines breached!");
     
     // Alexander campaign is Sudden Death: time out = failure
-    if (activeQuest?.id === 'alexander_conquest') {
+    if (activeRoute?.id === 'alexander_conquest') {
       setTimeout(() => {
         endQuest(false);
       }, 1500);
@@ -540,7 +540,7 @@ export default function EmpireQuestsPage() {
     }
     if (socratesUsed) return;
     if (userStars < soc.starCost) {
-      toast({ title: "No Stars", description: "Not enough Stars to recruit lifeline.", variant: "destructive" });
+      toast({ title: "No Tickets", description: "Not enough Tickets to recruit lifeline.", variant: "destructive" });
       return;
     }
 
@@ -570,7 +570,7 @@ export default function EmpireQuestsPage() {
     }
     if (aryabhataUsed) return;
     if (userStars < ary.starCost) {
-      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      toast({ title: "No Tickets", description: "Not enough Tickets.", variant: "destructive" });
       return;
     }
 
@@ -582,7 +582,7 @@ export default function EmpireQuestsPage() {
     setTimer(prev => prev + 15);
     toast({
       title: "Astronomical Shift",
-      description: "Aryabhata aligned the stars to add +15 seconds!",
+      description: "Aryabhata aligned the Tickets to add +15 seconds!",
     });
   };
 
@@ -595,7 +595,7 @@ export default function EmpireQuestsPage() {
     }
     if (chanakyaUsed) return;
     if (userStars < chan.starCost) {
-      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      toast({ title: "No Tickets", description: "Not enough Tickets.", variant: "destructive" });
       return;
     }
 
@@ -619,7 +619,7 @@ export default function EmpireQuestsPage() {
     }
     if (ramanujanUsed) return;
     if (userStars < ram.starCost) {
-      toast({ title: "No Stars", description: "Not enough Stars.", variant: "destructive" });
+      toast({ title: "No Tickets", description: "Not enough Tickets.", variant: "destructive" });
       return;
     }
 
@@ -691,7 +691,7 @@ export default function EmpireQuestsPage() {
         setFeedbackMsg(`❌ Defeat! Correct answer: ${correctAns}`);
         
         // Alexander campaign is Sudden Death: fail immediately
-        if (activeQuest?.id === 'alexander_conquest') {
+        if (activeRoute?.id === 'alexander_conquest') {
           setTimeout(() => {
             endQuest(false);
           }, 1800);
@@ -712,11 +712,11 @@ export default function EmpireQuestsPage() {
     const nextIndex = currentQIndex + 1;
     if (nextIndex < questQuestions.length) {
       setCurrentQIndex(nextIndex);
-      startTimer(activeQuest!);
+      startTimer(activeRoute!);
       setFeedbackMsg(`Question ${nextIndex + 1}/${questQuestions.length}`);
     } else {
       // Finished all questions!
-      const minPass = activeQuest?.id === 'alexander_conquest' ? 5 : 3;
+      const minPass = activeRoute?.id === 'alexander_conquest' ? 5 : 3;
       const passed = score >= minPass;
       endQuest(passed);
     }
@@ -726,25 +726,25 @@ export default function EmpireQuestsPage() {
     if (timerRef.current) clearInterval(timerRef.current);
     setGameplayStatus('ended');
 
-    if (passed && activeQuest) {
+    if (passed && activeRoute) {
       haptics('success');
       window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'quests' } }));
       confetti({ particleCount: 100, spread: 70 });
       
-      // Earn stars
+      // Earn Tickets
       let starReward = 20;
-      if (activeQuest.id === 'persia_trial') starReward = 50;
-      else if (activeQuest.id === 'alexander_conquest') starReward = 80;
-      else if (activeQuest.id === 'gupta_library') starReward = 150;
+      if (activeRoute.id === 'persia_trial') starReward = 50;
+      else if (activeRoute.id === 'alexander_conquest') starReward = 80;
+      else if (activeRoute.id === 'gupta_library') starReward = 150;
 
       await logStarsEarned(starReward, userId);
 
-      // Add to completed campaigns
-      const updatedCompleted = [...completedCampaigns];
-      if (!updatedCompleted.includes(activeQuest.id)) {
-        updatedCompleted.push(activeQuest.id);
-        setCompletedCampaigns(updatedCompleted);
-        localStorage.setItem('completed_campaigns', updatedCompleted.join(','));
+      // Add to completed Routes
+      const updatedCompleted = [...clearedStations];
+      if (!updatedCompleted.includes(activeRoute.id)) {
+        updatedCompleted.push(activeRoute.id);
+        setCompletedRoutes(updatedCompleted);
+        localStorage.setItem('cleared_stations', updatedCompleted.join(','));
       }
 
       // Award Chest
@@ -756,20 +756,20 @@ export default function EmpireQuestsPage() {
           .single();
 
         // Save chest to open
-        setSelectedBoxTier(activeQuest.rewardType);
+        setSelectedBoxTier(activeRoute.rewardType);
         setOpenerOpen(true);
       } catch (err) {
         console.error(err);
       }
 
       toast({
-        title: "✨ QUEST VICTORIOUS!",
-        description: `Successfully completed ${activeQuest.name}! Earned ${starReward} Stars and a ${activeQuest.rewardLabel}.`,
+        title: "✨ Station VICTORIOUS!",
+        description: `Successfully completed ${activeRoute.name}! Earned ${starReward} Tickets and a ${activeRoute.rewardLabel}.`,
       });
     } else {
       haptics('error');
       toast({
-        title: "Quest Defeated",
+        title: "Train Derailed",
         description: "Your army retreated. Upgrade your heroes and try again!",
         variant: "destructive"
       });
@@ -790,13 +790,13 @@ export default function EmpireQuestsPage() {
     <PageLayout showNewsTicker={true}>
       <div className="min-h-screen stone-wall text-foreground pb-16">
         
-        {/* TOP STATUS BAR - GEMS AND STARS (Age of Empires design) */}
+        {/* TOP STATUS BAR - GEMS AND Tickets (Age of Empires design) */}
         <div className="wooden-door py-4 px-6 relative z-30 shadow-md">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
               <div>
-                <h1 className="text-lg font-black tracking-tight text-white uppercase">Empire Quests</h1>
+                <h1 className="text-lg font-black tracking-tight text-white uppercase">Railway Journey</h1>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">War Room & Council Chambers</p>
               </div>
             </div>
@@ -814,7 +814,7 @@ export default function EmpireQuestsPage() {
               <div className="bg-slate-950 border border-yellow-500/20 rounded-xl px-3 py-1.5 flex items-center gap-2">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500/10 animate-pulse" />
                 <div>
-                  <span className="text-[9px] font-bold text-slate-500 block uppercase leading-none">Stars</span>
+                  <span className="text-[9px] font-bold text-slate-500 block uppercase leading-none">Tickets</span>
                   <span className="text-xs font-black text-yellow-400">{userStars}</span>
                 </div>
               </div>
@@ -830,7 +830,7 @@ export default function EmpireQuestsPage() {
           </div>
         ) : gameplayStatus === 'playing' ? (
           
-          /* ACTIVE IMMERSIVE QUEST PLAY INTERFACE */
+          /* ACTIVE IMMERSIVE Station PLAY INTERFACE */
           <div className="max-w-4xl mx-auto px-4 mt-8">
             <div className="w-full bg-card border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden text-card-foreground">
               
@@ -847,7 +847,7 @@ export default function EmpireQuestsPage() {
 
                 <div className="text-center">
                   <span className="text-xs font-black uppercase text-amber-600 tracking-widest block">
-                    {activeQuest?.name}
+                    {activeRoute?.name}
                   </span>
                   <span className="text-[10px] text-slate-500 uppercase font-bold">
                     Question {currentQIndex + 1} of {questQuestions.length}
@@ -955,7 +955,7 @@ export default function EmpireQuestsPage() {
                   )}
 
                   {/* COUNCIL LIFELINES PANEL */}
-                  {activeQuest?.id !== 'persia_trial' && (
+                  {activeRoute?.id !== 'persia_trial' && (
                     <div className="border-t-2 border-primary/10 pt-6 mt-8">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center mb-4">
                         Activate Council Lifelines
@@ -1029,23 +1029,23 @@ export default function EmpireQuestsPage() {
           </div>
         ) : gameplayStatus === 'ended' ? (
           
-          /* QUEST COMPLETED SUMMARY */
+          /* Station COMPLETED SUMMARY */
           <div className="max-w-md mx-auto px-4 mt-12 text-center">
             <div className="panel-3d bg-white rounded-3xl p-8 shadow-2xl border-2 border-primary/20">
               <span className="text-6xl mb-4 block drop-shadow-sm">
-                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? '🏆' : '💀'}
+                {score >= (activeRoute?.id === 'alexander_conquest' ? 5 : 3) ? '🏆' : '💀'}
               </span>
               <h2 className="text-2xl font-black text-primary uppercase tracking-wider mb-2">
-                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? 'Quest Successful!' : 'Quest Defeated'}
+                {score >= (activeRoute?.id === 'alexander_conquest' ? 5 : 3) ? 'Station Cleared!' : 'Train Derailed'}
               </h2>
               <p className="text-muted-foreground font-bold text-sm mb-6">
                 You correctly answered <span className="font-black text-amber-500">{score}</span> out of {questQuestions.length} trivia cards.
               </p>
 
               <div className="flex flex-col gap-3">
-                {score >= (activeQuest?.id === 'alexander_conquest' ? 5 : 3) ? (
+                {score >= (activeRoute?.id === 'alexander_conquest' ? 5 : 3) ? (
                   <p className="text-xs text-emerald-500 font-black animate-pulse mb-2">
-                    A {activeQuest?.rewardLabel} has been awarded to your cargo!
+                    A {activeRoute?.rewardLabel} has been awarded to your cargo!
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground font-bold mb-2">
@@ -1076,7 +1076,7 @@ export default function EmpireQuestsPage() {
                       : "text-muted-foreground hover:bg-muted"
                   )}
                 >
-                  🗺️ Saga Map
+                  🗺️ Route Map
                 </button>
                 <button
                   onClick={() => setActiveTab('hangman')}
@@ -1118,25 +1118,25 @@ export default function EmpireQuestsPage() {
             {activeTab === 'quests' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-6">
-                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Saga Map</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Route Map</h2>
                   <p className="text-sm font-bold text-muted-foreground mt-1">Journey through endless stages. Unlock chests and heroes.</p>
                 </div>
 
                 {/* Tactical Instruction Parchment Box */}
                 <div className="max-w-xl mx-auto bg-amber-50 rounded-2xl p-4 text-center shadow-md border-2 border-amber-200">
                   <p className="text-xs font-bold leading-relaxed text-amber-900">
-                    ✨ <span className="font-extrabold text-amber-700">Tip:</span> Play Stage 1 (0 Star cost) to earn your first <span className="font-extrabold text-amber-700">20 Stars</span>! Open chests in the shop to recruit heroes.
+                    ✨ <span className="font-extrabold text-amber-700">Tip:</span> Play Stage 1 (0 Star cost) to earn your first <span className="font-extrabold text-amber-700">20 Tickets</span>! Open chests in the shop to recruit heroes.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start h-[600px]">
                   {/* ═══════════════════════════════════════════════════════
-                      MEDIEVAL FANTASY ROUTE MAP - Complete Rebuild
+                      RAILWAY ROUTE MAP - Complete Rebuild
                       ═══════════════════════════════════════════════════════ */}
                   <div 
                     className="lg:col-span-2 relative rounded-2xl overflow-hidden h-full border-[8px] border-amber-900/70"
                     style={{
-                      backgroundImage: "url('/medieval_map_bg.png')",
+                      backgroundImage: "url('/steampunk_map_bg.jpg')",
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       boxShadow: 'inset 0 0 40px rgba(0,0,0,0.4), 0 12px 30px rgba(0,0,0,0.35)',
@@ -1144,233 +1144,107 @@ export default function EmpireQuestsPage() {
                   >
                     {/* Parchment vignette overlay */}
                     <div className="absolute inset-0 pointer-events-none z-[1]" style={{
-                      background: 'radial-gradient(ellipse at center, transparent 40%, rgba(60,30,10,0.45) 100%)',
+                      background: 'radial-gradient(ellipse at center, transparent 30%, rgba(30,15,5,0.6) 100%)',
                     }} />
 
-                    {/* Scrollable Map Viewport */}
-                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth">
-                      {(() => {
-                        const ALL_STAGES = Array.from({ length: 100 }, (_, i) => {
-                          if (i < CAMPAIGNS.length) return CAMPAIGNS[i];
-                          const categories = ["General", "Science", "History", "Geography", "Mythology"];
-                          return {
-                            id: `procedural_stage_${i + 1}`,
-                            name: `Stage ${i + 1}`,
-                            description: `A new territory in the realm of ${categories[i % categories.length]}.`,
-                            difficulty: i % 5 === 0 ? "Hard" : "Medium",
-                            category: categories[i % categories.length],
-                            rules: "Endless progression",
-                            entryCost: 20 + Math.floor(i / 10) * 10,
-                            rewardType: "bronze",
-                            rewardLabel: "Bronze Chest",
-                            emoji: "🌟",
-                          } as EmpireCampaign;
-                        });
-
-                        // Each stage row height
-                        const ROW_H = 130;
-                        // Total height of the map
-                        const totalHeight = ALL_STAGES.length * ROW_H + 80;
-
-                        // Calculate X positions: snake left-right with fixed pixel offsets
-                        const getX = (index: number): number => {
-                          const pattern = index % 4;
-                          // 0 = left, 1 = right, 2 = right, 3 = left (snake shape)
-                          return (pattern === 0 || pattern === 3) ? 110 : 280;
-                        };
-                        const getY = (index: number): number => {
-                          // Bottom-up: first stage at bottom
-                          return totalHeight - (index * ROW_H + ROW_H / 2 + 40);
-                        };
-
-                        return (
-                          <div className="relative" style={{ width: '100%', height: totalHeight, minWidth: 380 }}>
-                            {/* ─── SVG ROAD PATH ─── */}
-                            <svg 
-                              className="absolute inset-0 pointer-events-none" 
-                              width="100%" 
-                              height={totalHeight}
-                              viewBox={`0 0 390 ${totalHeight}`}
-                              preserveAspectRatio="xMidYMid meet"
-                            >
-                              {ALL_STAGES.map((_, index) => {
-                                if (index === ALL_STAGES.length - 1) return null;
-                                const x1 = getX(index);
-                                const y1 = getY(index);
-                                const x2 = getX(index + 1);
-                                const y2 = getY(index + 1);
-                                
-                                // For segments that go straight up (same X), draw a straight line
-                                // For segments that cross (different X), draw an L-shaped path with rounded corners
-                                if (x1 === x2) {
-                                  return (
-                                    <g key={`road-${index}`}>
-                                      {/* Dark brown road border */}
-                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#5c3d1e" strokeWidth="28" strokeLinecap="round" />
-                                      {/* Main dirt road fill */}
-                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#8B6914" strokeWidth="22" strokeLinecap="round" />
-                                      {/* White dashed center line */}
-                                      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f5f0e0" strokeWidth="3" strokeDasharray="8 12" strokeLinecap="round" />
-                                    </g>
-                                  );
-                                } else {
-                                  // L-shaped path: go horizontal first, then vertical (or vice versa)
-                                  const midY = (y1 + y2) / 2;
-                                  const pathD = `M${x1},${y1} L${x1},${midY} L${x2},${midY} L${x2},${y2}`;
-                                  return (
-                                    <g key={`road-${index}`}>
-                                      {/* Dark brown road border */}
-                                      <path d={pathD} fill="none" stroke="#5c3d1e" strokeWidth="28" strokeLinejoin="round" strokeLinecap="round" />
-                                      {/* Main dirt road fill */}
-                                      <path d={pathD} fill="none" stroke="#8B6914" strokeWidth="22" strokeLinejoin="round" strokeLinecap="round" />
-                                      {/* White dashed center line */}
-                                      <path d={pathD} fill="none" stroke="#f5f0e0" strokeWidth="3" strokeDasharray="8 12" strokeLinejoin="round" strokeLinecap="round" />
-                                    </g>
-                                  );
-                                }
-                              })}
-                            </svg>
-
-                            {/* ─── STAGE BUTTONS ─── */}
-                            {ALL_STAGES.map((quest, index) => {
-                              const isLocked = userStars < quest.entryCost && index > 0;
-                              const isSelected = selectedMapQuest?.id === quest.id;
-                              const isCompleted = completedCampaigns.includes(quest.id) || (index < completedCampaigns.length);
-                              
-                              const cx = getX(index);
-                              const cy = getY(index);
-
-                              // Button colors
-                              let btnGradient = '';
-                              let btnBorder = '';
-                              let btnShadow = '';
-                              let numberBg = '';
-                              let numberText = '';
-                              let numberBorder = '';
-
-                              if (isLocked) {
-                                btnGradient = 'linear-gradient(180deg, #d1d5db 0%, #9ca3af 40%, #6b7280 100%)';
-                                btnBorder = '3px solid #4b5563';
-                                btnShadow = '0 6px 0 #374151, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3)';
-                                numberBg = '#e5e7eb';
-                                numberText = '#4b5563';
-                                numberBorder = '2px solid #6b7280';
-                              } else if (isSelected) {
-                                btnGradient = 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 40%, #d97706 100%)';
-                                btnBorder = '3px solid #b45309';
-                                btnShadow = '0 6px 0 #92400e, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4), 0 0 20px rgba(251,191,36,0.4)';
-                                numberBg = '#fef3c7';
-                                numberText = '#92400e';
-                                numberBorder = '2px solid #d97706';
-                              } else if (isCompleted) {
-                                btnGradient = 'linear-gradient(180deg, #34d399 0%, #10b981 40%, #059669 100%)';
-                                btnBorder = '3px solid #047857';
-                                btnShadow = '0 6px 0 #065f46, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3)';
-                                numberBg = '#d1fae5';
-                                numberText = '#065f46';
-                                numberBorder = '2px solid #047857';
-                              } else {
-                                // Active/current stage
-                                btnGradient = 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 40%, #d97706 100%)';
-                                btnBorder = '3px solid #b45309';
-                                btnShadow = '0 6px 0 #92400e, 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4)';
-                                numberBg = '#fef3c7';
-                                numberText = '#92400e';
-                                numberBorder = '2px solid #d97706';
-                              }
-
-                              return (
-                                <div
-                                  key={quest.id}
-                                  className="absolute flex flex-col items-center"
-                                  style={{
-                                    left: cx,
-                                    top: cy,
-                                    transform: 'translate(-50%, -50%)',
-                                    zIndex: 10,
-                                  }}
-                                >
-                                  {/* Icon ABOVE the button */}
-                                  <div className="mb-1 select-none pointer-events-none" style={{ height: 32, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                                    {isLocked ? (
-                                      /* Heavy Medieval Iron Padlock */
-                                      <svg viewBox="0 0 48 56" width="28" height="33" className="drop-shadow-md">
-                                        {/* Shackle - thick iron */}
-                                        <path d="M12 22 V14 A12 12 0 0 1 36 14 V22" fill="none" stroke="#4b5563" strokeWidth="5" strokeLinecap="round" />
-                                        <path d="M12 22 V14 A12 12 0 0 1 36 14 V22" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" />
-                                        {/* Lock body - heavy iron */}
-                                        <rect x="6" y="20" width="36" height="30" rx="4" fill="#6b7280" stroke="#374151" strokeWidth="2" />
-                                        {/* Iron plate texture */}
-                                        <rect x="8" y="22" width="32" height="26" rx="3" fill="none" stroke="#9ca3af" strokeWidth="1" />
-                                        {/* Rivets */}
-                                        <circle cx="12" cy="26" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
-                                        <circle cx="36" cy="26" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
-                                        <circle cx="12" cy="44" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
-                                        <circle cx="36" cy="44" r="2" fill="#4b5563" stroke="#9ca3af" strokeWidth="0.5" />
-                                        {/* Keyhole */}
-                                        <circle cx="24" cy="33" r="4" fill="#1f2937" />
-                                        <rect x="22.5" y="33" width="3" height="8" rx="1" fill="#1f2937" />
-                                      </svg>
-                                    ) : (
-                                      /* Stage emoji icon floating above */
-                                      <span className="text-2xl drop-shadow-lg animate-float-slow">
-                                        {quest.emoji}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* The 3D Round Button */}
-                                  <button
-                                    onClick={() => {
-                                      haptics('light');
-                                      audioManager.playSFX('click');
-                                      setSelectedMapQuest(quest);
-                                    }}
-                                    className={cn(
-                                      "relative rounded-full transition-transform duration-100 active:translate-y-[3px] active:shadow-none",
-                                      isSelected ? "scale-110" : ""
-                                    )}
-                                    style={{
-                                      width: 64,
-                                      height: 64,
-                                      background: btnGradient,
-                                      border: btnBorder,
-                                      boxShadow: btnShadow,
-                                    }}
-                                  >
-                                    {/* Inner highlight ring */}
-                                    <div className="absolute inset-[4px] rounded-full border border-white/30" />
-                                    {/* Inner dark ring for depth */}
-                                    <div className="absolute inset-[8px] rounded-full border border-black/10" />
-                                  </button>
-
-                                  {/* Stage Number Badge BELOW the button */}
-                                  <div
-                                    className="mt-1 text-[11px] font-black rounded-md px-2.5 py-0.5 shadow-sm select-none"
-                                    style={{
-                                      background: numberBg,
-                                      color: numberText,
-                                      border: numberBorder,
-                                      fontFamily: 'serif',
-                                    }}
-                                  >
-                                    {index + 1}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
+                    {/* Custom Banner overlaying Aethelgard */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none bg-[#fef3c7] border-[3px] border-[#92400e] rounded px-6 py-2 shadow-xl">
+                      <h2 className="text-2xl font-black text-[#92400e] uppercase tracking-widest drop-shadow-md font-serif">
+                        CuizIN Railways
+                      </h2>
                     </div>
 
-                    {/* Compass Decoration */}
-                    <div className="absolute top-3 left-3 z-20 flex flex-col items-center">
-                      <div className="w-11 h-11 bg-amber-100 rounded-full border-[3px] border-amber-900/70 shadow-lg flex items-center justify-center">
-                        <span className="text-lg drop-shadow-sm">🧭</span>
-                      </div>
-                      <div className="mt-1.5 text-[8px] font-black text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full shadow border border-amber-800/20 uppercase tracking-widest">
-                        Empire Map
+                    {/* Scrollable Map Viewport */}
+                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center">
+                      
+                      {/* CSS Railway Track running down the center */}
+                      <div className="railway-track left-1/2 -translate-x-1/2" />
+                      
+                      <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: 150 }}>
+                        {(() => {
+                          const ALL_STATIONS = Array.from({ length: 100 }, (_, i) => {
+                            if (i < ROUTES.length) return ROUTES[i];
+                            const categories = ["General", "Science", "History", "Geography", "Mythology"];
+                            return {
+                              id: `procedural_st_${i + 1}`,
+                              name: `Station ${i + 1}`,
+                              description: `A challenging new stop in ${categories[i % categories.length]} territory.`,
+                              difficulty: i % 5 === 0 ? "Hard" : "Medium",
+                              category: categories[i % categories.length],
+                              rules: "Endless progression",
+                              entryCost: 20 + Math.floor(i / 10) * 10,
+                              rewardType: "bronze",
+                              rewardLabel: "Bronze Chest",
+                              emoji: "🚉",
+                            } as RailwayRoute;
+                          });
+
+                          return ALL_STATIONS.map((station, index) => {
+                            const isLocked = userStars < station.entryCost && index > 0;
+                            const isSelected = selectedRoute?.id === station.id;
+                            const isCleared = clearedStations.includes(station.id) || (index < clearedStations.length);
+                            const isActive = !isLocked && !isCleared && (index === 0 || clearedStations.includes(ALL_STATIONS[index - 1].id));
+                            
+                            // Check if this station is the active one where the train should be parked
+                            const isCurrentTrainStation = isActive || (index === ALL_STATIONS.length - 1 && isCleared);
+
+                            return (
+                              <div
+                                key={station.id}
+                                className="relative flex flex-col items-center justify-center w-full"
+                                style={{ height: 300 }} // 2 stations visible in 600px height
+                              >
+                                {/* Station click area */}
+                                <button
+                                  onClick={() => {
+                                    haptics('light');
+                                    audioManager.playSFX('click');
+                                    setSelectedMapQuest(station as any);
+                                  }}
+                                  className="group relative z-10 flex flex-col items-center focus:outline-none cursor-pointer"
+                                  style={{ width: '100%', height: '100%' }}
+                                >
+                                  {/* The Station Building Illustration */}
+                                  <div className={cn(
+                                    "station-building transition-transform duration-200 mt-auto mb-auto",
+                                    isSelected ? "scale-110 shadow-[0_0_20px_rgba(251,191,36,0.6)] border-amber-500" : "group-hover:scale-105",
+                                    isLocked ? "grayscale opacity-80" : ""
+                                  )}>
+                                    <div className="station-nameboard text-center">
+                                      {station.name}
+                                    </div>
+                                    <div className="platform-line" />
+                                    
+                                    {/* Victorian Signal */}
+                                    <div className="signal-post">
+                                      <div className={cn(
+                                        "signal-lantern",
+                                        isLocked ? "red" : "green"
+                                      )} />
+                                    </div>
+                                  </div>
+                                </button>
+                                
+                                {/* Steam Engine - only visible at the current active station */}
+                                {isCurrentTrainStation && (
+                                  <div className="steam-engine absolute left-1/2 -translate-x-[65px] top-[135px] pointer-events-none z-[20]">
+                                    <div className="engine-boiler" />
+                                    <div className="engine-cab">
+                                      <div className="engine-window" />
+                                    </div>
+                                    <div className="engine-chimney">
+                                      <div className="smoke-puff" style={{ animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
+                                      <div className="smoke-puff" style={{ animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
+                                    </div>
+                                    <div className="engine-wheel engine-wheel-1" />
+                                    <div className="engine-wheel engine-wheel-2" />
+                                    <div className="engine-wheel engine-wheel-3" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1381,46 +1255,46 @@ export default function EmpireQuestsPage() {
                     <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
                     <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
                     
-                    {selectedMapQuest ? (
+                    {selectedRoute ? (
                       <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
                         <div>
                           <div className="flex items-center gap-3 mb-4">
-                            <span className="text-4xl drop-shadow-sm">{selectedMapQuest.emoji}</span>
+                            <span className="text-4xl drop-shadow-sm">{selectedRoute.emoji}</span>
                             <div>
                               <h3 className="font-black text-foreground text-lg tracking-tight leading-tight">
-                                {selectedMapQuest.name}
+                                {selectedRoute.name}
                               </h3>
                               <span className={cn(
                                 "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1.5 inline-block",
-                                selectedMapQuest.difficulty === 'Easy' ? "bg-emerald-100 text-emerald-600 border border-emerald-200" :
-                                selectedMapQuest.difficulty === 'Medium' ? "bg-amber-100 text-amber-600 border border-amber-200" :
-                                selectedMapQuest.difficulty === 'Hard' ? "bg-rose-100 text-rose-600 border border-rose-200" :
+                                selectedRoute.difficulty === 'Easy' ? "bg-emerald-100 text-emerald-600 border border-emerald-200" :
+                                selectedRoute.difficulty === 'Medium' ? "bg-amber-100 text-amber-600 border border-amber-200" :
+                                selectedRoute.difficulty === 'Hard' ? "bg-rose-100 text-rose-600 border border-rose-200" :
                                 "bg-purple-100 text-purple-600 border border-purple-200"
                               )}>
-                                {selectedMapQuest.difficulty}
+                                {selectedRoute.difficulty}
                               </span>
                             </div>
                           </div>
 
                           <div className="space-y-4 text-sm">
                             <p className="text-muted-foreground font-bold leading-relaxed">
-                              "{selectedMapQuest.description}"
+                              "{selectedRoute.description}"
                             </p>
 
                             <div className="bg-muted p-4 rounded-2xl border-2 border-muted-foreground/10 space-y-3">
                               <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Entry Cost</span>
                                 <span className="text-primary font-black">
-                                  {selectedMapQuest.entryCost > 0 ? `${selectedMapQuest.entryCost} Stars` : 'FREE'}
+                                  {selectedRoute.entryCost > 0 ? `${selectedRoute.entryCost} Tickets` : 'FREE'}
                                 </span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Ruleset</span>
-                                <span className="text-foreground font-black text-xs">{selectedMapQuest.rules}</span>
+                                <span className="text-foreground font-black text-xs">{selectedRoute.rules}</span>
                               </div>
                               <div className="flex justify-between items-center border-t-2 border-white/50 pt-3 mt-1">
                                 <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Cargo Reward</span>
-                                <span className="text-secondary font-black text-xs">{selectedMapQuest.rewardLabel}</span>
+                                <span className="text-secondary font-black text-xs">{selectedRoute.rewardLabel}</span>
                               </div>
                             </div>
                           </div>
@@ -1429,25 +1303,25 @@ export default function EmpireQuestsPage() {
                         <div className="space-y-2 pt-4">
                           <Button
                             onClick={() => {
-                              const isLocked = userStars < selectedMapQuest.entryCost;
+                              const isLocked = userStars < selectedRoute.entryCost;
                               if (isLocked) {
                                 toast({
                                   title: "Fog of War Active!",
-                                  description: `You need at least ${selectedMapQuest.entryCost} Stars to launch this campaign.`,
+                                  description: `You need at least ${selectedRoute.entryCost} Tickets to launch this campaign.`,
                                   variant: "destructive"
                                 });
                                 return;
                               }
-                              handleLaunchQuest(selectedMapQuest);
+                              handleLaunchQuest(selectedRoute);
                             }}
                             className={cn(
                               "w-full rounded-xl py-4 font-black uppercase tracking-wide text-base btn-3d",
-                              userStars < selectedMapQuest.entryCost
+                              userStars < selectedRoute.entryCost
                                 ? "bg-slate-200 text-slate-400 shadow-none hover:bg-slate-200 active:scale-100" 
                                 : "btn-3d-primary"
                             )}
                           >
-                            {userStars < selectedMapQuest.entryCost ? `Locked (${selectedMapQuest.entryCost}★)` : 'Embark Quest'}
+                            {userStars < selectedRoute.entryCost ? `Locked (${selectedRoute.entryCost}★)` : 'Depart'}
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -1529,13 +1403,13 @@ export default function EmpireQuestsPage() {
                     </div>
                     <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Bronze Chest</h3>
                     <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
-                      Contains minor Gems & Stars. Socrates/Aryabhata shards.
+                      Contains minor Gems & Tickets. Socrates/Aryabhata shards.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('bronze')}
                       className="w-full btn-3d bg-white border-2 border-primary/20 text-primary font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-wider hover:bg-muted"
                     >
-                      50 Stars
+                      50 Tickets
                     </Button>
                   </div>
 
@@ -1550,13 +1424,13 @@ export default function EmpireQuestsPage() {
                     </div>
                     <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Golden Vault</h3>
                     <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
-                      Excellent value. Medium gems, stars. High chance of Chanakya shards.
+                      Excellent value. Medium gems, Tickets. High chance of Chanakya shards.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('gold')}
                       className="w-full btn-3d btn-3d-primary font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-widest"
                     >
-                      150 Stars
+                      150 Tickets
                     </Button>
                   </div>
 
@@ -1567,13 +1441,13 @@ export default function EmpireQuestsPage() {
                     </div>
                     <h3 className="font-black text-foreground text-lg tracking-tight mb-1">Emperor's Tomb</h3>
                     <p className="text-muted-foreground font-bold text-sm leading-relaxed mb-6 max-w-[200px]">
-                      Legendary drops. Major Gems & Stars. High shards count for any hero.
+                      Legendary drops. Major Gems & Tickets. High shards count for any hero.
                     </p>
                     <Button 
                       onClick={() => handleBuyChest('legendary')}
                       className="w-full btn-3d bg-white border-2 border-purple-300 text-purple-700 font-black px-4 py-2.5 rounded-xl text-sm uppercase tracking-wider hover:bg-purple-50"
                     >
-                      400 Stars
+                      400 Tickets
                     </Button>
                   </div>
                 </div>
