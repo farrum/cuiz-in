@@ -19,7 +19,7 @@ const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
     label: 'Easy', 
     timer: 45, 
     multiplier: 1, 
-    color: 'text-accent',
+    color: 'text-white',
     icon: <Brain className="w-5 h-5" />,
     description: 'Relaxed pace, perfect for learning'
   },
@@ -101,7 +101,7 @@ const QuizDifficultySelector: React.FC<QuizDifficultySelectorProps> = ({
                 )}>
                   {cfg.label}
                 </div>
-                <div className="text-xs opacity-70">{cfg.timer}s per question</div>
+                <div className={cn("text-xs opacity-90", selectedDifficulty === key ? "" : "text-white")}>{cfg.timer}s per question</div>
               </div>
             </div>
             <div className="text-right">
