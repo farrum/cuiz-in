@@ -1136,7 +1136,7 @@ export default function EmpireQuestsPage() {
                   <div 
                     className="lg:col-span-2 relative rounded-2xl overflow-hidden h-full border-[8px] border-amber-900/70"
                     style={{
-                      backgroundImage: "url('/steampunk_map_bg.jpg')",
+                      backgroundImage: "url('/railway_board_bg.jpg')",
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       boxShadow: 'inset 0 0 40px rgba(0,0,0,0.4), 0 12px 30px rgba(0,0,0,0.35)',
@@ -1209,7 +1209,7 @@ export default function EmpireQuestsPage() {
                                     onClick={() => {
                                       haptics('light');
                                       audioManager.playSFX('click');
-                                      setSelectedRoute(station as any);
+                                      setSelectedMapQuest(station as any);
                                     }}
                                   >
                                     {/* Left Building */}
