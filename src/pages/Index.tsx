@@ -78,7 +78,7 @@ const Index: React.FC = () => {
   };
   
   return (
-    <PageLayout className="stone-wall" containerClassName="pt-4 pb-20 md:pb-8">
+    <PageLayout className="stone-wall glass-diamond-bg" containerClassName="pt-4 pb-20 md:pb-8">
       <SEO 
         title="CuizIN - Play Quiz & Learn" 
         description="Play quizzes, earn gems, and climb the leaderboard. CuizIN is a completely free quiz platform where players can test their knowledge and compete."
