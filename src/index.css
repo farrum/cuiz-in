@@ -671,46 +671,52 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 80px;
+  width: 90px;
   background-image: url('/track_asset.png');
   background-repeat: repeat-y;
-  background-size: cover;
+  background-size: 90px auto;
   background-position: center;
   z-index: 1;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  /* The blend mode helps perfectly isolate the white background of the image */
-  mix-blend-mode: multiply;
+  box-shadow:
+    inset 0 0 12px rgba(0,0,0,0.6),
+    0 0 20px rgba(0,0,0,0.5);
+  border-radius: 4px;
 }
 
 /* Station Layout */
 .station-container {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
   align-items: center;
-  justify-content: center;
+  justify-items: center;
   width: 100%;
   height: 300px;
 }
 
 /* Station Building Side Images */
 .station-building-img {
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: center;
-  position: absolute;
-  mix-blend-mode: multiply;
+  background-position: bottom center;
+  position: relative;
   transition: transform 0.2s;
   z-index: 10;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.55));
 }
 .station-building-left {
-  right: calc(50% + 40px);
+  grid-column: 1;
+  justify-self: end;
+  margin-right: -8px;
   background-image: url('/station_asset.png');
   transform: scaleX(-1); /* Flip for the left side to face inwards */
 }
 .station-building-right {
-  left: calc(50% + 40px);
+  grid-column: 3;
+  justify-self: start;
+  margin-left: -8px;
   background-image: url('/station_asset.png');
 }
 .station-container:hover .station-building-img {
@@ -719,30 +725,34 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 .station-container:hover .station-building-left {
   transform: scaleX(-1) scale(1.05);
 }
-.station-locked .station-building-img {
-  filter: grayscale(100%) opacity(70%);
+.station-locked {
+  filter: grayscale(100%) brightness(0.7);
 }
 
 /* Wooden Nameboard spanning track */
 .station-wooden-plaque {
   position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, 85px);
   z-index: 15;
   background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
   border: 4px solid #451a03;
   box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.2);
   border-radius: 8px;
-  padding: 8px 32px;
+  padding: 8px 28px;
   text-align: center;
-  transform: translateY(60px); /* Position it slightly below the buildings */
+  white-space: nowrap;
 }
 .station-wooden-plaque h3 {
   color: #fef3c7;
   font-family: 'Georgia', serif;
   font-weight: 900;
-  font-size: 18px;
+  font-size: 16px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  margin: 0;
 }
 .station-locked .station-wooden-plaque {
   filter: grayscale(80%);
@@ -750,17 +760,17 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 
 /* Semaphore Signal */
 .semaphore-signal-img {
-  width: 60px;
-  height: 120px;
+  width: 70px;
+  height: 140px;
   background-image: url('/signal_asset.png');
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: bottom center;
   position: absolute;
-  mix-blend-mode: multiply;
-  right: calc(50% + 140px); /* Place to the left of the left building */
-  bottom: 60px;
+  left: calc(50% - 45px - 70px); /* Just left of the track (45px = half track width) */
+  bottom: 40px;
   z-index: 20;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6));
 }
 
 /* Train Root Animation */
@@ -768,13 +778,12 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 100px;
+  width: 110px;
   height: 150px;
   background-image: url('/train_asset.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  mix-blend-mode: multiply;
   z-index: 30;
   transition: top 2.5s cubic-bezier(0.25, 0.1, 0.25, 1);
   filter: drop-shadow(0 20px 20px rgba(0,0,0,0.6));
