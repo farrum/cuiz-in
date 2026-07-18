@@ -341,13 +341,13 @@ export default function EmpireQuestsPage() {
       // Fetch points (gems) and Tickets
       const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('gems:points, Tickets')
+        .select('gems:points, stars')
         .eq('id', session.user.id)
         .maybeSingle();
 
       if (profile) {
         let currentGems = profile.gems || 0;
-        let currentStars = profile.Tickets || 0;
+        let currentStars = profile.stars || 0;
 
         // Auto onboarding grant if user is completely empty
         if (currentGems === 0 && currentStars === 0) {
@@ -355,7 +355,7 @@ export default function EmpireQuestsPage() {
           currentStars = 20; // Enough to buy a bronze chest or launch Persia campaign
           await (supabase as any)
             .from('profiles')
-            .update({ points: 50, Tickets: 20 })
+            .update({ points: 50, stars: 20 })
             .eq('id', session.user.id);
           
           // Inject 10 Socrates shards so they can recruit him immediately

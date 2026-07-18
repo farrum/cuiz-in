@@ -240,54 +240,17 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
                 ))}
               </div>
 
-              {/* ---- Chest body ---- */}
-              <div className="relative">
-                {/* Lid (top) */}
-                <div className={cn(
-                  "w-40 h-14 mx-auto rounded-t-2xl bg-gradient-to-b relative overflow-hidden",
-                  "border-2 border-b-0",
-                  tier.lidGrad, tier.borderGlow,
-                  "group-hover:brightness-110 transition-all duration-300",
-                )}>
-                  {/* Lid iron band */}
-                  <div className={cn("absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2", tier.bandColor)} />
-                  {/* Lid rivets */}
-                  <div className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full shadow-inner", tier.rivetColor)} />
-                  <div className={cn("absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full shadow-inner", tier.rivetColor)} />
-                  {/* Lid highlight */}
-                  <div className="absolute inset-x-4 top-1 h-2 bg-white/10 rounded-full" />
-                </div>
-
-                {/* Body (bottom) */}
-                <div className={cn(
-                  "w-44 h-24 mx-auto rounded-b-xl bg-gradient-to-b relative overflow-hidden",
-                  "border-2 border-t-0",
-                  tier.bodyGrad, tier.borderGlow,
-                  "group-hover:brightness-110 transition-all duration-300",
-                )} style={{ marginTop: '-1px' }}>
-                  {/* Horizontal iron bands */}
-                  <div className={cn("absolute inset-x-0 top-3 h-1", tier.bandColor)} />
-                  <div className={cn("absolute inset-x-0 bottom-3 h-1", tier.bandColor)} />
-                  {/* Vertical band */}
-                  <div className={cn("absolute left-1/2 -translate-x-1/2 inset-y-0 w-1.5", tier.bandColor)} />
-                  {/* Corner rivets */}
-                  {[
-                    'top-1.5 left-2', 'top-1.5 right-2',
-                    'bottom-1.5 left-2', 'bottom-1.5 right-2',
-                    'top-1.5 left-1/2 -translate-x-1/2',
-                    'bottom-1.5 left-1/2 -translate-x-1/2',
-                  ].map((pos, i) => (
-                    <div key={i} className={cn("absolute w-2 h-2 rounded-full shadow-inner", pos, tier.rivetColor)} />
-                  ))}
-                  {/* Keyhole / lock */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <Lock className={cn("w-6 h-6 drop-shadow-md animate-pulse", tier.lockColor)} />
-                  </div>
-                  {/* Wood grain subtle */}
-                  <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
-                    style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.3) 8px, rgba(255,255,255,0.3) 9px)' }}
-                  />
-                </div>
+              {/* ---- Chest Image ---- */}
+              <div className="relative flex flex-col items-center">
+                <img 
+                  src="/chest_asset.jpg" 
+                  alt="Mystery Chest"
+                  className={cn(
+                    "w-48 h-48 object-contain drop-shadow-2xl",
+                    "group-hover:scale-105 group-hover:brightness-110 transition-all duration-300",
+                    tier.borderGlow
+                  )}
+                />
 
                 {/* Shadow under chest */}
                 <div className="w-36 h-3 mx-auto rounded-full bg-black/40 blur-sm mt-1" />
