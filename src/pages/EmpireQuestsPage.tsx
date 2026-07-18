@@ -1154,13 +1154,22 @@ export default function EmpireQuestsPage() {
                       </h2>
                     </div>
 
-                    {/* Scrollable Map Viewport */}
-                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center">
-                      
-                      {/* 3D Railway Track Texture */}
-                      <div className="railway-track-bg left-1/2 -translate-x-1/2" />
-                      
-                      <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: 150 }}>
+                     {/* FIXED Railway Track (does not scroll with stations) */}
+                     <div className="railway-track-bg left-1/2 -translate-x-1/2 z-[3]" style={{ position: 'absolute' }} />
+
+                     {/* FIXED Train — pinned to the "station stop" line in the viewport */}
+                     {(() => {
+                       // computed inside the IIFE below via ref; render placeholder here
+                       return null;
+                     })()}
+
+                     {/* Scrollable Map Viewport */}
+                     <div
+                       ref={railwayScrollRef}
+                       className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center"
+                       onScroll={handleRailwayScroll}
+                     >
+                       <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: RAILWAY_PAD_TOP }}>
                         {(() => {
                           const ALL_STATIONS = Array.from({ length: 100 }, (_, i) => {
                             if (i < ROUTES.length) return ROUTES[i];
@@ -1212,9 +1221,6 @@ export default function EmpireQuestsPage() {
                                       setSelectedMapQuest(station as any);
                                     }}
                                   >
-                                    {/* Left Building */}
-                                    <div className="station-building-img station-building-left" />
-                                    
                                     {/* Right Building */}
                                     <div className="station-building-img station-building-right" />
                                     
@@ -1234,22 +1240,19 @@ export default function EmpireQuestsPage() {
                                   </div>
                                 );
                               })}
-
-                              {/* 🚂 THE TRAIN - Absolute positioned for smooth animation */}
-                              <div 
-                                className="train-root train-moving"
-                                style={{
-                                  top: `${activeIndex * 300 + 150 - 75}px` // 300px per station, 150px padding-top, 75px half-height
-                                }}
-                              >
-                                {/* Smoke puffs */}
-                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
-                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
-                              </div>
                             </>
                           );
                         })()}
                       </div>
+                    </div>
+
+                    {/* 🚂 THE TRAIN — fixed to the "stop line" in the map viewport */}
+                    <div
+                      className={cn("train-root", trainHidden && "train-hidden")}
+                      style={{ top: `${RAILWAY_STOP_Y - 75}px` }}
+                    >
+                      <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
+                      <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
                     </div>
                   </div>
 
