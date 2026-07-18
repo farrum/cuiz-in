@@ -212,6 +212,14 @@ export default function EmpireQuestsPage() {
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
   const [clearedStations, setCompletedRoutes] = useState<string[]>([]);
 
+  // Railway map — fixed track/train, scrolling stations
+  const railwayScrollRef = useRef<HTMLDivElement | null>(null);
+  const [trainHidden, setTrainHidden] = useState(false);
+  const RAILWAY_PAD_TOP = 150;
+  const RAILWAY_STATION_H = 300;
+  const RAILWAY_STOP_Y = 260; // y-pixel within the map viewport where the train "stops"
+  const isProgrammaticScrollRef = useRef(false);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
