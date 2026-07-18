@@ -212,6 +212,57 @@ export default function EmpireQuestsPage() {
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
   const [clearedStations, setCompletedRoutes] = useState<string[]>([]);
 
+  // Railway map — fixed track/train, scrolling stations
+  const railwayScrollRef = useRef<HTMLDivElement | null>(null);
+  const [trainHidden, setTrainHidden] = useState(false);
+  const RAILWAY_PAD_TOP = 150;
+  const RAILWAY_STATION_H = 300;
+  const RAILWAY_STOP_Y = 260; // y-pixel within the map viewport where the train "stops"
+  const isProgrammaticScrollRef = useRef(false);
+
+  // Derive the active station index (first non-locked, non-cleared)
+  const railwayActiveIndex = React.useMemo(() => {
+    let idx = 0;
+    const total = 100;
+    for (let i = 0; i < total; i++) {
+      const entryCost = i < ROUTES.length ? ROUTES[i].entryCost : 20 + Math.floor(i / 10) * 10;
+      const stationId = i < ROUTES.length ? ROUTES[i].id : `procedural_st_${i + 1}`;
+      const isLocked = userStars < entryCost && i > 0;
+      const isCleared = clearedStations.includes(stationId) || (i < clearedStations.length);
+      const prevId = i > 0 ? (i - 1 < ROUTES.length ? ROUTES[i - 1].id : `procedural_st_${i}`) : null;
+      const isActive = !isLocked && !isCleared && (i === 0 || clearedStations.includes(prevId as string));
+      if (isActive) { idx = i; break; }
+      if (isCleared && i === total - 1) idx = i;
+    }
+    return idx;
+  }, [clearedStations, userStars]);
+
+  const railwayTargetScroll = React.useCallback(
+    (idx: number) => RAILWAY_PAD_TOP + idx * RAILWAY_STATION_H + RAILWAY_STATION_H / 2 - RAILWAY_STOP_Y,
+    []
+  );
+
+  // When active station changes, animate the container so the station arrives under the train
+  useEffect(() => {
+    const el = railwayScrollRef.current;
+    if (!el) return;
+    const target = Math.max(0, railwayTargetScroll(railwayActiveIndex));
+    isProgrammaticScrollRef.current = true;
+    setTrainHidden(false);
+    el.scrollTo({ top: target, behavior: 'smooth' });
+    const done = window.setTimeout(() => { isProgrammaticScrollRef.current = false; }, 1200);
+    return () => window.clearTimeout(done);
+  }, [railwayActiveIndex, railwayTargetScroll]);
+
+  const handleRailwayScroll = React.useCallback(() => {
+    const el = railwayScrollRef.current;
+    if (!el) return;
+    if (isProgrammaticScrollRef.current) return;
+    const target = railwayTargetScroll(railwayActiveIndex);
+    const delta = Math.abs(el.scrollTop - target);
+    setTrainHidden(delta > 40);
+  }, [railwayActiveIndex, railwayTargetScroll]);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
@@ -1154,13 +1205,22 @@ export default function EmpireQuestsPage() {
                       </h2>
                     </div>
 
-                    {/* Scrollable Map Viewport */}
-                    <div className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center">
-                      
-                      {/* 3D Railway Track Texture */}
-                      <div className="railway-track-bg left-1/2 -translate-x-1/2" />
-                      
-                      <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: 150 }}>
+                     {/* FIXED Railway Track (does not scroll with stations) */}
+                     <div className="railway-track-bg left-1/2 -translate-x-1/2 z-[3]" style={{ position: 'absolute' }} />
+
+                     {/* FIXED Train — pinned to the "station stop" line in the viewport */}
+                     {(() => {
+                       // computed inside the IIFE below via ref; render placeholder here
+                       return null;
+                     })()}
+
+                     {/* Scrollable Map Viewport */}
+                     <div
+                       ref={railwayScrollRef}
+                       className="w-full h-full overflow-y-auto overflow-x-hidden relative z-[2] custom-scrollbar scroll-smooth flex flex-col items-center"
+                       onScroll={handleRailwayScroll}
+                     >
+                       <div className="flex flex-col items-center w-full relative z-[5]" style={{ paddingBottom: 150, paddingTop: RAILWAY_PAD_TOP }}>
                         {(() => {
                           const ALL_STATIONS = Array.from({ length: 100 }, (_, i) => {
                             if (i < ROUTES.length) return ROUTES[i];
@@ -1212,9 +1272,6 @@ export default function EmpireQuestsPage() {
                                       setSelectedMapQuest(station as any);
                                     }}
                                   >
-                                    {/* Left Building */}
-                                    <div className="station-building-img station-building-left" />
-                                    
                                     {/* Right Building */}
                                     <div className="station-building-img station-building-right" />
                                     
@@ -1234,22 +1291,19 @@ export default function EmpireQuestsPage() {
                                   </div>
                                 );
                               })}
-
-                              {/* 🚂 THE TRAIN - Absolute positioned for smooth animation */}
-                              <div 
-                                className="train-root train-moving"
-                                style={{
-                                  top: `${activeIndex * 300 + 150 - 75}px` // 300px per station, 150px padding-top, 75px half-height
-                                }}
-                              >
-                                {/* Smoke puffs */}
-                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
-                                <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
-                              </div>
                             </>
                           );
                         })()}
                       </div>
+                    </div>
+
+                    {/* 🚂 THE TRAIN — fixed to the "stop line" in the map viewport */}
+                    <div
+                      className={cn("train-root", trainHidden && "train-hidden")}
+                      style={{ top: `${RAILWAY_STOP_Y - 75}px` }}
+                    >
+                      <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
+                      <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />
                     </div>
                   </div>
 
