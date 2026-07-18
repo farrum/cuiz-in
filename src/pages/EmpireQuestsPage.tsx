@@ -821,7 +821,7 @@ export default function EmpireQuestsPage() {
       haptics('error');
       toast({
         title: "Train Derailed",
-        description: "Your army retreated. Upgrade your heroes and try again!",
+        description: "The train couldn't reach the next station. Upgrade your crew and try again!",
         variant: "destructive"
       });
     }
