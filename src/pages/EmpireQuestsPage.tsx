@@ -220,6 +220,49 @@ export default function EmpireQuestsPage() {
   const RAILWAY_STOP_Y = 260; // y-pixel within the map viewport where the train "stops"
   const isProgrammaticScrollRef = useRef(false);
 
+  // Derive the active station index (first non-locked, non-cleared)
+  const railwayActiveIndex = React.useMemo(() => {
+    let idx = 0;
+    const total = 100;
+    for (let i = 0; i < total; i++) {
+      const entryCost = i < ROUTES.length ? ROUTES[i].entryCost : 20 + Math.floor(i / 10) * 10;
+      const stationId = i < ROUTES.length ? ROUTES[i].id : `procedural_st_${i + 1}`;
+      const isLocked = userStars < entryCost && i > 0;
+      const isCleared = clearedStations.includes(stationId) || (i < clearedStations.length);
+      const prevId = i > 0 ? (i - 1 < ROUTES.length ? ROUTES[i - 1].id : `procedural_st_${i}`) : null;
+      const isActive = !isLocked && !isCleared && (i === 0 || clearedStations.includes(prevId as string));
+      if (isActive) { idx = i; break; }
+      if (isCleared && i === total - 1) idx = i;
+    }
+    return idx;
+  }, [clearedStations, userStars]);
+
+  const railwayTargetScroll = React.useCallback(
+    (idx: number) => RAILWAY_PAD_TOP + idx * RAILWAY_STATION_H + RAILWAY_STATION_H / 2 - RAILWAY_STOP_Y,
+    []
+  );
+
+  // When active station changes, animate the container so the station arrives under the train
+  useEffect(() => {
+    const el = railwayScrollRef.current;
+    if (!el) return;
+    const target = Math.max(0, railwayTargetScroll(railwayActiveIndex));
+    isProgrammaticScrollRef.current = true;
+    setTrainHidden(false);
+    el.scrollTo({ top: target, behavior: 'smooth' });
+    const done = window.setTimeout(() => { isProgrammaticScrollRef.current = false; }, 1200);
+    return () => window.clearTimeout(done);
+  }, [railwayActiveIndex, railwayTargetScroll]);
+
+  const handleRailwayScroll = React.useCallback(() => {
+    const el = railwayScrollRef.current;
+    if (!el) return;
+    if (isProgrammaticScrollRef.current) return;
+    const target = railwayTargetScroll(railwayActiveIndex);
+    const delta = Math.abs(el.scrollTop - target);
+    setTrainHidden(delta > 40);
+  }, [railwayActiveIndex, railwayTargetScroll]);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
