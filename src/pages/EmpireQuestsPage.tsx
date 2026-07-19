@@ -43,7 +43,7 @@ const ROUTES: RailwayRoute[] = [
     description: "The journey begins! A bustling metropolis. Answer questions rapidly to catch the express train.",
     difficulty: "Easy",
     category: "General",
-    rules: "Time Attack: 6 seconds per question",
+    rules: "Time Attack: 12 seconds per question",
     entryCost: 0,
     rewardType: "bronze",
     rewardLabel: "Bronze Chest",
@@ -216,8 +216,8 @@ export default function EmpireQuestsPage() {
   const railwayScrollRef = useRef<HTMLDivElement | null>(null);
   const [trainHidden, setTrainHidden] = useState(false);
   const RAILWAY_PAD_TOP = 150;
-  const RAILWAY_STATION_H = 300;
-  const RAILWAY_STOP_Y = 260; // y-pixel within the map viewport where the train "stops"
+  const RAILWAY_STATION_H = 220;
+  const RAILWAY_STOP_Y = 180; // y-pixel within the map viewport where the train "stops"
   const isProgrammaticScrollRef = useRef(false);
 
   // Derive the active station index (first non-locked, non-cleared)
@@ -553,7 +553,7 @@ export default function EmpireQuestsPage() {
 
   const startTimer = (Station: RailwayRoute) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const startVal = 15;
+    const startVal = 12;
     setTimer(startVal);
 
     timerRef.current = setInterval(() => {
@@ -1169,7 +1169,7 @@ export default function EmpireQuestsPage() {
             {activeTab === 'quests' && (
               <div className="space-y-6">
                 <div className="text-center max-w-md mx-auto mb-6">
-                  <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Route Map</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-widest text-amber-800">Route Map</h2>
                   <p className="text-sm font-bold text-muted-foreground mt-1">Journey through endless stages. Unlock chests and heroes.</p>
                 </div>
 
@@ -1300,7 +1300,7 @@ export default function EmpireQuestsPage() {
                     {/* 🚂 THE TRAIN — fixed to the "stop line" in the map viewport */}
                     <div
                       className={cn("train-root", trainHidden && "train-hidden")}
-                      style={{ top: `${RAILWAY_STOP_Y - 75}px` }}
+                      style={{ top: `${RAILWAY_STOP_Y - 50}px` }}
                     >
                       <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1s infinite linear', animationDelay: '0s' }} />
                       <div className="smoke-puff" style={{ top: 20, left: 45, animation: 'smoke-rise 1.2s infinite linear', animationDelay: '0.4s' }} />

@@ -671,10 +671,10 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 90px;
+  width: 60px;
   background-image: url('/track_asset.png');
   background-repeat: repeat-y;
-  background-size: 90px auto;
+  background-size: 60px auto;
   background-position: center;
   z-index: 1;
   box-shadow:
@@ -687,17 +687,17 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 .station-container {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 90px 1fr;
+  grid-template-columns: 1fr 60px 1fr;
   align-items: center;
   justify-items: center;
   width: 100%;
-  height: 300px;
+  height: 220px;
 }
 
 /* Station Building Side Images */
 .station-building-img {
-  width: 160px;
-  height: 160px;
+  width: 110px;
+  height: 110px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom center;
@@ -724,7 +724,7 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, 85px);
+  transform: translate(-50%, 65px);
   z-index: 15;
   background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
   border: 4px solid #451a03;
@@ -750,15 +750,15 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 
 /* Semaphore Signal */
 .semaphore-signal-img {
-  width: 70px;
-  height: 140px;
+  width: 50px;
+  height: 100px;
   background-image: url('/signal_asset.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom center;
   position: absolute;
-  left: calc(50% - 45px - 70px); /* Just left of the track (45px = half track width) */
-  bottom: 40px;
+  left: calc(50% - 30px - 50px); /* Just left of the track (30px = half track width) */
+  bottom: 25px;
   z-index: 20;
   filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6));
 }
@@ -768,8 +768,8 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 110px;
-  height: 150px;
+  width: 75px;
+  height: 100px;
   background-image: url('/train_asset.png');
   background-size: contain;
   background-repeat: no-repeat;

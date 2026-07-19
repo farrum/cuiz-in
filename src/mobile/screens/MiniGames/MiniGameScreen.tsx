@@ -265,7 +265,7 @@ export default function MiniGameScreen() {
         >
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
-        <h1 className="font-black text-xl text-primary tracking-tight">
+        <h1 className="font-black text-xl text-amber-700 tracking-tight">
           {current?.title || 'Tavern Games'}
         </h1>
         <div className="w-9" />
