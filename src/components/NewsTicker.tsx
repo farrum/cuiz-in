@@ -93,7 +93,7 @@ const NewsTicker: React.FC<NewsTickerProps> = ({
   if (messages.length === 0) return null;
 
   return (
-    <div className={`bg-primary/10 text-primary py-2 px-4 ${className}`}>
+    <div className={`bg-amber-100/50 text-amber-900 py-2 px-4 ${className}`}>
       <div className="container max-w-7xl flex items-center mx-0">
         <Megaphone className="w-4 h-4 mr-2 flex-shrink-0" />
         <div className="overflow-hidden relative whitespace-nowrap">

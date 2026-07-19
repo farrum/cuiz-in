@@ -148,8 +148,8 @@ const Header: React.FC = () => {
               loading="eager"
               className="w-9 h-9 rounded-xl shadow-lg group-hover:scale-105 transition-transform"
             />
-            <span className="text-xl font-black font-serif tracking-widest text-slate-800 dark:text-white">
-              CUIZ<span className="text-yellow-500">IN</span>
+            <span className="text-xl font-black font-serif tracking-widest text-slate-800 dark:text-white flex items-center">
+              CUIZ<span className="bg-green-600 text-white px-1 rounded-sm ml-[1px]">IN</span>
             </span>
           </Link>
 
@@ -163,8 +163,8 @@ const Header: React.FC = () => {
                 className={cn(
                   "px-3 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider",
                   location.pathname === item.path
-                    ? "text-yellow-500 bg-yellow-500/10 border-b-2 border-yellow-500 rounded-b-none"
-                    : "text-white hover:text-white hover:bg-slate-900/40"
+                    ? "text-amber-700 bg-amber-500/20 border-b-2 border-amber-700 rounded-b-none"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/50"
                 )}
               >
                 {item.label}

@@ -847,8 +847,8 @@ export default function EmpireQuestsPage() {
             <div className="flex items-center gap-3">
               <Landmark className="w-6 h-6 text-yellow-500 fill-yellow-500/10" />
               <div>
-                <h1 className="text-lg font-black tracking-tight text-white uppercase">Railway Journey</h1>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">War Room & Council Chambers</p>
+                <h1 className="text-lg font-black tracking-tight text-amber-900 uppercase">Railway Journey</h1>
+                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">War Room & Council Chambers</p>
               </div>
             </div>
 
