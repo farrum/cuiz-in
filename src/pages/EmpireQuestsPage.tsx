@@ -225,17 +225,16 @@ export default function EmpireQuestsPage() {
     let idx = 0;
     const total = 100;
     for (let i = 0; i < total; i++) {
-      const entryCost = i < ROUTES.length ? ROUTES[i].entryCost : 20 + Math.floor(i / 10) * 10;
       const stationId = i < ROUTES.length ? ROUTES[i].id : `procedural_st_${i + 1}`;
-      const isLocked = userStars < entryCost && i > 0;
-      const isCleared = clearedStations.includes(stationId) || (i < clearedStations.length);
-      const prevId = i > 0 ? (i - 1 < ROUTES.length ? ROUTES[i - 1].id : `procedural_st_${i}`) : null;
-      const isActive = !isLocked && !isCleared && (i === 0 || clearedStations.includes(prevId as string));
-      if (isActive) { idx = i; break; }
-      if (isCleared && i === total - 1) idx = i;
+      const isCleared = clearedStations.includes(stationId) || i < clearedStations.length;
+      if (!isCleared) {
+        idx = i;
+        break;
+      }
+      if (i === total - 1) idx = i;
     }
     return idx;
-  }, [clearedStations, userStars]);
+  }, [clearedStations]);
 
   const railwayTargetScroll = React.useCallback(
     (idx: number) => RAILWAY_PAD_TOP + idx * RAILWAY_STATION_H + RAILWAY_STATION_H / 2 - RAILWAY_STOP_Y,
@@ -1242,14 +1241,12 @@ export default function EmpireQuestsPage() {
                           // Determine active station for train positioning
                           let activeIndex = 0;
                           for (let i = 0; i < ALL_STATIONS.length; i++) {
-                            const isLocked = userStars < ALL_STATIONS[i].entryCost && i > 0;
-                            const isCleared = clearedStations.includes(ALL_STATIONS[i].id) || (i < clearedStations.length);
-                            const isActive = !isLocked && !isCleared && (i === 0 || clearedStations.includes(ALL_STATIONS[i - 1].id));
-                            if (isActive) {
+                            const isCleared = clearedStations.includes(ALL_STATIONS[i].id) || i < clearedStations.length;
+                            if (!isCleared) {
                               activeIndex = i;
                               break;
                             }
-                            if (isCleared && i === ALL_STATIONS.length - 1) {
+                            if (i === ALL_STATIONS.length - 1) {
                               activeIndex = i;
                             }
                           }
