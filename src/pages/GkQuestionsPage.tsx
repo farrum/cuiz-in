@@ -258,7 +258,7 @@ const GkQuestionsPage: React.FC = () => {
                               <p className="text-sm text-muted-foreground mt-2">{q.explanation}</p>
                             )}
                             <Link
-                              to={`/questions/${createSlug(q.question)}`}
+                              to={`/quiz/question/${q.id}/${createSlug(q.question)}`}
                               className="text-sm text-primary underline mt-3 inline-block"
                             >
                               Read the full explanation for this question
