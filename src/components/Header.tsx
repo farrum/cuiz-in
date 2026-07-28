@@ -141,7 +141,7 @@ const Header: React.FC = () => {
           <Link to="/" className="flex items-center gap-2 group" aria-label="CuizIN Home - Go to homepage">
             <img
               src="/cuizin-logo.png"
-              alt="CuizIN logo"
+              alt="CuizIN - Quiz and Learning Platform Logo"
               width={36}
               height={36}
               fetchPriority="high"
@@ -206,8 +206,10 @@ const Header: React.FC = () => {
                 setBgmEnabled(audioManager.isBgmEnabled());
               }}
               title={bgmEnabled ? "Mute Background Music" : "Unmute Background Music"}
+              aria-label={bgmEnabled ? "Mute background music" : "Unmute background music"}
+              aria-pressed={!bgmEnabled}
             >
-              {bgmEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-red-500" />}
+              {bgmEnabled ? <Volume2 className="w-5 h-5" aria-hidden="true" /> : <VolumeX className="w-5 h-5 text-red-500" aria-hidden="true" />}
             </Button>
 
             {/* Play Now CTA - always visible */}
