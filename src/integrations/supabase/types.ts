@@ -1450,6 +1450,16 @@ export type Database = {
           unique_views: number
         }[]
       }
+      get_gk_hub_questions: {
+        Args: { p_per_category?: number }
+        Returns: {
+          category: string
+          correct_answer: string
+          explanation: string
+          id: string
+          question: string
+        }[]
+      }
       get_hourly_wordle: {
         Args: never
         Returns: {
@@ -1467,6 +1477,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_quiz_question_count: { Args: never; Returns: number }
       has_user_been_active_in_days: {
         Args: { p_days: number; p_user_id: string }
         Returns: boolean

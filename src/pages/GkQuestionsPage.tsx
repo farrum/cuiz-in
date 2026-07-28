@@ -99,32 +99,26 @@ const GkQuestionsPage: React.FC = () => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const allCategories = SECTIONS.flatMap((s) => s.categories);
-
-        const [{ data, error }, { count }] = await Promise.all([
-          supabase
-            .from('quiz_questions')
-            .select('id, question, correct_answer, explanation, category')
-            .in('category', allCategories)
-            .limit(600),
-          supabase.from('quiz_questions').select('id', { count: 'exact', head: true }),
+        const [{ data, error }, { data: countData }] = await Promise.all([
+          (supabase as any).rpc('get_gk_hub_questions', { p_per_category: PER_SECTION }),
+          (supabase as any).rpc('get_quiz_question_count'),
         ]);
 
         if (error) throw error;
         if (cancelled) return;
 
         const grouped: Record<string, GkQuestion[]> = {};
-        (data || []).forEach((q) => {
+        ((data || []) as GkQuestion[]).forEach((q) => {
           const section = SECTIONS.find((s) => s.categories.includes(q.category));
           if (!section) return;
           grouped[section.slug] = grouped[section.slug] || [];
           if (grouped[section.slug].length < PER_SECTION) {
-            grouped[section.slug].push(q as GkQuestion);
+            grouped[section.slug].push(q);
           }
         });
 
         setQuestionsByCategory(grouped);
-        setTotalCount(count || 0);
+        setTotalCount(Number(countData) || 0);
       } catch (err) {
         console.error('Error loading GK questions:', err);
       } finally {
@@ -237,7 +231,7 @@ const GkQuestionsPage: React.FC = () => {
           availableSections.map((section, sectionIndex) => {
             const items = questionsByCategory[section.slug] || [];
             return (
-              <React.Fragment key={section.slug}>
+              <div key={section.slug}>
                 <section id={section.slug} className="mb-10 scroll-mt-24">
                   <h2 className="text-2xl font-bold mb-2">{section.title}</h2>
                   <p className="text-muted-foreground mb-5">{section.blurb}</p>
@@ -281,7 +275,7 @@ const GkQuestionsPage: React.FC = () => {
                     <SimpleAdBanner position="content" slotId={`gk-questions-${section.slug}`} />
                   </div>
                 )}
-              </React.Fragment>
+              </div>
             );
           })
         )}
