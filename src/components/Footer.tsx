@@ -137,6 +137,12 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/gk-questions" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Search className="w-4 h-4 mr-2" />
+                  GK Questions with Answers
+                </Link>
+              </li>
+              <li>
                 <Link to="/topics" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Compass className="w-4 h-4 mr-2" />
                   Quiz Topics
