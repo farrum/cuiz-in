@@ -20,7 +20,7 @@ const MobileBottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label="Primary mobile navigation">
       {/* Backdrop blur */}
       <div className="absolute inset-0 bg-card/80 backdrop-blur-lg border-t border-border" />
       
@@ -33,6 +33,8 @@ const MobileBottomNav: React.FC = () => {
             <Link
               key={item.path}
               to={item.path}
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex flex-col items-center justify-center min-w-[64px] py-1 px-3 rounded-xl transition-all",
                 isActive && !isPrimary && "text-primary",
@@ -47,7 +49,7 @@ const MobileBottomNav: React.FC = () => {
                     "gradient-primary text-white",
                     isActive && "scale-110"
                   )}>
-                    <item.icon className="w-6 h-6" />
+                    <item.icon className="w-6 h-6" aria-hidden="true" />
                   </div>
                   <span className={cn(
                     "text-xs mt-1 font-medium",
@@ -61,7 +63,7 @@ const MobileBottomNav: React.FC = () => {
                   <item.icon className={cn(
                     "w-5 h-5 mb-1 transition-transform",
                     isActive && "scale-110"
-                  )} />
+                  )} aria-hidden="true" />
                   <span className={cn(
                     "text-xs font-medium",
                     isActive ? "text-primary" : "text-muted-foreground"
