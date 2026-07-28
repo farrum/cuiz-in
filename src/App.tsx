@@ -83,6 +83,7 @@ const SubcategoryPage = React.lazy(() => import('@/pages/SubcategoryPage'));
 const ChallengePlayPage = React.lazy(() => import('@/pages/ChallengePlayPage'));
 const ArchivedChallengesPage = React.lazy(() => import('@/pages/ArchivedChallengesPage'));
 const BrowseQuestionsPage = React.lazy(() => import('@/pages/BrowseQuestionsPage'));
+const GkQuestionsPage = React.lazy(() => import('@/pages/GkQuestionsPage'));
 const TopicPage = React.lazy(() => import('@/pages/TopicPage'));
 const WebStoriesPage = React.lazy(() => import('@/pages/WebStoriesPage'));
 const HtmlSitemapPage = React.lazy(() => import('@/pages/HtmlSitemapPage'));
@@ -417,6 +418,11 @@ function App() {
               <Route path="/browse" element={
                 <Suspense fallback={<PageLoader />}>
                   <BrowseQuestionsPage />
+                </Suspense>
+              } />
+              <Route path="/gk-questions" element={
+                <Suspense fallback={<PageLoader />}>
+                  <GkQuestionsPage />
                 </Suspense>
               } />
               <Route path="/topics" element={
