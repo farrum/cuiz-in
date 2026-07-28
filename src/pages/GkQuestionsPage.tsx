@@ -231,7 +231,7 @@ const GkQuestionsPage: React.FC = () => {
           availableSections.map((section, sectionIndex) => {
             const items = questionsByCategory[section.slug] || [];
             return (
-              <React.Fragment key={section.slug}>
+              <div key={section.slug}>
                 <section id={section.slug} className="mb-10 scroll-mt-24">
                   <h2 className="text-2xl font-bold mb-2">{section.title}</h2>
                   <p className="text-muted-foreground mb-5">{section.blurb}</p>
@@ -275,7 +275,7 @@ const GkQuestionsPage: React.FC = () => {
                     <SimpleAdBanner position="content" slotId={`gk-questions-${section.slug}`} />
                   </div>
                 )}
-              </React.Fragment>
+              </div>
             );
           })
         )}
