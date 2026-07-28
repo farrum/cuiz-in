@@ -33,6 +33,27 @@
 
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Fonts: loaded early (not via CSS @import) so the hero headline paints fast -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap"
+      />
+    </noscript>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CuizIN" />
