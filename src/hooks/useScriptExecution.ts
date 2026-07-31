@@ -67,6 +67,7 @@ export const useScriptExecution = (
         container.innerHTML = '';
         const iframe = document.createElement('iframe');
         iframe.setAttribute('data-ad-script', 'true');
+        iframe.title = 'Sponsored advertisement';
         iframe.width = String(adWidth);
         iframe.height = String(adHeight);
         iframe.scrolling = 'no';

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getAdPool, type AdCreative } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { Capacitor } from '@capacitor/core';
+import { AdMobBanner } from './AdMobBanner';
 
 const REFRESH_MS = 5000;
 
@@ -15,6 +17,12 @@ export function TopBannerAd() {
   const [pool] = useState<AdCreative[]>(() => getAdPool('banner'));
   const [index, setIndex] = useState(0);
   const [hasDbAd, setHasDbAd] = useState(false);
+
+  // On native builds, show the real Google AdMob banner instead of
+  // the web house/DB creatives. The plugin renders natively (no DOM).
+  if (Capacitor.isNativePlatform()) {
+    return <AdMobBanner />;
+  }
 
   useEffect(() => {
     const dbAds = getAdSlotsByPosition('app-banner');
