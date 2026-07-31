@@ -663,148 +663,77 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 }
 
 /* ═══════════════════════════════════════════════════════
-   RAILWAY MAP STYLES (Image-based 3D Steampunk)
+   EMPIRE QUEST BOARD STYLES (Modern Imperial Glassmorphism)
    ═══════════════════════════════════════════════════════ */
 
-/* The Railway Track (Image Texture) */
-.railway-track-bg {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  background-image: url('/track_asset.png');
-  background-repeat: repeat-y;
-  background-size: 60px auto;
-  background-position: center;
-  z-index: 1;
-  box-shadow:
-    inset 0 0 12px rgba(0,0,0,0.6),
-    0 0 20px rgba(0,0,0,0.5);
-  border-radius: 4px;
+.quest-board-container {
+  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 20px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 1.5rem;
 }
 
-/* Station Layout */
-.station-container {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 60px 1fr;
-  align-items: center;
-  justify-items: center;
-  width: 100%;
-  height: 220px;
+.quest-sector-tab {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.quest-sector-tab.active {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  border-color: #fef08a;
 }
 
-/* Station Building Side Images */
-.station-building-img {
-  width: 110px;
-  height: 110px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: bottom center;
-  position: relative;
-  transition: transform 0.2s;
-  z-index: 10;
-  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.55));
+.quest-node-card {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.station-building-right {
-  grid-column: 3;
-  justify-self: start;
-  margin-left: -8px;
-  background-image: url('/station_asset.png');
-}
-.station-container:hover .station-building-img {
-  transform: scale(1.05);
-}
-.station-locked {
-  filter: grayscale(100%) brightness(0.7);
+.quest-node-card:hover:not(.locked) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(234, 179, 8, 0.25);
 }
 
-/* Wooden Nameboard spanning track */
-.station-wooden-plaque {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, 65px);
-  z-index: 15;
-  background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
-  border: 4px solid #451a03;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.2);
-  border-radius: 8px;
-  padding: 8px 28px;
-  text-align: center;
-  white-space: nowrap;
-}
-.station-wooden-plaque h3 {
-  color: #fef3c7;
-  font-family: 'Georgia', serif;
-  font-weight: 900;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-  margin: 0;
-}
-.station-locked .station-wooden-plaque {
-  filter: grayscale(80%);
+.quest-node-card.active-unlocked {
+  border-color: #f59e0b;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.35), inset 0 0 15px rgba(245, 158, 11, 0.15);
+  animation: node-pulse-glow 2.5s infinite ease-in-out;
 }
 
-/* Semaphore Signal */
-.semaphore-signal-img {
-  width: 50px;
-  height: 100px;
-  background-image: url('/signal_asset.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: bottom center;
-  position: absolute;
-  left: calc(50% - 30px - 50px); /* Just left of the track (30px = half track width) */
-  bottom: 25px;
-  z-index: 20;
-  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6));
+@keyframes node-pulse-glow {
+  0%, 100% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.25), inset 0 0 10px rgba(245, 158, 11, 0.1); }
+  50% { box-shadow: 0 0 32px rgba(245, 158, 11, 0.5), inset 0 0 20px rgba(245, 158, 11, 0.25); }
 }
 
-/* Train Root Animation */
-.train-root {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 75px;
-  height: 100px;
-  background-image: url('/train_asset.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  z-index: 30;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  filter: drop-shadow(0 20px 20px rgba(0,0,0,0.6));
+.quest-node-card.cleared {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(6, 78, 59, 0.3));
 }
 
-.train-hidden {
-  opacity: 0;
+.quest-node-card.locked {
+  opacity: 0.75;
+  filter: grayscale(40%);
+  background: rgba(15, 23, 42, 0.8);
 }
 
-.train-moving {
-  /* Subtle wobble when moving */
-  animation: train-wobble 0.2s infinite alternate;
+/* Connectors between nodes */
+.quest-connector-line {
+  height: 3px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.6), rgba(245, 158, 11, 0.2));
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 
-@keyframes train-wobble {
-  0% { transform: translateX(calc(-50% - 1px)); }
-  100% { transform: translateX(calc(-50% + 1px)); }
+/* Float and bounce animations for 3D elements */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+.animate-float-slow {
+  animation: float-slow 4s ease-in-out infinite;
 }
 
-/* Animated Smoke */
-.smoke-puff {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  opacity: 0;
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
 }
-
-@keyframes smoke-rise {
-  0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; }
-  100% { transform: translate(-10px, -30px) scale(1.5); opacity: 0; }
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
 }
 
 /* Float and bounce animations for 3D elements */
