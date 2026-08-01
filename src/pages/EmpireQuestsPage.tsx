@@ -1582,35 +1582,35 @@ export default function EmpireQuestsPage() {
       {/* STAGE PREPARATION MODAL / DRAWER */}
       <AnimatePresence>
         {selectedPrepStage && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-950 border-2 border-amber-500/40 rounded-3xl p-6 max-w-lg w-full text-white shadow-2xl space-y-6 relative overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 10 }}
+              className="bg-slate-950 border-2 border-amber-500/40 rounded-3xl p-5 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto text-white shadow-2xl relative space-y-4 custom-scrollbar"
             >
-              <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-4xl">{selectedPrepStage.emoji}</span>
+                  <span className="text-3xl md:text-4xl">{selectedPrepStage.emoji}</span>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
                       Stage {selectedPrepStage.stageNumber} • {selectedPrepStage.category}
                     </span>
-                    <h3 className="text-xl font-black text-white tracking-tight mt-1">
+                    <h3 className="text-lg md:text-xl font-black text-white tracking-tight mt-1">
                       {selectedPrepStage.name}
                     </h3>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedPrepStage(null)}
-                  className="text-slate-400 hover:text-white text-lg font-bold"
+                  className="text-slate-400 hover:text-white text-lg font-bold p-1 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="space-y-4 text-sm">
-                <p className="text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-2xl border border-slate-800">
+              <div className="space-y-3.5 text-sm">
+                <p className="text-slate-300 leading-relaxed bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-xs md:text-sm">
                   "{selectedPrepStage.description}"
                 </p>
 
@@ -1627,7 +1627,7 @@ export default function EmpireQuestsPage() {
                   </div>
                 </div>
 
-                <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2">
+                <div className="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
                   <span className="text-[10px] font-black text-amber-400 block uppercase tracking-widest">Star Rating Targets</span>
                   <div className="flex justify-between text-xs font-bold text-slate-300">
                     <span>★★★ (3 Stars)</span>
@@ -1644,7 +1644,7 @@ export default function EmpireQuestsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="sticky bottom-0 bg-slate-950/95 pt-3 pb-1 border-t border-slate-800/80 backdrop-blur-sm z-10 flex gap-3">
                 <Button
                   variant="ghost"
                   onClick={() => setSelectedPrepStage(null)}
