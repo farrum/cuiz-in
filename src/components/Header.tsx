@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark, Volume2, VolumeX } from 'lucide-react';
+import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark, Volume2, VolumeX, Bell } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import GuestGemsDisplay from './GuestGemsDisplay';
 import { audioManager } from '@/utils/audioManager';
+import { getUnreadCount, checkScheduledReminders } from '@/utils/notificationManager';
+import { NotificationCenterModal } from '@/components/notifications/NotificationCenterModal';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -20,6 +22,17 @@ const Header: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTeamLeader, setIsTeamLeader] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+  const [notifModalOpen, setNotifModalOpen] = useState(false);
+
+  useEffect(() => {
+    checkScheduledReminders();
+    setUnreadNotifCount(getUnreadCount());
+
+    const handleNotifUpdate = () => setUnreadNotifCount(getUnreadCount());
+    window.addEventListener('cuizinNotificationUpdate', handleNotifUpdate);
+    return () => window.removeEventListener('cuizinNotificationUpdate', handleNotifUpdate);
+  }, []);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -196,6 +209,23 @@ const Header: React.FC = () => {
               <GuestGemsDisplay className="hidden lg:flex" />
             )}
 
+            {/* Notification Center Bell Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-white relative"
+              onClick={() => setNotifModalOpen(true)}
+              title="Notifications"
+              aria-label="Open notifications"
+            >
+              <Bell className="w-5 h-5 text-amber-400" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-black font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse border border-black">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
+            </Button>
+
             {/* Background Music Mute Button */}
             <Button
               variant="ghost"
@@ -300,6 +330,12 @@ const Header: React.FC = () => {
           </div>
         </nav>
       )}
+
+      {/* Notification Center Modal */}
+      <NotificationCenterModal
+        isOpen={notifModalOpen}
+        onClose={() => setNotifModalOpen(false)}
+      />
     </header>
   );
 };

@@ -16,6 +16,7 @@ import { fetchQuizQuestions } from '@/utils/quizDataService';
 import { QuizQuestion } from '@/utils/types';
 import { updateTotalStars, logStarsEarned } from '@/utils/rewardService';
 import { STORAGE_KEYS } from '@/utils/constants';
+import { addNotification } from '@/utils/notificationManager';
 import { 
   Shield, Star, Sparkles, Coins, Swords, Landmark, MapPin, 
   HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Lock,
@@ -975,6 +976,15 @@ export default function EmpireQuestsPage() {
 
       setSelectedBoxTier(activeStage.rewardType);
       setOpenerOpen(true);
+
+      // Trigger App Notification
+      addNotification(
+        'quest_unlock',
+        `✨ ${activeStage.name} Conquered!`,
+        `Achieved ${earnedStars}-Star rating (Score ${finalScore}/5) and earned +${ticketReward} Tickets!`,
+        '/empire-quests',
+        '🏰'
+      );
 
       toast({
         title: `✨ ${activeStage.name} CONQUERED!`,
