@@ -15,10 +15,11 @@ import { MiniGameCard } from '@/components/gamification/MiniGameCard';
 import { fetchQuizQuestions } from '@/utils/quizDataService';
 import { QuizQuestion } from '@/utils/types';
 import { updateTotalStars, logStarsEarned } from '@/utils/rewardService';
+import { STORAGE_KEYS } from '@/utils/constants';
 import { 
   Shield, Star, Sparkles, Coins, Swords, Landmark, MapPin, 
   HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Lock,
-  Trophy, Crown, Play, Award, Zap, ChevronRight, Check, RefreshCw
+  Trophy, Crown, Play, Award, Zap, ChevronRight, Check, RefreshCw, UserCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/utils/audioManager';
@@ -391,6 +392,7 @@ export default function EmpireQuestsPage() {
   const [stageStarData, setStageStarData] = useState<{ [stageId: string]: { stars: number; maxScore: number } }>({});
   const [clearedStageIds, setClearedStageIds] = useState<string[]>([]);
   const [selectedPrepStage, setSelectedPrepStage] = useState<QuestStage | null>(null);
+  const [selectedCouncilHero, setSelectedCouncilHero] = useState<HeroData | null>(null);
 
   // Mystery Box Opener state
   const [openerOpen, setOpenerOpen] = useState(false);
@@ -441,7 +443,6 @@ export default function EmpireQuestsPage() {
           parsedStageStars = {};
         }
       } else {
-        // Backwards compatibility: Map cleared stations to 3 stars
         clearedList.forEach(stId => {
           parsedStageStars[stId] = { stars: 3, maxScore: 5 };
         });
@@ -450,13 +451,14 @@ export default function EmpireQuestsPage() {
       setClearedStageIds(clearedList);
       setStageStarData(parsedStageStars);
 
+      // Read local fallback currency first
+      const localGems = Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '100');
+      const localStars = Number(localStorage.getItem(STORAGE_KEYS.USER_STARS) || '50');
+      setUserGems(localGems);
+      setUserStars(localStars);
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
-        const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
-        setUserGems(localGems);
-        setUserStars(localStars);
-
         const staticHeroes: HeroData[] = [
           {
             id: 'socrates',
@@ -512,13 +514,17 @@ export default function EmpireQuestsPage() {
         setUserId(session.user.id);
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('points, stars')
           .eq('id', session.user.id)
           .single();
 
         if (profile) {
-          setUserStars(profile.total_stars || 0);
-          setUserGems(profile.total_gems || 0);
+          const remoteStars = profile.stars ?? localStars;
+          const remoteGems = profile.points ?? localGems;
+          setUserStars(remoteStars);
+          setUserGems(remoteGems);
+          localStorage.setItem(STORAGE_KEYS.USER_STARS, remoteStars.toString());
+          localStorage.setItem(STORAGE_KEYS.USER_GEMS, remoteGems.toString());
         }
 
         // Fetch Heroes
@@ -615,12 +621,10 @@ export default function EmpireQuestsPage() {
     const isCleared = clearedStageIds.includes(stage.id) || (stageStarData[stage.id]?.stars || 0) > 0;
     const earnedStars = stageStarData[stage.id]?.stars || 0;
 
-    // Stage 1 is ALWAYS unlocked by default
     if (stage.id === 'st_1_1') {
       return { isUnlocked: true, isCleared, earnedStars, lockReason: null };
     }
 
-    // Find previous stage in flat array
     const currentIndex = allStagesFlat.findIndex(s => s.id === stage.id);
     const prevStage = currentIndex > 0 ? allStagesFlat[currentIndex - 1] : null;
 
@@ -677,9 +681,7 @@ export default function EmpireQuestsPage() {
     try {
       if (stage.entryCost > 0) {
         await updateTotalStars(-stage.entryCost, userId || undefined);
-        if (!userId) {
-          setUserStars(prev => prev - stage.entryCost);
-        }
+        setUserStars(prev => Math.max(0, prev - stage.entryCost));
       }
 
       const q = await fetchQuizQuestions();
@@ -764,7 +766,7 @@ export default function EmpireQuestsPage() {
 
     haptics('medium');
     await updateTotalStars(-soc.starCost, userId || undefined);
-    if (!userId) setUserStars(prev => prev - soc.starCost);
+    setUserStars(prev => Math.max(0, prev - soc.starCost));
     setSocratesUsed(true);
 
     const question = questQuestions[currentQIndex];
@@ -792,7 +794,7 @@ export default function EmpireQuestsPage() {
 
     haptics('medium');
     await updateTotalStars(-ary.starCost, userId || undefined);
-    if (!userId) setUserStars(prev => prev - ary.starCost);
+    setUserStars(prev => Math.max(0, prev - ary.starCost));
     setAryabhataUsed(true);
 
     setTimer(prev => prev + 15);
@@ -816,7 +818,7 @@ export default function EmpireQuestsPage() {
 
     haptics('medium');
     await updateTotalStars(-chan.starCost, userId || undefined);
-    if (!userId) setUserStars(prev => prev - chan.starCost);
+    setUserStars(prev => Math.max(0, prev - chan.starCost));
     setChanakyaUsed(true);
     setIsShieldActive(true);
 
@@ -840,7 +842,7 @@ export default function EmpireQuestsPage() {
 
     haptics('medium');
     await updateTotalStars(-ram.starCost, userId || undefined);
-    if (!userId) setUserStars(prev => prev - ram.starCost);
+    setUserStars(prev => Math.max(0, prev - ram.starCost));
     setRamanujanUsed(true);
 
     const question = questQuestions[currentQIndex];
@@ -952,7 +954,7 @@ export default function EmpireQuestsPage() {
       if (activeStage.difficulty === 'Legendary') ticketReward += 30;
 
       await logStarsEarned(ticketReward, userId || undefined);
-      if (!userId) setUserStars(prev => prev + ticketReward);
+      setUserStars(prev => prev + ticketReward);
 
       const updatedCleared = [...clearedStageIds];
       if (!updatedCleared.includes(activeStage.id)) {
@@ -1004,43 +1006,83 @@ export default function EmpireQuestsPage() {
     <PageLayout showNewsTicker={true}>
       <div className="min-h-screen stone-wall text-foreground pb-16">
         
-        {/* TOP STATUS BAR - IMPERIAL HEADER */}
-        <div className="wooden-door py-4 px-6 relative z-30 shadow-md">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Landmark className="w-6 h-6 text-amber-500 fill-amber-500/10" />
-              <div>
-                <h1 className="text-lg font-black tracking-tight text-amber-900 uppercase">Empire Quest Board</h1>
-                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">Conquest Campaign & Star Chambers</p>
+        {/* REDESIGNED IMPERIAL HEADER & BATTLE COUNCIL BAR */}
+        <div className="bg-slate-950/95 border-b border-amber-500/30 py-4 px-4 md:px-6 relative z-30 shadow-2xl backdrop-blur-md">
+          <div className="max-w-6xl mx-auto space-y-4">
+            
+            {/* Top Bar: Title & Currencies */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-inner">
+                  <Landmark className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h1 className="text-base md:text-lg font-black tracking-tight text-white uppercase font-serif">Empire Quest Board</h1>
+                  <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Conquest Campaign & Council Chambers</p>
+                </div>
+              </div>
+
+              {/* Currency Stat Badges */}
+              <div className="flex gap-2.5 items-center">
+                <div className="bg-slate-900 border border-amber-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                  <div>
+                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Total Stars</span>
+                    <span className="text-xs font-black text-amber-400">{totalEarnedStars} ★</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-yellow-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                  <Coins className="w-4 h-4 text-yellow-400" />
+                  <div>
+                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Tickets</span>
+                    <span className="text-xs font-black text-yellow-400">{userStars}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-cyan-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Gems</span>
+                    <span className="text-xs font-black text-cyan-300">{userGems}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Balances Display */}
-            <div className="flex gap-3 items-center">
-              <div className="bg-slate-950 border border-amber-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-                <div>
-                  <span className="text-[9px] font-bold text-slate-400 block uppercase leading-none">Total Stars</span>
-                  <span className="text-xs font-black text-amber-400">{totalEarnedStars} ★</span>
-                </div>
+            {/* INTERACTIVE BATTLE COUNCIL BAR */}
+            <div className="bg-slate-900/90 border border-amber-500/25 p-3 rounded-2xl shadow-inner">
+              <div className="flex justify-between items-center mb-2 px-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                  Battle Council
+                  <span className="text-[9px] text-slate-400 font-bold ml-1 hidden sm:inline">(Tap counselor to view powers & recruit)</span>
+                </span>
               </div>
 
-              <div className="bg-slate-950 border border-yellow-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                <Coins className="w-4 h-4 text-yellow-400" />
-                <div>
-                  <span className="text-[9px] font-bold text-slate-400 block uppercase leading-none">Tickets</span>
-                  <span className="text-xs font-black text-yellow-400">{userStars}</span>
-                </div>
-              </div>
-
-              <div className="hidden sm:flex bg-slate-950 border border-cyan-500/30 rounded-xl px-3 py-1.5 items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <div>
-                  <span className="text-[9px] font-bold text-slate-400 block uppercase leading-none">Gems</span>
-                  <span className="text-xs font-black text-cyan-300">{userGems}</span>
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {heroes.map((hero) => (
+                  <button
+                    key={hero.id}
+                    onClick={() => {
+                      haptics('light');
+                      setSelectedCouncilHero(hero);
+                    }}
+                    className="bg-slate-950/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/60 p-2 rounded-xl text-left flex items-center gap-2 transition-all group active:scale-95"
+                  >
+                    <span className="text-2xl group-hover:scale-110 transition-transform">{hero.emoji}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-extrabold text-xs text-white truncate">{hero.name.replace('King ', '')}</span>
+                        <span className="text-[8px] font-black uppercase bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/30">Lvl {hero.level}</span>
+                      </div>
+                      <span className="text-[9px] text-amber-300/80 truncate block font-medium">{hero.abilityName}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
+
           </div>
         </div>
 
@@ -1085,7 +1127,7 @@ export default function EmpireQuestsPage() {
               </div>
 
               {/* Hero Lifeline Bar */}
-              <div className="flex justify-center items-center gap-3 mb-6 bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800">
+              <div className="flex justify-center items-center gap-2 sm:gap-3 mb-6 bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800 overflow-x-auto">
                 <span className="text-[9px] uppercase font-black tracking-widest text-slate-400 mr-1 hidden sm:inline">Lifelines:</span>
                 <Button
                   size="sm"
@@ -1132,15 +1174,15 @@ export default function EmpireQuestsPage() {
                 </div>
               )}
 
-              {/* Question Text */}
+              {/* Question Text Box */}
               {questQuestions[currentQIndex] && (
                 <div className="space-y-6">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-inner text-center">
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 inline-block mb-3">
                       {questQuestions[currentQIndex].category || activeStage?.category}
                     </span>
-                    <h3 className="text-base md:text-lg font-bold text-white leading-relaxed">
-                      {questQuestions[currentQIndex].text}
+                    <h3 className="text-base md:text-lg font-extrabold text-white leading-relaxed">
+                      {questQuestions[currentQIndex].question || (questQuestions[currentQIndex] as any).text}
                     </h3>
                   </div>
 
@@ -1215,45 +1257,52 @@ export default function EmpireQuestsPage() {
           /* MAIN QUEST BOARD VIEW */
           <div className="max-w-6xl mx-auto px-4 mt-6">
             
-            {/* NAVIGATION TABS */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-slate-950 border border-amber-500/20 p-1.5 rounded-2xl flex gap-1 shadow-lg max-w-full overflow-x-auto">
+            {/* REDESIGNED COMPACT NAVIGATION TABS - NO SCROLLBAR, FULL FIT ON MOBILE */}
+            <div className="flex justify-center mb-6 px-1">
+              <div className="bg-slate-950 border border-amber-500/20 p-1 md:p-1.5 rounded-2xl flex gap-1 shadow-lg w-full sm:w-auto overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <button
                   onClick={() => setActiveTab('quests')}
                   className={cn(
-                    "px-4 md:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap",
+                    "px-2.5 sm:px-4 md:px-6 py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap flex-1 sm:flex-initial",
                     activeTab === 'quests' ? "btn-3d btn-3d-primary text-white" : "text-slate-400 hover:text-white"
                   )}
                 >
-                  <Swords className="w-4 h-4 text-amber-400" />
-                  Quest Board
+                  <Swords className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Quest Board</span>
+                  <span className="sm:hidden">Board</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('hangman')}
                   className={cn(
-                    "px-4 md:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap",
+                    "px-2.5 sm:px-4 md:px-6 py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap flex-1 sm:flex-initial",
                     activeTab === 'hangman' ? "btn-3d btn-3d-primary text-white" : "text-slate-400 hover:text-white"
                   )}
                 >
-                  🎯 Word Duel
+                  <span>🎯</span>
+                  <span className="hidden sm:inline">Word Duel</span>
+                  <span className="sm:hidden">Duel</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('chests')}
                   className={cn(
-                    "px-4 md:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap",
+                    "px-2.5 sm:px-4 md:px-6 py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap flex-1 sm:flex-initial",
                     activeTab === 'chests' ? "btn-3d btn-3d-primary text-white" : "text-slate-400 hover:text-white"
                   )}
                 >
-                  📦 Treasury Shop
+                  <span>📦</span>
+                  <span className="hidden sm:inline">Treasury Shop</span>
+                  <span className="sm:hidden">Shop</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('heroes')}
                   className={cn(
-                    "px-4 md:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap",
+                    "px-2.5 sm:px-4 md:px-6 py-2 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 whitespace-nowrap flex-1 sm:flex-initial",
                     activeTab === 'heroes' ? "btn-3d btn-3d-primary text-white" : "text-slate-400 hover:text-white"
                   )}
                 >
-                  🏛️ Intellectual Counsel
+                  <span>🏛️</span>
+                  <span className="hidden sm:inline">Intellectual Counsel</span>
+                  <span className="sm:hidden">Counsel</span>
                 </button>
               </div>
             </div>
@@ -1579,6 +1628,73 @@ export default function EmpireQuestsPage() {
           </div>
         )}
       </div>
+
+      {/* COUNCIL HERO INSPECTION & RECRUITMENT MODAL */}
+      {selectedCouncilHero && typeof window !== 'undefined' && createPortal(
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 10 }}
+              className="bg-slate-950 border-2 border-amber-500/40 rounded-3xl p-5 md:p-6 max-w-md w-full text-white shadow-2xl relative space-y-4 my-auto"
+            >
+              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{selectedCouncilHero.emoji}</span>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                      Level {selectedCouncilHero.level} Counselor
+                    </span>
+                    <h3 className="text-lg font-black text-white tracking-tight mt-1">
+                      {selectedCouncilHero.name}
+                    </h3>
+                    <p className="text-xs text-amber-300 font-medium">{selectedCouncilHero.title}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedCouncilHero(null)}
+                  className="text-slate-400 hover:text-white text-lg font-bold p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs md:text-sm">
+                <div className="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">Special Battle Lifeline</span>
+                  <span className="font-bold text-white text-sm block">{selectedCouncilHero.abilityName}</span>
+                  <p className="text-slate-300 text-xs leading-relaxed">{selectedCouncilHero.abilityDesc}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                    <span className="text-[9px] font-black text-slate-400 uppercase block">Battle Cost</span>
+                    <span className="font-bold text-yellow-400">{selectedCouncilHero.starCost} Tickets / Use</span>
+                  </div>
+                  <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                    <span className="text-[9px] font-black text-slate-400 uppercase block">Hero Shards</span>
+                    <span className="font-bold text-cyan-300">{selectedCouncilHero.shards} / 20 Shards</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <Button
+                  onClick={() => {
+                    setSelectedCouncilHero(null);
+                    setActiveTab('heroes');
+                  }}
+                  className="w-full py-3 rounded-xl font-black uppercase text-xs btn-3d btn-3d-primary tracking-wider"
+                >
+                  Manage Counselors in Hall →
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* STAGE PREPARATION MODAL / DRAWER */}
       {typeof window !== 'undefined' && createPortal(
