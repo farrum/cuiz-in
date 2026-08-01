@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import PageLayout from '@/components/layout/PageLayout';
@@ -1580,89 +1581,92 @@ export default function EmpireQuestsPage() {
       </div>
 
       {/* STAGE PREPARATION MODAL / DRAWER */}
-      <AnimatePresence>
-        {selectedPrepStage && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 10 }}
-              className="bg-slate-950 border-2 border-amber-500/40 rounded-3xl p-5 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto text-white shadow-2xl relative space-y-4 custom-scrollbar"
-            >
-              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl md:text-4xl">{selectedPrepStage.emoji}</span>
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                      Stage {selectedPrepStage.stageNumber} • {selectedPrepStage.category}
-                    </span>
-                    <h3 className="text-lg md:text-xl font-black text-white tracking-tight mt-1">
-                      {selectedPrepStage.name}
-                    </h3>
+      {typeof window !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedPrepStage && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                className="bg-slate-950 border-2 border-amber-500/40 rounded-3xl p-5 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto text-white shadow-2xl relative space-y-4 custom-scrollbar my-auto"
+              >
+                <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl md:text-4xl">{selectedPrepStage.emoji}</span>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                        Stage {selectedPrepStage.stageNumber} • {selectedPrepStage.category}
+                      </span>
+                      <h3 className="text-lg md:text-xl font-black text-white tracking-tight mt-1">
+                        {selectedPrepStage.name}
+                      </h3>
+                    </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => setSelectedPrepStage(null)}
-                  className="text-slate-400 hover:text-white text-lg font-bold p-1 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-3.5 text-sm">
-                <p className="text-slate-300 leading-relaxed bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-xs md:text-sm">
-                  "{selectedPrepStage.description}"
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-                    <span className="text-[9px] font-black text-slate-400 block uppercase">Ruleset</span>
-                    <span className="text-xs font-bold text-amber-300">{selectedPrepStage.rules}</span>
-                  </div>
-                  <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-                    <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Entry Cost</span>
-                    <span className="text-xs font-bold text-yellow-400">
-                      {selectedPrepStage.entryCost > 0 ? `${selectedPrepStage.entryCost} Tickets` : 'FREE'}
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => setSelectedPrepStage(null)}
+                    className="text-slate-400 hover:text-white text-lg font-bold p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                <div className="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                  <span className="text-[10px] font-black text-amber-400 block uppercase tracking-widest">Star Rating Targets</span>
-                  <div className="flex justify-between text-xs font-bold text-slate-300">
-                    <span>★★★ (3 Stars)</span>
-                    <span className="text-amber-400">5/5 Score (100%)</span>
+                <div className="space-y-3.5 text-sm">
+                  <p className="text-slate-300 leading-relaxed bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-xs md:text-sm">
+                    "{selectedPrepStage.description}"
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                      <span className="text-[9px] font-black text-slate-400 block uppercase">Ruleset</span>
+                      <span className="text-xs font-bold text-amber-300">{selectedPrepStage.rules}</span>
+                    </div>
+                    <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                      <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Entry Cost</span>
+                      <span className="text-xs font-bold text-yellow-400">
+                        {selectedPrepStage.entryCost > 0 ? `${selectedPrepStage.entryCost} Tickets` : 'FREE'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs font-bold text-slate-300">
-                    <span>★★☆ (2 Stars)</span>
-                    <span className="text-amber-400">4/5 Score (80%)</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-bold text-slate-300">
-                    <span>★☆☆ (1 Star)</span>
-                    <span className="text-amber-400">3/5 Score (60%)</span>
+
+                  <div className="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                    <span className="text-[10px] font-black text-amber-400 block uppercase tracking-widest">Star Rating Targets</span>
+                    <div className="flex justify-between text-xs font-bold text-slate-300">
+                      <span>★★★ (3 Stars)</span>
+                      <span className="text-amber-400">5/5 Score (100%)</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-slate-300">
+                      <span>★★☆ (2 Stars)</span>
+                      <span className="text-amber-400">4/5 Score (80%)</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-slate-300">
+                      <span>★☆☆ (1 Star)</span>
+                      <span className="text-amber-400">3/5 Score (60%)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="sticky bottom-0 bg-slate-950/95 pt-3 pb-1 border-t border-slate-800/80 backdrop-blur-sm z-10 flex gap-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedPrepStage(null)}
-                  className="w-1/3 py-3 rounded-xl font-bold uppercase text-xs text-slate-400 hover:text-white"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => handleLaunchQuest(selectedPrepStage)}
-                  className="w-2/3 py-3 rounded-xl font-black uppercase text-xs btn-3d btn-3d-primary tracking-wider"
-                >
-                  Embark Quest →
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="sticky bottom-0 bg-slate-950/95 pt-3 pb-1 border-t border-slate-800/80 backdrop-blur-sm z-10 flex gap-3">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setSelectedPrepStage(null)}
+                    className="w-1/3 py-3 rounded-xl font-bold uppercase text-xs text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => handleLaunchQuest(selectedPrepStage)}
+                    className="w-2/3 py-3 rounded-xl font-black uppercase text-xs btn-3d btn-3d-primary tracking-wider"
+                  >
+                    Embark Quest →
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* MYSTERY BOX REVEAL ANIMATOR SYSTEM */}
       <MysteryBoxOpener
