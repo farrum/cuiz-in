@@ -10,6 +10,7 @@ interface ThemeProviderProps {
   defaultTheme?: string
   storageKey?: string
   enableSystem?: boolean
+  attribute?: string
   [key: string]: any
 }
 
@@ -17,12 +18,15 @@ export function ThemeProvider({
   children, 
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
+  enableSystem = true,
+  attribute = "class",
   ...props 
 }: ThemeProviderProps) {
   return (
     <NextThemesProvider
+      attribute={attribute as any}
       defaultTheme={defaultTheme}
-      enableSystem
+      enableSystem={enableSystem}
       storageKey={storageKey}
       {...props}
     >
