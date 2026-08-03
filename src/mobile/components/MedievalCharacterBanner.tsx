@@ -106,24 +106,21 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
     switch (r.toLowerCase()) {
       case 'admin':
       case 'king':
-        return 'text-yellow-400 border-yellow-500/60';
+        return 'text-amber-600 border-amber-500/60';
       case 'baron':
-        return 'text-amber-500 border-amber-500/60';
+        return 'text-amber-700 border-amber-500/60';
       case 'knight':
-        return 'text-blue-400 border-blue-500/60';
+        return 'text-blue-600 border-blue-500/60';
       case 'officer':
-        return 'text-emerald-400 border-emerald-500/60';
+        return 'text-emerald-600 border-emerald-500/60';
       case 'infantry':
       default:
-        return 'text-slate-400 border-slate-500/40';
+        return 'text-slate-600 border-slate-300';
     }
   };
 
   return (
-    <div className={cn("relative select-none overflow-hidden pb-4 bg-stone-950/40 border-b border-stone-850", className)}>
-      {/* Stone archway background */}
-      <div className="absolute inset-0 castle-archway opacity-30 pointer-events-none" />
-
+    <div className={cn("relative select-none overflow-hidden pb-4 rounded-3xl border-2 border-primary/20 bg-gradient-to-b from-white to-[#eaf4ff] shadow-md", className)}>
       {/* Torch left */}
       <BurningTorch className="absolute left-3 top-2 scale-75" />
 
