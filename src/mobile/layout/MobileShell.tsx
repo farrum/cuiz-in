@@ -6,9 +6,9 @@ import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 export function MobileShell() {
   const location = useLocation();
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-[#f4faff]">
       <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
-      <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#f4faff]">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

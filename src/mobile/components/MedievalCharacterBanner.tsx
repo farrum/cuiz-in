@@ -106,24 +106,21 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
     switch (r.toLowerCase()) {
       case 'admin':
       case 'king':
-        return 'text-yellow-400 border-yellow-500/60';
+        return 'text-amber-600 border-amber-500/60';
       case 'baron':
-        return 'text-amber-500 border-amber-500/60';
+        return 'text-amber-700 border-amber-500/60';
       case 'knight':
-        return 'text-blue-400 border-blue-500/60';
+        return 'text-blue-600 border-blue-500/60';
       case 'officer':
-        return 'text-emerald-400 border-emerald-500/60';
+        return 'text-emerald-600 border-emerald-500/60';
       case 'infantry':
       default:
-        return 'text-slate-400 border-slate-500/40';
+        return 'text-slate-600 border-slate-300';
     }
   };
 
   return (
-    <div className={cn("relative select-none overflow-hidden pb-4 bg-stone-950/40 border-b border-stone-850", className)}>
-      {/* Stone archway background */}
-      <div className="absolute inset-0 castle-archway opacity-30 pointer-events-none" />
-
+    <div className={cn("relative select-none overflow-hidden pb-4 rounded-3xl border-2 border-primary/20 bg-gradient-to-b from-white to-[#eaf4ff] shadow-md", className)}>
       {/* Torch left */}
       <BurningTorch className="absolute left-3 top-2 scale-75" />
 
@@ -143,7 +140,7 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
         >
           {/* Glow */}
           <div className="absolute -inset-4 rounded-full bg-gradient-to-t from-amber-500/10 to-yellow-400/20 blur-xl pointer-events-none" />
-          <div className={cn("relative rounded-2xl overflow-hidden shadow-2xl border-[3px] w-24 h-24 bg-stone-900", getRankColorClass(role))}>
+          <div className={cn("relative rounded-2xl overflow-hidden shadow-xl border-[3px] w-24 h-24 bg-slate-900", getRankColorClass(role))}>
             <img src={getRankImage(role)} alt={getRankName(role)} className="w-full h-full object-cover" loading="lazy" />
             {/* Shimmer */}
             <motion.div
@@ -178,22 +175,22 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
 
       {/* Hierarchy Path Breadcrumb */}
       {!loading && hierarchyPath.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-1 mt-2 px-4 py-1.5 bg-stone-950/60 border border-stone-850 rounded-xl mx-6 max-w-lg md:mx-auto">
-          <div className="flex items-center gap-1 text-[9px] font-black uppercase text-amber-500/70 tracking-widest mr-1">
-            <Shield className="w-3 h-3 text-amber-500" /> Hierarchy:
+        <div className="flex flex-wrap items-center justify-center gap-1 mt-2 px-4 py-1.5 bg-white/80 border border-slate-200 rounded-xl mx-6 max-w-lg md:mx-auto">
+          <div className="flex items-center gap-1 text-[9px] font-black uppercase text-amber-600 tracking-widest mr-1">
+            <Shield className="w-3 h-3 text-amber-600" /> Hierarchy:
           </div>
           {hierarchyPath.map((node, index) => {
             const isSelf = index === hierarchyPath.length - 1;
             const displayRank = getRankName(node.role);
             return (
               <div key={node.user_id} className="flex items-center gap-0.5">
-                {index > 0 && <ChevronRight className="w-2.5 h-2.5 text-stone-600" />}
+                {index > 0 && <ChevronRight className="w-2.5 h-2.5 text-slate-400" />}
                 <span 
                   className={cn(
                     "text-[10px] font-bold font-serif px-1.5 py-0.5 rounded",
                     isSelf 
-                      ? "bg-amber-550/20 text-amber-400 border border-amber-550/30" 
-                      : "text-stone-400"
+                      ? "bg-amber-100 text-amber-700 border border-amber-300" 
+                      : "text-slate-500"
                   )}
                 >
                   {node.role === 'admin' || node.role === 'king' ? (
