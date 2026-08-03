@@ -306,12 +306,12 @@ export default function HubScreen() {
   const isLoggedIn = !!localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   return (
-    <div className="relative min-h-full pb-32 px-4 pt-4 overflow-hidden bg-background">
+    <div className="relative min-h-full pb-32 px-4 pt-4 overflow-hidden bg-[#f4faff]">
 
       {/* ═══ Header ═══ */}
       <div className="relative flex items-center justify-between mb-5">
         <div>
-          <p className="text-[11px] text-muted-foreground font-bold tracking-widest uppercase">Welcome,</p>
+          <p className="text-[11px] text-slate-500 font-bold tracking-widest uppercase">Welcome,</p>
           <h1 className="text-2xl font-black leading-tight text-primary drop-shadow-sm">{name}</h1>
         </div>
         <div className="flex items-center gap-1.5">
