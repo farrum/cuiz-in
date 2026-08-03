@@ -98,7 +98,7 @@ function AppMobile() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="cuizin-mobile-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="cuizin-mobile-theme" enableSystem={false} forcedTheme="dark">
           <Toaster />
           <Sonner />
           <BrowserRouter>
