@@ -122,4 +122,28 @@ export async function setLevelPlayConsent(consent: boolean) {
   }
 }
 
+/**
+ * Unified "show a video ad" entry point used by every ad slot in the app.
+ * Tries the preferred LevelPlay format first, then the other one, so a slot
+ * always gets filled if any inventory exists. Returns true when a native ad
+ * was displayed — callers should only fall back to a web creative on false.
+ */
+export async function showLevelPlayVideoAd(
+  prefer: 'rewarded' | 'interstitial' = 'interstitial',
+): Promise<boolean> {
+  if (!(await initLevelPlay())) return false;
+  if (prefer === 'rewarded') {
+    const r = await showLevelPlayRewarded();
+    if (r.shown) return true;
+    return await showLevelPlayInterstitial();
+  }
+  if (await showLevelPlayInterstitial()) return true;
+  const r = await showLevelPlayRewarded();
+  return r.shown;
+}
+
+function _unusedConsent(consent: boolean) {
+  if (!isNativeAds()) return;
+}
+
 export default Native;
