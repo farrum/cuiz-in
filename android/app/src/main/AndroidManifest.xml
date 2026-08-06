@@ -43,4 +43,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Required by Unity LevelPlay / mediated networks for ad personalisation -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 </manifest>
