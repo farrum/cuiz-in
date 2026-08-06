@@ -54,14 +54,14 @@ export default function ShopScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4faff] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed flex flex-col relative pb-32">
+    <div className="min-h-screen bg-background flex flex-col relative pb-32">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <button onClick={() => { haptics('light'); navigate(-1); }} className="p-2 -ml-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
-          <h1 className="text-xl font-black text-primary tracking-wide">Royal Shop</h1>
+          <h1 className="text-xl font-black text-amber-900 tracking-wide">Royal Shop</h1>
         </div>
         <div className="flex items-center gap-3">
            <div className="bg-blue-50 border-2 border-blue-100 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner">

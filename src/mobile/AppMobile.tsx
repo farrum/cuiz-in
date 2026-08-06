@@ -24,6 +24,7 @@ const DailyChallengeStoryScreen = lazy(() => import('./screens/DailyChallengeSto
 const MiniGameScreen = lazy(() => import('./screens/MiniGames/MiniGameScreen'));
 const EmpireQuestsPage = lazy(() => import('../pages/EmpireQuestsPage'));
 const KingdomsPage = lazy(() => import('../pages/KingdomsPage'));
+const ShopScreen = lazy(() => import('./screens/Shop/ShopScreen'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -114,6 +115,7 @@ function AppMobile() {
                       <Route path="/profile" element={<ProfileScreen />} />
                       <Route path="/empire-quests" element={<EmpireQuestsPage />} />
                       <Route path="/kingdoms" element={<KingdomsPage />} />
+                      <Route path="/shop" element={<ShopScreen />} />
                     </Route>
                     <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     <Route path="/quiz" element={<QuizStoryScreen />} />
