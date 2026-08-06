@@ -39,7 +39,7 @@ export function TopBannerAd() {
 
   if (hasDbAd) {
     return (
-      <div className="px-3 py-1.5 max-h-16 overflow-hidden">
+      <div className="px-3 py-1.5 max-h-16 overflow-hidden mb-10">
         <SimpleAdBanner position="app-banner" className="rounded-lg overflow-hidden max-h-12" />
       </div>
     );
@@ -49,7 +49,7 @@ export function TopBannerAd() {
   const ad = pool[index % pool.length];
 
   return (
-    <div className="px-3 py-1.5">
+    <div className="px-3 py-1.5 mb-10">
       {/* No enter/exit animation here: the creative swaps in place so a
           refresh never flashes the surrounding UI. */}
       <a

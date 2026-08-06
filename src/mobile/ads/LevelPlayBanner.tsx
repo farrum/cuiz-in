@@ -18,7 +18,7 @@ export function LevelPlayBanner() {
     };
   }, []);
 
-  return <div aria-hidden className="h-[50px] shrink-0" />;
+  return <div aria-hidden className="h-[50px] shrink-0 mb-10" />;
 }
 
 export default LevelPlayBanner;
