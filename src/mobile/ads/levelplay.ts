@@ -33,10 +33,16 @@ let initPromise: Promise<boolean> | null = null;
 
 /** Initialise the SDK once per app session. Resolves false on web/failure. */
 export function initLevelPlay(): Promise<boolean> {
-  if (!isNativeAds()) return Promise.resolve(false);
+  if (!isNativeAds()) {
+    console.info('[LevelPlay] inactive: web build (native SDK unavailable) — falling back to web video ads');
+    return Promise.resolve(false);
+  }
   if (!initPromise) {
     initPromise = Native.initialize({ appKey: LEVELPLAY_APP_KEY, testMode: import.meta.env.DEV })
-      .then((r) => !!r?.initialized)
+      .then((r) => {
+        console.info('[LevelPlay] init result:', r);
+        return !!r?.initialized;
+      })
       .catch((e) => {
         console.warn('[LevelPlay] init failed', e);
         return false;
