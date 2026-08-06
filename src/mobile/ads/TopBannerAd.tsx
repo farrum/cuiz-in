@@ -39,7 +39,7 @@ export function TopBannerAd() {
 
   if (hasDbAd) {
     return (
-      <div className="px-3 py-1.5 max-h-16 overflow-hidden">
+      <div className="px-3 py-1.5 max-h-16 overflow-hidden mb-10">
         <SimpleAdBanner position="app-banner" className="rounded-lg overflow-hidden max-h-12" />
       </div>
     );
