@@ -165,6 +165,11 @@ public class LevelPlayPlugin extends Plugin {
             }
 
             @Override
+            public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                // no-op
+            }
+
+            @Override
             public void onAdClosed(LevelPlayAdInfo adInfo) {
                 resolveInterstitial(true);
             }
@@ -229,6 +234,11 @@ public class LevelPlayPlugin extends Plugin {
             @Override
             public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
                 resolveRewarded(false);
+            }
+
+            @Override
+            public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                // no-op
             }
 
             @Override
