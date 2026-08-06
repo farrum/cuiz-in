@@ -6,7 +6,7 @@ import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { NetworkAdFrame } from './NetworkAdFrame';
 import { VastVideoAd } from './VastVideoAd';
-import { isNativeAds, showLevelPlayInterstitial } from './levelplay';
+import { isNativeAds, showLevelPlayVideoAd } from './levelplay';
 
 /** Adsterra 300x250 placement shown between quiz questions. */
 const ADSTERRA_KEY = '2036014d5863f79efb5b419b47c4b810';
@@ -50,7 +50,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
     }
     let cancelled = false;
     setNativeShowing(true);
-    showLevelPlayInterstitial().then((shown) => {
+    showLevelPlayVideoAd('interstitial').then((shown) => {
       if (cancelled) return;
       setNativeShowing(false);
       // Native ad ran (or was dismissed) — resume the quiz. If no native ad

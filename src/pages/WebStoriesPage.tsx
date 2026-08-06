@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, X, Play, Pause, BookOpen, Brain, RefreshCw, 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
+import { isNativeAds, showLevelPlayVideoAd } from '@/mobile/ads/levelplay';
 import { cn } from '@/lib/utils';
 
 const STORY_AD_TAG = 'https://vast.yomeno.xyz/vast?spot_id=1494657';
@@ -230,6 +231,21 @@ const WebStoriesPage: React.FC = () => {
     if (currentIndex >= stories.length - 1) return;
     const nextIndex = currentIndex + 1;
     if ((currentIndex + 1) % AD_EVERY === 0) {
+      // Native builds play a Unity LevelPlay video; the web VAST overlay is
+      // only used when no native ad is available.
+      if (isNativeAds()) {
+        setIsPaused(true);
+        showLevelPlayVideoAd('interstitial').then((shown) => {
+          if (shown) {
+            setIsPaused(false);
+            setCurrentIndex(nextIndex);
+          } else {
+            setPendingIndex(nextIndex);
+            setShowAd(true);
+          }
+        });
+        return;
+      }
       setPendingIndex(nextIndex);
       setShowAd(true);
       setIsPaused(true);
