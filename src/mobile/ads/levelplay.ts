@@ -142,8 +142,4 @@ export async function showLevelPlayVideoAd(
   return r.shown;
 }
 
-function _unusedConsent(consent: boolean) {
-  if (!isNativeAds()) return;
-}
-
 export default Native;
