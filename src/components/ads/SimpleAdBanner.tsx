@@ -41,16 +41,17 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   const uniqueId = useId().replace(/:/g, "");
   const resolvedPosition = POSITION_MAP[position] || position;
 
-  // Auto-refresh standard banners every 10s while the page stays open. Bumping
-  // the nonce changes the container id + remounts the inner node so the ad
-  // creative/scripts re-execute and a fresh impression is served.
+  // Auto-refresh standard banners while the page stays open. Bumping the nonce
+  // changes the container id + remounts the inner node so the creative/scripts
+  // re-execute and a fresh impression is served. 30s — a shorter interval makes
+  // the page look like it is constantly blinking.
   const [refreshNonce, setRefreshNonce] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
         setRefreshNonce((n) => n + 1);
       }
-    }, 10000);
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -80,8 +81,9 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   return (
     <div
       className={cn(
-        "ad-banner-wrapper w-full overflow-hidden transition-all duration-300",
-        adLoaded ? "opacity-100" : "opacity-0",
+        // No opacity transition: fading on every refresh is what reads as a
+        // blink. The creative is swapped in place instead.
+        "ad-banner-wrapper w-full overflow-hidden",
         getPositionClasses(resolvedPosition),
         className
       )}
