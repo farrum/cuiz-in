@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ---- Unity LevelPlay (ironSource) mediation ----
+-keepclassmembers class com.ironsource.** { public *; }
+-keep class com.ironsource.** { *; }
+-keep class com.unity3d.** { *; }
+-dontwarn com.ironsource.**
+-dontwarn com.unity3d.**
+-keep class com.google.android.gms.ads.identifier.** { *; }
