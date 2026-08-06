@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { VastVideoAd } from '@/mobile/ads/VastVideoAd';
+import { isNativeAds, showLevelPlayRewarded } from '@/mobile/ads/levelplay';
 
 const SKIP_SECONDS = 10;
 
@@ -24,6 +25,20 @@ export const useMiniGameVideoAd = () => {
   const canSkip = remaining <= 0;
 
   const showVideoAd = (callback: () => void) => {
+    // Native builds: use the Unity LevelPlay rewarded placement. The web
+    // VAST overlay is only used as a fallback when no native ad is available.
+    if (isNativeAds()) {
+      showLevelPlayRewarded().then(({ shown }) => {
+        if (shown) {
+          callback();
+        } else {
+          setOnAdComplete(() => callback);
+          setPendingClose(false);
+          setAdActive(true);
+        }
+      });
+      return;
+    }
     setOnAdComplete(() => callback);
     setPendingClose(false);
     setAdActive(true);

@@ -19,6 +19,17 @@ export function initMobilePlatform() {
 
       try { await SplashScreen.hide(); } catch {}
 
+      // Unity LevelPlay: initialise once and warm up interstitial + rewarded
+      // so the first show has no loading gap.
+      try {
+        const { initLevelPlay, preloadLevelPlayInterstitial, preloadLevelPlayRewarded } =
+          await import('@/mobile/ads/levelplay');
+        if (await initLevelPlay()) {
+          preloadLevelPlayInterstitial();
+          preloadLevelPlayRewarded();
+        }
+      } catch (e) { console.warn('[LevelPlay] init skipped', e); }
+
       // Back-button handler: never close the app from inside a story flow
       App.addListener('backButton', ({ canGoBack }) => {
         if (canGoBack) window.history.back();
