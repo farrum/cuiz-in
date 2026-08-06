@@ -58,19 +58,19 @@ export function BottomTabs() {
                 >
                   <Icon className={cn(
                     'w-6 h-6 transition-colors',
-                    active ? 'text-primary drop-shadow-sm' : 'text-slate-400'
+                    active ? 'text-amber-800 drop-shadow-sm' : 'text-slate-400'
                   )} strokeWidth={active ? 2.5 : 2} />
                   {active && (
                     <motion.div 
                       layoutId="bottom-nav-indicator"
-                      className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-primary"
+                      className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-amber-800"
                     />
                   )}
                 </motion.div>
               )}
               <span className={cn(
-                'text-[10px] mt-1 font-bold tracking-wide uppercase',
-                active ? 'text-primary' : 'text-slate-400',
+                'text-[10px] mt-1 font-extrabold tracking-wide uppercase',
+                active ? 'text-amber-800' : 'text-slate-400',
                 'font-sans'
               )}>
                 {tab.label}

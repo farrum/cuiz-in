@@ -308,8 +308,8 @@ export default function MiniGameScreen() {
       </div>
 
       {/* Ad banner */}
-      <div className="relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
-        <TopBannerAd />
+      <div className="relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>
+        <TopBannerAd noMargin />
       </div>
     </div>
   );

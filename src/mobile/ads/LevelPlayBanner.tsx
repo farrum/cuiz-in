@@ -6,7 +6,11 @@ import { hideLevelPlayBanner, showLevelPlayBanner } from './levelplay';
  * room for the natively-overlaid banner (the SDK draws outside the WebView),
  * which prevents the content from reflowing when the ad fills.
  */
-export function LevelPlayBanner() {
+interface LevelPlayBannerProps {
+  noMargin?: boolean;
+}
+
+export function LevelPlayBanner({ noMargin = false }: LevelPlayBannerProps) {
   useEffect(() => {
     let cancelled = false;
     showLevelPlayBanner().then(() => {
@@ -18,7 +22,7 @@ export function LevelPlayBanner() {
     };
   }, []);
 
-  return <div aria-hidden className="h-[50px] shrink-0 mb-10" />;
+  return <div aria-hidden className={`h-[50px] shrink-0 ${noMargin ? '' : 'mb-10'}`} />;
 }
 
 export default LevelPlayBanner;

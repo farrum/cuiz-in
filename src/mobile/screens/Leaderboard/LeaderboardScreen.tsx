@@ -41,25 +41,25 @@ export default function LeaderboardScreen() {
 
   return (
     <div className="px-4 pt-4 pb-32 bg-background min-h-full">
-      <h1 className="text-2xl font-black mb-1 text-primary">
-        <Crown className="w-6 h-6 inline mr-2 -mt-1 text-primary drop-shadow-sm" />Royal Rankings
+      <h1 className="text-2xl font-black mb-1 text-amber-900">
+        <Crown className="w-6 h-6 inline mr-2 -mt-1 text-amber-600 drop-shadow-sm" />Royal Rankings
       </h1>
-      <p className="text-sm text-muted-foreground font-bold mb-6 tracking-wide">Top champions of the realm this moon</p>
+      <p className="text-sm text-slate-700 font-bold mb-6 tracking-wide">Top champions of the realm this moon</p>
 
       {myRank && me && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 panel-3d bg-primary/10 flex items-center gap-3 border-2 border-primary"
+          className="mb-6 panel-3d bg-amber-500/10 flex items-center gap-3 border-2 border-amber-600/40"
         >
-          <div className="w-12 h-12 rounded-xl shadow-sm bg-primary text-white flex items-center justify-center font-black text-lg border-2 border-primary-foreground/20">
+          <div className="w-12 h-12 rounded-xl shadow-sm bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg border-2 border-white">
             #{myRank}
           </div>
           <div className="flex-1">
-            <p className="font-black text-foreground text-lg tracking-tight">{me.username} <span className="text-[11px] text-muted-foreground uppercase">(you)</span></p>
-            <p className="text-sm font-bold text-primary mt-0.5">{me.points.toLocaleString()} gems earned this moon</p>
+            <p className="font-black text-slate-900 text-lg tracking-tight">{me.username} <span className="text-[11px] text-slate-600 uppercase">(you)</span></p>
+            <p className="text-sm font-bold text-amber-900 mt-0.5">{me.points.toLocaleString()} gems earned this moon</p>
           </div>
-          <Shield className="w-6 h-6 text-primary drop-shadow-sm" />
+          <Shield className="w-6 h-6 text-amber-700 drop-shadow-sm" />
         </motion.div>
       )}
 
@@ -84,17 +84,17 @@ export default function LeaderboardScreen() {
                 transition={{ delay: i * 0.02 }}
                 className={cn(
                   'flex items-center gap-3 panel-3d p-3',
-                  isMe ? 'bg-primary/5 border-2 border-primary' : 'bg-white'
+                  isMe ? 'bg-amber-50 border-2 border-amber-500' : 'bg-white'
                 )}
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shadow-sm border-2 border-white bg-muted text-muted-foreground">
-                  {rank === 1 ? <Crown className="w-5 h-5 text-yellow-500 drop-shadow-sm" /> :
+                  {rank === 1 ? <Crown className="w-5 h-5 text-amber-500 drop-shadow-sm" /> :
                    rank === 2 ? <Medal className="w-5 h-5 text-slate-400 drop-shadow-sm" /> :
-                   rank === 3 ? <Medal className="w-5 h-5 text-amber-600 drop-shadow-sm" /> :
+                   rank === 3 ? <Medal className="w-5 h-5 text-amber-700 drop-shadow-sm" /> :
                    <span>#{rank}</span>}
                 </div>
-                <p className="flex-1 font-black truncate text-foreground tracking-tight">{row.username}</p>
-                <p className="text-base font-black text-primary tabular-nums tracking-wide">{row.points.toLocaleString()} 💎</p>
+                <p className="flex-1 font-black truncate text-slate-900 tracking-tight">{row.username}</p>
+                <p className="text-base font-black text-amber-900 tabular-nums tracking-wide">{row.points.toLocaleString()} 💎</p>
               </motion.li>
             );
           })}

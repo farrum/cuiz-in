@@ -13,9 +13,13 @@ const REFRESH_MS = 30000;
  * refreshes its creative every 30 seconds.
  * Renders nothing when no creative is available for the current user.
  */
-export function TopBannerAd() {
+interface TopBannerAdProps {
+  noMargin?: boolean;
+}
+
+export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
   const isNative = Capacitor.isNativePlatform();
-  const [pool] = useState<AdCreative[]>(() => (isNative ? [] : getAdPool('banner')));
+  const [pool] = useState<AdCreative[]>(() => getAdPool('banner'));
   const [index, setIndex] = useState(0);
   const [hasDbAd, setHasDbAd] = useState(false);
 
@@ -34,12 +38,14 @@ export function TopBannerAd() {
   // Native builds use the Unity LevelPlay banner, which the SDK overlays
   // outside the WebView. Checked after all hooks so hook order stays stable.
   if (isNative) {
-    return <LevelPlayBanner />;
+    return <LevelPlayBanner noMargin={noMargin} />;
   }
+
+  const marginClass = noMargin ? '' : 'mb-10';
 
   if (hasDbAd) {
     return (
-      <div className="px-3 py-1.5 max-h-16 overflow-hidden mb-10">
+      <div className={`px-3 py-1.5 max-h-16 overflow-hidden ${marginClass}`}>
         <SimpleAdBanner position="app-banner" className="rounded-lg overflow-hidden max-h-12" />
       </div>
     );
@@ -49,7 +55,7 @@ export function TopBannerAd() {
   const ad = pool[index % pool.length];
 
   return (
-    <div className="px-3 py-1.5 mb-10">
+    <div className={`px-3 py-1.5 ${marginClass}`}>
       {/* No enter/exit animation here: the creative swaps in place so a
           refresh never flashes the surrounding UI. */}
       <a

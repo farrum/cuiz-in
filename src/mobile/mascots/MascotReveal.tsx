@@ -112,20 +112,22 @@ export function MascotReveal({ show, mood, message, emoji, headline, headlineCla
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-          className="rounded-2xl wooden-door p-4 shadow-xl flex items-start gap-3"
+          className="rounded-2xl panel-3d bg-white p-4 shadow-xl flex items-start gap-3 border-2 border-amber-500/40"
         >
-          <MascotPlayer character={pinned} mood={mood} size={size} />
+          <div className="shrink-0 rounded-xl overflow-hidden bg-amber-100/60 p-1 border border-amber-300/60">
+            <MascotPlayer character={pinned} mood={mood} size={size} />
+          </div>
           <div className="flex-1 min-w-0">
             {headline && (
-              <p className={cn('font-bold text-base mb-1', headlineClass)}>{headline}</p>
+              <p className={cn('font-black text-base mb-1 text-emerald-700', headlineClass)}>{headline}</p>
             )}
             {displayMessage && (
-              <p className="text-sm leading-snug text-stone-200">
+              <p className="text-sm font-bold leading-snug text-slate-800">
                 {displayEmoji && <span className="mr-1">{displayEmoji}</span>}{displayMessage}
               </p>
             )}
             {explanation && (
-              <p className="text-xs text-stone-400 mt-2 leading-relaxed">{explanation}</p>
+              <p className="text-xs font-semibold text-slate-600 mt-2 leading-relaxed">{explanation}</p>
             )}
           </div>
         </motion.div>
