@@ -25,17 +25,11 @@ export const useMiniGameVideoAd = () => {
   const canSkip = remaining <= 0;
 
   const showVideoAd = (callback: () => void) => {
-    // Native builds: use the Unity LevelPlay rewarded placement. The web
-    // VAST overlay is only used as a fallback when no native ad is available.
+    // Native builds: use Unity LevelPlay (ironSource). Never launch the web Clickadilla
+    // VAST video ad overlay on native builds.
     if (isNativeAds()) {
-      showLevelPlayVideoAd('rewarded').then((shown) => {
-        if (shown) {
-          callback();
-        } else {
-          setOnAdComplete(() => callback);
-          setPendingClose(false);
-          setAdActive(true);
-        }
+      showLevelPlayVideoAd('rewarded').then(() => {
+        callback();
       });
       return;
     }

@@ -50,12 +50,10 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
     }
     let cancelled = false;
     setNativeShowing(true);
-    showLevelPlayVideoAd('interstitial').then((shown) => {
+    showLevelPlayVideoAd('interstitial').then(() => {
       if (cancelled) return;
       setNativeShowing(false);
-      // Native ad ran (or was dismissed) — resume the quiz. If no native ad
-      // was available we fall through to the existing web creatives.
-      if (shown) onClose();
+      onClose();
     });
     return () => {
       cancelled = true;
@@ -64,7 +62,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
 
   useEffect(() => {
     if (open) {
-      setTryVideo(Math.random() < 0.5);
+      setTryVideo(!isNativeAds() && Math.random() < 0.5);
       setVideoFailed(false);
     }
   }, [open, seed]);

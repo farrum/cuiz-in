@@ -43,6 +43,7 @@ public class LevelPlayPlugin extends Plugin {
     private LevelPlayBannerAdView bannerAd;
     private LevelPlayInterstitialAd interstitialAd;
     private LevelPlayRewardedAd rewardedAd;
+    private String pendingBannerPlacement = null;
 
     // Pending calls resolved from SDK callbacks.
     private PluginCall pendingInterstitialCall;
@@ -73,6 +74,11 @@ public class LevelPlayPlugin extends Plugin {
                     initialized = true;
                     setupInterstitial();
                     setupRewarded();
+                    if (pendingBannerPlacement != null) {
+                        final String p = pendingBannerPlacement;
+                        pendingBannerPlacement = null;
+                        activity.runOnUiThread(() -> loadBannerInternal(p));
+                    }
                     JSObject res = new JSObject();
                     res.put("initialized", true);
                     call.resolve(res);
@@ -97,34 +103,12 @@ public class LevelPlayPlugin extends Plugin {
         final Activity activity = getActivity();
         activity.runOnUiThread(() -> {
             try {
-                if (bannerContainer == null) {
-                    bannerContainer = new FrameLayout(activity);
-                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                    params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-                    // Sit above the in-app bottom tab bar.
-                    params.bottomMargin = (int) (56 * activity.getResources().getDisplayMetrics().density);
-                    activity.addContentView(bannerContainer, params);
+                if (!initialized) {
+                    pendingBannerPlacement = placement;
+                    call.resolve();
+                    return;
                 }
-                if (bannerAd == null) {
-                    bannerAd = new LevelPlayBannerAdView(activity, placement);
-                    bannerAd.setAdSize(LevelPlayAdSize.BANNER);
-                    bannerAd.setBannerListener(new LevelPlayBannerAdViewListener() {
-                        @Override
-                        public void onAdLoaded(LevelPlayAdInfo adInfo) {
-                            notifyListeners("adLoaded", infoOf("banner"));
-                        }
-
-                        @Override
-                        public void onAdLoadFailed(LevelPlayAdError error) {
-                            notifyListeners("adFailed", errorOf("banner", error));
-                        }
-                    });
-                    bannerContainer.addView(bannerAd);
-                }
-                bannerContainer.setVisibility(android.view.View.VISIBLE);
-                bannerAd.loadAd();
+                loadBannerInternal(placement);
                 call.resolve();
             } catch (Exception e) {
                 call.reject("banner_failed", e);
@@ -132,8 +116,42 @@ public class LevelPlayPlugin extends Plugin {
         });
     }
 
+    private void loadBannerInternal(String placement) {
+        Activity activity = getActivity();
+        if (activity == null) return;
+        if (bannerContainer == null) {
+            bannerContainer = new FrameLayout(activity);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            // Sit above the in-app bottom tab bar.
+            params.bottomMargin = (int) (56 * activity.getResources().getDisplayMetrics().density);
+            activity.addContentView(bannerContainer, params);
+        }
+        if (bannerAd == null) {
+            bannerAd = new LevelPlayBannerAdView(activity, placement);
+            bannerAd.setAdSize(LevelPlayAdSize.BANNER);
+            bannerAd.setBannerListener(new LevelPlayBannerAdViewListener() {
+                @Override
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                    notifyListeners("adLoaded", infoOf("banner"));
+                }
+
+                @Override
+                public void onAdLoadFailed(LevelPlayAdError error) {
+                    notifyListeners("adFailed", errorOf("banner", error));
+                }
+            });
+            bannerContainer.addView(bannerAd);
+        }
+        bannerContainer.setVisibility(android.view.View.VISIBLE);
+        bannerAd.loadAd();
+    }
+
     @PluginMethod
     public void hideBanner(final PluginCall call) {
+        pendingBannerPlacement = null;
         getActivity().runOnUiThread(() -> {
             if (bannerContainer != null) {
                 bannerContainer.setVisibility(android.view.View.GONE);

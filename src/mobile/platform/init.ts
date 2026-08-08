@@ -14,7 +14,6 @@ export function initMobilePlatform() {
 
       try {
         await StatusBar.setStyle({ style: Style.Light });
-        await StatusBar.setOverlaysWebView({ overlay: false });
       } catch (e) { console.warn('StatusBar init failed', e); }
 
       try { await SplashScreen.hide(); } catch {}
