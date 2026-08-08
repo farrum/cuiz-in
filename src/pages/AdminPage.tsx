@@ -37,6 +37,7 @@ import SitemapManagement from '@/components/admin/SitemapManagement';
 import AdminGamificationPanel from '@/components/admin/gamification/AdminGamificationPanel';
 
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
+import AdminEmpireTasksMonitor from '@/components/admin/AdminEmpireTasksMonitor';
 import { cn } from '@/lib/utils';
 
 const AdminPage: React.FC = () => {
@@ -76,6 +77,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/ads')) tab = 'ads';
     else if (path.includes('/payments')) tab = 'payments';
     else if (path.includes('/referrals')) tab = 'referrals';
+    else if (path.includes('/tasks')) tab = 'tasks';
     else if (path.includes('/quiz')) {
       tab = 'quiz';
       if (path.includes('/quiz/challenges')) {
@@ -179,6 +181,7 @@ const AdminPage: React.FC = () => {
         { value: 'users', label: 'User Directory', icon: UserSearch },
         { value: 'guests', label: 'Guest Activity', icon: Eye },
         { value: 'referrals', label: 'Referrals Program', icon: Users },
+        { value: 'tasks', label: 'Team Quests & Tasks', icon: ClipboardList },
         { value: 'badges', label: 'Badge Config', icon: Shield },
       ]
     },
@@ -430,6 +433,9 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="guests" className="mt-0 outline-none">
               <GuestActivityPanel />
+            </TabsContent>
+            <TabsContent value="tasks" className="mt-0 outline-none">
+              <AdminEmpireTasksMonitor />
             </TabsContent>
           </Tabs>
         </main>
