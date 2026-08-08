@@ -25,7 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, 
   HelpCircle, Link2, Search, Gamepad2, UserSearch, Clock, RefreshCw, 
-  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye
+  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye, ClipboardList
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
