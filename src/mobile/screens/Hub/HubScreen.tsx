@@ -82,20 +82,42 @@ export default function HubScreen() {
         .neq('status', 'claimed');
       
       if (!error && data) {
-        const mapped = data.map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          description: t.description || '',
-          targetCount: t.target_count,
-          currentCount: t.current_count,
-          type: t.type,
-          rewardGems: t.reward_gems,
-          rewardStars: t.reward_stars,
-          rewardShards: t.reward_shards,
-          shardType: t.shard_type,
-          status: t.status,
-          assignedTo: t.assigned_to || 'all'
-        }));
+        // Query per-user progress table if present, else read local progress key
+        const { data: userProgressData } = await supabase
+          .from('user_task_progress' as any)
+          .select('*')
+          .eq('user_id', userId);
+
+        const progressMap = new Map<string, { currentCount: number, status: string }>();
+        if (userProgressData) {
+          userProgressData.forEach((up: any) => {
+            progressMap.set(up.task_id, { currentCount: up.current_count, status: up.status });
+          });
+        }
+
+        const mapped = data.map((t: any) => {
+          const key = `cuizin_user_task_${userId}_${t.id}`;
+          const localProg = JSON.parse(localStorage.getItem(key) || 'null');
+          const dbProg = progressMap.get(t.id);
+
+          const currentCount = dbProg?.currentCount ?? localProg?.currentCount ?? 0;
+          const status = dbProg?.status ?? localProg?.status ?? 'active';
+
+          return {
+            id: t.id,
+            title: t.title,
+            description: t.description || '',
+            targetCount: t.target_count,
+            currentCount: currentCount,
+            type: t.type,
+            rewardGems: t.reward_gems,
+            rewardStars: t.reward_stars,
+            rewardShards: t.reward_shards,
+            shardType: t.shard_type,
+            status: status as 'active' | 'completed' | 'claimed',
+            assignedTo: t.assigned_to || 'all'
+          };
+        });
         setBaronTasks(mapped);
       }
     };
@@ -114,23 +136,34 @@ export default function HubScreen() {
           .from('empire_tasks' as any)
           .select('*')
           .eq('type', type)
-          .eq('status', 'active')
           .or(`assigned_to.eq.${userId},assigned_to.is.null`);
 
         if (!error && tasks) {
           for (const task of (tasks as any[])) {
-            const newCount = task.current_count + 1;
-            const isCompleted = newCount >= task.target_count;
-            
-            await supabase
-              .from('empire_tasks' as any)
-              .update({
-                current_count: newCount,
-                status: isCompleted ? 'completed' : 'active'
-              })
-              .eq('id', task.id);
+            const key = `cuizin_user_task_${userId}_${task.id}`;
+            const existing = JSON.parse(localStorage.getItem(key) || '{"currentCount":0, "status":"active"}');
+            if (existing.status === 'claimed') continue;
 
-            if (isCompleted) {
+            const newCount = existing.currentCount + 1;
+            const isCompleted = newCount >= task.target_count;
+            const newStatus = isCompleted ? 'completed' : 'active';
+
+            // Store in local storage per user
+            localStorage.setItem(key, JSON.stringify({ currentCount: newCount, status: newStatus }));
+
+            // Store in database user_task_progress table if available
+            await supabase
+              .from('user_task_progress' as any)
+              .upsert({
+                task_id: task.id,
+                user_id: userId,
+                current_count: newCount,
+                target_count: task.target_count,
+                status: newStatus,
+                last_updated: new Date().toISOString()
+              });
+
+            if (isCompleted && existing.status !== 'completed') {
               toast({
                 title: "Contract Completed!",
                 description: "Open the Hub to claim your reward stars, gems, and shards!",

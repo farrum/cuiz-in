@@ -17,9 +17,12 @@ import {
   ClipboardList,
   Sparkles,
   Coins,
-  Star
+  Star,
+  CalendarDays,
+  Plus
 } from 'lucide-react';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
+import TeamLeaderAttendanceTracker from '@/components/admin/attendance/TeamLeaderAttendanceTracker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +61,8 @@ export default function MobileTeamDashboard() {
     handleStatusChange,
     requestAccountAction,
     assignedTasks = [],
+    assignTask,
+    redistributeTask,
     deleteTask,
     awardBonus,
     joinRequests = [],
@@ -66,9 +71,19 @@ export default function MobileTeamDashboard() {
   } = useTeamLeaderDashboard();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState<'mercenaries' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
+  const [filterTab, setFilterTab] = useState<'mercenaries' | 'attendance' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+  // Contract Creator state
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDesc, setTaskDesc] = useState('');
+  const [taskTarget, setTaskTarget] = useState(5);
+  const [taskType, setTaskType] = useState<'quests' | 'games' | 'riddles'>('quests');
+  const [taskFrequency, setTaskFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [rewardGems, setRewardGems] = useState(50);
+  const [rewardStars, setRewardStars] = useState(10);
+  const [assignedTo, setAssignedTo] = useState('all');
 
   // Grant Bonus Modal states
   const [selectedMemberForBonus, setSelectedMemberForBonus] = useState<{ id: string, name: string } | null>(null);
@@ -150,6 +165,34 @@ export default function MobileTeamDashboard() {
     setSelectedMemberForBonus(null);
   };
 
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskTitle.trim() || !taskDesc.trim()) {
+      toast({ title: "Invalid Task", description: "Please complete all fields.", variant: "destructive" });
+      return;
+    }
+    const assigneeName = assignedTo === 'all' 
+      ? 'All Mercenaries' 
+      : teamMembers.find(m => m.id === assignedTo)?.name || 'Mercenary';
+
+    assignTask({
+      title: taskTitle,
+      description: taskDesc,
+      targetCount: Number(taskTarget),
+      type: taskType,
+      frequency: taskFrequency,
+      rewardGems: Number(rewardGems),
+      rewardStars: Number(rewardStars),
+      rewardShards: 1,
+      shardType: 'Socrates',
+      assignedTo,
+      assignedToName: assigneeName
+    });
+
+    setTaskTitle('');
+    setTaskDesc('');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen stone-wall flex flex-col items-center justify-center p-4 text-slate-100">
@@ -219,21 +262,31 @@ export default function MobileTeamDashboard() {
         </div>
 
         {/* Tactical Navigation Tabs */}
-        <div className="flex p-0.5 rounded-xl bg-stone-950 border border-stone-850">
+        <div className="flex p-0.5 rounded-xl bg-stone-950 border border-stone-850 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setFilterTab('mercenaries')}
-            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[75px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'mercenaries' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            ⚔️ Mercenaries
+            ⚔️ Troops
+          </button>
+          <button
+            onClick={() => setFilterTab('attendance')}
+            className={`flex-1 min-w-[85px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+              filterTab === 'attendance' 
+                ? 'bg-amber-500 text-stone-950 font-black' 
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            📅 Attendance
           </button>
           {joinRequests.length > 0 && (
             <button
               onClick={() => setFilterTab('requests')}
-              className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all relative ${
+              className={`flex-1 min-w-[75px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all relative ${
                 filterTab === 'requests' 
                   ? 'bg-amber-500 text-stone-950 font-black' 
                   : 'text-stone-400 hover:text-stone-200'
@@ -247,17 +300,17 @@ export default function MobileTeamDashboard() {
           )}
           <button
             onClick={() => setFilterTab('tasks')}
-            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[80px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'tasks' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            📜 Contracts ({assignedTasks.length})
+            📜 Quests ({assignedTasks.length})
           </button>
           <button
             onClick={() => setFilterTab('recruit')}
-            className={`flex-1 text-center py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[70px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'recruit' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
@@ -398,6 +451,18 @@ export default function MobileTeamDashboard() {
           </div>
         )}
 
+        {/* Tab content: ATTENDANCE */}
+        {filterTab === 'attendance' && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider">
+              📅 Troop Daily Attendance & Check-ins
+            </h3>
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-2 shadow-md">
+              <TeamLeaderAttendanceTracker />
+            </div>
+          </div>
+        )}
+
         {/* Tab content: JOIN REQUESTS */}
         {filterTab === 'requests' && (
           <div className="space-y-3">
@@ -444,14 +509,113 @@ export default function MobileTeamDashboard() {
 
         {/* Tab content: CONTRACTS LIST */}
         {filterTab === 'tasks' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Mobile Task Creation Workshop */}
+            <div className="bg-stone-900/90 border-2 border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+              <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider flex items-center gap-1.5">
+                <Plus className="w-4 h-4" /> Assign New Quest
+              </h3>
+
+              <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Quest Title</label>
+                  <Input 
+                    placeholder="e.g. Daily Siege" 
+                    value={taskTitle}
+                    onChange={e => setTaskTitle(e.target.value)}
+                    className="bg-stone-950 border-stone-800 text-white h-8.5 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Description</label>
+                  <textarea 
+                    placeholder="e.g. Complete 5 trivia battles" 
+                    value={taskDesc}
+                    onChange={e => setTaskDesc(e.target.value)}
+                    rows={2}
+                    className="w-full bg-stone-950 border border-stone-800 text-white text-xs rounded-xl p-2 outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Type</label>
+                    <select 
+                      value={taskType}
+                      onChange={e => setTaskType(e.target.value as any)}
+                      className="w-full bg-stone-950 border border-stone-800 text-white rounded-xl p-1.5 h-8.5 text-xs outline-none"
+                    >
+                      <option value="quests">Quests</option>
+                      <option value="games">Games</option>
+                      <option value="riddles">Riddles</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Recurrence</label>
+                    <select 
+                      value={taskFrequency}
+                      onChange={e => setTaskFrequency(e.target.value as any)}
+                      className="w-full bg-stone-950 border border-stone-800 text-white rounded-xl p-1.5 h-8.5 text-xs outline-none"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Target</label>
+                    <Input 
+                      type="number"
+                      min={1}
+                      value={taskTarget}
+                      onChange={e => setTaskTarget(Number(e.target.value))}
+                      className="bg-stone-950 border-stone-800 text-white h-8.5 text-xs rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Reward Gems</label>
+                    <Input 
+                      type="number"
+                      value={rewardGems}
+                      onChange={e => setRewardGems(Number(e.target.value))}
+                      className="bg-stone-950 border-stone-800 text-white h-8.5 text-xs rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Assignee</label>
+                    <select 
+                      value={assignedTo}
+                      onChange={e => setAssignedTo(e.target.value)}
+                      className="w-full bg-stone-950 border border-stone-800 text-white rounded-xl p-1.5 h-8.5 text-xs outline-none"
+                    >
+                      <option value="all">All Troops</option>
+                      {teamMembers.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-stone-950 font-black uppercase h-9 rounded-xl border-0 text-xs">
+                  ⚔️ Assign Quest to Troops
+                </Button>
+              </form>
+            </div>
+
             <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider">
-              Active Mercenary Quests
+              Active Mercenary Quests ({assignedTasks.length})
             </h3>
             
             {assignedTasks.length === 0 ? (
-              <div className="text-center py-12 bg-stone-900 border border-stone-800 rounded-3xl text-slate-500 font-bold uppercase tracking-wider text-xs">
-                No active contracts. Create contracts on the web dashboard workshop!
+              <div className="text-center py-8 bg-stone-900 border border-stone-800 rounded-2xl text-slate-500 font-bold uppercase tracking-wider text-xs">
+                No active contracts. Assign a quest using the form above!
               </div>
             ) : (
               assignedTasks.map(task => (
@@ -471,6 +635,9 @@ export default function MobileTeamDashboard() {
                   </div>
                   
                   <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase">
+                    <span className="bg-stone-950 border border-violet-500/25 px-2 py-0.5 rounded-lg text-violet-400">
+                      {task.frequency || 'daily'}
+                    </span>
                     <span className="bg-stone-950 border border-amber-500/25 px-2 py-0.5 rounded-lg text-amber-500">
                       Gems: +{task.rewardGems}
                     </span>
@@ -484,7 +651,16 @@ export default function MobileTeamDashboard() {
 
                   <div className="flex justify-between items-center text-[10px] pt-1.5 border-t border-stone-850 text-slate-500 font-semibold">
                     <span>Assignee: {task.assignedToName}</span>
-                    <span className="text-amber-500 font-black">Target: {task.targetCount}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-500 font-black">Target: {task.targetCount}</span>
+                      <Button
+                        onClick={() => redistributeTask(task, 'all')}
+                        size="sm"
+                        className="h-6 px-2 text-[9px] font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg"
+                      >
+                        ↪️ Cascade to Troops
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))

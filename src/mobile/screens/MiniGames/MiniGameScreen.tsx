@@ -9,6 +9,8 @@ import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
 import { ImageGame } from './games/ImageGame';
+import { STORAGE_KEYS } from '@/utils/quizData';
+import { logPlaySession } from '@/utils/playTimeTracker';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { BurningTorch } from '@/components/gamification/BurningTorch';
@@ -88,6 +90,7 @@ export default function MiniGameScreen() {
     }
     if (gameId && gameId !== 'riddlevault') {
       window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'games' } }));
+      logPlaySession(gameId, 180);
     }
   }, [gameId]);
 

@@ -13,6 +13,7 @@ export interface BaronTask {
   targetCount: number;
   currentCount: number;
   type: 'quests' | 'games' | 'riddles';
+  frequency?: 'daily' | 'weekly' | 'monthly';
   rewardGems: number;
   rewardStars: number;
   rewardShards: number;
@@ -20,6 +21,7 @@ export interface BaronTask {
   status: 'active' | 'completed' | 'claimed';
   assignedTo: string; // 'all' or specific member ID
   assignedToName: string;
+  parentTaskId?: string;
 }
 
 export const useTeamLeaderDashboard = () => {
@@ -152,6 +154,35 @@ export const useTeamLeaderDashboard = () => {
     }
   };
 
+  const redistributeTask = async (parentTask: BaronTask, targetAssignee: string = 'all') => {
+    try {
+      const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!storedUserId) return;
+
+      await assignTask({
+        title: `[Sub-Task] ${parentTask.title}`,
+        description: parentTask.description,
+        targetCount: parentTask.targetCount,
+        type: parentTask.type,
+        frequency: parentTask.frequency || 'daily',
+        rewardGems: parentTask.rewardGems,
+        rewardStars: parentTask.rewardStars,
+        rewardShards: parentTask.rewardShards,
+        shardType: parentTask.shardType,
+        assignedTo: targetAssignee,
+        assignedToName: targetAssignee === 'all' ? 'All Sub-Squad' : 'Mercenary',
+        parentTaskId: parentTask.id
+      });
+
+      toast({
+        title: "Task Cascaded to Squad",
+        description: `Successfully redistributed task "${parentTask.title}" to your sub-squad.`,
+      });
+    } catch (e) {
+      console.error('Error redistributing task:', e);
+    }
+  };
+
   const deleteTask = async (taskId: string) => {
     try {
       const { error } = await supabase
@@ -244,10 +275,10 @@ export const useTeamLeaderDashboard = () => {
       try {
         const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE) || 'infantry';
         setCurrentUserRole(userRole);
-        const isLeader = ['admin', 'king', 'baron', 'knight', 'officer'].includes(userRole);
+        const isLeader = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'].includes(userRole);
         
         setIsTeamLeader(isLeader);
-        setIsMainTeamLeader(['admin', 'king', 'baron'].includes(userRole));
+        setIsMainTeamLeader(['admin', 'king', 'baron', 'team_leader'].includes(userRole));
         
         if (!isLeader) {
           toast({
@@ -441,6 +472,7 @@ export const useTeamLeaderDashboard = () => {
     demoteToPlayer,
     assignedTasks,
     assignTask,
+    redistributeTask,
     deleteTask,
     awardBonus,
     joinRequests,

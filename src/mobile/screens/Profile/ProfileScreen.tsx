@@ -42,7 +42,7 @@ export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) : null;
   const userRole = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ROLE) : null;
-  const isTeamLeader = ['admin', 'king', 'baron', 'knight', 'officer'].includes(userRole || '');
+  const isTeamLeader = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'].includes(userRole || '');
 
   // Shop States
   const [purchased, setPurchased] = useState<string[]>([]);

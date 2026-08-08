@@ -58,6 +58,7 @@ const TeamLeaderDashboardPage = () => {
   const [taskDesc, setTaskDesc] = useState('');
   const [taskTarget, setTaskTarget] = useState(5);
   const [taskType, setTaskType] = useState<'quests' | 'games' | 'riddles'>('quests');
+  const [taskFrequency, setTaskFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [rewardGems, setRewardGems] = useState(50);
   const [rewardStars, setRewardStars] = useState(10);
   const [rewardShards, setRewardShards] = useState(1);
@@ -99,6 +100,7 @@ const TeamLeaderDashboardPage = () => {
       description: taskDesc,
       targetCount: Number(taskTarget),
       type: taskType,
+      frequency: taskFrequency,
       rewardGems: Number(rewardGems),
       rewardStars: Number(rewardStars),
       rewardShards: Number(rewardShards),
@@ -472,7 +474,7 @@ const TeamLeaderDashboardPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-bold text-slate-400 block">Task Type</label>
                       <select 
@@ -483,6 +485,19 @@ const TeamLeaderDashboardPage = () => {
                         <option value="quests">Map Quests</option>
                         <option value="games">Tavern Games</option>
                         <option value="riddles">Riddles</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-slate-400 block">Recurrence</label>
+                      <select 
+                        value={taskFrequency}
+                        onChange={e => setTaskFrequency(e.target.value as any)}
+                        className="w-full bg-stone-950 border border-stone-800 text-white rounded-md p-2 h-9 outline-none"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
                       </select>
                     </div>
 
