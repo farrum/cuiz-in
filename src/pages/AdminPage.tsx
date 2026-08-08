@@ -25,7 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, 
   HelpCircle, Link2, Search, Gamepad2, UserSearch, Clock, RefreshCw, 
-  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye, ClipboardList
+  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye, ClipboardList, ShieldCheck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -38,6 +38,7 @@ import AdminGamificationPanel from '@/components/admin/gamification/AdminGamific
 
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
 import AdminEmpireTasksMonitor from '@/components/admin/AdminEmpireTasksMonitor';
+import AdminTeamLeadersRoster from '@/components/admin/AdminTeamLeadersRoster';
 import { cn } from '@/lib/utils';
 
 const AdminPage: React.FC = () => {
@@ -77,6 +78,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/ads')) tab = 'ads';
     else if (path.includes('/payments')) tab = 'payments';
     else if (path.includes('/referrals')) tab = 'referrals';
+    else if (path.includes('/team-leaders')) tab = 'team-leaders';
     else if (path.includes('/tasks')) tab = 'tasks';
     else if (path.includes('/quiz')) {
       tab = 'quiz';
@@ -179,6 +181,7 @@ const AdminPage: React.FC = () => {
       title: 'User Management',
       items: [
         { value: 'users', label: 'User Directory', icon: UserSearch },
+        { value: 'team-leaders', label: 'Team Leaders & Roster', icon: ShieldCheck },
         { value: 'guests', label: 'Guest Activity', icon: Eye },
         { value: 'referrals', label: 'Referrals Program', icon: Users },
         { value: 'tasks', label: 'Team Quests & Tasks', icon: ClipboardList },
@@ -433,6 +436,9 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="guests" className="mt-0 outline-none">
               <GuestActivityPanel />
+            </TabsContent>
+            <TabsContent value="team-leaders" className="mt-0 outline-none">
+              <AdminTeamLeadersRoster />
             </TabsContent>
             <TabsContent value="tasks" className="mt-0 outline-none">
               <AdminEmpireTasksMonitor />
