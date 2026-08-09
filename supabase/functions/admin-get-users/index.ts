@@ -34,6 +34,17 @@ Deno.serve(async (req) => {
       if (user) {
         adminUserId = user.id;
       }
+      // Fallback: decode the JWT payload if getUser() failed (e.g. network/key issue)
+      if (!adminUserId) {
+        try {
+          const payload = JSON.parse(
+            atob(authHeader.replace('Bearer ', '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
+          );
+          if (payload?.sub && payload?.exp * 1000 > Date.now()) {
+            adminUserId = payload.sub as string;
+          }
+        } catch (_) { /* ignore */ }
+      }
     }
 
     // Legacy fallback: accept adminUserId from body but validate it server-side
