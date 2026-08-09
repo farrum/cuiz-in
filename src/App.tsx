@@ -486,6 +486,9 @@ function App() {
               <Route path="/admin/seo" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/gamification" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/guests" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/team-leaders" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/tasks" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/*" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               
               <Route path="/quiz/question/:questionId/:questionSlug" element={
                 <Suspense fallback={<PageLoader />}>
