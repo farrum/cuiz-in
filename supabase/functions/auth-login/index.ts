@@ -63,7 +63,7 @@ serve(async (req) => {
         await logLogin(identifier, false);
         return new Response(
           JSON.stringify({ success: false, error: "Invalid login credentials" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -117,7 +117,7 @@ serve(async (req) => {
       const code = tokenJson?.error_code || tokenJson?.code || tokenJson?.error;
       const msg =
         code === "invalid_credentials"
-          ? "Invalid email/username or password. If you recently migrated, please reset your password."
+          ? "Invalid email/username or password. Use Forgot Password if you need to set a new password."
           : "Invalid login credentials";
       return new Response(
         JSON.stringify({
@@ -125,7 +125,10 @@ serve(async (req) => {
           error: msg,
           code,
         }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        // Credential rejection is an expected application result. Returning a
+        // successful transport response lets functions.invoke expose the JSON
+        // body instead of turning it into a FunctionsHttpError/runtime error.
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
