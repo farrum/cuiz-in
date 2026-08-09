@@ -46,7 +46,7 @@ const UserLogin: React.FC = () => {
       });
 
       if (error || !data?.success) {
-        const errorMsg = data?.error || 'Invalid email/username or password';
+        const errorMsg = data?.error || 'Unable to complete login. Please try again.';
         const code = String(data?.code ?? '').toLowerCase();
 
         if (code === 'email_not_confirmed') {
@@ -70,7 +70,7 @@ const UserLogin: React.FC = () => {
         }
 
         toast({
-          title: "Login Failed",
+          title: code === 'invalid_credentials' ? "Incorrect credentials" : "Login Failed",
           description: errorMsg,
           variant: "destructive",
         });

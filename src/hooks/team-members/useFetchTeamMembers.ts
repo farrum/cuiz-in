@@ -90,7 +90,7 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
 
           if (referredIds.length > 0) {
             const [profilesRes, rolesRes] = await Promise.all([
-              supabase.from('profiles').select('id, username, display_name, updated_at').in('id', referredIds),
+              supabase.from('profiles').select('id, username, display_name, created_at').in('id', referredIds),
               supabase.from('user_roles' as any).select('user_id, role').in('user_id', referredIds)
             ]);
 
@@ -106,7 +106,7 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
             const prof = profilesMap.get(ref.referred_id);
             const status = (ref.status || 'inactive') as 'active' | 'inactive' | 'suspended';
             const joinDate = ref.date || new Date().toISOString();
-            const lastActive = ref.last_active_date || prof?.updated_at || '-';
+            const lastActive = ref.last_active_date || prof?.created_at || '-';
 
             return {
               id: ref.referred_id,
