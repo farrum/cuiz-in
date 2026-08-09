@@ -30,6 +30,18 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       // Prefer the real Supabase session; fall back to legacy admin id
       const { data: { session } } = await supabase.auth.getSession();
       const adminUserId = session?.user?.id || localStorage.getItem('quiz_app_user_id');
+
+      // Not signed in — don't call the admin function (it would 401)
+      if (!adminUserId) {
+        setUsers([]);
+        toast({
+          title: 'Session expired',
+          description: 'Please sign in as an admin to view users.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
         body: { adminUserId },
         headers: session?.access_token
