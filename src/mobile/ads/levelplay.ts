@@ -14,12 +14,19 @@ export const LEVELPLAY_PLACEMENTS = {
   rewarded: 'Rewarded_Android',
 } as const;
 
+/** Unity LevelPlay Ad Unit IDs (from the LevelPlay dashboard). */
+export const LEVELPLAY_AD_UNITS = {
+  banner: 'nfbd7er5vhgheohp',
+  interstitial: '5kn5xibxgmgcju9g',
+  rewarded: '',
+} as const;
+
 export interface LevelPlayPluginDefinition {
   initialize(options: { appKey: string; testMode?: boolean }): Promise<{ initialized: boolean }>;
-  showBanner(options: { placement: string }): Promise<void>;
+  showBanner(options: { placement: string; adUnitId?: string }): Promise<void>;
   hideBanner(): Promise<void>;
-  loadInterstitial(): Promise<void>;
-  showInterstitial(options: { placement: string }): Promise<{ shown: boolean }>;
+  loadInterstitial(options?: { adUnitId?: string }): Promise<void>;
+  showInterstitial(options: { placement: string; adUnitId?: string }): Promise<{ shown: boolean }>;
   loadRewarded(): Promise<void>;
   showRewarded(options: { placement: string }): Promise<{ shown: boolean; rewarded: boolean }>;
   setConsent(options: { consent: boolean; doNotSell?: boolean; childDirected?: boolean }): Promise<void>;
@@ -54,7 +61,7 @@ export function initLevelPlay(): Promise<boolean> {
 export async function showLevelPlayBanner() {
   if (!(await initLevelPlay())) return;
   try {
-    await Native.showBanner({ placement: LEVELPLAY_PLACEMENTS.banner });
+    await Native.showBanner({ placement: LEVELPLAY_PLACEMENTS.banner, adUnitId: LEVELPLAY_AD_UNITS.banner });
   } catch (e) {
     console.warn('[LevelPlay] banner failed', e);
   }
@@ -73,7 +80,7 @@ export async function hideLevelPlayBanner() {
 export async function preloadLevelPlayInterstitial() {
   if (!(await initLevelPlay())) return;
   try {
-    await Native.loadInterstitial();
+    await Native.loadInterstitial({ adUnitId: LEVELPLAY_AD_UNITS.interstitial });
   } catch {
     /* noop */
   }
@@ -83,9 +90,9 @@ export async function preloadLevelPlayInterstitial() {
 export async function showLevelPlayInterstitial(): Promise<boolean> {
   if (!(await initLevelPlay())) return false;
   try {
-    const res = await Native.showInterstitial({ placement: LEVELPLAY_PLACEMENTS.interstitial });
+    const res = await Native.showInterstitial({ placement: LEVELPLAY_PLACEMENTS.interstitial, adUnitId: LEVELPLAY_AD_UNITS.interstitial });
     // Queue the next one immediately.
-    Native.loadInterstitial().catch(() => {});
+    Native.loadInterstitial({ adUnitId: LEVELPLAY_AD_UNITS.interstitial }).catch(() => {});
     return !!res?.shown;
   } catch (e) {
     console.warn('[LevelPlay] interstitial failed', e);

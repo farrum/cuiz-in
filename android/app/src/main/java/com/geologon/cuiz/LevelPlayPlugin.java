@@ -45,6 +45,11 @@ public class LevelPlayPlugin extends Plugin {
     private LevelPlayRewardedAd rewardedAd;
     private String pendingBannerPlacement = null;
 
+    // Ad Unit IDs from the LevelPlay dashboard.
+    private static final String BANNER_AD_UNIT_ID = "nfbd7er5vhgheohp";
+    private static final String INTERSTITIAL_AD_UNIT_ID = "5kn5xibxgmgcju9g";
+    private static final String REWARDED_AD_UNIT_ID = "5kn5xibxgmgcju9g";
+
     // Pending calls resolved from SDK callbacks.
     private PluginCall pendingInterstitialCall;
     private PluginCall pendingRewardedCall;
@@ -72,6 +77,7 @@ public class LevelPlayPlugin extends Plugin {
                 @Override
                 public void onInitSuccess(LevelPlayConfiguration configuration) {
                     initialized = true;
+                    // Warm the interstitial immediately so the first show is instant.
                     setupInterstitial();
                     setupRewarded();
                     if (pendingBannerPlacement != null) {
@@ -99,7 +105,7 @@ public class LevelPlayPlugin extends Plugin {
 
     @PluginMethod
     public void showBanner(final PluginCall call) {
-        final String placement = call.getString("placement", "Banner_Android");
+        final String placement = call.getString("adUnitId", BANNER_AD_UNIT_ID);
         final Activity activity = getActivity();
         activity.runOnUiThread(() -> {
             try {
@@ -130,7 +136,7 @@ public class LevelPlayPlugin extends Plugin {
             activity.addContentView(bannerContainer, params);
         }
         if (bannerAd == null) {
-            bannerAd = new LevelPlayBannerAdView(activity, placement);
+            bannerAd = new LevelPlayBannerAdView(activity, placement != null && !placement.isEmpty() ? placement : BANNER_AD_UNIT_ID);
             bannerAd.setAdSize(LevelPlayAdSize.BANNER);
             bannerAd.setBannerListener(new LevelPlayBannerAdViewListener() {
                 @Override
@@ -164,7 +170,7 @@ public class LevelPlayPlugin extends Plugin {
 
     private void setupInterstitial() {
         if (interstitialAd != null) return;
-        interstitialAd = new LevelPlayInterstitialAd("Interstitial_Android");
+        interstitialAd = new LevelPlayInterstitialAd(INTERSTITIAL_AD_UNIT_ID);
         interstitialAd.setListener(new LevelPlayInterstitialAdListener() {
             @Override
             public void onAdLoaded(LevelPlayAdInfo adInfo) {
@@ -236,7 +242,7 @@ public class LevelPlayPlugin extends Plugin {
 
     private void setupRewarded() {
         if (rewardedAd != null) return;
-        rewardedAd = new LevelPlayRewardedAd("Rewarded_Android");
+        rewardedAd = new LevelPlayRewardedAd(REWARDED_AD_UNIT_ID);
         rewardedAd.setListener(new LevelPlayRewardedAdListener() {
             @Override
             public void onAdLoaded(LevelPlayAdInfo adInfo) {
