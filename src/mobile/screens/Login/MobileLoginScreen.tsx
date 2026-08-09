@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { ArrowLeft, Shield, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
@@ -14,19 +14,36 @@ export default function MobileLoginScreen() {
   const haptics = useHaptics();
   const { toast } = useToast();
   const [mode, setMode] = useState<'sign-in' | 'sign-up' | 'forgot-password'>('sign-in');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage(null);
     haptics('medium');
     try {
       if (mode === 'forgot-password') {
+        let resetEmail = identifier.trim();
+        if (!resetEmail.includes('@')) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .ilike('username', resetEmail)
+            .maybeSingle();
+
+          if (!profile?.email) {
+            throw new Error('Username not found. Please enter your registered email address.');
+          }
+          resetEmail = profile.email;
+        }
+
         const redirectUrl = `https://cuiz.in/reset-password`;
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
           redirectTo: redirectUrl,
         });
         if (error) throw error;
@@ -36,27 +53,59 @@ export default function MobileLoginScreen() {
         });
         setMode('sign-in');
       } else if (mode === 'sign-in') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        let loginEmail = identifier.trim();
+
+        if (!loginEmail.includes('@')) {
+          const { data: profile, error: profileErr } = await supabase
+            .from('profiles')
+            .select('email, id, username, display_name')
+            .ilike('username', loginEmail)
+            .maybeSingle();
+
+          if (profileErr || !profile?.email) {
+            throw new Error('Username not found. Please check your username or use your email address.');
+          }
+          loginEmail = profile.email;
+        }
+
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ 
+          email: loginEmail, 
+          password 
+        });
+        
         if (error) throw error;
+
+        if (authData?.user) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('username, display_name')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+
+          localStorage.setItem('cuizin_user_id', authData.user.id);
+          localStorage.setItem('cuizin_username', prof?.display_name || prof?.username || identifier);
+        }
+
         haptics('success');
         navigate('/hub');
       } else {
-        const uname = (username || email.split('@')[0]).trim();
+        const inputEmail = email.trim();
+        const uname = (username || inputEmail.split('@')[0]).trim();
         
         // Check if username is already taken
         const { data: existingUser } = await supabase
           .from('profiles')
           .select('id')
-          .eq('username', uname)
+          .ilike('username', uname)
           .maybeSingle();
 
         if (existingUser) {
-          throw new Error('That name is already claimed by another warrior');
+          throw new Error('That username is already claimed by another warrior');
         }
 
         // Create standard credentials account
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: inputEmail,
           password,
           options: {
             data: {
@@ -87,17 +136,19 @@ export default function MobileLoginScreen() {
         navigate('/hub');
       }
     } catch (err: any) {
+      const msg = err.message || 'The kingdom gates refused entry';
+      setErrorMessage(msg);
       haptics('error');
-      toast({ title: 'Alas!', description: err.message || 'The kingdom gates refused entry', variant: 'destructive' });
+      toast({ title: 'Alas!', description: msg, variant: 'destructive' });
     } finally { setLoading(false); }
   };
 
   return (
     <div
-      className="fixed inset-0 flex flex-col bg-gradient-to-b from-[#f4faff] to-white px-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+      className="min-h-screen w-full flex flex-col overflow-y-auto bg-gradient-to-b from-[#f4faff] to-white px-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
     >
-      <button onClick={() => navigate(-1)} className="self-start p-2.5 rounded-full bg-white shadow-sm border-2 border-slate-100 hover:bg-slate-50 transition-colors z-10" aria-label="Back">
+      <button onClick={() => navigate(-1)} className="self-start p-2.5 rounded-full bg-white shadow-sm border-2 border-slate-100 hover:bg-slate-50 transition-colors z-10 shrink-0" aria-label="Back">
         <ArrowLeft className="w-5 h-5 text-slate-600" />
       </button>
 
@@ -107,50 +158,84 @@ export default function MobileLoginScreen() {
         initial={{ opacity: 0, scale: 0.8, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-        className="h-16 w-auto mx-auto mt-4 mb-4 drop-shadow-md relative z-10"
+        className="h-12 w-auto mx-auto mt-2 mb-2 drop-shadow-md relative z-10 shrink-0"
       />
 
-      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full relative z-10">
-        <div className="text-center mb-8">
+      <div className="flex-1 flex flex-col justify-start py-2 max-w-sm mx-auto w-full relative z-10">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-black font-serif text-primary tracking-wide drop-shadow-sm">
             {mode === 'sign-in' ? 'Welcome to Cuiz.in' : mode === 'forgot-password' ? 'Lost Your Password?' : 'Create Your Account'}
           </h1>
-          <p className="text-sm font-semibold text-slate-500 mt-2">
+          <p className="text-xs font-semibold text-slate-500 mt-1">
             {mode === 'sign-in' 
-              ? 'Jump back in and continue your journey' 
+              ? 'Jump back in using your Username or Email' 
               : mode === 'forgot-password' 
-                ? "We'll send you a link to reset your password" 
+                ? "Enter your username or email to reset your password" 
                 : 'Join us and start earning rewards today'}
           </p>
         </div>
 
         {/* Modern form area */}
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-3">
+          {errorMessage && (
+            <div className="p-3.5 rounded-2xl bg-red-50 border-2 border-red-200 text-red-700 text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle className="w-4.5 h-4.5 shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
           {mode === 'sign-up' && (
+            <>
+              <div>
+                <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Username</label>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Choose a cool username"
+                  className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Email Address</label>
+                <input
+                  type="email" 
+                  required 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
+                />
+              </div>
+            </>
+          )}
+
+          {mode !== 'sign-up' && (
             <div>
-              <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Username</label>
+              <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Username or Email</label>
               <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Choose a cool username"
+                type="text"
+                required
+                autoCapitalize="none"
+                autoCorrect="off"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter username or email address"
                 className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
               />
             </div>
           )}
-          <div>
-            <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Email Address</label>
-            <input
-              type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
-              className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
-            />
-          </div>
+
           {mode !== 'forgot-password' && (
             <div>
               <label className="text-[11px] uppercase font-black tracking-wider text-slate-500 block mb-1.5 ml-1">Password</label>
               <input
-                type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 characters" minLength={6}
+                type="password" 
+                required 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 6 characters" 
+                minLength={6}
                 className="w-full rounded-2xl px-5 py-4 bg-white border-2 border-slate-200 text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary/50 shadow-inner transition-colors"
               />
             </div>

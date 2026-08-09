@@ -11,6 +11,7 @@ import { moodFromAccuracy, characterOfTheDay } from '@/mobile/mascots/registry';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { ProfileEditSheet, MobileProfile } from './ProfileEditSheet';
+import ReferralPreview from '@/components/home/ReferralPreview';
 import { cn } from '@/lib/utils';
 import {
   ARMORY_ITEMS,
@@ -207,29 +208,33 @@ export default function ProfileScreen() {
         <StatCard icon={Calendar} label="Answered" value={String(questionsAnswered)} color="from-emerald-500 to-teal-500" />
       </div>
 
-      {isTeamLeader && (
-        <motion.div
-          whileTap={{ scale: 0.97 }}
-          onClick={() => {
-            haptics('light');
-            navigate('/team-dashboard');
-          }}
-          className="mb-6 panel-3d bg-white p-4 flex items-center justify-between cursor-pointer border-2 border-indigo-100"
-        >
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-xl bg-indigo-500 text-white shadow-md">
-              <Users className="w-5 h-5 drop-shadow-sm" />
-            </span>
-            <div>
-              <p className="font-black text-sm text-indigo-900">Team Control Center</p>
-              <p className="text-xs font-bold text-indigo-500/70 mt-0.5 uppercase tracking-wide">
-                {(userRole || 'infantry')} Dashboard
-              </p>
-            </div>
+      {/* Team Control Center Card (Available for all users to build and manage squad) */}
+      <motion.div
+        whileTap={{ scale: 0.97 }}
+        onClick={() => {
+          haptics('light');
+          navigate('/team-dashboard');
+        }}
+        className="mb-6 panel-3d bg-white p-4 flex items-center justify-between cursor-pointer border-2 border-indigo-100 shadow-sm"
+      >
+        <div className="flex items-center gap-3">
+          <span className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-md">
+            <Users className="w-5 h-5 drop-shadow-sm" />
+          </span>
+          <div>
+            <p className="font-black text-sm text-indigo-900">Team & Squad Control Center</p>
+            <p className="text-xs font-bold text-indigo-500/80 mt-0.5 uppercase tracking-wide">
+              {isTeamLeader ? `${userRole || 'baron'} Dashboard` : 'Build Your Squad & Recruits'}
+            </p>
           </div>
-          <ExternalLink className="w-4 h-4 text-indigo-400 animate-pulse" />
-        </motion.div>
-      )}
+        </div>
+        <ExternalLink className="w-4 h-4 text-indigo-400 animate-pulse" />
+      </motion.div>
+
+      {/* Invite Friends & Referral Building Card */}
+      <div className="mb-6">
+        <ReferralPreview />
+      </div>
 
       {/* Reports */}
       <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">

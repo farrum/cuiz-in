@@ -42,35 +42,92 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
         return;
       }
 
-      // Fetch team members from hierarchy function
-      const { data: teamData, error: fetchError } = await supabase
-        .rpc('get_my_team_hierarchy' as any);
+      let members: TeamMember[] = [];
 
-      if (fetchError) throw fetchError;
-      
-      if (teamData && (teamData as any).length > 0) {
-        const members = (teamData as any).map((m: any) => {
-          const status = m.status || 'inactive';
-          return {
-            id: m.member_id,
-            name: m.display_name || m.username || 'Unknown',
-            email: m.email || '',
-            status: status as 'active' | 'inactive' | 'suspended',
-            lastActive: m.last_active_date || '-',
-            daysActive: calculateDaysActive(m.join_date, m.last_active_date || '', status),
-            joinDate: m.join_date,
-            totalEarned: 0, // Earnings are aggregated at the end of the month
-            role: m.role || 'player',
-            directLeaderId: m.direct_leader_id,
-            directLeaderUsername: m.direct_leader_username,
-            questionsAnswered: Number(m.questions_answered) || 0,
-            questionsCorrect: Number(m.questions_correct) || 0
-          };
-        });
-        setTeamMembers(members);
-      } else {
-        setTeamMembers([]);
+      // 1. Primary: Try fetching from RPC get_my_team_hierarchy
+      try {
+        const { data: teamData, error: fetchError } = await supabase
+          .rpc('get_my_team_hierarchy' as any);
+
+        if (!fetchError && teamData && (teamData as any).length > 0) {
+          members = (teamData as any).map((m: any) => {
+            const status = m.status || 'inactive';
+            return {
+              id: m.member_id,
+              name: m.display_name || m.username || 'Unknown',
+              email: m.email || '',
+              status: status as 'active' | 'inactive' | 'suspended',
+              lastActive: m.last_active_date || '-',
+              daysActive: calculateDaysActive(m.join_date, m.last_active_date || '', status),
+              joinDate: m.join_date,
+              totalEarned: 0,
+              role: m.role || 'player',
+              directLeaderId: m.direct_leader_id,
+              directLeaderUsername: m.direct_leader_username,
+              questionsAnswered: Number(m.questions_answered) || 0,
+              questionsCorrect: Number(m.questions_correct) || 0
+            };
+          });
+        }
+      } catch (rpcErr) {
+        console.warn('[TeamMembers] RPC get_my_team_hierarchy unavailable, switching to table query:', rpcErr);
       }
+
+      // 2. Fallback: Direct query to user_referrals table if RPC returned no members or failed
+      if (members.length === 0) {
+        const { data: refData, error: refError } = await supabase
+          .from('user_referrals')
+          .select('*')
+          .eq('referrer_id', userId);
+
+        if (refError) {
+          console.error('[TeamMembers] Fallback user_referrals query error:', refError);
+        } else if (refData && refData.length > 0) {
+          const referredIds = refData.map(r => r.referred_id).filter(Boolean);
+
+          let profilesMap = new Map<string, any>();
+          let rolesMap = new Map<string, string>();
+
+          if (referredIds.length > 0) {
+            const [profilesRes, rolesRes] = await Promise.all([
+              supabase.from('profiles').select('id, username, display_name, updated_at').in('id', referredIds),
+              supabase.from('user_roles' as any).select('user_id, role').in('user_id', referredIds)
+            ]);
+
+            if (profilesRes.data) {
+              profilesRes.data.forEach(p => profilesMap.set(p.id, p));
+            }
+            if (rolesRes.data) {
+              rolesRes.data.forEach((r: any) => rolesMap.set(r.user_id, r.role));
+            }
+          }
+
+          members = refData.map(ref => {
+            const prof = profilesMap.get(ref.referred_id);
+            const status = (ref.status || 'inactive') as 'active' | 'inactive' | 'suspended';
+            const joinDate = ref.date || new Date().toISOString();
+            const lastActive = ref.last_active_date || prof?.updated_at || '-';
+
+            return {
+              id: ref.referred_id,
+              name: prof?.display_name || prof?.username || ref.referred_name || 'Mercenary',
+              email: ref.referred_email || '',
+              status: status,
+              lastActive: lastActive,
+              daysActive: calculateDaysActive(joinDate, lastActive, status),
+              joinDate: joinDate,
+              totalEarned: status === 'active' ? 500 : 0,
+              role: rolesMap.get(ref.referred_id) || 'player',
+              directLeaderId: userId,
+              directLeaderUsername: '',
+              questionsAnswered: 0,
+              questionsCorrect: 0
+            };
+          });
+        }
+      }
+
+      setTeamMembers(members);
     } catch (err) {
       console.error('Error fetching team members:', err);
       setError('Failed to load team members data');
