@@ -48,7 +48,9 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // 1. Check if username is taken in profiles
+    // 1. Check if username or email is already represented in profiles.
+    // Supabase intentionally obscures repeated public signups, so duplicates
+    // must be rejected explicitly rather than presented as a new account.
     const { data: existingUsername } = await supabase
       .from("profiles")
       .select("id")
@@ -57,6 +59,19 @@ Deno.serve(async (req) => {
 
     if (existingUsername) {
       return new Response(JSON.stringify({ error: "This username is already taken. Please choose another." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: existingEmail } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingEmail) {
+      return new Response(JSON.stringify({ error: "An account with this email already exists. Please log in or reset your password." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -76,35 +91,16 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      // If user already exists in Auth, try to find them
-      if (createError.message.toLowerCase().includes("already registered") || createError.message.toLowerCase().includes("already exists")) {
-        // Find existing user by email
-        const { data: listedUsers } = await supabase.auth.admin.listUsers();
-        const existingUser = listedUsers?.users.find(u => u.email?.toLowerCase() === normalizedEmail);
-        
-        if (!existingUser) {
-          return new Response(JSON.stringify({ error: "Email already in use by another account." }), {
-            status: 409,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        
-        // If they exist but have no profile, we can "recover" it
-        const { data: profile } = await supabase.from('profiles').select('id').eq('id', existingUser.id).maybeSingle();
-        if (profile) {
-          return new Response(JSON.stringify({ error: "An account with this email already exists." }), {
-            status: 409,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        
-        userId = existingUser.id;
-      } else {
-        return new Response(JSON.stringify({ error: createError.message }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      const isDuplicate = createError.message.toLowerCase().includes("already registered")
+        || createError.message.toLowerCase().includes("already exists");
+      return new Response(JSON.stringify({
+        error: isDuplicate
+          ? "An account with this email already exists. Please log in or reset your password."
+          : createError.message,
+      }), {
+        status: isDuplicate ? 409 : 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     } else {
       userId = createdUser.user?.id || null;
     }
