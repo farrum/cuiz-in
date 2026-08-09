@@ -97,7 +97,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
       const leaderGroupsMap = new Map<string, TroopActivity[]>();
 
       if (referralsData) {
-        for (const ref of referralsData) {
+        for (const ref of (referralsData as any[])) {
           const referrerId = ref.referrer_id;
           const referredId = ref.referred_id;
           const prof = profilesMap.get(referredId);
