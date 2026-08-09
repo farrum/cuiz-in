@@ -29,7 +29,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
       // Prefer the real Supabase session; fall back to legacy admin id
       const { data: { session } } = await supabase.auth.getSession();
-      const adminUserId = localStorage.getItem('quiz_app_user_id');
+      const adminUserId = session?.user?.id || localStorage.getItem('quiz_app_user_id');
       const { data, error } = await supabase.functions.invoke('admin-get-users', {
         body: { adminUserId },
         headers: session?.access_token
