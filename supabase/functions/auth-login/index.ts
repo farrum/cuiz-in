@@ -75,24 +75,33 @@ serve(async (req) => {
         );
       }
 
-      if (!profile.email) {
-        console.log("[auth-login] Profile missing email, fetching from auth.users:", identifier);
-        const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
-        const authEmail = authUser?.user?.email;
-        if (authUserError || !authEmail) {
-          console.log("[auth-login] No auth email for username:", identifier, authUserError);
-          await logLogin(identifier, false);
-          return new Response(
-            JSON.stringify({ success: false, error: "Account needs to be re-registered with an email address" }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        // Backfill profile email for future logins
-        await supabaseAdmin.from("profiles").update({ email: authEmail }).eq("id", profile.id);
-        profile.email = authEmail;
+      // Always trust auth.users as the source of truth for the login email.
+      // profiles.email can drift (legacy migrations), which makes the password
+      // grant target the wrong address and look like a "wrong password".
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      const authEmail = authUser?.user?.email ?? null;
+
+      if (!authEmail) {
+        console.log("[auth-login] No auth account for username:", identifier);
+        await logLogin(identifier, false);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "This account was never migrated to the new login system. Please register again with an email address, or contact support.",
+            code: "no_auth_account",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      email = profile.email;
+      // Self-heal drifted profile emails
+      if (profile.email !== authEmail) {
+        console.log("[auth-login] Repairing drifted profile email for:", identifier);
+        await supabaseAdmin.from("profiles").update({ email: authEmail }).eq("id", profile.id);
+      }
+
+      email = authEmail;
       resolvedUsername = profile.username;
       console.log("[auth-login] Resolved to email:", email);
     }
