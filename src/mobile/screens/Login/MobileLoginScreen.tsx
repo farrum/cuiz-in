@@ -91,44 +91,44 @@ export default function MobileLoginScreen() {
       } else {
         const inputEmail = email.trim();
         const uname = (username || inputEmail.split('@')[0]).trim();
-        
-        // Check if username is already taken
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .ilike('username', uname)
-          .maybeSingle();
 
-        if (existingUser) {
-          throw new Error('That username is already claimed by another warrior');
+        // Use the same server registration flow as the website. This avoids
+        // Supabase's deliberately ambiguous repeated-signup response, which
+        // can otherwise look successful even though the password was not changed.
+        const { data, error } = await supabase.functions.invoke('register-user', {
+          body: {
+            username: uname,
+            displayName: uname,
+            email: inputEmail,
+            phone: '',
+            password,
+          },
+        });
+
+        if (error || !data?.success) {
+          let message = data?.error || error?.message || 'Registration failed. Please try again.';
+          try {
+            const context = (error as { context?: { json?: () => Promise<{ error?: string }> } } | null)?.context;
+            if (context?.json) {
+              const body = await context.json();
+              if (body?.error) message = body.error;
+            }
+          } catch {
+            // Keep the available error message.
+          }
+          throw new Error(message);
         }
 
-        // Create standard credentials account
-        const { data, error } = await supabase.auth.signUp({
-          email: inputEmail,
-          password,
-          options: {
-            data: {
-              username: uname,
-            }
-          }
-        });
-        if (error) throw error;
+        if (!data.access_token || !data.refresh_token) {
+          throw new Error('Account created, but login could not start. Please sign in.');
+        }
 
-        if (data?.user) {
-          // Create matching profile row
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              { 
-                id: data.user.id,
-                username: uname,
-                email: data.user.email,
-              }
-            ]);
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-          }
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+        if (sessionError) {
+          throw new Error('Account created, but login could not start. Please sign in.');
         }
 
         trackGuestEvent({ event_type: 'registered' });
