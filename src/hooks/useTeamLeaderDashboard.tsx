@@ -235,35 +235,69 @@ export const useTeamLeaderDashboard = () => {
     }
   };
 
-  // Enrich members with gamesPlayed, lastOnline, playTime, activeActivity
-  const teamMembers = rawMembers.map((member, idx) => {
-    const seed = idx + 1;
-    const isOnline = member.status === 'active';
-    const gamesPlayed = Math.floor(((member.totalEarned || 0) * 1.2) + seed * 3);
-    const lastOnline = isOnline 
-      ? 'Active Now' 
-      : seed % 3 === 0 
-      ? 'Online 15m ago' 
-      : seed % 3 === 1 
-      ? 'Online 2h ago' 
-      : 'Online 1d ago';
-    const activePlayTime = `${(seed * 2.4 + (member.totalEarned || 0) / 25).toFixed(1)} hrs`;
-    const activeActivity = isOnline
-      ? seed % 3 === 0
-        ? 'Campaigning Quests'
-        : seed % 3 === 1
-        ? 'Solving Daily Riddle'
-        : 'Playing Slots'
-      : 'Idle';
+  // Fetch REAL presence for the roster (last quiz answer / login timestamp).
+  const memberIdsKey = rawMembers.map((m) => m.id).sort().join(',');
+  useEffect(() => {
+    const ids = memberIdsKey ? memberIdsKey.split(',') : [];
+    if (ids.length === 0) {
+      setPresence({});
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      const { data, error } = await supabase.rpc('get_my_team_presence' as any, { p_member_ids: ids });
+      if (cancelled || error || !data) return;
+      const map: Record<string, { lastSeen: string | null; gamesPlayed: number }> = {};
+      (data as any[]).forEach((row) => {
+        map[row.member_id] = {
+          lastSeen: row.last_seen ?? null,
+          gamesPlayed: Number(row.games_played) || 0,
+        };
+      });
+      setPresence(map);
+    };
+    load();
+    // Presence goes stale quickly — refresh while the dashboard is open.
+    const interval = setInterval(load, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [memberIdsKey]);
+
+  /** A member counts as online only if they did something in the last 5 minutes. */
+  const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
+  const formatLastSeen = (lastSeen: string | null): string => {
+    if (!lastSeen) return 'Never';
+    const diff = Date.now() - new Date(lastSeen).getTime();
+    if (diff < ONLINE_WINDOW_MS) return 'Active now';
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
+
+  // Enrich members with REAL activity data. No synthetic/random values —
+  // showing invented "online" states was misleading.
+  const teamMembers = rawMembers.map((member) => {
+    const p = presence[member.id];
+    const lastSeen = p?.lastSeen ?? null;
+    const isOnline = !!lastSeen && Date.now() - new Date(lastSeen).getTime() < ONLINE_WINDOW_MS;
 
     return {
       ...member,
-      gamesPlayed,
-      lastOnline,
-      activePlayTime,
-      activeActivity
+      isOnline,
+      lastSeen,
+      gamesPlayed: p?.gamesPlayed ?? member.questionsAnswered ?? 0,
+      lastOnline: formatLastSeen(lastSeen),
+      activePlayTime: '—',
+      activeActivity: isOnline ? 'Playing' : 'Idle',
     };
   });
+
+  const onlineMembers = teamMembers.filter((m) => m.isOnline).length;
 
   useEffect(() => {
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
