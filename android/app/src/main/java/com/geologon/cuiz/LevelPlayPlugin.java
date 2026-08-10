@@ -53,7 +53,7 @@ public class LevelPlayPlugin extends Plugin {
     // Ad Unit IDs from the LevelPlay dashboard.
     private static final String BANNER_AD_UNIT_ID = "nfbd7er5vhgheohp";
     private static final String INTERSTITIAL_AD_UNIT_ID = "5kn5xibxgmgcju9g";
-    private static final String REWARDED_AD_UNIT_ID = "5kn5xibxgmgcju9g";
+    private static final String REWARDED_AD_UNIT_ID = "l396uc79p1ajnsmt";
 
     // Pending calls resolved from SDK callbacks.
     private PluginCall pendingInterstitialCall;

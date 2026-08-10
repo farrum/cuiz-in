@@ -572,6 +572,35 @@ export default function KingdomsPage() {
           </p>
         </div>
 
+        {/* Faction Ledger / Help Guide to explain what the page is about */}
+        <div className="max-w-6xl mx-auto px-4 mt-8">
+          <div className="panel-3d bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200/60 rounded-3xl p-5 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-start relative overflow-hidden text-foreground">
+            <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-amber-200/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-200 shrink-0 text-amber-900">
+              <Info className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <h3 className="font-serif font-black uppercase text-amber-950 tracking-wider text-sm flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-700 animate-pulse" /> Kingdom Ledger & Decree
+              </h3>
+              <p className="text-[12px] font-extrabold leading-relaxed text-slate-700">
+                A Kingdom (Alliance) is a guild where players pool their bi-weekly Stars to secure territorial ranking titles and active Gem multiplier buffs.
+              </p>
+              <ul className="list-disc list-inside text-[11px] font-bold text-slate-600 space-y-1 pl-1">
+                <li>
+                  <strong className="text-amber-955 font-black">How to Earn Stars:</strong> Play quizzes, maintain your daily streak, and complete campaign stages (Quest Board) to earn Stars.
+                </li>
+                <li>
+                  <strong className="text-amber-955 font-black">Automatic Pooling:</strong> All Stars earned by you and your guildmates automatically contribute to your active Kingdom's pool.
+                </li>
+                <li>
+                  <strong className="text-amber-955 font-black">Active Perks:</strong> Every bi-weekly reset, the highest-ranking Kingdoms unlock dynamic passive Gem bonuses (+2% to +10%) on Quests for all their members!
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div className="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* LEFT 2 COLUMNS: ALLIANCE PORTAL / GUILD HALL */}
@@ -598,8 +627,8 @@ export default function KingdomsPage() {
                       <div className="flex gap-4 items-center">
                         <div className="text-center bg-slate-50 px-4 py-2 rounded-2xl border-2 border-slate-200 shadow-inner">
                           <span className="text-[10px] uppercase font-black text-slate-500 block mb-1">Bi-weekly Pool</span>
-                          <span className="text-sm font-black text-amber-600 flex items-center justify-center gap-1.5 drop-shadow-sm">
-                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                          <span className="text-sm font-black text-amber-900 flex items-center justify-center gap-1.5 drop-shadow-sm">
+                            <Star className="w-4 h-4 text-amber-600 fill-amber-500" />
                             {myAlliance.biweekly_stars} ★
                           </span>
                         </div>
@@ -616,8 +645,8 @@ export default function KingdomsPage() {
 
                     {/* Kingdom Perks Card */}
                     <div className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl mb-6 shadow-sm relative z-10">
-                      <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider flex items-center gap-1.5 mb-1.5">
-                        <Flame className="w-4 h-4 text-amber-600" /> Active Kingdom Buff
+                      <span className="text-[10px] font-black uppercase text-amber-950 tracking-wider flex items-center gap-1.5 mb-1.5">
+                        <Flame className="w-4 h-4 text-amber-700" /> Active Kingdom Buff
                       </span>
                       <p className="text-sm font-bold text-amber-950">
                         {getRankBuff(getMyRank())}
@@ -852,8 +881,8 @@ export default function KingdomsPage() {
                       </div>
                     </div>
 
-                    <span className="text-sm font-black text-amber-600 flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl shadow-inner border border-slate-100">
-                      <Star className="w-4 h-4 text-amber-500 fill-amber-500 drop-shadow-sm" />
+                    <span className="text-sm font-black text-amber-900 flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl shadow-inner border border-slate-100">
+                      <Star className="w-4 h-4 text-amber-600 fill-amber-500 drop-shadow-sm" />
                       {all.biweekly_stars}
                     </span>
                   </div>

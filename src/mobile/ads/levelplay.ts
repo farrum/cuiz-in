@@ -18,7 +18,7 @@ export const LEVELPLAY_PLACEMENTS = {
 export const LEVELPLAY_AD_UNITS = {
   banner: 'nfbd7er5vhgheohp',
   interstitial: '5kn5xibxgmgcju9g',
-  rewarded: '',
+  rewarded: 'l396uc79p1ajnsmt',
 } as const;
 
 export interface LevelPlayPluginDefinition {

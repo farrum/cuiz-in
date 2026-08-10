@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil, Users, ExternalLink, Shield } from 'lucide-react';
+import { LogOut, Trophy, Sparkles, Calendar, Flame, Pencil, Users, ExternalLink, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
