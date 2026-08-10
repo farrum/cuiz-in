@@ -63,6 +63,21 @@ export const useTeamLeaderDashboard = () => {
         .or(`assigned_to.eq.${storedUserId},assigned_by.eq.${storedUserId}`);
       
       if (!error && data) {
+        // Fetch assignee names for tasks with specific assignments
+        const assigneeIds = [...new Set(
+          data.filter((t: any) => t.assigned_to).map((t: any) => t.assigned_to)
+        )];
+        let namesMap = new Map<string, string>();
+        if (assigneeIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, display_name, username')
+            .in('id', assigneeIds);
+          if (profiles) {
+            profiles.forEach((p: any) => namesMap.set(p.id, p.display_name || p.username || 'Troop'));
+          }
+        }
+
         const mapped: BaronTask[] = data.map((t: any) => ({
           id: t.id,
           title: t.title,
@@ -76,7 +91,7 @@ export const useTeamLeaderDashboard = () => {
           shardType: t.shard_type,
           status: t.status,
           assignedTo: t.assigned_to || 'all',
-          assignedToName: ''
+          assignedToName: t.assigned_to ? (namesMap.get(t.assigned_to) || 'Troop') : 'All Troops'
         }));
         setAssignedTasks(mapped);
       }
@@ -283,7 +298,7 @@ export const useTeamLeaderDashboard = () => {
   // showing invented "online" states was misleading.
   const teamMembers = rawMembers.map((member) => {
     const p = presence[member.id];
-    const lastSeen = p?.lastSeen ?? null;
+    const lastSeen = p?.lastSeen ?? (member.lastActive && member.lastActive !== '-' ? member.lastActive : null);
     const isOnline = !!lastSeen && Date.now() - new Date(lastSeen).getTime() < ONLINE_WINDOW_MS;
 
     return {
@@ -314,7 +329,9 @@ export const useTeamLeaderDashboard = () => {
         const isLeader = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'].includes(userRole);
         
         setIsTeamLeader(isLeader);
-        setIsMainTeamLeader(['admin', 'king', 'baron', 'team_leader'].includes(userRole));
+        // Main team leaders (who can promote/demote anyone) include barons and above.
+        // Officers and knights can also manage their own sub-squads.
+        setIsMainTeamLeader(['admin', 'king', 'baron', 'team_leader', 'knight', 'officer', 'junior_team_leader'].includes(userRole));
         
         if (!isLeader) {
           toast({

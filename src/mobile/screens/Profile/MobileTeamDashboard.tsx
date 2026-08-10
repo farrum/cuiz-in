@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildReferralLink } from '@/utils/referralLink';
@@ -47,6 +47,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
+
 
 export default function MobileTeamDashboard() {
   const navigate = useNavigate();
@@ -75,6 +77,25 @@ export default function MobileTeamDashboard() {
   const [filterTab, setFilterTab] = useState<'mercenaries' | 'attendance' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [referralStats, setReferralStats] = useState<{ total: number; active: number }>({ total: 0, active: 0 });
+
+  // Fetch referral stats for non-leader recruit landing page
+  useEffect(() => {
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!userId) return;
+    supabase
+      .from('user_referrals')
+      .select('status')
+      .eq('referrer_id', userId)
+      .then(({ data }) => {
+        if (data) {
+          setReferralStats({
+            total: data.length,
+            active: data.filter((r: any) => r.status === 'active').length,
+          });
+        }
+      });
+  }, []);
 
   // Contract Creator state
   const [taskTitle, setTaskTitle] = useState('');
@@ -99,24 +120,38 @@ export default function MobileTeamDashboard() {
     action: () => Promise<void>;
   } | null>(null);
 
-  const username = localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'baron';
+  const username = localStorage.getItem('cuizin_username') || localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'baron';
   const inviteLink = buildReferralLink(username);
 
   const copyInviteLink = async () => {
+    // Robust clipboard copy — works in Capacitor Android WebViews
+    let didCopy = false;
     try {
       await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      toast({
-        title: "Scroll Copied!",
-        description: "Recruitment scroll link copied to clipboard.",
-      });
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        variant: "destructive"
-      });
+      didCopy = true;
+    } catch {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = inviteLink;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        didCopy = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {}
     }
+    setCopied(true);
+    toast({
+      title: didCopy ? 'Scroll Copied!' : 'Copy Failed',
+      description: didCopy
+        ? 'Recruitment scroll link copied to clipboard.'
+        : 'Please copy the link manually.',
+      variant: didCopy ? undefined : 'destructive',
+    });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const filteredMembers = useMemo(() => {
@@ -203,8 +238,138 @@ export default function MobileTeamDashboard() {
     );
   }
 
-  if (!isTeamLeader) {
-    return null;
+  // ═══════════════════════════════════════════════
+  // Role helpers
+  // ═══════════════════════════════════════════════
+  const ROLE_LABEL: Record<string, string> = {
+    admin: 'Admin',
+    king: 'King',
+    baron: 'Baron',
+    knight: 'Knight',
+    officer: 'Officer',
+    team_leader: 'Baron',
+    junior_team_leader: 'Officer',
+    player: 'Troop',
+    infantry: 'Troop',
+  };
+  const ROLE_BADGE_CLASS: Record<string, string> = {
+    admin:              'bg-red-950/40 border-red-800 text-red-300',
+    king:               'bg-amber-950/40 border-amber-700 text-amber-200',
+    baron:              'bg-amber-950/40 border-amber-900 text-amber-300',
+    team_leader:        'bg-amber-950/40 border-amber-900 text-amber-300',
+    knight:             'bg-blue-950/40 border-blue-900 text-blue-300',
+    officer:            'bg-indigo-950/40 border-indigo-900 text-indigo-300',
+    junior_team_leader: 'bg-indigo-950/40 border-indigo-900 text-indigo-300',
+    player:             'bg-stone-950 border-stone-800 text-slate-400',
+    infantry:           'bg-stone-950 border-stone-800 text-slate-400',
+  };
+
+  const SELF_ROLE_TITLE: Record<string, string> = {
+    admin: 'Supreme Command',
+    king: 'High King',
+    baron: 'Baron\'s War Room',
+    team_leader: 'Baron\'s War Room',
+    knight: 'Knight\'s War Room',
+    officer: 'Officer\'s War Room',
+    junior_team_leader: 'Officer\'s War Room',
+  };
+  const SELF_ROLE_SUBTITLE: Record<string, string> = {
+    admin: 'Supreme Commander',
+    king: 'High King',
+    baron: 'Mercenary Commander',
+    team_leader: 'Mercenary Commander',
+    knight: 'Knight Commander',
+    officer: 'Junior Officer',
+    junior_team_leader: 'Junior Officer',
+  };
+
+  const selfTitle = SELF_ROLE_TITLE[currentUserRole] || 'War Room';
+  const selfSubtitle = SELF_ROLE_SUBTITLE[currentUserRole] || 'Commander';
+
+  // ═══════════════════════════════════════════════
+  // Non-leader landing: Recruit page
+  // ═══════════════════════════════════════════════
+  if (!isLoading && !isTeamLeader) {
+    return (
+      <div className="min-h-full stone-wall text-slate-100 pb-24 relative overflow-x-hidden">
+        {/* Header */}
+        <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={() => navigate(-1)}
+            className="p-1.5 rounded-full hover:bg-stone-850"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-200" />
+          </motion.button>
+          <div className="flex-1">
+            <h1 className="text-sm font-black uppercase text-white tracking-tight" style={{ fontFamily: "'Cinzel', serif" }}>
+              Squad Recruitment
+            </h1>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Build Your Mercenary Ranks</p>
+          </div>
+        </div>
+
+        <div className="px-4 pt-6 space-y-5 relative z-10">
+          {/* Invite Link Card */}
+          <div className="bg-stone-900/90 border-2 border-amber-500/30 rounded-3xl p-5 space-y-4 shadow-lg text-center">
+            <Sparkles className="w-12 h-12 text-yellow-500 mx-auto animate-pulse" />
+            <div>
+              <h2 className="font-black text-base text-white uppercase tracking-wide">Recruit Infantry</h2>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                Share your recruitment scroll across the realm. New players automatically join your ranks and you earn bonus gems when they play!
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-stone-950 rounded-2xl p-3 text-center">
+                <p className="text-xl font-black text-amber-400">{referralStats.total}</p>
+                <p className="text-[9px] text-slate-500 uppercase font-bold mt-0.5">Enlisted</p>
+              </div>
+              <div className="bg-stone-950 rounded-2xl p-3 text-center">
+                <p className="text-xl font-black text-emerald-400">{referralStats.active}</p>
+                <p className="text-[9px] text-slate-500 uppercase font-bold mt-0.5">Active Duty</p>
+              </div>
+            </div>
+
+            {/* Progress to Team Leader */}
+            {referralStats.active < 10 && (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3">
+                <div className="flex justify-between text-[10px] mb-2">
+                  <span className="text-slate-400 font-bold uppercase">Progress to Baron</span>
+                  <span className="font-black text-amber-400">{referralStats.active}/10</span>
+                </div>
+                <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500"
+                    style={{ width: `${Math.min((referralStats.active / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-[9px] text-slate-500 text-center mt-2">
+                  🎯 {10 - referralStats.active} more active recruits to unlock Baron rank!
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <input
+                readOnly
+                value={inviteLink}
+                className="bg-stone-950 border border-stone-800 text-white text-xs rounded-xl px-3 py-2 text-center w-full outline-none"
+              />
+              <button
+                onClick={copyInviteLink}
+                className="w-full h-11 font-black bg-yellow-500 hover:bg-yellow-600 text-stone-950 rounded-xl flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Scroll Copied!' : 'Copy Recruitment Scroll'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -220,25 +385,25 @@ export default function MobileTeamDashboard() {
       <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
         <motion.button 
           whileTap={{ scale: 0.92 }}
-          onClick={() => navigate('/hub')}
+          onClick={() => navigate(-1)}
           className="p-1.5 rounded-full hover:bg-stone-850"
-          aria-label="Back to hub"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5 text-slate-200" />
         </motion.button>
         <div className="flex-1">
           <h1 className="text-sm font-black uppercase text-white tracking-tight" style={{ fontFamily: "'Cinzel', serif" }}>
-            Baron War Room
+            {selfTitle}
           </h1>
           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-            {isMainTeamLeader ? 'Mercenary Commander' : 'Junior Officer'}
+            {selfSubtitle}
           </p>
         </div>
         <button
-          onClick={() => navigate('/hub')}
+          onClick={() => navigate('/empire-quests')}
           className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-amber-500 text-stone-950"
         >
-          Games
+          Quests
         </button>
       </div>
 
@@ -273,7 +438,7 @@ export default function MobileTeamDashboard() {
         <div className="flex p-0.5 rounded-xl bg-stone-950 border border-stone-850 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setFilterTab('mercenaries')}
-            className={`flex-1 min-w-[75px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[65px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'mercenaries' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
@@ -283,32 +448,32 @@ export default function MobileTeamDashboard() {
           </button>
           <button
             onClick={() => setFilterTab('attendance')}
-            className={`flex-1 min-w-[85px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[75px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'attendance' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            📅 Attendance
+            📅 Attend
           </button>
           {joinRequests.length > 0 && (
             <button
               onClick={() => setFilterTab('requests')}
-              className={`flex-1 min-w-[75px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all relative ${
+              className={`flex-1 min-w-[65px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all relative ${
                 filterTab === 'requests' 
                   ? 'bg-amber-500 text-stone-950 font-black' 
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              📥 Requests
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-650 text-[8px] font-bold text-white rounded-full flex items-center justify-center border border-stone-900 animate-bounce">
+              📥 Req
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-650 text-[7px] font-bold text-white rounded-full flex items-center justify-center border border-stone-900 animate-bounce">
                 {joinRequests.length}
               </span>
             </button>
           )}
           <button
             onClick={() => setFilterTab('tasks')}
-            className={`flex-1 min-w-[80px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[70px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'tasks' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
@@ -318,7 +483,7 @@ export default function MobileTeamDashboard() {
           </button>
           <button
             onClick={() => setFilterTab('recruit')}
-            className={`flex-1 min-w-[70px] text-center py-2 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+            className={`flex-1 min-w-[65px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'recruit' 
                 ? 'bg-amber-500 text-stone-950 font-black' 
                 : 'text-stone-400 hover:text-stone-200'
@@ -362,14 +527,9 @@ export default function MobileTeamDashboard() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-black text-sm text-white">{member.name}</span>
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase border ${
-                              member.role === 'baron' ? 'bg-amber-950/40 border-amber-900 text-amber-300' :
-                              member.role === 'knight' ? 'bg-blue-950/40 border-blue-900 text-blue-300' :
-                              member.role === 'officer' ? 'bg-indigo-950/40 border-indigo-900 text-indigo-300' :
-                              'bg-stone-950 border-stone-800 text-slate-400'
+                              ROLE_BADGE_CLASS[member.role] || ROLE_BADGE_CLASS['infantry']
                             }`}>
-                              {member.role === 'baron' ? 'Baron' :
-                               member.role === 'knight' ? 'Knight' :
-                               member.role === 'officer' ? 'Officer' : 'Infantry'}
+                              {ROLE_LABEL[member.role] || 'Troop'}
                             </span>
                           </div>
                           <span className="text-[10px] text-slate-500">{member.email}</span>
@@ -465,7 +625,60 @@ export default function MobileTeamDashboard() {
             <h3 className="text-xs font-black uppercase text-amber-500 tracking-wider">
               📅 Troop Daily Attendance & Check-ins
             </h3>
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-2 shadow-md">
+            <div className="bg-stone-950 border border-stone-800 rounded-2xl p-2 shadow-md overflow-hidden attendance-dark-theme">
+              <style dangerouslySetInnerHTML={{ __html: `
+                .attendance-dark-theme .bg-white,
+                .attendance-dark-theme .bg-card,
+                .attendance-dark-theme .rounded-xl,
+                .attendance-dark-theme .bg-background {
+                  background-color: #0c0a09 !important; /* stone-950 */
+                  color: #f1f5f9 !important;
+                  border-color: #292524 !important;
+                }
+                .attendance-dark-theme .bg-muted {
+                  background-color: #1c1917 !important; /* stone-900 */
+                  color: #d6d3d1 !important;
+                }
+                .attendance-dark-theme .divide-y > :not([hidden]) ~ :not([hidden]) {
+                  border-color: #292524 !important;
+                }
+                .attendance-dark-theme border, 
+                .attendance-dark-theme .border,
+                .attendance-dark-theme .border-gray-200,
+                .attendance-dark-theme .divide-gray-200 {
+                  border-color: #292524 !important;
+                }
+                .attendance-dark-theme thead th, 
+                .attendance-dark-theme tbody td {
+                  border-color: #292524 !important;
+                  color: #e2e8f0 !important;
+                }
+                .attendance-dark-theme .bg-gray-100, 
+                .attendance-dark-theme .bg-gray-50 {
+                  background-color: #1c1917 !important;
+                  color: #e2e8f0 !important;
+                }
+                .attendance-dark-theme .bg-green-100 {
+                  background-color: rgba(16, 185, 129, 0.15) !important;
+                  color: #34d399 !important;
+                }
+                .attendance-dark-theme input {
+                  background-color: #0c0a09 !important;
+                  border-color: #292524 !important;
+                  color: #fff !important;
+                }
+                .attendance-dark-theme button {
+                  background-color: #1c1917 !important;
+                  border-color: #292524 !important;
+                  color: #f1f5f9 !important;
+                }
+                .attendance-dark-theme button:hover {
+                  background-color: #292524 !important;
+                }
+                .attendance-dark-theme .text-muted-foreground {
+                  color: #78716c !important; /* stone-500 */
+                }
+              `}} />
               <TeamLeaderAttendanceTracker />
             </div>
           </div>
@@ -597,6 +810,16 @@ export default function MobileTeamDashboard() {
                   </div>
 
                   <div>
+                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Reward ⭐ Stars</label>
+                    <Input 
+                      type="number"
+                      value={rewardStars}
+                      onChange={e => setRewardStars(Number(e.target.value))}
+                      className="bg-stone-950 border-stone-800 text-white h-8.5 text-xs rounded-xl"
+                    />
+                  </div>
+
+                  <div>
                     <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Assignee</label>
                     <select 
                       value={assignedTo}
@@ -716,7 +939,7 @@ export default function MobileTeamDashboard() {
               <h3 className="text-sm font-black uppercase text-amber-500 tracking-wider">
                 Grant Tribute
               </h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Reward <span className="text-white font-bold">{selectedMemberForBonus.name}</span> for exception service.</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Reward <span className="text-white font-bold">{selectedMemberForBonus.name}</span> for exceptional service.</p>
             </div>
 
             <form onSubmit={handleGrantBonusSubmit} className="space-y-4 text-xs">

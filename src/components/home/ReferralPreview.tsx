@@ -27,10 +27,12 @@ const ReferralPreview: React.FC = () => {
 
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    const storedName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    const displayName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    // Use the stable username (not display_name) for referral links
+    const storedUsername = localStorage.getItem('cuizin_username') || displayName || '';
     
     setIsLoggedIn(!!userId);
-    if (storedName) setUserName(storedName);
+    if (storedUsername) setUserName(storedUsername);
     
     if (userId) {
       fetchReferralStats(userId);
@@ -61,16 +63,36 @@ const ReferralPreview: React.FC = () => {
     }
   };
 
-  const copyReferralLink = () => {
+  const copyReferralLink = async () => {
     const link = buildReferralLink(userName);
-    navigator.clipboard.writeText(link);
+    // Robust clipboard copy: works in Capacitor Android WebViews where
+    // navigator.clipboard may be unavailable or throw a permission error.
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(link);
+      copied = true;
+    } catch {
+      // Fallback: use a hidden textarea + execCommand
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {}
+    }
     setCopied(true);
-    
     toast({
-      title: "Link Copied!",
-      description: "Share this link with friends to earn bonus gems",
+      title: copied ? 'Link Copied!' : 'Copy failed',
+      description: copied
+        ? 'Share this link with friends to earn bonus gems'
+        : 'Please copy the link manually from the address bar',
     });
-    
     setTimeout(() => setCopied(false), 2000);
   };
 

@@ -25,7 +25,6 @@ import {
   equipTitle,
   unequipTitle
 } from '@/utils/shopData';
-import { Award } from 'lucide-react';
 
 export default function ProfileScreen() {
   const navigate = useNavigate();

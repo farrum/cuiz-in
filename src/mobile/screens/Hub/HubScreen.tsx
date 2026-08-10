@@ -191,23 +191,39 @@ export default function HubScreen() {
     audioManager.playSFX('chest');
 
     try {
-      const { error } = await supabase
-        .from('empire_tasks' as any)
-        .update({ status: 'claimed' })
-        .eq('id', taskId);
-
-      if (error) throw error;
-      
-      // Force reload tasks
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      if (userId) {
-        const { data } = await supabase
-          .from('empire_tasks' as any)
+      if (!userId) return;
+
+      // Mark as claimed ONLY for this user in user_task_progress
+      // (Do NOT update empire_tasks.status — that would mark it claimed for ALL users)
+      await supabase
+        .from('user_task_progress' as any)
+        .upsert({
+          task_id: taskId,
+          user_id: userId,
+          status: 'claimed',
+          last_updated: new Date().toISOString()
+        });
+
+      // Reload tasks for this user (hiding newly claimed ones)
+      const { data } = await supabase
+        .from('empire_tasks' as any)
+        .select('*')
+        .or(`assigned_to.eq.${userId},assigned_to.is.null`);
+
+      if (data) {
+        const { data: userProgressData } = await supabase
+          .from('user_task_progress' as any)
           .select('*')
-          .or(`assigned_to.eq.${userId},assigned_to.is.null`)
-          .neq('status', 'claimed');
-        if (data) {
-          setBaronTasks(data.map((t: any) => ({
+          .eq('user_id', userId);
+
+        const claimedIds = new Set(
+          (userProgressData || []).filter((up: any) => up.status === 'claimed').map((up: any) => up.task_id)
+        );
+
+        setBaronTasks(data
+          .filter((t: any) => !claimedIds.has(t.id))
+          .map((t: any) => ({
             id: t.id,
             title: t.title,
             description: t.description || '',
@@ -221,7 +237,6 @@ export default function HubScreen() {
             status: t.status,
             assignedTo: t.assigned_to || 'all'
           })));
-        }
       }
     } catch (e) {
       console.error('Error claiming task:', e);

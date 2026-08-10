@@ -33,6 +33,10 @@ const queryClient = new QueryClient({
 function RequireAuth({ authed }: { authed: boolean }) {
   const location = useLocation();
   if (!authed) {
+    const onboarded = localStorage.getItem('mobile_onboarded') === '1';
+    if (!onboarded) {
+      return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
+    }
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
   return <Outlet />;
@@ -45,9 +49,13 @@ async function hydrateMobileSession(userId: string) {
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
     if (profileResult.data) {
+      const pd = profileResult.data as any;
       localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-      localStorage.setItem(STORAGE_KEYS.USER_NAME, (profileResult.data as any).display_name || profileResult.data.username);
-      localStorage.setItem(STORAGE_KEYS.USER_GEMS, String((profileResult.data as any).gems ?? 0));
+      // USER_NAME is the display greeting (can be display_name)
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, pd.display_name || pd.username);
+      // USER_USERNAME is the stable login handle — always used for referral links
+      localStorage.setItem('cuizin_username', pd.username || '');
+      localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(pd.gems ?? 0));
     }
     const roles = new Set((roleResult.data || []).map((r) => r.role).filter(Boolean));
     const role = roles.has('admin') ? 'admin' : roles.has('team_leader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
