@@ -488,7 +488,10 @@ export const useTeamLeaderDashboard = () => {
     userId,
     isTeamLeader,
     teamMembers,
-    activeMembers,
+    // "Active duty" now reflects members genuinely active in the last 5 minutes.
+    activeMembers: onlineMembers,
+    registeredActiveMembers: activeMembers,
+    onlineMembers,
     inactiveMembers,
     suspendedMembers,
     earnings,
