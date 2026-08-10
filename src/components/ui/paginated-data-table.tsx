@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import {
   Pagination,
@@ -37,6 +37,11 @@ export const PaginatedDataTable: React.FC<PaginatedDataTableProps> = ({
   
   // Calculate total pages
   const totalPages = Math.ceil(data.length / pageSize);
+
+  // Keep the page in range whenever the dataset changes (e.g. after searching)
+  useEffect(() => {
+    setCurrentPage((p) => Math.min(Math.max(1, p), Math.max(1, totalPages)));
+  }, [totalPages, data.length]);
   
   // Get current page data
   const getCurrentPageData = () => {

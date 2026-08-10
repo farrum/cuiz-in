@@ -14,26 +14,36 @@ export function PromotionAnimation() {
     // Check for rank promotion by comparing current fetched role with stored role
     const checkPromotion = async () => {
       try {
-        const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        // Only run for a genuinely signed-in user (stale localStorage must not trigger this)
+        const { data: { session } } = await supabase.auth.getSession();
+        const storedUserId = session?.user?.id;
         if (!storedUserId) return;
 
-        // Fetch active user role
-        const { data: roleData } = await supabase
+        // Fetch all roles (a user can hold several) and pick the highest
+        const { data: roleRows } = await supabase
           .from('user_roles' as any)
           .select('role')
-          .eq('user_id', storedUserId)
-          .maybeSingle();
+          .eq('user_id', storedUserId);
 
-        const activeRole = (roleData as any)?.role || 'infantry';
+        const roles = ((roleRows as any[]) || []).map((r) => String(r.role).toLowerCase());
+        // Admins are staff, not a game rank — never celebrate
+        if (roles.includes('admin')) return;
+        const activeRole =
+          ['king', 'baron', 'team_leader', 'knight', 'officer', 'junior_team_leader'].find((r) =>
+            roles.includes(r)
+          ) || 'infantry';
         const lastSeenRole = localStorage.getItem('last_seen_user_role') || 'infantry';
         const acknowledgedRole = localStorage.getItem('acknowledged_rank_role') || '';
 
         // Hierarchy hierarchy level check
         const levels: Record<string, number> = {
           'infantry': 1,
+          'player': 1,
           'officer': 2,
+          'junior_team_leader': 2,
           'knight': 3,
           'baron': 4,
+          'team_leader': 4,
           'king': 5,
           'admin': 5
         };
@@ -50,9 +60,9 @@ export function PromotionAnimation() {
           setCurrentRole(activeRole);
           // Trigger promotion celebration!
           let name = 'Infantry';
-          if (activeRole === 'officer') name = 'Officer';
+          if (activeRole === 'officer' || activeRole === 'junior_team_leader') name = 'Officer';
           else if (activeRole === 'knight') name = 'Knight';
-          else if (activeRole === 'baron') name = 'Baron';
+          else if (activeRole === 'baron' || activeRole === 'team_leader') name = 'Baron';
           else if (activeRole === 'king' || activeRole === 'admin') name = 'King';
 
           setRankName(name);

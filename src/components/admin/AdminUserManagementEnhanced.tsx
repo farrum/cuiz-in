@@ -208,12 +208,28 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     }
   ];
 
-  const filteredUsers = users.filter(user => 
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.display_name && user.display_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (user.phone && user.phone.includes(searchTerm))
-  );
+  const normalize = (v: unknown) =>
+    String(v ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const terms = normalize(searchTerm).split(' ').filter(Boolean);
+
+  const filteredUsers = users.filter((user) => {
+    if (terms.length === 0) return true;
+    const haystack = [
+      user.username,
+      user.display_name,
+      user.email,
+      user.phone,
+      user.id,
+    ]
+      .map(normalize)
+      .join(' ');
+    const compact = haystack.replace(/\s+/g, '');
+    return terms.every((t) => haystack.includes(t) || compact.includes(t.replace(/\s+/g, '')));
+  });
 
   return (
     <div className="space-y-4">
