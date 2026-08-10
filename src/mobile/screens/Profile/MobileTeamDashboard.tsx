@@ -99,7 +99,7 @@ export default function MobileTeamDashboard() {
   } | null>(null);
 
   const username = localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'baron';
-  const inviteLink = `${window.location.origin}/register?ref=${username}`;
+  const inviteLink = buildReferralLink(username);
 
   const copyInviteLink = async () => {
     try {
