@@ -116,8 +116,8 @@ function AppMobile() {
                       <Route path="/empire-quests" element={<EmpireQuestsPage />} />
                       <Route path="/kingdoms" element={<KingdomsPage />} />
                       <Route path="/shop" element={<ShopScreen />} />
+                      <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     </Route>
-                    <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     <Route path="/quiz" element={<QuizStoryScreen />} />
                     <Route path="/daily" element={<DailyChallengeStoryScreen />} />
                     <Route path="/game/:gameId" element={<MiniGameScreen />} />
