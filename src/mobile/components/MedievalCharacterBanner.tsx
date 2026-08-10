@@ -30,14 +30,15 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
         const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
         if (!storedUserId) return;
 
-        // Fetch current role
-        const { data: roleData } = await supabase
+        // Fetch all roles (a user can hold several) and pick the highest
+        const { data: roleRows } = await supabase
           .from('user_roles' as any)
           .select('role')
-          .eq('user_id', storedUserId)
-          .maybeSingle();
+          .eq('user_id', storedUserId);
 
-        const userRole = (roleData as any)?.role || 'infantry';
+        const roles = ((roleRows as any[]) || []).map((r) => String(r.role).toLowerCase());
+        const priority = ['admin', 'king', 'baron', 'team_leader', 'knight', 'officer', 'junior_team_leader'];
+        const userRole = priority.find((p) => roles.includes(p)) || 'infantry';
         setRole(userRole);
 
         // Fetch username
@@ -74,10 +75,12 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
       case 'king':
         return 'King';
       case 'baron':
+      case 'team_leader':
         return 'Baron';
       case 'knight':
         return 'Knight';
       case 'officer':
+      case 'junior_team_leader':
         return 'Officer';
       case 'infantry':
       default:
@@ -91,10 +94,12 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
       case 'king':
         return '/medieval/king.png';
       case 'baron':
+      case 'team_leader':
         return '/medieval/baron.png';
       case 'knight':
         return '/medieval/knight.png';
       case 'officer':
+      case 'junior_team_leader':
         return '/medieval/officer.png';
       case 'infantry':
       default:
@@ -108,10 +113,12 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
       case 'king':
         return 'text-amber-600 border-amber-500/60';
       case 'baron':
+      case 'team_leader':
         return 'text-amber-700 border-amber-500/60';
       case 'knight':
         return 'text-blue-600 border-blue-500/60';
       case 'officer':
+      case 'junior_team_leader':
         return 'text-emerald-600 border-emerald-500/60';
       case 'infantry':
       default:
@@ -136,40 +143,36 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-          className="relative z-20 text-center"
+          className="relative z-20 flex flex-col items-center text-center"
         >
-          {/* Glow */}
-          <div className="absolute -inset-4 rounded-full bg-gradient-to-t from-amber-500/10 to-yellow-400/20 blur-xl pointer-events-none" />
-          <div className={cn("relative rounded-2xl overflow-hidden shadow-xl border-[3px] w-24 h-24 bg-slate-900", getRankColorClass(role))}>
-            <img src={getRankImage(role)} alt={getRankName(role)} className="w-full h-full object-cover" loading="lazy" />
-            {/* Shimmer */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              animate={{ x: ['-100%', '200%'] }}
-              transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
-            />
+          {/* Avatar + rank icon */}
+          <div className="relative w-24 h-24 mx-auto">
+            {/* Glow */}
+            <div className="absolute -inset-4 rounded-full bg-gradient-to-t from-amber-500/10 to-yellow-400/20 blur-xl pointer-events-none" />
+            <div className={cn("relative rounded-2xl overflow-hidden shadow-xl border-[3px] w-24 h-24 bg-slate-900", getRankColorClass(role))}>
+              <img src={getRankImage(role)} alt={getRankName(role)} className="w-full h-full object-cover object-center" loading="lazy" />
+              {/* Shimmer */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                animate={{ x: ['-100%', '200%'] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
+              />
+            </div>
+            {/* Rank icon */}
+            <motion.span
+              className={cn(
+                "absolute left-1/2 -translate-x-1/2 select-none pointer-events-none z-30",
+                role === 'admin' || role === 'king' ? "-top-7 text-3xl" : "-top-5 text-xl"
+              )}
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              {role === 'admin' || role === 'king' ? '👑' : '🛡️'}
+            </motion.span>
           </div>
           <p className={cn("text-[11px] font-black font-serif tracking-[0.2em] mt-1.5 uppercase", getRankColorClass(role))}>
             {getRankName(role)} {username}
           </p>
-          {/* Rank icon */}
-          {role === 'admin' || role === 'king' ? (
-            <motion.span
-              className="absolute left-1/2 -translate-x-1/2 select-none -top-6 text-3xl"
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              👑
-            </motion.span>
-          ) : (
-            <motion.span
-              className="absolute left-1/2 -translate-x-1/2 select-none -top-6 text-xl"
-              animate={{ y: [0, -2, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              🛡️
-            </motion.span>
-          )}
         </motion.div>
       </div>
 
