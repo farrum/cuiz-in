@@ -58,8 +58,17 @@ export function initLevelPlay(): Promise<boolean> {
   return initPromise;
 }
 
+/**
+ * Several screens mount a banner slot at once (shell + screen). Reference
+ * count the requests so unmounting one screen never hides the banner while
+ * another slot is still on screen — that race was why no banner appeared.
+ */
+let bannerRefCount = 0;
+
 export async function showLevelPlayBanner() {
+  bannerRefCount += 1;
   if (!(await initLevelPlay())) return;
+  if (bannerRefCount <= 0) return;
   try {
     await Native.showBanner({ placement: LEVELPLAY_PLACEMENTS.banner, adUnitId: LEVELPLAY_AD_UNITS.banner });
   } catch (e) {
@@ -68,7 +77,8 @@ export async function showLevelPlayBanner() {
 }
 
 export async function hideLevelPlayBanner() {
-  if (!isNativeAds()) return;
+  bannerRefCount = Math.max(0, bannerRefCount - 1);
+  if (!isNativeAds() || bannerRefCount > 0) return;
   try {
     await Native.hideBanner();
   } catch {
