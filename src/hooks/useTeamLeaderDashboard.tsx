@@ -51,6 +51,8 @@ export const useTeamLeaderDashboard = () => {
 
   const [assignedTasks, setAssignedTasks] = useState<BaronTask[]>([]);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  // Real presence data (last activity timestamp + games played) per member.
+  const [presence, setPresence] = useState<Record<string, { lastSeen: string | null; gamesPlayed: number }>>({});
 
   // Load tasks from Supabase empire_tasks
   const fetchTasks = async (storedUserId: string) => {
