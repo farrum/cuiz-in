@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import { BurningTorch } from '@/components/gamification/BurningTorch';
+import { buildReferralLink } from '@/utils/referralLink';
 import { 
   Users, 
   UserCheck, 
@@ -72,7 +73,7 @@ const TeamLeaderDashboardPage = () => {
 
   const [copied, setCopied] = useState(false);
   const username = localStorage.getItem('cuizin_username') || 'baron';
-  const inviteLink = `${window.location.origin}/register?ref=${username}`;
+  const inviteLink = buildReferralLink(username);
 
   const copyLink = async () => {
     try {
