@@ -369,12 +369,12 @@ export default function MobileTeamDashboard() {
                         </div>
 
                         <span className={`inline-flex items-center gap-1 text-[9px] font-bold ${
-                          member.status === 'active' ? 'text-emerald-400' : 'text-slate-500'
+                          member.isOnline ? 'text-emerald-400' : 'text-slate-500'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                            member.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                            member.isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
                           }`} />
-                          {member.status === 'active' ? 'Online' : 'Offline'}
+                          {member.isOnline ? 'Online' : 'Offline'}
                         </span>
                       </div>
 
