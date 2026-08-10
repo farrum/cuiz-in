@@ -208,7 +208,7 @@ export default function MobileTeamDashboard() {
   }
 
   return (
-    <div className="min-h-screen stone-wall text-slate-100 pb-36 relative overflow-x-hidden">
+    <div className="min-h-full stone-wall text-slate-100 pb-24 relative overflow-x-hidden">
       
       {/* Decorative Torches */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -217,15 +217,16 @@ export default function MobileTeamDashboard() {
       </div>
 
       {/* Header */}
-      <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md">
+      <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
         <motion.button 
           whileTap={{ scale: 0.92 }}
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/hub')}
           className="p-1.5 rounded-full hover:bg-stone-850"
+          aria-label="Back to hub"
         >
           <ArrowLeft className="w-5 h-5 text-slate-200" />
         </motion.button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-sm font-black uppercase text-white tracking-tight" style={{ fontFamily: "'Cinzel', serif" }}>
             Baron War Room
           </h1>
@@ -233,6 +234,12 @@ export default function MobileTeamDashboard() {
             {isMainTeamLeader ? 'Mercenary Commander' : 'Junior Officer'}
           </p>
         </div>
+        <button
+          onClick={() => navigate('/hub')}
+          className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-amber-500 text-stone-950"
+        >
+          Games
+        </button>
       </div>
 
       <div className="px-4 pt-4 space-y-4 relative z-10">
