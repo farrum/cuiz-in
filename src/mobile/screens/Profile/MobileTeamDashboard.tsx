@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildReferralLink } from '@/utils/referralLink';
 import { 
   ArrowLeft, 
   Users, 
@@ -99,7 +100,7 @@ export default function MobileTeamDashboard() {
   } | null>(null);
 
   const username = localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'baron';
-  const inviteLink = `${window.location.origin}/register?ref=${username}`;
+  const inviteLink = buildReferralLink(username);
 
   const copyInviteLink = async () => {
     try {

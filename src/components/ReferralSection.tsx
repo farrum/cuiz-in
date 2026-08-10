@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { DataTable } from '@/components/ui/data-table';
+import { buildReferralLink } from '@/utils/referralLink';
 
 interface ReferralEntry {
   id: string;
@@ -329,7 +330,7 @@ const ReferralSection: React.FC = () => {
   };
   
   const copyReferralLink = () => {
-    const link = `${window.location.origin}/register?ref=${userName}`;
+    const link = buildReferralLink(userName);
     navigator.clipboard.writeText(link);
     
     toast({

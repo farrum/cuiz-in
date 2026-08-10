@@ -1,6 +1,8 @@
 package com.geologon.cuiz;
 
 import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -44,6 +46,9 @@ public class LevelPlayPlugin extends Plugin {
     private LevelPlayInterstitialAd interstitialAd;
     private LevelPlayRewardedAd rewardedAd;
     private String pendingBannerPlacement = null;
+    private final Handler retryHandler = new Handler(Looper.getMainLooper());
+    private int bannerRetryCount = 0;
+    private boolean bannerVisible = false;
 
     // Ad Unit IDs from the LevelPlay dashboard.
     private static final String BANNER_AD_UNIT_ID = "nfbd7er5vhgheohp";
@@ -141,23 +146,41 @@ public class LevelPlayPlugin extends Plugin {
             bannerAd.setBannerListener(new LevelPlayBannerAdViewListener() {
                 @Override
                 public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                    bannerRetryCount = 0;
                     notifyListeners("adLoaded", infoOf("banner"));
                 }
 
                 @Override
                 public void onAdLoadFailed(LevelPlayAdError error) {
                     notifyListeners("adFailed", errorOf("banner", error));
+                    scheduleBannerRetry();
                 }
             });
             bannerContainer.addView(bannerAd);
         }
         bannerContainer.setVisibility(android.view.View.VISIBLE);
+        bannerContainer.bringToFront();
+        bannerVisible = true;
         bannerAd.loadAd();
+    }
+
+    /** Networks often have no fill on the very first request — retry with backoff. */
+    private void scheduleBannerRetry() {
+        if (!bannerVisible || bannerRetryCount >= 5) return;
+        bannerRetryCount++;
+        long delay = Math.min(30000L, 3000L * bannerRetryCount);
+        retryHandler.postDelayed(() -> {
+            if (bannerVisible && bannerAd != null) {
+                bannerAd.loadAd();
+            }
+        }, delay);
     }
 
     @PluginMethod
     public void hideBanner(final PluginCall call) {
         pendingBannerPlacement = null;
+        bannerVisible = false;
+        retryHandler.removeCallbacksAndMessages(null);
         getActivity().runOnUiThread(() -> {
             if (bannerContainer != null) {
                 bannerContainer.setVisibility(android.view.View.GONE);

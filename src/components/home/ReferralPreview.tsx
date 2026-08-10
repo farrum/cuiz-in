@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { buildReferralLink } from '@/utils/referralLink';
 
 interface ReferralStats {
   totalReferrals: number;
@@ -61,7 +62,7 @@ const ReferralPreview: React.FC = () => {
   };
 
   const copyReferralLink = () => {
-    const link = `${window.location.origin}/register?ref=${userName}`;
+    const link = buildReferralLink(userName);
     navigator.clipboard.writeText(link);
     setCopied(true);
     
@@ -74,7 +75,7 @@ const ReferralPreview: React.FC = () => {
   };
 
   const shareReferralLink = async () => {
-    const link = `${window.location.origin}/register?ref=${userName}`;
+    const link = buildReferralLink(userName);
     const shareData = {
       title: 'Join CuizIN - Play Fun Quizzes!',
       text: 'Hey! Join me on CuizIN and test your knowledge with fun quizzes. Use my referral link to get started!',

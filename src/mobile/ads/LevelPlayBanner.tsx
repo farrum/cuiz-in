@@ -12,12 +12,10 @@ interface LevelPlayBannerProps {
 
 export function LevelPlayBanner({ noMargin = false }: LevelPlayBannerProps) {
   useEffect(() => {
-    let cancelled = false;
-    showLevelPlayBanner().then(() => {
-      if (cancelled) hideLevelPlayBanner();
-    });
+    // show/hide are reference counted inside the wrapper, so overlapping
+    // banner slots (shell + screen) do not cancel each other out.
+    showLevelPlayBanner();
     return () => {
-      cancelled = true;
       hideLevelPlayBanner();
     };
   }, []);
