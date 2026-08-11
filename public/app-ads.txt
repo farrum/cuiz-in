@@ -1,7 +1,1 @@
-# app-ads.txt — Authorized Digital Sellers for CuizIN Android/iOS app
-# Hosted at: https://cuiz.in/app-ads.txt
-# This file authorizes the ad networks permitted to sell ad inventory
-# in the CuizIN mobile app (com.geologon.cuiz).
-# Format: <ad_system_domain>, <publisher_id>, <relationship>, <certification_authority_id>
-
 google.com, pub-2831295465597549, DIRECT, f08c47fec0942fa0

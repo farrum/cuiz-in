@@ -19,7 +19,11 @@ const isMobilePlatform =
     }
   })() ||
   // Allow override via ?mobile=1 for in-browser preview / QA
-  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1');
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1') ||
+  // Mobile-width browsers and Lovable's phone preview should render the same
+  // Hub experience as the native app. This makes native UI changes testable
+  // before producing and uploading another Play Store build.
+  (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
 
 const RootComponent = isMobilePlatform ? AppMobile : App;
 
