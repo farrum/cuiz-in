@@ -5,14 +5,11 @@ import { pickAd } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { NetworkAdFrame } from './NetworkAdFrame';
-import { VastVideoAd } from './VastVideoAd';
-import { isNativeAds, showLevelPlayVideoAd } from './levelplay';
+import { isNativeAds } from './levelplay';
+import { showAdWithFallback } from './admob';
 
 /** Adsterra 300x250 placement shown between quiz questions. */
 const ADSTERRA_KEY = '2036014d5863f79efb5b419b47c4b810';
-/** Yomeno VAST video tag. */
-const VAST_TAG_URL = 'https://vast.yomeno.xyz/vast?spot_id=1494657';
-
 interface InterstitialAdProps {
   open: boolean;
   onClose: () => void;
@@ -34,12 +31,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
   // A network (Adsterra) creative is always available, so the interstitial
   // always has something to render.
   const hasNetworkAd = true;
-  // Randomly attempt a VAST video ad (~50% of shows). If the video tag has no
-  // inventory or is blocked, we fall back to the Adsterra display creative.
-  const [tryVideo, setTryVideo] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const showVideo = tryVideo && !videoFailed;
-  // True while the native LevelPlay interstitial is on screen (or being
+  // True while the native AdMob/LevelPlay interstitial is on screen (or being
   // requested) — the web overlay must stay hidden in that case.
   const [nativeShowing, setNativeShowing] = useState(false);
 
@@ -50,7 +42,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
     }
     let cancelled = false;
     setNativeShowing(true);
-    showLevelPlayVideoAd('interstitial').then(() => {
+    showAdWithFallback('interstitial').then(() => {
       if (cancelled) return;
       setNativeShowing(false);
       onClose();
@@ -59,13 +51,6 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
       cancelled = true;
     };
   }, [open, seed, onClose]);
-
-  useEffect(() => {
-    if (open) {
-      setTryVideo(!isNativeAds() && Math.random() < 0.5);
-      setVideoFailed(false);
-    }
-  }, [open, seed]);
 
   useEffect(() => {
     if (open) {
@@ -127,33 +112,6 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
               
               <div className="w-full max-w-sm p-4 bg-white rounded-2xl flex justify-center items-center shadow-2xl overflow-hidden">
                 <SimpleAdBanner position="app-interstitial" />
-              </div>
-            </div>
-          ) : showVideo ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-black/90 text-white relative">
-              <div className="absolute top-3 left-3 text-[10px] font-bold uppercase bg-black/50 px-2 py-1 rounded">
-                Ad
-              </div>
-              <div className="absolute top-3 right-3">
-                {canSkip ? (
-                  <button
-                    onClick={onClose}
-                    className="flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full"
-                  >
-                    Skip <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <span className="text-xs font-semibold bg-white/10 px-3 py-1.5 rounded-full">
-                    Skip in {remaining}s
-                  </span>
-                )}
-              </div>
-              <div className="w-full max-w-sm">
-                <VastVideoAd
-                  tagUrl={VAST_TAG_URL}
-                  onUnavailable={() => setVideoFailed(true)}
-                  onComplete={() => { if (canSkip) onClose(); }}
-                />
               </div>
             </div>
           ) : hasNetworkAd ? (
