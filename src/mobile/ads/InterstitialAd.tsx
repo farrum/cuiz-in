@@ -28,9 +28,9 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
   const [remaining, setRemaining] = useState(skipSeconds);
   const [hasDbAd, setHasDbAd] = useState(false);
   const ad = open ? pickAd('interstitial', seed) : null;
-  // A network (Adsterra) creative is always available, so the interstitial
-  // always has something to render.
-  const hasNetworkAd = true;
+  // Legacy Adsterra/VAST creatives are retired — interstitials come from
+  // AdMob (with LevelPlay fallback) on native, or a managed DB slot on web.
+  const hasNetworkAd = false;
   // True while the native AdMob/LevelPlay interstitial is on screen (or being
   // requested) — the web overlay must stay hidden in that case.
   const [nativeShowing, setNativeShowing] = useState(false);
