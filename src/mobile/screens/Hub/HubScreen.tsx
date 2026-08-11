@@ -366,7 +366,7 @@ export default function HubScreen() {
             className="h-8 w-auto shrink-0 object-contain"
             draggable={false}
           />
-          <span className="truncate text-xl font-black text-foreground">CuizIN</span>
+          <span className="sr-only">CuizIN</span>
         </div>
         <div className="flex items-center gap-1.5">
           <StreakFlame streak={streak} />
