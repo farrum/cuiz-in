@@ -7,7 +7,9 @@ import {
   type BannerAdOptions,
 } from '@capacitor-community/admob';
 
-const AD_UNIT_ID = 'ca-app-pub-2831295465597549/6948956225';
+import { ADMOB_AD_UNITS } from './admob';
+
+const AD_UNIT_ID = ADMOB_AD_UNITS.banner;
 // Google's official test unit — used automatically in dev builds.
 const TEST_AD_UNIT_ID = 'ca-app-pub-3940256099942544/6300978111';
 
