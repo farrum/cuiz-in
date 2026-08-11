@@ -238,9 +238,10 @@ export function TrueFalseGame() {
           <button
             onClick={() => answer(false)}
             disabled={!!feedback}
-            className="w-16 h-16 rounded-full btn-3d bg-white border-2 border-destructive/20 text-destructive flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
+            aria-label="Answer false"
+            className="w-16 h-16 rounded-full btn-3d bg-destructive border-2 border-destructive flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
           >
-            <X className="w-8 h-8 drop-shadow-sm" />
+            <X className="w-9 h-9 text-destructive-foreground" strokeWidth={3.5} />
           </button>
           <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">False</span>
         </div>
@@ -249,9 +250,10 @@ export function TrueFalseGame() {
           <button
             onClick={() => answer(true)}
             disabled={!!feedback}
-            className="w-16 h-16 rounded-full btn-3d bg-white border-2 border-emerald-500/20 text-emerald-500 flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
+            aria-label="Answer true"
+            className="w-16 h-16 rounded-full btn-3d bg-emerald-500 border-2 border-emerald-600 flex items-center justify-center disabled:opacity-40 transition-transform active:scale-90 hover:scale-105"
           >
-            <Check className="w-8 h-8 drop-shadow-sm" />
+            <Check className="w-9 h-9 text-white" strokeWidth={3.5} />
           </button>
           <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">True</span>
         </div>
