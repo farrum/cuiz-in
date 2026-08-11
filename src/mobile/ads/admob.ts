@@ -13,21 +13,23 @@ import {
 } from './levelplay';
 
 // ─── Ad Unit IDs ──────────────────────────────────────────────────────────────
-// Real banner unit is live.
-// ⚠ Replace the interstitial & rewarded IDs below with your real AdMob unit
-//   IDs once you create them at https://admob.google.com — right now they point
-//   to Google's official test units so you can verify the plumbing immediately.
+// App ID: ca-app-pub-2831295465597549~8524102249 (set in AndroidManifest.xml)
+// All units below are live AdMob units.
 export const ADMOB_AD_UNITS = {
-  banner:        'ca-app-pub-2831295465597549/6948956225', // ✅ real
-  interstitial:  'ca-app-pub-3940256099942544/1033173712', // ⚠ test — replace
-  rewarded:      'ca-app-pub-3940256099942544/5224354917', // ⚠ test — replace
+  banner:               'ca-app-pub-2831295465597549/6948956225',
+  interstitial:         'ca-app-pub-2831295465597549/8851079305',
+  rewarded:             'ca-app-pub-2831295465597549/7154854253',
+  rewardedInterstitial: 'ca-app-pub-2831295465597549/7694056096',
+  native:               'ca-app-pub-2831295465597549/8847923880',
 } as const;
 
 // Google's official test unit IDs — used automatically in DEV builds.
 const TEST_UNITS: Record<keyof typeof ADMOB_AD_UNITS, string> = {
-  banner:       'ca-app-pub-3940256099942544/6300978111',
-  interstitial: 'ca-app-pub-3940256099942544/1033173712',
-  rewarded:     'ca-app-pub-3940256099942544/5224354917',
+  banner:               'ca-app-pub-3940256099942544/6300978111',
+  interstitial:         'ca-app-pub-3940256099942544/1033173712',
+  rewarded:             'ca-app-pub-3940256099942544/5224354917',
+  rewardedInterstitial: 'ca-app-pub-3940256099942544/5354046379',
+  native:               'ca-app-pub-3940256099942544/2247696110',
 };
 
 function adId(type: keyof typeof ADMOB_AD_UNITS): string {
