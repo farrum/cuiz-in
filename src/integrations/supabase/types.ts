@@ -1496,8 +1496,12 @@ export type Database = {
         Returns: Json
       }
       leave_alliance: { Args: { p_user_id: string }; Returns: Json }
-      process_scratch_card: { Args: { p_context?: string }; Returns: Json }
-      process_wheel_spin: { Args: { user_uuid: string }; Returns: Json }
+      process_scratch_card:
+        | { Args: { p_context?: string }; Returns: Json }
+        | { Args: { p_context?: string; p_paid?: boolean }; Returns: Json }
+      process_wheel_spin:
+        | { Args: { user_uuid: string }; Returns: Json }
+        | { Args: { p_paid?: boolean; user_uuid: string }; Returns: Json }
       purchase_skill_node: {
         Args: { target_skill_id: string; user_uuid: string }
         Returns: Json
