@@ -110,12 +110,14 @@ export default function MiniGameScreen() {
       localStorage.setItem(`cuizin-last-play-${gameId}`, today);
       setHasPaid(true);
     } else {
+      // Server-backed games (wheel / scratch) charge the 5 Gem fee on the server
+      const serverCharged = gameId === 'wheel' || gameId === 'scratch';
       const { gems } = getUserBalances();
       if (gems < 5) {
         alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
         return;
       }
-      updateUserBalances(-5, 0);
+      if (!serverCharged) updateUserBalances(-5, 0);
       setHasPaid(true);
     }
   };
@@ -216,8 +218,8 @@ export default function MiniGameScreen() {
       <p className="text-muted-foreground">This mini-game is coming soon.</p>
     </div>
   );
-  if (gameId === 'wheel') body = <WheelGame />;
-  else if (gameId === 'scratch') body = <ScratchGame />;
+  if (gameId === 'wheel') body = <WheelGame paidPlay={!isFirstPlayToday()} />;
+  else if (gameId === 'scratch') body = <ScratchGame paidPlay={!isFirstPlayToday()} />;
   else if (gameId === 'true-false') body = <TrueFalseGame />;
   else if (gameId === 'image') body = <ImageGame />;
   else if (gameId === 'slot') body = <SlotMachine />;
