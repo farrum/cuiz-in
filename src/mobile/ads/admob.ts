@@ -186,19 +186,23 @@ export async function showAdWithFallback(
     // 1. AdMob Rewarded
     const admobR = await showAdMobRewarded();
     if (admobR.shown) return true;
-    // 2. LevelPlay Rewarded
+    // 2. AdMob Rewarded Interstitial
+    if ((await showAdMobRewardedInterstitial()).shown) return true;
+    // 3. LevelPlay Rewarded
     const lpR = await showLevelPlayRewarded();
     if (lpR.shown) return true;
-    // 3. LevelPlay Interstitial (last resort)
+    // 4. LevelPlay Interstitial (last resort)
     return await showLevelPlayInterstitial();
   }
 
   // prefer === 'interstitial'
   // 1. AdMob Interstitial
   if (await showAdMobInterstitial()) return true;
-  // 2. LevelPlay Interstitial
+  // 2. AdMob Rewarded Interstitial
+  if ((await showAdMobRewardedInterstitial()).shown) return true;
+  // 3. LevelPlay Interstitial
   if (await showLevelPlayInterstitial()) return true;
-  // 3. LevelPlay Rewarded (last resort)
+  // 4. LevelPlay Rewarded (last resort)
   const lpR = await showLevelPlayRewarded();
   return lpR.shown;
 }
