@@ -7,7 +7,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Gift } from 'lucide-react';
 
-export function ScratchGame() {
+export function ScratchGame({ paidPlay = false }: { paidPlay?: boolean }) {
   const [revealed, setRevealed] = useState(false);
   const [prize, setPrize] = useState<{ label: string; value: number } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export function ScratchGame() {
     setLoading(true); 
     haptics('medium');
     try {
-      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily' });
+      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily', p_paid: paidPlay });
       const r: any = data;
       if (error || r?.error) {
         toast({ 

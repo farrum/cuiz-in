@@ -26,12 +26,14 @@ interface SpinTheWheelProps {
   prizes?: Prize[];
   onSpinComplete?: (prize: Prize) => void;
   canSpin?: boolean;
+  paidPlay?: boolean;
 }
 
 export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
   prizes = defaultPrizes,
   onSpinComplete,
   canSpin = true,
+  paidPlay = false,
 }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -85,7 +87,8 @@ export const SpinTheWheel: React.FC<SpinTheWheelProps> = ({
       if (!session?.session?.user) throw new Error("Must be logged in to spin");
 
       const { data: serverPrize, error } = await (supabase as any).rpc('process_wheel_spin', { 
-        user_uuid: session.session.user.id 
+        user_uuid: session.session.user.id,
+        p_paid: paidPlay,
       });
 
       if (error) throw error;
