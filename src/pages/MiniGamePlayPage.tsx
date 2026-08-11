@@ -126,12 +126,14 @@ export const MiniGamePlayPage: React.FC = () => {
       setHasPaid(true);
     } else {
       // Subsequent plays cost 5 Gems
+      // Server-backed games (wheel / scratch) charge the fee server-side
+      const serverCharged = gameId === 'wheel' || gameId === 'scratch';
       const { gems } = getUserBalances();
       if (gems < 5) {
         alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
         return;
       }
-      updateUserBalances(-5, 0);
+      if (!serverCharged) updateUserBalances(-5, 0);
       setHasPaid(true);
       setBalanceUpdateTrigger(prev => prev + 1);
     }
@@ -221,7 +223,7 @@ export const MiniGamePlayPage: React.FC = () => {
       }
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily' });
+      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily', p_paid: !isFirstPlayToday() });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r: any = data;
       if (error || r?.error) {
@@ -334,7 +336,7 @@ export const MiniGamePlayPage: React.FC = () => {
       case 'treasurechest':
         return <TreasureChest />;
       case 'wheel':
-        return <SpinTheWheel />;
+        return <SpinTheWheel paidPlay={!isFirstPlayToday()} />;
       case 'scratch':
         if (scratchLoading) {
           return (
