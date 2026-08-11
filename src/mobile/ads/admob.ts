@@ -150,6 +150,23 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
 }
 
 // ─── Unified Waterfall ────────────────────────────────────────────────────────
+/** Shows an AdMob rewarded interstitial. */
+export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
+  if (!(await initAdMob())) return { shown: false, rewarded: false };
+  try {
+    const opts: RewardAdOptions = {
+      adId: adId('rewardedInterstitial'),
+      isTesting: import.meta.env.DEV as boolean,
+    };
+    await AdMob.prepareRewardInterstitialAd(opts);
+    const result = await AdMob.showRewardInterstitialAd();
+    return { shown: true, rewarded: !!(result as any)?.amount };
+  } catch (e) {
+    console.warn('[AdMob] rewarded interstitial failed', e);
+    return { shown: false, rewarded: false };
+  }
+}
+
 /**
  * Unified ad entry point for every native video/fullscreen slot.
  *
