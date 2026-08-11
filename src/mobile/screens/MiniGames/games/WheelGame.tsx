@@ -26,7 +26,7 @@ const defaultPrizes: Prize[] = [
   { id: '6', label: 'Jackpot!', color: '#c084fc', value: 500 },
 ];
 
-export function WheelGame() {
+export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
   const haptics = useHaptics();
   const { toast } = useToast();
   const [spinning, setSpinning] = useState(false);
@@ -76,7 +76,7 @@ export function WheelGame() {
     haptics('medium');
 
     try {
-      const { data, error } = await supabase.rpc('process_wheel_spin' as any, { user_uuid: uid });
+      const { data, error } = await supabase.rpc('process_wheel_spin' as any, { user_uuid: uid, p_paid: paidPlay });
       const r: any = data;
 
       if (error || r?.error) {
