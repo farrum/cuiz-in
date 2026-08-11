@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { pickAd } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { NetworkAdFrame } from './NetworkAdFrame';
@@ -27,10 +26,11 @@ interface InterstitialAdProps {
 export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: InterstitialAdProps) {
   const [remaining, setRemaining] = useState(skipSeconds);
   const [hasDbAd, setHasDbAd] = useState(false);
-  const ad = open ? pickAd('interstitial', seed) : null;
-  // A network (Adsterra) creative is always available, so the interstitial
-  // always has something to render.
-  const hasNetworkAd = true;
+  // No built-in sample creatives: native SDKs or a managed slot only.
+  const ad = null as null | { bg: string; sample?: boolean; headline: string; body: string; cta: string; href?: string };
+  // Legacy Adsterra/VAST creatives are retired — interstitials come from
+  // AdMob (with LevelPlay fallback) on native, or a managed DB slot on web.
+  const hasNetworkAd = false;
   // True while the native AdMob/LevelPlay interstitial is on screen (or being
   // requested) — the web overlay must stay hidden in that case.
   const [nativeShowing, setNativeShowing] = useState(false);
