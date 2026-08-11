@@ -1,92 +1,42 @@
-import { useState, useEffect } from 'react';
-import { VastVideoAd } from '@/mobile/ads/VastVideoAd';
-import { isNativeAds, showLevelPlayVideoAd } from '@/mobile/ads/levelplay';
+import { useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { showAdWithFallback } from '@/mobile/ads/admob';
 
-const SKIP_SECONDS = 10;
-
+/**
+ * Full-screen video ad for mini-game rewards.
+ *
+ * Native builds: Google AdMob (rewarded → rewarded-interstitial), falling back
+ * to Unity LevelPlay via `showAdWithFallback`. Both SDKs render their own
+ * full-screen surface with their own skip timer — we never draw an overlay.
+ *
+ * Web/preview builds: no third-party video ad is shown at all (the old VAST
+ * overlay has been removed); the reward callback fires immediately.
+ */
 export const useMiniGameVideoAd = () => {
   const [adActive, setAdActive] = useState(false);
-  const [onAdComplete, setOnAdComplete] = useState<(() => void) | null>(null);
-  const [remaining, setRemaining] = useState(SKIP_SECONDS);
-  const [pendingClose, setPendingClose] = useState(false);
-
-  useEffect(() => {
-    if (!adActive) return;
-    setRemaining(SKIP_SECONDS);
-    const t = window.setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) { window.clearInterval(t); return 0; }
-        return r - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(t);
-  }, [adActive]);
-
-  const canSkip = remaining <= 0;
+  const inFlight = useRef(false);
 
   const showVideoAd = (callback: () => void) => {
-    // Native builds: use Unity LevelPlay (ironSource). Never launch the web Clickadilla
-    // VAST video ad overlay on native builds.
-    if (isNativeAds()) {
-      showLevelPlayVideoAd('rewarded').then(() => {
-        callback();
-      });
+    if (inFlight.current) return;
+
+    if (!Capacitor.isNativePlatform()) {
+      callback();
       return;
     }
-    setOnAdComplete(() => callback);
-    setPendingClose(false);
+
+    inFlight.current = true;
     setAdActive(true);
+    showAdWithFallback('rewarded')
+      .catch(() => false)
+      .finally(() => {
+        inFlight.current = false;
+        setAdActive(false);
+        callback();
+      });
   };
 
-  const handleComplete = () => {
-    setAdActive(false);
-    setPendingClose(false);
-    if (onAdComplete) {
-      onAdComplete();
-    }
-  };
-
-  // If the video ends or has no inventory before the 5s minimum elapses,
-  // close automatically as soon as the skip window opens.
-  const markFinished = () => {
-    if (canSkip) handleComplete();
-    else setPendingClose(true);
-  };
-
-  useEffect(() => {
-    if (adActive && canSkip && pendingClose) handleComplete();
-  }, [adActive, canSkip, pendingClose]);
-
-  const adElement = adActive ? (
-    <div className="fixed inset-0 z-[99999] bg-black/95 flex flex-col items-center justify-center p-4" data-no-auto-ads="true">
-      <div className="w-full max-w-lg flex items-center justify-between mb-4 px-2 text-white">
-        <span className="text-xs font-black tracking-widest uppercase bg-white/10 px-3 py-1 rounded-full text-slate-300">
-          Sponsored Ad
-        </span>
-        {canSkip ? (
-          <button
-            onClick={handleComplete}
-            className="text-xs font-semibold bg-white/10 text-slate-400 hover:text-white px-4 py-2 rounded-full transition-all"
-          >
-            Skip Ad
-          </button>
-        ) : (
-          <span className="text-xs font-semibold bg-white/10 text-slate-400 px-4 py-2 rounded-full">
-            Skip in {remaining}s
-          </span>
-        )}
-      </div>
-      <div className="w-full max-w-lg bg-black border border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center min-h-[250px] shadow-2xl relative">
-        <VastVideoAd
-          tagUrl="https://vast.yomeno.xyz/vast?spot_id=1494657"
-          onReady={() => console.log('Video ad loaded')}
-          onUnavailable={markFinished}
-          onComplete={markFinished}
-          className="w-full max-h-[60vh] object-contain rounded-2xl"
-        />
-      </div>
-    </div>
-  ) : null;
+  // Native SDKs own their UI — nothing to render from React.
+  const adElement = null;
 
   return { showVideoAd, adElement, adActive };
 };
