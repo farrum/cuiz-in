@@ -24,7 +24,7 @@ export const ADMOB_AD_UNITS = {
 } as const;
 
 // Google's official test unit IDs — used automatically in DEV builds.
-const TEST_UNITS: typeof ADMOB_AD_UNITS = {
+const TEST_UNITS: Record<keyof typeof ADMOB_AD_UNITS, string> = {
   banner:       'ca-app-pub-3940256099942544/6300978111',
   interstitial: 'ca-app-pub-3940256099942544/1033173712',
   rewarded:     'ca-app-pub-3940256099942544/5224354917',

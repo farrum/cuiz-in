@@ -359,12 +359,15 @@ export default function HubScreen() {
 
       {/* ═══ Brand Logo Top Bar ═══ */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-amber-100/60 px-4 py-2 flex items-center justify-between">
-        <img
-          src="/cuizin-logo.png"
-          alt="CuizIN – Speed Quizzing, Unmatched Trivia"
-          className="h-8 w-auto object-contain"
-          draggable={false}
-        />
+        <div className="flex min-w-0 items-center gap-2" aria-label="CuizIN">
+          <img
+            src="/cuizin-logo.png"
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-lg object-contain"
+            draggable={false}
+          />
+          <span className="truncate text-xl font-black text-foreground">CuizIN</span>
+        </div>
         <div className="flex items-center gap-1.5">
           <StreakFlame streak={streak} />
           <GemCounter value={gems} />

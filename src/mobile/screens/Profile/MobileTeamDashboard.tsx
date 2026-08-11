@@ -71,6 +71,7 @@ export default function MobileTeamDashboard() {
     joinRequests = [],
     approveJoinRequest,
     rejectJoinRequest
+    ,currentUserRole
   } = useTeamLeaderDashboard();
 
   const [searchQuery, setSearchQuery] = useState('');
