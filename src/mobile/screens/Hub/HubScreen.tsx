@@ -355,18 +355,30 @@ export default function HubScreen() {
   const isLoggedIn = !!localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   return (
-    <div className="relative min-h-full pb-32 px-4 pt-4 overflow-hidden bg-background">
+    <div className="relative min-h-full pb-32 overflow-hidden bg-background">
 
-      {/* ═══ Header ═══ */}
-      <div className="relative flex items-center justify-between mb-5">
-        <div>
-          <p className="text-[11px] text-amber-800/80 font-bold tracking-widest uppercase">Welcome,</p>
-          <h1 className="text-2xl font-black leading-tight text-amber-900 drop-shadow-sm">{name}</h1>
-        </div>
+      {/* ═══ Brand Logo Top Bar ═══ */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-amber-100/60 px-4 py-2 flex items-center justify-between">
+        <img
+          src="/cuizin-logo.png"
+          alt="CuizIN – Speed Quizzing, Unmatched Trivia"
+          className="h-8 w-auto object-contain"
+          draggable={false}
+        />
         <div className="flex items-center gap-1.5">
           <StreakFlame streak={streak} />
           <GemCounter value={gems} />
           <StarCounter value={stars} />
+        </div>
+      </div>
+
+      <div className="px-4 pt-4">
+
+      {/* ═══ Welcome Header ═══ */}
+      <div className="relative flex items-center justify-between mb-5">
+        <div>
+          <p className="text-[11px] text-amber-800/80 font-bold tracking-widest uppercase">Welcome,</p>
+          <h1 className="text-2xl font-black leading-tight text-amber-900 drop-shadow-sm">{name}</h1>
         </div>
       </div>
 
@@ -646,6 +658,7 @@ export default function HubScreen() {
           </div>
         )}
       </AnimatePresence>
+      </div>{/* end px-4 pt-4 content wrapper */}
     </div>
   );
 }

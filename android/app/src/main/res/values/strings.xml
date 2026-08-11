@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">cuiz-in</string>
-    <string name="title_activity_main">cuiz-in</string>
+    <string name="app_name">CuizIN</string>
+    <string name="title_activity_main">CuizIN</string>
     <string name="package_name">com.geologon.cuiz</string>
     <string name="custom_url_scheme">com.geologon.cuiz</string>
 </resources>
