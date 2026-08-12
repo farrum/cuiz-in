@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import NewsTicker from '@/components/NewsTicker';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
+import { AppDownloadStickyBar } from '@/components/app-promo/GooglePlay';
 import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
 
@@ -65,6 +66,8 @@ const PageLayout = ({
       {!isMobile && <div className="h-20 md:hidden" aria-hidden="true" />}
 
       {!isMobile && <MobileBottomNav />}
+
+      {!isMobile && <AppDownloadStickyBar />}
     </div>
   );
 };
