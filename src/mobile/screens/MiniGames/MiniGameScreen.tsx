@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
@@ -48,6 +49,8 @@ export default function MiniGameScreen() {
 
   // Gamification Play State
   const [hasPaid, setHasPaid] = useState(false);
+  const [playToken, setPlayToken] = useState(0);
+  const { showVideoAd } = useMiniGameVideoAd();
 
   // States for Riddle Vault
   const [riddleText, setRiddleText] = useState('What has keys but can\'t open locks?');
@@ -120,6 +123,27 @@ export default function MiniGameScreen() {
       if (!serverCharged) updateUserBalances(-5, 0);
       setHasPaid(true);
     }
+    setPlayToken((t) => t + 1);
+  };
+
+  // Watch a video ad to earn the 5 Gems needed for one extra round.
+  const handleWatchAdForChance = () => {
+    showVideoAd(async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: 5,
+          p_stars_delta: 0,
+          p_reason: 'rewarded_ad_extra_chance',
+        });
+      } catch (err) {
+        console.error('Failed to grant ad reward', err);
+      }
+      updateUserBalances(5, 0);
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      setHasPaid(true);
+      setPlayToken((t) => t + 1);
+    });
   };
 
   const renderLaunchScreen = () => {
@@ -177,6 +201,15 @@ export default function MiniGameScreen() {
         >
           {isFree ? ' Start Free Play' : ' Pay 5 Gems & Play'}
         </button>
+
+        {!isFree && (
+          <button
+            onClick={handleWatchAdForChance}
+            className="w-full btn-3d bg-white py-3 uppercase text-[13px] font-black text-slate-700"
+          >
+            ▶ Watch ad for a free chance
+          </button>
+        )}
       </div>
     );
   };
@@ -273,11 +306,28 @@ export default function MiniGameScreen() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-2 min-h-0 overflow-y-auto w-full"
+        className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 pt-2 pb-2 min-h-0 overflow-y-auto w-full"
       >
-        <div className="w-full max-w-md panel-3d bg-white p-6 relative">
-          {hasPaid ? body : renderLaunchScreen()}
+        <div className="w-full max-w-md panel-3d bg-white p-4 sm:p-6 relative my-auto">
+          {hasPaid ? <div key={playToken}>{body}</div> : renderLaunchScreen()}
         </div>
+
+        {hasPaid && (
+          <div className="w-full max-w-md mt-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={handlePayAndStart}
+              className="btn-3d bg-white py-2.5 text-[12px] font-black uppercase tracking-wide text-slate-700"
+            >
+              💎 5 Gems · Play again
+            </button>
+            <button
+              onClick={handleWatchAdForChance}
+              className="btn-3d btn-3d-primary py-2.5 text-[12px] font-black uppercase tracking-wide"
+            >
+              ▶ Watch ad · Free chance
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Other Games nav bar */}
