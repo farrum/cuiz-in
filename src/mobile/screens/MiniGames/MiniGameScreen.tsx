@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
@@ -133,7 +134,12 @@ export default function MiniGameScreen() {
 
   // Watch a video ad to earn the 5 Gems needed for one extra round.
   const handleWatchAdForChance = () => {
-    showVideoAd(async () => {
+    showVideoAd(async (shown) => {
+      // On native, only grant the extra chance if a rewarded ad actually played.
+      if (Capacitor.isNativePlatform() && !shown) {
+        alert('No ad available right now. Please try again in a moment.');
+        return;
+      }
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).rpc('award_currency', {
