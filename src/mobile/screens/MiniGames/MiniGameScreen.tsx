@@ -50,6 +50,8 @@ export default function MiniGameScreen() {
   // Gamification Play State
   const [hasPaid, setHasPaid] = useState(false);
   const [playToken, setPlayToken] = useState(0);
+  const [playMode, setPlayMode] = useState<'free' | 'paid' | 'ad'>('free');
+  const [roundComplete, setRoundComplete] = useState(false);
   const { showVideoAd } = useMiniGameVideoAd();
 
   // States for Riddle Vault
@@ -60,6 +62,8 @@ export default function MiniGameScreen() {
 
   useEffect(() => {
     setHasPaid(false);
+    setPlayMode('free');
+    setRoundComplete(false);
     if (gameId === 'riddlevault') {
       const loadRiddle = async () => {
         setRiddleLoading(true);
@@ -109,8 +113,7 @@ export default function MiniGameScreen() {
 
   const handlePayAndStart = () => {
     if (isFirstPlayToday()) {
-      const today = getTodayString();
-      localStorage.setItem(`cuizin-last-play-${gameId}`, today);
+      setPlayMode('free');
       setHasPaid(true);
     } else {
       // Server-backed games (wheel / scratch) charge the 5 Gem fee on the server
@@ -121,8 +124,10 @@ export default function MiniGameScreen() {
         return;
       }
       if (!serverCharged) updateUserBalances(-5, 0);
+      setPlayMode('paid');
       setHasPaid(true);
     }
+    setRoundComplete(false);
     setPlayToken((t) => t + 1);
   };
 
@@ -141,9 +146,16 @@ export default function MiniGameScreen() {
       }
       updateUserBalances(5, 0);
       window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      setPlayMode('ad');
       setHasPaid(true);
+      setRoundComplete(false);
       setPlayToken((t) => t + 1);
     });
+  };
+
+  const handleRoundComplete = () => {
+    localStorage.setItem(`cuizin-last-play-${gameId}`, getTodayString());
+    setRoundComplete(true);
   };
 
   const renderLaunchScreen = () => {
@@ -205,7 +217,7 @@ export default function MiniGameScreen() {
         {!isFree && (
           <button
             onClick={handleWatchAdForChance}
-            className="w-full btn-3d bg-white py-3 uppercase text-[13px] font-black text-slate-700"
+            className="w-full btn-3d btn-3d-secondary py-3 uppercase text-[13px] font-black"
           >
             ▶ Watch ad for a free chance
           </button>
@@ -244,7 +256,15 @@ export default function MiniGameScreen() {
       <p className="text-muted-foreground">This mini-game is coming soon.</p>
     </div>
   );
-  if (gameId === 'wheel') body = <WheelGame paidPlay={!isFirstPlayToday()} />;
+  if (gameId === 'wheel') {
+    body = (
+      <WheelGame
+        paidPlay={playMode !== 'free'}
+        chanceLabel={playMode === 'free' ? 'Free daily spin' : playMode === 'ad' ? 'Ad reward spin' : 'Paid spin'}
+        onRoundComplete={handleRoundComplete}
+      />
+    );
+  }
   else if (gameId === 'scratch') body = <ScratchGame paidPlay={!isFirstPlayToday()} />;
   else if (gameId === 'true-false') body = <TrueFalseGame />;
   else if (gameId === 'image') body = <ImageGame />;
@@ -312,7 +332,7 @@ export default function MiniGameScreen() {
           {hasPaid ? <div key={playToken}>{body}</div> : renderLaunchScreen()}
         </div>
 
-        {hasPaid && (
+        {hasPaid && roundComplete && (
           <div className="w-full max-w-md mt-3 grid grid-cols-2 gap-2">
             <button
               onClick={handlePayAndStart}
