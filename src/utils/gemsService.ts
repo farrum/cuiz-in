@@ -246,36 +246,24 @@ export const updateTotalGems = async (gems: number, userId?: string | null) => {
   console.log(`Adding ${gems} to total gems for user ${userId}`);
   
   try {
-    // Get current gems
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('gems:points')
-      .eq('id', userId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching total gems:', error);
+    // Balances are only mutable server-side via the award_currency RPC
+    const { data: result, error: rpcError } = await (supabase as any).rpc('award_currency', {
+      p_points_delta: Math.round(gems),
+      p_stars_delta: 0,
+      p_reason: 'gems_earned'
+    });
+
+    if (rpcError || (result as any)?.error) {
+      console.error('Error updating total gems:', rpcError || (result as any)?.error);
       return;
     }
-    
-    const currentGems = data?.gems || 0;
-    const newTotal = Number(currentGems) + gems;
-    
-    // Update gems in database
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ points: newTotal })
-      .eq('id', userId);
-      
-    if (updateError) {
-      console.error('Error updating total gems:', updateError);
-      return;
-    }
+
+    const newTotal = Number((result as any)?.points ?? 0);
     
     // Update local storage
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, newTotal.toString());
     
-    console.log(`Updated total gems for user ${userId} from ${currentGems} to ${newTotal}`);
+    console.log(`Updated total gems for user ${userId} to ${newTotal}`);
     
     // Notify other components about the update
     window.dispatchEvent(new CustomEvent('gemsUpdated'));

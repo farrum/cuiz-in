@@ -268,30 +268,19 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
  */
 const awardBonusGems = async (userId: string, bonusGems: number): Promise<void> => {
   try {
-    // Update user's gems in the profiles table
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('gems:points')
-      .eq('id', userId)
-      .single();
-    
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
+    // Balances are granted server-side only
+    const { data: result, error: rpcError } = await (supabase as any).rpc('award_currency', {
+      p_points_delta: Math.round(bonusGems),
+      p_stars_delta: 0,
+      p_reason: 'login_streak_bonus'
+    });
+
+    if (rpcError || (result as any)?.error) {
+      console.error('Error updating user gems:', rpcError || (result as any)?.error);
       return;
     }
-    
-    const currentGems = profileData.gems || 0;
-    const newGems = currentGems + bonusGems;
-    
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ points: newGems })
-      .eq('id', userId);
-      
-    if (updateError) {
-      console.error('Error updating user gems:', updateError);
-      return;
-    }
+
+    const newGems = Number((result as any)?.points ?? 0);
     
     // Update local storage
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, newGems.toString());

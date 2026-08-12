@@ -251,22 +251,16 @@ const useChallengeData = (
     if (!challenge || !progress || !userId) return;
     
     try {
-      const { data: userProfileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('gems:points')
-        .eq('id', userId)
-        .single();
-        
-      if (profileError) throw profileError;
-      
-      const currentUserGems = userProfileData.gems || 0;
-      const newTotalGems = currentUserGems + finalScore;
-      
-      await supabase
-        .from('profiles')
-        .update({ points: newTotalGems })
-        .eq('id', userId);
-        
+      const { data: awardResult, error: awardError } = await (supabase as any).rpc('award_currency', {
+        p_points_delta: Math.round(finalScore),
+        p_stars_delta: 0,
+        p_reason: 'daily_challenge_complete'
+      });
+
+      if (awardError) throw awardError;
+
+      const newTotalGems = Number((awardResult as any)?.points ?? 0);
+
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, newTotalGems.toString());
       
       await supabase

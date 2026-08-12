@@ -43,24 +43,19 @@ export const useWithdrawalActions = (
     setWithdrawals(prev => [...prev, newWithdrawal]);
 
     try {
-      const { error } = await supabase
-        .from('payments')
-        .insert({
-          user_id: userId,
-          username: userName,
-          amount: amount,
-          method: paymentMethod,
-          type: 'withdrawal',
-          status: 'pending',
-          transaction_id: transactionId,
-          date: new Date().toISOString().split('T')[0]
-        });
+      // Withdrawals are created server-side so the amount is validated against
+      // the player's real balance and deducted atomically.
+      const { data: result, error } = await (supabase as any).rpc('request_withdrawal', {
+        p_amount: amount,
+        p_method: paymentMethod
+      });
 
-      if (error) {
-        console.error('Error creating payment record:', error);
+      if (error || (result as any)?.error) {
+        console.error('Error creating payment record:', error || (result as any)?.error);
+        setWithdrawals(prev => prev.filter(w => w.id !== transactionId));
         toast({
           title: "Error",
-          description: "Failed to submit withdrawal request. Please try again.",
+          description: (result as any)?.error || "Failed to submit withdrawal request. Please try again.",
           variant: "destructive",
         });
         return;
@@ -78,10 +73,9 @@ export const useWithdrawalActions = (
         }
       });
 
-      const gemsToDeduct = amount * 2;
-      const currentGems = parseInt(localStorage.getItem('quiz_app_user_gems') || '0');
-      const newGems = currentGems - gemsToDeduct;
-      localStorage.setItem('quiz_app_user_gems', newGems.toString());
+      if (typeof (result as any)?.remaining_points === 'number') {
+        localStorage.setItem('quiz_app_user_gems', String((result as any).remaining_points));
+      }
 
       window.dispatchEvent(new Event('gemsUpdated'));
 

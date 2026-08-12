@@ -311,7 +311,11 @@ export default function HubScreen() {
 
     if (userKey !== 'guest') {
       try {
-        await (supabase as any).from('profiles').update({ stars: currentStars + reward }).eq('id', userKey);
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: 0,
+          p_stars_delta: Math.round(reward),
+          p_reason: 'daily_check_in'
+        });
       } catch (err) {
         console.warn("Failed to sync check-in stars to DB:", err);
       }

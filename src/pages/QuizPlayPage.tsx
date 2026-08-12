@@ -156,16 +156,11 @@ const QuizPlayPage: React.FC = () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await (supabase as any)
-          .from('profiles')
-          .select('points')
-          .eq('id', session.session.user.id)
-          .maybeSingle();
-        const currentBalance = (data as any)?.points || 0;
-        await (supabase as any)
-          .from('profiles')
-          .update({ points: currentBalance + amount })
-          .eq('id', session.session.user.id);
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: Math.round(amount),
+          p_stars_delta: 0,
+          p_reason: 'mini_game_reward'
+        });
         fetchGems();
       }
     } catch (e) {
@@ -259,19 +254,22 @@ const QuizPlayPage: React.FC = () => {
       // Double the daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await (supabase as any).from('profiles').select('points').eq('id', session.session.user.id).single();
-        const currentBalance = (data as any)?.points || 0;
-        await (supabase as any).from('profiles').update({ points: currentBalance + dailyGems }).eq('id', session.session.user.id);
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: Math.round(dailyGems),
+          p_stars_delta: 0,
+          p_reason: 'boss_fight_win'
+        });
         fetchGems();
       }
     } else {
       // Lose daily gems
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { data } = await (supabase as any).from('profiles').select('points').eq('id', session.session.user.id).single();
-        const currentBalance = (data as any)?.points || 0;
-        const newBalance = Math.max(0, currentBalance - dailyGems);
-        await (supabase as any).from('profiles').update({ points: newBalance }).eq('id', session.session.user.id);
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: -Math.round(dailyGems),
+          p_stars_delta: 0,
+          p_reason: 'boss_fight_loss'
+        });
         fetchGems();
       }
       resetStreak();

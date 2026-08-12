@@ -1395,6 +1395,14 @@ export type Database = {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
       }
+      award_currency: {
+        Args: {
+          p_points_delta?: number
+          p_reason?: string
+          p_stars_delta?: number
+        }
+        Returns: Json
+      }
       check_admin_access: { Args: never; Returns: boolean }
       create_alliance: {
         Args: {
@@ -1507,6 +1515,10 @@ export type Database = {
         Returns: Json
       }
       regenerate_sitemap: { Args: never; Returns: undefined }
+      request_withdrawal: {
+        Args: { p_amount: number; p_method?: string }
+        Returns: Json
+      }
       set_user_context: { Args: { user_id: string }; Returns: undefined }
       slugify_ascii: { Args: { input: string }; Returns: string }
       update_alliance: {

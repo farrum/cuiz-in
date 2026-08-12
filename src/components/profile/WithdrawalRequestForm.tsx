@@ -61,21 +61,17 @@ const WithdrawalRequestForm = () => {
         .update({ upi_id: upiId })
         .eq('id', userId);
 
-      // Create withdrawal request
-      const { error } = await supabase
-        .from('payments')
-        .insert([{
-          user_id: userId,
-          username: username,
-          amount: numAmount,
-          type: 'withdrawal',
-          status: 'pending',
-          method: 'UPI',
-          date: new Date().toISOString().split('T')[0]
-        }]);
+      // Create withdrawal request server-side (validates balance and deducts atomically)
+      const { data: result, error } = await (supabase as any).rpc('request_withdrawal', {
+        p_amount: numAmount,
+        p_method: 'UPI'
+      });
 
       if (error) {
         throw error;
+      }
+      if ((result as any)?.error) {
+        throw new Error((result as any).error);
       }
       
       // Create admin notification
