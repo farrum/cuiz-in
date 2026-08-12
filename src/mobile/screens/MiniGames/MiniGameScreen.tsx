@@ -246,6 +246,7 @@ export default function MiniGameScreen() {
     setHasAttemptedRiddle(true);
 
     const isCorrect = guess.toLowerCase().trim() === riddleAnswer.toLowerCase().trim();
+    handleRoundComplete();
     if (isCorrect) {
       window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'riddles' } }));
       const { data: session } = await supabase.auth.getSession();
