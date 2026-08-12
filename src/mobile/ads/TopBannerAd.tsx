@@ -3,7 +3,7 @@ import { getAdPool, type AdCreative } from './adProvider';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Capacitor } from '@capacitor/core';
-import { LevelPlayBanner } from './LevelPlayBanner';
+import { NativeBannerAd } from './NativeBannerAd';
 
 // Rotate house creatives slowly — fast swaps read as the screen "blinking".
 const REFRESH_MS = 30000;
@@ -35,10 +35,10 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
     return () => window.clearInterval(t);
   }, [pool.length, isNative]);
 
-  // Native builds use the Unity LevelPlay banner, which the SDK overlays
-  // outside the WebView. Checked after all hooks so hook order stays stable.
+  // Native builds use AdMob (with a LevelPlay fallback); the SDK overlays the
+  // banner outside the WebView. Checked after hooks so hook order stays stable.
   if (isNative) {
-    return <LevelPlayBanner noMargin={noMargin} />;
+    return <NativeBannerAd noMargin={noMargin} />;
   }
 
   const marginClass = noMargin ? '' : 'mb-10';
