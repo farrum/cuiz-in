@@ -30,10 +30,13 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
   }, [isNative]);
 
   useEffect(() => {
-    if (isNative || pool.length <= 1) return;
+    // Only rotate the house-creative pool when that branch is actually
+    // rendered; when a DB ad is shown the timer just caused pointless
+    // re-renders of the banner.
+    if (isNative || hasDbAd || pool.length <= 1) return;
     const t = window.setInterval(() => setIndex((i) => i + 1), REFRESH_MS);
     return () => window.clearInterval(t);
-  }, [pool.length, isNative]);
+  }, [pool.length, isNative, hasDbAd]);
 
   // Native builds use AdMob (with a LevelPlay fallback); the SDK overlays the
   // banner outside the WebView. Checked after hooks so hook order stays stable.

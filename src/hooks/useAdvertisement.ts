@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAdState } from './useAdState';
 import { getSessionId, getAdPositionKey, getAdFromCache, debugAvailableAds } from '@/services/adCacheService';
 import { trackAdImpression, trackAdClick } from '@/services/adTrackingService';
@@ -30,12 +30,20 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     adRefreshTimeoutRef,
     lastFetchTimeRef
   } = useAdState();
+
+  // Keep a ref of the latest ad state so `fetchAds` can read it without
+  // taking a dependency on it. Depending on the whole state object made
+  // `fetchAds` a new function on every render, which re-armed the effect
+  // below in a loop (visible as an endless "Forced refresh" cycle).
+  const adStateRef = useRef(adState);
+  adStateRef.current = adState;
   
   // Handle ad click
   const handleAdClick = useCallback(async () => {
-    if (!adState.adId || !isMountedRef.current) return;
-    await trackAdClick(adState.adId, position, slotId, pageSection);
-  }, [adState.adId, position, slotId, pageSection]);
+    const adId = adStateRef.current.adId;
+    if (!adId || !isMountedRef.current) return;
+    await trackAdClick(adId, position, slotId, pageSection);
+  }, [position, slotId, pageSection]);
   
   // Fetch ads
   const fetchAds = useCallback(async (force = false) => {
@@ -51,9 +59,10 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     
     // Check if we should use the cache
     const cachedAd = getAdFromCache(adPositionKey, force);
+    const current = adStateRef.current;
     
     if (cachedAd) {
-      if (cachedAd.version === adState.adVersion && adState.adLoaded && adState.adContent === cachedAd.content) {
+      if (cachedAd.version === current.adVersion && current.adLoaded && current.adContent === cachedAd.content) {
         console.log(`Ad content unchanged for ${position}, skipping update`);
         return;
       }
@@ -125,14 +134,14 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
         
         const { content, id, version, debug } = processSelectedAd(selectedAd, position, slotId, pageSection);
         
-        if (version === adState.adVersion && adState.adLoaded) {
+        if (version === adStateRef.current.adVersion && adStateRef.current.adLoaded) {
           console.log(`Ad content unchanged for ${position}, skipping server update`);
           return;
         }
         
         updateAdState(content, id, version, debug);
         
-        if (id !== adState.adId) {
+        if (id !== current.adId) {
           trackAdImpression(id, position, slotId, pageSection);
         }
       } else {
@@ -147,7 +156,7 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       const errorMessage = err instanceof Error ? err.message : String(err);
       updateAdState('', null, '', null, false, `Fetch error: ${errorMessage}`);
     }
-  }, [position, slotId, pageSection, adState, updateAdState, adPositionKey, canFetchAd]);
+  }, [position, slotId, pageSection, updateAdState, adPositionKey, canFetchAd]);
   
   // Initial ad fetch and event listener setup
   useEffect(() => {
@@ -167,10 +176,7 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       const isRelevant = slots.some((slot: any) => slot.position === position);
       
       if (isRelevant) {
-        console.log(`Relevant ad slots updated for instance ${adState.instanceId.slice(0,8)}, refreshing ad for ${position}...`);
         fetchAds(true);
-      } else {
-        console.log(`Ad slots updated but not relevant for position ${position}, skipping refresh`);
       }
     };
     
@@ -188,7 +194,7 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
       clearTimeout(initTimer);
     };
-  }, [fetchAds, position, adState.instanceId, adPositionKey]);
+  }, [fetchAds, position, adPositionKey]);
   
   return {
     ...adState,
