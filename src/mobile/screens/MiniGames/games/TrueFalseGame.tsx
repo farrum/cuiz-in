@@ -37,7 +37,7 @@ function buildCard(q: QuizQuestion): Card {
   return { q, claim, isTrue: makeTrue };
 }
 
-export function TrueFalseGame() {
+export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => void } = {}) {
   const haptics = useHaptics();
   const [card, setCard] = useState<Card | null>(null);
   const [score, setScore] = useState(0);
@@ -77,6 +77,7 @@ export function TrueFalseGame() {
       setPlayed(nextPlayed);
       if (nextPlayed >= ROUND_SIZE * rounds) {
         setFinished(true);
+        onRoundComplete?.();
       } else {
         showVideoAd(() => {
           load();
@@ -115,20 +116,28 @@ export function TrueFalseGame() {
         <p className="text-[11px] tracking-widest uppercase font-black text-muted-foreground mb-8">
           {pct}% questions correct
         </p>
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={extend}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 font-black uppercase text-base btn-3d btn-3d-primary"
-        >
-          <Trophy className="w-5 h-5" /> Play 20 more
-        </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={restart}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 mt-3 font-black uppercase text-base panel-3d bg-white text-muted-foreground border-2 border-muted-foreground/20 hover:bg-muted"
-        >
-          <RotateCcw className="w-5 h-5" /> Start over
-        </motion.button>
+        {onRoundComplete ? (
+          <p className="text-[11px] font-black uppercase tracking-wide text-muted-foreground">
+            Spend 5 gems or watch an ad below for another round.
+          </p>
+        ) : (
+          <>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={extend}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 font-black uppercase text-base btn-3d btn-3d-primary"
+            >
+              <Trophy className="w-5 h-5" /> Play 20 more
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={restart}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 mt-3 font-black uppercase text-base panel-3d bg-white text-muted-foreground border-2 border-muted-foreground/20 hover:bg-muted"
+            >
+              <RotateCcw className="w-5 h-5" /> Start over
+            </motion.button>
+          </>
+        )}
       </div>
     );
   }
