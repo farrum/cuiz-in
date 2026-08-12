@@ -42,6 +42,8 @@ export default function QuizStoryScreen() {
   const advanceTimer = useRef<number | null>(null);
   const progressTimer = useRef<number | null>(null);
   const answerCount = useRef(0);
+  const mountedRef = useRef(true);
+  const [loadError, setLoadError] = useState(false);
   const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
   const [showInterstitial, setShowInterstitial] = useState(false);
@@ -60,7 +62,16 @@ export default function QuizStoryScreen() {
   categoryRef.current = category;
   difficultyRef.current = difficulty;
 
+  const clearTimers = () => {
+    if (advanceTimer.current) { window.clearTimeout(advanceTimer.current); advanceTimer.current = null; }
+    if (progressTimer.current) { window.clearInterval(progressTimer.current); progressTimer.current = null; }
+  };
+
   const loadNext = async () => {
+    // Any pending reveal/advance timer from the previous question must die,
+    // otherwise rapid taps or a preference change double-advance the flow.
+    clearTimers();
+    setLoadError(false);
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);
@@ -74,11 +85,19 @@ export default function QuizStoryScreen() {
         difficulty: difficultyRef.current,
         questionType: isImageMode ? 'image' : null
       });
+      if (!mountedRef.current) return;
+      if (!q) {
+        setLoadError(true);
+        setPhase('loading');
+        return;
+      }
       setQuestion(q);
       setPhase('asking');
     } catch (e) {
-      console.error(e);
-      setPhase('asking');
+      console.error('[QuizStory] failed to load question', e);
+      if (!mountedRef.current) return;
+      setLoadError(true);
+      setPhase('loading');
     }
   };
 
@@ -201,8 +220,8 @@ export default function QuizStoryScreen() {
 
   useEffect(() => {
     return () => {
-      if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
-      if (progressTimer.current) window.clearInterval(progressTimer.current);
+      mountedRef.current = false;
+      clearTimers();
     };
   }, []);
 

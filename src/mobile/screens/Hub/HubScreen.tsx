@@ -143,10 +143,13 @@ export default function HubScreen() {
         if (!error && tasks) {
           for (const task of (tasks as any[])) {
             const key = `cuizin_user_task_${userId}_${task.id}`;
-            const existing = JSON.parse(localStorage.getItem(key) || '{"currentCount":0, "status":"active"}');
+            let existing: any = { currentCount: 0, status: 'active' };
+            try {
+              existing = JSON.parse(localStorage.getItem(key) || '') || existing;
+            } catch { /* corrupted entry — fall back to defaults */ }
             if (existing.status === 'claimed') continue;
 
-            const newCount = existing.currentCount + 1;
+            const newCount = (existing.currentCount || 0) + 1;
             const isCompleted = newCount >= task.target_count;
             const newStatus = isCompleted ? 'completed' : 'active';
 
