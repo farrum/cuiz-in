@@ -42,6 +42,8 @@ export default function QuizStoryScreen() {
   const advanceTimer = useRef<number | null>(null);
   const progressTimer = useRef<number | null>(null);
   const answerCount = useRef(0);
+  const mountedRef = useRef(true);
+  const [loadError, setLoadError] = useState(false);
   const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
   const [showInterstitial, setShowInterstitial] = useState(false);
@@ -60,7 +62,16 @@ export default function QuizStoryScreen() {
   categoryRef.current = category;
   difficultyRef.current = difficulty;
 
+  const clearTimers = () => {
+    if (advanceTimer.current) { window.clearTimeout(advanceTimer.current); advanceTimer.current = null; }
+    if (progressTimer.current) { window.clearInterval(progressTimer.current); progressTimer.current = null; }
+  };
+
   const loadNext = async () => {
+    // Any pending reveal/advance timer from the previous question must die,
+    // otherwise rapid taps or a preference change double-advance the flow.
+    clearTimers();
+    setLoadError(false);
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);
@@ -74,11 +85,19 @@ export default function QuizStoryScreen() {
         difficulty: difficultyRef.current,
         questionType: isImageMode ? 'image' : null
       });
+      if (!mountedRef.current) return;
+      if (!q) {
+        setLoadError(true);
+        setPhase('loading');
+        return;
+      }
       setQuestion(q);
       setPhase('asking');
     } catch (e) {
-      console.error(e);
-      setPhase('asking');
+      console.error('[QuizStory] failed to load question', e);
+      if (!mountedRef.current) return;
+      setLoadError(true);
+      setPhase('loading');
     }
   };
 
@@ -139,6 +158,7 @@ export default function QuizStoryScreen() {
     const elapsed = Date.now() - revealStart;
     const wait = Math.max(0, 2500 - elapsed);
     advanceTimer.current = window.setTimeout(() => {
+      if (!mountedRef.current) return;
       setIsCorrect(correct);
       setCorrectAnswer(serverCorrectAnswer);
       setExplanation(serverExplanation);
@@ -187,6 +207,7 @@ export default function QuizStoryScreen() {
       answerCount.current += 1;
       const showAd = answerCount.current % 2 === 0;
       advanceTimer.current = window.setTimeout(() => {
+        if (!mountedRef.current) return;
         if (showAd) setShowInterstitial(true);
         else loadNext();
       }, 10000);
@@ -201,8 +222,8 @@ export default function QuizStoryScreen() {
 
   useEffect(() => {
     return () => {
-      if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
-      if (progressTimer.current) window.clearInterval(progressTimer.current);
+      mountedRef.current = false;
+      clearTimers();
     };
   }, []);
 
@@ -240,8 +261,22 @@ export default function QuizStoryScreen() {
 
       {/* Question card */}
       <div className="flex-1 flex flex-col px-4 pt-4 pb-6 overflow-y-auto">
+        {loadError && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
+            <p className="text-sm font-bold text-foreground">Couldn't load a question</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Check your connection and try again.
+            </p>
+            <button
+              onClick={() => loadNext()}
+              className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <AnimatePresence mode="wait">
-          {question && (
+          {question && !loadError && (
             <motion.div
               key={question.id}
               initial={{ opacity: 0, y: 30, scale: 0.95 }}

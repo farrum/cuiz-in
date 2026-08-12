@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from "react";
+import React, { useId } from "react";
 import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
 import { cn } from "@/lib/utils";
@@ -41,21 +41,11 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   const uniqueId = useId().replace(/:/g, "");
   const resolvedPosition = POSITION_MAP[position] || position;
 
-  // Auto-refresh standard banners while the page stays open. Bumping the nonce
-  // changes the container id + remounts the inner node so the creative/scripts
-  // re-execute and a fresh impression is served. 30s — a shorter interval makes
-  // the page look like it is constantly blinking.
-  const [refreshNonce, setRefreshNonce] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        setRefreshNonce((n) => n + 1);
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const containerId = `ad-container-${resolvedPosition}-${uniqueId}-${refreshNonce}`;
+  // The container id is stable for the lifetime of the component. Previously a
+  // refresh nonce was baked into the id AND the React `key`, which destroyed
+  // and recreated the whole ad node (plus re-injected its scripts/iframes)
+  // every 30s — a visible flash and layout jump on every screen.
+  const containerId = `ad-container-${resolvedPosition}-${uniqueId}`;
 
   const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({
     position: resolvedPosition,
@@ -90,7 +80,6 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     >
       <div
         id={containerId}
-        key={containerId}
         className="ad-container min-h-[1px] w-full flex justify-center"
         dangerouslySetInnerHTML={{ __html: adContent }}
         data-ad-position={resolvedPosition}
