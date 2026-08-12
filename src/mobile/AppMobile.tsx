@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
 import { MobileSplash } from './components/MobileSplash';
+import { ScreenSkeleton } from './components/ScreenSkeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 
@@ -112,7 +114,10 @@ function AppMobile() {
           <Sonner />
           <BrowserRouter>
             <MobileMusicProvider>
-              <Suspense fallback={<MobileSplash />}>
+              {/* Routes inside MobileShell have their own Suspense + error
+                  boundary so navigation never blanks the whole viewport. */}
+              <ErrorBoundary>
+              <Suspense fallback={<ScreenSkeleton />}>
                 <Routes>
                   <Route path="/onboarding" element={<OnboardingScreen />} />
                   <Route path="/login" element={<MobileLoginScreen />} />
@@ -134,6 +139,7 @@ function AppMobile() {
                   <Route path="*" element={<Navigate to="/hub" replace />} />
                 </Routes>
               </Suspense>
+              </ErrorBoundary>
               <MobileMusicPlayer />
             </MobileMusicProvider>
           </BrowserRouter>

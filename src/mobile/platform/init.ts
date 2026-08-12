@@ -29,10 +29,17 @@ export function initMobilePlatform() {
         }
       } catch (e) { console.warn('[LevelPlay] init skipped', e); }
 
-      // Back-button handler: never close the app from inside a story flow
+      // Back-button handler: never close the app from inside a story flow.
+      // Uses SPA history (pushState + popstate) instead of location.assign so
+      // the WebView never does a full reload (which re-showed the splash and
+      // re-initialised the ad SDKs).
       App.addListener('backButton', ({ canGoBack }) => {
-        if (canGoBack) window.history.back();
-        else if (window.location.pathname !== '/hub') window.location.assign('/hub');
+        if (canGoBack) {
+          window.history.back();
+        } else if (window.location.pathname !== '/hub') {
+          window.history.pushState({}, '', '/hub');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
       });
     } catch (err) {
       console.warn('[Mobile] Capacitor init skipped:', err);
