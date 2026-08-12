@@ -16,11 +16,11 @@ export const useMiniGameVideoAd = () => {
   const [adActive, setAdActive] = useState(false);
   const inFlight = useRef(false);
 
-  const showVideoAd = (callback: () => void) => {
+  const showVideoAd = (callback: (shown: boolean) => void) => {
     if (inFlight.current) return;
 
     if (!Capacitor.isNativePlatform()) {
-      callback();
+      callback(false);
       return;
     }
 
@@ -28,10 +28,10 @@ export const useMiniGameVideoAd = () => {
     setAdActive(true);
     showAdWithFallback('rewarded')
       .catch(() => false)
-      .finally(() => {
+      .then((shown) => {
         inFlight.current = false;
         setAdActive(false);
-        callback();
+        callback(Boolean(shown));
       });
   };
 
