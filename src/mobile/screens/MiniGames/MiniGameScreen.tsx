@@ -297,11 +297,28 @@ export default function MiniGameScreen() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-2 min-h-0 overflow-y-auto w-full"
+        className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 pt-2 pb-2 min-h-0 overflow-y-auto w-full"
       >
-        <div className="w-full max-w-md panel-3d bg-white p-6 relative">
-          {hasPaid ? body : renderLaunchScreen()}
+        <div className="w-full max-w-md panel-3d bg-white p-4 sm:p-6 relative my-auto">
+          {hasPaid ? <div key={playToken}>{body}</div> : renderLaunchScreen()}
         </div>
+
+        {hasPaid && (
+          <div className="w-full max-w-md mt-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={handlePayAndStart}
+              className="btn-3d bg-white py-2.5 text-[12px] font-black uppercase tracking-wide text-slate-700"
+            >
+              💎 5 Gems · Play again
+            </button>
+            <button
+              onClick={handleWatchAdForChance}
+              className="btn-3d btn-3d-primary py-2.5 text-[12px] font-black uppercase tracking-wide"
+            >
+              ▶ Watch ad · Free chance
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Other Games nav bar */}
