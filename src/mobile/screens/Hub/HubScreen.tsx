@@ -98,7 +98,8 @@ export default function HubScreen() {
 
         const mapped = data.map((t: any) => {
           const key = `cuizin_user_task_${userId}_${t.id}`;
-          const localProg = JSON.parse(localStorage.getItem(key) || 'null');
+          let localProg: any = null;
+          try { localProg = JSON.parse(localStorage.getItem(key) || 'null'); } catch { localProg = null; }
           const dbProg = progressMap.get(t.id);
 
           const currentCount = dbProg?.currentCount ?? localProg?.currentCount ?? 0;
