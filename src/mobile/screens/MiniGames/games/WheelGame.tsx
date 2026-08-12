@@ -104,7 +104,6 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
       // Each mounted game represents exactly one granted chance. A replay must
       // be purchased or earned from the parent screen before another spin.
       setChanceUsed(true);
-      onRoundComplete?.();
 
       // landing animation calculation: land EXACTLY in the middle of the segment
       // 1440 degrees = 4 full extra rotations for high velocity feeling
@@ -137,6 +136,7 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
               origin: { y: 0.45 } 
             });
           }
+          onRoundComplete?.();
         });
       }, 3200);
 
