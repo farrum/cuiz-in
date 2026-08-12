@@ -336,7 +336,7 @@ export default function MiniGameScreen() {
           <div className="w-full max-w-md mt-3 grid grid-cols-2 gap-2">
             <button
               onClick={handlePayAndStart}
-              className="btn-3d bg-white py-2.5 text-[12px] font-black uppercase tracking-wide text-slate-700"
+              className="btn-3d bg-slate-800 border-slate-900 py-2.5 text-[12px] font-black uppercase tracking-wide text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]"
             >
               💎 5 Gems · Play again
             </button>

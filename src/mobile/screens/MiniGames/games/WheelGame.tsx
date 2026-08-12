@@ -220,14 +220,16 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
         </div>
       </div>
 
-      {/* Control Button */}
-      <button
-        onClick={spin} 
-        disabled={spinning || loading || chanceUsed}
-        className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base btn-3d btn-3d-primary w-full max-w-[240px]"
-      >
-        {loading ? 'Loading...' : spinning ? 'Spinning…' : chanceUsed ? 'Chance used' : chanceLabel}
-      </button>
+      {/* Control Button — hidden once the chance is used, until a new chance is bought/earned */}
+      {!chanceUsed && (
+        <button
+          onClick={spin}
+          disabled={spinning || loading}
+          className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base btn-3d btn-3d-primary w-full max-w-[240px]"
+        >
+          {loading ? 'Loading...' : spinning ? 'Spinning…' : chanceLabel}
+        </button>
+      )}
 
       {/* Winner Announcement */}
       <div className="text-center min-h-[50px] mt-4 flex items-center justify-center w-full px-4">
