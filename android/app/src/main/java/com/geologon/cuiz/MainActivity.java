@@ -22,5 +22,15 @@ public class MainActivity extends BridgeActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
+        // The launch theme (Theme.SplashScreen) is not an AppCompat theme, so
+        // getSupportActionBar() can be null while a *native* action bar is
+        // still drawn. Hide that one too.
+        android.app.ActionBar nativeBar = getActionBar();
+        if (nativeBar != null) {
+            nativeBar.hide();
+        }
+        // Belt-and-braces: an empty title leaves nothing to render even if a
+        // cached theme momentarily supplies a title bar.
+        setTitle("");
     }
 }
