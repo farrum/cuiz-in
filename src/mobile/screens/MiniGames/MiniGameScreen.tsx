@@ -201,6 +201,15 @@ export default function MiniGameScreen() {
         >
           {isFree ? ' Start Free Play' : ' Pay 5 Gems & Play'}
         </button>
+
+        {!isFree && (
+          <button
+            onClick={handleWatchAdForChance}
+            className="w-full btn-3d bg-white py-3 uppercase text-[13px] font-black text-slate-700"
+          >
+            ▶ Watch ad for a free chance
+          </button>
+        )}
       </div>
     );
   };
