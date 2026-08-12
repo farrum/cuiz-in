@@ -7,6 +7,7 @@ import { getRemainingGuestPlays, getMaxGuestQuestions } from '@/utils/guestPlayS
 import InteractiveQuizPreview from './InteractiveQuizPreview';
 import SocialProofStats from './SocialProofStats';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { GooglePlayBadge } from '@/components/app-promo/GooglePlay';
 
 interface HeroSectionEnhancedProps {
   isLoggedIn: boolean;
@@ -100,6 +101,12 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
                 Forge Covenant
               </Button>
             )}
+          </div>
+
+          {/* Google Play download CTA */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
+            <GooglePlayBadge size="md" />
+            <span className="text-sm text-foreground/70">Now on Android — play anywhere</span>
           </div>
 
           {/* Banner ad below CTA */}
