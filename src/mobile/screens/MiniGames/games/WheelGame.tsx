@@ -26,7 +26,13 @@ const defaultPrizes: Prize[] = [
   { id: '6', label: 'Jackpot!', color: '#c084fc', value: 500 },
 ];
 
-export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
+interface WheelGameProps {
+  paidPlay?: boolean;
+  chanceLabel?: string;
+  onRoundComplete?: () => void;
+}
+
+export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', onRoundComplete }: WheelGameProps) {
   const haptics = useHaptics();
   const { toast } = useToast();
   const [spinning, setSpinning] = useState(false);
@@ -36,6 +42,7 @@ export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
   const { showVideoAd, adElement } = useMiniGameVideoAd();
   const [activePrizes, setActivePrizes] = useState<Prize[]>(defaultPrizes);
   const [loading, setLoading] = useState(true);
+  const [chanceUsed, setChanceUsed] = useState(false);
   const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   useEffect(() => {
@@ -68,7 +75,7 @@ export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
       toast({ title: 'Sign in required', description: 'Please log in to spin the wheel!' }); 
       return; 
     }
-    if (spinning || loading) return;
+    if (spinning || loading || chanceUsed) return;
 
     setSpinning(true);
     setPrize(null);
@@ -93,6 +100,11 @@ export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
       const foundIndex = activePrizes.findIndex(p => p.id === r.id);
       const winningIndex = foundIndex >= 0 ? foundIndex : 0;
       const wonPrizeObj = activePrizes[winningIndex];
+
+      // Each mounted game represents exactly one granted chance. A replay must
+      // be purchased or earned from the parent screen before another spin.
+      setChanceUsed(true);
+      onRoundComplete?.();
 
       // landing animation calculation: land EXACTLY in the middle of the segment
       // 1440 degrees = 4 full extra rotations for high velocity feeling
@@ -211,10 +223,10 @@ export function WheelGame({ paidPlay = false }: { paidPlay?: boolean }) {
       {/* Control Button */}
       <button
         onClick={spin} 
-        disabled={spinning || loading}
+        disabled={spinning || loading || chanceUsed}
         className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base btn-3d btn-3d-primary w-full max-w-[240px]"
       >
-        {loading ? 'Loading...' : spinning ? 'Spinning…' : 'Spin (1/day)'}
+        {loading ? 'Loading...' : spinning ? 'Spinning…' : chanceUsed ? 'Chance used' : chanceLabel}
       </button>
 
       {/* Winner Announcement */}
