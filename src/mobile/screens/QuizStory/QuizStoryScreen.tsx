@@ -207,6 +207,7 @@ export default function QuizStoryScreen() {
       answerCount.current += 1;
       const showAd = answerCount.current % 2 === 0;
       advanceTimer.current = window.setTimeout(() => {
+        if (!mountedRef.current) return;
         if (showAd) setShowInterstitial(true);
         else loadNext();
       }, 10000);
