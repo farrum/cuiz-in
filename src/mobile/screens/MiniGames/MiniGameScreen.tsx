@@ -48,6 +48,8 @@ export default function MiniGameScreen() {
 
   // Gamification Play State
   const [hasPaid, setHasPaid] = useState(false);
+  const [playToken, setPlayToken] = useState(0);
+  const { showVideoAd } = useMiniGameVideoAd();
 
   // States for Riddle Vault
   const [riddleText, setRiddleText] = useState('What has keys but can\'t open locks?');
@@ -120,6 +122,27 @@ export default function MiniGameScreen() {
       if (!serverCharged) updateUserBalances(-5, 0);
       setHasPaid(true);
     }
+    setPlayToken((t) => t + 1);
+  };
+
+  // Watch a video ad to earn the 5 Gems needed for one extra round.
+  const handleWatchAdForChance = () => {
+    showVideoAd(async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: 5,
+          p_stars_delta: 0,
+          p_reason: 'rewarded_ad_extra_chance',
+        });
+      } catch (err) {
+        console.error('Failed to grant ad reward', err);
+      }
+      updateUserBalances(5, 0);
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      setHasPaid(true);
+      setPlayToken((t) => t + 1);
+    });
   };
 
   const renderLaunchScreen = () => {
