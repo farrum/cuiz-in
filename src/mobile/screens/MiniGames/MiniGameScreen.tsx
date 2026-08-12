@@ -133,7 +133,12 @@ export default function MiniGameScreen() {
 
   // Watch a video ad to earn the 5 Gems needed for one extra round.
   const handleWatchAdForChance = () => {
-    showVideoAd(async () => {
+    showVideoAd(async (shown) => {
+      // On native, only grant the extra chance if a rewarded ad actually played.
+      if (Capacitor.isNativePlatform() && !shown) {
+        alert('No ad available right now. Please try again in a moment.');
+        return;
+      }
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).rpc('award_currency', {
