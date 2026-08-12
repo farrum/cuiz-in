@@ -7,7 +7,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Gift } from 'lucide-react';
 
-export function ScratchGame({ paidPlay = false }: { paidPlay?: boolean }) {
+export function ScratchGame({ paidPlay = false, onRoundComplete }: { paidPlay?: boolean; onRoundComplete?: () => void }) {
   const [revealed, setRevealed] = useState(false);
   const [prize, setPrize] = useState<{ label: string; value: number } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,6 +34,7 @@ export function ScratchGame({ paidPlay = false }: { paidPlay?: boolean }) {
           setRevealed(true);
           haptics('success');
           if (r.value > 0) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+          onRoundComplete?.();
         });
       }
     } catch (err: any) {
