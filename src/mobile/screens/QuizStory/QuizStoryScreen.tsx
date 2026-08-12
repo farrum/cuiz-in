@@ -259,8 +259,22 @@ export default function QuizStoryScreen() {
 
       {/* Question card */}
       <div className="flex-1 flex flex-col px-4 pt-4 pb-6 overflow-y-auto">
+        {loadError && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
+            <p className="text-sm font-bold text-foreground">Couldn't load a question</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Check your connection and try again.
+            </p>
+            <button
+              onClick={() => loadNext()}
+              className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <AnimatePresence mode="wait">
-          {question && (
+          {question && !loadError && (
             <motion.div
               key={question.id}
               initial={{ opacity: 0, y: 30, scale: 0.95 }}
