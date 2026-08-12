@@ -158,6 +158,7 @@ export default function QuizStoryScreen() {
     const elapsed = Date.now() - revealStart;
     const wait = Math.max(0, 2500 - elapsed);
     advanceTimer.current = window.setTimeout(() => {
+      if (!mountedRef.current) return;
       setIsCorrect(correct);
       setCorrectAnswer(serverCorrectAnswer);
       setExplanation(serverExplanation);
