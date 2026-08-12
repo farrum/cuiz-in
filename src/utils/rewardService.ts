@@ -8,36 +8,24 @@ export const updateTotalStars = async (stars: number, userId?: string | null) =>
   console.log(`Adding ${stars} to total stars for user ${userId}`);
   
   try {
-    // Get current stars
-    const { data, error } = await (supabase as any)
-      .from('profiles')
-      .select('stars')
-      .eq('id', userId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching total stars:', error);
+    // Stars are only mutable server-side via the award_currency RPC
+    const { data: result, error: rpcError } = await (supabase as any).rpc('award_currency', {
+      p_points_delta: 0,
+      p_stars_delta: Math.round(stars),
+      p_reason: 'stars_earned'
+    });
+
+    if (rpcError || (result as any)?.error) {
+      console.error('Error updating total stars:', rpcError || (result as any)?.error);
       return;
     }
-    
-    const currentStars = data?.stars || 0;
-    const newTotal = Number(currentStars) + stars;
-    
-    // Update stars in database
-    const { error: updateError } = await (supabase as any)
-      .from('profiles')
-      .update({ stars: newTotal })
-      .eq('id', userId);
-      
-    if (updateError) {
-      console.error('Error updating total stars:', updateError);
-      return;
-    }
+
+    const newTotal = Number((result as any)?.stars ?? 0);
     
     // Update local storage
     localStorage.setItem(STORAGE_KEYS.USER_STARS, newTotal.toString());
     
-    console.log(`Updated total stars for user ${userId} from ${currentStars} to ${newTotal}`);
+    console.log(`Updated total stars for user ${userId} to ${newTotal}`);
     
     // Notify other components about the update
     window.dispatchEvent(new CustomEvent('starsUpdated'));

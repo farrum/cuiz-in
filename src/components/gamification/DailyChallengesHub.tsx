@@ -61,9 +61,11 @@ export const DailyChallengesHub: React.FC = () => {
     const { data: session } = await supabase.auth.getSession();
     if (session?.session?.user && amount > 0) {
       const sb = supabase as any;
-      const { data } = await sb.from('profiles').select('points').eq('id', session.session.user.id).maybeSingle();
-      const currentBalance = (data as any)?.points || 0;
-      await sb.from('profiles').update({ points: currentBalance + amount }).eq('id', session.session.user.id);
+      await sb.rpc('award_currency', {
+        p_points_delta: Math.round(amount),
+        p_stars_delta: 0,
+        p_reason: 'daily_challenge'
+      });
     }
   };
 
