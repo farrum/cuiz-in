@@ -10,6 +10,7 @@ import GuestGemsDisplay from './GuestGemsDisplay';
 import { audioManager } from '@/utils/audioManager';
 import { getUnreadCount, checkScheduledReminders } from '@/utils/notificationManager';
 import { NotificationCenterModal } from '@/components/notifications/NotificationCenterModal';
+import { GooglePlayBadge } from '@/components/app-promo/GooglePlay';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -242,6 +243,9 @@ const Header: React.FC = () => {
               {bgmEnabled ? <Volume2 className="w-5 h-5" aria-hidden="true" /> : <VolumeX className="w-5 h-5 text-red-500" aria-hidden="true" />}
             </Button>
 
+            {/* Get the app CTA */}
+            <GooglePlayBadge size="sm" className="hidden lg:inline-flex" />
+
             {/* Play Now CTA - always visible */}
             <Button
               onClick={handlePlayNow}
@@ -317,6 +321,8 @@ const Header: React.FC = () => {
                 <Play className="w-4 h-4 mr-2 fill-current" />
                 Play Now
               </Button>
+
+              <GooglePlayBadge size="md" className="w-full justify-center" />
               
               {!isLoggedIn && (
                 <Link to="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
