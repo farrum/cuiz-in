@@ -129,8 +129,8 @@ const ReferralPreview: React.FC = () => {
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Invite Friends</h3>
-            <p className="text-sm text-muted-foreground">Share with friends, play together!</p>
+            <h3 className="text-lg font-bold text-foreground">Recruit your Squad</h3>
+            <p className="text-sm text-muted-foreground">Share with squadmates, play together!</p>
           </div>
         </div>
         
@@ -148,11 +148,11 @@ const ReferralPreview: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="bg-background/50 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-foreground">{stats.totalReferrals}</div>
-              <div className="text-xs text-muted-foreground">Friends Invited</div>
+              <div className="text-xs text-muted-foreground">Squad Invited</div>
             </div>
             <div className="bg-background/50 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-green-500">{stats.activeReferrals}</div>
-              <div className="text-xs text-muted-foreground">Active Players</div>
+              <div className="text-xs text-muted-foreground">Active Squad</div>
             </div>
           </div>
 
