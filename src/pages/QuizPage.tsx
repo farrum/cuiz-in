@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsTicker from '@/components/NewsTicker';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { AppDownloadCard } from '@/components/app-promo/GooglePlay';
 import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
@@ -270,6 +271,9 @@ const QuizPage: React.FC = () => {
             
             {/* Guest banner */}
             <GuestGemsBanner className="mt-4" />
+
+            {/* Google Play app promo */}
+            <AppDownloadCard className="mt-4" />
             
             {/* Daily Challenges - compact */}
             <div className="mt-4">
@@ -309,6 +313,7 @@ const QuizPage: React.FC = () => {
           
           <div className="md:col-span-3">
             <div className="sticky top-20 space-y-4">
+              <AppDownloadCard compact />
               <SimpleAdBanner position="sidebar" slotId="quiz-sidebar" />
               <SidebarVideoAd alwaysVideo />
             </div>
