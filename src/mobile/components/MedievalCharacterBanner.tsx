@@ -143,14 +143,6 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
           animate={{ x: ['-100%', '200%'] }}
           transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
         />
-        {/* Rank icon */}
-        <motion.span
-          className="absolute top-2 left-1/2 -translate-x-1/2 select-none pointer-events-none text-2xl drop-shadow-lg"
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          {role === 'admin' || role === 'king' ? '👑' : '🛡️'}
-        </motion.span>
         {/* Name */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}
