@@ -192,18 +192,11 @@ export default function MiniGameScreen() {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data } = await (supabase as any)
-          .from('profiles')
-          .select('points')
-          .eq('id', session.session.user.id)
-          .maybeSingle();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const currentBalance = (data as any)?.points || 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any)
-          .from('profiles')
-          .update({ points: currentBalance + 500 })
-          .eq('id', session.session.user.id);
+        await (supabase as any).rpc('award_currency', {
+          p_points_delta: 500,
+          p_stars_delta: 0,
+          p_reason: 'vault_unlock'
+        });
         
         window.dispatchEvent(new CustomEvent('gemsUpdated'));
       }
