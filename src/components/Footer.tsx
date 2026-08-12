@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2, Search, Compass, Layers } from 'lucide-react';
+import { AppDownloadCard } from '@/components/app-promo/GooglePlay';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -27,6 +28,9 @@ const Footer: React.FC = () => {
   return (
     <footer className="py-8 border-t border-border bg-background" role="contentinfo" aria-label="Site footer">
       <div className="container mx-auto px-4">
+        {/* Google Play app promo */}
+        <AppDownloadCard className="mb-8" />
+
         {/* SEO: Static category link grid for crawler depth */}
         <nav aria-label="Quiz categories" className="mb-8 pb-8 border-b border-border">
           <h3 className="text-lg font-semibold mb-4">Browse Quiz Categories</h3>
