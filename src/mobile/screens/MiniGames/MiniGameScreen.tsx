@@ -164,6 +164,14 @@ export default function MiniGameScreen() {
     setRoundComplete(true);
   };
 
+  // Any game can signal completion generically via a window event.
+  useEffect(() => {
+    const onDone = () => handleRoundComplete();
+    window.addEventListener('miniGameRoundComplete', onDone);
+    return () => window.removeEventListener('miniGameRoundComplete', onDone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
   const renderLaunchScreen = () => {
     const isFree = isFirstPlayToday();
     const { gems } = getUserBalances();
@@ -271,8 +279,8 @@ export default function MiniGameScreen() {
       />
     );
   }
-  else if (gameId === 'scratch') body = <ScratchGame paidPlay={!isFirstPlayToday()} />;
-  else if (gameId === 'true-false') body = <TrueFalseGame />;
+  else if (gameId === 'scratch') body = <ScratchGame paidPlay={playMode !== 'free'} onRoundComplete={handleRoundComplete} />;
+  else if (gameId === 'true-false') body = <TrueFalseGame onRoundComplete={handleRoundComplete} />;
   else if (gameId === 'image') body = <ImageGame />;
   else if (gameId === 'slot') body = <SlotMachine />;
   else if (gameId === 'plinko') body = <PlinkoGame />;
