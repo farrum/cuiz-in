@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
+import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
