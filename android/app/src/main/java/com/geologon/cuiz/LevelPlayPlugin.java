@@ -79,7 +79,7 @@ public class LevelPlayPlugin extends Plugin {
                     .build();
 
             LevelPlay.init(activity, request, new LevelPlayInitListener() {
-                                public void onInitSuccess(LevelPlayConfiguration configuration) {
+                public void onInitSuccess(LevelPlayConfiguration configuration) {
                     initialized = true;
                     // Warm the interstitial immediately so the first show is instant.
                     setupInterstitial();
@@ -94,7 +94,7 @@ public class LevelPlayPlugin extends Plugin {
                     call.resolve(res);
                 }
 
-                                public void onInitFailed(LevelPlayInitError error) {
+                public void onInitFailed(LevelPlayInitError error) {
                     JSObject res = new JSObject();
                     res.put("initialized", false);
                     res.put("error", error != null ? error.getErrorMessage() : "unknown");
@@ -142,12 +142,12 @@ public class LevelPlayPlugin extends Plugin {
             bannerAd = new LevelPlayBannerAdView(activity, placement != null && !placement.isEmpty() ? placement : BANNER_AD_UNIT_ID);
             bannerAd.setAdSize(LevelPlayAdSize.BANNER);
             bannerAd.setBannerListener(new LevelPlayBannerAdViewListener() {
-                                public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
                     bannerRetryCount = 0;
                     notifyListeners("adLoaded", infoOf("banner"));
                 }
 
-                                public void onAdLoadFailed(LevelPlayAdError error) {
+                public void onAdLoadFailed(LevelPlayAdError error) {
                     notifyListeners("adFailed", errorOf("banner", error));
                     scheduleBannerRetry();
                 }
@@ -191,24 +191,24 @@ public class LevelPlayPlugin extends Plugin {
         if (interstitialAd != null) return;
         interstitialAd = new LevelPlayInterstitialAd(INTERSTITIAL_AD_UNIT_ID);
         interstitialAd.setListener(new LevelPlayInterstitialAdListener() {
-                        public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
                 notifyListeners("adLoaded", infoOf("interstitial"));
             }
 
-                        public void onAdLoadFailed(LevelPlayAdError error) {
+                public void onAdLoadFailed(LevelPlayAdError error) {
                 notifyListeners("adFailed", errorOf("interstitial", error));
                 resolveInterstitial(false);
             }
 
-                        public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
                 resolveInterstitial(false);
             }
 
-                        public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                public void onAdDisplayed(LevelPlayAdInfo adInfo) {
                 // no-op
             }
 
-                        public void onAdClosed(LevelPlayAdInfo adInfo) {
+                public void onAdClosed(LevelPlayAdInfo adInfo) {
                 resolveInterstitial(true);
             }
         });
@@ -258,29 +258,29 @@ public class LevelPlayPlugin extends Plugin {
         if (rewardedAd != null) return;
         rewardedAd = new LevelPlayRewardedAd(REWARDED_AD_UNIT_ID);
         rewardedAd.setListener(new LevelPlayRewardedAdListener() {
-                        public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
                 notifyListeners("adLoaded", infoOf("rewarded"));
             }
 
-                        public void onAdLoadFailed(LevelPlayAdError error) {
+                public void onAdLoadFailed(LevelPlayAdError error) {
                 notifyListeners("adFailed", errorOf("rewarded", error));
                 resolveRewarded(false);
             }
 
-                        public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
                 resolveRewarded(false);
             }
 
-                        public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                public void onAdDisplayed(LevelPlayAdInfo adInfo) {
                 // no-op
             }
 
-                        public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
+                public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
                 rewardGranted = true;
                 notifyListeners("rewarded", infoOf("rewarded"));
             }
 
-                        public void onAdClosed(LevelPlayAdInfo adInfo) {
+                public void onAdClosed(LevelPlayAdInfo adInfo) {
                 resolveRewarded(true);
             }
         });
