@@ -56,10 +56,14 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
   const fetchTeamMembers = async () => {
     setError(null);
     try {
-      const teamLeaderId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      
+      // Prefer the live Supabase session; fall back to the stored id
+      const { data: authData } = await supabase.auth.getUser();
+      const teamLeaderId = authData?.user?.id || localStorage.getItem(STORAGE_KEYS.USER_ID);
+
       if (!teamLeaderId) {
-        throw new Error('Team leader ID not found');
+        setTeamMembers([]);
+        setFilteredMembers([]);
+        throw new Error('Team leader session not found. Please sign in again.');
       }
 
       console.log('Fetching team members for team leader:', teamLeaderId);
