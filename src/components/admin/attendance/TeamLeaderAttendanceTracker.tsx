@@ -56,10 +56,14 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
   const fetchTeamMembers = async () => {
     setError(null);
     try {
-      const teamLeaderId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      
+      // Prefer the live Supabase session; fall back to the stored id
+      const { data: authData } = await supabase.auth.getUser();
+      const teamLeaderId = authData?.user?.id || localStorage.getItem(STORAGE_KEYS.USER_ID);
+
       if (!teamLeaderId) {
-        throw new Error('Team leader ID not found');
+        setTeamMembers([]);
+        setFilteredMembers([]);
+        throw new Error('Team leader session not found. Please sign in again.');
       }
 
       console.log('Fetching team members for team leader:', teamLeaderId);
@@ -173,6 +177,10 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
         
         {loading ? (
           <LoadingState message="Loading team attendance data..." />
+        ) : teamMembers.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            No squad members yet — attendance will appear once players join your team.
+          </div>
         ) : (
           <>
             {view === 'calendar' && (
