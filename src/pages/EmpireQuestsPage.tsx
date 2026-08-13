@@ -425,6 +425,7 @@ export default function EmpireQuestsPage() {
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameplayStatusRef = useRef<'idle' | 'playing' | 'ended'>('idle');
   const { toast } = useToast();
   const haptics = useHaptics();
 
@@ -596,16 +597,32 @@ export default function EmpireQuestsPage() {
   useEffect(() => {
     fetchUserData();
 
-    const handleGemsUpdate = () => fetchUserData();
+    gameplayStatusRef.current = 'idle';
+    // Reward events (gemsUpdated / starsUpdated) fire several times in a row
+    // when a quest ends. Refetching on each one re-rendered the whole board
+    // repeatedly, which reads as the screen blinking. Debounce them, and never
+    // refetch while a stage is being played — exitGameplay() refreshes anyway.
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const handleGemsUpdate = () => {
+      if (gameplayStatusRef.current !== 'idle') return;
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => fetchUserData(), 800);
+    };
     window.addEventListener('gemsUpdated', handleGemsUpdate);
     window.addEventListener('starsUpdated', handleGemsUpdate);
 
     return () => {
+      if (debounce) clearTimeout(debounce);
       window.removeEventListener('gemsUpdated', handleGemsUpdate);
       window.removeEventListener('starsUpdated', handleGemsUpdate);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  // Keep the ref in sync so the reward-event listener can read it.
+  useEffect(() => {
+    gameplayStatusRef.current = gameplayStatus;
+  }, [gameplayStatus]);
 
   // Compute Total Star Ratings Earned across all stages
   const totalEarnedStars = React.useMemo(() => {
