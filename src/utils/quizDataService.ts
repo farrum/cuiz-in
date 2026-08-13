@@ -48,7 +48,8 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
     // First try to get from Supabase
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at');
+      .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
+      .limit(1500);
       
     if (error) {
       console.error('Error fetching quiz questions from Supabase:', error);

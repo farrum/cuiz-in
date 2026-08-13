@@ -310,7 +310,7 @@ export default function QuizStoryScreen() {
               <h2 className="text-xl font-black leading-snug mb-5 text-foreground tracking-tight">{question.question}</h2>
 
               <div className="space-y-3">
-                {question.options.map((opt, i) => {
+                {(question.options || []).map((opt, i) => {
                   const isSelected = selected === opt;
                   const isReveal = phase === 'revealing' && correctAnswer;
                   const isThisCorrect = isReveal && opt === correctAnswer;
