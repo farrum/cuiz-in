@@ -1485,6 +1485,17 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_team_analytics: {
+        Args: { p_days?: number; p_member_ids: string[] }
+        Returns: {
+          answers: number
+          correct: number
+          day: string
+          gems: number
+          member_id: string
+          quiz_points: number
+        }[]
+      }
       get_my_team_presence: {
         Args: { p_member_ids: string[] }
         Returns: {
