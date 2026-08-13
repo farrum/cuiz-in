@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import TeamLeaderAttendanceTracker from '@/components/admin/attendance/TeamLeaderAttendanceTracker';
+import TeamAnalyticsPanel from '@/components/team-leader/TeamAnalyticsPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +76,7 @@ export default function MobileTeamDashboard() {
   } = useTeamLeaderDashboard();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState<'mercenaries' | 'attendance' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
+  const [filterTab, setFilterTab] = useState<'mercenaries' | 'analytics' | 'attendance' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [referralStats, setReferralStats] = useState<{ total: number; active: number }>({ total: 0, active: 0 });
@@ -448,6 +449,16 @@ export default function MobileTeamDashboard() {
             ⚔️ Troops
           </button>
           <button
+            onClick={() => setFilterTab('analytics')}
+            className={`flex-1 min-w-[70px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
+              filterTab === 'analytics'
+                ? 'bg-amber-500 text-stone-950 font-black'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            📊 Stats
+          </button>
+          <button
             onClick={() => setFilterTab('attendance')}
             className={`flex-1 min-w-[75px] text-center py-2 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
               filterTab === 'attendance' 
@@ -493,6 +504,14 @@ export default function MobileTeamDashboard() {
             📢 Recruit
           </button>
         </div>
+
+        {/* Tab content: TEAM ANALYTICS */}
+        {filterTab === 'analytics' && (
+          <TeamAnalyticsPanel
+            compact
+            members={(teamMembers || []).map((m: any) => ({ id: m.id, name: m.name }))}
+          />
+        )}
 
         {/* Tab content: MERCENARIES LIST */}
         {filterTab === 'mercenaries' && (
