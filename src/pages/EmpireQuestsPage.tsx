@@ -619,6 +619,11 @@ export default function EmpireQuestsPage() {
     };
   }, []);
 
+  // Keep the ref in sync so the reward-event listener can read it.
+  useEffect(() => {
+    gameplayStatusRef.current = gameplayStatus;
+  }, [gameplayStatus]);
+
   // Compute Total Star Ratings Earned across all stages
   const totalEarnedStars = React.useMemo(() => {
     return Object.values(stageStarData).reduce((sum, item) => sum + (item.stars || 0), 0);
