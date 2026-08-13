@@ -425,6 +425,7 @@ export default function EmpireQuestsPage() {
   const [revealedExplanation, setRevealedExplanation] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameplayStatusRef = useRef<'idle' | 'playing' | 'ended'>('idle');
   const { toast } = useToast();
   const haptics = useHaptics();
 
