@@ -98,6 +98,50 @@ export interface QuestionFilter {
 }
 
 // Get a random question (with preference for unanswered questions)
+// Sample a small random slice of the question bank server-side.
+// Returns [] on any failure so callers can fall back to the cached pool.
+const RANDOM_PAGE_SIZE = 30;
+export const fetchRandomQuestionPage = async (filter?: QuestionFilter): Promise<QuizQuestion[]> => {
+  try {
+    const base = () => {
+      let q = supabase
+        .from('quiz_questions')
+        .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at', { count: 'exact' });
+      if (filter?.category) q = q.eq('category', filter.category);
+      if (filter?.difficulty) q = q.eq('difficulty', filter.difficulty);
+      if (filter?.questionType) q = q.eq('question_type', filter.questionType);
+      return q;
+    };
+
+    // One cheap HEAD-style call to learn the pool size, then read one page.
+    const { count, error: countError } = await base().range(0, 0);
+    if (countError) throw countError;
+    const total = count || 0;
+    if (total === 0) return [];
+
+    const maxOffset = Math.max(0, total - RANDOM_PAGE_SIZE);
+    const offset = Math.floor(Math.random() * (maxOffset + 1));
+    const { data, error } = await base().range(offset, offset + RANDOM_PAGE_SIZE - 1);
+    if (error) throw error;
+
+    return (data || []).map((q: any) => ({
+      id: q.id,
+      question: q.question,
+      options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
+      difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
+      category: q.category,
+      gems: q.gems || 10,
+      explanation: q.explanation || '',
+      imageUrl: q.image_url || undefined,
+      questionType: (q.question_type as 'text' | 'image') || 'text',
+      createdAt: q.created_at,
+    })).filter((q: QuizQuestion) => Array.isArray(q.options) && q.options.length > 0);
+  } catch (e) {
+    console.warn('[quiz] random page fetch failed, falling back', e);
+    return [];
+  }
+};
+
 export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQuestion> => {
   // Fast path: sample a *small* page of questions straight from the server.
   // Pulling the entire question bank (12k+ rows) into the WebView on every
