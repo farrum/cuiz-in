@@ -16,7 +16,7 @@ export const useAttendanceRecords = (
 ) => {
   const [attendance, setAttendance] = useState<UserAttendance[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAttendanceData = useCallback(async () => {
@@ -91,12 +91,19 @@ export const useAttendanceRecords = (
     }
   }, [currentMonth, users]);
 
+  const resetAttendance = useCallback(() => {
+    setAttendance([]);
+    setAttendanceRecords([]);
+    setLoading(false);
+  }, []);
+
   return {
     attendance,
     attendanceRecords,
     loading,
     error,
     setError,
-    fetchAttendanceData
+    fetchAttendanceData,
+    resetAttendance
   };
 };

@@ -15,7 +15,8 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
     attendance, 
     attendanceRecords, 
     loading, 
-    fetchAttendanceData 
+    fetchAttendanceData,
+    resetAttendance
   } = useAttendanceRecords(currentMonth, users);
 
   const { 
@@ -34,8 +35,11 @@ export const useAttendanceData = (currentMonth: Date, users: any[]) => {
   useEffect(() => {
     if (users.length > 0) {
       fetchAttendanceData();
+    } else {
+      // No members to report on — clear state instead of hanging on "loading"
+      resetAttendance();
     }
-  }, [currentMonth, users, fetchAttendanceData]);
+  }, [currentMonth, users, fetchAttendanceData, resetAttendance]);
 
   return {
     attendance,
