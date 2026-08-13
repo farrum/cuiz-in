@@ -48,7 +48,8 @@ export const fetchQuizQuestions = async (): Promise<QuizQuestion[]> => {
     // First try to get from Supabase
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at');
+      .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
+      .limit(1500);
       
     if (error) {
       console.error('Error fetching quiz questions from Supabase:', error);
@@ -98,9 +99,56 @@ export interface QuestionFilter {
 }
 
 // Get a random question (with preference for unanswered questions)
+// Sample a small random slice of the question bank server-side.
+// Returns [] on any failure so callers can fall back to the cached pool.
+const RANDOM_PAGE_SIZE = 30;
+export const fetchRandomQuestionPage = async (filter?: QuestionFilter): Promise<QuizQuestion[]> => {
+  try {
+    const base = () => {
+      let q = supabase
+        .from('quiz_questions')
+        .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at', { count: 'exact' });
+      if (filter?.category) q = q.eq('category', filter.category);
+      if (filter?.difficulty) q = q.eq('difficulty', filter.difficulty);
+      if (filter?.questionType) q = q.eq('question_type', filter.questionType);
+      return q;
+    };
+
+    // One cheap HEAD-style call to learn the pool size, then read one page.
+    const { count, error: countError } = await base().range(0, 0);
+    if (countError) throw countError;
+    const total = count || 0;
+    if (total === 0) return [];
+
+    const maxOffset = Math.max(0, total - RANDOM_PAGE_SIZE);
+    const offset = Math.floor(Math.random() * (maxOffset + 1));
+    const { data, error } = await base().range(offset, offset + RANDOM_PAGE_SIZE - 1);
+    if (error) throw error;
+
+    return (data || []).map((q: any) => ({
+      id: q.id,
+      question: q.question,
+      options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
+      difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
+      category: q.category,
+      gems: q.gems || 10,
+      explanation: q.explanation || '',
+      imageUrl: q.image_url || undefined,
+      questionType: (q.question_type as 'text' | 'image') || 'text',
+      createdAt: q.created_at,
+    })).filter((q: QuizQuestion) => Array.isArray(q.options) && q.options.length > 0);
+  } catch (e) {
+    console.warn('[quiz] random page fetch failed, falling back', e);
+    return [];
+  }
+};
+
 export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQuestion> => {
-  // Try to get the latest questions from Supabase
-  let questions = await fetchQuizQuestions();
+  // Fast path: sample a *small* page of questions straight from the server.
+  // Pulling the entire question bank (12k+ rows) into the WebView on every
+  // question was blowing memory on native devices and crashing the app.
+  const sampled = await fetchRandomQuestionPage(filter);
+  let questions = sampled.length > 0 ? sampled : await fetchQuizQuestions();
 
   // Apply user-selected category / difficulty / questionType preferences when provided
   if (filter && (filter.category || filter.difficulty || filter.questionType)) {
@@ -198,7 +246,19 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
 
 // Get the list of distinct categories available in the question pool
 export const getAvailableCategories = async (): Promise<string[]> => {
-  const questions = await fetchQuizQuestions();
+  try {
+    const { data, error } = await supabase
+      .from('quiz_questions')
+      .select('category')
+      .not('category', 'is', null)
+      .limit(3000);
+    if (!error && data && data.length > 0) {
+      return Array.from(new Set(data.map((r: any) => r.category).filter(Boolean))).sort();
+    }
+  } catch (e) {
+    console.warn('[quiz] category lookup failed, using cache', e);
+  }
+  const questions = getQuestionsFromLocalStorage();
   return Array.from(new Set(questions.map(q => q.category).filter(Boolean))).sort();
 };
 
