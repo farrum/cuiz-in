@@ -597,6 +597,7 @@ export default function EmpireQuestsPage() {
   useEffect(() => {
     fetchUserData();
 
+    gameplayStatusRef.current = 'idle';
     // Reward events (gemsUpdated / starsUpdated) fire several times in a row
     // when a quest ends. Refetching on each one re-rendered the whole board
     // repeatedly, which reads as the screen blinking. Debounce them, and never
