@@ -177,6 +177,10 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
         
         {loading ? (
           <LoadingState message="Loading team attendance data..." />
+        ) : teamMembers.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            No squad members yet — attendance will appear once players join your team.
+          </div>
         ) : (
           <>
             {view === 'calendar' && (
