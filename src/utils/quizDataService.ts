@@ -99,8 +99,11 @@ export interface QuestionFilter {
 
 // Get a random question (with preference for unanswered questions)
 export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQuestion> => {
-  // Try to get the latest questions from Supabase
-  let questions = await fetchQuizQuestions();
+  // Fast path: sample a *small* page of questions straight from the server.
+  // Pulling the entire question bank (12k+ rows) into the WebView on every
+  // question was blowing memory on native devices and crashing the app.
+  const sampled = await fetchRandomQuestionPage(filter);
+  let questions = sampled.length > 0 ? sampled : await fetchQuizQuestions();
 
   // Apply user-selected category / difficulty / questionType preferences when provided
   if (filter && (filter.category || filter.difficulty || filter.questionType)) {
@@ -198,7 +201,19 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
 
 // Get the list of distinct categories available in the question pool
 export const getAvailableCategories = async (): Promise<string[]> => {
-  const questions = await fetchQuizQuestions();
+  try {
+    const { data, error } = await supabase
+      .from('quiz_questions')
+      .select('category')
+      .not('category', 'is', null)
+      .limit(3000);
+    if (!error && data && data.length > 0) {
+      return Array.from(new Set(data.map((r: any) => r.category).filter(Boolean))).sort();
+    }
+  } catch (e) {
+    console.warn('[quiz] category lookup failed, using cache', e);
+  }
+  const questions = getQuestionsFromLocalStorage();
   return Array.from(new Set(questions.map(q => q.category).filter(Boolean))).sort();
 };
 
