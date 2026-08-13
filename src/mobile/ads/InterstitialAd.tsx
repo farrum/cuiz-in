@@ -3,12 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-import { NetworkAdFrame } from './NetworkAdFrame';
 import { isNativeAds } from './levelplay';
 import { showAdWithFallback } from './admob';
 
-/** Adsterra 300x250 placement shown between quiz questions. */
-const ADSTERRA_KEY = '2036014d5863f79efb5b419b47c4b810';
 interface InterstitialAdProps {
   open: boolean;
   onClose: () => void;
@@ -28,8 +25,9 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
   const [hasDbAd, setHasDbAd] = useState(false);
   // No built-in sample creatives: native SDKs or a managed slot only.
   const ad = null as null | { bg: string; sample?: boolean; headline: string; body: string; cta: string; href?: string };
-  // Legacy Adsterra/VAST creatives are retired — interstitials come from
-  // AdMob (with LevelPlay fallback) on native, or a managed DB slot on web.
+  // Third-party network creatives (Adsterra / ClickAdilla / VAST) are removed.
+  // Interstitials come from AdMob (LevelPlay fallback) on native, or a managed
+  // DB slot on web.
   const hasNetworkAd = false;
   // True while the native AdMob/LevelPlay interstitial is on screen (or being
   // requested) — the web overlay must stay hidden in that case.
@@ -112,30 +110,6 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
               
               <div className="w-full max-w-sm p-4 bg-white rounded-2xl flex justify-center items-center shadow-2xl overflow-hidden">
                 <SimpleAdBanner position="app-interstitial" />
-              </div>
-            </div>
-          ) : hasNetworkAd ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-black/90 text-white relative">
-              <div className="absolute top-3 left-3 text-[10px] font-bold uppercase bg-black/50 px-2 py-1 rounded">
-                Ad
-              </div>
-              <div className="absolute top-3 right-3">
-                {canSkip ? (
-                  <button
-                    onClick={onClose}
-                    className="flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full"
-                  >
-                    Skip <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <span className="text-xs font-semibold bg-white/10 px-3 py-1.5 rounded-full">
-                    Skip in {remaining}s
-                  </span>
-                )}
-              </div>
-
-              <div className="bg-white rounded-2xl p-3 shadow-2xl overflow-hidden">
-                <NetworkAdFrame adKey={ADSTERRA_KEY} width={300} height={250} />
               </div>
             </div>
           ) : (
