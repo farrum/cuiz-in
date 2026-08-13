@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 import { BurningTorch } from '@/components/gamification/BurningTorch';
 import { buildReferralLink } from '@/utils/referralLink';
+import TeamAnalyticsPanel from '@/components/team-leader/TeamAnalyticsPanel';
 import { 
   Users, 
   UserCheck, 
@@ -52,7 +53,7 @@ const TeamLeaderDashboardPage = () => {
     rejectJoinRequest
   } = useTeamLeaderDashboard();
 
-  const [activeTab, setActiveTab] = useState<'mercenaries' | 'requests' | 'tasks' | 'invite'>('mercenaries');
+  const [activeTab, setActiveTab] = useState<'mercenaries' | 'analytics' | 'requests' | 'tasks' | 'invite'>('mercenaries');
   
   // Task creator state
   const [taskTitle, setTaskTitle] = useState('');
@@ -235,6 +236,14 @@ const TeamLeaderDashboardPage = () => {
                 }`}
               >
                 ⚔️ Mercenaries
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all h-9 flex items-center ${
+                  activeTab === 'analytics' ? 'medieval-btn' : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                📊 War Analytics
               </button>
               {joinRequests.length > 0 && (
                 <button
@@ -643,6 +652,18 @@ const TeamLeaderDashboardPage = () => {
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* TAB: WAR ANALYTICS */}
+          {activeTab === 'analytics' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-black uppercase tracking-widest text-amber-500" style={{ fontFamily: "'Cinzel', serif" }}>
+                War Analytics
+              </h2>
+              <TeamAnalyticsPanel
+                members={teamMembers.map((m: any) => ({ id: m.id, name: m.name }))}
+              />
             </div>
           )}
 
