@@ -15,9 +15,11 @@ export function MobileShell() {
         {/* No AnimatePresence exit: waiting for the outgoing screen to animate
             away leaves an empty pane between routes, which reads as a
             blank-screen flicker. The new screen simply fades in. */}
+        {/* No key on the wrapper: keying by pathname remounted the whole
+            subtree on every navigation, which re-ran the fade from opacity 0
+            and read as a flicker. */}
         <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
+          initial={false}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
           className="min-h-full"
