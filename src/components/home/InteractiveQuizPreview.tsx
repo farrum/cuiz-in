@@ -294,7 +294,7 @@ const InteractiveQuizPreview: React.FC = () => {
           <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center mx-auto mb-4">
             <Zap className="w-6 h-6 text-white" />
           </div>
-          <h3 className="text-xl font-bold mb-2">Quick IQ Test</h3>
+          <h2 className="text-xl font-bold mb-2">Quick IQ Test</h2>
           <p className="text-sm text-muted-foreground">
             Answer {TOTAL_QUESTIONS} questions and discover your Quiz IQ!
           </p>
