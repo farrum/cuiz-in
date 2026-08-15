@@ -52,7 +52,7 @@ const SearchConsolePanel: React.FC = () => {
       );
     }
     const { data, error: fnError } = await supabase.functions.invoke('search-console', {
-      body: payload,
+      body: { ...payload, accessToken: token },
       headers: { Authorization: `Bearer ${token}` },
     });
     if (fnError) {
