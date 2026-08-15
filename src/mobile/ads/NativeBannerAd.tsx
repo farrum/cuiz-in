@@ -9,7 +9,9 @@ interface NativeBannerAdProps {
 }
 
 export function NativeBannerAd({ noMargin = false }: NativeBannerAdProps) {
-  return <div aria-hidden className={`h-[50px] shrink-0 ${noMargin ? '' : 'mb-10'}`} />;
+  // Height only — no bottom margin, the banner must sit flush on the chrome.
+  void noMargin;
+  return <div aria-hidden className="h-[50px] shrink-0" />;
 }
 
 export default NativeBannerAd;
