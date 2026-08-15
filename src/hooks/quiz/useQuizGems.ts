@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getAllBadges } from '@/utils/badgeData';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -147,17 +147,17 @@ export const useQuizGems = (
     }
   }, [updateNextBadgeThreshold, dailyGems, monthlyGems, userGems, questionsAnswered]);
   
+  // Keep the poller stable: fetchGems changes identity on every gem update, so
+  // depending on it tore down and recreated the interval constantly, causing
+  // extra fetches and re-render churn during long sessions.
+  const fetchGemsRef = useRef(fetchGems);
+  fetchGemsRef.current = fetchGems;
+
   useEffect(() => {
-    // Initial fetch only
-    fetchGems();
-    
-    // Poll for updates every minute
-    const intervalId = setInterval(fetchGems, 60000);
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [fetchGems, isLoggedIn]);
+    void fetchGemsRef.current();
+    const intervalId = setInterval(() => { void fetchGemsRef.current(); }, 60000);
+    return () => clearInterval(intervalId);
+  }, [isLoggedIn]);
   
   return {
     userGems,
