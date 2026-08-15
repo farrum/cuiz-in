@@ -13,19 +13,20 @@ serve(async (req) => {
 
   try {
     const { username, password } = await req.json();
+    const normalizedUsername = typeof username === 'string' ? username.trim() : '';
 
-    if (!username || !password) {
+    if (!normalizedUsername || typeof password !== 'string' || !password) {
       return new Response(
         JSON.stringify({ success: false, error: 'Username and password are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const adminUsername = Deno.env.get('ADMIN_USERNAME');
     const adminPassword = Deno.env.get('ADMIN_PASSWORD');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
     if (!adminUsername || !adminPassword || !supabaseUrl || !supabaseServiceKey || !anonKey) {
       return new Response(
@@ -35,11 +36,14 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const adminEmail = `${adminUsername.toLowerCase()}@cuiz.in`;
+    const supabaseAuth = createClient(supabaseUrl, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const adminEmail = `${normalizedUsername.toLowerCase()}@cuiz.in`;
 
     const logLogin = async (successful: boolean) => {
       await supabaseAdmin.from('login_logs').insert({
-        username: username,
+        username: normalizedUsername,
         ip_address: req.headers.get('x-forwarded-for') || 'unknown',
         device: req.headers.get('user-agent') || 'unknown',
         login_time: new Date().toISOString(),
@@ -47,11 +51,54 @@ serve(async (req) => {
       });
     };
 
-    if (username !== adminUsername || password !== adminPassword) {
+    // Prefer the real Supabase credential. This keeps admin auth aligned with
+    // the rest of the app and avoids resetting the password on every login.
+    const { data: passwordLogin } = await supabaseAuth.auth.signInWithPassword({
+      email: adminEmail,
+      password,
+    });
+
+    if (passwordLogin.session?.user) {
+      const { data: role } = await supabaseAdmin
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', passwordLogin.session.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!role) {
+        await supabaseAuth.auth.signOut();
+        await logLogin(false);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid credentials' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      await logLogin(true);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          adminUserId: passwordLogin.session.user.id,
+          adminUsername: normalizedUsername,
+          access_token: passwordLogin.session.access_token,
+          refresh_token: passwordLogin.session.refresh_token,
+          expires_in: passwordLogin.session.expires_in,
+          token_type: passwordLogin.session.token_type,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Backward-compatible bootstrap: accept the configured admin credential,
+    // then mint a Supabase session without changing the Auth password. A login
+    // rejection is a normal response (HTTP 200), so the client can display it
+    // without surfacing an Edge Function runtime error.
+    if (normalizedUsername.toLowerCase() !== adminUsername.trim().toLowerCase() || password !== adminPassword) {
       await logLogin(false);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid credentials' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -60,14 +107,9 @@ serve(async (req) => {
     let authUserId: string | null = null;
     {
       const { data: list } = await supabaseAdmin.auth.admin.listUsers();
-      const existing = list?.users?.find((u: any) => u.email?.toLowerCase() === adminEmail);
+      const existing = list?.users?.find((user) => user.email?.toLowerCase() === adminEmail);
       if (existing) {
         authUserId = existing.id;
-        // Make sure password matches the current ADMIN_PASSWORD (rotation-safe)
-        await supabaseAdmin.auth.admin.updateUserById(authUserId, {
-          password: adminPassword,
-          email_confirm: true,
-        });
       } else {
         const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
           email: adminEmail,
@@ -120,19 +162,28 @@ serve(async (req) => {
       await supabaseAdmin.from('user_roles').insert({ user_id: authUserId, role: 'admin' });
     }
 
-    // Now sign in via password grant to get real tokens
-    const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+    // Mint a one-time server-generated sign-in token. This avoids the race
+    // caused by changing a password and immediately requesting a token.
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: adminEmail,
     });
-    const tokenJson = await tokenRes.json().catch(() => ({}));
-    if (!tokenRes.ok) {
-      console.error('[admin-auth] token grant failed:', tokenJson);
+    const hashedToken = linkData?.properties?.hashed_token;
+    if (linkError || !hashedToken) {
+      console.error('[admin-auth] session link failed:', linkError);
+      await logLogin(false);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Could not establish admin session' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: verified, error: verifyError } = await supabaseAuth.auth.verifyOtp({
+      type: 'magiclink',
+      token_hash: hashedToken,
+    });
+    if (verifyError || !verified.session) {
+      console.error('[admin-auth] session verification failed:', verifyError);
       await logLogin(false);
       return new Response(
         JSON.stringify({ success: false, error: 'Could not establish admin session' }),
@@ -146,11 +197,11 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         adminUserId: authUserId,
-        adminUsername,
-        access_token: tokenJson.access_token,
-        refresh_token: tokenJson.refresh_token,
-        expires_in: tokenJson.expires_in,
-        token_type: tokenJson.token_type,
+        adminUsername: normalizedUsername,
+        access_token: verified.session.access_token,
+        refresh_token: verified.session.refresh_token,
+        expires_in: verified.session.expires_in,
+        token_type: verified.session.token_type,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
