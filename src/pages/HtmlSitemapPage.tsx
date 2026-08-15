@@ -84,8 +84,8 @@ const HtmlSitemapPage: React.FC = () => {
   return (
     <>
       <SEO
-        title={`All ${totalCount.toLocaleString()} Quiz Questions & Answers | CuizIN`}
-        description={`Complete directory of ${totalCount.toLocaleString()} quiz questions and answers. Browse by category — History, Science, Sports, Entertainment, Geography, and more.`}
+        title={`${totalCount.toLocaleString()} Quiz Questions With Answers — Free GK Trivia | CuizIN`}
+        description={`Find the answer to any trivia question fast. Search ${totalCount.toLocaleString()} quiz questions with verified answers and explanations across history, science, sports, geography, entertainment and more — free, no signup.`}
         canonicalUrl="https://cuiz.in/all-questions"
         schemaType="WebPage"
         schemaData={pageSchema}
