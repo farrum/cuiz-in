@@ -17,7 +17,6 @@ export function BottomTabs() {
   const location = useLocation();
   return (
     <nav
-      data-bottom-chrome
       className="relative z-40 bg-white"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -25,9 +24,7 @@ export function BottomTabs() {
         boxShadow: '0 -4px 10px rgba(0,0,0,0.05)'
       }}
     >
-      {/* Extra top padding keeps the raised Quest button fully inside the nav
-          so the native banner (which sits flush on top of it) never covers it. */}
-      <div className="flex items-center justify-around px-2 pt-10 pb-2">
+      <div className="flex items-center justify-around px-2 pt-2 pb-2">
         {tabs.map((tab) => {
           const active = location.pathname === tab.to;
           const Icon = tab.icon;

@@ -387,7 +387,6 @@ export default function QuizStoryScreen() {
       {/* Rotating banner ad */}
       <TopBannerAd />
 
-      <div data-bottom-chrome>
       {/* Preferences button */}
       <div className="px-4 pt-2">
         <button
@@ -409,7 +408,6 @@ export default function QuizStoryScreen() {
           <span>SPOILS: <strong className="text-primary text-[13px]">+{sessionGems} 💎</strong></span>
           <button onClick={loadNext} className="text-primary font-black uppercase tracking-widest text-[11px] hover:underline">Skip →</button>
         </div>
-      </div>
       </div>
 
       <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={10} seed={adSeed} />
