@@ -392,6 +392,31 @@ export const useTeamLeaderDashboard = () => {
     }
   };
 
+  const removeMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .rpc('remove_member_from_team' as any, { 
+          p_member_id: memberId
+        });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Mercenary Dismissed",
+        description: "The mercenary has been successfully removed from your squad.",
+      });
+      
+      if (refreshMembers) refreshMembers();
+    } catch (err: any) {
+      console.error('Error removing member:', err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to remove member.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const approveJoinRequest = async (requestId: string) => {
     try {
       const { error } = await supabase
@@ -526,6 +551,7 @@ export const useTeamLeaderDashboard = () => {
     currentUserRole,
     promoteToJunior,
     demoteToPlayer,
+    removeMember,
     assignedTasks,
     assignTask,
     redistributeTask,

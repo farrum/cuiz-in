@@ -32,6 +32,16 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem 
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -44,6 +54,7 @@ const TeamLeaderDashboardPage = () => {
     isMainTeamLeader,
     promoteToJunior,
     demoteToPlayer,
+    removeMember,
     assignedTasks = [],
     assignTask,
     deleteTask,
@@ -71,6 +82,9 @@ const TeamLeaderDashboardPage = () => {
   const [selectedMemberForBonus, setSelectedMemberForBonus] = useState<{ id: string, name: string } | null>(null);
   const [bonusStars, setBonusStars] = useState(25);
   const [bonusGems, setBonusGems] = useState(100);
+
+  // Dismiss modal state
+  const [memberToDismiss, setMemberToDismiss] = useState<{ id: string, name: string } | null>(null);
 
   const [copied, setCopied] = useState(false);
   const username = localStorage.getItem('cuizin_username') || 'baron';
@@ -376,6 +390,17 @@ const TeamLeaderDashboardPage = () => {
                                   className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 h-7 rounded text-[10px]"
                                 >
                                   Demote
+                                </Button>
+                              )}
+
+                              {/* Dismiss Button */}
+                              {isMainTeamLeader && (
+                                <Button 
+                                  onClick={() => setMemberToDismiss({ id: member.id, name: member.name })}
+                                  size="sm"
+                                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 h-7 rounded text-[10px]"
+                                >
+                                  Dismiss
                                 </Button>
                               )}
                               
@@ -756,6 +781,37 @@ const TeamLeaderDashboardPage = () => {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Dismiss confirmation dialog */}
+        {memberToDismiss && (
+          <AlertDialog open={!!memberToDismiss} onOpenChange={(open) => !open && setMemberToDismiss(null)}>
+            <AlertDialogContent className="bg-stone-900 border border-stone-800 text-slate-200">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-500 font-black uppercase tracking-wider text-sm">
+                  Dismiss Mercenary?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-400 text-xs">
+                  Are you sure you want to dismiss {memberToDismiss.name} from your team? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex gap-2">
+                <AlertDialogCancel onClick={() => setMemberToDismiss(null)} className="flex-1 rounded-xl mt-0 bg-stone-850 hover:bg-stone-800 border-stone-700 text-slate-300">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    const mId = memberToDismiss.id;
+                    setMemberToDismiss(null);
+                    await removeMember(mId);
+                  }}
+                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold"
+                >
+                  Dismiss
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
 
       </div>

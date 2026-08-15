@@ -62,6 +62,7 @@ export default function MobileTeamDashboard() {
     isMainTeamLeader,
     promoteToJunior,
     demoteToPlayer,
+    removeMember,
     handleStatusChange,
     requestAccountAction,
     assignedTasks = [],
@@ -191,6 +192,20 @@ export default function MobileTeamDashboard() {
       action: async () => {
         setActionInProgress(memberId);
         await demoteToPlayer(memberId);
+        setActionInProgress(null);
+      }
+    });
+  };
+
+  const handleDismissClick = (memberId: string, name: string) => {
+    if (!removeMember) return;
+    setConfirmDialog({
+      open: true,
+      title: "Dismiss Mercenary?",
+      description: `Are you sure you want to dismiss ${name} from your team? This action cannot be undone.`,
+      action: async () => {
+        setActionInProgress(memberId);
+        await removeMember(memberId);
         setActionInProgress(null);
       }
     });
@@ -614,12 +629,22 @@ export default function MobileTeamDashboard() {
                           )}
                           {isMainTeamLeader && member.role !== 'infantry' && (
                             <Button
-                              onClick={() => demoteToPlayer(member.id)}
+                              onClick={() => handleDemoteClick(member.id, member.name)}
                               variant="outline"
                               size="sm"
                               className="h-7 px-2.5 text-[10px] font-bold border-stone-700 text-stone-300 bg-stone-850"
                             >
                               Demote
+                            </Button>
+                          )}
+                          {isMainTeamLeader && (
+                            <Button
+                              onClick={() => handleDismissClick(member.id, member.name)}
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2.5 text-[10px] font-bold border-red-900/50 text-red-400 bg-red-950/20 hover:bg-red-950/40"
+                            >
+                              Dismiss
                             </Button>
                           )}
                           <Button
