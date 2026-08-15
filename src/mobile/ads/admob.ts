@@ -56,7 +56,13 @@ export function initAdMob(): Promise<boolean> {
 }
 
 // ─── Banner ───────────────────────────────────────────────────────────────────
-let bannerRefCount = 0;
+// A single banner surface is owned by the app (see BannerHost). Showing is
+// idempotent: repeated calls never stack a second surface, and hiding only
+// removes a banner that is actually on screen. The old reference-count could
+// drift (it incremented before init and on the LevelPlay fallback path), which
+// made the banner blink or duplicate as the session went on.
+let bannerShown = false;
+let bannerPending: Promise<boolean> | null = null;
 
 /**
  * Show the AdMob banner (bottom-centre, sits above the 56 px tab bar).
@@ -64,9 +70,15 @@ let bannerRefCount = 0;
  * the caller can fall back to a LevelPlay banner.
  */
 export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
-  bannerRefCount += 1;
+  if (!Capacitor.isNativePlatform()) return false;
+  if (bannerShown) return true;
+  if (bannerPending) return bannerPending;
+  bannerPending = doShowBanner(onFailed).finally(() => { bannerPending = null; });
+  return bannerPending;
+}
+
+async function doShowBanner(onFailed?: () => void): Promise<boolean> {
   if (!(await initAdMob())) { onFailed?.(); return false; }
-  if (bannerRefCount <= 0) return false;
   try {
     const options: BannerAdOptions = {
       adId: adId('banner'),
@@ -76,6 +88,7 @@ export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
       isTesting: import.meta.env.DEV as boolean,
     };
     await AdMob.showBanner(options);
+    bannerShown = true;
     return true;
   } catch (e) {
     console.warn('[AdMob] banner failed', e);
@@ -85,9 +98,13 @@ export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
 }
 
 export async function hideAdMobBanner(): Promise<void> {
-  bannerRefCount = Math.max(0, bannerRefCount - 1);
-  if (!Capacitor.isNativePlatform() || bannerRefCount > 0) return;
+  if (!Capacitor.isNativePlatform() || !bannerShown) return;
+  bannerShown = false;
   try { await AdMob.removeBanner(); } catch { /* noop */ }
+}
+
+export function isAdMobBannerShown(): boolean {
+  return bannerShown;
 }
 
 // ─── Interstitial ─────────────────────────────────────────────────────────────
@@ -182,27 +199,16 @@ export async function showAdWithFallback(
 ): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
+  // The waterfall is capped at two surfaces on purpose: preparing four
+  // full-screen ads back-to-back (each of which also warms the next one) piles
+  // up native memory and was crashing the WebView after a few rounds.
   if (prefer === 'rewarded') {
-    // 1. AdMob Rewarded
     const admobR = await showAdMobRewarded();
     if (admobR.shown) return true;
-    // 2. AdMob Rewarded Interstitial
-    if ((await showAdMobRewardedInterstitial()).shown) return true;
-    // 3. LevelPlay Rewarded
     const lpR = await showLevelPlayRewarded();
-    if (lpR.shown) return true;
-    // 4. LevelPlay Interstitial (last resort)
-    return await showLevelPlayInterstitial();
+    return lpR.shown;
   }
 
-  // prefer === 'interstitial'
-  // 1. AdMob Interstitial
   if (await showAdMobInterstitial()) return true;
-  // 2. AdMob Rewarded Interstitial
-  if ((await showAdMobRewardedInterstitial()).shown) return true;
-  // 3. LevelPlay Interstitial
-  if (await showLevelPlayInterstitial()) return true;
-  // 4. LevelPlay Rewarded (last resort)
-  const lpR = await showLevelPlayRewarded();
-  return lpR.shown;
+  return await showLevelPlayInterstitial();
 }
