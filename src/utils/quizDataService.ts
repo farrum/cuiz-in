@@ -145,10 +145,16 @@ export const fetchRandomQuestionPage = async (filter?: QuestionFilter): Promise<
 
 export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQuestion> => {
   // Fast path: sample a *small* page of questions straight from the server.
-  // Pulling the entire question bank (12k+ rows) into the WebView on every
-  // question was blowing memory on native devices and crashing the app.
-  const sampled = await fetchRandomQuestionPage(filter);
-  let questions = sampled.length > 0 ? sampled : await fetchQuizQuestions();
+  // Never fall back to fetchQuizQuestions() here — that pulls up to 1500 rows
+  // and re-serialises them into localStorage on every question, which stalls
+  // the main thread and crashes the WebView on mid-range devices.
+  let sampled = await fetchRandomQuestionPage(filter);
+  if (sampled.length === 0 && filter && (filter.category || filter.difficulty || filter.questionType)) {
+    // Retry once without the restrictive filter before giving up.
+    sampled = await fetchRandomQuestionPage();
+  }
+  // Last resort: the small cached pool already in localStorage.
+  let questions = sampled.length > 0 ? sampled : getQuestionsFromLocalStorage();
 
   // Apply user-selected category / difficulty / questionType preferences when provided
   if (filter && (filter.category || filter.difficulty || filter.questionType)) {

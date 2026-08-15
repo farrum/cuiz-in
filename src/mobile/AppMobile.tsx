@@ -13,6 +13,7 @@ import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
+import { BannerHost } from './ads/BannerHost';
 
 // Lazy-load screens for fast first paint
 const HubScreen = lazy(() => import('./screens/Hub/HubScreen'));
@@ -131,9 +132,21 @@ function AppMobile() {
                       <Route path="/shop" element={<ShopScreen />} />
                       <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     </Route>
-                    <Route path="/quiz" element={<QuizStoryScreen />} />
-                    <Route path="/daily" element={<DailyChallengeStoryScreen />} />
-                    <Route path="/game/:gameId" element={<MiniGameScreen />} />
+                    {/* Full-screen routes live outside the shell, so they need
+                        their own boundary — otherwise one bad render blanks
+                        the entire app instead of just this screen. */}
+                    <Route
+                      path="/quiz"
+                      element={<ErrorBoundary compact resetKey="/quiz"><QuizStoryScreen /></ErrorBoundary>}
+                    />
+                    <Route
+                      path="/daily"
+                      element={<ErrorBoundary compact resetKey="/daily"><DailyChallengeStoryScreen /></ErrorBoundary>}
+                    />
+                    <Route
+                      path="/game/:gameId"
+                      element={<ErrorBoundary compact resetKey="/game"><MiniGameScreen /></ErrorBoundary>}
+                    />
                   </Route>
                   <Route path="/" element={<Navigate to="/hub" replace />} />
                   <Route path="*" element={<Navigate to="/hub" replace />} />
@@ -141,6 +154,8 @@ function AppMobile() {
               </Suspense>
               </ErrorBoundary>
               <MobileMusicPlayer />
+              {/* Single, session-long native banner surface. */}
+              <BannerHost />
             </MobileMusicProvider>
           </BrowserRouter>
         </ThemeProvider>
