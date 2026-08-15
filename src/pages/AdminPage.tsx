@@ -34,6 +34,7 @@ import BlogManagement from '@/components/admin/blog/BlogManagement';
 import FaqManagement from '@/components/admin/faq/FaqManagement';
 import { ContentPartnerships } from '@/components/admin/partnerships';
 import SitemapManagement from '@/components/admin/SitemapManagement';
+import SearchConsolePanel from '@/components/admin/SearchConsolePanel';
 import AdminGamificationPanel from '@/components/admin/gamification/AdminGamificationPanel';
 
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
@@ -99,6 +100,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/faq')) tab = 'faq';
     else if (path.includes('/partnerships')) tab = 'partnerships';
     else if (path.includes('/seo')) tab = 'seo';
+    else if (path.includes('/search-console')) tab = 'search-console';
     else if (path.includes('/gamification')) tab = 'gamification';
     else if (path.includes('/guests')) tab = 'guests';
     else if (path === '/admin') {
@@ -203,6 +205,7 @@ const AdminPage: React.FC = () => {
         { value: 'ticker', label: 'News Tickers', icon: Volume2 },
         { value: 'messages', label: 'Fun Feedback Msg', icon: MessageSquare },
         { value: 'seo', label: 'SEO & Sitemap', icon: Search },
+        { value: 'search-console', label: 'Search Console', icon: BarChart },
       ]
     }
   ];
@@ -430,6 +433,9 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="seo" className="mt-0 outline-none">
               <SitemapManagement />
+            </TabsContent>
+            <TabsContent value="search-console" className="mt-0 outline-none">
+              <SearchConsolePanel />
             </TabsContent>
             <TabsContent value="gamification" className="mt-0 outline-none">
               <AdminGamificationPanel />
