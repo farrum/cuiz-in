@@ -63,6 +63,8 @@ export function initAdMob(): Promise<boolean> {
 // made the banner blink or duplicate as the session went on.
 let bannerShown = false;
 let bannerPending: Promise<boolean> | null = null;
+let bannerMargin = 0;
+let bannerFailedHandler: (() => void) | undefined;
 
 /**
  * Show the AdMob banner (bottom-centre, sits above the 56 px tab bar).
@@ -84,7 +86,7 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
       adId: adId('banner'),
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 56,
+      margin: bannerMargin,
       isTesting: import.meta.env.DEV as boolean,
     };
     await AdMob.showBanner(options);
@@ -95,6 +97,27 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
     onFailed?.();
     return false;
   }
+}
+
+/**
+ * Repositions the banner so it sits flush on top of whatever bottom chrome
+ * (tab bar / screen footer) the current route renders — no gap below it.
+ * The SDK has no "move" API, so the surface is re-shown only when the offset
+ * actually changes (avoids a re-request flicker on every navigation).
+ */
+export async function setAdMobBannerMargin(px: number): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  const next = Math.max(0, Math.round(px));
+  if (next === bannerMargin) return;
+  bannerMargin = next;
+  if (!bannerShown) return;
+  try { await AdMob.removeBanner(); } catch { /* noop */ }
+  bannerShown = false;
+  await showAdMobBanner(bannerFailedHandler);
+}
+
+export function setAdMobBannerFailedHandler(handler: () => void): void {
+  bannerFailedHandler = handler;
 }
 
 export async function hideAdMobBanner(): Promise<void> {
