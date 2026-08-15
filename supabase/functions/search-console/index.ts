@@ -51,11 +51,13 @@ Deno.serve(async (req) => {
     );
 
     let adminUserId: string | null = null;
-    if (authHeader.startsWith('Bearer ')) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data } = await supabaseAuth.auth.getUser();
+    const bearerToken =
+      (typeof body.accessToken === 'string' && body.accessToken) ||
+      (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '');
+    if (bearerToken) {
+      // Validate the token directly (works regardless of anon-key header handling).
+      const { data, error: userError } = await supabaseAdmin.auth.getUser(bearerToken);
+      if (userError) console.error('getUser failed:', userError.message);
       if (data?.user) adminUserId = data.user.id;
     }
     if (!adminUserId) {
