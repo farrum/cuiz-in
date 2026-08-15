@@ -107,7 +107,7 @@ serve(async (req) => {
     let authUserId: string | null = null;
     {
       const { data: list } = await supabaseAdmin.auth.admin.listUsers();
-      const existing = list?.users?.find((u: any) => u.email?.toLowerCase() === adminEmail);
+      const existing = list?.users?.find((user) => user.email?.toLowerCase() === adminEmail);
       if (existing) {
         authUserId = existing.id;
       } else {
