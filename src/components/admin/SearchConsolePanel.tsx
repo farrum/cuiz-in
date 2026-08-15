@@ -44,8 +44,16 @@ const SearchConsolePanel: React.FC = () => {
   const [devices, setDevices] = useState<Row[]>([]);
 
   const call = useCallback(async (payload: Record<string, unknown>) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      throw new Error(
+        'Your admin session has expired. Please sign out and sign in again to load Search Console data.'
+      );
+    }
     const { data, error: fnError } = await supabase.functions.invoke('search-console', {
       body: payload,
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (fnError) {
       let details = fnError.message;
