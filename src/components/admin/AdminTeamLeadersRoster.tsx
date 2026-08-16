@@ -176,7 +176,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
   // Admin control handlers
   const handleReassignLeader = async (memberId: string, newLeaderId: string) => {
     try {
-      const { error } = await supabase.rpc('admin_reassign_member_leader', {
+      const { error } = await supabase.rpc('admin_reassign_member_leader' as any, {
         p_member_id: memberId,
         p_new_leader_id: newLeaderId
       });
@@ -197,7 +197,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.rpc('promote_member_manually', {
+      const { error } = await supabase.rpc('promote_member_manually' as any, {
         p_member_id: userId,
         p_new_role: newRole
       });
@@ -219,7 +219,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
   const handleRemoveFromTeam = async (memberId: string) => {
     if (!window.confirm("Are you sure you want to remove this mercenary from their team? They will revert to independent infantry.")) return;
     try {
-      const { error } = await supabase.rpc('admin_remove_member_from_team', {
+      const { error } = await supabase.rpc('admin_remove_member_from_team' as any, {
         p_member_id: memberId
       });
       if (error) throw error;
@@ -241,7 +241,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
     const actionText = dissolveMembers ? "demote this team leader and dissolve all their team member referrals" : "demote the leader only";
     if (!window.confirm(`Are you sure you want to ${actionText}?`)) return;
     try {
-      const { error } = await supabase.rpc('admin_disable_team', {
+      const { error } = await supabase.rpc('admin_disable_team' as any, {
         p_leader_id: leaderId,
         p_dissolve_members: dissolveMembers
       });

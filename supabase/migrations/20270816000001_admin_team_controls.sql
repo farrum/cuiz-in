@@ -1,6 +1,57 @@
 -- Admin Team and Roster Controls SQL Functions
 
--- 1. Reassign member's leader
+-- 1. Promote member manually (re-defined to ensure it exists in the schema cache and supports admin actions)
+CREATE OR REPLACE FUNCTION public.promote_member_manually(p_member_id UUID, p_new_role TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_id UUID;
+  v_caller_role TEXT;
+  v_member_referrer_id UUID;
+BEGIN
+  v_caller_id := auth.uid();
+  
+  -- If called from service_role / system, auth.uid() can be NULL, allow it
+  IF v_caller_id IS NOT NULL THEN
+    -- Get caller's role
+    SELECT role INTO v_caller_role FROM public.user_roles WHERE user_id = v_caller_id::text LIMIT 1;
+
+    -- Ensure caller is a superior or admin
+    IF v_caller_role IS NULL OR (v_caller_role <> 'admin' AND v_caller_role <> 'king' AND v_caller_role <> 'baron' AND v_caller_role <> 'knight' AND v_caller_role <> 'officer') THEN
+      RAISE EXCEPTION 'Only superiors can promote members';
+    END IF;
+
+    -- Verify member is referred by caller (if caller is not admin/king)
+    IF v_caller_role <> 'admin' AND v_caller_role <> 'king' THEN
+      SELECT referrer_id::uuid INTO v_member_referrer_id
+      FROM public.user_referrals
+      WHERE referred_id::uuid = p_member_id;
+
+      IF v_member_referrer_id IS NULL OR v_member_referrer_id <> v_caller_id THEN
+        RAISE EXCEPTION 'You can only promote users within your team';
+      END IF;
+    END IF;
+  END IF;
+
+  -- Perform manual promotion (delete existing role first to prevent duplicates)
+  DELETE FROM public.user_roles WHERE user_id = p_member_id::text AND role <> 'admin';
+  INSERT INTO public.user_roles (user_id, role, is_manual)
+  VALUES (p_member_id::text, p_new_role, TRUE)
+  ON CONFLICT (user_id, role) DO UPDATE
+  SET is_manual = TRUE;
+
+  RETURN TRUE;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.promote_member_manually(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.promote_member_manually(UUID, TEXT) TO service_role;
+
+
+-- 2. Reassign member's leader
 CREATE OR REPLACE FUNCTION public.admin_reassign_member_leader(
   p_member_id UUID,
   p_new_leader_id UUID
@@ -59,7 +110,8 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_reassign_member_leader(UUID, UUID) TO authenticated;
 
--- 2. Remove user from team
+
+-- 3. Remove user from team
 CREATE OR REPLACE FUNCTION public.admin_remove_member_from_team(p_member_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -100,7 +152,8 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_remove_member_from_team(UUID) TO authenticated;
 
--- 3. Disable team
+
+-- 4. Disable team
 CREATE OR REPLACE FUNCTION public.admin_disable_team(
   p_leader_id UUID,
   p_dissolve_members BOOLEAN

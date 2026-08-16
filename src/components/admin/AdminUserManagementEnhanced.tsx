@@ -90,7 +90,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.rpc('promote_member_manually', {
+      const { error } = await supabase.rpc('promote_member_manually' as any, {
         p_member_id: userId,
         p_new_role: newRole
       });
