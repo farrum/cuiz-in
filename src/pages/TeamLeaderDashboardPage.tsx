@@ -42,6 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { MemberActivityTracker } from '@/components/team-leader/MemberActivityTracker';
 
 const TeamLeaderDashboardPage = () => {
   const navigate = useNavigate();
@@ -61,10 +62,10 @@ const TeamLeaderDashboardPage = () => {
     awardBonus,
     joinRequests = [],
     approveJoinRequest,
-    rejectJoinRequest
   } = useTeamLeaderDashboard();
 
   const [activeTab, setActiveTab] = useState<'mercenaries' | 'analytics' | 'requests' | 'tasks' | 'invite'>('mercenaries');
+  const [selectedMemberForActivity, setSelectedMemberForActivity] = useState<{ id: string, name: string } | null>(null);
   
   // Task creator state
   const [taskTitle, setTaskTitle] = useState('');
@@ -403,6 +404,15 @@ const TeamLeaderDashboardPage = () => {
                                   Dismiss
                                 </Button>
                               )}
+                              
+                              {/* View Member Activity */}
+                              <Button
+                                onClick={() => setSelectedMemberForActivity({ id: member.id, name: member.name })}
+                                size="sm"
+                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-1 h-7 rounded text-[10px]"
+                              >
+                                Activity
+                              </Button>
                               
                               {/* Grant Bonus Tribute */}
                               <Button
@@ -813,6 +823,13 @@ const TeamLeaderDashboardPage = () => {
             </AlertDialogContent>
           </AlertDialog>
         )}
+
+        <MemberActivityTracker
+          memberId={selectedMemberForActivity?.id || ''}
+          memberName={selectedMemberForActivity?.name || ''}
+          isOpen={!!selectedMemberForActivity}
+          onClose={() => setSelectedMemberForActivity(null)}
+        />
 
       </div>
     </PageLayout>

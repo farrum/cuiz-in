@@ -24,13 +24,17 @@ export interface BaronTask {
   parentTaskId?: string;
 }
 
-export const useTeamLeaderDashboard = () => {
+export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [isTeamLeader, setIsTeamLeader] = useState<boolean>(false);
   const [isMainTeamLeader, setIsMainTeamLeader] = useState<boolean>(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>('infantry');
+  
+  const [currentTeam, setCurrentTeam] = useState<{ referrer_id: string; referrer_name: string; date: string } | null>(null);
+  const [pendingRequest, setPendingRequest] = useState<any | null>(null);
+  const [teamLoading, setTeamLoading] = useState(false);
   
   const { 
     teamMembers: rawMembers = [], 
@@ -117,12 +121,42 @@ export const useTeamLeaderDashboard = () => {
     }
   };
 
+  // Load user team membership and request status
+  const fetchMyTeamStatus = async (storedUserId: string) => {
+    setTeamLoading(true);
+    try {
+      // 1. Fetch current team referral
+      const { data: refData } = await supabase
+        .from('user_referrals')
+        .select('referrer_id, referrer_name, date')
+        .eq('referred_id', storedUserId)
+        .maybeSingle();
+
+      setCurrentTeam(refData as any);
+
+      // 2. Fetch pending request (if any)
+      const { data: reqData } = await supabase
+        .from('team_join_requests')
+        .select('*, profiles!team_join_requests_target_leader_id_fkey(username, display_name)')
+        .eq('user_id', storedUserId)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      setPendingRequest(reqData);
+    } catch (e) {
+      console.error('Error fetching team status:', e);
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+
   useEffect(() => {
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (storedUserId) {
       setUserId(storedUserId);
       fetchTasks(storedUserId);
       fetchJoinRequests(storedUserId);
+      fetchMyTeamStatus(storedUserId);
     }
   }, [userId]);
 
@@ -318,7 +352,9 @@ export const useTeamLeaderDashboard = () => {
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     
     if (!storedUserId) {
-      navigate('/login');
+      if (redirectNonLeaders) {
+        navigate('/login');
+      }
       return;
     }
     
@@ -333,7 +369,7 @@ export const useTeamLeaderDashboard = () => {
         // Officers and knights can also manage their own sub-squads.
         setIsMainTeamLeader(['admin', 'king', 'baron', 'team_leader', 'knight', 'officer', 'junior_team_leader'].includes(userRole));
         
-        if (!isLeader) {
+        if (!isLeader && redirectNonLeaders) {
           toast({
             title: "Access Denied",
             description: "Only Barons, Knights, and Officers can access the War Room.",
@@ -348,7 +384,7 @@ export const useTeamLeaderDashboard = () => {
     };
     
     checkTeamLeaderStatus();
-  }, [navigate, toast]);
+  }, [navigate, toast, redirectNonLeaders]);
 
   const promoteToJunior = async (memberId: string, roleToPromote: string = 'officer') => {
     try {
@@ -524,7 +560,81 @@ export const useTeamLeaderDashboard = () => {
     members: item.membersCount
   })).reverse();
 
-  const isLoading = membersLoading || earningsLoading;
+  const resignFromTeam = async () => {
+    try {
+      const { data, error } = await supabase.rpc('resign_from_team');
+      if (error) throw error;
+      
+      toast({
+        title: "Squad Resigned",
+        description: "You have successfully resigned from your current squad.",
+      });
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'infantry');
+      window.location.reload();
+    } catch (e: any) {
+      toast({
+        title: "Resignation Failed",
+        description: e.message || "Failed to resign from the squad.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelJoinRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('team_join_requests')
+        .delete()
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      setPendingRequest(null);
+      toast({
+        title: "Request Cancelled",
+        description: "Your request to join the squad has been cancelled.",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Cancellation Failed",
+        description: e.message || "Failed to cancel request.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const sendJoinRequest = async (targetLeaderId: string, targetLeaderName: string) => {
+    try {
+      const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      if (!storedUserId) return;
+
+      const { data, error } = await supabase
+        .from('team_join_requests')
+        .insert({
+          user_id: storedUserId,
+          target_leader_id: targetLeaderId,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Sent",
+        description: `Alliance request sent to @${targetLeaderName}.`,
+      });
+      fetchMyTeamStatus(storedUserId);
+    } catch (e: any) {
+      toast({
+        title: "Request Failed",
+        description: e.message || "Could not dispatch request.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isLoading = membersLoading || earningsLoading || teamLoading;
 
   return {
     userId,
@@ -559,6 +669,13 @@ export const useTeamLeaderDashboard = () => {
     awardBonus,
     joinRequests,
     approveJoinRequest,
-    rejectJoinRequest
+    rejectJoinRequest,
+    currentTeam,
+    pendingRequest,
+    teamLoading,
+    resignFromTeam,
+    cancelJoinRequest,
+    sendJoinRequest,
+    fetchMyTeamStatus
   };
 };

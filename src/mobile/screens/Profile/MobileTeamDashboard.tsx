@@ -20,9 +20,11 @@ import {
   Coins,
   Star,
   CalendarDays,
-  Plus
+  Plus,
+  Clock
 } from 'lucide-react';
 import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
+import { MemberActivityTracker } from '@/components/team-leader/MemberActivityTracker';
 import TeamLeaderAttendanceTracker from '@/components/admin/attendance/TeamLeaderAttendanceTracker';
 import TeamAnalyticsPanel from '@/components/team-leader/TeamAnalyticsPanel';
 import { Button } from '@/components/ui/button';
@@ -72,15 +74,50 @@ export default function MobileTeamDashboard() {
     awardBonus,
     joinRequests = [],
     approveJoinRequest,
-    rejectJoinRequest
-    ,currentUserRole
-  } = useTeamLeaderDashboard();
+    rejectJoinRequest,
+    currentUserRole,
+    currentTeam,
+    pendingRequest,
+    teamLoading,
+    resignFromTeam,
+    cancelJoinRequest,
+    sendJoinRequest,
+  } = useTeamLeaderDashboard(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'mercenaries' | 'analytics' | 'attendance' | 'requests' | 'tasks' | 'recruit'>('mercenaries');
   const [copied, setCopied] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [referralStats, setReferralStats] = useState<{ total: number; active: number }>({ total: 0, active: 0 });
+
+  // Search & Join states
+  const [leaderSearchQuery, setLeaderSearchQuery] = useState('');
+  const [leaderSearchResults, setLeaderSearchResults] = useState<any[]>([]);
+  const [searchingLeaders, setSearchingLeaders] = useState(false);
+  const [selectedMemberForActivity, setSelectedMemberForActivity] = useState<{ id: string, name: string } | null>(null);
+
+  const handleLeaderSearch = async (query: string) => {
+    setLeaderSearchQuery(query);
+    if (!query.trim()) {
+      setLeaderSearchResults([]);
+      return;
+    }
+    setSearchingLeaders(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, user_roles(role)')
+        .ilike('username', `%${query}%`)
+        .limit(10);
+      if (!error && data) {
+        setLeaderSearchResults(data);
+      }
+    } catch (e) {
+      console.error('Error searching leaders:', e);
+    } finally {
+      setSearchingLeaders(false);
+    }
+  };
 
   // Fetch referral stats for non-leader recruit landing page
   useEffect(() => {
@@ -331,6 +368,110 @@ export default function MobileTeamDashboard() {
         </div>
 
         <div className="px-4 pt-6 space-y-5 relative z-10">
+          {/* Pledged Alliance (If in team) */}
+          {currentTeam ? (
+            <div className="bg-stone-900/90 border-2 border-emerald-500/30 rounded-3xl p-5 space-y-3 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-white uppercase tracking-wider">Pledged Alliance</h3>
+                  <p className="text-[10px] text-slate-400 font-bold mt-0.5">SQUAD OF @{currentTeam.referrer_name.toUpperCase()}</p>
+                </div>
+              </div>
+              <div className="text-xs text-slate-400 font-bold bg-stone-950 p-3 rounded-2xl flex items-center justify-between">
+                <span>Joined Rank:</span>
+                <span className="text-emerald-400 uppercase tracking-widest">{currentUserRole}</span>
+              </div>
+              <button
+                onClick={() => {
+                  setConfirmDialog({
+                    open: true,
+                    title: 'Resign from Squad',
+                    description: 'Are you sure you want to resign from your current squad? You will lose your current squad rank and active contracts.',
+                    action: async () => {
+                      await resignFromTeam();
+                    }
+                  });
+                }}
+                className="w-full py-2.5 font-black bg-red-650 hover:bg-red-750 text-white rounded-xl text-xs uppercase tracking-widest border border-red-500/30 shadow-md transition-colors"
+              >
+                Resign from Squad
+              </button>
+            </div>
+          ) : (
+            /* Join an Alliance Search / Pending Request (If NOT in team) */
+            <>
+              {pendingRequest ? (
+                <div className="bg-stone-900/90 border-2 border-amber-500/30 rounded-3xl p-5 space-y-3 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-amber-400 animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-sm text-white uppercase tracking-wider">Pending Alliance</h3>
+                      <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                        SENT TO @{(pendingRequest.profiles?.username || pendingRequest.profiles?.display_name || '').toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => cancelJoinRequest(pendingRequest.id)}
+                    className="w-full py-2.5 font-black bg-stone-850 hover:bg-stone-800 text-slate-200 rounded-xl text-xs uppercase tracking-widest border border-stone-700 transition-colors"
+                  >
+                    Cancel Request
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-stone-900/90 border-2 border-amber-500/30 rounded-3xl p-5 space-y-4 shadow-lg">
+                  <div>
+                    <h3 className="font-black text-sm text-white uppercase tracking-wider">Join an Alliance</h3>
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5 leading-relaxed">
+                      Search for a team leader by username to request joining their squad.
+                    </p>
+                  </div>
+                  
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-stone-500" />
+                    <input
+                      type="text"
+                      placeholder="Enter leader's username..."
+                      value={leaderSearchQuery}
+                      onChange={(e) => handleLeaderSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 bg-stone-950 border border-stone-850 text-white text-xs rounded-xl outline-none focus:border-amber-500/65"
+                    />
+                  </div>
+
+                  {searchingLeaders ? (
+                    <div className="text-center py-4">
+                      <div className="w-5 h-5 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mx-auto" />
+                    </div>
+                  ) : leaderSearchResults.length > 0 ? (
+                    <div className="bg-stone-950 border border-stone-850 rounded-2xl overflow-hidden divide-y divide-stone-900 max-h-40 overflow-y-auto">
+                      {leaderSearchResults.map((leader) => (
+                        <div key={leader.id} className="p-3 flex items-center justify-between text-xs">
+                          <div>
+                            <p className="font-black text-slate-200">@{leader.username}</p>
+                            {leader.display_name && <p className="text-[9px] text-slate-500 font-bold">{leader.display_name}</p>}
+                          </div>
+                          <button
+                            onClick={() => sendJoinRequest(leader.id, leader.username)}
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-lg text-[9px] uppercase tracking-wider"
+                          >
+                            Join
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : leaderSearchQuery.trim() !== '' && (
+                    <p className="text-[10px] text-slate-500 text-center font-bold uppercase">No lords matching this scroll found.</p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
           {/* Invite Link Card */}
           <div className="bg-stone-900/90 border-2 border-amber-500/30 rounded-3xl p-5 space-y-4 shadow-lg text-center">
             <Sparkles className="w-12 h-12 text-yellow-500 mx-auto animate-pulse" />
@@ -653,6 +794,14 @@ export default function MobileTeamDashboard() {
                               Dismiss
                             </Button>
                           )}
+                          <Button
+                            onClick={() => setSelectedMemberForActivity({ id: member.id, name: member.name })}
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-[10px] font-bold border-teal-900/50 text-teal-400 bg-teal-950/20 hover:bg-teal-950/40 animate-pulse"
+                          >
+                            Activity
+                          </Button>
                           <Button
                             onClick={() => setSelectedMemberForBonus({ id: member.id, name: member.name })}
                             size="sm"
@@ -1066,6 +1215,14 @@ export default function MobileTeamDashboard() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+
+      {/* Activity Tracker */}
+      <MemberActivityTracker
+        memberId={selectedMemberForActivity?.id || ''}
+        memberName={selectedMemberForActivity?.name || ''}
+        isOpen={!!selectedMemberForActivity}
+        onClose={() => setSelectedMemberForActivity(null)}
+      />
     </div>
   );
 }
