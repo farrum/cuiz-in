@@ -1344,6 +1344,10 @@ export type Database = {
         Args: { p_icon_id: string }
         Returns: boolean
       }
+      admin_disable_team: {
+        Args: { p_dissolve_members?: boolean; p_leader_id: string }
+        Returns: boolean
+      }
       admin_get_all_team_leaders_performance: {
         Args: never
         Returns: {
