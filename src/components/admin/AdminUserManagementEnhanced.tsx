@@ -54,7 +54,28 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         throw error;
       }
       
-      setUsers(data?.users || []);
+      const rawUsers = data?.users || [];
+
+      // Fetch user roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles' as any)
+        .select('user_id, role');
+
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+      }
+
+      const rolesMap = new Map<string, string>();
+      if (rolesData) {
+        rolesData.forEach((r: any) => rolesMap.set(r.user_id, r.role));
+      }
+
+      const mappedUsers = rawUsers.map((u: any) => ({
+        ...u,
+        role: rolesMap.get(u.id) || 'infantry'
+      }));
+
+      setUsers(mappedUsers);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
@@ -64,6 +85,27 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase.rpc('promote_member_manually', {
+        p_member_id: userId,
+        p_new_role: newRole
+      });
+      if (error) throw error;
+      toast({
+        title: 'Rank Adjusted',
+        description: `Successfully adjusted user rank to ${newRole}.`,
+      });
+      fetchUsers();
+    } catch (e: any) {
+      toast({
+        title: 'Failed to Update Role',
+        description: e.message || 'Failed to update role.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -160,6 +202,23 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       header: 'Phone',
       accessorKey: 'phone',
       cell: (row: any) => row.phone || '-'
+    },
+    {
+      header: 'Rank',
+      accessorKey: 'role',
+      cell: (row: any) => (
+        <select
+          onChange={(e) => handleChangeRole(row.id, e.target.value)}
+          value={row.role}
+          className="bg-background border border-input rounded px-1.5 py-0.5 text-xs outline-none uppercase font-bold"
+        >
+          <option value="infantry">Infantry</option>
+          <option value="officer">Officer</option>
+          <option value="knight">Knight</option>
+          <option value="baron">Baron</option>
+          <option value="admin">Admin</option>
+        </select>
+      )
     },
     {
       header: 'Gems',

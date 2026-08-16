@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { DataTable } from '@/components/ui/data-table';
 import { buildReferralLink } from '@/utils/referralLink';
+import { useTeamLeaderDashboard } from '@/hooks/useTeamLeaderDashboard';
 
 interface ReferralEntry {
   id: string;
@@ -46,6 +47,48 @@ const ReferralSection: React.FC = () => {
   const [isTeamLeader, setIsTeamLeader] = useState(false);
   const [monthlyEarnings, setMonthlyEarnings] = useState(0);
   const [totalTeamEarnings, setTotalTeamEarnings] = useState(0);
+
+  const {
+    currentTeam,
+    pendingRequest,
+    resignFromTeam,
+    cancelJoinRequest,
+    sendJoinRequest,
+    currentUserRole
+  } = useTeamLeaderDashboard(false);
+
+  const [leaderSearchQuery, setLeaderSearchQuery] = useState('');
+  const [leaderSearchResults, setLeaderSearchResults] = useState<any[]>([]);
+  const [searchingLeaders, setSearchingLeaders] = useState(false);
+
+  const handleLeaderSearch = async (query: string) => {
+    setLeaderSearchQuery(query);
+    if (!query.trim()) {
+      setLeaderSearchResults([]);
+      return;
+    }
+    setSearchingLeaders(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, user_roles(role)')
+        .ilike('username', `%${query}%`)
+        .limit(10);
+      if (!error && data) {
+        setLeaderSearchResults(data);
+      }
+    } catch (e) {
+      console.error('Error searching leaders:', e);
+    } finally {
+      setSearchingLeaders(false);
+    }
+  };
+
+  const handleResign = async () => {
+    if (window.confirm("Are you sure you want to resign from your current squad? You will lose your rank and active contracts.")) {
+      await resignFromTeam();
+    }
+  };
   
   useEffect(() => {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -396,6 +439,108 @@ const ReferralSection: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      {/* Team Alliance Dashboard (For Non-Leaders) */}
+      {!isTeamLeader && (
+        <div className="quiz-card">
+          <h3 className="text-xl font-medium mb-6">Your Squad Alliance</h3>
+          
+          {currentTeam ? (
+            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 p-5 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h4 className="font-semibold text-lg text-emerald-800 dark:text-emerald-400">Pledged Alliance</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You are enroled under Leader <strong className="text-emerald-750 dark:text-emerald-300">@{currentTeam.referrer_name}</strong> since {new Date(currentTeam.date).toLocaleDateString()}.
+                </p>
+                <div className="mt-2 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 px-3 py-1.5 rounded-md w-fit font-bold uppercase tracking-wider">
+                  Squad Rank: {currentUserRole}
+                </div>
+              </div>
+              <Button 
+                onClick={handleResign}
+                variant="destructive"
+                className="w-full md:w-auto"
+              >
+                Resign from Squad
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Search leaders */}
+              <div className="bg-secondary/30 p-5 rounded-lg space-y-4">
+                <div>
+                  <h4 className="font-semibold text-base">Join an Alliance</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Search for a team leader by username to request joining their squad.
+                  </p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Search leader by username..."
+                    value={leaderSearchQuery}
+                    onChange={(e) => handleLeaderSearch(e.target.value)}
+                    disabled={!!pendingRequest}
+                  />
+                </div>
+
+                {searchingLeaders ? (
+                  <div className="text-center py-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto animate-pulse"></div>
+                  </div>
+                ) : leaderSearchResults.length > 0 ? (
+                  <div className="bg-background border border-border rounded-lg overflow-hidden divide-y divide-border max-h-40 overflow-y-auto">
+                    {leaderSearchResults.map((leader) => (
+                      <div key={leader.id} className="p-3 flex items-center justify-between text-sm">
+                        <div>
+                          <p className="font-bold text-foreground">@{leader.username}</p>
+                          {leader.display_name && <p className="text-xs text-muted-foreground">{leader.display_name}</p>}
+                        </div>
+                        <Button
+                          onClick={() => sendJoinRequest(leader.id, leader.username)}
+                          size="sm"
+                          disabled={!!pendingRequest}
+                        >
+                          Join Request
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : leaderSearchQuery.trim() !== '' && (
+                  <p className="text-xs text-muted-foreground italic text-center">No matching leaders found</p>
+                )}
+              </div>
+
+              {/* Pending request */}
+              <div className="bg-secondary/30 p-5 rounded-lg flex flex-col justify-between gap-4">
+                <div>
+                  <h4 className="font-semibold text-base">Request Status</h4>
+                  {pendingRequest ? (
+                    <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg space-y-3">
+                      <p className="text-sm">
+                        Pending request sent to <strong className="text-amber-700 dark:text-amber-400">@{pendingRequest.profiles?.username}</strong>.
+                      </p>
+                      <Button 
+                        onClick={() => cancelJoinRequest(pendingRequest.id)}
+                        variant="outline" 
+                        size="sm"
+                        className="w-full text-xs"
+                      >
+                        Cancel Request
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      You do not have any pending alliance requests. Find a leader to enlist!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="quiz-card">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-medium">{isTeamLeader ? "Invite Users to Your Team" : "Refer Friends"}</h3>

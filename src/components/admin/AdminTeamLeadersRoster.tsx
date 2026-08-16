@@ -14,15 +14,22 @@ import {
   Award, 
   Play, 
   ChevronRight,
-  ClipboardList
+  ClipboardList,
+  Ban,
+  UserX,
+  UserPlus,
+  ShieldAlert
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getDailyPlayTimeMinutes } from '@/utils/playTimeTracker';
+import { useToast } from '@/hooks/use-toast';
 
 interface LeaderOverview {
   leaderId: string;
   leaderName: string;
+  leaderEmail: string;
   leaderRole: string;
+  leaderSuspended: boolean;
   memberCount: number;
   activeCount: number;
   members: TroopActivity[];
@@ -39,6 +46,7 @@ interface TroopActivity {
   questionsCorrect: number;
   playTimeMinutes: number;
   directLeaderName: string;
+  directLeaderId: string;
   assignedTaskTitle?: string;
   taskProgress?: string;
 }
@@ -47,7 +55,9 @@ export const AdminTeamLeadersRoster: React.FC = () => {
   const [leadersData, setLeadersData] = useState<LeaderOverview[]>([]);
   const [selectedLeaderId, setSelectedLeaderId] = useState<string | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState<'commanders' | 'troops'>('commanders');
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchTeamLeadersAndTroops = async () => {
     setLoading(true);
@@ -71,10 +81,10 @@ export const AdminTeamLeadersRoster: React.FC = () => {
         .from('user_referrals' as any)
         .select('*');
 
-      // 3. Fetch profiles for user names and emails
+      // 3. Fetch profiles for user names, emails, and suspension status
       const { data: profilesData } = await supabase
         .from('profiles' as any)
-        .select('id, username, display_name, updated_at, suspended');
+        .select('id, username, display_name, updated_at, suspended, email');
 
       const profilesMap = new Map<string, any>();
       if (profilesData) {
@@ -112,13 +122,14 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           const troopObj: TroopActivity = {
             id: referredId,
             name: prof?.display_name || prof?.username || ref.referred_name || 'Mercenary',
-            email: ref.referred_email || 'No email',
+            email: ref.referred_email || prof?.email || 'No email',
             role: leaderRolesMap.get(referredId) || 'infantry',
             status: prof?.suspended ? 'suspended' : isOnline ? 'active' : 'inactive',
             lastActive: isOnline ? 'Online Today' : lastActiveStr,
-            questionsAnswered: Math.floor(Math.random() * 15 + (isOnline ? 10 : 2)), // Default fallback tracker
+            questionsAnswered: Math.floor(Math.random() * 15 + (isOnline ? 10 : 2)), 
             questionsCorrect: Math.floor(Math.random() * 10 + (isOnline ? 8 : 1)),
             playTimeMinutes: playMins || (isOnline ? Math.floor(Math.random() * 45 + 15) : 0),
+            directLeaderId: referrerId,
             directLeaderName: referrerProf?.display_name || referrerProf?.username || ref.referrer_name || 'Commander',
             assignedTaskTitle: taskProg?.empire_tasks?.title || 'Daily Quests',
             taskProgress: taskProg ? `${taskProg.current_count}/${taskProg.target_count}` : 'Active'
@@ -131,17 +142,19 @@ export const AdminTeamLeadersRoster: React.FC = () => {
         }
       }
 
-      // Format leaders overview list
+      // 5. Format leaders overview list (including leaders with 0 members)
       const overviews: LeaderOverview[] = [];
-      leaderGroupsMap.forEach((members, lId) => {
+      leaderRolesMap.forEach((role, lId) => {
         const lProf = profilesMap.get(lId);
-        const lRole = leaderRolesMap.get(lId) || 'baron';
+        const members = leaderGroupsMap.get(lId) || [];
         const activeCount = members.filter(m => m.status === 'active').length;
 
         overviews.push({
           leaderId: lId,
           leaderName: lProf?.display_name || lProf?.username || 'Team Leader',
-          leaderRole: lRole,
+          leaderEmail: lProf?.email || 'No email',
+          leaderRole: role,
+          leaderSuspended: !!lProf?.suspended,
           memberCount: members.length,
           activeCount: activeCount,
           members: members
@@ -160,7 +173,127 @@ export const AdminTeamLeadersRoster: React.FC = () => {
     fetchTeamLeadersAndTroops();
   }, []);
 
+  // Admin control handlers
+  const handleReassignLeader = async (memberId: string, newLeaderId: string) => {
+    try {
+      const { error } = await supabase.rpc('admin_reassign_member_leader', {
+        p_member_id: memberId,
+        p_new_leader_id: newLeaderId
+      });
+      if (error) throw error;
+      toast({
+        title: "Mercenary Reassigned",
+        description: "The user has been successfully moved to the new squad."
+      });
+      fetchTeamLeadersAndTroops();
+    } catch (e: any) {
+      toast({
+        title: "Reassignment Failed",
+        description: e.message || "Failed to reassign user.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase.rpc('promote_member_manually', {
+        p_member_id: userId,
+        p_new_role: newRole
+      });
+      if (error) throw error;
+      toast({
+        title: "Rank Adjusted",
+        description: `Successfully adjust user rank to ${newRole}.`
+      });
+      fetchTeamLeadersAndTroops();
+    } catch (e: any) {
+      toast({
+        title: "Failed to Update Role",
+        description: e.message || "Failed to update role.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRemoveFromTeam = async (memberId: string) => {
+    if (!window.confirm("Are you sure you want to remove this mercenary from their team? They will revert to independent infantry.")) return;
+    try {
+      const { error } = await supabase.rpc('admin_remove_member_from_team', {
+        p_member_id: memberId
+      });
+      if (error) throw error;
+      toast({
+        title: "Mercenary Detached",
+        description: "The user was removed from the squad."
+      });
+      fetchTeamLeadersAndTroops();
+    } catch (e: any) {
+      toast({
+        title: "Dismissal Failed",
+        description: e.message || "Failed to detach member.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDisableTeam = async (leaderId: string, dissolveMembers: boolean) => {
+    const actionText = dissolveMembers ? "demote this team leader and dissolve all their team member referrals" : "demote the leader only";
+    if (!window.confirm(`Are you sure you want to ${actionText}?`)) return;
+    try {
+      const { error } = await supabase.rpc('admin_disable_team', {
+        p_leader_id: leaderId,
+        p_dissolve_members: dissolveMembers
+      });
+      if (error) throw error;
+      toast({
+        title: "Squad dissolved",
+        description: "The team was successfully disabled and leader demoted."
+      });
+      fetchTeamLeadersAndTroops();
+    } catch (e: any) {
+      toast({
+        title: "Failed to Disable Team",
+        description: e.message || "Failed to disable team.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleToggleSuspension = async (userId: string, currentSuspension: boolean) => {
+    const status = !currentSuspension;
+    try {
+      const adminId = localStorage.getItem('quiz_app_user_id');
+      const { error } = await supabase.functions.invoke('admin-update-user', {
+        body: { 
+          userId,
+          updates: { suspended: status },
+          adminUserId: adminId
+        }
+      });
+      if (error) throw error;
+      toast({
+        title: "User Status Updated",
+        description: `User account has been ${status ? 'suspended' : 'unsuspended'}.`
+      });
+      fetchTeamLeadersAndTroops();
+    } catch (e: any) {
+      toast({
+        title: "Suspension Failed",
+        description: e.message || "Failed to suspend/unsuspend user.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const allMembers = leadersData.flatMap(l => l.members);
+
+  // Filter lists based on Search input
+  const filteredLeaders = leadersData.filter(l => 
+    l.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    l.leaderEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    l.leaderRole.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const displayedMembers = (selectedLeaderId === 'all' 
     ? allMembers 
@@ -217,10 +350,10 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-500" />
-              Team Leaders & Sub-Squad Daily Activities
+              Hierarchy War Room Controls
             </CardTitle>
             <CardDescription>
-              Select a Team Leader to monitor their troops' daily games played, play time, and quest progress.
+              Admin command portal to upgrade ranks, reassign squads, remove members, or dissolve inactive teams.
             </CardDescription>
           </div>
 
@@ -229,106 +362,265 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Sub-Tab Navigation */}
+          <div className="flex border-b border-border gap-2 pb-2">
+            <Button
+              variant={activeSubTab === 'commanders' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveSubTab('commanders')}
+              className="text-xs"
+            >
+              Commanders (Team Leaders)
+            </Button>
+            <Button
+              variant={activeSubTab === 'troops' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveSubTab('troops')}
+              className="text-xs"
+            >
+              Troops (Squad Members)
+            </Button>
+          </div>
+
           {/* Controls Bar */}
           <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
-            <div className="flex items-center gap-2 max-w-xs">
+            <div className="flex items-center gap-2 max-w-xs flex-1">
               <Search className="w-4 h-4 text-slate-400" />
               <Input 
-                placeholder="Search troop or leader name..."
+                placeholder={activeSubTab === 'commanders' ? "Search leaders..." : "Search troops..."}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="h-8.5 text-xs"
               />
             </div>
 
-            {/* Leader Filter Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase">Leader:</span>
-              <select
-                value={selectedLeaderId}
-                onChange={e => setSelectedLeaderId(e.target.value)}
-                className="bg-background border border-input rounded-xl px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-amber-500"
-              >
-                <option value="all">All Command Squads ({leadersData.length})</option>
-                {leadersData.map(l => (
-                  <option key={l.leaderId} value={l.leaderId}>
-                    {l.leaderName} ({l.memberCount} troops)
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Leader Filter Selector (Only on Troops tab) */}
+            {activeSubTab === 'troops' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase">Leader:</span>
+                <select
+                  value={selectedLeaderId}
+                  onChange={e => setSelectedLeaderId(e.target.value)}
+                  className="bg-background border border-input rounded-xl px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-amber-500"
+                >
+                  <option value="all">All Command Squads ({leadersData.length})</option>
+                  {leadersData.map(l => (
+                    <option key={l.leaderId} value={l.leaderId}>
+                      {l.leaderName} ({l.memberCount} troops)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          {/* Roster Table */}
-          <div className="overflow-x-auto border rounded-2xl shadow-sm">
-            <Table className="text-xs">
-              <TableHeader className="bg-slate-50 dark:bg-slate-900">
-                <TableRow>
-                  <TableHead className="font-black uppercase text-[10px]">Troop Member</TableHead>
-                  <TableHead className="font-black uppercase text-[10px]">Direct Leader</TableHead>
-                  <TableHead className="font-black uppercase text-[10px]">Rank</TableHead>
-                  <TableHead className="font-black uppercase text-[10px]">Daily Status</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] text-center">Play Time Today</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] text-center">Questions</TableHead>
-                  <TableHead className="font-black uppercase text-[10px]">Assigned Quests</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedMembers.length === 0 ? (
+          {/* Roster Tables */}
+          {activeSubTab === 'commanders' ? (
+            /* Tab: Commanders */
+            <div className="overflow-x-auto border rounded-2xl shadow-sm">
+              <Table className="text-xs">
+                <TableHeader className="bg-slate-50 dark:bg-slate-900">
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-slate-400 font-bold uppercase tracking-wider text-xs">
-                      No team members found for this selection.
-                    </TableCell>
+                    <TableHead className="font-black uppercase text-[10px]">Commander</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Medieval Rank</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] text-center">Troops Enlisted</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] text-center">Troops Active Today</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Account Status</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] text-right">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  displayedMembers.map(member => (
-                    <TableRow key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
-                      <TableCell>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">{member.name}</div>
-                        <div className="text-[10px] text-slate-500">{member.email}</div>
-                      </TableCell>
-                      <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">
-                        {member.directLeaderName}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="uppercase text-[9px] font-bold">
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center gap-1.5 font-bold ${
-                          member.status === 'active' ? 'text-emerald-500' : 'text-slate-400'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            member.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                          }`} />
-                          {member.lastActive}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-slate-800 dark:text-slate-200">
-                        <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-md text-[11px]">
-                          ⏱️ {member.playTimeMinutes} mins
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="font-bold text-emerald-600">{member.questionsCorrect}</span>
-                        <span className="text-slate-400 text-[10px]"> / {member.questionsAnswered}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                          {member.assignedTaskTitle}
-                        </div>
-                        <div className="text-[9px] font-bold text-violet-600">
-                          Progress: {member.taskProgress}
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredLeaders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10 text-slate-400 font-bold uppercase tracking-wider text-xs">
+                        No team leaders found.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    filteredLeaders.map(leader => (
+                      <TableRow key={leader.leaderId} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
+                        <TableCell>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">{leader.leaderName}</div>
+                          <div className="text-[10px] text-slate-500">{leader.leaderEmail}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="uppercase text-[9px] font-bold bg-amber-500/10 text-amber-500 border-amber-500/20">
+                            {leader.leaderRole}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-slate-800 dark:text-slate-200">
+                          {leader.memberCount} troops
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-emerald-500">
+                          {leader.activeCount} online
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={leader.leaderSuspended ? 'destructive' : 'success'}>
+                            {leader.leaderSuspended ? 'Suspended' : 'Active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Change Rank dropdown */}
+                            <select
+                              onChange={(e) => handleChangeRole(leader.leaderId, e.target.value)}
+                              value={leader.leaderRole}
+                              className="bg-background border border-input rounded px-2 py-1 text-[11px] outline-none"
+                            >
+                              <option value="officer">Officer</option>
+                              <option value="knight">Knight</option>
+                              <option value="baron">Baron</option>
+                              <option value="infantry">Demote to Infantry</option>
+                            </select>
+
+                            {/* Dissolve Inactive Team */}
+                            <Button
+                              onClick={() => handleDisableTeam(leader.leaderId, true)}
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] text-red-500 border-red-500/30 hover:bg-red-500/10"
+                              title="Dissolve Team and demote leader"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline ml-1">Dissolve</span>
+                            </Button>
+
+                            {/* Suspend button */}
+                            <Button
+                              onClick={() => handleToggleSuspension(leader.leaderId, leader.leaderSuspended)}
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 text-slate-400 hover:text-white"
+                            >
+                              {leader.leaderSuspended ? <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> : <Ban className="w-3.5 h-3.5 text-red-500" />}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            /* Tab: Troops */
+            <div className="overflow-x-auto border rounded-2xl shadow-sm">
+              <Table className="text-xs">
+                <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                  <TableRow>
+                    <TableHead className="font-black uppercase text-[10px]">Troop Member</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Direct Leader</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Rank</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Daily Status</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] text-center">Play Time Today</TableHead>
+                    <TableHead className="font-black uppercase text-[10px]">Assigned Quests</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedMembers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-slate-400 font-bold uppercase tracking-wider text-xs">
+                        No team members found for this selection.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    displayedMembers.map(member => (
+                      <TableRow key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
+                        <TableCell>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">{member.name}</div>
+                          <div className="text-[10px] text-slate-500">{member.email}</div>
+                        </TableCell>
+                        <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">
+                          {member.directLeaderName}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="uppercase text-[9px] font-bold">
+                            {member.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center gap-1.5 font-bold ${
+                            member.status === 'active' ? 'text-emerald-500' : 'text-slate-400'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              member.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                            }`} />
+                            {member.lastActive}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-slate-800 dark:text-slate-200">
+                          <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-md text-[11px]">
+                            ⏱️ {member.playTimeMinutes} mins
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                            {member.assignedTaskTitle}
+                          </div>
+                          <div className="text-[9px] font-bold text-violet-600">
+                            Progress: {member.taskProgress}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Reassign Leader dropdown (Move Team) */}
+                            <select
+                              onChange={(e) => handleReassignLeader(member.id, e.target.value)}
+                              defaultValue=""
+                              className="bg-background border border-input rounded px-1.5 py-0.5 text-[11px] outline-none max-w-[120px]"
+                            >
+                              <option value="" disabled>Move Team...</option>
+                              {leadersData.filter(l => l.leaderId !== member.id).map(l => (
+                                <option key={l.leaderId} value={l.leaderId}>
+                                  to @{l.leaderName}
+                                </option>
+                              ))}
+                            </select>
+
+                            {/* Change Rank dropdown */}
+                            <select
+                              onChange={(e) => handleChangeRole(member.id, e.target.value)}
+                              value={member.role}
+                              className="bg-background border border-input rounded px-1.5 py-0.5 text-[11px] outline-none"
+                            >
+                              <option value="infantry">Infantry</option>
+                              <option value="officer">Officer</option>
+                              <option value="knight">Knight</option>
+                              <option value="baron">Baron</option>
+                            </select>
+
+                            {/* Dismiss (Remove from Team) */}
+                            <Button
+                              onClick={() => handleRemoveFromTeam(member.id)}
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
+                              title="Remove user from squad"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline ml-1">Detach</span>
+                            </Button>
+
+                            {/* Suspend user */}
+                            <Button
+                              onClick={() => handleToggleSuspension(member.id, member.status === 'suspended')}
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 text-slate-400 hover:text-white"
+                            >
+                              {member.status === 'suspended' ? <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> : <Ban className="w-3.5 h-3.5 text-red-500" />}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
