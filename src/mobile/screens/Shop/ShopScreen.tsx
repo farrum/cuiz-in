@@ -54,7 +54,7 @@ export default function ShopScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative pb-32">
+    <div className="min-h-full bg-background flex flex-col relative pb-[120px]">
       {/* Header */}
       <div 
         className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm"

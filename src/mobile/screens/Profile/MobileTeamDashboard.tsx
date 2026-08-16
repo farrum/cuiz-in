@@ -345,7 +345,7 @@ export default function MobileTeamDashboard() {
   // ═══════════════════════════════════════════════
   if (!isLoading && !isTeamLeader) {
     return (
-      <div className="min-h-full stone-wall text-slate-100 pb-24 relative overflow-x-hidden">
+      <div className="min-h-full stone-wall text-slate-100 pb-[120px] relative overflow-x-hidden">
         {/* Header */}
         <div 
           className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" 
@@ -534,7 +534,7 @@ export default function MobileTeamDashboard() {
   }
 
   return (
-    <div className="min-h-full stone-wall text-slate-100 pb-24 relative overflow-x-hidden">
+    <div className="min-h-full stone-wall text-slate-100 pb-[120px] relative overflow-x-hidden">
       
       {/* Decorative Torches */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

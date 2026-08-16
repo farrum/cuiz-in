@@ -84,7 +84,7 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
       adId: adId('banner'),
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 56,
+      margin: 68, // clears the ~68px BottomTabs bar
       isTesting: import.meta.env.DEV as boolean,
     };
     await AdMob.showBanner(options);

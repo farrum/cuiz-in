@@ -122,7 +122,7 @@ export default function ProfileScreen() {
 
   if (!uid) {
     return (
-      <div className="px-4 pt-10 pb-32 text-center bg-background min-h-full">
+      <div className="px-4 pt-10 pb-[120px] text-center bg-background min-h-full">
         <MascotPlayer character={characterOfTheDay()} mood="cheer" size={140} className="mx-auto mb-4" />
         <h1 className="text-2xl font-black mb-2 text-primary">Join the Kingdom</h1>
         <p className="text-muted-foreground font-bold mb-6 text-sm">Pledge your allegiance to save gems, climb the Royal Rankings, and win monthly bounties.</p>
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
   const equippedTitle = ARMORY_ITEMS.find(item => item.id === equippedTitleId);
 
   return (
-    <div className="px-4 pt-4 pb-32 bg-background min-h-full">
+    <div className="px-4 pt-4 pb-[120px] bg-background min-h-full">
       {/* Hero */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative">

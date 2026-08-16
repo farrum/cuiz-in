@@ -9,7 +9,7 @@ interface NativeBannerAdProps {
 }
 
 export function NativeBannerAd({ noMargin = false }: NativeBannerAdProps) {
-  return <div aria-hidden className={`h-[50px] shrink-0 ${noMargin ? '' : 'mb-10'}`} />;
+  return <div aria-hidden className="h-[50px] shrink-0" />;
 }
 
 export default NativeBannerAd;

@@ -40,7 +40,7 @@ export default function LeaderboardScreen() {
   }, [uid]);
 
   return (
-    <div className="px-4 pt-4 pb-32 bg-background min-h-full">
+    <div className="px-4 pt-4 pb-[120px] bg-background min-h-full">
       <h1 className="text-2xl font-black mb-1 text-amber-900">
         <Crown className="w-6 h-6 inline mr-2 -mt-1 text-amber-600 drop-shadow-sm" />Royal Rankings
       </h1>

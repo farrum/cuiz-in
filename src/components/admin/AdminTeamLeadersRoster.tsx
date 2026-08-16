@@ -118,7 +118,8 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           const referrerProf = profilesMap.get(referrerId);
 
           const lastActiveStr = ref.last_active_date || prof?.created_at || '-';
-          const isOnline = ref.status === 'active' || (prof?.created_at && new Date(prof.created_at).getTime() > Date.now() - 30 * 60 * 1000);
+          const isOnline = ref.status === 'active' && ref.last_active_date && 
+            new Date(ref.last_active_date).getTime() > Date.now() - 30 * 60 * 1000;
 
           const playMins = await getDailyPlayTimeMinutes(referredId);
           const taskProg = taskProgressMap.get(referredId);
@@ -210,13 +211,12 @@ export const AdminTeamLeadersRoster: React.FC = () => {
         
       if (deleteError) throw deleteError;
 
-      // 2. Insert the new rank manually
+      // 2. Insert the new rank
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: newRole,
-          is_manual: true
+          role: newRole
         });
 
       if (insertError) throw insertError;

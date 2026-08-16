@@ -363,7 +363,7 @@ export default function HubScreen() {
   const isLoggedIn = !!localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   return (
-    <div className="relative min-h-full pb-32 overflow-hidden bg-background">
+    <div className="relative min-h-full pb-[120px] overflow-hidden bg-background">
 
       {/* ═══ Brand Logo Top Bar ═══ */}
       <div 
