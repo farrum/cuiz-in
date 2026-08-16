@@ -136,13 +136,13 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
 
       // 2. Fetch pending request (if any)
       const { data: reqData } = await supabase
-        .from('team_join_requests')
+        .from('team_join_requests' as any)
         .select('*, profiles!team_join_requests_target_leader_id_fkey(username, display_name)')
         .eq('user_id', storedUserId)
         .eq('status', 'pending')
         .maybeSingle();
 
-      setPendingRequest(reqData);
+      setPendingRequest(reqData as any);
     } catch (e) {
       console.error('Error fetching team status:', e);
     } finally {
@@ -562,7 +562,7 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
 
   const resignFromTeam = async () => {
     try {
-      const { data, error } = await supabase.rpc('resign_from_team');
+      const { data, error } = await supabase.rpc('resign_from_team' as any);
       if (error) throw error;
       
       toast({
@@ -583,7 +583,7 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
   const cancelJoinRequest = async (requestId: string) => {
     try {
       const { error } = await supabase
-        .from('team_join_requests')
+        .from('team_join_requests' as any)
         .delete()
         .eq('id', requestId);
 
@@ -609,7 +609,7 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
       if (!storedUserId) return;
 
       const { data, error } = await supabase
-        .from('team_join_requests')
+        .from('team_join_requests' as any)
         .insert({
           user_id: storedUserId,
           target_leader_id: targetLeaderId,

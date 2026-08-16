@@ -62,6 +62,7 @@ const TeamLeaderDashboardPage = () => {
     awardBonus,
     joinRequests = [],
     approveJoinRequest,
+    rejectJoinRequest,
   } = useTeamLeaderDashboard();
 
   const [activeTab, setActiveTab] = useState<'mercenaries' | 'analytics' | 'requests' | 'tasks' | 'invite'>('mercenaries');
