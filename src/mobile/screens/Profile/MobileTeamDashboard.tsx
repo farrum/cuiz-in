@@ -310,7 +310,10 @@ export default function MobileTeamDashboard() {
     return (
       <div className="min-h-full stone-wall text-slate-100 pb-24 relative overflow-x-hidden">
         {/* Header */}
-        <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+        <div 
+          className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" 
+          style={{ paddingTop: '0.75rem', transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+        >
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={() => navigate(-1)}
@@ -399,7 +402,10 @@ export default function MobileTeamDashboard() {
       </div>
 
       {/* Header */}
-      <div className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+      <div 
+        className="sticky top-0 z-30 wooden-door px-4 py-3 flex items-center gap-3 shadow-md" 
+        style={{ paddingTop: '0.75rem', transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+      >
         <motion.button 
           whileTap={{ scale: 0.92 }}
           onClick={() => navigate(-1)}

@@ -56,7 +56,10 @@ export default function ShopScreen() {
   return (
     <div className="min-h-screen bg-background flex flex-col relative pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
+      <div 
+        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm"
+        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+      >
         <div className="flex items-center gap-3">
           <button onClick={() => { haptics('light'); navigate(-1); }} className="p-2 -ml-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-600" />

@@ -366,7 +366,10 @@ export default function HubScreen() {
     <div className="relative min-h-full pb-32 overflow-hidden bg-background">
 
       {/* ═══ Brand Logo Top Bar ═══ */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-amber-100/60 px-4 py-2 flex items-center justify-between">
+      <div 
+        className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-amber-100/60 px-4 py-2 flex items-center justify-between"
+        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+      >
         <div className="flex min-w-0 items-center gap-2" aria-label="CuizIN">
           <img
             src="/cuizin-logo.png"
