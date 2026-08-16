@@ -90,11 +90,26 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.rpc('promote_member_manually' as any, {
-        p_member_id: userId,
-        p_new_role: newRole
-      });
-      if (error) throw error;
+      // 1. Delete existing roles (except admin)
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .neq('role', 'admin');
+        
+      if (deleteError) throw deleteError;
+
+      // 2. Insert the new rank manually
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: newRole,
+          is_manual: true
+        });
+
+      if (insertError) throw insertError;
+
       toast({
         title: 'Rank Adjusted',
         description: `Successfully adjusted user rank to ${newRole}.`,

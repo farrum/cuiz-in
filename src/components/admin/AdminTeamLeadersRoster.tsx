@@ -82,9 +82,13 @@ export const AdminTeamLeadersRoster: React.FC = () => {
         .select('*');
 
       // 3. Fetch profiles for user names, emails, and suspension status
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles' as any)
-        .select('id, username, display_name, updated_at, suspended, email');
+        .select('id, username, display_name, created_at, suspended, email');
+
+      if (profilesError) {
+        console.error('Error fetching profiles in AdminTeamLeadersRoster:', profilesError);
+      }
 
       const profilesMap = new Map<string, any>();
       if (profilesData) {
@@ -113,8 +117,8 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           const prof = profilesMap.get(referredId);
           const referrerProf = profilesMap.get(referrerId);
 
-          const lastActiveStr = ref.last_active_date || prof?.updated_at || '-';
-          const isOnline = ref.status === 'active' || (prof?.updated_at && new Date(prof.updated_at).getTime() > Date.now() - 30 * 60 * 1000);
+          const lastActiveStr = ref.last_active_date || prof?.created_at || '-';
+          const isOnline = ref.status === 'active' || (prof?.created_at && new Date(prof.created_at).getTime() > Date.now() - 30 * 60 * 1000);
 
           const playMins = await getDailyPlayTimeMinutes(referredId);
           const taskProg = taskProgressMap.get(referredId);
@@ -197,14 +201,29 @@ export const AdminTeamLeadersRoster: React.FC = () => {
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.rpc('promote_member_manually' as any, {
-        p_member_id: userId,
-        p_new_role: newRole
-      });
-      if (error) throw error;
+      // 1. Delete existing roles (except admin)
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .neq('role', 'admin');
+        
+      if (deleteError) throw deleteError;
+
+      // 2. Insert the new rank manually
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: newRole,
+          is_manual: true
+        });
+
+      if (insertError) throw insertError;
+
       toast({
         title: "Rank Adjusted",
-        description: `Successfully adjust user rank to ${newRole}.`
+        description: `Successfully adjusted user rank to ${newRole}.`
       });
       fetchTeamLeadersAndTroops();
     } catch (e: any) {
@@ -441,8 +460,13 @@ export const AdminTeamLeadersRoster: React.FC = () => {
                     filteredLeaders.map(leader => (
                       <TableRow key={leader.leaderId} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
                         <TableCell>
-                          <div className="font-bold text-slate-900 dark:text-slate-100">{leader.leaderName}</div>
-                          <div className="text-[10px] text-slate-500">{leader.leaderEmail}</div>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">
+                            {leader.leaderName}
+                          </div>
+                          <div className="text-[10px] text-slate-500 flex flex-col gap-0.5 mt-0.5">
+                            <span>ID: <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-[9px] select-all">{leader.leaderId}</code></span>
+                            {leader.leaderEmail !== 'No email' && <span>{leader.leaderEmail}</span>}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="uppercase text-[9px] font-bold bg-amber-500/10 text-amber-500 border-amber-500/20">
@@ -530,10 +554,16 @@ export const AdminTeamLeadersRoster: React.FC = () => {
                       <TableRow key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
                         <TableCell>
                           <div className="font-bold text-slate-900 dark:text-slate-100">{member.name}</div>
-                          <div className="text-[10px] text-slate-500">{member.email}</div>
+                          <div className="text-[10px] text-slate-500 flex flex-col gap-0.5 mt-0.5">
+                            <span>ID: <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-[9px] select-all">{member.id}</code></span>
+                            {member.email && member.email !== 'No email' && <span>{member.email}</span>}
+                          </div>
                         </TableCell>
-                        <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">
-                          {member.directLeaderName}
+                        <TableCell className="text-indigo-600 dark:text-indigo-400">
+                          <div className="font-bold">{member.directLeaderName}</div>
+                          <div className="text-[9px] text-slate-500 opacity-80 mt-0.5">
+                            ID: <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-[8px] select-all">{member.directLeaderId}</code>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="uppercase text-[9px] font-bold">
