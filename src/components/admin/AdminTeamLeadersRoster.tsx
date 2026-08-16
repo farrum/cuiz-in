@@ -62,19 +62,36 @@ export const AdminTeamLeadersRoster: React.FC = () => {
   const fetchTeamLeadersAndTroops = async () => {
     setLoading(true);
     try {
-      // 1. Fetch user roles to find all leaders
+      // 1. Fetch user roles and resolve ONE effective role per user.
+      // A manually assigned role (is_manual) always wins — e.g. a demoted leader
+      // keeps a legacy 'admin' row but is effectively 'infantry'.
       const { data: rolesData } = await supabase
         .from('user_roles' as any)
-        .select('user_id, role');
+        .select('user_id, role, is_manual, created_at');
 
-      const leaderRolesMap = new Map<string, string>();
-      if (rolesData) {
-        rolesData.forEach((r: any) => {
-          if (['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'].includes(r.role)) {
-            leaderRolesMap.set(r.user_id, r.role);
-          }
-        });
-      }
+      const RANK_PRIORITY: Record<string, number> = {
+        admin: 100, king: 90, baron: 80, knight: 70,
+        team_leader: 60, officer: 50, junior_team_leader: 40,
+        player: 5, infantry: 1,
+      };
+      const LEADER_ROLES = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'];
+
+      const roleRowsMap = new Map<string, any[]>();
+      (rolesData as any[] | null)?.forEach((r: any) => {
+        if (!roleRowsMap.has(r.user_id)) roleRowsMap.set(r.user_id, []);
+        roleRowsMap.get(r.user_id)!.push(r);
+      });
+
+      const effectiveRoleMap = new Map<string, string>();
+      roleRowsMap.forEach((rows, uid) => {
+        const manual = rows
+          .filter((r) => r.is_manual)
+          .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())[0];
+        const best = manual || rows
+          .slice()
+          .sort((a, b) => (RANK_PRIORITY[b.role] ?? 0) - (RANK_PRIORITY[a.role] ?? 0))[0];
+        if (best) effectiveRoleMap.set(uid, best.role);
+      });
 
       // 2. Fetch referrals to construct direct leader-troop tree
       const { data: referralsData } = await supabase
@@ -128,7 +145,7 @@ export const AdminTeamLeadersRoster: React.FC = () => {
             id: referredId,
             name: prof?.display_name || prof?.username || ref.referred_name || 'Mercenary',
             email: ref.referred_email || prof?.email || 'No email',
-            role: leaderRolesMap.get(referredId) || 'infantry',
+          role: effectiveRoleMap.get(referredId) || 'infantry',
             status: prof?.suspended ? 'suspended' : isOnline ? 'active' : 'inactive',
             lastActive: isOnline ? 'Online Today' : lastActiveStr,
             questionsAnswered: Math.floor(Math.random() * 15 + (isOnline ? 10 : 2)), 
@@ -147,12 +164,24 @@ export const AdminTeamLeadersRoster: React.FC = () => {
         }
       }
 
-      // 5. Format leaders overview list (including leaders with 0 members)
+      // 5. A commander is someone who either holds an officer-or-above rank,
+      // or actually has troops referred under them.
+      const candidateIds = new Set<string>([
+        ...Array.from(effectiveRoleMap.entries())
+          .filter(([, role]) => LEADER_ROLES.includes(role))
+          .map(([uid]) => uid),
+        ...Array.from(leaderGroupsMap.keys()),
+      ]);
+
       const overviews: LeaderOverview[] = [];
-      leaderRolesMap.forEach((role, lId) => {
+      candidateIds.forEach((lId) => {
+        const role = effectiveRoleMap.get(lId) || 'infantry';
         const lProf = profilesMap.get(lId);
         const members = leaderGroupsMap.get(lId) || [];
         const activeCount = members.filter(m => m.status === 'active').length;
+
+        // Demoted / non-ranked users with no troops are not commanders.
+        if (!LEADER_ROLES.includes(role) && members.length === 0) return;
 
         overviews.push({
           leaderId: lId,
