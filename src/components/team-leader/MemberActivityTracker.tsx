@@ -37,31 +37,31 @@ export const MemberActivityTracker: React.FC<MemberActivityTrackerProps> = ({
       try {
         // 1. Fetch Attendance Logs
         const { data: attendanceData, error: attendanceErr } = await supabase
-          .rpc('get_member_attendance', { p_member_id: memberId });
+          .rpc('get_member_attendance' as any, { p_member_id: memberId } as any);
 
         if (attendanceErr) throw attendanceErr;
-        setAttendance(attendanceData || []);
+        setAttendance((attendanceData as any[]) || []);
 
         // 2. Fetch Tasks (Contracts)
         const { data: tasksData, error: tasksErr } = await supabase
-          .rpc('get_member_tasks', { p_member_id: memberId });
+          .rpc('get_member_tasks' as any, { p_member_id: memberId } as any);
 
         if (tasksErr) throw tasksErr;
-        setTasks(tasksData || []);
+        setTasks((tasksData as any[]) || []);
 
         // 3. Fetch Quiz Answers
         const { data: quizData, error: quizErr } = await supabase
-          .rpc('get_member_quiz_answers', { p_member_id: memberId });
+          .rpc('get_member_quiz_answers' as any, { p_member_id: memberId } as any);
 
         if (quizErr) throw quizErr;
-        setQuizzes(quizData || []);
+        setQuizzes((quizData as any[]) || []);
 
         // 4. Fetch Wheel Spins
         const { data: spinsData, error: spinsErr } = await supabase
-          .rpc('get_member_wheel_spins', { p_member_id: memberId });
+          .rpc('get_member_wheel_spins' as any, { p_member_id: memberId } as any);
 
         if (spinsErr) throw spinsErr;
-        setGames(spinsData || []);
+        setGames((spinsData as any[]) || []);
 
       } catch (err: any) {
         console.error('Error fetching member activities:', err);
