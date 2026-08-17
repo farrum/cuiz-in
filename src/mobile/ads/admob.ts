@@ -65,7 +65,33 @@ let bannerShown = false;
 let bannerPending: Promise<boolean> | null = null;
 
 /**
- * Show the AdMob banner (bottom-centre, sits above the 56 px tab bar).
+ * Compute the bottom margin needed so the banner clears both the WebView
+ * BottomTabs bar AND the Android system navigation bar.
+ *
+ * On devices using gesture navigation the system nav bar is ~0–24 px.
+ * On devices using 3-button navigation it is ~48 px.
+ * We read it from the CSS variable set by BottomTabs via safe-area-inset-bottom,
+ * falling back to a safe 80 px (tab bar) so nothing overlaps on any device.
+ */
+function getBottomMargin(): number {
+  // --tab-h is our WebView tab bar (68px).
+  // env(safe-area-inset-bottom) covers the gesture/nav-button bar on the device.
+  // We use offsetHeight of a measuring element to get the computed px value.
+  try {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
+    document.body.appendChild(el);
+    const safeBottom = el.offsetHeight || 0;
+    document.body.removeChild(el);
+    // 68px tab bar + safe-area bottom. Minimum 68 so we never drop below the tab bar.
+    return Math.max(68, 68 + safeBottom);
+  } catch {
+    return 80; // safe fallback
+  }
+}
+
+/**
+ * Show the AdMob banner (bottom-centre, sits above the tab bar + system nav bar).
  * Returns true on success; calls onFailed() and returns false on error so
  * the caller can fall back to a LevelPlay banner.
  */
@@ -80,15 +106,23 @@ export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
 async function doShowBanner(onFailed?: () => void): Promise<boolean> {
   if (!(await initAdMob())) { onFailed?.(); return false; }
   try {
+    const margin = getBottomMargin();
     const options: BannerAdOptions = {
       adId: adId('banner'),
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 68, // clears the ~68px BottomTabs bar
+      margin,
       isTesting: import.meta.env.DEV as boolean,
     };
     await AdMob.showBanner(options);
     bannerShown = true;
+    // Listen for the actual rendered banner height so CSS spacers match.
+    // bannerAdSizeChanged fires with { width, height } in dp after the ad loads.
+    AdMob.addListener('bannerAdSizeChanged', (size: { width: number; height: number }) => {
+      if (size?.height) {
+        document.documentElement.style.setProperty('--banner-h', `${Math.ceil(size.height)}px`);
+      }
+    }).catch(() => {/* plugin may not support this listener — safe to ignore */});
     return true;
   } catch (e) {
     console.warn('[AdMob] banner failed', e);

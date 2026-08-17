@@ -16,7 +16,9 @@ import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
-import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
+/* TopBannerAd intentionally NOT imported here — the persistent banner is already
+   managed by BannerHost in AppMobile. Mounting it again caused a double-banner
+   on native and a flash on every question transition. */
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -235,19 +237,24 @@ export default function QuizStoryScreen() {
   const exit = () => navigate('/hub');
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
-      {/* Background Ambience */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-50" />
-      </div>
-
-      {/* Top bar */}
+    // Safe-area padding on the OUTER wrapper — this is the correct place.
+    // Applying it to an inner element only grows that element's internal padding
+    // but doesn't move content below the physical status bar.
+    <div
+      className="fixed inset-0 flex flex-col bg-background overflow-hidden"
+      style={{ paddingTop: 'var(--safe-top)' }}
+    >
+      {/* Ambient background — static gradient, zero GPU cost */}
       <div
-        className="relative flex items-center justify-between px-4 py-2 bg-white panel-3d mx-4 mt-2 rounded-2xl border-2 border-primary/20"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
-      >
-        <button onClick={exit} aria-label="Close" className="p-2 -ml-2 rounded-xl hover:bg-muted">
-          <X className="w-5 h-5 text-muted-foreground" />
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)' }}
+      />
+
+      {/* Top bar — safe-area handled by outer wrapper */}
+      <div className="relative flex items-center justify-between px-4 py-2.5 mx-3 mt-2 rounded-2xl bg-white/85 ring-1 ring-black/[0.06] shadow-sm">
+        <button onClick={exit} aria-label="Close" className="p-2 -ml-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+          <X className="w-5 h-5 text-slate-400" />
         </button>
         <div className="flex items-center gap-2">
           <StreakFlame streak={streak} />
@@ -255,17 +262,18 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-2 mx-6 mt-4 rounded-full overflow-hidden bg-muted border border-muted-foreground/20">
+      {/* Session progress bar */}
+      <div className="h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
         <motion.div
-          className="h-full rounded-full bg-primary"
+          className="h-full rounded-full"
+          style={{ background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}
           animate={{ width: `${phase === 'asking' ? progress : 100}%` }}
-          transition={{ duration: 0.1 }}
+          transition={{ duration: 0.12 }}
         />
       </div>
 
-      {/* Question card */}
-      <div className="flex-1 flex flex-col px-4 pt-4 pb-6 overflow-y-auto">
+      {/* Question scroll area — bottom clearance uses CSS contract variable */}
+      <div className="flex-1 flex flex-col px-4 pt-4 overflow-y-auto" style={{ paddingBottom: 'calc(var(--safe-bottom) + 6px)' }}>
         {loadError && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
             <p className="text-sm font-bold text-foreground">Couldn't load a question</p>
@@ -280,7 +288,7 @@ export default function QuizStoryScreen() {
             </button>
           </div>
         )}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {question && !loadError && (
             <motion.div
               key={question.id}
@@ -290,15 +298,16 @@ export default function QuizStoryScreen() {
               transition={{ type: 'spring', stiffness: 220, damping: 24 }}
               className="flex-1 flex flex-col"
             >
-              <div className="mb-4 flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest font-black px-2.5 py-1 rounded-lg bg-primary/10 text-primary border-2 border-primary/20">
-                  <Shield className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />{question.category}
+              {/* Category + Difficulty + Gems row */}
+              <div className="mb-4 flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-black px-2 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                  <Shield className="w-3 h-3" />{question.category}
                 </span>
-                <span className="text-[11px] uppercase tracking-widest font-black px-2 py-1 rounded-lg bg-secondary/10 text-secondary border-2 border-secondary/20">
+                <span className="text-[10px] uppercase tracking-wider font-black px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                   {question.difficulty}
                 </span>
-                <span className="ml-auto inline-flex items-center gap-1 text-[13px] font-black text-primary">
-                  <Sparkles className="w-4 h-4 fill-primary" /> +{question.gems || 10}
+                <span className="ml-auto inline-flex items-center gap-1 text-[12px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
+                  <Sparkles className="w-3.5 h-3.5" /> +{question.gems || 10}
                 </span>
               </div>
 
@@ -312,9 +321,9 @@ export default function QuizStoryScreen() {
                 />
               )}
 
-              <h2 className="text-xl font-black leading-snug mb-5 text-foreground tracking-tight">{question.question}</h2>
+              <h2 className="text-[18px] font-black leading-snug mb-5 tracking-tight" style={{ color: 'hsl(220 50% 15%)' }}>{question.question}</h2>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {(question.options || []).map((opt, i) => {
                   const isSelected = selected === opt;
                   const isReveal = phase === 'revealing' && correctAnswer;
@@ -323,21 +332,32 @@ export default function QuizStoryScreen() {
                   return (
                     <motion.button
                       key={opt}
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, x: -16 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.08 * i }}
-                      whileTap={{ scale: phase === 'asking' ? 0.97 : 1 }}
+                      transition={{ delay: 0.07 * i, ease: [0.22, 1, 0.36, 1] }}
+                      whileTap={{ scale: phase === 'asking' ? 0.975 : 1 }}
                       disabled={phase !== 'asking'}
                       onClick={() => handleAnswer(opt)}
                       className={cn(
-                        'w-full text-left rounded-2xl px-4 py-4 font-black transition-all panel-3d text-foreground border-2',
-                        !isSelected && !isThisCorrect && !isThisWrong && 'bg-white border-muted-foreground/10',
-                        isSelected && phase === 'revealing' && !isCorrect && 'border-destructive bg-destructive/10 text-destructive',
-                        isThisCorrect && 'border-emerald-500 bg-emerald-500/10 text-emerald-600',
-                        isThisWrong && 'border-destructive bg-destructive/10 text-destructive animate-[shake_0.4s]',
+                        'relative w-full text-left rounded-2xl px-4 py-3.5 font-bold text-[14px] leading-snug transition-colors overflow-hidden',
+                        'ring-1 bg-white',
+                        !isSelected && !isThisCorrect && !isThisWrong && 'ring-black/[0.06] text-slate-800 hover:bg-slate-50',
+                        isThisCorrect  && 'ring-emerald-400 bg-emerald-50 text-emerald-800',
+                        isThisWrong    && 'ring-rose-400 bg-rose-50 text-rose-800 animate-[shake_0.4s]',
+                        isSelected && phase === 'revealing' && !isCorrect && 'ring-rose-400 bg-rose-50 text-rose-800',
                       )}
                     >
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl text-[13px] font-black mr-3 shadow-sm bg-muted text-muted-foreground border-2 border-white">
+                      {/* Left colour bar — reveals on answer */}
+                      <span className={cn(
+                        'absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-all',
+                        isThisCorrect ? 'bg-emerald-500' : isThisWrong ? 'bg-rose-500' : 'bg-transparent'
+                      )} />
+                      <span className={cn(
+                        'inline-flex items-center justify-center w-7 h-7 rounded-xl text-[12px] font-black mr-3 shrink-0 align-middle border',
+                        isThisCorrect ? 'bg-emerald-500 text-white border-emerald-600'
+                          : isThisWrong ? 'bg-rose-500 text-white border-rose-600'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      )}>
                         {String.fromCharCode(65 + i)}
                       </span>
                       {opt}
@@ -346,21 +366,17 @@ export default function QuizStoryScreen() {
                 })}
               </div>
 
-              {/* Reveal panel */}
-              <div className="mt-6">
-                {/* Suspense while we check the answer */}
+              <div className="mt-5">
                 <AnimatePresence>
                   {phase === 'revealing' && !revealReady && (
                     <motion.div
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-4 panel-3d bg-white"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3.5 bg-white/80 ring-1 ring-black/[0.06]"
                     >
-                      <Scroll className="w-6 h-6 text-primary animate-pulse flex-shrink-0" />
-                      <span className="text-sm font-black text-foreground tracking-tight">
-                        Reviewing your answer…
-                      </span>
+                      <Scroll className="w-5 h-5 text-amber-500 animate-pulse flex-shrink-0" />
+                      <span className="text-sm font-bold text-slate-600">Reviewing your answer…</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -384,29 +400,33 @@ export default function QuizStoryScreen() {
         </AnimatePresence>
       </div>
 
-      {/* Rotating banner ad */}
-      <TopBannerAd />
+      {/* The persistent native banner (BannerHost) sits between MobileShell's
+          TopBannerAd and BottomTabs — DO NOT mount another TopBannerAd here.
+          Spacer ensures scroll content is never hidden behind the banner. */}
+      <div aria-hidden className="h-[var(--banner-h)] shrink-0" />
 
-      {/* Preferences button */}
+      {/* Preferences button — floating pill */}
       <div className="px-4 pt-2">
         <button
           onClick={() => setPrefsOpen(true)}
-          className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-black panel-3d bg-white text-muted-foreground hover:bg-muted transition-colors border-2 border-muted-foreground/20 uppercase tracking-wide"
+          className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[12px] font-black bg-white/80 ring-1 ring-black/[0.06] text-slate-600 hover:bg-white transition-colors uppercase tracking-wide"
         >
-          <SlidersHorizontal className="w-5 h-5 text-primary" />
+          <SlidersHorizontal className="w-4 h-4 text-amber-500" />
           {category || 'All realms'} · {difficulty ? difficulty[0].toUpperCase() + difficulty.slice(1) : 'Any trial'}
         </button>
       </div>
 
       {/* Session summary footer */}
-      <div
-        className="px-4 py-3 panel-3d bg-white mx-4 mb-2 rounded-2xl"
+      <div className="px-4 py-2.5 mx-3 mb-2 rounded-2xl bg-white/80 ring-1 ring-black/[0.06]"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
       >
-        <div className="flex items-center justify-between text-[11px] text-muted-foreground font-black uppercase tracking-wider">
-          <span><strong className="text-foreground text-[13px]">{questionsAnswered}</strong> BATTLES · <strong className="text-emerald-500 text-[13px]">{correctAnswered}</strong> WINS</span>
-          <span>SPOILS: <strong className="text-primary text-[13px]">+{sessionGems} 💎</strong></span>
-          <button onClick={loadNext} className="text-primary font-black uppercase tracking-widest text-[11px] hover:underline">Skip →</button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-black tabular-nums px-2 py-1 rounded-full bg-slate-100 text-slate-600">{questionsAnswered} battles</span>
+            <span className="text-[11px] font-black tabular-nums px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">{correctAnswered} wins</span>
+          </div>
+          <span className="text-[11px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-700">+{sessionGems} 💎</span>
+          <button onClick={loadNext} className="text-[11px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-wide">Skip →</button>
         </div>
       </div>
 

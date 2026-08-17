@@ -88,6 +88,22 @@ function AppMobile() {
       }
     })();
 
+    // Silent prefetch questions cache for offline gameplay
+    (async () => {
+      try {
+        const lastFetched = localStorage.getItem('last_questions_fetch_time');
+        const now = Date.now();
+        // If empty or older than 24 hours (86,400,000 ms), fetch questions
+        if (!lastFetched || now - Number(lastFetched) > 86400000) {
+          const { fetchQuizQuestions } = await import('@/utils/quizData');
+          await fetchQuizQuestions();
+          localStorage.setItem('last_questions_fetch_time', String(now));
+        }
+      } catch (e) {
+        console.warn('[Offline Cache] Silent prefetch failed:', e);
+      }
+    })();
+
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setAuthed(true);

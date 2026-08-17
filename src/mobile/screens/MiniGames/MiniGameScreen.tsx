@@ -6,7 +6,8 @@ import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
-import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
+/* TopBannerAd NOT imported — banner managed by BannerHost. Mounting here caused
+   double-banner and GPU flash on every game switch. */
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -310,28 +311,30 @@ export default function MiniGameScreen() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
-      {/* Background Ambience */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <motion.div
-          className={cn('absolute -top-32 -left-32 w-80 h-80 rounded-full blur-3xl opacity-50', current?.bgGlow ?? 'bg-primary/20')}
-          animate={{ scale: [1, 1.2, 1], x: [0, 30, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </div>
+      {/* Static gradient background — replaced the animated blur-3xl motion.div.
+          An animated `filter: blur` forces a full GPU repaint every frame on Android
+          WebView, causing visible frame drops. A static gradient is zero-cost. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={{
+          background: `radial-gradient(ellipse at -10% -10%, ${current?.bgGlow ? 'hsl(var(--primary)/0.25)' : 'hsl(var(--primary)/0.15)'} 0%, transparent 65%)`
+        }}
+      />
 
       {/* Top bar */}
       <div
-        className="relative z-10 flex items-center justify-between px-4 py-2"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+        className="relative z-10 flex items-center justify-between px-4 py-2.5"
+        style={{ paddingTop: 'calc(var(--safe-top) + 8px)' }}
       >
         <button
           onClick={() => { haptics('light'); navigate('/hub'); }}
-          className="p-2 -ml-2 rounded-xl panel-3d bg-white border-2 border-primary/20 hover:bg-muted transition-colors"
+          className="p-2 -ml-1.5 rounded-xl bg-white/80 ring-1 ring-black/[0.06] hover:bg-white transition-colors"
           aria-label="Close"
         >
-          <X className="w-5 h-5 text-muted-foreground" />
+          <X className="w-5 h-5 text-slate-400" />
         </button>
-        <h1 className="font-black text-xl text-amber-700 tracking-tight">
+        <h1 className="font-black text-[17px] tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
           {current?.title || 'Tavern Games'}
         </h1>
         <div className="w-9" />
@@ -343,7 +346,7 @@ export default function MiniGameScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 pt-2 pb-2 min-h-0 overflow-y-auto w-full"
       >
-        <div className="w-full max-w-md panel-3d bg-white p-4 sm:p-6 relative my-auto">
+        <div className="w-full max-w-md rounded-2xl bg-white/85 ring-1 ring-black/[0.07] shadow-md p-4 sm:p-6 relative my-auto">
           {hasPaid ? <div key={playToken}>{body}</div> : renderLaunchScreen()}
         </div>
 
@@ -351,15 +354,17 @@ export default function MiniGameScreen() {
           <div className="w-full max-w-md mt-3 grid grid-cols-2 gap-2">
             <button
               onClick={handlePayAndStart}
-              className="btn-3d bg-slate-800 border-slate-900 py-2.5 text-[12px] font-black uppercase tracking-wide text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]"
+              className="rounded-xl py-2.5 text-[12px] font-black uppercase tracking-wide text-white"
+              style={{ background: 'linear-gradient(160deg, hsl(220 60% 40%), hsl(220 70% 28%))', boxShadow: '0 3px 0 hsl(220 70% 18%)' }}
             >
               💎 5 Gems · Play again
             </button>
             <button
               onClick={handleWatchAdForChance}
-              className="btn-3d btn-3d-primary py-2.5 text-[12px] font-black uppercase tracking-wide"
+              className="rounded-xl py-2.5 text-[12px] font-black uppercase tracking-wide text-white"
+              style={{ background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 45%))', boxShadow: '0 3px 0 hsl(30 80% 35%)' }}
             >
-              ▶ Watch ad · Free chance
+              ▶ Watch ad · Free
             </button>
           </div>
         )}
@@ -367,33 +372,30 @@ export default function MiniGameScreen() {
 
       {/* Other Games nav bar */}
       <div className="relative z-10 px-4 pt-1 pb-1.5">
-        <p className="text-[11px] uppercase tracking-widest font-black text-muted-foreground mb-1.5 text-center">
-          More Games
-        </p>
-        <div className="flex items-center gap-3 overflow-x-auto pb-4 px-1 pr-14 scrollbar-none justify-start w-full max-w-full">
+        <p className="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400 mb-1.5 text-center">More Games</p>
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 px-1 scrollbar-none">
           {otherGames.map((g) => {
             const Icon = g.icon;
             return (
               <motion.button
                 key={g.id}
-                whileTap={{ scale: 0.93 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => { haptics('light'); navigate(`/game/${g.id}`); }}
-                className="flex items-center gap-2 rounded-2xl px-3 py-2 btn-3d bg-white transition-colors whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 bg-white/80 ring-1 ring-black/[0.06] whitespace-nowrap flex-shrink-0 transition-colors hover:bg-white"
               >
-                <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-white border-2 border-white/20 bg-gradient-to-br shadow-sm', g.color)}>
-                  <Icon className="w-4 h-4 drop-shadow-sm" />
+                <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center text-white bg-gradient-to-br', g.color)}>
+                  <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[13px] font-black text-slate-700 tracking-tight pr-1">{g.short}</span>
+                <span className="text-[12px] font-black text-slate-700 tracking-tight">{g.short}</span>
               </motion.button>
             );
           })}
         </div>
       </div>
 
-      {/* Ad banner */}
-      <div className="relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)' }}>
-        <TopBannerAd noMargin />
-      </div>
+      {/* Banner spacer — native banner managed by BannerHost (do not mount TopBannerAd here).
+          This spacer prevents the game nav row from being hidden behind the SDK banner. */}
+      <div aria-hidden className="h-[var(--banner-h)] shrink-0" style={{ paddingBottom: 'var(--safe-bottom)' }} />
     </div>
   );
 }

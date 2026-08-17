@@ -64,6 +64,21 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 200 40% 75%;
     --sidebar-ring: 45 95% 55%;
+
+    /* ── Layout Contract ──────────────────────────────────────────
+       All screens MUST use these variables for bottom spacing.
+       --tab-h   : height of the BottomTabs bar (fixed, pt-2 pb-2 + icon ~44px + label ~16px = 68px)
+       --banner-h: height of the native/web banner ad (50px standard AdMob)
+       --safe-top: iOS/Android status bar safe area
+       --safe-bottom: iOS/Android home indicator safe area
+       Never hard-code px values for bottom padding — always use calc(var(--tab-h) + var(--banner-h))
+    ────────────────────────────────────────────────────────────── */
+    --tab-h: 68px;
+    --banner-h: 50px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Content bottom clearance = tab bar + ad banner */
+    --bottom-clearance: calc(var(--tab-h) + var(--banner-h));
   }
 
   .dark {
@@ -530,8 +545,11 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
     inset 0 4px 0 rgba(255, 255, 255, 0.6),
     0 12px 20px rgba(0, 0, 0, 0.15);
   position: relative;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 8px; /* Leave space for the 3D bottom edge */
+  /* NOTE: transition: transform was removed — it promoted every panel card to its
+     own GPU composite layer, causing 16+ simultaneous GPU layers on HubScreen
+     and was a primary cause of the screen flicker on mid-range Android devices.
+     Tap animation is now handled by Framer Motion's whileTap on individual
+     interactive elements only, which is GPU-efficient. */
 }
 
 /* 3D Button Base */

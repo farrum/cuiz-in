@@ -54,129 +54,124 @@ export default function ShopScreen() {
   };
 
   return (
-    <div className="min-h-full bg-background flex flex-col relative pb-[120px]">
-      {/* Header */}
-      <div 
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm"
-        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+    <div className="relative min-h-full">
+
+      {/* Ambient background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0"
+        style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
+      {/* Sticky header */}
+      <div
+        className="sticky top-0 z-30 backdrop-blur-md border-b border-amber-200/60 px-4 py-2.5"
+        style={{ background: 'hsl(38 60% 95% / 0.92)' }}
       >
-        <div className="flex items-center gap-3">
-          <button onClick={() => { haptics('light'); navigate(-1); }} className="p-2 -ml-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </button>
-          <h1 className="text-xl font-black text-amber-900 tracking-wide">Royal Shop</h1>
-        </div>
-        <div className="flex items-center gap-3">
-           <div className="bg-blue-50 border-2 border-blue-100 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner">
-             <span className="text-sm drop-shadow-sm">💎</span>
-             <span className="text-sm font-black text-blue-600">{profile.gems}</span>
-           </div>
-           <div className="bg-amber-50 border-2 border-amber-100 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner">
-             <span className="text-sm drop-shadow-sm">⭐</span>
-             <span className="text-sm font-black text-amber-500">{profile.stars}</span>
-           </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { haptics('light'); navigate(-1); }}
+              className="p-2 -ml-2 rounded-xl hover:bg-amber-100/60 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-amber-900/70" />
+            </button>
+            <h1 className="text-[19px] font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>Royal Armory</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-100 border border-sky-200">
+              <span className="text-sm">💎</span>
+              <span className="text-sm font-black text-sky-700">{profile.gems}</span>
+            </div>
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 border border-amber-200">
+              <span className="text-sm">⭐</span>
+              <span className="text-sm font-black text-amber-700">{profile.stars}</span>
+            </div>
+          </div>
         </div>
       </div>
+      {/* Content */}
+      <div className="relative px-4 pt-5 pb-6 space-y-5">
 
-      <div className="px-4 pt-6 space-y-6">
-        <div className="panel-3d bg-white p-5 flex items-center gap-4">
-          <MascotPlayer character="king" mood="excited" size={80} noHalo />
+        {/* Hero intro card */}
+        <div className="flex items-center gap-3 rounded-2xl bg-white/80 ring-1 ring-black/[0.06] px-4 py-3.5 shadow-sm">
+          <MascotPlayer character="king" mood="excited" size={64} noHalo />
           <div>
-            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-1">The Royal Armory</h2>
-            <p className="text-[12px] font-bold text-slate-500 leading-snug">
-              Spend your gems and stars to acquire enhancements, lifelines, and exclusive profile cosmetics!
+            <h2 className="font-black text-[14px] tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>Royal Armory</h2>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-snug max-w-[220px]">
+              Spend gems &amp; stars to acquire enhancements, lifelines &amp; exclusive cosmetics!
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5">
+        {/* Items grid */}
+        <div className="space-y-3">
           {ARMORY_ITEMS.map((item) => {
             const isShard = item.type === 'counselor_shard';
             const owned = purchased.includes(item.id);
             const isEquipped = equipped[item.type] === item.id || (item.type === 'prestige_title' && equippedTitleId === item.id);
-            
+
             return (
-              <div key={item.id} className="panel-3d bg-white p-5 flex flex-col relative overflow-hidden group">
+              <div key={item.id} className="relative rounded-2xl bg-white/85 ring-1 ring-black/[0.06] shadow-sm p-4 overflow-hidden">
+
+                {/* Equipped ribbon */}
                 {isEquipped && (
-                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-bl-xl shadow-sm border-b-2 border-l-2 border-amber-500 z-10">
-                     Active
-                   </div>
+                  <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-bl-2xl rounded-tr-2xl z-10">
+                    Equipped
+                  </div>
                 )}
-                
-                <div className="flex gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-slate-100 flex items-center justify-center text-4xl shadow-inner shrink-0">
+
+                {/* Item header row */}
+                <div className="flex gap-3 mb-3">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+                    style={{ background: 'linear-gradient(135deg, hsl(45 80% 85%), hsl(38 60% 80%))' }}>
                     <span className="drop-shadow-sm">{item.emoji}</span>
                   </div>
-                  
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <h3 className="font-black text-slate-800 text-lg leading-tight mb-1 truncate">{item.name}</h3>
-                    <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-1 rounded border border-amber-300 shadow-sm self-start inline-block">
+                    <h3 className="font-black text-[15px] leading-tight tracking-tight truncate" style={{ color: 'hsl(220 50% 15%)' }}>{item.name}</h3>
+                    <span className="mt-1 self-start text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
                       {item.effect}
                     </span>
                   </div>
                 </div>
 
-                <div className="mt-4 bg-slate-50 rounded-xl p-3 border-2 border-slate-100 shadow-inner">
-                  <p className="text-xs font-bold text-slate-600 mb-2">{item.description}</p>
-                  <div className="flex items-start gap-2 pt-2 border-t-2 border-slate-200">
-                    <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                    <p className="text-[11px] font-black text-blue-600/80 leading-snug">
-                      {getReasoning(item.type)}
-                    </p>
+                {/* Description */}
+                <div className="rounded-xl bg-slate-50/80 border border-slate-100 px-3 py-2.5 mb-3">
+                  <p className="text-[12px] font-medium text-slate-600 leading-snug mb-2">{item.description}</p>
+                  <div className="flex items-start gap-1.5 pt-2 border-t border-slate-200">
+                    <Info className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] font-medium text-sky-600/90 leading-snug">{getReasoning(item.type)}</p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t-2 border-slate-100">
-                  {owned && !isShard ? (
-                    isEquipped ? (
-                      <motion.button 
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => {
-                          haptics('light');
-                          if (item.type === 'prestige_title') unequipTitle();
-                          else unequipItem(item.type);
-                          setShopTrigger(p => p + 1);
-                        }}
-                        className="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-black px-3 py-3 rounded-xl text-xs uppercase tracking-wider shadow-inner"
-                      >
-                        Unequip Item
-                      </motion.button>
-                    ) : (
-                      <motion.button 
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => {
-                          haptics('light');
-                          if (item.type === 'prestige_title') equipTitle(item.id);
-                          else equipItem(item.id);
-                          setShopTrigger(p => p + 1);
-                        }}
-                        className="w-full btn-3d btn-3d-primary py-3 rounded-xl text-xs uppercase tracking-wider"
-                      >
-                        Equip Item
-                      </motion.button>
-                    )
-                  ) : (
-                    <motion.button 
+                {/* Action button */}
+                {owned && !isShard ? (
+                  isEquipped ? (
+                    <motion.button
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        haptics('success');
-                        const res = purchaseItem(item.id);
-                        if (res.success) {
-                          alert(res.message);
-                          reloadGems();
-                        } else {
-                          alert(res.message);
-                        }
-                        setShopTrigger(p => p + 1);
-                      }}
-                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black border-b-4 border-slate-950 active:border-b-0 active:translate-y-1 px-3 py-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md"
+                      onClick={() => { haptics('light'); if (item.type === 'prestige_title') unequipTitle(); else unequipItem(item.type); setShopTrigger(p => p + 1); }}
+                      className="w-full rounded-xl py-3 text-[12px] font-black uppercase tracking-wide text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
                     >
-                      Buy for 
-                      {item.costGems > 0 && <span className="text-blue-400">💎 {item.costGems}</span>}
-                      {item.costStars > 0 && <span className="text-amber-400">⭐ {item.costStars}</span>}
+                      Unequip
                     </motion.button>
-                  )}
-                </div>
+                  ) : (
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => { haptics('light'); if (item.type === 'prestige_title') equipTitle(item.id); else equipItem(item.id); setShopTrigger(p => p + 1); }}
+                      className="w-full rounded-xl py-3 text-[12px] font-black uppercase tracking-wide text-white"
+                      style={{ background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 45%))', boxShadow: '0 3px 0 hsl(30 80% 35%)' }}
+                    >
+                      ⚔️ Equip Item
+                    </motion.button>
+                  )
+                ) : (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { haptics('success'); const res = purchaseItem(item.id); alert(res.message); reloadGems(); setShopTrigger(p => p + 1); }}
+                    className="w-full rounded-xl py-3 text-[12px] font-black uppercase tracking-wide text-white flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(160deg, hsl(220 60% 40%), hsl(220 70% 30%))', boxShadow: '0 3px 0 hsl(220 70% 20%)' }}
+                  >
+                    Buy for
+                    {item.costGems  > 0 && <span className="text-sky-300">💎 {item.costGems}</span>}
+                    {item.costStars > 0 && <span className="text-amber-300">⭐ {item.costStars}</span>}
+                  </motion.button>
+                )}
               </div>
             );
           })}

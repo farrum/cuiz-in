@@ -2,11 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Calendar, Sparkles, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound, Landmark, ChevronRight, Users } from 'lucide-react';
+import {
+  Calendar, Sparkles, Swords, Landmark, Users,
+  ChevronRight, Flame, Star, Gem, LogIn, Crown,
+  Disc3, ScrollText, ImageIcon, Coins, Dices,
+  Gamepad2, Gift, KeyRound
+} from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
 import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
+import { StarCounter } from '@/mobile/components/StarCounter';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,68 +34,91 @@ type Node = {
 };
 
 const ROYAL_CHAMBERS: Node[] = [
-  { id: 'quests', label: 'Quest Board', to: '/empire-quests', icon: Swords, color: 'from-amber-500 via-yellow-500 to-amber-600', hint: 'Conquer locked campaign stages & earn star crowns' },
-  { id: 'kingdoms', label: 'Kingdoms Dynasty', to: '/kingdoms', icon: Landmark, color: 'from-blue-600 to-indigo-500', hint: 'Establish your faction, design crests & compete in rankings' },
-  { id: 'team', label: 'Team & Squad', to: '/team-dashboard', icon: Users, color: 'from-indigo-600 to-purple-600', hint: 'Build your squad, invite friends & earn recurring gems', badge: 'Squad' },
-  { id: 'quiz', label: 'Quick Quiz', to: '/quiz', icon: Sparkles, color: 'from-purple-600 to-pink-500', hint: 'Answer questions, build streaks & earn gems' },
-  { id: 'daily', label: 'Daily Challenge', to: '/daily', icon: Calendar, color: 'from-orange-500 to-red-500', hint: 'Complete the daily special for 2x rewards!' },
+  { id: 'quests',   label: 'Quest Board',       to: '/empire-quests',  icon: Swords,   color: 'from-amber-500 to-orange-600',   hint: 'Conquer locked campaign stages & earn star crowns' },
+  { id: 'kingdoms', label: 'Kingdoms Dynasty',  to: '/kingdoms',       icon: Landmark, color: 'from-blue-600 to-indigo-700',    hint: 'Establish your faction & compete in rankings' },
+  { id: 'team',     label: 'Team & Squad',       to: '/team-dashboard', icon: Users,    color: 'from-indigo-500 to-purple-700',  hint: 'Build your squad & earn recurring gems', badge: 'Squad' },
+  { id: 'quiz',     label: 'Quick Quiz',         to: '/quiz',           icon: Sparkles, color: 'from-violet-500 to-pink-600',    hint: 'Answer questions & build streaks' },
+  { id: 'daily',    label: 'Daily Challenge',    to: '/daily',          icon: Calendar, color: 'from-rose-500 to-red-600',       hint: 'Complete the daily special for 2× rewards!', badge: 'HOT' },
 ];
 
 const TAVERN_GAMES: Node[] = [
-  { id: 'wheel', label: 'Spin Wheel', to: '/game/wheel', emoji: '🎡', color: 'from-emerald-400 to-teal-600', hint: '1 free spin / day', badge: 'Daily' },
-  { id: 'scratch', label: 'Scratch Card', to: '/game/scratch', emoji: '🎫', color: 'from-amber-400 to-orange-600', hint: 'Mystery gems reward', badge: 'Daily' },
-  { id: 'true-false', label: 'True / False', to: '/game/true-false', emoji: '⚖️', color: 'from-sky-400 to-blue-600', hint: 'Rapid‑fire swipe', badge: 'New' },
-  { id: 'image', label: 'Image Trivia', to: '/game/image', emoji: '🖼️', color: 'from-violet-500 to-fuchsia-600', hint: 'Visual trivia puzzles', badge: 'Image' },
-  { id: 'slot', label: 'Slot Machine', to: '/game/slot', emoji: '🎰', color: 'from-red-500 to-amber-500', hint: 'Test matching luck', badge: 'Lucky' },
-  { id: 'plinko', label: 'Plinko Board', to: '/game/plinko', emoji: '🔴', color: 'from-green-400 to-emerald-600', hint: 'Bounce chips for prizes', badge: 'Fun' },
-  { id: 'rps', label: 'Rock Paper Scissors', to: '/game/rps', emoji: '✊', color: 'from-purple-500 to-indigo-600', hint: 'Gesture battle vs AI', badge: 'Battle' },
-  { id: 'treasure', label: 'Treasure Chest', to: '/game/treasure', emoji: '🏴‍☠️', color: 'from-yellow-400 to-orange-500', hint: 'Open mystery chest', badge: 'Reward' },
-  { id: 'coinflip', label: 'Coin Flip', to: '/game/coinflip', emoji: '🪙', color: 'from-amber-500 to-orange-600', hint: 'Double or nothing coin', badge: 'Luck' },
-  { id: 'diceroll', label: 'Dice Roll', to: '/game/diceroll', emoji: '🎲', color: 'from-indigo-400 to-purple-600', hint: 'High rolling dice bonus', badge: 'Hot' },
-  { id: 'riddlevault', label: 'Riddle Vault', to: '/game/riddlevault', emoji: '🔑', color: 'from-stone-600 to-stone-900', hint: 'Claim massive daily gems', badge: 'Daily' },
+  { id: 'wheel',      label: 'Spin Wheel',           to: '/game/wheel',       emoji: '🎡', color: 'from-emerald-400 to-teal-600',    badge: 'Daily' },
+  { id: 'scratch',    label: 'Scratch Card',         to: '/game/scratch',     emoji: '🎫', color: 'from-amber-400 to-orange-500',    badge: 'Daily' },
+  { id: 'true-false', label: 'True / False',         to: '/game/true-false',  emoji: '⚖️', color: 'from-sky-400 to-blue-600',        badge: 'New' },
+  { id: 'image',      label: 'Image Trivia',         to: '/game/image',       emoji: '🖼️', color: 'from-violet-500 to-fuchsia-600' },
+  { id: 'slot',       label: 'Slot Machine',         to: '/game/slot',        emoji: '🎰', color: 'from-red-500 to-amber-500' },
+  { id: 'plinko',     label: 'Plinko Board',         to: '/game/plinko',      emoji: '🔴', color: 'from-green-400 to-emerald-600' },
+  { id: 'rps',        label: 'Rock Paper Scissors',  to: '/game/rps',         emoji: '✊', color: 'from-purple-500 to-indigo-600' },
+  { id: 'treasure',   label: 'Treasure Chest',       to: '/game/treasure',    emoji: '🏴‍☠️', color: 'from-yellow-400 to-orange-500' },
+  { id: 'coinflip',   label: 'Coin Flip',            to: '/game/coinflip',    emoji: '🪙', color: 'from-amber-500 to-orange-600' },
+  { id: 'diceroll',   label: 'Dice Roll',            to: '/game/diceroll',    emoji: '🎲', color: 'from-indigo-400 to-purple-600',   badge: 'Hot' },
+  { id: 'riddlevault',label: 'Riddle Vault',         to: '/game/riddlevault', emoji: '🔑', color: 'from-stone-600 to-stone-900',     badge: 'Daily' },
 ];
 
-import { StarCounter } from '@/mobile/components/StarCounter';
+// ── Stagger animation helpers ───────────────────────────────────────────────
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+});
+
+const popIn = (delay = 0) => ({
+  initial: { opacity: 0, scale: 0.92 },
+  animate: { opacity: 1, scale: 1 },
+  transition: { delay, type: 'spring', stiffness: 260, damping: 22 },
+});
+
+// ── Section heading ──────────────────────────────────────────────────────────
+function SectionTitle({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn('flex items-center gap-2 mb-3', className)}>
+      <span className="h-px flex-1 bg-amber-900/15 rounded-full" />
+      <span className="text-[10px] font-black tracking-[0.18em] uppercase text-amber-900/50">
+        {children}
+      </span>
+      <span className="h-px flex-1 bg-amber-900/15 rounded-full" />
+    </div>
+  );
+}
 
 export default function HubScreen() {
   const navigate = useNavigate();
   const haptics = useHaptics();
   const { streak } = usePersistentQuizStats();
-  const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
+  const [gems,  setGems]  = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
   const [stars, setStars] = useState<number>(() => Number(localStorage.getItem('quiz_app_user_stars') || 50));
-  const [name, setName] = useState<string>(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Adventurer');
+  const [name,  setName]  = useState<string>(() => localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Adventurer');
 
-  // Shared state for advisor speech bubble
   const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId,     setActiveId]     = useState<string | null>(null);
 
-  // Daily check-in states
-  const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [checkInRewardStars, setCheckInRewardStars] = useState(0);
-  const [checkInStreak, setCheckInStreak] = useState(0);
+  const [showCheckInModal,    setShowCheckInModal]    = useState(false);
+  const [checkInRewardStars,  setCheckInRewardStars]  = useState(0);
+  const [checkInStreak,       setCheckInStreak]       = useState(0);
+  const [showRatingModal,      setShowRatingModal]     = useState(false);
 
   const { toast } = useToast();
   const [baronTasks, setBaronTasks] = useState<any[]>([]);
 
+  // ── Task loading ─────────────────────────────────────────────────────────
   useEffect(() => {
     const loadTasks = async () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
-      
+
       const { data, error } = await supabase
         .from('empire_tasks' as any)
         .select('*')
         .or(`assigned_to.eq.${userId},assigned_to.is.null`)
         .neq('status', 'claimed');
-      
+
       if (!error && data) {
-        // Query per-user progress table if present, else read local progress key
         const { data: userProgressData } = await supabase
           .from('user_task_progress' as any)
           .select('*')
           .eq('user_id', userId);
 
-        const progressMap = new Map<string, { currentCount: number, status: string }>();
+        const progressMap = new Map<string, { currentCount: number; status: string }>();
         if (userProgressData) {
           userProgressData.forEach((up: any) => {
             progressMap.set(up.task_id, { currentCount: up.current_count, status: up.status });
@@ -101,87 +130,61 @@ export default function HubScreen() {
           let localProg: any = null;
           try { localProg = JSON.parse(localStorage.getItem(key) || 'null'); } catch { localProg = null; }
           const dbProg = progressMap.get(t.id);
-
-          const currentCount = dbProg?.currentCount ?? localProg?.currentCount ?? 0;
-          const status = dbProg?.status ?? localProg?.status ?? 'active';
-
           return {
             id: t.id,
             title: t.title,
             description: t.description || '',
             targetCount: t.target_count,
-            currentCount: currentCount,
+            currentCount: dbProg?.currentCount ?? localProg?.currentCount ?? 0,
             type: t.type,
-            rewardGems: t.reward_gems,
-            rewardStars: t.reward_stars,
+            rewardGems:   t.reward_gems,
+            rewardStars:  t.reward_stars,
             rewardShards: t.reward_shards,
             shardType: t.shard_type,
-            status: status as 'active' | 'completed' | 'claimed',
-            assignedTo: t.assigned_to || 'all'
+            status: (dbProg?.status ?? localProg?.status ?? 'active') as 'active' | 'completed' | 'claimed',
+            assignedTo: t.assigned_to || 'all',
           };
         });
         setBaronTasks(mapped);
       }
     };
-    loadTasks();
 
     const handleAction = async (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const type = customEvent.detail?.type;
+      const type = (e as CustomEvent).detail?.type;
       if (!type) return;
-
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
-
       try {
         const { data: tasks, error } = await supabase
           .from('empire_tasks' as any)
           .select('*')
           .eq('type', type)
           .or(`assigned_to.eq.${userId},assigned_to.is.null`);
-
         if (!error && tasks) {
           for (const task of (tasks as any[])) {
             const key = `cuizin_user_task_${userId}_${task.id}`;
             let existing: any = { currentCount: 0, status: 'active' };
-            try {
-              existing = JSON.parse(localStorage.getItem(key) || '') || existing;
-            } catch { /* corrupted entry — fall back to defaults */ }
+            try { existing = JSON.parse(localStorage.getItem(key) || '') || existing; } catch {}
             if (existing.status === 'claimed') continue;
-
             const newCount = (existing.currentCount || 0) + 1;
             const isCompleted = newCount >= task.target_count;
             const newStatus = isCompleted ? 'completed' : 'active';
-
-            // Store in local storage per user
             localStorage.setItem(key, JSON.stringify({ currentCount: newCount, status: newStatus }));
-
-            // Store in database user_task_progress table if available
-            await supabase
-              .from('user_task_progress' as any)
-              .upsert({
-                task_id: task.id,
-                user_id: userId,
-                current_count: newCount,
-                target_count: task.target_count,
-                status: newStatus,
-                last_updated: new Date().toISOString()
-              });
-
+            await supabase.from('user_task_progress' as any).upsert({
+              task_id: task.id, user_id: userId,
+              current_count: newCount, target_count: task.target_count,
+              status: newStatus, last_updated: new Date().toISOString(),
+            });
             if (isCompleted && existing.status !== 'completed') {
-              toast({
-                title: "Contract Completed!",
-                description: "Open the Hub to claim your reward stars, gems, and shards!",
-              });
+              toast({ title: 'Contract Completed!', description: 'Open the Hub to claim your reward!' });
             }
           }
           loadTasks();
         }
-      } catch (err) {
-        console.error('Error handling task action:', err);
-      }
+      } catch (err) { console.error(err); }
     };
 
+    loadTasks();
     window.addEventListener('baronTasksUpdated', loadTasks);
     window.addEventListener('baronTaskAction' as any, handleAction);
     return () => {
@@ -193,486 +196,534 @@ export default function HubScreen() {
   const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
     haptics('success');
     audioManager.playSFX('chest');
-
     try {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
-
-      // Mark as claimed ONLY for this user in user_task_progress
-      // (Do NOT update empire_tasks.status — that would mark it claimed for ALL users)
-      await supabase
-        .from('user_task_progress' as any)
-        .upsert({
-          task_id: taskId,
-          user_id: userId,
-          status: 'claimed',
-          last_updated: new Date().toISOString()
-        });
-
-      // Reload tasks for this user (hiding newly claimed ones)
+      await supabase.from('user_task_progress' as any).upsert({
+        task_id: taskId, user_id: userId, status: 'claimed', last_updated: new Date().toISOString(),
+      });
       const { data } = await supabase
-        .from('empire_tasks' as any)
-        .select('*')
-        .or(`assigned_to.eq.${userId},assigned_to.is.null`);
-
+        .from('empire_tasks' as any).select('*').or(`assigned_to.eq.${userId},assigned_to.is.null`);
       if (data) {
-        const { data: userProgressData } = await supabase
-          .from('user_task_progress' as any)
-          .select('*')
-          .eq('user_id', userId);
-
-        const claimedIds = new Set(
-          (userProgressData || []).filter((up: any) => up.status === 'claimed').map((up: any) => up.task_id)
-        );
-
-        setBaronTasks(data
-          .filter((t: any) => !claimedIds.has(t.id))
-          .map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            description: t.description || '',
-            targetCount: t.target_count,
-            currentCount: t.current_count,
-            type: t.type,
-            rewardGems: t.reward_gems,
-            rewardStars: t.reward_stars,
-            rewardShards: t.reward_shards,
-            shardType: t.shard_type,
-            status: t.status,
-            assignedTo: t.assigned_to || 'all'
-          })));
+        const { data: upd } = await supabase.from('user_task_progress' as any).select('*').eq('user_id', userId);
+        const claimedIds = new Set((upd || []).filter((u: any) => u.status === 'claimed').map((u: any) => u.task_id));
+        setBaronTasks(data.filter((t: any) => !claimedIds.has(t.id)).map((t: any) => ({
+          id: t.id, title: t.title, description: t.description || '',
+          targetCount: t.target_count, currentCount: t.current_count, type: t.type,
+          rewardGems: t.reward_gems, rewardStars: t.reward_stars, rewardShards: t.reward_shards,
+          shardType: t.shard_type, status: t.status, assignedTo: t.assigned_to || 'all',
+        })));
       }
-    } catch (e) {
-      console.error('Error claiming task:', e);
-    }
-
+    } catch (e) { console.error(e); }
     const newGems = gems + gemsReward;
     const newStars = stars + starsReward;
-    setGems(newGems);
-    setStars(newStars);
+    setGems(newGems); setStars(newStars);
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(newGems));
     localStorage.setItem('quiz_app_user_stars', String(newStars));
     window.dispatchEvent(new CustomEvent('gemsUpdated'));
-
     if (shardsReward > 0) {
       const key = `advisor_shards_${shardType.toLowerCase()}`;
-      const curShards = Number(localStorage.getItem(key) || '0');
-      localStorage.setItem(key, String(curShards + shardsReward));
+      localStorage.setItem(key, String(Number(localStorage.getItem(key) || '0') + shardsReward));
       window.dispatchEvent(new CustomEvent('shardsUpdated'));
     }
-
     try {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        await (supabase as any)
-          .from('profiles')
-          .update({ 
-            points: newGems, 
-            stars: newStars 
-          })
-          .eq('id', session.session.user.id);
+        await (supabase as any).from('profiles').update({ points: newGems, stars: newStars }).eq('id', session.session.user.id);
       }
-    } catch (e) {
-      console.warn(e);
-    }
-
-    toast({
-      title: "Contract Claimed!",
-      description: `Claimed +${gemsReward} Gems, +${starsReward} Stars, and +${shardsReward} ${shardType} Shards!`,
-    });
+    } catch (e) { console.warn(e); }
+    toast({ title: '⚔️ Contract Claimed!', description: `+${gemsReward} 💎 · +${starsReward} ⭐ · +${shardsReward} ${shardType} Shards` });
   };
 
   const triggerDailyCheckIn = async (userKey: string, currentStars: number) => {
     const today = new Date().toLocaleDateString();
     const lastCheckIn = localStorage.getItem(`last_check_in_date_${userKey}`);
     const currentStreak = Number(localStorage.getItem(`check_in_streak_${userKey}`) || '0');
-
     if (lastCheckIn === today || sessionStorage.getItem('daily_checkin_shown')) return;
     sessionStorage.setItem('daily_checkin_shown', 'true');
-
-    let newStreak = 1;
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString();
-
-    if (lastCheckIn === yesterdayStr) {
-      newStreak = currentStreak + 1;
-    }
-    if (newStreak > 7) {
-      newStreak = 1;
-    }
-
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    let newStreak = lastCheckIn === yesterday.toLocaleDateString() ? Math.min(currentStreak + 1, 7) : 1;
     const reward = newStreak === 7 ? 50 : newStreak * 5;
-
-    // Apply reward
-    setCheckInRewardStars(reward);
-    setCheckInStreak(newStreak);
+    setCheckInRewardStars(reward); setCheckInStreak(newStreak);
     setStars(prev => prev + reward);
-
     localStorage.setItem(`last_check_in_date_${userKey}`, today);
     localStorage.setItem(`check_in_streak_${userKey}`, String(newStreak));
     localStorage.setItem('quiz_app_user_stars', String(currentStars + reward));
-
     if (userKey !== 'guest') {
-      try {
-        await (supabase as any).rpc('award_currency', {
-          p_points_delta: 0,
-          p_stars_delta: Math.round(reward),
-          p_reason: 'daily_check_in'
-        });
-      } catch (err) {
-        console.warn("Failed to sync check-in stars to DB:", err);
-      }
+      try { await (supabase as any).rpc('award_currency', { p_points_delta: 0, p_stars_delta: Math.round(reward), p_reason: 'daily_check_in' }); } catch {}
     }
-
     setTimeout(() => {
-      setShowCheckInModal(true);
-      haptics('success');
-      try {
-        import('canvas-confetti').then((m) => m.default({ particleCount: 60, spread: 50 }));
-      } catch {}
+      setShowCheckInModal(true); haptics('success');
+      try { import('canvas-confetti').then((m) => m.default({ particleCount: 70, spread: 55, origin: { y: 0.55 } })); } catch {}
     }, 1200);
   };
 
   useEffect(() => {
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    if (!uid) {
-      // Guest login check
-      triggerDailyCheckIn('guest', stars);
-      return;
-    }
+    if (!uid) { triggerDailyCheckIn('guest', stars); return; }
     supabase.from('profiles').select('username, display_name, points, stars').eq('id', uid).maybeSingle()
       .then(({ data }) => {
         if (data) {
           const balance = (data as any).points ?? 0;
           const starsBalance = (data as any).stars ?? 0;
-          setGems(balance);
-          setStars(starsBalance);
+          setGems(balance); setStars(starsBalance);
           const dn = (data as any).display_name || (data as any).username || 'Adventurer';
           setName(dn);
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(balance));
           localStorage.setItem('quiz_app_user_stars', String(starsBalance));
           localStorage.setItem(STORAGE_KEYS.USER_NAME, dn);
-
-          // Trigger daily check-in for registered user
           triggerDailyCheckIn(uid, starsBalance);
         }
       });
   }, []);
 
+  useEffect(() => {
+    const lifetimeWins = Number(localStorage.getItem('cuizin_lifetime_wins') || '0');
+    const isRated = localStorage.getItem('cuizin_app_rated') === 'true';
+    const isPromptShownThisSession = sessionStorage.getItem('rating_prompt_shown') === 'true';
+    
+    if (lifetimeWins >= 5 && !isRated && !isPromptShownThisSession && !showCheckInModal) {
+      const timer = setTimeout(() => {
+        setShowRatingModal(true);
+        sessionStorage.setItem('rating_prompt_shown', 'true');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showCheckInModal]);
+
   const isLoggedIn = !!localStorage.getItem(STORAGE_KEYS.USER_ID);
+  const activeTasks = baronTasks.filter(t => t.status !== 'claimed');
 
   return (
-    <div className="relative min-h-full pb-[120px] overflow-hidden bg-background">
+    <div className="relative min-h-full overflow-hidden">
 
-      {/* ═══ Brand Logo Top Bar ═══ */}
-      <div 
-        className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-amber-100/60 px-4 py-2 flex items-center justify-between"
-        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+      {/* ── Ambient background gradient ───────────────────────────────── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(24 49% 88%) 50%, hsl(200 40% 90%) 100%)',
+        }}
+      />
+
+      {/* ── Sticky Top Bar ────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 backdrop-blur-md border-b border-amber-200/60 px-4 py-2.5"
+        style={{ background: 'hsl(38 60% 95% / 0.92)' }}
       >
-        <div className="flex min-w-0 items-center gap-2" aria-label="CuizIN">
-          <img
-            src="/cuizin-logo.png"
-            alt=""
-            className="h-8 w-auto shrink-0 object-contain"
-            draggable={false}
-          />
-          <span className="sr-only">CuizIN</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <StreakFlame streak={streak} />
-          <GemCounter value={gems} />
-          <StarCounter value={stars} />
-        </div>
-      </div>
-
-      <div className="px-4 pt-4">
-
-      {/* ═══ Welcome Header ═══ */}
-      <div className="relative flex items-center justify-between mb-5">
-        <div>
-          <p className="text-[11px] text-amber-800/80 font-bold tracking-widest uppercase">Welcome,</p>
-          <h1 className="text-2xl font-black leading-tight text-amber-900 drop-shadow-sm">{name}</h1>
-        </div>
-      </div>
-
-      {/* ═══ King's Court / Character Banner ═══ */}
-      <section className="relative mb-4">
-        <MedievalCharacterBanner compact />
-      </section>
-
-      {/* Sign-in CTA for guests */}
-      {!isLoggedIn && (
-        <motion.button
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => { haptics('medium'); navigate('/login'); }}
-          className="w-full mb-6 p-4 text-left panel-3d bg-white"
-        >
-          <p className="font-black text-primary tracking-wide text-lg">⚔ Pledge Your Allegiance</p>
-          <p className="text-[12px] text-muted-foreground mt-0.5 font-bold">Sign in to save your gems & climb the rankings.</p>
-        </motion.button>
-      )}
-
-      {/* ═══ Your Council ═══ */}
-      <section className="relative mb-6">
-        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
-          Your Battle Council
-          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
-        </h2>
-        <MedievalAdvisors 
-          compact 
-          onAdvisorTap={(advisor) => {
-            const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
-            setActiveSpeech(quote);
-            setActiveId(advisor.id);
-            setTimeout(() => {
-              setActiveSpeech(null);
-              setActiveId(null);
-            }, 3500);
-          }}
-        />
-      </section>
-
-      {/* ═══ Royal Chambers (Featured Modes) ═══ */}
-      <section className="relative mb-6">
-        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
-          Royal Chambers
-          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
-        </h2>
-        <div className="space-y-3">
-          {ROYAL_CHAMBERS.map((node, i) => {
-            const Icon = node.icon;
-            return (
-              <motion.button
-                key={node.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative w-full flex items-center gap-4 p-4 text-left panel-3d bg-white group overflow-hidden"
-              >
-                {/* Icon emblem */}
-                <div className={cn(
-                  'flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm bg-gradient-to-br relative z-10 border-2 border-white/20',
-                  node.color
-                )}>
-                  <Icon className="w-6 h-6 drop-shadow-sm" />
-                </div>
-
-                {/* Text */}
-                <div className="flex-1 min-w-0 relative z-10">
-                  <p className="font-black text-lg text-foreground tracking-tight">{node.label}</p>
-                  <p className="text-[12px] text-muted-foreground font-bold mt-0.5 leading-tight">{node.hint}</p>
-                </div>
-
-                {/* Chevron */}
-                <ChevronRight className="w-5 h-5 text-muted-foreground/40 relative z-10 group-hover:text-primary transition-colors" />
-              </motion.button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ═══ Baron Contracts ═══ */}
-      {baronTasks.filter(t => t.status !== 'claimed').length > 0 && (
-        <section className="relative mb-6">
-          <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-            <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
-            Active Contracts
-            <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
-          </h2>
-          <div className="space-y-3">
-            {baronTasks.filter(t => t.status !== 'claimed').map((task) => (
-              <div 
-                key={task.id} 
-                className="panel-3d bg-white p-4 space-y-3 relative overflow-hidden"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="font-black text-sm text-primary block uppercase tracking-wider">
-                      📜 {task.title}
-                    </span>
-                    <span className="text-[12px] text-muted-foreground block mt-0.5 leading-relaxed font-bold">
-                      {task.description}
-                    </span>
-                  </div>
-                  
-                  {task.status === 'completed' ? (
-                    <Button 
-                      onClick={() => handleClaimTask(task.id, task.rewardGems, task.rewardStars, task.rewardShards, task.shardType)}
-                      className="btn-3d btn-3d-success py-1.5 h-8 px-4 text-[10px] animate-bounce"
-                    >
-                      Claim
-                    </Button>
-                  ) : (
-                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest bg-muted px-2 py-1 rounded-md">
-                      Active
-                    </span>
-                  )}
-                </div>
-
-                {/* Progress bar */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground">
-                    <span>Progress</span>
-                    <span>{task.currentCount} / {task.targetCount}</span>
-                  </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner">
-                    <div 
-                      className="h-full bg-primary transition-all duration-300"
-                      style={{ width: `${Math.min(100, (task.currentCount / task.targetCount) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Rewards display */}
-                <div className="flex items-center gap-3 pt-2 text-[11px] font-bold">
-                  <span className="text-muted-foreground">Rewards:</span>
-                  {task.rewardGems > 0 && <span className="flex items-center gap-1 text-sky-500">💎 {task.rewardGems}</span>}
-                  {task.rewardStars > 0 && <span className="flex items-center gap-1 text-amber-500">⭐ {task.rewardStars}</span>}
-                  {task.rewardShards > 0 && <span className="flex items-center gap-1 text-purple-500">🧩 {task.rewardShards} {task.shardType}</span>}
-                </div>
-              </div>
-            ))}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/cuizin-logo.png" alt="CuizIN" className="h-7 w-auto object-contain" draggable={false} />
           </div>
-        </section>
-      )}
+          <div className="flex items-center gap-1">
+            <StreakFlame streak={streak} />
+            <GemCounter value={gems} />
+            <StarCounter value={stars} />
+          </div>
+        </div>
+      </div>
 
-      {/* Daily Bounty Board */}
-      <section className="relative mb-5">
-        <DailyBountyBoard />
-      </section>
+      {/* ── Scrollable content ────────────────────────────────────────── */}
+      <div className="relative px-4 pt-5 pb-6 space-y-7">
 
-      {/* ═══ Tavern Games ═══ */}
-      <section className="relative mb-6">
-        <h2 className="text-[11px] font-black tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-          <span className="w-8 h-[2px] bg-muted/50 rounded-full" />
-          Tavern Games & Contests
-          <span className="flex-1 h-[2px] bg-muted/50 rounded-full" />
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          {TAVERN_GAMES.map((node, i) => {
-            const Icon = node.icon;
-            return (
+        {/* ── Hero: Welcome + Character ─────────────────────────────── */}
+        <motion.section {...fadeUp(0)}>
+          {/* Welcome text */}
+          <div className="mb-3">
+            <p className="text-[10px] font-black tracking-[0.18em] uppercase text-amber-800/60">Welcome back,</p>
+            <h1 className="text-[26px] font-black leading-tight tracking-tight"
+              style={{ color: 'hsl(30 60% 18%)' }}>
+              {name}
+            </h1>
+          </div>
+
+          {/* Character Banner — full-width, taller on the revamped hub */}
+          <div className="rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/10">
+            <MedievalCharacterBanner compact />
+          </div>
+
+          {/* Guest CTA */}
+          {!isLoggedIn && (
+            <motion.button
+              {...fadeUp(0.05)}
+              onClick={() => { haptics('medium'); navigate('/login'); }}
+              className="mt-3 w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left"
+              style={{
+                background: 'linear-gradient(135deg, hsl(45 95% 55%), hsl(30 90% 50%))',
+                boxShadow: '0 4px 0 hsl(30 80% 38%), 0 6px 16px hsl(45 60% 50% / 0.35)',
+              }}
+            >
+              <LogIn className="w-5 h-5 text-white/90 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-white text-sm tracking-tight">Pledge Your Allegiance</p>
+                <p className="text-[11px] text-white/80 font-bold">Sign in to save gems & climb the ranks</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/70 shrink-0" />
+            </motion.button>
+          )}
+        </motion.section>
+
+        {/* ── Battle Council (Advisors) ─────────────────────────────── */}
+        <motion.section {...fadeUp(0.06)}>
+          <SectionTitle>Your Battle Council</SectionTitle>
+          <MedievalAdvisors
+            compact
+            onAdvisorTap={(advisor) => {
+              const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
+              setActiveSpeech(quote);
+              setActiveId(advisor.id);
+              setTimeout(() => { setActiveSpeech(null); setActiveId(null); }, 3500);
+            }}
+          />
+        </motion.section>
+
+        {/* ── Royal Chambers (main modes) ───────────────────────────── */}
+        <motion.section {...fadeUp(0.10)}>
+          <SectionTitle>Royal Chambers</SectionTitle>
+          <div className="space-y-2.5">
+            {ROYAL_CHAMBERS.map((node, i) => {
+              const Icon = node.icon!;
+              const isHot = node.badge === 'HOT';
+              return (
+                <motion.button
+                  key={node.id}
+                  {...popIn(i * 0.055)}
+                  whileTap={{ scale: 0.975 }}
+                  onClick={() => { haptics('medium'); navigate(node.to); }}
+                  className="relative w-full flex items-center gap-3.5 px-4 py-3.5 text-left rounded-2xl bg-white/80 ring-1 ring-black/[0.06] shadow-sm overflow-hidden group"
+                >
+                  {/* Colour accent strip */}
+                  <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b', node.color)} />
+
+                  {/* Icon emblem */}
+                  <div className={cn(
+                    'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm',
+                    node.color
+                  )}>
+                    <Icon className="w-5.5 h-5.5 drop-shadow-sm" strokeWidth={2.2} />
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-[15px] leading-tight" style={{ color: 'hsl(220 50% 15%)' }}>
+                      {node.label}
+                    </p>
+                    <p className="text-[11px] font-semibold mt-0.5 leading-tight text-slate-500 truncate">
+                      {node.hint}
+                    </p>
+                  </div>
+
+                  {/* Badge + Chevron */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {node.badge && (
+                      <span className={cn(
+                        'text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full',
+                        isHot
+                          ? 'bg-rose-500 text-white animate-pulse'
+                          : 'bg-amber-100 text-amber-700 border border-amber-200'
+                      )}>
+                        {node.badge}
+                      </span>
+                    )}
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* ── Active Contracts ──────────────────────────────────────── */}
+        {activeTasks.length > 0 && (
+          <motion.section {...fadeUp(0.13)}>
+            <SectionTitle>Active Contracts</SectionTitle>
+            <div className="space-y-2.5">
+              {activeTasks.map((task) => {
+                const pct = Math.min(100, (task.currentCount / task.targetCount) * 100);
+                const isComplete = task.status === 'completed';
+                return (
+                  <div
+                    key={task.id}
+                    className="relative rounded-2xl bg-white/80 ring-1 ring-black/[0.06] shadow-sm p-4 overflow-hidden"
+                  >
+                    {/* Completion shimmer */}
+                    {isComplete && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-50/60 to-transparent pointer-events-none" />
+                    )}
+
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-sm text-amber-800 uppercase tracking-wide truncate">
+                          📜 {task.title}
+                        </p>
+                        {task.description && (
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                            {task.description}
+                          </p>
+                        )}
+                      </div>
+                      {isComplete ? (
+                        <Button
+                          onClick={() => handleClaimTask(task.id, task.rewardGems, task.rewardStars, task.rewardShards, task.shardType)}
+                          className="h-8 px-3 text-[11px] font-black bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shrink-0 animate-bounce shadow-md"
+                        >
+                          Claim
+                        </Button>
+                      ) : (
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-full shrink-0">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                        <span>Progress</span>
+                        <span>{task.currentCount} / {task.targetCount}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <motion.div
+                          className={cn('h-full rounded-full', isComplete ? 'bg-emerald-500' : 'bg-amber-400')}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Rewards row */}
+                    <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Rewards:</span>
+                      {task.rewardGems  > 0 && <span className="text-[11px] font-black text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded-full">💎 {task.rewardGems}</span>}
+                      {task.rewardStars > 0 && <span className="text-[11px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">⭐ {task.rewardStars}</span>}
+                      {task.rewardShards > 0 && <span className="text-[11px] font-black text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full">🧩 {task.rewardShards}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Daily Bounty Board ────────────────────────────────────── */}
+        <motion.section {...fadeUp(0.15)}>
+          <DailyBountyBoard />
+        </motion.section>
+
+        {/* ── Tavern Games ─────────────────────────────────────────── */}
+        <motion.section {...fadeUp(0.18)}>
+          <SectionTitle>Tavern Games & Contests</SectionTitle>
+          <div className="grid grid-cols-2 gap-2.5">
+            {TAVERN_GAMES.map((node, i) => (
               <motion.button
                 key={node.id}
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: (i + 2) * 0.04, type: 'spring', stiffness: 220, damping: 22 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => { haptics('medium'); navigate(node.to); }}
-                className="relative flex flex-col justify-between p-4 text-left h-36 overflow-hidden panel-3d bg-white"
+                {...popIn(i * 0.03)}
+                whileTap={{ scale: 0.94 }}
+                onClick={() => { haptics('light'); navigate(node.to); }}
+                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl bg-white/80 ring-1 ring-black/[0.06] shadow-sm text-left overflow-hidden group"
               >
                 {/* Badge */}
                 {node.badge && (
-                  <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-500 text-white shadow-sm">
+                  <span className="absolute top-2.5 right-2.5 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500 text-white shadow-sm">
                     {node.badge}
                   </span>
                 )}
 
-                {/* Icon */}
+                {/* Emoji icon in a gradient pill */}
                 <div className={cn(
-                  'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm bg-gradient-to-br border-2 border-white/20',
+                  'w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-sm',
                   node.color
                 )}>
-                  {node.emoji ? (
-                    <span className="text-xl drop-shadow-sm">{node.emoji}</span>
-                  ) : node.icon ? (
-                    <Icon className="w-5 h-5 drop-shadow-sm" />
-                  ) : null}
+                  <span className="text-xl leading-none">{node.emoji}</span>
                 </div>
 
-                {/* Info */}
-                <div className="mt-4">
-                  <h4 className="font-black text-sm text-foreground tracking-tight line-clamp-1">{node.label}</h4>
-                  <p className="text-[11px] text-muted-foreground font-bold mt-0.5 line-clamp-2 leading-tight">{node.hint}</p>
-                </div>
+                {/* Label */}
+                <p className="font-black text-[13px] leading-tight tracking-tight line-clamp-2"
+                  style={{ color: 'hsl(220 50% 15%)' }}>
+                  {node.label}
+                </p>
               </motion.button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ═══ DAILY CHECK-IN MODAL ═══ */}
-      <AnimatePresence>
-        {showCheckInModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="panel-3d bg-white max-w-sm w-full p-6 text-center shadow-2xl relative"
-            >
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-400 text-white rounded-full w-20 h-20 flex items-center justify-center text-4xl shadow-lg border-4 border-white">
-                ✨
-              </div>
-
-              <h3 className="text-2xl font-black text-primary mt-10 mb-2 uppercase tracking-wide">
-                Daily Tribute!
-              </h3>
-              <p className="text-sm font-bold text-muted-foreground leading-relaxed mb-6">
-                Your presence is requested at the King's Council. Claim your daily tribute of stars to expand your empire!
-              </p>
-
-              {/* 7-Day Progression track */}
-              <div className="grid grid-cols-7 gap-1.5 mb-6">
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => {
-                  const isDayCompleted = day < checkInStreak;
-                  const isDayCurrent = day === checkInStreak;
-                  const rewardAmt = day === 7 ? 50 : day * 5;
-
-                  return (
-                    <div 
-                      key={day} 
-                      className={cn(
-                        "rounded-xl p-1 flex flex-col items-center justify-between border-2 text-[10px] font-bold h-20 transition-all",
-                        isDayCompleted 
-                          ? "bg-emerald-100 border-emerald-300 text-emerald-600" 
-                          : isDayCurrent
-                          ? "bg-yellow-100 border-yellow-400 text-yellow-600 scale-105 shadow-md"
-                          : "bg-muted/50 border-muted text-muted-foreground"
-                      )}
-                    >
-                      <span className="opacity-70 text-[9px]">Day {day}</span>
-                      <span className="text-lg">{day === 7 ? '👑' : '⭐'}</span>
-                      <span className={cn(
-                        "font-black font-mono",
-                        isDayCurrent ? "text-yellow-600" : "text-muted-foreground"
-                      )}>+{rewardAmt}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="bg-muted/30 border-2 border-muted rounded-2xl p-4 mb-6 flex items-center justify-around">
-                <div className="text-left">
-                  <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Today's Reward</span>
-                  <span className="text-2xl font-black text-primary leading-tight">+{checkInRewardStars} Stars</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Current Streak</span>
-                  <span className="text-2xl font-black text-secondary leading-tight">{checkInStreak} Days</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  haptics('medium');
-                  setShowCheckInModal(false);
-                }}
-                className="w-full btn-3d btn-3d-primary"
-              >
-                Claim Tribute
-              </button>
-            </motion.div>
+            ))}
           </div>
+        </motion.section>
+
+      </div>{/* end scrollable content */}
+
+      {/* ── Rate App Modal ────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showRatingModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 60, opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+              style={{ background: 'hsl(38 60% 97%)' }}
+            >
+              {/* Header gradient band */}
+              <div className="relative h-28 flex flex-col items-center justify-end pb-4"
+                style={{ background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}>
+                <div className="absolute inset-0 opacity-20"
+                  style={{ backgroundImage: 'radial-gradient(circle at 30% 40%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                <Star className="w-10 h-10 text-white fill-white/20 drop-shadow-lg mb-1 animate-pulse" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Support the Realm</p>
+              </div>
+
+              <div className="px-5 pt-5 pb-6">
+                <h3 className="text-xl font-black text-center mb-1" style={{ color: 'hsl(30 60% 18%)' }}>
+                  Rate the Kingdom!
+                </h3>
+                <p className="text-[12px] text-center text-slate-500 font-medium mb-5">
+                  Your wisdom has conquered multiple trivia battles! Rate Cuiz.in to help other query-seekers find our kingdom.
+                </p>
+
+                {/* Stars Selection */}
+                <div className="flex justify-center gap-2 mb-6">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <motion.button
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      key={star}
+                      onClick={() => {
+                        haptics('light');
+                        localStorage.setItem('cuizin_app_rated', 'true');
+                        setShowRatingModal(false);
+                        window.open('https://cuiz.in', '_blank');
+                      }}
+                      className="text-3xl leading-none filter drop-shadow-sm bg-transparent border-0 outline-none cursor-pointer"
+                    >
+                      ⭐
+                    </motion.button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      haptics('medium');
+                      localStorage.setItem('cuizin_app_rated', 'true');
+                      setShowRatingModal(false);
+                      window.open('https://cuiz.in', '_blank');
+                    }}
+                    className="w-full rounded-2xl py-3.5 font-black text-sm uppercase tracking-wider text-white"
+                    style={{
+                      background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 45%))',
+                      boxShadow: '0 4px 0 hsl(30 80% 35%), 0 6px 20px hsl(45 70% 50% / 0.4)',
+                    }}
+                  >
+                    ⚔️ Rate 5 Stars
+                  </button>
+                  <button
+                    onClick={() => {
+                      haptics('light');
+                      setShowRatingModal(false);
+                    }}
+                    className="w-full py-2.5 font-black text-slate-400 hover:text-slate-600 text-xs uppercase tracking-wider transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                  >
+                    Maybe Later
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
-      </div>{/* end px-4 pt-4 content wrapper */}
+
+      {/* ── Daily Check-In Modal ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showCheckInModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 60, opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+              style={{ background: 'hsl(38 60% 97%)' }}
+            >
+              {/* Header gradient band */}
+              <div className="relative h-28 flex flex-col items-center justify-end pb-4"
+                style={{ background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}>
+                <div className="absolute inset-0 opacity-20"
+                  style={{ backgroundImage: 'radial-gradient(circle at 30% 40%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                <Crown className="w-10 h-10 text-white drop-shadow-lg mb-1" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Royal Decree</p>
+              </div>
+
+              <div className="px-5 pt-5 pb-6">
+                <h3 className="text-xl font-black text-center mb-1" style={{ color: 'hsl(30 60% 18%)' }}>
+                  Daily Tribute!
+                </h3>
+                <p className="text-[12px] text-center text-slate-500 font-medium mb-5">
+                  Your presence graces the King's Council. Claim your daily stars to expand your empire!
+                </p>
+
+                {/* 7-Day track */}
+                <div className="grid grid-cols-7 gap-1 mb-5">
+                  {[1,2,3,4,5,6,7].map((day) => {
+                    const done    = day < checkInStreak;
+                    const current = day === checkInStreak;
+                    const amt     = day === 7 ? 50 : day * 5;
+                    return (
+                      <div key={day} className={cn(
+                        'flex flex-col items-center justify-center rounded-xl border-2 py-1.5 gap-0.5 transition-all',
+                        done    ? 'bg-emerald-100 border-emerald-300'
+                        : current ? 'bg-amber-100 border-amber-400 scale-105 shadow-md'
+                        : 'bg-slate-50 border-slate-200'
+                      )}>
+                        <span className="text-[8px] font-black text-slate-400 uppercase">D{day}</span>
+                        <span className="text-base leading-none">{day === 7 ? '👑' : '⭐'}</span>
+                        <span className={cn('text-[9px] font-black', current ? 'text-amber-600' : 'text-slate-400')}>
+                          +{amt}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Reward summary */}
+                <div className="flex items-center justify-around rounded-2xl bg-amber-50 border border-amber-200 p-3.5 mb-5">
+                  <div className="text-center">
+                    <p className="text-[9px] font-black uppercase tracking-wide text-amber-600/70 mb-0.5">Today's Reward</p>
+                    <p className="text-2xl font-black text-amber-700 leading-none">+{checkInRewardStars}</p>
+                    <p className="text-[10px] font-bold text-amber-600 mt-0.5">Stars</p>
+                  </div>
+                  <div className="w-px h-10 bg-amber-200" />
+                  <div className="text-center">
+                    <p className="text-[9px] font-black uppercase tracking-wide text-amber-600/70 mb-0.5">Streak</p>
+                    <p className="text-2xl font-black text-amber-700 leading-none">{checkInStreak}</p>
+                    <p className="text-[10px] font-bold text-amber-600 mt-0.5">Days</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => { haptics('medium'); setShowCheckInModal(false); }}
+                  className="w-full rounded-2xl py-3.5 font-black text-sm uppercase tracking-wider text-white"
+                  style={{
+                    background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 45%))',
+                    boxShadow: '0 4px 0 hsl(30 80% 35%), 0 6px 20px hsl(45 70% 50% / 0.4)',
+                  }}
+                >
+                  ⚔️ Claim Tribute
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

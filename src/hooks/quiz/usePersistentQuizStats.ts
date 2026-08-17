@@ -109,7 +109,16 @@ export const usePersistentQuizStats = () => {
   }, []);
 
   const incrementCorrectAnswered = useCallback(() => {
-    setCorrectAnsweredState(prev => prev + 1);
+    setCorrectAnsweredState(prev => {
+      const next = prev + 1;
+      try {
+        const currentLifetime = Number(localStorage.getItem('cuizin_lifetime_wins') || '0');
+        localStorage.setItem('cuizin_lifetime_wins', String(currentLifetime + 1));
+      } catch (e) {
+        console.error('Failed to update lifetime wins', e);
+      }
+      return next;
+    });
   }, []);
   
   // Sync with database value if higher (in case user answered on another device)
