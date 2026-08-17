@@ -193,7 +193,7 @@ export default function ProfileScreen() {
   if (!uid) {
     return (
       <div className="relative min-h-full">
-        <div aria-hidden className="pointer-events-none absolute inset-0"
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
           style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
         <div className="relative flex flex-col items-center px-6 pt-16 pb-8 text-center">
           <MascotPlayer character={characterOfTheDay()} mood="cheer" size={130} className="mb-5" />
@@ -234,7 +234,7 @@ export default function ProfileScreen() {
     <div className="relative min-h-full">
 
       {/* Ambient background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0"
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
 
       <div className="relative px-4 pt-5 pb-6 space-y-5">

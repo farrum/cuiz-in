@@ -286,7 +286,7 @@ export default function MobileTeamDashboard() {
   if (isLoading) {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center p-4">
-        <div aria-hidden className="pointer-events-none absolute inset-0"
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
           style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
         <div className="relative z-10 text-center">
           <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3 mx-auto" />
@@ -351,7 +351,7 @@ export default function MobileTeamDashboard() {
     return (
       <div className="relative min-h-full">
         {/* Ambient background */}
-        <div aria-hidden className="pointer-events-none absolute inset-0"
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
           style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
 
         {/* Header */}
@@ -549,7 +549,7 @@ export default function MobileTeamDashboard() {
   return (
     <div className="relative min-h-full">
       {/* Ambient background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0"
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
 
       {/* Header */}

@@ -16,11 +16,17 @@ import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { Capacitor } from '@capacitor/core';
 /* TopBannerAd intentionally NOT imported here — the persistent banner is already
    managed by BannerHost in AppMobile. Mounting it again caused a double-banner
    on native and a flash on every question transition. */
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
+
+const isNativeApp = (() => {
+  try { return Capacitor.isNativePlatform(); } catch { return false; }
+})();
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const PREF_KEY = 'quiz_story_prefs';
@@ -244,10 +250,14 @@ export default function QuizStoryScreen() {
       className="fixed inset-0 flex flex-col bg-background overflow-hidden"
       style={{ paddingTop: 'var(--safe-top)' }}
     >
-      {/* Ambient background — static gradient, zero GPU cost */}
+      {/* Ambient background — static gradient, zero GPU cost.
+          MUST stay behind the content (-z-10): as a positioned element it
+          otherwise paints on top of the non-positioned question text and the
+          footer, which made them invisible while transformed elements (the
+          option buttons) still showed through. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)' }}
       />
 
@@ -273,7 +283,7 @@ export default function QuizStoryScreen() {
       </div>
 
       {/* Question scroll area — bottom clearance uses CSS contract variable */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4" style={{ paddingBottom: 'calc(var(--safe-bottom) + 6px)' }}>
+      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto px-4 pt-4" style={{ paddingBottom: 'calc(var(--safe-bottom) + 6px)' }}>
         {loadError && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
             <p className="text-sm font-bold text-foreground">Couldn't load a question</p>
@@ -288,16 +298,15 @@ export default function QuizStoryScreen() {
             </button>
           </div>
         )}
-        <AnimatePresence mode="popLayout">
-          {question && !loadError && (
-            <motion.div
-              key={question.id}
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-              className="w-full flex flex-col"
-            >
+        {/* NOTE: this block must NOT be wrapped in a transform/scale animation.
+            Animating scale on the container promotes it to its own compositing
+            layer, and on the Android WebView (and headless Chromium) the
+            layer's own painted content — the question text and the category
+            chips — can be dropped while nested layers (the option buttons)
+            still paint. That is what produced the blank question area. A plain
+            opacity fade keeps everything on one layer. */}
+        {question && !loadError && (
+            <div key={question.id} className="w-full flex flex-col animate-fade-in">
               {/* Category + Difficulty + Gems row */}
               <div className="mb-4 flex items-center gap-1.5 flex-wrap">
                 <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-black px-2 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
@@ -312,12 +321,12 @@ export default function QuizStoryScreen() {
               </div>
 
               {question.imageUrl && (
-                <motion.img
+                <img
                   src={question.imageUrl}
                   alt=""
+                  loading="lazy"
                   className="w-full max-h-64 object-cover rounded-2xl mb-4 shadow-md iron-frame"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
 
@@ -395,18 +404,23 @@ export default function QuizStoryScreen() {
                   size={92}
                 />
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
 
-      {/* The persistent native banner (BannerHost) sits between MobileShell's
-          TopBannerAd and BottomTabs — DO NOT mount another TopBannerAd here.
-          Spacer ensures scroll content is never hidden behind the banner. */}
-      <div aria-hidden className="h-[var(--banner-h)] shrink-0" />
+      {/* Native app: the persistent banner (BannerHost) is drawn outside the
+          WebView, so only reserve its height. Mobile web has no native SDK, so
+          render a real ad slot instead of an empty gap. */}
+      {isNativeApp ? (
+        <div aria-hidden className="h-[var(--banner-h)] shrink-0" />
+      ) : (
+        <div className="shrink-0 px-3">
+          <SimpleAdBanner position="bottom" slotId="quiz-mobile-bottom" />
+        </div>
+      )}
 
       {/* Preferences button — floating pill */}
-      <div className="px-4 pt-2">
+      <div className="relative z-10 px-4 pt-2">
         <button
           onClick={() => setPrefsOpen(true)}
           className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[12px] font-black bg-white/80 ring-1 ring-black/[0.06] text-slate-600 hover:bg-white transition-colors uppercase tracking-wide"
@@ -417,7 +431,7 @@ export default function QuizStoryScreen() {
       </div>
 
       {/* Session summary footer */}
-      <div className="px-4 py-2.5 mx-3 mb-2 rounded-2xl bg-white/80 ring-1 ring-black/[0.06]"
+      <div className="relative z-10 px-4 py-2.5 mx-3 mb-2 rounded-2xl bg-white/80 ring-1 ring-black/[0.06]"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
       >
         <div className="flex items-center justify-between gap-2">

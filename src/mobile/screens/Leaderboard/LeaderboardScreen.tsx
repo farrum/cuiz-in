@@ -63,7 +63,7 @@ export default function LeaderboardScreen() {
     <div className="relative min-h-full">
 
       {/* Ambient bg */}
-      <div aria-hidden className="pointer-events-none absolute inset-0"
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
 
       <div className="relative px-4 pt-5 pb-6">
