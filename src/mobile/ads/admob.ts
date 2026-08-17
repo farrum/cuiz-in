@@ -118,11 +118,13 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
     bannerShown = true;
     // Listen for the actual rendered banner height so CSS spacers match.
     // bannerAdSizeChanged fires with { width, height } in dp after the ad loads.
-    AdMob.addListener('bannerAdSizeChanged', (size: { width: number; height: number }) => {
-      if (size?.height) {
-        document.documentElement.style.setProperty('--banner-h', `${Math.ceil(size.height)}px`);
-      }
-    }).catch(() => {/* plugin may not support this listener — safe to ignore */});
+    (AdMob as any)
+      .addListener('bannerAdSizeChanged', (size: { width: number; height: number }) => {
+        if (size?.height) {
+          document.documentElement.style.setProperty('--banner-h', `${Math.ceil(size.height)}px`);
+        }
+      })
+      ?.catch?.(() => {/* plugin may not support this listener — safe to ignore */});
     return true;
   } catch (e) {
     console.warn('[AdMob] banner failed', e);

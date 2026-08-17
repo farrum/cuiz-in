@@ -59,13 +59,13 @@ const TAVERN_GAMES: Node[] = [
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0 },
-  transition: { delay, duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+  transition: { delay, duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 const popIn = (delay = 0) => ({
   initial: { opacity: 0, scale: 0.92 },
   animate: { opacity: 1, scale: 1 },
-  transition: { delay, type: 'spring', stiffness: 260, damping: 22 },
+  transition: { delay, type: 'spring' as const, stiffness: 260, damping: 22 },
 });
 
 // ── Section heading ──────────────────────────────────────────────────────────
@@ -300,7 +300,7 @@ export default function HubScreen() {
       {/* ── Ambient background gradient ───────────────────────────────── */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(24 49% 88%) 50%, hsl(200 40% 90%) 100%)',
         }}

@@ -57,7 +57,7 @@ export default function ShopScreen() {
     <div className="relative min-h-full">
 
       {/* Ambient background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0"
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
       {/* Sticky header */}
       <div
