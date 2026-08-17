@@ -15,19 +15,20 @@ import { initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 import { BannerHost } from './ads/BannerHost';
 
-// Lazy-load screens for fast first paint
-const HubScreen = lazy(() => import('./screens/Hub/HubScreen'));
+import HubScreen from './screens/Hub/HubScreen';
+import LeaderboardScreen from './screens/Leaderboard/LeaderboardScreen';
+import ProfileScreen from './screens/Profile/ProfileScreen';
+import MobileTeamDashboard from './screens/Profile/MobileTeamDashboard';
+import ShopScreen from './screens/Shop/ShopScreen';
+
+// Lazy-load screens that are outside the main tab view to optimize load size
 const QuizStoryScreen = lazy(() => import('./screens/QuizStory/QuizStoryScreen'));
-const LeaderboardScreen = lazy(() => import('./screens/Leaderboard/LeaderboardScreen'));
-const ProfileScreen = lazy(() => import('./screens/Profile/ProfileScreen'));
-const MobileTeamDashboard = lazy(() => import('./screens/Profile/MobileTeamDashboard'));
 const OnboardingScreen = lazy(() => import('./screens/Onboarding/OnboardingScreen'));
 const MobileLoginScreen = lazy(() => import('./screens/Login/MobileLoginScreen'));
 const DailyChallengeStoryScreen = lazy(() => import('./screens/DailyChallengeStory/DailyChallengeStoryScreen'));
 const MiniGameScreen = lazy(() => import('./screens/MiniGames/MiniGameScreen'));
 const EmpireQuestsPage = lazy(() => import('../pages/EmpireQuestsPage'));
 const KingdomsPage = lazy(() => import('../pages/KingdomsPage'));
-const ShopScreen = lazy(() => import('./screens/Shop/ShopScreen'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },

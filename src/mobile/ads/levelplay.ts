@@ -71,6 +71,7 @@ export async function showLevelPlayBanner() {
   try {
     await Native.showBanner({ placement: LEVELPLAY_PLACEMENTS.banner, adUnitId: LEVELPLAY_AD_UNITS.banner });
     bannerShown = true;
+    document.documentElement.style.setProperty('--banner-h', '50px');
   } catch (e) {
     console.warn('[LevelPlay] banner failed', e);
   }
@@ -81,6 +82,7 @@ export async function hideLevelPlayBanner() {
   bannerShown = false;
   try {
     await Native.hideBanner();
+    document.documentElement.style.setProperty('--banner-h', '0px');
   } catch {
     /* noop */
   }

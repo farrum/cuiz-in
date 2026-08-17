@@ -33,18 +33,13 @@ export function MobileShell() {
         {/* No key on the wrapper: keying by pathname remounted the whole
             subtree on every navigation, which re-ran the fade from opacity 0
             and read as a flicker. */}
-        <motion.div
-          initial={false}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="min-h-full"
-        >
+        <div className="min-h-full">
           <ErrorBoundary compact resetKey={location.pathname}>
             <Suspense fallback={<ScreenSkeleton />}>
               <Outlet />
             </Suspense>
           </ErrorBoundary>
-        </motion.div>
+        </div>
       </div>
       {/* Banner spacer: the AdMob/LevelPlay banner is drawn by BannerHost
           outside the WebView at this physical position. This div reserves

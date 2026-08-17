@@ -132,7 +132,7 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
         <img
           src={getRankImage(role)}
           alt={getRankName(role)}
-          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
+          className="absolute inset-0 w-full h-full object-cover object-top scale-105"
           loading="lazy"
         />
         {/* Darkening overlay for legibility */}

@@ -273,7 +273,7 @@ export default function QuizStoryScreen() {
       </div>
 
       {/* Question scroll area — bottom clearance uses CSS contract variable */}
-      <div className="flex-1 flex flex-col px-4 pt-4 overflow-y-auto" style={{ paddingBottom: 'calc(var(--safe-bottom) + 6px)' }}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4" style={{ paddingBottom: 'calc(var(--safe-bottom) + 6px)' }}>
         {loadError && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
             <p className="text-sm font-bold text-foreground">Couldn't load a question</p>
@@ -296,7 +296,7 @@ export default function QuizStoryScreen() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -30, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-              className="flex-1 flex flex-col"
+              className="min-h-full flex flex-col"
             >
               {/* Category + Difficulty + Gems row */}
               <div className="mb-4 flex items-center gap-1.5 flex-wrap">
