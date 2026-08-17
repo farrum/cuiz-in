@@ -365,7 +365,16 @@ export default function MobileTeamDashboard() {
             className="p-2 -ml-2 rounded-xl hover:bg-amber-100/60 transition-colors"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 text-amber-905/70" />
+            <ArrowLeft className="w-5 h-5 text-amber-900/70" />
+          </motion.button>
+          <div className="flex-1">
+            <h1 className="text-[15px] font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
+              Squad Recruitment
+            </h1>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Build Your Mercenary Ranks</p>
+          </div>
+        </div>
+
         <div className="px-4 pt-5 pb-6 space-y-5 relative z-10 text-slate-800">
           {/* Pledged Alliance (If in team) */}
           {currentTeam ? (
