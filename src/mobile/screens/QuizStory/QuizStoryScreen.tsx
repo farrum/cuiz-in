@@ -296,7 +296,7 @@ export default function QuizStoryScreen() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -30, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-              className="min-h-full flex flex-col"
+              className="w-full flex flex-col"
             >
               {/* Category + Difficulty + Gems row */}
               <div className="mb-4 flex items-center gap-1.5 flex-wrap">
