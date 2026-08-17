@@ -380,7 +380,7 @@ ${mainEntries.join('\n')}
   while (hasMore) {
     const { data, error } = await supabase
       .from('quiz_questions')
-      .select('id, question, category, created_at')
+      .select('id, question, options, category, difficulty, explanation, created_at')
       .order('id')
       .range(from, from + batchSize - 1);
 

@@ -213,6 +213,25 @@ function getQuestionSubcategorySlug(dbCategory, questionText) {
   return undefined;
 }
 
+function getQuestionSubcategoryName(dbCategory, questionText) {
+  const parentSlug = getCategorySlug(dbCategory);
+  if (!parentSlug) return '';
+  
+  const subcategories = subcategoriesByCategory[parentSlug] || [];
+  for (const sub of subcategories) {
+    if (sub.dbCategories && sub.dbCategories.includes(dbCategory)) {
+      return sub.name;
+    }
+    if (sub.keywords && sub.keywords.length > 0) {
+      const lowerText = questionText.toLowerCase();
+      if (sub.keywords.some(kw => lowerText.includes(kw.toLowerCase().replace(/[,()]/g, '')))) {
+        return sub.name;
+      }
+    }
+  }
+  return '';
+}
+
 const categoryToSlugMap = {};
 for (const [slug, cats] of Object.entries(slugToCategoriesMap)) {
   for (const cat of cats) {
@@ -393,7 +412,7 @@ async function run() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('quiz_questions')
-          .select('id, question, category')
+          .select('id, question, options, category, difficulty, explanation, created_at')
           .order('id')
           .range(from, from + batchSize - 1);
 
@@ -712,6 +731,68 @@ async function run() {
       bodyHtml: blogHtml
     });
     count++;
+  }
+  // 6. GENERATE INDIVIDUAL QUESTION PAGES
+  if (databaseAvailable && allQuestions.length > 0) {
+    console.log(`[seo-pages] Generating static pages for ${allQuestions.length} quiz questions...`);
+    let qCount = 0;
+    for (const q of allQuestions) {
+      const qSlug = createSlug(q.question);
+      if (!qSlug) continue;
+
+      const categorySlug = getCategorySlug(q.category);
+      const subSlug = getQuestionSubcategorySlug(q.category, q.question);
+      
+      const canonical = subSlug
+        ? `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${subSlug}/${qSlug}`
+        : `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${qSlug}`;
+
+      const optionsList = (Array.isArray(q.options) ? q.options : Object.values(q.options || {}))
+        .map(opt => `<li>${esc(opt)}</li>`)
+        .join('\n');
+
+      const bodyHtml = `
+        <nav class="bc">
+          <a href="/">Home</a> &rsaquo; 
+          <a href="/categories">Categories</a> &rsaquo; 
+          <a href="/categories/${categorySlug}">${esc(q.category)}</a>
+          ${subSlug ? ` &rsaquo; <a href="/categories/${categorySlug}/${subSlug}">${esc(getQuestionSubcategoryName(q.category, q.question))}</a>` : ''}
+        </nav>
+        <article>
+          <span class="tag">${esc(q.difficulty || 'medium')}</span>
+          <span class="tag">${esc(q.category)}</span>
+          <h1>${esc(q.question)}</h1>
+          
+          <h2>Quiz Options</h2>
+          <ul>
+            ${optionsList}
+          </ul>
+          
+          ${q.explanation ? `
+          <h2>Explanation</h2>
+          <p>${esc(q.explanation)}</p>
+          ` : ''}
+        </article>
+      `;
+
+      const title = `${q.question.substring(0, 60)}${q.question.length > 60 ? '...' : ''} | ${q.category} Quiz Question`;
+      const cleanQ = q.question.replace(/"/g, "'");
+      const description = `Answer the quiz question: "${cleanQ.substring(0, 80)}${cleanQ.length > 80 ? '...' : ''}" (${q.difficulty || 'medium'} difficulty). Find options, correct answer, and explanation. Play free quizzes on CuizIN.`;
+
+      const routePath = subSlug
+        ? `/quiz/question/${q.id}/${categorySlug}/${subSlug}/${qSlug}`
+        : `/quiz/question/${q.id}/${categorySlug}/${qSlug}`;
+
+      write(routePath, {
+        title,
+        description,
+        canonical,
+        bodyHtml
+      });
+      qCount++;
+    }
+    console.log(`[seo-pages] Successfully pre-rendered ${qCount} quiz question pages.`);
+    count += qCount;
   }
 
   console.log(`[seo-pages] Successfully generated ${count} per-route static HTML files.`);
