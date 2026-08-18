@@ -108,6 +108,7 @@ export default function LeaderboardScreen() {
               const p = PODIUM_COLORS[actualRank - 1];
               const Icon = p.icon;
               const isMe = row?.user_id === uid;
+              const isFirst = actualRank === 1;
               return (
                 <motion.div
                   key={row?.user_id}
@@ -117,7 +118,12 @@ export default function LeaderboardScreen() {
                   className={cn('flex-1 flex flex-col items-center rounded-2xl pt-3 pb-2 ring-2', heights[podiumIdx], p.ring,
                     isMe ? 'ring-offset-2 scale-[1.02]' : ''
                   )}
-                  style={{ background: `linear-gradient(180deg, hsl(38 60% 95%), hsl(38 40% 90%))` }}
+                  style={{
+                    background: `linear-gradient(180deg, hsl(38 60% 95%), hsl(38 40% 90%))`,
+                    boxShadow: isFirst
+                      ? '0 0 0 2px hsl(45 95% 60%), 0 4px 20px hsl(45 90% 55% / 0.45)'
+                      : undefined,
+                  }}
                 >
                   <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br mb-1.5 ring-2', p.bg, p.ring)}>
                     <Icon className={cn('w-4 h-4 drop-shadow-sm', p.label)} />
@@ -134,9 +140,22 @@ export default function LeaderboardScreen() {
 
         {/* Full list */}
         {loading ? (
-          <div className="text-center py-16">
-            <p className="text-sm font-black uppercase tracking-widest text-slate-400 animate-pulse">Summoning court records…</p>
-          </div>
+          <ul className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-2xl px-3.5 py-3 bg-white/75 ring-1 ring-black/[0.05] animate-pulse"
+                style={{ animationDelay: `${i * 0.06}s` }}
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-100/80 shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-2/3 rounded-full bg-amber-100/80" />
+                  <div className="h-2.5 w-1/3 rounded-full bg-slate-100" />
+                </div>
+                <div className="h-3 w-12 rounded-full bg-amber-100/60" />
+              </li>
+            ))}
+          </ul>
         ) : rows.length === 0 ? (
           <div className="text-center py-16 rounded-2xl bg-white/70 ring-1 ring-black/[0.06]">
             <p className="text-slate-500 font-semibold">No champion has claimed glory this moon. Be first!</p>
@@ -151,7 +170,8 @@ export default function LeaderboardScreen() {
                   key={row.user_id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: Math.min(i * 0.02, 0.4) }}
+                  transition={{ delay: Math.min(i * 0.035, 0.5) }}
+                  whileTap={{ scale: 0.98 }}
                   className={cn(
                     'flex items-center gap-3 rounded-2xl px-3.5 py-3 ring-1',
                     isMe

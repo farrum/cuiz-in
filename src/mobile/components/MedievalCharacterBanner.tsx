@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,8 +125,29 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
     }
   };
 
+  const getRankGlowStyle = (r: string): React.CSSProperties => {
+    switch (r.toLowerCase()) {
+      case 'admin':
+      case 'king':
+        return { borderColor: 'hsl(45 95% 55%)', boxShadow: '0 0 0 3px hsl(45 95% 55% / 0.25), 0 0 20px hsl(45 90% 60% / 0.3)' };
+      case 'baron':
+      case 'team_leader':
+        return { borderColor: 'hsl(38 85% 55%)', boxShadow: '0 0 0 3px hsl(38 85% 55% / 0.22), 0 0 16px hsl(38 80% 60% / 0.25)' };
+      case 'knight':
+        return { borderColor: 'hsl(210 80% 55%)', boxShadow: '0 0 0 3px hsl(210 80% 55% / 0.22), 0 0 16px hsl(210 75% 60% / 0.25)' };
+      case 'officer':
+      case 'junior_team_leader':
+        return { borderColor: 'hsl(145 60% 45%)', boxShadow: '0 0 0 3px hsl(145 60% 45% / 0.22), 0 0 14px hsl(145 55% 50% / 0.22)' };
+      default:
+        return { borderColor: 'hsl(220 20% 70%)', boxShadow: '0 0 0 2px hsl(220 20% 70% / 0.15)' };
+    }
+  };
+
   return (
-    <div className={cn("relative select-none overflow-hidden rounded-3xl border-2 border-primary/20 bg-slate-900 shadow-md", className)}>
+    <div
+      className={cn("relative select-none overflow-hidden rounded-3xl border-2 bg-slate-900 shadow-md", className)}
+      style={getRankGlowStyle(role)}
+    >
       {/* Full-bleed rank artwork */}
       <div className={cn("relative w-full", compact ? "h-36" : "h-48")}>
         <img
@@ -139,10 +160,23 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-slate-950/25" />
         {/* Shimmer */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-          animate={{ x: ['-100%', '200%'] }}
-          transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/12 to-transparent"
+          animate={{ x: ['-100%', '220%'] }}
+          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 3.5, ease: 'easeInOut' }}
         />
+        {/* Rank badge pip — bottom-left corner */}
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
+          className={cn(
+            'absolute bottom-2 left-3 text-[8px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border backdrop-blur-sm',
+            getRankColorClass(role)
+          )}
+          style={{ background: 'rgba(15,20,30,0.65)' }}
+        >
+          {getRankName(role)}
+        </motion.div>
         {/* Name */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}

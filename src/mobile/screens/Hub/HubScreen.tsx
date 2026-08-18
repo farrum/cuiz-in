@@ -306,15 +306,38 @@ export default function HubScreen() {
         }}
       />
 
-      {/* ── Sticky Top Bar ────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 backdrop-blur-md border-b border-amber-200/60 px-4 py-2.5"
-        style={{ background: 'hsl(38 60% 95% / 0.92)' }}
+      {/* ── Sticky Top Bar ── glassmorphic ─────────────────────────────── */}
+      <div
+        className="sticky top-0 z-30 px-4 py-2.5"
+        style={{
+          background: 'rgba(255, 251, 240, 0.80)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderBottom: '1px solid rgba(212, 170, 80, 0.22)',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 12px rgba(0,0,0,0.06)',
+        }}
       >
+        {/* Shimmer line along the bottom edge */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(212,170,80,0.4) 50%, transparent 100%)',
+          }}
+        />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/cuizin-logo.png" alt="CuizIN" className="h-7 w-auto object-contain" draggable={false} />
           </div>
-          <div className="flex items-center gap-1">
+          {/* HUD stats with soft glow ring */}
+          <div
+            className="flex items-center gap-1 rounded-2xl px-2 py-1"
+            style={{
+              background: 'rgba(255, 248, 220, 0.70)',
+              boxShadow: '0 0 0 1px rgba(212,170,60,0.25), 0 2px 8px rgba(212,170,60,0.12)',
+            }}
+          >
             <StreakFlame streak={streak} />
             <GemCounter value={gems} />
             <StarCounter value={stars} />
@@ -387,19 +410,30 @@ export default function HubScreen() {
                 <motion.button
                   key={node.id}
                   {...popIn(i * 0.055)}
-                  whileTap={{ scale: 0.975 }}
+                  whileTap={{ scale: 0.975, y: 3 }}
                   onClick={() => { haptics('medium'); navigate(node.to); }}
-                  className="relative w-full flex items-center gap-3.5 px-4 py-3.5 text-left rounded-2xl bg-white/80 ring-1 ring-black/[0.06] shadow-sm overflow-hidden group"
+                  className="relative w-full flex items-center gap-3.5 px-4 py-3.5 text-left rounded-2xl ring-1 ring-black/[0.06] overflow-hidden group"
+                  style={{
+                    background: 'linear-gradient(135deg, #fff 0%, hsl(38 60% 98%) 100%)',
+                    boxShadow: '0 4px 0 rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05)',
+                    transition: 'box-shadow 0.1s ease',
+                  }}
                 >
-                  {/* Colour accent strip */}
-                  <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b', node.color)} />
+                  {/* Animated colour accent strip */}
+                  <motion.div
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ delay: i * 0.06, duration: 0.35, ease: 'easeOut' }}
+                    style={{ transformOrigin: 'top' }}
+                    className={cn('absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b', node.color)}
+                  />
 
                   {/* Icon emblem */}
                   <div className={cn(
-                    'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm',
+                    'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br',
                     node.color
-                  )}>
-                    <Icon className="w-5.5 h-5.5 drop-shadow-sm" strokeWidth={2.2} />
+                  )} style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.18)' }}>
+                    <Icon className="w-5 h-5 drop-shadow-sm" strokeWidth={2.2} />
                   </div>
 
                   {/* Text */}
@@ -418,8 +452,8 @@ export default function HubScreen() {
                       <span className={cn(
                         'text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full',
                         isHot
-                          ? 'bg-rose-500 text-white animate-pulse'
-                          : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          ? 'bg-rose-500 text-white shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse'
+                          : 'bg-amber-100 text-amber-700 border border-amber-300'
                       )}>
                         {node.badge}
                       </span>
@@ -518,27 +552,40 @@ export default function HubScreen() {
               <motion.button
                 key={node.id}
                 {...popIn(i * 0.03)}
-                whileTap={{ scale: 0.94 }}
+                whileTap={{ scale: 0.93, y: 2 }}
                 onClick={() => { haptics('light'); navigate(node.to); }}
-                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl bg-white/80 ring-1 ring-black/[0.06] shadow-sm text-left overflow-hidden group"
+                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl ring-1 ring-black/[0.06] text-left overflow-hidden group"
+                style={{
+                  background: 'linear-gradient(145deg, #fff 0%, hsl(38 55% 98%) 100%)',
+                  boxShadow: '0 3px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05)',
+                }}
               >
-                {/* Badge */}
+                {/* Inner colour glow overlay */}
+                <div
+                  aria-hidden
+                  className={cn('absolute inset-0 opacity-[0.07] bg-gradient-to-br pointer-events-none', node.color)}
+                />
+
+                {/* Badge — glowing ring */}
                 {node.badge && (
-                  <span className="absolute top-2.5 right-2.5 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500 text-white shadow-sm">
+                  <span
+                    className="absolute top-2.5 right-2.5 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500 text-white"
+                    style={{ boxShadow: '0 0 0 2px rgba(244,63,94,0.3), 0 0 8px rgba(244,63,94,0.35)' }}
+                  >
                     {node.badge}
                   </span>
                 )}
 
                 {/* Emoji icon in a gradient pill */}
-                <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-sm',
-                  node.color
-                )}>
+                <div
+                  className={cn('w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br', node.color)}
+                  style={{ boxShadow: '0 3px 10px rgba(0,0,0,0.15)' }}
+                >
                   <span className="text-xl leading-none">{node.emoji}</span>
                 </div>
 
                 {/* Label */}
-                <p className="font-black text-[13px] leading-tight tracking-tight line-clamp-2"
+                <p className="font-black text-[13px] leading-tight tracking-tight line-clamp-2 relative z-10"
                   style={{ color: 'hsl(220 50% 15%)' }}>
                   {node.label}
                 </p>
