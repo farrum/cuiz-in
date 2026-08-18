@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Shield, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
@@ -146,13 +146,14 @@ export default function MobileLoginScreen() {
 
       {/* Back button */}
       <div className="shrink-0 px-5 pt-3 pb-1 relative z-10" style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}>
-        <button
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)}
           className="p-2 rounded-xl bg-white/80 ring-1 ring-black/[0.06] hover:bg-white shadow-sm transition-colors"
           aria-label="Back"
         >
           <ArrowLeft className="w-4 h-4 text-slate-650" />
-        </button>
+        </motion.button>
       </div>
 
       {/* Form area */}
@@ -166,20 +167,29 @@ export default function MobileLoginScreen() {
             className="h-10 w-auto mx-auto mb-2 drop-shadow-sm shrink-0"
           />
 
-          <div className="text-center mb-4">
-            <h1 className="text-xl font-black text-slate-800 tracking-wide">
-              {mode === 'sign-in' ? 'Welcome to Cuiz.in' : mode === 'forgot-password' ? 'Lost Your Password?' : 'Create Account'}
-            </h1>
-            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-              {mode === 'sign-in'
-                ? 'Enter your Username or Email'
-                : mode === 'forgot-password'
-                  ? 'Enter your username or email to reset password'
-                  : 'Start earning rewards today'}
-            </p>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="w-full flex flex-col"
+            >
+              <div className="text-center mb-4">
+                <h1 className="text-xl font-black text-slate-800 tracking-wide">
+                  {mode === 'sign-in' ? 'Welcome to Cuiz.in' : mode === 'forgot-password' ? 'Lost Your Password?' : 'Create Account'}
+                </h1>
+                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                  {mode === 'sign-in'
+                    ? 'Enter your Username or Email'
+                    : mode === 'forgot-password'
+                      ? 'Enter your username or email to reset password'
+                      : 'Start earning rewards today'}
+                </p>
+              </div>
 
-          <form onSubmit={submit} className="space-y-3">
+              <form onSubmit={submit} className="space-y-3">
             {errorMessage && (
               <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -197,7 +207,7 @@ export default function MobileLoginScreen() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Choose a username"
-                    className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 shadow-sm transition-colors"
+                    className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 shadow-sm transition-colors"
                   />
                 </div>
                 <div>
@@ -208,7 +218,7 @@ export default function MobileLoginScreen() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 shadow-sm transition-colors"
+                    className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 shadow-sm transition-colors"
                   />
                 </div>
               </>
@@ -225,7 +235,7 @@ export default function MobileLoginScreen() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="Enter username or email"
-                  className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 shadow-sm transition-colors"
+                  className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 shadow-sm transition-colors"
                 />
               </div>
             )}
@@ -240,7 +250,7 @@ export default function MobileLoginScreen() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
                   minLength={6}
-                  className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 shadow-sm transition-colors"
+                  className="w-full rounded-2xl px-4 py-2.5 bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 shadow-sm transition-colors"
                 />
               </div>
             )}
@@ -267,7 +277,12 @@ export default function MobileLoginScreen() {
                 boxShadow: '0 3.5px 0 hsl(30 80% 35%)'
               }}
             >
-              {loading ? 'Processing...' : mode === 'sign-in' ? 'Login' : mode === 'forgot-password' ? 'Send Reset Link' : 'Create Account'}
+              {loading ? (
+                <>
+                  <Shield className="w-4 h-4 animate-spin text-white" />
+                  <span>Processing...</span>
+                </>
+              ) : mode === 'sign-in' ? 'Login' : mode === 'forgot-password' ? 'Send Reset Link' : 'Create Account'}
             </motion.button>
           </form>
 
@@ -288,8 +303,10 @@ export default function MobileLoginScreen() {
                 : <span>Already have an account? <span className="text-amber-600 font-black">Login</span></span>}
             </button>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  </div>
 
       {/* Persistent native banner spacer instead of duplicate mount */}
       <div aria-hidden className="h-[var(--banner-h)] shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />

@@ -771,3 +771,11 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   animation: bounce-slow 3s ease-in-out infinite;
 }
 
+/* ── GemCounter CSS shimmer — GPU-composited, zero JS per frame ── */
+@keyframes gem-shimmer {
+  0%   { background-position: 150% center; }
+  100% { background-position: -50% center; }
+}
+.gem-shimmer {
+  animation: gem-shimmer 3s ease-in-out infinite;
+}

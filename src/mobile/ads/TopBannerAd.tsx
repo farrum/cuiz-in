@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { getAdPool, type AdCreative } from "./adProvider";
 import { getAdSlotsByPosition } from "@/utils/adService";
 import SimpleAdBanner from "@/components/ads/SimpleAdBanner";
@@ -51,23 +52,33 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
 
   return (
     <div className={`px-3 py-1.5 ${marginClass}`}>
-      {/* No enter/exit animation here: the creative swaps in place so a
-          refresh never flashes the surrounding UI. */}
-      <a
-        href={ad.href || undefined}
-        target={ad.href ? "_blank" : undefined}
-        rel={ad.href ? "noopener noreferrer" : undefined}
-        className={`relative flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-gradient-to-r ${ad.bg} text-white shadow-sm overflow-hidden`}
-      >
-        <span className="absolute top-0.5 right-0.5 text-[7px] font-bold uppercase bg-black/30 px-1 py-0.5 rounded">
-          {ad.sample ? "Sample Ad" : "Ad"}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold leading-tight truncate">{ad.headline}</p>
-          <p className="text-[10px] opacity-90 leading-tight truncate">{ad.body}</p>
-        </div>
-        <span className="shrink-0 text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">{ad.cta}</span>
-      </a>
+      {/*
+        AnimatePresence cross-fades between creatives when the rotation
+        index changes. Fixed height on the outer div prevents the banner
+        slot from jumping during the transition.
+      */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.a
+          key={index % pool.length}
+          href={ad.href || undefined}
+          target={ad.href ? "_blank" : undefined}
+          rel={ad.href ? "noopener noreferrer" : undefined}
+          className={`relative flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-gradient-to-r ${ad.bg} text-white shadow-sm overflow-hidden`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <span className="absolute top-0.5 right-0.5 text-[7px] font-bold uppercase bg-black/30 px-1 py-0.5 rounded">
+            {ad.sample ? "Sample Ad" : "Ad"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold leading-tight truncate">{ad.headline}</p>
+            <p className="text-[10px] opacity-90 leading-tight truncate">{ad.body}</p>
+          </div>
+          <span className="shrink-0 text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">{ad.cta}</span>
+        </motion.a>
+      </AnimatePresence>
     </div>
   );
 }

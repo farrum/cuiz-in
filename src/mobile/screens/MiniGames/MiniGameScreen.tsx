@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Capacitor } from '@capacitor/core';
-import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
+import { X, Shield, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2, Gift, KeyRound } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
@@ -293,8 +293,12 @@ export default function MiniGameScreen() {
     if (riddleLoading) {
       body = (
         <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-muted-foreground">Preparing daily riddle...</p>
+          <Shield
+            className="w-10 h-10 text-amber-500/80 animate-spin mb-4"
+            style={{ animationDuration: '2s', animationTimingFunction: 'ease-in-out' }}
+            strokeWidth={1.5}
+          />
+          <p className="text-sm font-black text-amber-900">Preparing daily riddle...</p>
         </div>
       );
     } else {
@@ -321,10 +325,17 @@ export default function MiniGameScreen() {
         }}
       />
 
-      {/* Top bar */}
+      {/* Top bar — glassmorphic */}
       <div
-        className="relative z-10 flex items-center justify-between px-4 py-2.5"
-        style={{ paddingTop: 'calc(var(--safe-top) + 8px)' }}
+        className="relative z-20 flex items-center justify-between px-4 py-2.5"
+        style={{
+          paddingTop: 'calc(var(--safe-top) + 8px)',
+          background: 'rgba(255, 251, 240, 0.80)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderBottom: '1px solid rgba(212, 170, 80, 0.22)',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 12px rgba(0,0,0,0.06)',
+        }}
       >
         <button
           onClick={() => { haptics('light'); navigate('/hub'); }}
@@ -371,21 +382,35 @@ export default function MiniGameScreen() {
 
       {/* Other Games nav bar */}
       <div className="relative z-10 px-4 pt-1 pb-1.5">
-        <p className="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400 mb-1.5 text-center">More Games</p>
+        <p className="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400 mb-1.5 text-center">Tavern Switcher</p>
         <div className="flex items-center gap-2 overflow-x-auto pb-3 px-1 scrollbar-none">
-          {otherGames.map((g) => {
+          {GAMES.map((g) => {
             const Icon = g.icon;
+            const active = g.id === gameId;
             return (
               <motion.button
                 key={g.id}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => { haptics('light'); navigate(`/game/${g.id}`); }}
-                className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 bg-white/80 ring-1 ring-black/[0.06] whitespace-nowrap flex-shrink-0 transition-colors hover:bg-white"
+                className={cn(
+                  "flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 whitespace-nowrap flex-shrink-0 transition-colors relative",
+                  active ? "bg-white ring-2 ring-amber-400 shadow-sm" : "bg-white/80 ring-1 ring-black/[0.06] hover:bg-white"
+                )}
               >
-                <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center text-white bg-gradient-to-br', g.color)}>
+                {/* Active slider background indicator */}
+                {active && (
+                  <motion.div
+                    layoutId="active-game-pill"
+                    className="absolute inset-0 rounded-xl border border-amber-400/40 pointer-events-none"
+                    transition={{ type: 'spring', stiffness: 380, damping: 25 }}
+                  />
+                )}
+                <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center text-white bg-gradient-to-br relative z-10', g.color)}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[12px] font-black text-slate-700 tracking-tight">{g.short}</span>
+                <span className={cn("text-[12px] font-black tracking-tight relative z-10", active ? "text-amber-800 font-extrabold" : "text-slate-700 font-semibold")}>
+                  {g.short}
+                </span>
               </motion.button>
             );
           })}

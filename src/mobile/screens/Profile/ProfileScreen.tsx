@@ -24,6 +24,9 @@ import {
   getEquippedItems,
   getEquippedTitle,
 } from '@/utils/shopData';
+import { GemCounter } from '@/mobile/components/GemCounter';
+import { StreakFlame } from '@/mobile/components/StreakFlame';
+import { StarCounter } from '@/mobile/components/StarCounter';
 
 // ── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, gradient }: {
@@ -109,6 +112,7 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<{
     name: string; username: string; gems: number; daily: number; monthly: number;
   } | null>(null);
+  const [stars, setStars] = useState<number>(() => Number(localStorage.getItem('quiz_app_user_stars') || 50));
   const [reports, setReports] = useState<{
     dayAttempted: number; dayCorrect: number;
     monthAttempted: number; monthCorrect: number;
@@ -141,7 +145,7 @@ export default function ProfileScreen() {
       const monthStart = `${month}-01T00:00:00.000Z`;
 
       const [p, d, m, dAtt, dCorr, mAtt, mCorr] = await Promise.all([
-        supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth, stars').eq('id', uid).maybeSingle(),
         supabase.from('daily_points').select('points').eq('user_id', uid).eq('date', today).maybeSingle(),
         supabase.from('monthly_points').select('points').eq('user_id', uid).eq('month', month).maybeSingle(),
         supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('answered_at', dayStart),
@@ -158,6 +162,10 @@ export default function ProfileScreen() {
         daily:   Number((d.data as any)?.points ?? 0),
         monthly: Number((m.data as any)?.points ?? 0),
       });
+      if (pd?.stars !== undefined) {
+        setStars(Number(pd.stars));
+        localStorage.setItem('quiz_app_user_stars', String(pd.stars));
+      }
       setReports({
         dayAttempted:   dAtt.count ?? 0,
         dayCorrect:     dCorr.count ?? 0,
@@ -219,6 +227,87 @@ export default function ProfileScreen() {
     );
   }
 
+  if (uid && profile === null) {
+    return (
+      <div className="relative min-h-full">
+        {/* Ambient background */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
+          style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
+
+        {/* ── Sticky Top Bar ── glassmorphic ─────────────────────────────── */}
+        <div
+          className="sticky top-0 z-30 px-4 py-2.5"
+          style={{
+            background: 'rgba(255, 251, 240, 0.80)',
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            borderBottom: '1px solid rgba(212, 170, 80, 0.22)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 12px rgba(0,0,0,0.06)',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
+                Herald Profile
+              </h1>
+            </div>
+            {/* HUD stats with soft glow ring */}
+            <div
+              className="flex items-center gap-1 rounded-2xl px-2 py-1"
+              style={{
+                background: 'rgba(255, 248, 220, 0.70)',
+                boxShadow: '0 0 0 1px rgba(212,170,60,0.25), 0 2px 8px rgba(212,170,60,0.12)',
+              }}
+            >
+              <StreakFlame streak={streak} />
+              <div className="w-[85px] h-[34px] bg-slate-200/50 rounded-full animate-pulse" />
+              <div className="w-[85px] h-[34px] bg-slate-200/50 rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative px-4 pt-5 pb-6 space-y-5">
+          {/* Skeleton Hero Card */}
+          <div className="rounded-2xl h-[160px] w-full animate-pulse"
+            style={{
+              background: 'linear-gradient(145deg, hsl(30 60% 15%), hsl(220 55% 15%))',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}
+          >
+            <div className="p-5 flex items-start gap-4">
+              <div className="w-[76px] h-[76px] rounded-2xl bg-white/10 shrink-0" />
+              <div className="flex-1 space-y-2 pt-2">
+                <div className="h-5 w-2/3 rounded bg-white/20" />
+                <div className="h-3.5 w-1/2 rounded bg-white/10" />
+                <div className="h-3 w-1/3 rounded bg-amber-400/30" />
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton Stats Grid */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-[96px] rounded-2xl bg-white/80 ring-1 ring-black/[0.06] p-4 animate-pulse">
+                <div className="w-5 h-5 rounded bg-amber-200/50 mb-2" />
+                <div className="h-3 w-1/2 rounded bg-slate-200 mb-1.5" />
+                <div className="h-4.5 w-2/3 rounded bg-amber-200/40" />
+              </div>
+            ))}
+          </div>
+
+          {/* Skeleton Court Mirror */}
+          <div className="h-[80px] rounded-2xl bg-white/80 ring-1 ring-black/[0.06] p-4 animate-pulse flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-amber-200/30 shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-1/4 rounded bg-slate-200" />
+              <div className="h-3.5 w-3/4 rounded bg-amber-200/40" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const equippedFrame = ARMORY_ITEMS.find(item => item.id === equipped.avatar_frame);
   const equippedTitle = ARMORY_ITEMS.find(item => item.id === equippedTitleId);
 
@@ -236,6 +325,47 @@ export default function ProfileScreen() {
       {/* Ambient background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(220 40% 92%) 100%)' }} />
+
+      {/* ── Sticky Top Bar ── glassmorphic ─────────────────────────────── */}
+      <div
+        className="sticky top-0 z-30 px-4 py-2.5"
+        style={{
+          background: 'rgba(255, 251, 240, 0.80)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          borderBottom: '1px solid rgba(212, 170, 80, 0.22)',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 12px rgba(0,0,0,0.06)',
+        }}
+      >
+        {/* Shimmer line along the bottom edge */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(212,170,80,0.4) 50%, transparent 100%)',
+          }}
+        />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
+              Herald Profile
+            </h1>
+          </div>
+          {/* HUD stats with soft glow ring */}
+          <div
+            className="flex items-center gap-1 rounded-2xl px-2 py-1"
+            style={{
+              background: 'rgba(255, 248, 220, 0.70)',
+              boxShadow: '0 0 0 1px rgba(212,170,60,0.25), 0 2px 8px rgba(212,170,60,0.12)',
+            }}
+          >
+            <StreakFlame streak={streak} />
+            <GemCounter value={profile?.gems ?? 0} />
+            <StarCounter value={stars} />
+          </div>
+        </div>
+      </div>
 
       <div className="relative px-4 pt-5 pb-6 space-y-5">
 
