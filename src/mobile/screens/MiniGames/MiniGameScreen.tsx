@@ -6,8 +6,7 @@ import { X, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, Gamepad2
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
-/* TopBannerAd NOT imported — banner managed by BannerHost. Mounting here caused
-   double-banner and GPU flash on every game switch. */
+import { TopBannerAd } from '../../ads/TopBannerAd';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -393,9 +392,7 @@ export default function MiniGameScreen() {
         </div>
       </div>
 
-      {/* Banner spacer — native banner managed by BannerHost (do not mount TopBannerAd here).
-          This spacer prevents the game nav row from being hidden behind the SDK banner. */}
-      <div aria-hidden className="h-[var(--banner-h)] shrink-0" style={{ paddingBottom: 'var(--safe-bottom)' }} />
+      <TopBannerAd />
     </div>
   );
 }

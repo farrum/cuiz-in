@@ -4,6 +4,7 @@ import { BottomTabs } from './BottomTabs';
 import { motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ScreenSkeleton } from '@/mobile/components/ScreenSkeleton';
+import { TopBannerAd } from '../ads/TopBannerAd';
 
 /**
  * MobileShell — root layout wrapper for all shell routes (Hub, Profile, etc.)
@@ -41,12 +42,7 @@ export function MobileShell() {
           </ErrorBoundary>
         </div>
       </div>
-      {/* Banner spacer: the AdMob/LevelPlay banner is drawn by BannerHost
-          outside the WebView at this physical position. This div reserves
-          the exact same height so scroll content is never hidden under it.
-          --banner-h defaults to 50px and is updated dynamically when the
-          SDK fires bannerAdSizeChanged with the actual rendered height. */}
-      <div aria-hidden className="shrink-0 h-[var(--banner-h)]" />
+      <TopBannerAd />
       <BottomTabs />
     </div>
   );

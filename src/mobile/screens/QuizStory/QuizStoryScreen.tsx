@@ -408,16 +408,9 @@ export default function QuizStoryScreen() {
           )}
       </div>
 
-      {/* Native app: the persistent banner (BannerHost) is drawn outside the
-          WebView, so only reserve its height. Mobile web has no native SDK, so
-          render a real ad slot instead of an empty gap. */}
-      {isNativeApp ? (
-        <div aria-hidden className="h-[var(--banner-h)] shrink-0" />
-      ) : (
-        <div className="shrink-0 px-3">
-          <SimpleAdBanner position="bottom" slotId="quiz-mobile-bottom" />
-        </div>
-      )}
+      <div className="shrink-0 px-3">
+        <SimpleAdBanner position="bottom" slotId="quiz-mobile-bottom" />
+      </div>
 
       {/* Preferences button — floating pill */}
       <div className="relative z-10 px-4 pt-2">

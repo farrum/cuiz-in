@@ -28,6 +28,9 @@ export function ScratchGame({ paidPlay = false, onRoundComplete }: { paidPlay?: 
           description: r?.error || error?.message || 'You can only scratch one card per day.', 
           variant: 'destructive' 
         });
+        if (r?.already_played) {
+          onRoundComplete?.();
+        }
       } else {
         showVideoAd(() => {
           setPrize({ label: r.label, value: r.value || 0 });

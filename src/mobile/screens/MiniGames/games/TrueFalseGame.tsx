@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Check, X, Trophy, RotateCcw } from 'lucide-react';
-import { getRandomQuestion } from '@/utils/quizData';
+import { getRandomQuestion, getBatchQuestions } from '@/utils/quizData';
 import type { QuizQuestion } from '@/utils/types';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
 import { characterOfTheDay } from '@/mobile/mascots/registry';
 import { moodEngine } from '@/mobile/mascots/useMoodEngine';
 
-const ROUND_SIZE = 20;
+const ROUND_SIZE = 10;
 
 interface Card {
   q: QuizQuestion;
@@ -39,6 +39,8 @@ function buildCard(q: QuizQuestion): Card {
 
 export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => void } = {}) {
   const haptics = useHaptics();
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [card, setCard] = useState<Card | null>(null);
   const [score, setScore] = useState(0);
   const [played, setPlayed] = useState(0);
@@ -53,15 +55,43 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
   const trueGlow = useTransform(x, [40, 160], [0, 1]);
   const falseGlow = useTransform(x, [-160, -40], [1, 0]);
 
-  const load = useCallback(async () => {
+  const loadBatch = useCallback(async (count: number, append = false) => {
+    setLoading(true);
     try {
-      const q = await getRandomQuestion();
-      setCard(buildCard(q));
+      const batch = await getBatchQuestions(count);
+      if (batch.length > 0) {
+        if (append) {
+          setQuestions((prev) => [...prev, ...batch]);
+          setCard(buildCard(batch[0]));
+        } else {
+          setQuestions(batch);
+          setCard(buildCard(batch[0]));
+        }
+      } else {
+        const q = await getRandomQuestion();
+        if (append) {
+          setQuestions((prev) => [...prev, q]);
+        } else {
+          setQuestions([q]);
+        }
+        setCard(buildCard(q));
+      }
+    } catch (e) {
+      console.error('Failed to load questions batch', e);
+      try {
+        const q = await getRandomQuestion();
+        setQuestions([q]);
+        setCard(buildCard(q));
+      } catch { /* noop */ }
+    } finally {
+      setLoading(false);
       x.set(0);
-    } catch { /* noop */ }
+    }
   }, [x]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    loadBatch(ROUND_SIZE, false);
+  }, [loadBatch]);
 
   const answer = (saidTrue: boolean) => {
     if (!card || feedback) return;
@@ -76,12 +106,21 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
       setFeedback(null);
       setPlayed(nextPlayed);
       if (nextPlayed >= ROUND_SIZE * rounds) {
-        setFinished(true);
-        onRoundComplete?.();
-      } else {
         showVideoAd(() => {
-          load();
+          setFinished(true);
+          onRoundComplete?.();
         });
+      } else {
+        const nextQ = questions[nextPlayed];
+        if (nextQ) {
+          setCard(buildCard(nextQ));
+          x.set(0);
+        } else {
+          getRandomQuestion().then((q) => {
+            setCard(buildCard(q));
+            x.set(0);
+          });
+        }
       }
     }, 1100);
   };
@@ -89,7 +128,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
   const extend = () => {
     setRounds((r) => r + 1);
     setFinished(false);
-    load();
+    loadBatch(ROUND_SIZE, true);
   };
 
   const restart = () => {
@@ -97,7 +136,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
     setPlayed(0);
     setRounds(1);
     setFinished(false);
-    load();
+    loadBatch(ROUND_SIZE, false);
   };
 
   // ---- Round complete screen ----
@@ -127,7 +166,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
               onClick={extend}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-4 font-black uppercase text-base btn-3d btn-3d-primary"
             >
-              <Trophy className="w-5 h-5" /> Play 20 more
+              <Trophy className="w-5 h-5" /> Play {ROUND_SIZE} more
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.97 }}
@@ -142,7 +181,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
     );
   }
 
-  if (!card) return <div className="text-center text-muted-foreground py-10 font-bold">Shuffling facts...</div>;
+  if (loading || !card) return <div className="text-center text-muted-foreground py-10 font-bold">Shuffling facts...</div>;
 
   const progress = Math.min(played, ROUND_SIZE * rounds);
   const target = ROUND_SIZE * rounds;

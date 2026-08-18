@@ -18,31 +18,23 @@ interface TopBannerAdProps {
 }
 
 export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
-  const isNative = Capacitor.isNativePlatform();
   const [pool] = useState<AdCreative[]>(() => getAdPool("banner"));
   const [index, setIndex] = useState(0);
   const [hasDbAd, setHasDbAd] = useState(false);
 
   useEffect(() => {
-    if (isNative) return;
     const dbAds = getAdSlotsByPosition("app-banner");
     setHasDbAd(dbAds && dbAds.length > 0);
-  }, [isNative]);
+  }, []);
 
   useEffect(() => {
     // Only rotate the house-creative pool when that branch is actually
     // rendered; when a DB ad is shown the timer just caused pointless
     // re-renders of the banner.
-    if (isNative || hasDbAd || pool.length <= 1) return;
+    if (hasDbAd || pool.length <= 1) return;
     const t = window.setInterval(() => setIndex((i) => i + 1), REFRESH_MS);
     return () => window.clearInterval(t);
-  }, [pool.length, isNative, hasDbAd]);
-
-  // Native builds use AdMob (with a LevelPlay fallback); the SDK overlays the
-  // banner outside the WebView. Checked after hooks so hook order stays stable.
-  if (isNative) {
-    return <NativeBannerAd noMargin={noMargin} />;
-  }
+  }, [pool.length, hasDbAd]);
 
   const marginClass = noMargin ? "" : "mb-1";
 

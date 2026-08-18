@@ -92,6 +92,10 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
           description: r?.error || error?.message || 'Daily limit reached or server error', 
           variant: 'destructive' 
         });
+        if (r?.already_played) {
+          setChanceUsed(true);
+          onRoundComplete?.();
+        }
         setSpinning(false);
         return;
       }
