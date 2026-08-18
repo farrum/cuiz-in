@@ -10,6 +10,7 @@ import {
 import {
   showLevelPlayInterstitial,
   showLevelPlayRewarded,
+  setLevelPlayConsent,
 } from './levelplay';
 
 // ─── Ad Unit IDs ──────────────────────────────────────────────────────────────
@@ -42,15 +43,36 @@ let initPromise: Promise<boolean> | null = null;
 export function initAdMob(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return Promise.resolve(false);
   if (!initPromise) {
-    initPromise = AdMob.initialize({ initializeForTesting: import.meta.env.DEV as boolean })
-      .then(() => {
+    initPromise = (async () => {
+      try {
+        await AdMob.initialize({ initializeForTesting: import.meta.env.DEV as boolean });
         console.info('[AdMob] initialized');
+
+        // Request UMP Consent Info
+        try {
+          let consentInfo = await AdMob.requestConsentInfo();
+          if (consentInfo.status === 'REQUIRED' && consentInfo.isConsentFormAvailable) {
+            consentInfo = await AdMob.showConsentForm();
+          }
+
+          // Propagate consent to LevelPlay
+          const consentGranted = consentInfo.status === 'OBTAINED' || consentInfo.status === 'NOT_REQUIRED';
+          await setLevelPlayConsent(consentGranted);
+          console.info('[AdMob/Consent] consent status:', consentInfo.status, 'granted:', consentGranted);
+        } catch (consentErr) {
+          console.warn('[AdMob/Consent] consent update failed, propagating default consent', consentErr);
+          // Default to granting consent so we don't block ad loads if UMP server is offline or fails
+          await setLevelPlayConsent(true);
+        }
+
         return true;
-      })
-      .catch((e) => {
+      } catch (e) {
         console.warn('[AdMob] init failed', e);
+        // Fallback: propagate default consent to LevelPlay even if AdMob fails to initialize
+        try { await setLevelPlayConsent(true); } catch {}
         return false;
-      });
+      }
+    })();
   }
   return initPromise;
 }
@@ -223,6 +245,19 @@ export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean;
   }
 }
 
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
+  let timeoutId: number;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timeoutId = window.setTimeout(() => {
+      console.warn(`[Ads] Promise timed out after ${timeoutMs}ms`);
+      resolve(fallbackValue);
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
+}
+
 /**
  * Unified ad entry point for every native video/fullscreen slot.
  *
@@ -242,12 +277,31 @@ export async function showAdWithFallback(
   // full-screen ads back-to-back (each of which also warms the next one) piles
   // up native memory and was crashing the WebView after a few rounds.
   if (prefer === 'rewarded') {
-    const admobR = await showAdMobRewarded();
+    const admobR = await withTimeout(
+      showAdMobRewarded(),
+      5000,
+      { shown: false, rewarded: false }
+    );
     if (admobR.shown) return true;
-    const lpR = await showLevelPlayRewarded();
+    
+    const lpR = await withTimeout(
+      showLevelPlayRewarded(),
+      5000,
+      { shown: false, rewarded: false }
+    );
     return lpR.shown;
   }
 
-  if (await showAdMobInterstitial()) return true;
-  return await showLevelPlayInterstitial();
+  const admobI = await withTimeout(
+    showAdMobInterstitial(),
+    5000,
+    false
+  );
+  if (admobI) return true;
+  
+  return await withTimeout(
+    showLevelPlayInterstitial(),
+    5000,
+    false
+  );
 }
