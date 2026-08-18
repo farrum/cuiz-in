@@ -88,6 +88,11 @@ export async function hideLevelPlayBanner() {
   }
 }
 
+export function isLevelPlayBannerShown(): boolean {
+  return bannerShown;
+}
+
+
 /** Warm up an interstitial so the next show has no gap. */
 export async function preloadLevelPlayInterstitial() {
   if (!(await initLevelPlay())) return;

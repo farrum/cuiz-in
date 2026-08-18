@@ -138,8 +138,8 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
     };
     await AdMob.showBanner(options);
     bannerShown = true;
+
     // Listen for the actual rendered banner height so CSS spacers match.
-    // bannerAdSizeChanged fires with { width, height } in dp after the ad loads.
     (AdMob as any)
       .addListener('bannerAdSizeChanged', (size: { width: number; height: number }) => {
         if (size?.height) {
@@ -147,6 +147,21 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
         }
       })
       ?.catch?.(() => {/* plugin may not support this listener — safe to ignore */});
+
+    // Listen for ad load failure (like no fill) to trigger fallback to LevelPlay
+    try {
+      const failListener = await (AdMob as any).addListener('bannerAdFailedToLoad', async (info: any) => {
+        console.warn('[AdMob] Banner failed to load (no fill):', info);
+        bannerShown = false;
+        try { await AdMob.removeBanner(); } catch {}
+        document.documentElement.style.setProperty('--banner-h', '0px');
+        onFailed?.();
+        failListener.remove();
+      });
+    } catch (err) {
+      console.warn('[AdMob] Failed to attach bannerAdFailedToLoad listener:', err);
+    }
+
     return true;
   } catch (e) {
     console.warn('[AdMob] banner failed', e);

@@ -13,7 +13,7 @@ import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
-// import { BannerHost } from './ads/BannerHost';
+import { BannerHost } from './ads/BannerHost';
 
 import HubScreen from './screens/Hub/HubScreen';
 import LeaderboardScreen from './screens/Leaderboard/LeaderboardScreen';
@@ -171,8 +171,8 @@ function AppMobile() {
               </Suspense>
               </ErrorBoundary>
               <MobileMusicPlayer />
-              {/* Single, session-long native banner surface is disabled to allow inline WebView banner ads. */}
-              {/* <BannerHost /> */}
+              {/* Single, session-long native banner surface is managed here */}
+              <BannerHost />
             </MobileMusicProvider>
           </BrowserRouter>
         </ThemeProvider>

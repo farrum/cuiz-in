@@ -5,6 +5,8 @@ import { getAdSlotsByPosition } from "@/utils/adService";
 import SimpleAdBanner from "@/components/ads/SimpleAdBanner";
 import { Capacitor } from "@capacitor/core";
 import { NativeBannerAd } from "./NativeBannerAd";
+import { isAdMobBannerShown } from "./admob";
+import { isLevelPlayBannerShown } from "./levelplay";
 
 // Rotate house creatives slowly — fast swaps read as the screen "blinking".
 const REFRESH_MS = 30000;
@@ -22,11 +24,24 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
   const [pool] = useState<AdCreative[]>(() => getAdPool("banner"));
   const [index, setIndex] = useState(0);
   const [hasDbAd, setHasDbAd] = useState(false);
+  const [nativeActive, setNativeActive] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const checkActive = () => {
+      const active = isAdMobBannerShown() || isLevelPlayBannerShown();
+      setNativeActive((prev) => prev !== active ? active : prev);
+    };
+    checkActive();
+    const interval = setInterval(checkActive, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const dbAds = getAdSlotsByPosition("app-banner");
     setHasDbAd(dbAds && dbAds.length > 0);
   }, []);
+
 
   useEffect(() => {
     // Only rotate the house-creative pool when that branch is actually
@@ -38,6 +53,10 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
   }, [pool.length, hasDbAd]);
 
   const marginClass = noMargin ? "" : "mb-1";
+
+  if (Capacitor.isNativePlatform() && nativeActive) {
+    return <div className="shrink-0" style={{ height: 'var(--banner-h, 50px)' }} />;
+  }
 
   if (hasDbAd) {
     return (
