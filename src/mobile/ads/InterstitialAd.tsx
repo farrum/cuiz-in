@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { getAdSlotsByPosition } from '@/utils/adService';
@@ -33,22 +33,48 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
   // requested) — the web overlay must stay hidden in that case.
   const [nativeShowing, setNativeShowing] = useState(false);
 
+  // onClose is usually an inline arrow from the parent, so its identity changes
+  // on every render. Keeping it in effect deps made the native-ad effect tear
+  // down and re-run continuously: each pass fired ANOTHER showAdWithFallback()
+  // and toggled state, which re-rendered, which re-ran the effect… That request
+  // storm is what produced the white flash and the runaway flickering.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const close = useCallback(() => onCloseRef.current(), []);
+
+  // Guards so each "open" transition triggers exactly one ad request / one close.
+  const requestedFor = useRef<number | null>(null);
+  const closedFor = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!open || !isNativeAds()) {
+    if (!open) {
+      requestedFor.current = null;
+      closedFor.current = null;
       setNativeShowing(false);
       return;
     }
+    if (!isNativeAds()) {
+      setNativeShowing(false);
+      return;
+    }
+    if (requestedFor.current === seed) return; // already requested for this show
+    requestedFor.current = seed;
+
     let cancelled = false;
     setNativeShowing(true);
-    showAdWithFallback('interstitial').then(() => {
-      if (cancelled) return;
-      setNativeShowing(false);
-      onClose();
-    });
+    showAdWithFallback('interstitial')
+      .catch(() => false)
+      .then(() => {
+        if (cancelled) return;
+        setNativeShowing(false);
+        if (closedFor.current === seed) return;
+        closedFor.current = seed;
+        close();
+      });
     return () => {
       cancelled = true;
     };
-  }, [open, seed, onClose]);
+  }, [open, seed, close]);
 
   useEffect(() => {
     if (open) {
@@ -71,10 +97,14 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
     return () => window.clearInterval(t);
   }, [open, ad, hasDbAd, skipSeconds, seed]);
 
-  // If there's nothing to show, immediately resolve so the quiz keeps flowing.
+  // If there's nothing to show, resolve once so the quiz keeps flowing.
   useEffect(() => {
-    if (open && !ad && !hasDbAd && !hasNetworkAd) onClose();
-  }, [open, ad, hasDbAd, onClose]);
+    if (!open || isNativeAds()) return;
+    if (ad || hasDbAd || hasNetworkAd) return;
+    if (closedFor.current === seed) return;
+    closedFor.current = seed;
+    close();
+  }, [open, seed, hasDbAd, close]);
 
   const canSkip = remaining <= 0;
 
