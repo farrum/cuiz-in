@@ -44,61 +44,47 @@ export function BottomTabs() {
           const Icon   = tab.icon;
 
           return (
-            <NavLink
+          <NavLink
               key={tab.to}
               to={tab.to}
               onClick={() => haptics(tab.primary ? 'medium' : 'light')}
-              className={cn(
-                'flex flex-col items-center justify-center py-1 min-w-[64px] rounded-xl relative',
-                tab.primary && '-mt-9',
-              )}
+              className="flex flex-col items-center justify-center py-1 min-w-[64px] rounded-xl relative"
             >
-              {tab.primary ? (
-                <motion.div
-                  whileTap={{ scale: 0.88, y: 5 }}
-                  animate={
-                    active
-                      ? { scale: [1, 1.08, 1], y: [0, -5, 0] }
-                      : { scale: 1, y: 0 }
-                  }
-                  transition={{ duration: 0.45, type: 'spring', stiffness: 380, damping: 14 }}
-                  className="relative"
-                >
-                  {/* Golden outer glow ring */}
-                  <div
-                    className="absolute -inset-1 rounded-full opacity-70"
-                    style={{
-                      background: 'radial-gradient(circle, hsl(45 95% 65% / 0.6) 0%, transparent 70%)',
-                      filter: 'blur(6px)',
-                    }}
+              <motion.div
+                whileTap={{ scale: tab.primary ? 0.9 : 0.82, y: 2 }}
+                animate={active ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+                className={cn(
+                  'flex items-center justify-center rounded-2xl relative',
+                  tab.primary ? 'w-12 h-12' : 'w-12 h-12',
+                )}
+              >
+                {active && !tab.primary && (
+                  <motion.div
+                    layoutId="tab-bg"
+                    className="absolute inset-0 rounded-2xl"
+                    style={{ background: 'hsl(38 80% 90%)' }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
                   />
+                )}
+
+                {tab.primary ? (
                   <div
-                    className="w-[62px] h-[62px] flex items-center justify-center relative rounded-full border-4 border-white"
+                    className={cn(
+                      'w-11 h-11 flex items-center justify-center rounded-full border-2 border-white shadow-md',
+                      active
+                        ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                        : 'bg-gradient-to-br from-amber-300 to-amber-500',
+                    )}
                     style={{
-                      background: 'linear-gradient(145deg, hsl(48 96% 55%), hsl(35 95% 48%))',
                       boxShadow: active
-                        ? '0 4px 0 hsl(35 85% 35%), 0 6px 24px hsl(45 90% 55% / 0.55)'
-                        : '0 4px 0 hsl(35 85% 38%), 0 6px 16px hsl(45 70% 50% / 0.35)',
+                        ? '0 3px 0 hsl(35 85% 35%), 0 4px 12px hsl(45 90% 55% / 0.45)'
+                        : '0 3px 0 hsl(35 85% 38%), 0 4px 10px hsl(45 70% 50% / 0.25)',
                     }}
                   >
-                    <Icon className="w-7 h-7 text-white relative z-10 drop-shadow-md" strokeWidth={2.5} />
+                    <Icon className="w-6 h-6 text-white relative z-10 drop-shadow-md" strokeWidth={2.5} />
                   </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  whileTap={{ scale: 0.82, y: 2 }}
-                  animate={active ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 22 }}
-                  className="flex items-center justify-center w-12 h-12 rounded-2xl relative"
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="tab-bg"
-                      className="absolute inset-0 rounded-2xl"
-                      style={{ background: 'hsl(38 80% 90%)' }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                    />
-                  )}
+                ) : (
                   <Icon
                     className={cn(
                       'w-[22px] h-[22px] transition-colors relative z-10',
@@ -106,21 +92,21 @@ export function BottomTabs() {
                     )}
                     strokeWidth={active ? 2.5 : 2}
                   />
-                  {active && (
-                    <motion.div
-                      layoutId="bottom-nav-dot"
-                      className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-amber-700"
-                      transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                    />
-                  )}
-                </motion.div>
-              )}
+                )}
+
+                {active && !tab.primary && (
+                  <motion.div
+                    layoutId="bottom-nav-dot"
+                    className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-amber-700"
+                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                  />
+                )}
+              </motion.div>
 
               <span
                 className={cn(
                   'text-[9px] mt-0.5 font-extrabold tracking-[0.12em] uppercase transition-colors',
                   active ? 'text-amber-800' : 'text-slate-400',
-                  tab.primary && 'mt-1',
                 )}
               >
                 {tab.label}
