@@ -227,11 +227,19 @@ export default function QuizStoryScreen() {
     }, wait);
   };
 
-  const closeInterstitial = () => {
+  // Stable identity + re-entrancy guard: the ad component can resolve from more
+  // than one path (native callback, "no creative" fallback, Skip button) and a
+  // double close used to fire two loadNext() calls, racing two questions into
+  // the same screen — the visible flicker.
+  const closingRef = useRef(false);
+  const closeInterstitial = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
     setShowInterstitial(false);
     setAdSeed((s) => s + 1);
     loadNext();
-  };
+    window.setTimeout(() => { closingRef.current = false; }, 500);
+  }, []);
 
   useEffect(() => {
     return () => {
