@@ -263,13 +263,13 @@ export const DailyHangman: React.FC<DailyHangmanProps> = ({
       const newWrong = [...wrongGuesses, letter];
       setWrongGuesses(newWrong);
       haptics('warning');
-      audioManager.playSFX('incorrect');
+      audioManager.playSFX('wrong');
 
       if (newWrong.length >= 6) {
         // Lose Game
         haptics('error');
         setGameState('lost');
-        audioManager.playSFX('game_over');
+        audioManager.playSFX('royal_sadness');
       }
     } else {
       audioManager.playSFX('correct');

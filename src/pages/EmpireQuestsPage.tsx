@@ -1040,7 +1040,7 @@ export default function EmpireQuestsPage() {
   const currentSector = QUEST_SECTORS.find(s => s.id === activeSectorId) || QUEST_SECTORS[0];
 
   return (
-    <PageLayout showNewsTicker={true}>
+    <PageLayout>
       <div className="min-h-screen stone-wall text-foreground pb-16">
         
         {/* REDESIGNED IMPERIAL HEADER & BATTLE COUNCIL BAR */}

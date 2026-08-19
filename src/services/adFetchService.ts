@@ -37,27 +37,21 @@ export const fetchAdsFromLocalStorage = (position: string): AdSlot[] | null => {
   return null;
 };
 
+// Round-robin rotation counters, one per position key (module scope so all
+// refreshes of the same slot advance to the next creative).
+const rotationCounters = new Map<string, number>();
+
 // Select ad from matching ads
 export const selectAdFromMatching = (matchingAds: AdSlot[], position: string, slotId?: string, pageSection?: string): AdSlot | null => {
   if (!matchingAds || matchingAds.length === 0) {
     return null;
   }
   
-  const dayKey = new Date().toISOString().split('T')[0];
   const positionKey = getAdPositionKey(position, slotId, pageSection);
-  const consistencyKey = `${dayKey}-${positionKey}`;
-  
-  let index = 0;
-  const savedIndex = localStorage.getItem(`ad_index_${consistencyKey}`);
-  
-  if (savedIndex) {
-    index = parseInt(savedIndex);
-  } else {
-    index = Math.floor(Math.random() * matchingAds.length);
-    localStorage.setItem(`ad_index_${consistencyKey}`, index.toString());
-  }
-  
-  const selectedAd = matchingAds[index % matchingAds.length];
+  const next = (rotationCounters.get(positionKey) ?? Math.floor(Math.random() * matchingAds.length)) + 1;
+  rotationCounters.set(positionKey, next);
+
+  const selectedAd = matchingAds[next % matchingAds.length];
   
   // Log the selected ad for debugging
   console.log(`Selected ad for ${position}/${slotId || 'default'}: ${selectedAd.name || selectedAd.id}`);

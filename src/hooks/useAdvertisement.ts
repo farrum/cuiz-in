@@ -160,8 +160,9 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
   
   // Initial ad fetch and event listener setup
   useEffect(() => {
-    // Initial fetch for all ad positions
-    fetchAds();
+    // Initial fetch: force so a page/route change always pulls the next
+    // creative instead of replaying the cached one.
+    fetchAds(true);
     
     const handleAdSlotsUpdated = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -190,12 +191,12 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       }
     }, 2000);
 
-    // Regular rotation interval (every 30s) so banner ads update regularly
+    // Regular rotation interval (every 12s) so banner ads update regularly
     const refreshInterval = setInterval(() => {
       if (isMountedRef.current) {
         fetchAds(true);
       }
-    }, 30000);
+    }, 12000);
     
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
