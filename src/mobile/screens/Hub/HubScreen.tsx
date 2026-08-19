@@ -600,8 +600,12 @@ export default function HubScreen() {
       <AnimatePresence>
         {showRatingModal && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+            style={{
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(6px)',
+              padding: 'calc(1rem + var(--safe-top, 0px)) 1rem calc(1rem + env(safe-area-inset-bottom, 0px))',
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -611,7 +615,7 @@ export default function HubScreen() {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 60, opacity: 0, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+              className="relative my-auto w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
               style={{ background: 'hsl(38 60% 97%)' }}
             >
               {/* Header gradient band */}
