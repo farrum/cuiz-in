@@ -97,7 +97,7 @@ export function BottomTabs() {
                 {active && !tab.primary && (
                   <motion.div
                     layoutId="bottom-nav-dot"
-                    className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-amber-700"
+                    className="absolute -bottom-1.5 h-1.5 rounded-full bg-amber-600 aurora-dot"
                     transition={{ type: 'spring', stiffness: 420, damping: 30 }}
                   />
                 )}

@@ -779,3 +779,88 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 .gem-shimmer {
   animation: gem-shimmer 3s ease-in-out infinite;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WOW EFFECTS — GPU-composited animations, all honour prefers-reduced-motion
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Ember / Dust Particle float ─────────────────────────────────────────── */
+@keyframes emberFloat {
+  0%   { transform: translateY(0)   translateX(0)    scale(1)    rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.85; }
+  80%  { opacity: 0.6; }
+  100% { transform: translateY(-90px) translateX(var(--ember-sway, 12px)) scale(0.4) rotate(180deg); opacity: 0; }
+}
+@keyframes emberFlicker {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1;   }
+}
+.ember-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation:
+    emberFloat   var(--ember-dur, 4s)   ease-in-out var(--ember-delay, 0s) infinite,
+    emberFlicker var(--ember-flick, 0.8s) ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Living Sky gradient shift ───────────────────────────────────────────── */
+@keyframes skyShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+.living-sky {
+  background-size: 300% 300%;
+  animation: skyShift 12s ease infinite;
+  will-change: background-position;
+}
+
+/* ── Epic Streak Flame layers ────────────────────────────────────────────── */
+@keyframes flameBase {
+  0%, 100% { transform: scaleY(1)    scaleX(1)    translateY(0);   }
+  25%       { transform: scaleY(1.08) scaleX(0.96) translateY(-1px); }
+  50%       { transform: scaleY(0.95) scaleX(1.04) translateY(0);   }
+  75%       { transform: scaleY(1.05) scaleX(0.98) translateY(-1px); }
+}
+@keyframes flameInner {
+  0%, 100% { transform: scaleY(1)    scaleX(1)    translateY(0);   opacity: 0.85; }
+  33%       { transform: scaleY(1.12) scaleX(0.9)  translateY(-2px); opacity: 1;    }
+  66%       { transform: scaleY(0.9)  scaleX(1.1)  translateY(0);   opacity: 0.75; }
+}
+@keyframes flameGlow {
+  0%, 100% { box-shadow: 0 0 6px 2px var(--flame-color, rgba(255,100,0,0.55)); }
+  50%       { box-shadow: 0 0 14px 5px var(--flame-color, rgba(255,100,0,0.75)); }
+}
+@keyframes flameOrbit {
+  0%   { transform: rotate(0deg)   translateX(var(--orbit-r, 10px)) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(var(--orbit-r, 10px)) rotate(-360deg); }
+}
+.flame-base  { animation: flameBase  1.4s ease-in-out infinite; will-change: transform; }
+.flame-inner { animation: flameInner 1.1s ease-in-out infinite; will-change: transform; }
+.flame-glow  { animation: flameGlow  1.6s ease-in-out infinite; will-change: box-shadow; }
+
+/* ── Bottom Tab aurora indicator dot ─────────────────────────────────────── */
+@keyframes auroraGlow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(180,120,20,0.6); width: 6px;  }
+  50%       { box-shadow: 0 0 8px 3px rgba(255,180,40,0.9); width: 14px; }
+}
+.aurora-dot {
+  animation: auroraGlow 1.8s ease-in-out infinite;
+  will-change: box-shadow, width;
+}
+
+/* ── Honour prefers-reduced-motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ember-particle,
+  .living-sky,
+  .flame-base,
+  .flame-inner,
+  .flame-glow,
+  .aurora-dot,
+  .gem-shimmer {
+    animation: none !important;
+    transition: none !important;
+  }
+}

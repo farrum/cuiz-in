@@ -13,6 +13,8 @@ import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
 import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
 import { StarCounter } from '@/mobile/components/StarCounter';
+import { EmberBackground } from '@/mobile/components/EmberBackground';
+import { TiltCard } from '@/mobile/components/TiltCard';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
@@ -297,7 +299,7 @@ export default function HubScreen() {
   return (
     <div className="relative min-h-full overflow-hidden">
 
-      {/* ── Ambient background gradient ───────────────────────────────── */}
+      {/* ── Ambient background gradient + Ember particle atmosphere ─────────── */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -305,6 +307,7 @@ export default function HubScreen() {
           background: 'linear-gradient(160deg, hsl(38 60% 93%) 0%, hsl(24 49% 88%) 50%, hsl(200 40% 90%) 100%)',
         }}
       />
+      <EmberBackground count={20} />
 
       {/* ── Sticky Top Bar ── glassmorphic ─────────────────────────────── */}
       <div
@@ -407,60 +410,66 @@ export default function HubScreen() {
               const Icon = node.icon!;
               const isHot = node.badge === 'HOT';
               return (
-                <motion.button
+                <TiltCard
                   key={node.id}
-                  {...popIn(i * 0.055)}
-                  whileTap={{ scale: 0.975, y: 3 }}
-                  onClick={() => { haptics('medium'); navigate(node.to); }}
-                  className="relative w-full flex items-center gap-3.5 px-4 py-3.5 text-left rounded-2xl ring-1 ring-black/[0.06] overflow-hidden group"
+                  maxTilt={6}
+                  glareIntensity={0.2}
+                  hoverScale={1.015}
+                  className="relative w-full rounded-2xl overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, #fff 0%, hsl(38 60% 98%) 100%)',
                     boxShadow: '0 4px 0 rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05)',
-                    transition: 'box-shadow 0.1s ease',
+                    ring: '1px solid rgba(0,0,0,0.06)',
                   }}
+                  onClick={() => { haptics('medium'); navigate(node.to); }}
                 >
-                  {/* Animated colour accent strip */}
                   <motion.div
-                    initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ delay: i * 0.06, duration: 0.35, ease: 'easeOut' }}
-                    style={{ transformOrigin: 'top' }}
-                    className={cn('absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b', node.color)}
-                  />
+                    {...popIn(i * 0.055)}
+                    className="relative flex items-center gap-3.5 px-4 py-3.5 text-left group"
+                  >
+                    {/* Animated colour accent strip */}
+                    <motion.div
+                      initial={{ scaleY: 0 }}
+                      animate={{ scaleY: 1 }}
+                      transition={{ delay: i * 0.06, duration: 0.35, ease: 'easeOut' }}
+                      style={{ transformOrigin: 'top' }}
+                      className={cn('absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b', node.color)}
+                    />
 
-                  {/* Icon emblem */}
-                  <div className={cn(
-                    'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br',
-                    node.color
-                  )} style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.18)' }}>
-                    <Icon className="w-5 h-5 drop-shadow-sm" strokeWidth={2.2} />
-                  </div>
+                    {/* Icon emblem */}
+                    <div className={cn(
+                      'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white bg-gradient-to-br',
+                      node.color
+                    )} style={{ boxShadow: '0 3px 8px rgba(0,0,0,0.18)' }}>
+                      <Icon className="w-5 h-5 drop-shadow-sm" strokeWidth={2.2} />
+                    </div>
 
-                  {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-[15px] leading-tight" style={{ color: 'hsl(220 50% 15%)' }}>
-                      {node.label}
-                    </p>
-                    <p className="text-[11px] font-semibold mt-0.5 leading-tight text-slate-500 truncate">
-                      {node.hint}
-                    </p>
-                  </div>
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-[15px] leading-tight" style={{ color: 'hsl(220 50% 15%)' }}>
+                        {node.label}
+                      </p>
+                      <p className="text-[11px] font-semibold mt-0.5 leading-tight text-slate-500 truncate">
+                        {node.hint}
+                      </p>
+                    </div>
 
-                  {/* Badge + Chevron */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {node.badge && (
-                      <span className={cn(
-                        'text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full',
-                        isHot
-                          ? 'bg-rose-500 text-white shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse'
-                          : 'bg-amber-100 text-amber-700 border border-amber-300'
-                      )}>
-                        {node.badge}
-                      </span>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-                  </div>
-                </motion.button>
+                    {/* Badge + Chevron */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {node.badge && (
+                        <span className={cn(
+                          'text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full',
+                          isHot
+                            ? 'bg-rose-500 text-white shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse'
+                            : 'bg-amber-100 text-amber-700 border border-amber-300'
+                        )}>
+                          {node.badge}
+                        </span>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    </div>
+                  </motion.div>
+                </TiltCard>
               );
             })}
           </div>
