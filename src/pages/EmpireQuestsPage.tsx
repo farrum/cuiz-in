@@ -25,6 +25,8 @@ import {
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
+import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
+import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 
 export interface QuestStage {
   id: string;
@@ -398,6 +400,10 @@ export default function EmpireQuestsPage() {
   // Mystery Box Opener state
   const [openerOpen, setOpenerOpen] = useState(false);
   const [selectedBoxTier, setSelectedBoxTier] = useState<'bronze' | 'gold' | 'legendary' | null>(null);
+
+  // Ad states for Quests & Tavern battles
+  const [interstitialOpen, setInterstitialOpen] = useState(false);
+  const [adSeed, setAdSeed] = useState(0);
 
   // Active Gameplay state
   const [activeStage, setActiveStage] = useState<QuestStage | null>(null);
@@ -1025,6 +1031,10 @@ export default function EmpireQuestsPage() {
     setRevealedCorrectAnswer(null);
     setRevealedExplanation(null);
     fetchUserData();
+
+    // Trigger interstitial ad between quest trials
+    setAdSeed((s) => s + 1);
+    setInterstitialOpen(true);
   };
 
   const currentSector = QUEST_SECTORS.find(s => s.id === activeSectorId) || QUEST_SECTORS[0];
@@ -1822,6 +1832,18 @@ export default function EmpireQuestsPage() {
         boxTier={selectedBoxTier}
         userId={userId}
         onSuccess={fetchUserData}
+      />
+
+      {/* BANNER AD PLACEMENT */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-auto">
+        <TopBannerAd />
+      </div>
+
+      {/* INTERSTITIAL AD OVERLAY */}
+      <InterstitialAd
+        open={interstitialOpen}
+        onClose={() => setInterstitialOpen(false)}
+        seed={adSeed}
       />
     </PageLayout>
   );

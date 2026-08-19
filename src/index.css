@@ -851,16 +851,37 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   will-change: box-shadow, width;
 }
 
-/* ── Honour prefers-reduced-motion ──────────────────────────────────────── */
+/* ── Quiz Answer Feedback ────────────────────────────────────────────────── */
+@keyframes gemLaunch {
+  0%   { transform: translate(var(--gem-sx, 0px), var(--gem-sy, 0px)) scale(1.2); opacity: 1; }
+  60%  { opacity: 0.9; }
+  100% { transform: translate(var(--gem-tx, 0px), var(--gem-ty, -120px)) scale(0.3); opacity: 0; }
+}
+.gem-launch {
+  animation: gemLaunch 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-7px); }
+  40%       { transform: translateX(7px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+.answer-shake {
+  animation: wrongShake 0.42s ease-out;
+}
+
+@keyframes correctPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  60%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.answer-correct-pulse {
+  animation: correctPulse 0.6s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ember-particle,
-  .living-sky,
-  .flame-base,
-  .flame-inner,
-  .flame-glow,
-  .aurora-dot,
-  .gem-shimmer {
-    animation: none !important;
-    transition: none !important;
-  }
+  .gem-launch, .answer-shake, .answer-correct-pulse { animation: none !important; }
 }

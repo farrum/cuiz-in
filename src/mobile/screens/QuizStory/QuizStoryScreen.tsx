@@ -62,6 +62,10 @@ export default function QuizStoryScreen() {
   const [adSeed, setAdSeed] = useState(0);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const [gemLaunchKey,    setGemLaunchKey]    = useState(0);   // increments to re-trigger gem fly
+  const [shakeOpt,        setShakeOpt]        = useState<string | null>(null); // option to shake on wrong
+  const [pulseOpt,        setPulseOpt]        = useState<string | null>(null); // option to pulse on correct
+  const [launchGems,      setLaunchGems]      = useState(0);   // gem value shown during launch
   const [category, setCategory] = useState<string | null>(() => {
     try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}').category ?? null; } catch { return null; }
   });
@@ -209,9 +213,17 @@ export default function QuizStoryScreen() {
         if (uid) { void logGemsEarned(earned, uid); }
         const burst = moodEngine.snapshot().correctStreak >= 5 ? 200 : moodEngine.snapshot().correctStreak >= 2 ? 130 : 80;
         confetti({ particleCount: burst, spread: 80, origin: { y: 0.4 }, ticks: 140 });
+        // Trigger gem launch + correct pulse animations
+        setPulseOpt(option);
+        setLaunchGems(earned);
+        setGemLaunchKey((k) => k + 1);
+        setTimeout(() => { setPulseOpt(null); }, 700);
       } else {
         haptics('error');
         resetStreak();
+        // Shake the wrong option
+        setShakeOpt(option);
+        setTimeout(() => setShakeOpt(null), 500);
       }
 
       // After the 10s reveal, show a full-screen ad every 2nd question (more ad
@@ -280,14 +292,31 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      {/* Session progress bar */}
-      <div className="h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
+      {/* Session progress bar + gem launch origin anchor */}
+      <div className="relative h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
         <motion.div
           className="h-full rounded-full"
           style={{ background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}
           animate={{ width: `${phase === 'asking' ? progress : 100}%` }}
           transition={{ duration: 0.12 }}
         />
+        {/* Flying gem — launches from here toward the HUD gem counter */}
+        <AnimatePresence>
+          {gemLaunchKey > 0 && (
+            <motion.span
+              key={gemLaunchKey}
+              aria-hidden
+              className="absolute right-2 top-1/2 text-lg leading-none pointer-events-none z-50"
+              style={{ translateY: '-50%' }}
+              initial={{ opacity: 1, scale: 1.4, y: 0, x: 0 }}
+              animate={{ opacity: 0, scale: 0.3, y: -80, x: 40 }}
+              exit={{}}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              💎
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Question scroll area — bottom clearance uses CSS contract variable */}
@@ -359,9 +388,12 @@ export default function QuizStoryScreen() {
                         'relative w-full text-left rounded-2xl px-4 py-3.5 font-bold text-[14px] leading-snug transition-colors overflow-hidden',
                         'ring-1 bg-white',
                         !isSelected && !isThisCorrect && !isThisWrong && 'ring-black/[0.06] text-slate-800 hover:bg-slate-50',
-                        isThisCorrect  && 'ring-emerald-400 bg-emerald-50 text-emerald-800',
-                        isThisWrong    && 'ring-rose-400 bg-rose-50 text-rose-800 animate-[shake_0.4s]',
+                        isThisCorrect  && 'ring-emerald-400 bg-emerald-50 text-emerald-800 answer-correct-pulse',
+                        isThisWrong    && 'ring-rose-400 bg-rose-50 text-rose-800',
                         isSelected && phase === 'revealing' && !isCorrect && 'ring-rose-400 bg-rose-50 text-rose-800',
+                        // per-option animation classes
+                        opt === shakeOpt  && 'answer-shake',
+                        opt === pulseOpt  && 'answer-correct-pulse',
                       )}
                     >
                       {/* Left colour bar — reveals on answer */}

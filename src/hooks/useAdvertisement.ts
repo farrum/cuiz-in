@@ -189,10 +189,18 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
         fetchAds(true);
       }
     }, 2000);
+
+    // Regular rotation interval (every 30s) so banner ads update regularly
+    const refreshInterval = setInterval(() => {
+      if (isMountedRef.current) {
+        fetchAds(true);
+      }
+    }, 30000);
     
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
       clearTimeout(initTimer);
+      clearInterval(refreshInterval);
     };
   }, [fetchAds, position, adPositionKey]);
   

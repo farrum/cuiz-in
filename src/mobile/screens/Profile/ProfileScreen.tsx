@@ -28,30 +28,50 @@ import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { StarCounter } from '@/mobile/components/StarCounter';
 
-// ── Stat card ────────────────────────────────────────────────────────────────
+// ── Animated stat card with shimmer ──────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, gradient }: {
   icon: any; label: string; value: string; gradient: string;
 }) {
   return (
-    <div className="rounded-2xl bg-white/80 ring-1 ring-black/[0.06] p-4 relative overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+      className="rounded-2xl bg-white/80 ring-1 ring-black/[0.06] p-4 relative overflow-hidden"
+    >
+      {/* Accent circle */}
       <div
         aria-hidden
         className="absolute -right-3 -top-3 w-14 h-14 rounded-full opacity-15"
         style={{ background: gradient }}
       />
+      {/* Shimmer sweep on mount */}
+      <motion.span
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.55) 50%, transparent 60%)',
+          backgroundSize: '200% 100%',
+        }}
+        initial={{ backgroundPosition: '150% center' }}
+        animate={{ backgroundPosition: ['-50% center', '150% center'] }}
+        transition={{ duration: 1.8, delay: 0.3, ease: 'easeInOut', repeat: Infinity, repeatDelay: 4 }}
+      />
       <Icon className="w-4.5 h-4.5 mb-2 opacity-70" style={{ color: 'hsl(30 60% 25%)' }} />
       <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">{label}</p>
       <p className="font-black text-[17px] leading-tight" style={{ color: 'hsl(220 50% 15%)' }}>{value}</p>
-    </div>
+    </motion.div>
   );
 }
 
-// ── Report row ───────────────────────────────────────────────────────────────
+// ── Report row with animated bar ─────────────────────────────────────────────
 function ReportRow({ title, attempted, correct, gems }: {
   title: string; attempted: number; correct: number; gems: number;
 }) {
   const acc = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
   const pct = Math.min(100, acc);
+  const barColor = acc >= 70 ? '#10b981' : acc >= 40 ? '#f59e0b' : '#f43f5e';
   return (
     <div className="rounded-2xl bg-white/80 ring-1 ring-black/[0.06] p-4">
       <div className="flex items-center justify-between mb-3">
@@ -65,12 +85,24 @@ function ReportRow({ title, attempted, correct, gems }: {
           {acc}% accuracy
         </span>
       </div>
-      {/* Accuracy bar */}
+      {/* Animated accuracy bar */}
       <div className="h-1.5 rounded-full bg-slate-100 mb-3 overflow-hidden">
-        <div
-          className={cn('h-full rounded-full transition-all', acc >= 70 ? 'bg-emerald-500' : acc >= 40 ? 'bg-amber-400' : 'bg-rose-500')}
-          style={{ width: `${pct}%` }}
-        />
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: barColor, position: 'relative', overflow: 'hidden' }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+        >
+          {/* shimmer sweep on the bar */}
+          <motion.span
+            aria-hidden
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.45) 55%, transparent 70%)' }}
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 1.1, delay: 1.1, ease: 'easeInOut', repeat: Infinity, repeatDelay: 5 }}
+          />
+        </motion.div>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
@@ -382,9 +414,26 @@ export default function ProfileScreen() {
 
           <div className="relative p-5">
             <div className="flex items-start gap-4">
-              {/* Avatar */}
+              {/* Avatar with spinning rank-tinted ring */}
               <div className="relative shrink-0">
-                <div className="w-[76px] h-[76px] rounded-2xl overflow-hidden ring-3 ring-white/25 shadow-lg">
+                {/* Rotating conic gradient ring */}
+                <motion.div
+                  aria-hidden
+                  className="absolute -inset-1.5 rounded-[20px]"
+                  style={{
+                    background: (
+                      userRole === 'admin' || userRole === 'king'
+                        ? 'conic-gradient(from 0deg, hsl(45 95% 55%), hsl(38 80% 70%), hsl(45 95% 55%))'
+                        : userRole === 'baron' || userRole === 'team_leader'
+                        ? 'conic-gradient(from 0deg, hsl(35 80% 55%), hsl(28 70% 70%), hsl(35 80% 55%))'
+                        : 'conic-gradient(from 0deg, hsl(210 70% 60%), hsl(200 60% 75%), hsl(210 70% 60%))'
+                    ),
+                    filter: 'blur(1px)',
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                />
+                <div className="relative w-[76px] h-[76px] rounded-2xl overflow-hidden shadow-lg">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}

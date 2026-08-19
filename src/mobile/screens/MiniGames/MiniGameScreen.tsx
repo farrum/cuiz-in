@@ -41,11 +41,29 @@ const GAMES = [
   { id: 'riddlevault', title: 'Riddle Vault', color: 'from-slate-600 to-slate-900', bgGlow: 'bg-slate-500/15', icon: KeyRound, short: 'Riddle' },
 ];
 
+export const normalizeGameId = (id: string | undefined): string => {
+  if (!id) return 'wheel';
+  const clean = id.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (clean === 'slotmachine' || clean === 'slots') return 'slot';
+  if (clean === 'plinkogame') return 'plinko';
+  if (clean === 'rockpaperscissors') return 'rps';
+  if (clean === 'treasurechest' || clean === 'chest') return 'treasure';
+  if (clean === 'spinthewheel') return 'wheel';
+  if (clean === 'scratchcard') return 'scratch';
+  if (clean === 'truefalseswipe' || clean === 'truefalse') return 'true-false';
+  if (clean === 'imagereveal' || clean === 'imagetrivia') return 'image';
+  if (clean === 'coin') return 'coinflip';
+  if (clean === 'dice') return 'diceroll';
+  if (clean === 'vault' || clean === 'riddle') return 'riddlevault';
+  return clean;
+};
+
 export default function MiniGameScreen() {
-  const { gameId = '' } = useParams();
+  const { gameId: rawGameId = 'wheel' } = useParams();
+  const gameId = normalizeGameId(rawGameId);
   const navigate = useNavigate();
   const haptics = useHaptics();
-  const current = GAMES.find((g) => g.id === gameId);
+  const current = GAMES.find((g) => g.id === gameId) || GAMES[0];
   const otherGames = GAMES.filter((g) => g.id !== gameId);
 
   // Gamification Play State

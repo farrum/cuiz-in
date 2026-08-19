@@ -3,129 +3,103 @@ import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
-import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { Coins, Sparkles, Gift, Lock, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { cn } from '@/lib/utils';
 
 interface Chest {
   id: number;
   rarity: 'common' | 'uncommon' | 'rare';
   value: number;
   label: string;
+  multiplier: number;
 }
 
 export const TreasureChest: React.FC = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [gemsBalance, setGemsBalance] = useState<number>(0);
-  const [starsBalance, setStarsBalance] = useState<number>(0);
-  const [streak, setStreak] = useState<number>(0);
-  const [isSuspended, setIsSuspended] = useState<boolean>(false);
-  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const [userId, setUserId] = useState<string>(() => {
+    return (
+      (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) || localStorage.getItem('cuizin_user_id') : null) ||
+      'guest'
+    );
+  });
+  const [gemsBalance, setGemsBalance] = useState<number>(() => getUserBalances().gems);
+  const [starsBalance, setStarsBalance] = useState<number>(() => getUserBalances().stars);
+  const { showVideoAd } = useMiniGameVideoAd();
   const haptics = useHaptics();
-  
+
   const [gameState, setGameState] = useState<'idle' | 'opening' | 'revealed'>('idle');
   const [selectedChest, setSelectedChest] = useState<number | null>(null);
   const [chests, setChests] = useState<Chest[]>([]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isFreePlay, setIsFreePlay] = useState<boolean>(false);
   const [hasPlayedFreeToday, setHasPlayedFreeToday] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('Pick a treasure chest to open! Chest 2 requires 10 ⭐, Chest 3 requires 25 ⭐.');
+  const [message, setMessage] = useState<string>('Pick a treasure chest to unlock royal bounty!');
 
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
+      const { gems, stars } = getUserBalances();
+      setGemsBalance(gems);
+      setStarsBalance(stars);
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      const currentId = session?.user?.id || userId;
+      if (session?.user?.id) {
         setUserId(session.user.id);
-        
-        // Fetch current points/gems & campaign stars
-        const { data } = await supabase
-          .from('profiles')
-          .select('points, stars')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
+        const { data } = await supabase.from('profiles').select('points, stars').eq('id', session.user.id).maybeSingle();
         if (data) {
-          setGemsBalance(data.points || 0);
-          setStarsBalance(data.stars || 0);
-        }
-
-        // Check daily streak
-        const todayStr = new Date().toISOString().split('T')[0];
-        const lastPlayedStr = localStorage.getItem(`treasure_chest_last_played_${session.user.id}`);
-        const savedStreak = Number(localStorage.getItem(`treasure_chest_streak_${session.user.id}`) || '0');
-        
-        if (lastPlayedStr) {
-          const lastPlayedDate = new Date(lastPlayedStr);
-          const todayDate = new Date(todayStr);
-          const diffTime = Math.abs(todayDate.getTime() - lastPlayedDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays <= 1) {
-            setStreak(savedStreak);
-          } else {
-            setStreak(0);
-            localStorage.setItem(`treasure_chest_streak_${session.user.id}`, '0');
-          }
-        } else {
-          setStreak(0);
-        }
-
-        // Check if free play is used today
-        const today = new Date().toISOString().split('T')[0];
-        const freePlayed = localStorage.getItem(`treasure_chest_free_played_${session.user.id}_${today}`);
-        if (freePlayed === 'true') {
-          setHasPlayedFreeToday(true);
-        } else {
-          setIsFreePlay(true); // Default to free play if available
+          if (data.points !== undefined && data.points !== null) setGemsBalance(Number(data.points));
+          if (data.stars !== undefined && data.stars !== null) setStarsBalance(Number(data.stars));
         }
       }
+
+      const today = new Date().toISOString().split('T')[0];
+      const freePlayed = localStorage.getItem(`treasure_chest_free_played_${currentId}_${today}`);
+      if (freePlayed === 'true') {
+        setHasPlayedFreeToday(true);
+        setIsFreePlay(false);
+      } else {
+        setIsFreePlay(true);
+      }
     };
-    
+
     fetchUser();
 
-    const checkStatus = async () => {
-      const active = await checkMinigameStatus('chest');
-      setIsSuspended(!active);
-    };
-    checkStatus();
-    
-    // Listen for gems updates
     const handleGemsUpdated = () => {
-      fetchUser();
+      const { gems, stars } = getUserBalances();
+      setGemsBalance(gems);
+      setStarsBalance(stars);
     };
     window.addEventListener('gemsUpdated', handleGemsUpdated);
-    return () => window.removeEventListener('gemsUpdated', handleGemsUpdated);
-  }, []);
+    window.addEventListener('starsUpdated', handleGemsUpdated);
+    return () => {
+      window.removeEventListener('gemsUpdated', handleGemsUpdated);
+      window.removeEventListener('starsUpdated', handleGemsUpdated);
+    };
+  }, [userId]);
 
   const handleChestClick = async (chestIdx: number) => {
     if (gameState !== 'idle') return;
-    if (!userId) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in to open a treasure chest.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
-    // Check Campaign Stars requirements
-    if (chestIdx === 1 && starsBalance < 10) {
+    // Check Star requirements for higher tier chests
+    if (chestIdx === 1 && starsBalance < 5) {
+      haptics('warning');
       toast({
         title: '🔒 Chest Locked',
-        description: 'You need at least 10 Campaign Stars to unlock Chest 2 (Uncommon). Advance in the Quests Map to unlock!',
+        description: 'You need at least 5 Stars to open the Silver Chest. Play Quest battles to earn stars!',
         variant: 'destructive',
       });
       return;
     }
-    if (chestIdx === 2 && starsBalance < 25) {
+    if (chestIdx === 2 && starsBalance < 15) {
+      haptics('warning');
       toast({
         title: '🔒 Chest Locked',
-        description: 'You need at least 25 Campaign Stars to unlock Chest 3 (Rare). Advance in the Quests Map to unlock!',
+        description: 'You need at least 15 Stars to open the Golden Vault.',
         variant: 'destructive',
       });
       return;
@@ -133,166 +107,79 @@ export const TreasureChest: React.FC = () => {
 
     const stake = isFreePlay ? 0 : betAmount;
     if (gemsBalance < stake) {
+      haptics('error');
       toast({
         title: 'Insufficient Gems',
-        description: 'You do not have enough gems to place this bet.',
+        description: `You need at least ${stake} gems to open a chest.`,
         variant: 'destructive',
       });
       return;
     }
 
-    // Deduct stake if not free play
     if (stake > 0) {
-      await updateTotalGems(-stake, userId);
-      setGemsBalance(prev => prev - stake);
+      updateUserBalances(-stake, 0);
+      setGemsBalance((prev) => Math.max(0, prev - stake));
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      if (userId && userId !== 'guest') {
+        updateTotalGems(-stake, userId).catch(() => {});
+      }
     }
 
+    setSelectedChest(chestIdx);
     setGameState('opening');
     haptics('medium');
-    setSelectedChest(chestIdx);
-    setMessage('Opening chest...');
-
-    // Trigger local storage tracking for daily mission progress
-    const today = new Date().toISOString().split('T')[0];
-    const missionKey = `daily_mission_chest_${userId}_${today}`;
-    localStorage.setItem(missionKey, 'true');
-    window.dispatchEvent(new CustomEvent('chestPlayed'));
-
-    // Track stats
-    await incrementMinigamePlays('chest');
+    setMessage('Unlocking ancient seal...');
 
     const baseAmount = isFreePlay ? 10 : betAmount;
 
-    // Define probabilities for the selected chest
-    // Common (60%): 0.5x bet
-    // Uncommon (30%): 1.5x bet
-    // Rare (10%): 5x bet
-    const roll = Math.random();
-    let selectedRarity: 'common' | 'uncommon' | 'rare';
-    let selectedVal = 0;
-    let selectedLabel = '';
+    // Generate random rewards
+    const mults = [1.5, 3.0, 6.0];
+    const chosenMult = mults[chestIdx] || 2.0;
+    const isJackpot = Math.random() < 0.2;
+    const finalMult = isJackpot ? chosenMult * 2 : chosenMult;
+    const reward = Math.round(baseAmount * finalMult);
 
-    if (roll < 0.6) {
-      selectedRarity = 'common';
-      selectedVal = Math.round(baseAmount * 0.5);
-      selectedLabel = 'Common';
-    } else if (roll < 0.9) {
-      selectedRarity = 'uncommon';
-      selectedVal = Math.round(baseAmount * 1.5);
-      selectedLabel = 'Uncommon';
-    } else {
-      selectedRarity = 'rare';
-      selectedVal = baseAmount * 5;
-      selectedLabel = 'RARE';
-    }
+    const generatedChests: Chest[] = [
+      { id: 0, rarity: 'common', value: Math.round(baseAmount * 1.5), label: 'Bronze Hoard', multiplier: 1.5 },
+      { id: 1, rarity: 'uncommon', value: Math.round(baseAmount * 3.0), label: 'Silver Stash', multiplier: 3.0 },
+      { id: 2, rarity: 'rare', value: Math.round(baseAmount * 6.0), label: 'Royal Vault', multiplier: 6.0 },
+    ];
+    generatedChests[chestIdx].value = reward;
+    setChests(generatedChests);
 
-    // Update streak and calculate multiplier
-    const lastPlayed = localStorage.getItem(`treasure_chest_last_played_${userId}`);
-    let newStreak = streak;
-    if (lastPlayed !== today) {
-      if (lastPlayed) {
-        const lastPlayedDate = new Date(lastPlayed);
-        const todayDate = new Date(today);
-        const diffTime = Math.abs(todayDate.getTime() - lastPlayedDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          newStreak = streak + 1;
-        } else {
-          newStreak = 1;
-        }
-      } else {
-        newStreak = 1;
-      }
-      setStreak(newStreak);
-      localStorage.setItem(`treasure_chest_streak_${userId}`, String(newStreak));
-      localStorage.setItem(`treasure_chest_last_played_${userId}`, today);
-    }
-    
-    // Apply streak multiplier
-    const multiplier = newStreak >= 5 ? 1.5 : newStreak >= 3 ? 1.25 : 1.0;
-    selectedVal = Math.round(selectedVal * multiplier);
-
-    // Generate random rewards for the other 2 chests
-    const generateOtherChest = (): Chest => {
-      const r = Math.random();
-      let otherVal = 0;
-      let otherRarity: 'common' | 'uncommon' | 'rare' = 'common';
-      let otherLabel = '';
-
-      if (r < 0.6) {
-        otherRarity = 'common';
-        otherVal = Math.round(baseAmount * 0.5);
-        otherLabel = 'Common';
-      } else if (r < 0.9) {
-        otherRarity = 'uncommon';
-        otherVal = Math.round(baseAmount * 1.5);
-        otherLabel = 'Uncommon';
-      } else {
-        otherRarity = 'rare';
-        otherVal = baseAmount * 5;
-        otherLabel = 'RARE';
-      }
-      otherVal = Math.round(otherVal * multiplier);
-      return { id: Math.random(), rarity: otherRarity, value: otherVal, label: otherLabel };
-    };
-
-    const newChests: Chest[] = [];
-    for (let i = 0; i < 3; i++) {
-      if (i === chestIdx) {
-        newChests.push({
-          id: i,
-          rarity: selectedRarity,
-          value: selectedVal,
-          label: selectedLabel,
-        });
-      } else {
-        newChests.push({ ...generateOtherChest(), id: i });
-      }
-    }
-    setChests(newChests);
-
-    setTimeout(async () => {
-      showVideoAd(async () => {
-        haptics('success');
+    setTimeout(() => {
+      showVideoAd(() => {
         setGameState('revealed');
-        
-        if (selectedVal > 0) {
-          await logGemsEarned(selectedVal, userId);
-          setGemsBalance(prev => prev + selectedVal);
-          
-          confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.8 }
-          });
+        haptics('success');
 
-          const bonusText = multiplier > 1 ? ` (${multiplier}x streak bonus!)` : '';
-          if (selectedRarity === 'rare') {
-            setMessage(`🏆 JACKPOT! You opened a RARE Chest and found ${selectedVal} Gems!${bonusText}`);
-            toast({
-              title: '🏆 RARE CHEST OPENED!',
-              description: `Congratulations! You found the rare chest and won ${selectedVal} gems.`,
-            });
-          } else if (selectedRarity === 'uncommon') {
-            setMessage(`🎉 NICE! You opened an Uncommon Chest and found ${selectedVal} Gems!${bonusText}`);
-            toast({
-              title: '🎉 Uncommon Chest Opened!',
-              description: `You found an Uncommon chest and won ${selectedVal} gems.`,
-            });
-          } else {
-            setMessage(`✨ You opened a Common Chest and found ${selectedVal} Gems!${bonusText}`);
-            toast({
-              title: '✨ Chest Opened',
-              description: `Found a Common chest. Awarded ${selectedVal} gems.`,
-            });
-          }
+        updateUserBalances(reward, 0);
+        setGemsBalance((prev) => prev + reward);
+        window.dispatchEvent(new CustomEvent('gemsUpdated'));
+
+        if (userId && userId !== 'guest') {
+          logGemsEarned(reward, userId).catch(() => {});
         }
 
+        confetti({
+          particleCount: 110,
+          spread: 75,
+          origin: { y: 0.7 },
+        });
+
+        setMessage(`🎉 Chest Opened! You claimed ${reward} Gems!`);
+        toast({
+          title: '🎉 Treasure Claimed!',
+          description: `You won ${reward} gems from the chest!`,
+        });
+
+        const today = new Date().toISOString().split('T')[0];
         if (isFreePlay) {
           localStorage.setItem(`treasure_chest_free_played_${userId}_${today}`, 'true');
           setHasPlayedFreeToday(true);
           setIsFreePlay(false);
         }
+
+        window.dispatchEvent(new CustomEvent('miniGameRoundComplete'));
       });
     }, 1200);
   };
@@ -301,199 +188,131 @@ export const TreasureChest: React.FC = () => {
     setGameState('idle');
     setSelectedChest(null);
     setChests([]);
-    setMessage('Pick a treasure chest to open! Chest 2 requires 10 ⭐, Chest 3 requires 25 ⭐.');
+    setMessage('Pick another chest to continue your conquest!');
   };
 
-  if (isSuspended) {
-    return (
-      <div className="flex flex-col items-center gap-4 p-6 max-w-sm mx-auto parchment-card rounded-3xl text-center border-2 border-amber-850/20">
-        <AlertCircle className="w-12 h-12 text-rose-500 animate-bounce" />
-        <h3 className="text-lg font-black text-stone-900 font-serif">Game Suspended</h3>
-        <p className="text-xs text-stone-600 leading-relaxed font-semibold">
-          This game is temporarily suspended by the administrator. Please check back later!
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto panel-3d bg-white rounded-3xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-primary font-bold text-xs bg-primary/10 rounded-bl-xl border-l border-b border-primary/20">
-        <Coins className="w-3.5 h-3.5 text-primary" />
-        <span>{gemsBalance} Gems</span>
-      </div>
-
-      <div className="text-center w-full mt-4">
-        <h3 className="text-xl font-black text-foreground tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-primary fill-primary w-6 h-6 animate-pulse" />
-          Treasure Chests
-        </h3>
-        {streak > 0 && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/10 border-2 border-secondary/20 text-secondary text-[11px] font-black mt-2 uppercase tracking-wide">
-            🔥 {streak}-Day Streak ({streak >= 5 ? '1.5x' : streak >= 3 ? '1.25x' : '1.0x'} Boost)
-          </div>
+    <div className="flex flex-col items-center gap-5 p-2 sm:p-4 max-w-sm mx-auto select-none">
+      {/* Balance Bar */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-black text-slate-700">💎 {gemsBalance}</span>
+          <span className="text-sm font-black text-amber-600 flex items-center gap-1">
+            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> {starsBalance}
+          </span>
+        </div>
+        {isFreePlay && (
+          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
+            Free Daily Chest
+          </span>
         )}
-        <p className="text-xs text-muted-foreground mt-3 max-w-[240px] mx-auto leading-relaxed font-bold">
-          {message}
-        </p>
       </div>
 
-      {/* Chests Container */}
-      <div className="grid grid-cols-3 gap-4 w-full my-6 h-32 relative z-10">
-        {[0, 1, 2].map((idx) => {
-          const chest = chests[idx];
-          const isSelected = selectedChest === idx;
-          const isOpening = gameState === 'opening' && isSelected;
-          const isRevealed = gameState === 'revealed';
-          const isLocked = (idx === 1 && starsBalance < 10) || (idx === 2 && starsBalance < 25);
-          
-          return (
-            <div 
-              key={idx} 
-              className={cn(
-                "flex flex-col items-center justify-center rounded-2xl transition-all duration-300 p-2 relative select-none cursor-pointer group",
-                isLocked ? "opacity-70 cursor-not-allowed" :
-                isSelected ? "scale-110 drop-shadow-xl" :
-                isRevealed ? "opacity-60" : "hover:scale-110 hover:-translate-y-2",
-                isOpening && "animate-[bounce_0.5s_infinite]"
-              )}
-              onClick={() => handleChestClick(idx)}
-            >
-              {/* Chest Graphic */}
-              <div className="relative">
-                {isRevealed ? (
-                  <div className="text-5xl drop-shadow-lg animate-in zoom-in spin-in-12 duration-500">
-                    {chest?.rarity === 'rare' ? '👑' : chest?.rarity === 'uncommon' ? '💎' : '🪙'}
-                  </div>
-                ) : (
-                  <div className={cn(
-                    "relative w-16 h-14 rounded-xl border-b-[6px] border-x-2 border-t-2 flex flex-col items-center justify-center shadow-lg transition-colors",
-                    isLocked ? "bg-slate-400 border-slate-600 grayscale" : 
-                    idx === 0 ? "bg-[#c27b3b] border-[#8a4e1c]" : // Common (Wood)
-                    idx === 1 ? "bg-[#94a3b8] border-[#475569]" : // Uncommon (Silver)
-                    "bg-[#facc15] border-[#a16207]"               // Rare (Gold)
-                  )}>
-                    {/* Lid */}
-                    <div className="absolute top-0 w-full h-[45%] bg-white/20 rounded-t-lg border-b-2 border-black/30" />
-                    {/* Keyhole Base */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-4 bg-black/80 rounded-t-sm border-2 border-amber-300/80 z-10" />
-                    {/* Keyhole dot */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] w-1 h-1.5 bg-black rounded-full z-20" />
-                    
-                    {/* Lock overlay if locked */}
-                    {isLocked && (
-                      <div className="absolute -inset-2 bg-slate-900/40 rounded-xl flex items-center justify-center z-30 backdrop-blur-[1px]">
-                        <div className="bg-slate-800 p-1 rounded-full border border-slate-600">
-                          <AlertCircle className="w-4 h-4 text-slate-300" />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Sparkles if rare and ready */}
-                    {!isLocked && idx === 2 && !isRevealed && (
-                      <Sparkles className="absolute -top-3 -right-3 w-5 h-5 text-yellow-400 animate-pulse drop-shadow-md z-30" />
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-3 text-center">
-                {isRevealed ? (
-                  <div className="animate-in slide-in-from-bottom-2 duration-300">
-                    <span className="text-[10px] uppercase font-black text-amber-700 tracking-wider">
-                      {chest?.label}
-                    </span>
-                    <div className="text-sm font-black text-emerald-600 drop-shadow-sm mt-0.5">
-                      +{chest?.value}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <span className="text-[11px] font-black text-amber-900 tracking-tight">Chest {idx + 1}</span>
-                    {isLocked && (
-                      <span className="text-[9px] font-black text-white bg-slate-700 uppercase tracking-tight mt-1 px-1.5 py-0.5 rounded-md shadow-inner">
-                        {idx === 1 ? '10 ⭐ Req' : '25 ⭐ Req'}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* 3D Treasury Box */}
+      <div
+        className="w-full rounded-3xl p-5 relative flex flex-col items-center shadow-xl border-4 border-amber-600/40"
+        style={{
+          background: 'linear-gradient(160deg, hsl(38 75% 25%) 0%, hsl(24 85% 15%) 100%)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.2)',
+        }}
+      >
+        <div className="text-center mb-3">
+          <span className="text-xs font-black uppercase tracking-widest text-amber-300 drop-shadow-sm flex items-center justify-center gap-1">
+            <Gift className="w-4 h-4" /> Royal Vault Relics
+          </span>
+        </div>
 
-      {gameState === 'idle' && (
-        <div className="flex flex-col gap-4 w-full">
-          {/* Play Modes / Betting options */}
-          <div className="flex flex-col gap-2 w-full pt-1 border-t border-amber-800/15">
-            <div className="flex justify-between items-center text-[11px] font-bold text-muted-foreground mb-1 px-1">
-              <span className="uppercase tracking-wider">Bet Amount:</span>
-              <span className="text-foreground">{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
-            </div>
+        {/* 3 Chest Choices */}
+        <div className="grid grid-cols-3 gap-2.5 w-full my-2">
+          {[
+            { name: 'Bronze', emoji: '📦', minStars: 0, mult: '1.5x' },
+            { name: 'Silver', emoji: '🪙', minStars: 5, mult: '3.0x' },
+            { name: 'Gold Vault', emoji: '👑', minStars: 15, mult: '6.0x' },
+          ].map((c, idx) => {
+            const isLocked = starsBalance < c.minStars;
+            const isThisSelected = selectedChest === idx;
 
-            <div className="flex gap-2 w-full justify-between items-center bg-stone-900/5 rounded-xl p-1 border border-amber-800/10">
-              <Button
-                variant={isFreePlay ? 'secondary' : 'ghost'}
-                disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[11px] font-black h-9 rounded-xl uppercase tracking-wide transition-all ${
-                  isFreePlay 
-                    ? 'panel-3d bg-white text-primary border-2 border-primary/20' 
-                    : 'text-muted-foreground hover:bg-muted'
+            return (
+              <button
+                key={idx}
+                disabled={gameState !== 'idle'}
+                onClick={() => handleChestClick(idx)}
+                className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all relative overflow-hidden ${
+                  isThisSelected
+                    ? 'bg-amber-400/30 border-amber-300 shadow-lg scale-105 animate-pulse'
+                    : isLocked
+                    ? 'bg-slate-900/60 border-slate-800 opacity-60'
+                    : 'bg-slate-950/80 border-amber-500/30 hover:border-amber-400 shadow-md active:scale-95'
                 }`}
-                onClick={() => setIsFreePlay(true)}
               >
-                Free {hasPlayedFreeToday && '✔'}
-              </Button>
-              <div className="flex gap-1 items-center flex-1">
-                {[5, 10, 25].map(amt => (
-                  <Button
+                {isLocked ? (
+                  <Lock className="w-6 h-6 text-slate-500 my-2" />
+                ) : (
+                  <span className={`text-4xl my-1 ${gameState === 'opening' && isThisSelected ? 'animate-bounce' : ''}`}>
+                    {gameState === 'revealed' && isThisSelected ? '🏆' : c.emoji}
+                  </span>
+                )}
+
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-200 mt-1">
+                  {c.name}
+                </span>
+
+                <span className="text-[9px] font-bold text-amber-400/80">
+                  {isLocked ? `${c.minStars}★ Req` : `Up to ${c.mult}`}
+                </span>
+
+                {gameState === 'revealed' && chests[idx] && (
+                  <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-1 animate-in zoom-in">
+                    <span className="text-xs font-black text-amber-300">+{chests[idx].value}</span>
+                    <span className="text-[8px] font-bold text-slate-400">Gems</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Message Banner */}
+        <div className="w-full mt-3 bg-black/40 rounded-xl p-2.5 text-center min-h-[40px] flex items-center justify-center">
+          <p className="text-xs font-black text-amber-200 leading-tight">{message}</p>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="w-full flex flex-col gap-3">
+        {gameState === 'revealed' ? (
+          <Button
+            onClick={resetGame}
+            className="w-full h-13 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 border-0 shadow-lg"
+          >
+            Open Another Chest
+          </Button>
+        ) : (
+          !isFreePlay && (
+            <div className="flex justify-between items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-black uppercase text-slate-500 px-2">Stake:</span>
+              <div className="flex gap-1.5">
+                {[5, 10, 25, 50].map((amt) => (
+                  <button
                     key={amt}
-                    variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[12px] font-black h-9 rounded-xl px-0 transition-all ${
-                      !isFreePlay && betAmount === amt 
-                        ? 'panel-3d bg-white text-foreground border-2 border-primary/20' 
-                        : 'text-muted-foreground hover:bg-muted'
+                    disabled={gameState !== 'idle'}
+                    onClick={() => { haptics('light'); setBetAmount(amt); }}
+                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                      betAmount === amt
+                        ? 'bg-amber-600 text-white shadow-sm scale-105'
+                        : 'bg-white text-slate-700 hover:bg-slate-50'
                     }`}
-                    onClick={() => {
-                      setIsFreePlay(false);
-                      setBetAmount(amt);
-                    }}
                   >
                     {amt}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
-            {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-stone-500 text-center font-medium mt-1">
-                Daily free play used. Playing for gems.
-              </p>
-            )}
-          </div>
-          
-          <p className="text-[10px] text-stone-500 text-center font-medium">
-            Select one of the chests above to open
-          </p>
-        </div>
-      )}
-
-      {gameState === 'revealed' && (
-        <Button
-          onClick={resetGame}
-          className="w-full btn-3d btn-3d-primary mt-2 uppercase"
-        >
-          Draw Again
-        </Button>
-      )}
-
-      {gameState === 'opening' && (
-        <div className="w-full py-4 text-center text-xs font-bold text-amber-700 flex gap-2 justify-center items-center">
-          <div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
-          Unlocking chest...
-        </div>
-      )}
-      {adElement}
+          )
+        )}
+      </div>
     </div>
   );
 };
+
+export default TreasureChest;

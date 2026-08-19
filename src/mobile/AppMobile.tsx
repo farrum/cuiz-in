@@ -164,6 +164,14 @@ function AppMobile() {
                       path="/game/:gameId"
                       element={<ErrorBoundary compact resetKey="/game"><MiniGameScreen /></ErrorBoundary>}
                     />
+                    <Route
+                      path="/minigames/:gameId"
+                      element={<ErrorBoundary compact resetKey="/minigames"><MiniGameScreen /></ErrorBoundary>}
+                    />
+                    <Route
+                      path="/minigames"
+                      element={<ErrorBoundary compact resetKey="/minigames-hub"><MiniGameScreen /></ErrorBoundary>}
+                    />
                   </Route>
                   <Route path="/" element={<Navigate to="/hub" replace />} />
                   <Route path="*" element={<Navigate to="/hub" replace />} />

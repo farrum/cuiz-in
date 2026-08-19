@@ -4,9 +4,11 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
 import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdmin';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Coins, Sparkles, AlertCircle } from 'lucide-react';
+import { Coins, Sparkles, Dices, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const faceRotations = {
@@ -18,7 +20,6 @@ const faceRotations = {
   6: { x: 0, y: 180 },
 };
 
-// Simple helper component to render dots on a die face
 const DieFace: React.FC<{ value: number }> = ({ value }) => {
   const dotPositions: Record<number, string[]> = {
     1: ['col-start-2 row-start-2'],
@@ -48,11 +49,11 @@ const DieFace: React.FC<{ value: number }> = ({ value }) => {
   };
 
   return (
-    <div className="absolute w-full h-full bg-white rounded-xl border-[3px] border-slate-200 p-2.5 grid grid-cols-3 grid-rows-3 gap-1 shadow-inner [backface-visibility:hidden]">
+    <div className="absolute w-full h-full bg-white rounded-xl border-[2.5px] border-slate-300 p-2 grid grid-cols-3 grid-rows-3 gap-1 shadow-inner [backface-visibility:hidden]">
       {dotPositions[value]?.map((pos, idx) => (
         <span
           key={idx}
-          className={`${pos} w-2.5 h-2.5 rounded-full bg-slate-800 self-center justify-self-center shadow-sm`}
+          className={`${pos} w-2.5 h-2.5 rounded-full bg-slate-900 self-center justify-self-center shadow-sm`}
         />
       ))}
     </div>
@@ -60,197 +61,199 @@ const DieFace: React.FC<{ value: number }> = ({ value }) => {
 };
 
 export const DiceRoll: React.FC = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [gemsBalance, setGemsBalance] = useState<number>(0);
+  const [userId, setUserId] = useState<string>(() => {
+    return (
+      (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) || localStorage.getItem('cuizin_user_id') : null) ||
+      'guest'
+    );
+  });
+  const [gemsBalance, setGemsBalance] = useState<number>(() => getUserBalances().gems);
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
-  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const { showVideoAd } = useMiniGameVideoAd();
   const haptics = useHaptics();
-  
+
   const [diceState, setDiceState] = useState<'idle' | 'rolling' | 'result'>('idle');
   const [diceValues, setDiceValues] = useState<[number, number]>([1, 1]);
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isFreePlay, setIsFreePlay] = useState<boolean>(false);
   const [hasPlayedFreeToday, setHasPlayedFreeToday] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('Roll the dice to earn gems! Double 6 wins jackpot.');
-  
+  const [message, setMessage] = useState<string>('Roll the dice to earn gems! Doubles & high totals win big.');
+
   const [diceRotation1, setDiceRotation1] = useState({ x: 0, y: 0 });
   const [diceRotation2, setDiceRotation2] = useState({ x: 0, y: 0 });
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUserId(session.user.id);
-        
-        // Fetch current points/gems
-        const { data } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (data) {
-          setGemsBalance(data.points || 0);
-        }
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
 
-        // Check if free play is used today
-        const today = new Date().toISOString().split('T')[0];
-        const freePlayed = localStorage.getItem(`dice_roll_free_played_${session.user.id}_${today}`);
-        if (freePlayed === 'true') {
-          setHasPlayedFreeToday(true);
-        } else {
-          setIsFreePlay(true); // Default to free play if available
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentId = session?.user?.id || userId;
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        const { data } = await supabase.from('profiles').select('points').eq('id', session.user.id).maybeSingle();
+        if (data && data.points !== undefined && data.points !== null) {
+          setGemsBalance(Number(data.points));
         }
       }
+
+      const today = new Date().toISOString().split('T')[0];
+      const freePlayed = localStorage.getItem(`dice_roll_free_played_${currentId}_${today}`);
+      if (freePlayed === 'true') {
+        setHasPlayedFreeToday(true);
+        setIsFreePlay(false);
+      } else {
+        setIsFreePlay(true);
+      }
     };
-    
+
     fetchUser();
 
     const checkStatus = async () => {
-      const active = await checkMinigameStatus('dice');
-      setIsSuspended(!active);
+      try {
+        const active = await checkMinigameStatus('dice');
+        setIsSuspended(!active);
+      } catch {
+        setIsSuspended(false);
+      }
     };
     checkStatus();
-    
-    // Listen for gems updates
+
     const handleGemsUpdated = () => {
-      fetchUser();
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
     };
     window.addEventListener('gemsUpdated', handleGemsUpdated);
     return () => window.removeEventListener('gemsUpdated', handleGemsUpdated);
-  }, []);
+  }, [userId]);
 
   const handleRoll = async () => {
     if (diceState === 'rolling') return;
-    if (!userId) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in to play the Dice Roll game.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const stake = isFreePlay ? 0 : betAmount;
     if (gemsBalance < stake) {
+      haptics('error');
       toast({
         title: 'Insufficient Gems',
-        description: 'You do not have enough gems to place this bet.',
+        description: `You need at least ${stake} gems to place this roll.`,
         variant: 'destructive',
       });
       return;
     }
 
-    // Deduct stake if not free play
     if (stake > 0) {
-      await updateTotalGems(-stake, userId);
-      setGemsBalance(prev => prev - stake);
+      updateUserBalances(-stake, 0);
+      setGemsBalance((prev) => Math.max(0, prev - stake));
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      if (userId && userId !== 'guest') {
+        updateTotalGems(-stake, userId).catch(() => {});
+      }
     }
 
     setDiceState('rolling');
     haptics('medium');
-    setMessage('Rolling the dice...');
+    setMessage('Rolling the dice across the table...');
 
-    // Trigger local storage tracking for daily mission progress
     const today = new Date().toISOString().split('T')[0];
     const missionKey = `daily_mission_dice_roll_${userId}_${today}`;
     localStorage.setItem(missionKey, 'true');
     window.dispatchEvent(new CustomEvent('diceRollPlayed'));
 
-    // Track stats
-    await incrementMinigamePlays('dice');
+    incrementMinigamePlays('dice').catch(() => {});
 
-    // Generate random roll
     const d1 = Math.floor(Math.random() * 6) + 1;
     const d2 = Math.floor(Math.random() * 6) + 1;
 
-    // Spin animation rotations
-    // Spin multiple full rotations, plus the target face alignment rotation
     const rot1 = faceRotations[d1 as keyof typeof faceRotations];
     const rot2 = faceRotations[d2 as keyof typeof faceRotations];
 
-    // Extra spins to make it look active
-    const extraSpins1X = (Math.floor(Math.random() * 3) + 3) * 360;
-    const extraSpins1Y = (Math.floor(Math.random() * 3) + 3) * 360;
-    const extraSpins2X = (Math.floor(Math.random() * 3) + 3) * 360;
-    const extraSpins2Y = (Math.floor(Math.random() * 3) + 3) * 360;
+    const extraSpins1X = (Math.floor(Math.random() * 2) + 2) * 360;
+    const extraSpins1Y = (Math.floor(Math.random() * 2) + 2) * 360;
+    const extraSpins2X = (Math.floor(Math.random() * 2) + 2) * 360;
+    const extraSpins2Y = (Math.floor(Math.random() * 2) + 2) * 360;
 
     setDiceRotation1({ x: rot1.x + extraSpins1X, y: rot1.y + extraSpins1Y });
     setDiceRotation2({ x: rot2.x + extraSpins2X, y: rot2.y + extraSpins2Y });
 
-    setTimeout(async () => {
+    setTimeout(() => {
       setDiceValues([d1, d2]);
-      
-      showVideoAd(async () => {
+
+      showVideoAd(() => {
         setDiceState('result');
 
-        const sum = d1 + d2;
-        let reward = 0;
-        let isJackpot = false;
-        let isDoubles = false;
+        const total = d1 + d2;
+        const isDoubles = d1 === d2;
+        const isDoubleSix = isDoubles && d1 === 6;
 
-        if (d1 === 6 && d2 === 6) {
-          reward = isFreePlay ? 25 : 50; // Jackpot
-          isJackpot = true;
-        } else if (d1 === d2) {
-          reward = isFreePlay ? sum : sum * 2; // Doubles bonus
-          isDoubles = true;
+        let multiplier = 0;
+        let outcomeMsg = '';
+
+        if (isDoubleSix) {
+          multiplier = 5.0; // Jackpot
+          outcomeMsg = '🏆 DOUBLE SIX JACKPOT! 5x Multiplier!';
+          haptics('success');
+        } else if (isDoubles) {
+          multiplier = 2.5;
+          outcomeMsg = `✨ Doubles (${d1} & ${d2})! 2.5x Multiplier!`;
+          haptics('success');
+        } else if (total >= 9) {
+          multiplier = 1.5;
+          outcomeMsg = `🎉 High Total (${total})! 1.5x Multiplier!`;
+          haptics('success');
+        } else if (total === 7) {
+          multiplier = 1.0;
+          outcomeMsg = `Lucky 7! Stake returned.`;
+          haptics('warning');
         } else {
-          reward = isFreePlay ? Math.ceil(sum / 2) : sum; // Regular reward
+          multiplier = 0;
+          outcomeMsg = `Total: ${total}. Better luck next roll!`;
+          haptics('error');
         }
+
+        const baseAmount = isFreePlay ? 10 : betAmount;
+        const reward = Math.round(baseAmount * multiplier);
 
         if (reward > 0) {
-          haptics('success');
-          await logGemsEarned(reward, userId);
-          setGemsBalance(prev => prev + reward);
-          
-          confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.8 }
-          });
+          updateUserBalances(reward, 0);
+          setGemsBalance((prev) => prev + reward);
+          window.dispatchEvent(new CustomEvent('gemsUpdated'));
 
-          if (isJackpot) {
-            setMessage(`🏆 JACKPOT DOUBLE 6! You won ${reward} Gems!`);
-            toast({
-              title: '🏆 JACKPOT!',
-              description: `You rolled double 6s! Awarded ${reward} gems.`,
-            });
-          } else if (isDoubles) {
-            setMessage(`🎉 DOUBLES BONUS! Rolled double ${d1}s. You won ${reward} Gems!`);
-            toast({
-              title: '🎉 Doubles Bonus!',
-              description: `Rolled double ${d1}s. Awarded ${reward} gems.`,
-            });
-          } else {
-            setMessage(`✨ Rolled ${d1} and ${d2} (Total: ${sum}). You won ${reward} Gems!`);
-            toast({
-              title: '✨ You Won!',
-              description: `Total roll is ${sum}. Awarded ${reward} gems.`,
+          if (userId && userId !== 'guest') {
+            logGemsEarned(reward, userId).catch(() => {});
+          }
+
+          if (multiplier >= 2.0) {
+            confetti({
+              particleCount: 90,
+              spread: 70,
+              origin: { y: 0.7 },
             });
           }
-        } else {
-          haptics('error');
-          setMessage(`Rolled ${d1} and ${d2}. No gems won this time.`);
+
+          toast({
+            title: '🎉 Roll Complete!',
+            description: `Rolled ${total}. Awarded ${reward} gems!`,
+          });
         }
 
+        setMessage(outcomeMsg);
+
         if (isFreePlay) {
-          const today = new Date().toISOString().split('T')[0];
           localStorage.setItem(`dice_roll_free_played_${userId}_${today}`, 'true');
           setHasPlayedFreeToday(true);
           setIsFreePlay(false);
         }
+
+        window.dispatchEvent(new CustomEvent('miniGameRoundComplete'));
       });
-    }, 1500);
+    }, 1200);
   };
 
   const resetGame = () => {
     setDiceState('idle');
-    setDiceRotation1({ x: 0, y: 0 });
-    setDiceRotation2({ x: 0, y: 0 });
-    setMessage('Roll the dice to earn gems! Double 6 wins jackpot.');
+    setMessage('Roll again to test your luck!');
   };
 
   if (isSuspended) {
@@ -258,177 +261,124 @@ export const DiceRoll: React.FC = () => {
       <div className="flex flex-col items-center gap-4 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm text-center">
         <AlertCircle className="w-12 h-12 text-rose-500 animate-bounce" />
         <h3 className="text-lg font-black text-slate-800">Game Suspended</h3>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          This game is temporarily suspended by the administrator. Please check back later!
-        </p>
+        <p className="text-xs text-slate-500 font-semibold">Dice Roll is undergoing maintenance.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-yellow-600 font-bold text-xs bg-yellow-50 rounded-bl-xl border-l border-b border-yellow-100">
-        <Coins className="w-3.5 h-3.5" />
-        <span>{gemsBalance} Gems</span>
+    <div className="flex flex-col items-center gap-5 p-2 sm:p-4 max-w-sm mx-auto select-none">
+      {/* Balance Bar */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-black text-slate-700">💎 {gemsBalance}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">Gems</span>
+        </div>
+        {isFreePlay && (
+          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
+            Free Daily Roll
+          </span>
+        )}
       </div>
 
-      <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-indigo-500 fill-indigo-500 w-5 h-5 animate-pulse" />
-          High Roller Dice
-        </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
-          {message}
-        </p>
-      </div>
+      {/* 3D Dice Arena */}
+      <div
+        className="w-full rounded-3xl p-5 relative flex flex-col items-center shadow-xl border-4 border-indigo-600/40"
+        style={{
+          background: 'linear-gradient(160deg, hsl(235 60% 25%) 0%, hsl(250 70% 15%) 100%)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.2)',
+        }}
+      >
+        <div className="text-center mb-3">
+          <span className="text-xs font-black uppercase tracking-widest text-indigo-300 drop-shadow-sm flex items-center justify-center gap-1">
+            <Dices className="w-4 h-4" /> Royal High Dice
+          </span>
+        </div>
 
-      {/* Dice Container */}
-      <div className="flex gap-8 justify-center items-center my-4 h-24">
-        {/* Die 1 */}
-        <div className="w-16 h-16 [perspective:600px]">
+        {/* Dice Viewport */}
+        <div className="w-full h-32 bg-slate-950/90 rounded-2xl border-2 border-indigo-400/40 flex justify-around items-center px-4 shadow-inner relative overflow-hidden">
           <div
-            className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-[1500ms]"
-            style={{
-              transform: `rotateX(${diceRotation1.x}deg) rotateY(${diceRotation1.y}deg)`,
-            }}
+            className={`w-16 h-16 bg-white rounded-2xl border-2 border-slate-200 flex items-center justify-center text-3xl font-black text-slate-900 shadow-lg transition-transform ${
+              diceState === 'rolling' ? 'animate-bounce' : ''
+            }`}
           >
-            {/* Front (1) */}
-            <div className="absolute w-full h-full [transform:rotateY(0deg)_translateZ(32px)]">
-              <DieFace value={1} />
-            </div>
-            {/* Top (2) */}
-            <div className="absolute w-full h-full [transform:rotateX(90deg)_translateZ(32px)]">
-              <DieFace value={2} />
-            </div>
-            {/* Right (3) */}
-            <div className="absolute w-full h-full [transform:rotateY(90deg)_translateZ(32px)]">
-              <DieFace value={3} />
-            </div>
-            {/* Left (4) */}
-            <div className="absolute w-full h-full [transform:rotateY(-90deg)_translateZ(32px)]">
-              <DieFace value={4} />
-            </div>
-            {/* Bottom (5) */}
-            <div className="absolute w-full h-full [transform:rotateX(-90deg)_translateZ(32px)]">
-              <DieFace value={5} />
-            </div>
-            {/* Back (6) */}
-            <div className="absolute w-full h-full [transform:rotateY(180deg)_translateZ(32px)]">
-              <DieFace value={6} />
-            </div>
+            {diceValues[0] === 1 && '⚀'}
+            {diceValues[0] === 2 && '⚁'}
+            {diceValues[0] === 3 && '⚂'}
+            {diceValues[0] === 4 && '⚃'}
+            {diceValues[0] === 5 && '⚄'}
+            {diceValues[0] === 6 && '⚅'}
+          </div>
+
+          <div
+            className={`w-16 h-16 bg-white rounded-2xl border-2 border-slate-200 flex items-center justify-center text-3xl font-black text-slate-900 shadow-lg transition-transform ${
+              diceState === 'rolling' ? 'animate-bounce' : ''
+            }`}
+          >
+            {diceValues[1] === 1 && '⚀'}
+            {diceValues[1] === 2 && '⚁'}
+            {diceValues[1] === 3 && '⚂'}
+            {diceValues[1] === 4 && '⚃'}
+            {diceValues[1] === 5 && '⚄'}
+            {diceValues[1] === 6 && '⚅'}
           </div>
         </div>
 
-        {/* Die 2 */}
-        <div className="w-16 h-16 [perspective:600px]">
-          <div
-            className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-[1500ms]"
-            style={{
-              transform: `rotateX(${diceRotation2.x}deg) rotateY(${diceRotation2.y}deg)`,
-            }}
-          >
-            {/* Front (1) */}
-            <div className="absolute w-full h-full [transform:rotateY(0deg)_translateZ(32px)]">
-              <DieFace value={1} />
-            </div>
-            {/* Top (2) */}
-            <div className="absolute w-full h-full [transform:rotateX(90deg)_translateZ(32px)]">
-              <DieFace value={2} />
-            </div>
-            {/* Right (3) */}
-            <div className="absolute w-full h-full [transform:rotateY(90deg)_translateZ(32px)]">
-              <DieFace value={3} />
-            </div>
-            {/* Left (4) */}
-            <div className="absolute w-full h-full [transform:rotateY(-90deg)_translateZ(32px)]">
-              <DieFace value={4} />
-            </div>
-            {/* Bottom (5) */}
-            <div className="absolute w-full h-full [transform:rotateX(-90deg)_translateZ(32px)]">
-              <DieFace value={5} />
-            </div>
-            {/* Back (6) */}
-            <div className="absolute w-full h-full [transform:rotateY(180deg)_translateZ(32px)]">
-              <DieFace value={6} />
-            </div>
-          </div>
+        {/* Message Banner */}
+        <div className="w-full mt-3 bg-black/40 rounded-xl p-2.5 text-center min-h-[40px] flex items-center justify-center">
+          <p className="text-xs font-black text-indigo-200 leading-tight">{message}</p>
         </div>
       </div>
 
-      {diceState === 'idle' && (
-        <div className="flex flex-col gap-4 w-full">
-          {/* Play Modes / Betting options */}
-          <div className="flex flex-col gap-2 w-full pt-1 border-t border-slate-100">
-            <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1 px-1">
-              <span>Cost to Roll:</span>
-              <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
-            </div>
-
-            <div className="flex gap-2 w-full justify-between items-center bg-slate-55 bg-slate-50 rounded-xl p-1 border border-slate-100">
-              <Button
-                variant={isFreePlay ? 'secondary' : 'ghost'}
-                disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
-                  isFreePlay 
-                    ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setIsFreePlay(true)}
-              >
-                Free {hasPlayedFreeToday && '✔'}
-              </Button>
-              <div className="flex gap-1 items-center flex-1">
-                {[5, 10, 25].map(amt => (
-                  <Button
-                    key={amt}
-                    variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
-                      !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-slate-200 text-slate-800' 
-                        : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                    onClick={() => {
-                      setIsFreePlay(false);
-                      setBetAmount(amt);
-                    }}
-                  >
-                    {amt}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-slate-400 text-center font-medium mt-1">
-                Daily free play used. Playing for gems.
-              </p>
-            )}
-          </div>
-
+      {/* Controls */}
+      <div className="w-full flex flex-col gap-3">
+        {diceState === 'result' ? (
           <Button
-            onClick={handleRoll}
-            className="w-full font-bold h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-sm shadow-md shadow-indigo-500/10 border-0 transition-transform active:scale-[0.98] mt-2"
+            onClick={resetGame}
+            className="w-full h-13 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 border-0 shadow-lg"
           >
-            Roll Dice
+            Roll Next Round
           </Button>
-        </div>
-      )}
+        ) : (
+          <>
+            {!isFreePlay && (
+              <div className="flex justify-between items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-black uppercase text-slate-500 px-2">Roll Stake:</span>
+                <div className="flex gap-1.5">
+                  {[5, 10, 25, 50].map((amt) => (
+                    <button
+                      key={amt}
+                      disabled={diceState === 'rolling'}
+                      onClick={() => { haptics('light'); setBetAmount(amt); }}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                        betAmount === amt
+                          ? 'bg-indigo-600 text-white shadow-sm scale-105'
+                          : 'bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-      {diceState === 'result' && (
-        <Button
-          onClick={resetGame}
-          className="w-full font-bold h-11 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs uppercase tracking-wider transition-all mt-2"
-        >
-          Roll Again
-        </Button>
-      )}
-
-      {diceState === 'rolling' && (
-        <div className="w-full py-4 text-center text-xs font-bold text-indigo-600 flex gap-2 justify-center items-center">
-          <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          Rolling...
-        </div>
-      )}
-      {adElement}
+            <Button
+              onClick={handleRoll}
+              disabled={diceState === 'rolling'}
+              className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest text-slate-950 shadow-lg border-0 transition-transform active:scale-95"
+              style={{
+                background: 'linear-gradient(160deg, hsl(230 90% 60%), hsl(250 85% 50%))',
+                boxShadow: '0 4px 0 hsl(250 80% 30%), 0 6px 20px hsl(230 70% 50% / 0.4)',
+              }}
+            >
+              {diceState === 'rolling' ? '🎲 Rolling…' : isFreePlay ? '🎲 Free Roll Now' : `🎲 Roll Dice (💎 ${betAmount} Gems)`}
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 };
+
+export default DiceRoll;

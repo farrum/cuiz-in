@@ -3,6 +3,8 @@ import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins, Sparkles } from 'lucide-react';
@@ -17,11 +19,16 @@ const BOARD_WIDTH = 300;
 const CENTER_X = BOARD_WIDTH / 2;
 
 export const PlinkoGame: React.FC = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [gemsBalance, setGemsBalance] = useState<number>(0);
-  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const [userId, setUserId] = useState<string>(() => {
+    return (
+      (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) || localStorage.getItem('cuizin_user_id') : null) ||
+      'guest'
+    );
+  });
+  const [gemsBalance, setGemsBalance] = useState<number>(() => getUserBalances().gems);
+  const { showVideoAd } = useMiniGameVideoAd();
   const haptics = useHaptics();
-  
+
   const [dropping, setDropping] = useState<boolean>(false);
   const [ballPos, setBallPos] = useState<{ x: number; y: number } | null>(null);
   const [betAmount, setBetAmount] = useState<number>(10);
@@ -33,81 +40,73 @@ export const PlinkoGame: React.FC = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUserId(session.user.id);
-        
-        // Fetch current points/gems
-        const { data } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (data) {
-          setGemsBalance(data.points || 0);
-        }
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
 
-        // Check if free play is used today
-        const today = new Date().toISOString().split('T')[0];
-        const freePlayed = localStorage.getItem(`plinko_free_played_${session.user.id}_${today}`);
-        if (freePlayed === 'true') {
-          setHasPlayedFreeToday(true);
-        } else {
-          setIsFreePlay(true); // Default to free play if available
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentId = session?.user?.id || userId;
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        const { data } = await supabase.from('profiles').select('points').eq('id', session.user.id).maybeSingle();
+        if (data && data.points !== undefined && data.points !== null) {
+          setGemsBalance(Number(data.points));
         }
       }
+
+      const today = new Date().toISOString().split('T')[0];
+      const freePlayed = localStorage.getItem(`plinko_free_played_${currentId}_${today}`);
+      if (freePlayed === 'true') {
+        setHasPlayedFreeToday(true);
+        setIsFreePlay(false);
+      } else {
+        setIsFreePlay(true);
+      }
     };
-    
+
     fetchUser();
-    
-    // Listen for gems updates
+
     const handleGemsUpdated = () => {
-      fetchUser();
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
     };
     window.addEventListener('gemsUpdated', handleGemsUpdated);
     return () => window.removeEventListener('gemsUpdated', handleGemsUpdated);
-  }, []);
+  }, [userId]);
 
   const handleDrop = async () => {
     if (dropping) return;
-    if (!userId) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in to play Plinko.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const stake = isFreePlay ? 0 : betAmount;
     if (gemsBalance < stake) {
+      haptics('error');
       toast({
         title: 'Insufficient Gems',
-        description: 'You do not have enough gems to place this bet.',
+        description: `You need at least ${stake} gems to drop the ball.`,
         variant: 'destructive',
       });
       return;
     }
 
-    // Deduct stake if not free play
+    // Deduct stake locally & remotely
     if (stake > 0) {
-      await updateTotalGems(-stake, userId);
-      setGemsBalance(prev => prev - stake);
+      updateUserBalances(-stake, 0);
+      setGemsBalance((prev) => Math.max(0, prev - stake));
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      if (userId && userId !== 'guest') {
+        updateTotalGems(-stake, userId).catch(() => {});
+      }
     }
 
     setDropping(true);
     haptics('medium');
-    setMessage('Dropping ball...');
+    setMessage('Dropping ball through the pegs...');
 
-    // Trigger local storage tracking for daily mission progress
     const today = new Date().toISOString().split('T')[0];
     const missionKey = `daily_mission_plinko_${userId}_${today}`;
     localStorage.setItem(missionKey, 'true');
     window.dispatchEvent(new CustomEvent('plinkoPlayed'));
 
-    // Precalculate ball path (5 rows of pegs, so 5 left/right choices)
-    // choices: array of 5 decisions where 0 = left (-1), 1 = right (+1)
+    // Precalculate ball path (5 rows of pegs, 5 choices)
     const choices: number[] = [];
     let rightCount = 0;
     for (let i = 0; i < 5; i++) {
@@ -118,35 +117,29 @@ export const PlinkoGame: React.FC = () => {
 
     // Run animation steps
     let currentStep = 0;
-    let currX = CENTER_X;
-    let currY = 20;
-    setBallPos({ x: currX, y: currY });
+    let currentX = CENTER_X;
+    let currentY = PEG_START_Y - 30;
 
-    const animateInterval = setInterval(async () => {
+    setBallPos({ x: currentX, y: currentY });
+
+    const stepInterval = setInterval(() => {
       if (currentStep < 5) {
-        // Drop to next row, bounce left or right
-        const nextY = PEG_START_Y + currentStep * ROW_SPACING;
-        const dir = choices[currentStep] === 0 ? -1 : 1;
-        const nextX = currX + dir * 18; // offset on peg grid
-
-        setBallPos({ x: nextX, y: nextY });
+        const choice = choices[currentStep];
+        currentX += choice === 1 ? 16 : -16;
+        currentY = PEG_START_Y + currentStep * ROW_SPACING + 15;
+        setBallPos({ x: currentX, y: currentY });
         haptics('light');
-        currX = nextX;
-        currY = nextY;
-        currentStep++;
-      } else if (currentStep === 5) {
-        // Drop to the final slot at the bottom
-        const finalY = 270;
-        setBallPos({ x: currX, y: finalY });
-        haptics('light');
-        currY = finalY;
         currentStep++;
       } else {
-        // Animation finished
-        clearInterval(animateInterval);
+        clearInterval(stepInterval);
 
-        const binIndex = rightCount;
-        const multiplier = MULTIPLIERS[binIndex];
+        // Land in bin (index 0 to 5)
+        const targetBin = Math.max(0, Math.min(5, rightCount));
+        const finalX = (BOARD_WIDTH / 6) * targetBin + BOARD_WIDTH / 12;
+        const finalY = PEG_START_Y + 5 * ROW_SPACING + 20;
+        setBallPos({ x: finalX, y: finalY });
+
+        const multiplier = MULTIPLIERS[targetBin];
         const baseAmount = isFreePlay ? 10 : betAmount;
         const reward = Math.round(baseAmount * multiplier);
 
@@ -155,20 +148,25 @@ export const PlinkoGame: React.FC = () => {
 
           if (reward > 0) {
             haptics(multiplier >= 1.5 ? 'success' : 'warning');
-            await logGemsEarned(reward, userId);
-            setGemsBalance(prev => prev + reward);
-            
+            updateUserBalances(reward, 0);
+            setGemsBalance((prev) => prev + reward);
+            window.dispatchEvent(new CustomEvent('gemsUpdated'));
+
+            if (userId && userId !== 'guest') {
+              logGemsEarned(reward, userId).catch(() => {});
+            }
+
             if (multiplier >= 1.5) {
               confetti({
-                particleCount: 80,
-                spread: 60,
-                origin: { y: 0.8 }
+                particleCount: 90,
+                spread: 65,
+                origin: { y: 0.8 },
               });
             }
 
             setMessage(`🎉 Landed on ${multiplier}x! You won ${reward} Gems!`);
             toast({
-              title: '🎉 Multiplier hit!',
+              title: '🎉 Multiplier Hit!',
               description: `Landed on ${multiplier}x slot. Awarded ${reward} gems.`,
             });
           } else {
@@ -181,21 +179,22 @@ export const PlinkoGame: React.FC = () => {
             setHasPlayedFreeToday(true);
             setIsFreePlay(false);
           }
+
+          window.dispatchEvent(new CustomEvent('miniGameRoundComplete'));
         });
       }
-    }, 200);
+    }, 180);
   };
 
   // Generate pegs coords for rendering the board visual background
   const renderPegs = () => {
     const pegList = [];
     for (let row = 0; row < 5; row++) {
-      // Row row has row + 2 pegs
       const pegCount = row + 2;
-      const startX = CENTER_X - ((pegCount - 1) * 18) / 2;
+      const startX = CENTER_X - ((pegCount - 1) * 32) / 2;
       for (let i = 0; i < pegCount; i++) {
         pegList.push({
-          x: startX + i * 18,
+          x: startX + i * 32,
           y: PEG_START_Y + row * ROW_SPACING,
         });
       }
@@ -204,133 +203,124 @@ export const PlinkoGame: React.FC = () => {
   };
 
   return (
-    <div className="panel-3d flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-white rounded-3xl border-2 border-primary/20 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-amber-600 font-black text-xs bg-amber-50 rounded-bl-2xl border-l-2 border-b-2 border-amber-200">
-        <Coins className="w-3.5 h-3.5" />
-        <span>{gemsBalance} Gems</span>
-      </div>
-
-      <div className="text-center w-full mt-4">
-        <h3 className="text-2xl font-black text-primary tracking-widest uppercase flex items-center justify-center gap-2">
-          <Sparkles className="text-emerald-500 fill-emerald-500 w-6 h-6 animate-pulse" />
-          Plinko Board
-        </h3>
-        <p className="text-sm font-bold text-muted-foreground mt-1 max-w-[240px] mx-auto leading-relaxed">
-          {message}
-        </p>
-      </div>
-
-      {/* Plinko Board Screen */}
-      <div className="relative bg-slate-50 border-4 border-slate-200 rounded-3xl w-[300px] h-[320px] overflow-hidden shadow-inner flex flex-col justify-between p-2 select-none">
-        {/* Draw Pegs */}
-        <div className="absolute inset-0">
-          {renderPegs().map((peg, idx) => (
-            <div
-              key={idx}
-              className="absolute w-2 h-2 rounded-full bg-slate-400 shadow-sm"
-              style={{
-                left: `${peg.x - 4}px`,
-                top: `${peg.y - 4}px`,
-              }}
-            />
-          ))}
+    <div className="flex flex-col items-center gap-5 p-2 sm:p-4 max-w-sm mx-auto select-none">
+      {/* Balance Bar */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-black text-slate-700">💎 {gemsBalance}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">Gems</span>
         </div>
-
-        {/* Draw Drop Point Indicator */}
-        <div 
-          className="absolute top-2 w-4 h-4 border-2 border-dashed border-slate-400 rounded-full"
-          style={{ left: `${CENTER_X - 8}px` }}
-        />
-
-        {/* Draw Ball */}
-        {ballPos && (
-          <div
-            className="absolute w-4.5 h-4.5 rounded-full bg-yellow-400 border border-yellow-500 shadow-md transition-all duration-200 z-10"
-            style={{
-              width: '18px',
-              height: '18px',
-              left: `${ballPos.x - 9}px`,
-              top: `${ballPos.y - 9}px`,
-            }}
-          />
+        {isFreePlay && (
+          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
+            Free Daily Drop
+          </span>
         )}
+      </div>
 
-        {/* Bottom Slots */}
-        <div className="absolute bottom-2 left-2 right-2 grid grid-cols-6 gap-1 h-12 items-end">
-          {MULTIPLIERS.map((mult, idx) => (
-            <div
-              key={idx}
-              className={`rounded-xl py-1 text-center font-black text-xs border-2 flex flex-col items-center justify-center h-full ${
-                mult >= 1.5 
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-600' 
-                  : 'bg-white border-slate-200 text-slate-400'
-              }`}
-            >
-              <span>{mult}x</span>
-            </div>
-          ))}
+      {/* 3D Plinko Board Canvas Box */}
+      <div
+        className="w-full rounded-3xl p-4 relative flex flex-col items-center shadow-xl border-4 border-emerald-600/40"
+        style={{
+          background: 'linear-gradient(160deg, hsl(165 70% 20%) 0%, hsl(175 80% 12%) 100%)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.2)',
+        }}
+      >
+        <div className="text-center mb-2">
+          <span className="text-xs font-black uppercase tracking-widest text-emerald-300 drop-shadow-sm flex items-center justify-center gap-1">
+            <Sparkles className="w-4 h-4" /> Royal Plinko Pegs
+          </span>
+        </div>
+
+        {/* Board SVG */}
+        <div className="w-[300px] h-[260px] relative bg-slate-950/90 rounded-2xl border-2 border-emerald-400/40 overflow-hidden shadow-inner flex flex-col justify-between">
+          <svg className="w-full h-full absolute inset-0 pointer-events-none">
+            {/* Pegs */}
+            {renderPegs().map((p, idx) => (
+              <circle
+                key={idx}
+                cx={p.x}
+                cy={p.y}
+                r="4.5"
+                className="fill-emerald-400 filter drop-shadow-[0_0_3px_rgba(52,211,153,0.8)]"
+              />
+            ))}
+
+            {/* Bouncing Ball */}
+            {ballPos && (
+              <circle
+                cx={ballPos.x}
+                cy={ballPos.y}
+                r="7.5"
+                className="fill-amber-400 stroke-yellow-200 stroke-2 filter drop-shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse"
+              />
+            )}
+          </svg>
+
+          <div className="flex-1" />
+
+          {/* Multiplier Bins */}
+          <div className="w-full grid grid-cols-6 h-10 border-t-2 border-emerald-500/40 bg-slate-900/90 relative z-10">
+            {MULTIPLIERS.map((mult, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center justify-center text-[10px] font-black border-r last:border-r-0 border-emerald-500/30 ${
+                  mult >= 5
+                    ? 'text-amber-400 bg-amber-500/15'
+                    : mult >= 1.5
+                    ? 'text-emerald-300 bg-emerald-500/10'
+                    : 'text-slate-400'
+                }`}
+              >
+                {mult}x
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Message Banner */}
+        <div className="w-full mt-3 bg-black/40 rounded-xl p-2 text-center min-h-[38px] flex items-center justify-center">
+          <p className="text-xs font-black text-emerald-300 leading-tight">{message}</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 w-full">
-        {/* Play Modes / Betting options */}
-        {!dropping && (
-          <div className="flex flex-col gap-2 w-full pt-1 border-t-2 border-muted">
-            <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 px-1">
-              <span>Bet Amount:</span>
-              <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
+      {/* Controls & Bet Selector */}
+      <div className="w-full flex flex-col gap-3">
+        {!isFreePlay && (
+          <div className="flex justify-between items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+            <span className="text-[11px] font-black uppercase text-slate-500 px-2">Bet Amount:</span>
+            <div className="flex gap-1.5">
+              {[5, 10, 25, 50].map((amt) => (
+                <button
+                  key={amt}
+                  disabled={dropping}
+                  onClick={() => { haptics('light'); setBetAmount(amt); }}
+                  className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                    betAmount === amt
+                      ? 'bg-emerald-600 text-white shadow-sm scale-105'
+                      : 'bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {amt}
+                </button>
+              ))}
             </div>
-
-            <div className="flex gap-2 w-full justify-between items-center bg-slate-50 rounded-2xl p-1 border-2 border-slate-200">
-              <Button
-                variant={isFreePlay ? 'secondary' : 'ghost'}
-                disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-black h-10 rounded-xl uppercase tracking-widest transition-all ${
-                  isFreePlay 
-                    ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setIsFreePlay(true)}
-              >
-                Free {hasPlayedFreeToday && '✔'}
-              </Button>
-              <div className="flex gap-1 items-center flex-1">
-                {[5, 10, 25].map(amt => (
-                  <Button
-                    key={amt}
-                    variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-10 rounded-xl px-0 transition-all ${
-                      !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-slate-200 text-primary' 
-                        : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                    onClick={() => {
-                      setIsFreePlay(false);
-                      setBetAmount(amt);
-                    }}
-                  >
-                    {amt}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-muted-foreground text-center font-bold mt-1">
-                Daily free play used. Playing for gems.
-              </p>
-            )}
           </div>
         )}
 
         <Button
           onClick={handleDrop}
           disabled={dropping}
-          className="w-full btn-3d bg-emerald-500 border-2 border-emerald-600 hover:bg-emerald-400 font-black py-6 rounded-2xl text-lg tracking-widest uppercase shadow-md text-white"
+          className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest text-slate-950 shadow-lg border-0 transition-transform active:scale-95"
+          style={{
+            background: 'linear-gradient(160deg, hsl(150 85% 50%), hsl(165 90% 40%))',
+            boxShadow: '0 4px 0 hsl(165 80% 25%), 0 6px 20px hsl(150 70% 50% / 0.4)',
+          }}
         >
-          {dropping ? 'Dropping...' : 'Drop Ball'}
+          {dropping ? '🔴 Ball Dropping…' : isFreePlay ? '🔴 Free Drop Now' : `🔴 Drop Ball (💎 ${betAmount} Gems)`}
         </Button>
       </div>
-      {adElement}
     </div>
   );
 };
+
+export default PlinkoGame;

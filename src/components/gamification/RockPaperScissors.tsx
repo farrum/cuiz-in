@@ -3,9 +3,11 @@ import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { supabase } from '@/integrations/supabase/client';
 import { logGemsEarned, updateTotalGems } from '@/utils/gemsService';
+import { getUserBalances, updateUserBalances } from '@/utils/shopData';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Coins, Sparkles } from 'lucide-react';
+import { Coins, Sparkles, Swords } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const CHOICES = [
@@ -15,11 +17,16 @@ const CHOICES = [
 ];
 
 export const RockPaperScissors: React.FC = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [gemsBalance, setGemsBalance] = useState<number>(0);
-  const { showVideoAd, adElement } = useMiniGameVideoAd();
+  const [userId, setUserId] = useState<string>(() => {
+    return (
+      (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.USER_ID) || localStorage.getItem('cuizin_user_id') : null) ||
+      'guest'
+    );
+  });
+  const [gemsBalance, setGemsBalance] = useState<number>(() => getUserBalances().gems);
+  const { showVideoAd } = useMiniGameVideoAd();
   const haptics = useHaptics();
-  
+
   const [gameState, setGameState] = useState<'idle' | 'battling' | 'result'>('idle');
   const [playerChoice, setPlayerChoice] = useState<string | null>(null);
   const [aiChoice, setAiChoice] = useState<string | null>(null);
@@ -27,87 +34,79 @@ export const RockPaperScissors: React.FC = () => {
   const [betAmount, setBetAmount] = useState<number>(10);
   const [isFreePlay, setIsFreePlay] = useState<boolean>(false);
   const [hasPlayedFreeToday, setHasPlayedFreeToday] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('Select Rock, Paper, or Scissors and play against the AI!');
+  const [message, setMessage] = useState<string>('Select Rock, Paper, or Scissors to duel the Royal Bot!');
 
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUserId(session.user.id);
-        
-        // Fetch current points/gems
-        const { data } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (data) {
-          setGemsBalance(data.points || 0);
-        }
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
 
-        // Check if free play is used today
-        const today = new Date().toISOString().split('T')[0];
-        const freePlayed = localStorage.getItem(`rps_free_played_${session.user.id}_${today}`);
-        if (freePlayed === 'true') {
-          setHasPlayedFreeToday(true);
-        } else {
-          setIsFreePlay(true); // Default to free play if available
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentId = session?.user?.id || userId;
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        const { data } = await supabase.from('profiles').select('points').eq('id', session.user.id).maybeSingle();
+        if (data && data.points !== undefined && data.points !== null) {
+          setGemsBalance(Number(data.points));
         }
       }
+
+      const today = new Date().toISOString().split('T')[0];
+      const freePlayed = localStorage.getItem(`rps_free_played_${currentId}_${today}`);
+      if (freePlayed === 'true') {
+        setHasPlayedFreeToday(true);
+        setIsFreePlay(false);
+      } else {
+        setIsFreePlay(true);
+      }
     };
-    
+
     fetchUser();
-    
-    // Listen for gems updates
+
     const handleGemsUpdated = () => {
-      fetchUser();
+      const { gems } = getUserBalances();
+      setGemsBalance(gems);
     };
     window.addEventListener('gemsUpdated', handleGemsUpdated);
     return () => window.removeEventListener('gemsUpdated', handleGemsUpdated);
-  }, []);
+  }, [userId]);
 
   const handlePlay = async (choice: string) => {
     if (gameState === 'battling') return;
-    if (!userId) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in to play Rock Paper Scissors.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const stake = isFreePlay ? 0 : betAmount;
     if (gemsBalance < stake) {
+      haptics('error');
       toast({
         title: 'Insufficient Gems',
-        description: 'You do not have enough gems to place this bet.',
+        description: `You need at least ${stake} gems to duel.`,
         variant: 'destructive',
       });
       return;
     }
 
-    // Deduct stake if not free play
     if (stake > 0) {
-      await updateTotalGems(-stake, userId);
-      setGemsBalance(prev => prev - stake);
+      updateUserBalances(-stake, 0);
+      setGemsBalance((prev) => Math.max(0, prev - stake));
+      window.dispatchEvent(new CustomEvent('gemsUpdated'));
+      if (userId && userId !== 'guest') {
+        updateTotalGems(-stake, userId).catch(() => {});
+      }
     }
 
     setPlayerChoice(choice);
     haptics('medium');
     setGameState('battling');
-    setMessage('Rock... Paper... Scissors...');
+    setMessage('Rock… Paper… Scissors… Shoot!');
 
-    // Trigger local storage tracking for daily mission progress
     const today = new Date().toISOString().split('T')[0];
     const missionKey = `daily_mission_rps_${userId}_${today}`;
     localStorage.setItem(missionKey, 'true');
     window.dispatchEvent(new CustomEvent('rpsPlayed'));
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const oppChoice = CHOICES[Math.floor(Math.random() * CHOICES.length)].name;
       setAiChoice(oppChoice);
 
@@ -124,7 +123,7 @@ export const RockPaperScissors: React.FC = () => {
         battleOutcome = 'lose';
       }
 
-      showVideoAd(async () => {
+      showVideoAd(() => {
         setGameState('result');
         setResult(battleOutcome);
 
@@ -133,38 +132,43 @@ export const RockPaperScissors: React.FC = () => {
         if (battleOutcome === 'win') {
           haptics('success');
           const reward = baseAmount * 2;
-          await logGemsEarned(reward, userId);
-          setGemsBalance(prev => prev + reward);
-          
+          updateUserBalances(reward, 0);
+          setGemsBalance((prev) => prev + reward);
+          window.dispatchEvent(new CustomEvent('gemsUpdated'));
+
+          if (userId && userId !== 'guest') {
+            logGemsEarned(reward, userId).catch(() => {});
+          }
+
           confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.8 }
+            particleCount: 90,
+            spread: 70,
+            origin: { y: 0.7 },
           });
 
-          setMessage(`🎉 You Win! AI chose ${oppChoice.toUpperCase()}. Awarded ${reward} Gems!`);
+          setMessage(`🎉 Victory! Bot chose ${oppChoice.toUpperCase()}. Won ${reward} Gems!`);
           toast({
             title: '🎉 You Won!',
-            description: `AI chose ${oppChoice}. You won ${reward} gems.`,
+            description: `Bot chose ${oppChoice}. You won ${reward} gems.`,
           });
         } else if (battleOutcome === 'tie') {
           haptics('warning');
-          // Return stake back to user
           if (stake > 0) {
-            await logGemsEarned(stake, userId);
-            setGemsBalance(prev => prev + stake);
+            updateUserBalances(stake, 0);
+            setGemsBalance((prev) => prev + stake);
+            window.dispatchEvent(new CustomEvent('gemsUpdated'));
           }
-          setMessage(`🤝 Tie! AI chose ${oppChoice.toUpperCase()}. Your stake has been returned.`);
+          setMessage(`🤝 Tie! Bot chose ${oppChoice.toUpperCase()}. Stake returned.`);
           toast({
             title: '🤝 Tie Game!',
-            description: 'No gems lost or gained.',
+            description: 'No gems lost.',
           });
         } else {
           haptics('error');
-          setMessage(`😢 You Lost! AI chose ${oppChoice.toUpperCase()}. Better luck next time.`);
+          setMessage(`😢 Defeat! Bot chose ${oppChoice.toUpperCase()}. Better luck next duel!`);
           toast({
-            title: 'Better luck next time!',
-            description: `AI chose ${oppChoice}. You lost your bet.`,
+            title: 'Bot took the round!',
+            description: `Bot chose ${oppChoice}.`,
           });
         }
 
@@ -173,8 +177,10 @@ export const RockPaperScissors: React.FC = () => {
           setHasPlayedFreeToday(true);
           setIsFreePlay(false);
         }
+
+        window.dispatchEvent(new CustomEvent('miniGameRoundComplete'));
       });
-    }, 1500);
+    }, 1200);
   };
 
   const resetGame = () => {
@@ -182,133 +188,122 @@ export const RockPaperScissors: React.FC = () => {
     setPlayerChoice(null);
     setAiChoice(null);
     setResult(null);
-    setMessage('Select Rock, Paper, or Scissors and play against the AI!');
-  };
-
-  const getEmoji = (name: string | null) => {
-    return CHOICES.find(c => c.name === name)?.emoji || '';
+    setMessage('Select your move for the next round!');
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto bg-card rounded-2xl border shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 flex items-center gap-1.5 text-yellow-600 font-bold text-xs bg-yellow-50 rounded-bl-xl border-l border-b border-yellow-100">
-        <Coins className="w-3.5 h-3.5" />
-        <span>{gemsBalance} Gems</span>
+    <div className="flex flex-col items-center gap-5 p-2 sm:p-4 max-w-sm mx-auto select-none">
+      {/* Balance Bar */}
+      <div className="w-full flex justify-between items-center px-4 py-2 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-black text-slate-700">💎 {gemsBalance}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">Gems</span>
+        </div>
+        {isFreePlay && (
+          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
+            Free Daily Duel
+          </span>
+        )}
       </div>
 
-      <div className="text-center w-full mt-4">
-        <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="text-orange-500 fill-orange-500 w-5 h-5 animate-pulse" />
-          Rock Paper Scissors
-        </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-[240px] mx-auto leading-relaxed">
-          {message}
-        </p>
-      </div>
-
-      {/* Battle visual frame */}
-      <div className="flex justify-between items-center bg-slate-50 border rounded-2xl p-4 w-full h-32 relative overflow-hidden shadow-inner">
-        {/* Player gesture */}
-        <div className="flex flex-col items-center flex-1">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">You</span>
-          <span className={`text-4xl mt-2 ${gameState === 'battling' ? 'animate-bounce' : ''}`}>
-            {playerChoice ? getEmoji(playerChoice) : '❓'}
+      {/* 3D Battle Arena Box */}
+      <div
+        className="w-full rounded-3xl p-5 relative flex flex-col items-center shadow-xl border-4 border-indigo-600/40"
+        style={{
+          background: 'linear-gradient(160deg, hsl(260 65% 25%) 0%, hsl(240 75% 15%) 100%)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.2)',
+        }}
+      >
+        <div className="text-center mb-3">
+          <span className="text-xs font-black uppercase tracking-widest text-indigo-300 drop-shadow-sm flex items-center justify-center gap-1">
+            <Swords className="w-4 h-4" /> Royal Hand Duel
           </span>
         </div>
 
-        <div className="text-sm font-black text-slate-350">VS</div>
-
-        {/* AI gesture */}
-        <div className="flex flex-col items-center flex-1">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide">AI Opponent</span>
-          <span className={`text-4xl mt-2 ${gameState === 'battling' ? 'animate-bounce' : ''}`}>
-            {gameState === 'battling' ? '✊' : aiChoice ? getEmoji(aiChoice) : '❓'}
-          </span>
-        </div>
-      </div>
-
-      {gameState === 'idle' && (
-        <div className="flex flex-col gap-4 w-full">
-          {/* Choice Selection Grid */}
-          <div className="grid grid-cols-3 gap-2 w-full">
-            {CHOICES.map(choice => (
-              <Button
-                key={choice.name}
-                variant="outline"
-                className="flex flex-col h-16 rounded-xl border-2 hover:bg-slate-50 border-slate-200 transition-all font-black text-xs uppercase"
-                onClick={() => handlePlay(choice.name)}
-              >
-                <span className="text-2xl">{choice.emoji}</span>
-                <span className="text-[9px] mt-1">{choice.label}</span>
-              </Button>
-            ))}
+        {/* Battle Duel Stage */}
+        <div className="w-full bg-slate-950/90 rounded-2xl p-4 border-2 border-indigo-400/40 flex justify-around items-center min-h-[120px] shadow-inner">
+          {/* Player Side */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[10px] font-black text-indigo-300 uppercase">You</span>
+            <div className="w-16 h-16 rounded-2xl bg-indigo-900/60 border border-indigo-400/50 flex items-center justify-center text-3xl shadow-md">
+              {playerChoice ? CHOICES.find((c) => c.name === playerChoice)?.emoji : '❓'}
+            </div>
           </div>
 
-          {/* Play Modes / Betting options */}
-          <div className="flex flex-col gap-2 w-full pt-1 border-t border-slate-100">
-            <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1 px-1">
-              <span>Cost to Play:</span>
-              <span>{isFreePlay ? 'FREE PLAY' : `${betAmount} Gems`}</span>
-            </div>
+          <span className="text-xl font-black text-amber-400">VS</span>
 
-            <div className="flex gap-2 w-full justify-between items-center bg-slate-55 bg-slate-50 rounded-xl p-1 border border-slate-100">
-              <Button
-                variant={isFreePlay ? 'secondary' : 'ghost'}
-                disabled={hasPlayedFreeToday}
-                className={`flex-1 text-[10px] font-bold h-8 rounded-lg uppercase tracking-wide transition-all ${
-                  isFreePlay 
-                    ? 'bg-white shadow-sm border border-slate-200 text-purple-600' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-                onClick={() => setIsFreePlay(true)}
-              >
-                Free {hasPlayedFreeToday && '✔'}
-              </Button>
-              <div className="flex gap-1 items-center flex-1">
-                {[5, 10, 25].map(amt => (
-                  <Button
-                    key={amt}
-                    variant={!isFreePlay && betAmount === amt ? 'secondary' : 'ghost'}
-                    className={`flex-1 text-[10px] font-black h-8 rounded-lg px-0 transition-all ${
-                      !isFreePlay && betAmount === amt 
-                        ? 'bg-white shadow-sm border border-slate-200 text-slate-800' 
-                        : 'text-slate-400 hover:text-slate-600'
+          {/* AI Side */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[10px] font-black text-rose-300 uppercase">Royal Bot</span>
+            <div className="w-16 h-16 rounded-2xl bg-rose-950/60 border border-rose-400/50 flex items-center justify-center text-3xl shadow-md">
+              {gameState === 'battling' ? (
+                <span className="animate-spin text-2xl">⚔️</span>
+              ) : aiChoice ? (
+                CHOICES.find((c) => c.name === aiChoice)?.emoji
+              ) : (
+                '🤖'
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Outcome Message */}
+        <div className="w-full mt-3 bg-black/40 rounded-xl p-2.5 text-center min-h-[40px] flex items-center justify-center">
+          <p className="text-xs font-black text-indigo-200 leading-tight">{message}</p>
+        </div>
+      </div>
+
+      {/* Move Choice Buttons */}
+      <div className="w-full flex flex-col gap-3">
+        {gameState === 'result' ? (
+          <Button
+            onClick={resetGame}
+            className="w-full h-13 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 border-0 shadow-lg"
+          >
+            Play Next Round
+          </Button>
+        ) : (
+          <>
+            {!isFreePlay && (
+              <div className="flex justify-between items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-black uppercase text-slate-500 px-2">Duel Stake:</span>
+                <div className="flex gap-1.5">
+                  {[5, 10, 25, 50].map((amt) => (
+                    <button
+                      key={amt}
+                      disabled={gameState === 'battling'}
+                      onClick={() => { haptics('light'); setBetAmount(amt); }}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                        betAmount === amt
+                          ? 'bg-indigo-600 text-white shadow-sm scale-105'
+                          : 'bg-white text-slate-700 hover:bg-slate-50'
                       }`}
-                    onClick={() => {
-                      setIsFreePlay(false);
-                      setBetAmount(amt);
-                    }}
-                  >
-                    {amt}
-                  </Button>
-                ))}
+                    >
+                      {amt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            {hasPlayedFreeToday && isFreePlay && (
-              <p className="text-[10px] text-slate-400 text-center font-medium mt-1">
-                Daily free play used. Playing for gems.
-              </p>
             )}
-          </div>
-        </div>
-      )}
 
-      {gameState === 'result' && (
-        <Button
-          onClick={resetGame}
-          className="w-full font-bold h-11 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs uppercase tracking-wider transition-all mt-2"
-        >
-          Play Again
-        </Button>
-      )}
-
-      {gameState === 'battling' && (
-        <div className="w-full py-4 text-center text-xs font-bold text-orange-600 flex gap-2 justify-center items-center">
-          <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
-          Battling AI...
-        </div>
-      )}
-      {adElement}
+            <div className="grid grid-cols-3 gap-2.5 w-full">
+              {CHOICES.map((choice) => (
+                <button
+                  key={choice.name}
+                  disabled={gameState === 'battling'}
+                  onClick={() => handlePlay(choice.name)}
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white border-2 border-indigo-200 shadow-sm hover:border-indigo-400 hover:shadow-md active:scale-95 transition-all"
+                >
+                  <span className="text-3xl mb-1">{choice.emoji}</span>
+                  <span className="text-[11px] font-black uppercase text-slate-700">{choice.label}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
+
+export default RockPaperScissors;
