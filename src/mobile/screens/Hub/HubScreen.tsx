@@ -418,8 +418,7 @@ export default function HubScreen() {
                   className="relative w-full rounded-2xl overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, #fff 0%, hsl(38 60% 98%) 100%)',
-                    boxShadow: '0 4px 0 rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05)',
-                    ring: '1px solid rgba(0,0,0,0.06)',
+                    boxShadow: '0 4px 0 rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.06)',
                   }}
                   onClick={() => { haptics('medium'); navigate(node.to); }}
                 >
