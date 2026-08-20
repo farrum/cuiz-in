@@ -3,6 +3,7 @@ import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
 import { cn } from "@/lib/utils";
 import { getPositionClasses } from "./adStyles";
+import { Capacitor } from "@capacitor/core";
 
 interface SimpleAdBannerProps {
   position:
@@ -38,8 +39,16 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   slotId,
   pageSection,
 }) => {
-  const uniqueId = useId().replace(/:/g, "");
   const resolvedPosition = POSITION_MAP[position] || position;
+
+  // On native platform, web-based HTML ad slot scripts (like Adsterra) are
+  // completely disabled to prevent layout shifts, script injection risks, and
+  // conflicts with native AdMob/LevelPlay banner surfaces.
+  if (Capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  const uniqueId = useId().replace(/:/g, "");
 
   // The container id is stable for the lifetime of the component. Previously a
   // refresh nonce was baked into the id AND the React `key`, which destroyed

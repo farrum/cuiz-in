@@ -77,12 +77,14 @@ export async function showLevelPlayBanner() {
   }
 }
 
-export async function hideLevelPlayBanner() {
+export async function hideLevelPlayBanner(keepLayoutSpacer = false) {
   if (!isNativeAds() || !bannerShown) return;
   bannerShown = false;
   try {
     await Native.hideBanner();
-    document.documentElement.style.setProperty('--banner-h', '0px');
+    if (!keepLayoutSpacer) {
+      document.documentElement.style.setProperty('--banner-h', '0px');
+    }
   } catch {
     /* noop */
   }

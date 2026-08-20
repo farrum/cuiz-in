@@ -170,12 +170,14 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
   }
 }
 
-export async function hideAdMobBanner(): Promise<void> {
+export async function hideAdMobBanner(keepLayoutSpacer = false): Promise<void> {
   if (!Capacitor.isNativePlatform() || !bannerShown) return;
   bannerShown = false;
   try {
     await AdMob.removeBanner();
-    document.documentElement.style.setProperty('--banner-h', '0px');
+    if (!keepLayoutSpacer) {
+      document.documentElement.style.setProperty('--banner-h', '0px');
+    }
   } catch { /* noop */ }
 }
 

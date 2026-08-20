@@ -191,12 +191,13 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       }
     }, 2000);
 
-    // Regular rotation interval (every 12s) so banner ads update regularly
+    // Regular rotation interval (every 30s) so banner ads update regularly on web.
+    // Native SDKs (AdMob/LevelPlay) handle their own rotation internally.
     const refreshInterval = setInterval(() => {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && !Capacitor.isNativePlatform()) {
         fetchAds(true);
       }
-    }, 12000);
+    }, 30000);
     
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);

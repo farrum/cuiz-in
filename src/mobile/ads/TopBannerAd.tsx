@@ -54,7 +54,8 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
 
   const marginClass = noMargin ? "" : "mb-1";
 
-  if (Capacitor.isNativePlatform() && nativeActive) {
+  if (Capacitor.isNativePlatform()) {
+    // On native builds, the banner is persistent. Always render the spacer immediately on mount.
     return <div className="shrink-0" style={{ height: 'var(--banner-h, 50px)' }} />;
   }
 

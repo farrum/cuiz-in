@@ -21,14 +21,14 @@ import ProfileScreen from './screens/Profile/ProfileScreen';
 import MobileTeamDashboard from './screens/Profile/MobileTeamDashboard';
 import ShopScreen from './screens/Shop/ShopScreen';
 
-// Lazy-load screens that are outside the main tab view to optimize load size
-const QuizStoryScreen = lazy(() => import('./screens/QuizStory/QuizStoryScreen'));
-const OnboardingScreen = lazy(() => import('./screens/Onboarding/OnboardingScreen'));
-const MobileLoginScreen = lazy(() => import('./screens/Login/MobileLoginScreen'));
-const DailyChallengeStoryScreen = lazy(() => import('./screens/DailyChallengeStory/DailyChallengeStoryScreen'));
-const MiniGameScreen = lazy(() => import('./screens/MiniGames/MiniGameScreen'));
-const EmpireQuestsPage = lazy(() => import('../pages/EmpireQuestsPage'));
-const KingdomsPage = lazy(() => import('../pages/KingdomsPage'));
+// Static imports for all screens to eliminate dynamic dynamic import/Suspense blinks
+import QuizStoryScreen from './screens/QuizStory/QuizStoryScreen';
+import OnboardingScreen from './screens/Onboarding/OnboardingScreen';
+import MobileLoginScreen from './screens/Login/MobileLoginScreen';
+import DailyChallengeStoryScreen from './screens/DailyChallengeStory/DailyChallengeStoryScreen';
+import MiniGameScreen from './screens/MiniGames/MiniGameScreen';
+import EmpireQuestsPage from '../pages/EmpireQuestsPage';
+import KingdomsPage from '../pages/KingdomsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
