@@ -25,7 +25,8 @@ const isMobile =
       return false;
     }
   })() ||
-  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1');
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mobile') === '1') ||
+  (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
 
 const PageLayout = ({ 
   children, 
