@@ -1,57 +1,62 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
 
 /**
- * Owns the *single* native banner surface for the whole app session.
- *
- * Mounted once from AppMobile and never unmounted during navigation. Screens
- * used to each mount their own banner component, so every route change ran
- * removeBanner() followed by showBanner() — a visible flash, a layout jump and
- * a fresh ad request each time. Screens now only reserve layout height.
- * 
- * This component listens to router path changes and refreshes the native ad
- * on navigation, keeping the spacer --banner-h constant to prevent the WebView from jumping.
+ * Helper to determine if a route should show the bottom native banner ad.
+ * Banner routes correspond to screens displayed inside the main MobileShell (with bottom tabs).
+ */
+function shouldShowBannerForRoute(pathname: string): boolean {
+  const p = pathname.toLowerCase();
+  const bannerRoutes = [
+    '/hub',
+    '/leaderboard',
+    '/profile',
+    '/shop',
+    '/empire-quests',
+    '/kingdoms',
+    '/team-dashboard'
+  ];
+  return bannerRoutes.some(route => p === route || p.startsWith(route + '/'));
+}
+
+/**
+ * Owns the native banner surface for the whole app session.
+ * Monitors router path changes and toggles banner visibility.
+ * If moving between banner-eligible routes, the banner remains visible
+ * without being destroyed and recreated, eliminating visual flashes/flickering.
  */
 export function BannerHost() {
   const location = useLocation();
-  const firstRender = useRef(true);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    showAdMobBanner();
+    const manageBanner = async () => {
+      const show = shouldShowBannerForRoute(location.pathname);
+      const isShown = isAdMobBannerShown();
 
+      if (show && !isShown) {
+        console.log('[BannerHost] Entering banner-eligible route, showing native banner');
+        await showAdMobBanner();
+      } else if (!show && isShown) {
+        console.log('[BannerHost] Entering full-screen route, hiding native banner');
+        await hideAdMobBanner();
+      }
+    };
+
+    void manageBanner();
+  }, [location.pathname]);
+
+  // Hide the banner when this host component is unmounted
+  useEffect(() => {
     return () => {
-      void hideAdMobBanner();
+      if (Capacitor.isNativePlatform()) {
+        void hideAdMobBanner();
+      }
     };
   }, []);
-
-  // Refresh native ad on route change
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    
-    // Skip the first render since initial load effect handles it
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-
-    const refreshBanner = async () => {
-      console.log('[BannerHost] Route changed, refreshing native ad banner');
-
-      if (isAdMobBannerShown()) {
-        try {
-          await hideAdMobBanner(true);
-        } catch {}
-      }
-      
-      showAdMobBanner();
-    };
-
-    void refreshBanner();
-  }, [location.pathname]);
 
   return null;
 }

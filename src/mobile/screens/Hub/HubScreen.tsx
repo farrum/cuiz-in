@@ -20,6 +20,8 @@ import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
+import { Capacitor } from '@capacitor/core';
+import { showAdMobRewarded } from '@/mobile/ads/admob';
 import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
 import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
@@ -98,6 +100,14 @@ export default function HubScreen() {
   const [checkInRewardStars,  setCheckInRewardStars]  = useState(0);
   const [checkInStreak,       setCheckInStreak]       = useState(0);
   const [showRatingModal,      setShowRatingModal]     = useState(false);
+  const [bountyClaimPending, setBountyClaimPending] = useState<{
+    taskId: string;
+    gemsReward: number;
+    starsReward: number;
+    shardsReward: number;
+    shardType: string;
+  } | null>(null);
+  const [bountyAdShowing, setBountyAdShowing] = useState(false);
 
   const { toast } = useToast();
   const [baronTasks, setBaronTasks] = useState<any[]>([]);
@@ -195,7 +205,7 @@ export default function HubScreen() {
     };
   }, [gems, stars]);
 
-  const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
+  const executeClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string, isDoubled = false) => {
     haptics('success');
     audioManager.playSFX('chest');
     try {
@@ -234,7 +244,18 @@ export default function HubScreen() {
         await (supabase as any).from('profiles').update({ points: newGems, stars: newStars }).eq('id', session.session.user.id);
       }
     } catch (e) { console.warn(e); }
-    toast({ title: '⚔️ Contract Claimed!', description: `+${gemsReward} 💎 · +${starsReward} ⭐ · +${shardsReward} ${shardType} Shards` });
+    toast({
+      title: isDoubled ? '⚔️ Bounty Doubled!' : '⚔️ Contract Claimed!',
+      description: `+${gemsReward} 💎 · +${starsReward} ⭐ · +${shardsReward} ${shardType} Shards`
+    });
+  };
+
+  const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
+    if (Capacitor.isNativePlatform() && gemsReward > 0) {
+      setBountyClaimPending({ taskId, gemsReward, starsReward, shardsReward, shardType });
+    } else {
+      await executeClaimTask(taskId, gemsReward, starsReward, shardsReward, shardType);
+    }
   };
 
   const triggerDailyCheckIn = async (userKey: string, currentStars: number) => {
@@ -782,6 +803,116 @@ export default function HubScreen() {
                 >
                   ⚔️ Claim Tribute
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Double Bounty Gems Rewarded Ad Confirmation Modal ──────────────── */}
+      <AnimatePresence>
+        {bountyClaimPending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border-2 border-amber-300 relative overflow-hidden"
+            >
+              {/* Medieval decorative background banner */}
+              <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500" />
+              
+              <div className="text-center mt-3">
+                <div className="mx-auto w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center border border-amber-200 mb-4 animate-bounce">
+                  <Gem className="w-8 h-8 text-amber-500 fill-amber-300" />
+                </div>
+                
+                <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">
+                  Double Your Gems?
+                </h3>
+                
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed mb-6">
+                  Watch a short video scroll to double your contract earnings!
+                  <br />
+                  <span className="text-amber-600 font-bold">+{bountyClaimPending.gemsReward} 💎</span> becomes <span className="text-emerald-600 font-black">+{bountyClaimPending.gemsReward * 2} 💎</span>
+                </p>
+
+                <div className="space-y-2">
+                  <Button
+                    disabled={bountyAdShowing}
+                    onClick={async () => {
+                      haptics('medium');
+                      setBountyAdShowing(true);
+                      try {
+                        const res = await showAdMobRewarded();
+                        if (res.rewarded) {
+                          await executeClaimTask(
+                            bountyClaimPending.taskId,
+                            bountyClaimPending.gemsReward * 2, // Double gems!
+                            bountyClaimPending.starsReward,
+                            bountyClaimPending.shardsReward,
+                            bountyClaimPending.shardType,
+                            true // isDoubled
+                          );
+                        } else {
+                          // Standard claim fallback
+                          await executeClaimTask(
+                            bountyClaimPending.taskId,
+                            bountyClaimPending.gemsReward,
+                            bountyClaimPending.starsReward,
+                            bountyClaimPending.shardsReward,
+                            bountyClaimPending.shardType
+                          );
+                          toast({ title: 'Ad closed early', description: 'Gems were not doubled.' });
+                        }
+                      } catch (err) {
+                        console.error('Rewarded ad failed', err);
+                        // Standard claim fallback on error
+                        await executeClaimTask(
+                          bountyClaimPending.taskId,
+                          bountyClaimPending.gemsReward,
+                          bountyClaimPending.starsReward,
+                          bountyClaimPending.shardsReward,
+                          bountyClaimPending.shardType
+                        );
+                      } finally {
+                        setBountyAdShowing(false);
+                        setBountyClaimPending(null);
+                      }
+                    }}
+                    className="w-full rounded-2xl py-6 font-black text-sm uppercase tracking-wider text-white shadow-md transition-all active:scale-[0.98]"
+                    style={{
+                      background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+                      boxShadow: '0 4px 0 hsl(30 80% 35%)',
+                    }}
+                  >
+                    {bountyAdShowing ? 'Preparing Scroll...' : '⚔️ Watch to Double (2x)'}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    disabled={bountyAdShowing}
+                    onClick={async () => {
+                      haptics('light');
+                      await executeClaimTask(
+                        bountyClaimPending.taskId,
+                        bountyClaimPending.gemsReward,
+                        bountyClaimPending.starsReward,
+                        bountyClaimPending.shardsReward,
+                        bountyClaimPending.shardType
+                      );
+                      setBountyClaimPending(null);
+                    }}
+                    className="w-full rounded-2xl py-5 text-xs font-bold text-slate-400 hover:text-slate-500 uppercase tracking-wider"
+                  >
+                    Claim Standard (+{bountyClaimPending.gemsReward} 💎)
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

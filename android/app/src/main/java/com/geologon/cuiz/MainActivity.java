@@ -15,8 +15,7 @@ public class MainActivity extends BridgeActivity {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         // Enable edge-to-edge display explicitly for Android 15+ and backward compatibility
         EdgeToEdge.enable(this);
-        // Register the in-repo Unity LevelPlay bridge before the bridge boots.
-        registerPlugin(LevelPlayPlugin.class);
+
         super.onCreate(savedInstanceState);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {

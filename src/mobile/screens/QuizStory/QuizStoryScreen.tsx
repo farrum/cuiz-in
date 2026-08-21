@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll } from 'lucide-react';
+import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
+import { showAdMobRewarded, showAdMobInterstitial } from '@/mobile/ads/admob';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
 import type { QuizQuestion } from '@/utils/types';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
@@ -60,6 +63,11 @@ export default function QuizStoryScreen() {
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [adSeed, setAdSeed] = useState(0);
+  const { toast } = useToast();
+  const [doubleGemsPending, setDoubleGemsPending] = useState(false);
+  const [doubleGemsAdShowing, setDoubleGemsAdShowing] = useState(false);
+  const [reviveStreakPending, setReviveStreakPending] = useState(false);
+  const [reviveAdShowing, setReviveAdShowing] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [gemLaunchKey,    setGemLaunchKey]    = useState(0);   // increments to re-trigger gem fly
@@ -220,22 +228,25 @@ export default function QuizStoryScreen() {
         setTimeout(() => { setPulseOpt(null); }, 700);
       } else {
         haptics('error');
-        resetStreak();
+        if (Capacitor.isNativePlatform() && streak >= 3) {
+          setReviveStreakPending(true);
+        } else {
+          resetStreak();
+        }
         // Shake the wrong option
         setShakeOpt(option);
         setTimeout(() => setShakeOpt(null), 500);
       }
 
-      // After the 10s reveal, show a full-screen ad every 2nd question (more ad
-      // views without interrupting every single question), otherwise advance.
+      // After the 10s reveal, advance. Mid-quiz interstitial ad spam is disabled.
       answerCount.current += 1;
-      const showAd =
-        answerCount.current % 2 === 0 && Date.now() - lastAdAt.current > AD_COOLDOWN_MS;
-      advanceTimer.current = window.setTimeout(() => {
-        if (!mountedRef.current) return;
-        if (showAd) { lastAdAt.current = Date.now(); setShowInterstitial(true); }
-        else loadNext();
-      }, 10000);
+      const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3;
+      if (!isRevivePossible) {
+        advanceTimer.current = window.setTimeout(() => {
+          if (!mountedRef.current) return;
+          loadNext();
+        }, 10000);
+      }
     }, wait);
   };
 
@@ -260,7 +271,87 @@ export default function QuizStoryScreen() {
     };
   }, []);
 
-  const exit = () => navigate('/hub');
+  const handleReviveStreak = async () => {
+    setReviveAdShowing(true);
+    try {
+      const res = await showAdMobRewarded();
+      if (res.rewarded) {
+        toast({ title: '🔥 Streak Saved!', description: `Your streak of ${streak} has been preserved.` });
+      } else {
+        resetStreak();
+        toast({ title: 'Ad closed early', description: 'Streak was reset.' });
+      }
+    } catch (e) {
+      console.warn('AdMob Revive failed', e);
+      resetStreak();
+    } finally {
+      setReviveAdShowing(false);
+      setReviveStreakPending(false);
+      loadNext();
+    }
+  };
+
+  const handleDeclineRevive = () => {
+    resetStreak();
+    setReviveStreakPending(false);
+    loadNext();
+  };
+
+  const exit = () => {
+    if (Capacitor.isNativePlatform() && sessionGems > 0) {
+      setDoubleGemsPending(true);
+    } else {
+      navigate('/hub');
+    }
+  };
+
+  const handleDoubleGems = async () => {
+    setDoubleGemsAdShowing(true);
+    try {
+      const res = await showAdMobRewarded();
+      if (res.rewarded) {
+        const extraGems = sessionGems;
+        const next = gems + extraGems;
+        setGems(next);
+        localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(next));
+        const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (uid) {
+          try {
+            await logGemsEarned(extraGems, uid);
+            await supabase.from('profiles').update({ points: next }).eq('id', uid);
+          } catch (e) {
+            console.warn('Failed to update doubled gems in DB', e);
+          }
+        }
+        setSessionGems((g) => g + extraGems);
+        toast({ title: '💎 Gems Doubled!', description: `+${extraGems} extra gems added!` });
+        setTimeout(() => {
+          setDoubleGemsPending(false);
+          navigate('/hub');
+        }, 1500);
+      } else {
+        toast({ title: 'Ad closed early', description: 'Gems were not doubled.' });
+        setDoubleGemsPending(false);
+        navigate('/hub');
+      }
+    } catch (e) {
+      console.warn('AdMob Double Gems failed', e);
+      setDoubleGemsPending(false);
+      navigate('/hub');
+    } finally {
+      setDoubleGemsAdShowing(false);
+    }
+  };
+
+  const handleDeclineDoubleGems = async () => {
+    setDoubleGemsPending(false);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await showAdMobInterstitial();
+      } catch {}
+    }
+    navigate('/hub');
+  };
 
   return (
     // Safe-area padding on the OUTER wrapper — this is the correct place.
@@ -554,6 +645,122 @@ export default function QuizStoryScreen() {
               >
                 ⚔️ Apply &amp; March On
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Revive Streak Rewarded Ad Modal ──────────────── */}
+      <AnimatePresence>
+        {reviveStreakPending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border-2 border-red-300 relative overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-red-400 via-rose-300 to-red-500" />
+              
+              <div className="text-center mt-3">
+                <div className="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center border border-red-200 mb-4">
+                  <Flame className="w-8 h-8 text-red-500 fill-red-400 animate-pulse" />
+                </div>
+                
+                <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">
+                  Streak in Danger!
+                </h3>
+                
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed mb-6">
+                  Save your streak of <strong className="text-red-500">{streak}</strong> battles! Watch a quick scroll video to revive it and continue!
+                </p>
+
+                <div className="space-y-2">
+                  <Button
+                    disabled={reviveAdShowing}
+                    onClick={handleReviveStreak}
+                    className="w-full rounded-2xl py-6 font-black text-sm uppercase tracking-wider text-white shadow-md transition-all active:scale-[0.98]"
+                    style={{
+                      background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+                      boxShadow: '0 4px 0 hsl(30 80% 35%)',
+                    }}
+                  >
+                    {reviveAdShowing ? 'Preparing Scroll...' : '⚔️ Watch to Save Streak'}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    disabled={reviveAdShowing}
+                    onClick={handleDeclineRevive}
+                    className="w-full rounded-2xl py-5 text-xs font-bold text-slate-400 hover:text-slate-500 uppercase tracking-wider"
+                  >
+                    No thanks, let it break
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Double Session Gems Rewarded Ad Modal ──────────────── */}
+      <AnimatePresence>
+        {doubleGemsPending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border-2 border-amber-300 relative overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500" />
+              
+              <div className="text-center mt-3">
+                <div className="mx-auto w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center border border-amber-200 mb-4 animate-bounce">
+                  <Gem className="w-8 h-8 text-amber-500 fill-amber-300" />
+                </div>
+                
+                <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">
+                  Double Your Session Gems?
+                </h3>
+                
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed mb-6">
+                  You earned <span className="text-amber-600 font-bold">+{sessionGems} 💎</span> in this run. Watch a quick video scroll to double it to <span className="text-emerald-600 font-black">+{sessionGems * 2} 💎</span>!
+                </p>
+
+                <div className="space-y-2">
+                  <Button
+                    disabled={doubleGemsAdShowing}
+                    onClick={handleDoubleGems}
+                    className="w-full rounded-2xl py-6 font-black text-sm uppercase tracking-wider text-white shadow-md transition-all active:scale-[0.98]"
+                    style={{
+                      background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+                      boxShadow: '0 4px 0 hsl(30 80% 35%)',
+                    }}
+                  >
+                    {doubleGemsAdShowing ? 'Preparing Scroll...' : '⚔️ Watch to Double (2x)'}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    disabled={doubleGemsAdShowing}
+                    onClick={handleDeclineDoubleGems}
+                    className="w-full rounded-2xl py-5 text-xs font-bold text-slate-400 hover:text-slate-500 uppercase tracking-wider"
+                  >
+                    Claim Standard (+{sessionGems} 💎)
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

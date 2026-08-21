@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
-import { isNativeAds } from './levelplay';
+import { Capacitor } from '@capacitor/core';
 import { showAdWithFallback } from './admob';
 
 interface InterstitialAdProps {
@@ -53,7 +53,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
       setNativeShowing(false);
       return;
     }
-    if (!isNativeAds()) {
+    if (!Capacitor.isNativePlatform()) {
       setNativeShowing(false);
       return;
     }
@@ -99,7 +99,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
 
   // If there's nothing to show, resolve once so the quiz keeps flowing.
   useEffect(() => {
-    if (!open || isNativeAds()) return;
+    if (!open || Capacitor.isNativePlatform()) return;
     if (ad || hasDbAd || hasNetworkAd) return;
     if (closedFor.current === seed) return;
     closedFor.current = seed;

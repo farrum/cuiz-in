@@ -26,11 +26,6 @@
     @android.webkit.JavascriptInterface <methods>;
 }
 
-# ---- Unity LevelPlay (ironSource) mediation ----
--keepclassmembers class com.ironsource.** { public *; }
--keep class com.ironsource.** { *; }
--keep class com.unity3d.** { *; }
--dontwarn com.ironsource.**
--dontwarn com.unity3d.**
+
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
