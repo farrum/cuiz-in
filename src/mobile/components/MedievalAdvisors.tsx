@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { audioManager } from '@/utils/audioManager';
 
 export interface Advisor {
   id: string;
@@ -93,6 +94,9 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleTap = (advisor: Advisor) => {
+    // Play advisor's custom synthesizer sound effect
+    audioManager.playSFX(advisor.id as any);
+
     if (onAdvisorTap) {
       onAdvisorTap(advisor);
       return;
@@ -109,31 +113,26 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
 
   return (
     <div className="relative">
-      {/* Speech bubble */}
+      {/* Speech bubble - Centered over the advisors block */}
       <AnimatePresence>
         {!onAdvisorTap && activeSpeech && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.9 }}
-            className="absolute -top-24 z-30 max-w-[200px] w-max -translate-x-1/2"
-            style={{
-              left: activeId === 'socrates' ? '12.5%' : 
-                    activeId === 'aryabhata' ? '37.5%' : 
-                    activeId === 'chanakya' ? '62.5%' : '87.5%'
-            }}
+            className="absolute -top-24 left-0 right-0 z-30 flex justify-center pointer-events-none"
           >
-            <div className="parchment-card rounded-xl px-3 py-2 text-[10px] sm:text-[11px] italic leading-snug text-center shadow-xl border border-amber-800/40">
+            <div className="parchment-card rounded-xl px-4 py-2 text-[11px] sm:text-xs italic leading-snug text-center shadow-2xl border border-amber-800/40 bg-[#f4ebd0] text-amber-950 max-w-[280px]">
               {activeSpeech}
             </div>
-            <div className="w-3 h-3 bg-[#e2ccad] border border-amber-800/40 rotate-45 mx-auto -mt-1.5 border-t-0 border-l-0" />
+            <div className="absolute bottom-[-4px] w-2.5 h-2.5 bg-[#f4ebd0] border border-amber-800/40 rotate-45 border-t-0 border-l-0" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Advisor cards */}
       <div className={cn(
-        "grid gap-3.5",
+        "grid gap-4",
         compact ? "grid-cols-4" : "grid-cols-2"
       )}>
         {ADVISORS.map((advisor, i) => {
@@ -147,13 +146,24 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
             <motion.button
               key={advisor.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1, type: 'spring', stiffness: 200, damping: 20 }}
-              whileTap={{ scale: 0.95 }}
+              animate={{ 
+                opacity: 1, 
+                y: [0, -4, 0], // Slow vertical floating animation
+              }}
+              transition={{
+                y: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.4
+                },
+                opacity: { duration: 0.3 }
+              }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => handleTap(advisor)}
               className={cn(
                 "relative flex flex-col items-center rounded-2xl overflow-hidden transition-all duration-300",
-                compact ? "p-3" : "p-4",
+                compact ? "p-3.5" : "p-5",
                 "iron-frame",
                 isActive && "ring-2 ring-amber-500/50"
               )}

@@ -69,6 +69,12 @@ async function hydrateMobileSession(userId: string) {
   }
 }
 
+const getSystemTimeTheme = () => {
+  const hour = new Date().getHours();
+  // Day theme from 6 AM to 6 PM (18:00), Night/Twilight dark theme otherwise
+  return (hour >= 6 && hour < 18) ? 'light' : 'dark';
+};
+
 function AppMobile() {
   const [booted, setBooted] = useState(false);
   const [authed, setAuthed] = useState<boolean>(false);
@@ -127,7 +133,7 @@ function AppMobile() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="cuizin-mobile-theme" enableSystem={false} forcedTheme="light">
+        <ThemeProvider defaultTheme={getSystemTimeTheme()} storageKey="cuizin-mobile-theme" enableSystem={false}>
           <Toaster />
           <Sonner />
           <BrowserRouter>

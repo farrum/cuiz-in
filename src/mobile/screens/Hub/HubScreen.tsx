@@ -392,7 +392,6 @@ export default function HubScreen() {
         <motion.section {...fadeUp(0.06)}>
           <SectionTitle>Your Battle Council</SectionTitle>
           <MedievalAdvisors
-            compact
             onAdvisorTap={(advisor) => {
               const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
               setActiveSpeech(quote);
@@ -420,7 +419,7 @@ export default function HubScreen() {
                     background: 'linear-gradient(135deg, #fff 0%, hsl(38 60% 98%) 100%)',
                     boxShadow: '0 4px 0 rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.06)',
                   }}
-                  onClick={() => { haptics('medium'); navigate(node.to); }}
+                  onClick={() => { haptics('medium'); audioManager.playSFX('click'); navigate(node.to); }}
                 >
                   <motion.div
                     {...popIn(i * 0.055)}
@@ -557,15 +556,16 @@ export default function HubScreen() {
           <SectionTitle>Tavern Games & Contests</SectionTitle>
           <div className="grid grid-cols-2 gap-2.5">
             {TAVERN_GAMES.map((node, i) => (
-              <motion.button
+              <TiltCard
                 key={node.id}
-                {...popIn(i * 0.03)}
-                whileTap={{ scale: 0.93, y: 2 }}
-                onClick={() => { haptics('light'); navigate(node.to); }}
-                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl ring-1 ring-black/[0.06] text-left overflow-hidden group"
+                maxTilt={8}
+                glareIntensity={0.15}
+                hoverScale={1.02}
+                onClick={() => { haptics('light'); audioManager.playSFX('click'); navigate(node.to); }}
+                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl overflow-hidden text-left"
                 style={{
                   background: 'linear-gradient(145deg, #fff 0%, hsl(38 55% 98%) 100%)',
-                  boxShadow: '0 3px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05)',
+                  boxShadow: '0 3px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.06)',
                 }}
               >
                 {/* Inner colour glow overlay */}
@@ -597,7 +597,7 @@ export default function HubScreen() {
                   style={{ color: 'hsl(220 50% 15%)' }}>
                   {node.label}
                 </p>
-              </motion.button>
+              </TiltCard>
             ))}
           </div>
         </motion.section>
