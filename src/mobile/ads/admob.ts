@@ -191,6 +191,7 @@ export async function preloadAdMobInterstitial(): Promise<void> {
   try {
     const opts: AdOptions = { adId: adId('interstitial'), isTesting: import.meta.env.DEV as boolean };
     await AdMob.prepareInterstitial(opts);
+    console.info('[AdMob] Interstitial preloaded successfully');
   } catch (e) {
     console.warn('[AdMob] preload interstitial failed', e);
   }
@@ -200,14 +201,15 @@ export async function preloadAdMobInterstitial(): Promise<void> {
 export async function showAdMobInterstitial(): Promise<boolean> {
   if (!(await initAdMob())) return false;
   try {
-    const opts: AdOptions = { adId: adId('interstitial'), isTesting: import.meta.env.DEV as boolean };
-    await AdMob.prepareInterstitial(opts);
+    // Show the already prepared/cached interstitial instantly with zero network delay
     await AdMob.showInterstitial();
-    // Warm up the next one immediately.
-    AdMob.prepareInterstitial(opts).catch(() => {});
+    // Warm up the next interstitial in the background immediately
+    preloadAdMobInterstitial().catch(() => {});
     return true;
   } catch (e) {
-    console.warn('[AdMob] interstitial failed', e);
+    console.warn('[AdMob] interstitial show failed (falling back/preloading next)', e);
+    // Trigger a background preload so an ad is fetched for the next round
+    preloadAdMobInterstitial().catch(() => {});
     return false;
   }
 }
@@ -218,6 +220,7 @@ export async function preloadAdMobRewarded(): Promise<void> {
   try {
     const opts: RewardAdOptions = { adId: adId('rewarded'), isTesting: import.meta.env.DEV as boolean };
     await AdMob.prepareRewardVideoAd(opts);
+    console.info('[AdMob] Rewarded video preloaded successfully');
   } catch (e) {
     console.warn('[AdMob] preload rewarded failed', e);
   }
@@ -231,15 +234,16 @@ export async function preloadAdMobRewarded(): Promise<void> {
 export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: boolean }> {
   if (!(await initAdMob())) return { shown: false, rewarded: false };
   try {
-    const opts: RewardAdOptions = { adId: adId('rewarded'), isTesting: import.meta.env.DEV as boolean };
-    await AdMob.prepareRewardVideoAd(opts);
+    // Show the already prepared/cached rewarded video instantly
     const result = await AdMob.showRewardVideoAd();
-    // Warm up next.
-    AdMob.prepareRewardVideoAd(opts).catch(() => {});
+    // Warm up the next one in the background immediately
+    preloadAdMobRewarded().catch(() => {});
     // result.value > 0 means the SDK fired the reward callback.
     return { shown: true, rewarded: !!(result as any)?.value };
   } catch (e) {
-    console.warn('[AdMob] rewarded failed', e);
+    console.warn('[AdMob] rewarded show failed (falling back/preloading next)', e);
+    // Pre-warm the next one for future rounds
+    preloadAdMobRewarded().catch(() => {});
     return { shown: false, rewarded: false };
   }
 }

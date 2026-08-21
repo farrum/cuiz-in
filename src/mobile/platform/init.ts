@@ -18,6 +18,16 @@ export function initMobilePlatform() {
 
       try { await SplashScreen.hide(); } catch {}
 
+      // AdMob: initialize and warm up interstitial + rewarded
+      try {
+        const { initAdMob, preloadAdMobInterstitial, preloadAdMobRewarded } =
+          await import('@/mobile/ads/admob');
+        if (await initAdMob()) {
+          preloadAdMobInterstitial();
+          preloadAdMobRewarded();
+        }
+      } catch (e) { console.warn('[AdMob] init skipped', e); }
+
       // Unity LevelPlay: initialise once and warm up interstitial + rewarded
       // so the first show has no loading gap.
       try {
