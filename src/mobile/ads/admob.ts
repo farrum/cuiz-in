@@ -7,11 +7,6 @@ import {
   type AdOptions,
   type RewardAdOptions,
 } from '@capacitor-community/admob';
-import {
-  showLevelPlayInterstitial,
-  showLevelPlayRewarded,
-  setLevelPlayConsent,
-} from './levelplay';
 
 // ─── Ad Unit IDs ──────────────────────────────────────────────────────────────
 // App ID: ca-app-pub-2831295465597549~8524102249 (set in AndroidManifest.xml)
@@ -303,14 +298,7 @@ export async function showAdWithFallback(
       5000,
       { shown: false, rewarded: false }
     );
-    if (admobR.shown) return true;
-    
-    const lpR = await withTimeout(
-      showLevelPlayRewarded(),
-      5000,
-      { shown: false, rewarded: false }
-    );
-    return lpR.shown;
+    return admobR.shown;
   }
 
   const admobI = await withTimeout(
@@ -318,11 +306,5 @@ export async function showAdWithFallback(
     5000,
     false
   );
-  if (admobI) return true;
-  
-  return await withTimeout(
-    showLevelPlayInterstitial(),
-    5000,
-    false
-  );
+  return admobI;
 }

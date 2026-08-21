@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
-import { hideLevelPlayBanner, showLevelPlayBanner, isLevelPlayBannerShown } from './levelplay';
 
 /**
  * Owns the *single* native banner surface for the whole app session.
@@ -21,16 +20,11 @@ export function BannerHost() {
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    let usedLevelPlay = false;
 
-    showAdMobBanner(() => {
-      usedLevelPlay = true;
-      void showLevelPlayBanner();
-    });
+    showAdMobBanner();
 
     return () => {
       void hideAdMobBanner();
-      if (usedLevelPlay) void hideLevelPlayBanner();
     };
   }, []);
 
@@ -46,7 +40,6 @@ export function BannerHost() {
 
     const refreshBanner = async () => {
       console.log('[BannerHost] Route changed, refreshing native ad banner');
-      const wasLevelPlay = isLevelPlayBannerShown();
 
       if (isAdMobBannerShown()) {
         try {
@@ -54,15 +47,7 @@ export function BannerHost() {
         } catch {}
       }
       
-      if (wasLevelPlay) {
-        try {
-          await hideLevelPlayBanner(true);
-        } catch {}
-      }
-
-      showAdMobBanner(() => {
-        void showLevelPlayBanner();
-      });
+      showAdMobBanner();
     };
 
     void refreshBanner();
