@@ -12,6 +12,8 @@ import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
 import QuizContent from '@/components/quiz/QuizContent';
