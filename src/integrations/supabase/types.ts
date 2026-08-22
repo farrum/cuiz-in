@@ -1402,6 +1402,10 @@ export type Database = {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
       }
+      admin_reassign_member_leader: {
+        Args: { p_member_id: string; p_new_leader_id: string }
+        Returns: boolean
+      }
       award_currency: {
         Args: {
           p_points_delta?: number
