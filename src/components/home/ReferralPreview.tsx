@@ -23,6 +23,7 @@ const ReferralPreview: React.FC = () => {
     activeReferrals: 0,
     totalEarned: 0
   });
+  const [hasLeaderRank, setHasLeaderRank] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,8 +37,19 @@ const ReferralPreview: React.FC = () => {
     
     if (userId) {
       fetchReferralStats(userId);
+      // Users already holding a leader rank (incl. manual admin promotions)
+      // are exempt from the 10-referral unlock requirement.
+      supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .then(({ data }) => {
+          const leaderRoles = ['baron', 'team_leader', 'king', 'admin'];
+          setHasLeaderRank(!!data?.some((r: any) => leaderRoles.includes(String(r.role || '').toLowerCase())));
+        });
     }
   }, []);
+
 
   const fetchReferralStats = async (userId: string) => {
     try {
@@ -179,8 +191,8 @@ const ReferralPreview: React.FC = () => {
             </Button>
           </div>
 
-          {/* Team Leader Progress */}
-          {stats.activeReferrals < 10 && (
+          {/* Team Leader Progress — hidden for users already holding the rank (incl. manual promotions) */}
+          {!hasLeaderRank && stats.activeReferrals < 10 && (
             <div className="bg-purple-500/10 rounded-lg p-3">
               <div className="flex justify-between text-xs mb-2">
                 <span className="text-muted-foreground">Progress to Team Leader</span>
@@ -197,6 +209,7 @@ const ReferralPreview: React.FC = () => {
               </p>
             </div>
           )}
+
 
           {stats.activeReferrals >= 10 && (
             <Button 

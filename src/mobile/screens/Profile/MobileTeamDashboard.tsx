@@ -299,6 +299,11 @@ export default function MobileTeamDashboard() {
   // ═══════════════════════════════════════════════
   // Role helpers
   // ═══════════════════════════════════════════════
+  // Ranks that already are Baron or above — these users (including manual
+  // admin promotions) are exempt from the 10-recruit unlock requirement.
+  const BARON_OR_ABOVE = ['baron', 'team_leader', 'king', 'admin'];
+  const hasBaronRank = BARON_OR_ABOVE.includes(String(currentUserRole || '').toLowerCase()) || isTeamLeader || isMainTeamLeader;
+
   const ROLE_LABEL: Record<string, string> = {
     admin: 'Admin',
     king: 'King',
@@ -503,8 +508,13 @@ export default function MobileTeamDashboard() {
               </div>
             </div>
 
-            {/* Progress to Team Leader */}
-            {referralStats.active < 10 && (
+            {/* Progress to Baron — hidden for users already holding Baron rank or above (incl. manual promotions) */}
+            {hasBaronRank ? (
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3 text-center">
+                <p className="text-[10px] font-black uppercase tracking-wide text-amber-700">Baron rank unlocked 👑</p>
+                <p className="text-[9px] text-slate-500 mt-1 font-medium">Keep recruiting to grow your squad.</p>
+              </div>
+            ) : referralStats.active < 10 && (
               <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3">
                 <div className="flex justify-between text-[10px] mb-2">
                   <span className="text-slate-400 font-bold uppercase">Progress to Baron</span>
@@ -521,6 +531,7 @@ export default function MobileTeamDashboard() {
                 </p>
               </div>
             )}
+
 
             <div className="flex flex-col gap-2">
               <input
