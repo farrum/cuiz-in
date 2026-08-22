@@ -183,6 +183,14 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
     };
     
     window.addEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+
+    // Explicit refresh request (e.g. user moved to the next quiz question)
+    const handleForcedRefresh = () => {
+      if (isMountedRef.current && !Capacitor.isNativePlatform()) {
+        fetchAds(true);
+      }
+    };
+    window.addEventListener('refreshAllAds', handleForcedRefresh);
     
     // Force refresh after initialization for ALL ad positions
     const initTimer = setTimeout(() => {
@@ -192,19 +200,21 @@ export const useAdvertisement = ({ position, slotId, pageSection }: UseAdvertise
       }
     }, 2000);
 
-    // Regular rotation interval (every 30s) so banner ads update regularly on web.
+    // Regular rotation interval (every 20s) so banner ads update regularly on web.
     // Native SDKs (AdMob/LevelPlay) handle their own rotation internally.
     const refreshInterval = setInterval(() => {
       if (isMountedRef.current && !Capacitor.isNativePlatform()) {
         fetchAds(true);
       }
-    }, 30000);
+    }, 20000);
     
     return () => {
       window.removeEventListener('adSlotsUpdated', handleAdSlotsUpdated);
+      window.removeEventListener('refreshAllAds', handleForcedRefresh);
       clearTimeout(initTimer);
       clearInterval(refreshInterval);
     };
+
   }, [fetchAds, position, adPositionKey]);
   
   return {

@@ -13,6 +13,8 @@ import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+import { triggerAdRefresh } from '@/utils/adService';
+
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 
 import { useQuizState } from '@/hooks/quiz';
@@ -95,7 +97,16 @@ const QuizPage: React.FC = () => {
 
   };
   
+  // Rotate every banner on this page whenever a new question is shown.
+  useEffect(() => {
+    if (currentQuestion?.id) {
+      triggerAdRefresh();
+    }
+  }, [currentQuestion?.id]);
+
   useMonthlyReset();
+  
+
   
   useEffect(() => {
     const initializeQuiz = async () => {

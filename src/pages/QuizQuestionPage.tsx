@@ -31,6 +31,8 @@ import {
 import { QuizQuestion } from '@/utils/quizData';
 import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { triggerAdRefresh } from '@/utils/adService';
+
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
@@ -69,7 +71,10 @@ const QuizQuestionPage: React.FC = () => {
 
   useEffect(() => {
     trackGuestPageView();
+    // New question => rotate every banner on the page.
+    triggerAdRefresh();
   }, [questionId]);
+
 
   useEffect(() => {
     const fetchQuestionData = async () => {
