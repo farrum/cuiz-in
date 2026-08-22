@@ -69,7 +69,10 @@ const QuizQuestionPage: React.FC = () => {
 
   useEffect(() => {
     trackGuestPageView();
+    // New question => rotate every banner on the page.
+    triggerAdRefresh();
   }, [questionId]);
+
 
   useEffect(() => {
     const fetchQuestionData = async () => {
