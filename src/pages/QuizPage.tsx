@@ -39,6 +39,8 @@ const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
   const [milestoneCheckTrigger, setMilestoneCheckTrigger] = useState(0);
   const [showLeaderboards, setShowLeaderboards] = useState(false);
+  // Web ad break shown before every 3rd question.
+  const [adBreakOpen, setAdBreakOpen] = useState(false);
   // VAST video interstitial between questions (fills on mobile-web; on desktop
   // the network returns no video inventory and it auto-skips harmlessly).
   const { showVideoAd, adElement } = useMiniGameVideoAd();
