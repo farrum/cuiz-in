@@ -29,6 +29,7 @@ import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
+import { Capacitor } from '@capacitor/core';
 
 export interface QuestStage {
   id: string;
