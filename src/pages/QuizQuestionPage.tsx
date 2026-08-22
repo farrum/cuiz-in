@@ -31,6 +31,8 @@ import {
 import { QuizQuestion } from '@/utils/quizData';
 import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { triggerAdRefresh } from '@/utils/adService';
+
 import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
