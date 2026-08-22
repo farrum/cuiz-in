@@ -949,6 +949,12 @@ export default function EmpireQuestsPage() {
     setRevealedExplanation(null);
 
     const nextIndex = currentQIndex + 1;
+
+    // Web-only interstitial ad network after every 2 answered questions
+    if (nextIndex > 0 && nextIndex % 2 === 0) {
+      triggerWebInterstitial();
+    }
+
     if (nextIndex < questQuestions.length) {
       setCurrentQIndex(nextIndex);
       startTimer(activeStage!);
