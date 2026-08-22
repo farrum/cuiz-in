@@ -358,17 +358,42 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
       return;
     }
     
+    const LEADER_ROLES = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'];
+    const RANK_ORDER = ['infantry', 'player', 'junior_team_leader', 'officer', 'knight', 'team_leader', 'baron', 'king', 'admin'];
+
     const checkTeamLeaderStatus = async () => {
       try {
-        const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE) || 'infantry';
+        let userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE) || 'infantry';
+
+        // Always reconcile with the server: manual admin promotions land in
+        // user_roles and would otherwise never reach a stale localStorage value.
+        try {
+          const { data: roleRows } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', storedUserId);
+
+          if (roleRows && roleRows.length > 0) {
+            const best = roleRows
+              .map((r: any) => String(r.role || '').toLowerCase())
+              .sort((a, b) => RANK_ORDER.indexOf(b) - RANK_ORDER.indexOf(a))[0];
+            if (best && RANK_ORDER.indexOf(best) > RANK_ORDER.indexOf(userRole)) {
+              userRole = best;
+              localStorage.setItem(STORAGE_KEYS.USER_ROLE, best);
+            }
+          }
+        } catch (e) {
+          console.warn('Could not load server role, falling back to cached role', e);
+        }
+
         setCurrentUserRole(userRole);
-        const isLeader = ['admin', 'king', 'baron', 'knight', 'officer', 'team_leader', 'junior_team_leader'].includes(userRole);
-        
+        const isLeader = LEADER_ROLES.includes(userRole);
+
         setIsTeamLeader(isLeader);
         // Main team leaders (who can promote/demote anyone) include barons and above.
         // Officers and knights can also manage their own sub-squads.
-        setIsMainTeamLeader(['admin', 'king', 'baron', 'team_leader', 'knight', 'officer', 'junior_team_leader'].includes(userRole));
-        
+        setIsMainTeamLeader(isLeader);
+
         if (!isLeader && redirectNonLeaders) {
           toast({
             title: "Access Denied",
@@ -382,6 +407,7 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
         setIsTeamLeader(false);
       }
     };
+
     
     checkTeamLeaderStatus();
   }, [navigate, toast, redirectNonLeaders]);
