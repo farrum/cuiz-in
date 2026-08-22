@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 
 export interface QuestStage {
   id: string;
@@ -404,6 +405,7 @@ export default function EmpireQuestsPage() {
 
   // Ad states for Quests & Tavern battles
   const [interstitialOpen, setInterstitialOpen] = useState(false);
+  const [webAdBreakOpen, setWebAdBreakOpen] = useState(false);
   const [adSeed, setAdSeed] = useState(0);
 
   // Active Gameplay state
@@ -954,6 +956,13 @@ export default function EmpireQuestsPage() {
     // Web-only interstitial ad network after every 2 answered questions
     if (nextIndex > 0 && nextIndex % 2 === 0) {
       triggerWebInterstitial();
+      if (!Capacitor.isNativePlatform()) {
+        setAdSeed((s) => s + 1);
+        setWebAdBreakOpen(true);
+      } else {
+        setAdSeed((s) => s + 1);
+        setInterstitialOpen(true);
+      }
     }
 
     if (nextIndex < questQuestions.length) {
@@ -1847,6 +1856,14 @@ export default function EmpireQuestsPage() {
       </div>
 
       {/* INTERSTITIAL AD OVERLAY */}
+      {webAdBreakOpen && (
+        <div className="fixed inset-0 z-[120] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <QuizInterstitial onContinue={() => setWebAdBreakOpen(false)} countdownSeconds={8} />
+          </div>
+        </div>
+      )}
+
       <InterstitialAd
         open={interstitialOpen}
         onClose={() => setInterstitialOpen(false)}
