@@ -299,6 +299,11 @@ export default function MobileTeamDashboard() {
   // ═══════════════════════════════════════════════
   // Role helpers
   // ═══════════════════════════════════════════════
+  // Ranks that already are Baron or above — these users (including manual
+  // admin promotions) are exempt from the 10-recruit unlock requirement.
+  const BARON_OR_ABOVE = ['baron', 'team_leader', 'king', 'admin'];
+  const hasBaronRank = BARON_OR_ABOVE.includes(String(currentUserRole || '').toLowerCase()) || isTeamLeader || isMainTeamLeader;
+
   const ROLE_LABEL: Record<string, string> = {
     admin: 'Admin',
     king: 'King',
