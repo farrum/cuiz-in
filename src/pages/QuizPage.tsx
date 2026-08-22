@@ -78,7 +78,7 @@ const QuizPage: React.FC = () => {
       setMilestoneCheckTrigger(prev => prev + 1);
     }, 500);
 
-    // Every 2 answered questions, surface an interstitial (web only).
+    // Every 2 answered questions, surface an ad break before the next question.
     answeredSinceAdRef.current += 1;
     if (answeredSinceAdRef.current >= 2) {
       answeredSinceAdRef.current = 0;
@@ -86,7 +86,10 @@ const QuizPage: React.FC = () => {
       // Network interstitial script (web only, throttled internally)
       triggerWebInterstitial();
       // Small delay so the answer feedback shows before the ad overlay.
-      setTimeout(() => showVideoAd(() => {}), 800);
+      setTimeout(() => {
+        setAdBreakOpen(true);
+        showVideoAd(() => {});
+      }, 800);
     }
 
   };
