@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAdState } from './useAdState';
 import { getSessionId, getAdPositionKey, getAdFromCache, debugAvailableAds } from '@/services/adCacheService';
 import { trackAdImpression, trackAdClick } from '@/services/adTrackingService';

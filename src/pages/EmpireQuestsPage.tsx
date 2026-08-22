@@ -27,6 +27,7 @@ import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 
 export interface QuestStage {
   id: string;
@@ -949,6 +950,12 @@ export default function EmpireQuestsPage() {
     setRevealedExplanation(null);
 
     const nextIndex = currentQIndex + 1;
+
+    // Web-only interstitial ad network after every 2 answered questions
+    if (nextIndex > 0 && nextIndex % 2 === 0) {
+      triggerWebInterstitial();
+    }
+
     if (nextIndex < questQuestions.length) {
       setCurrentQIndex(nextIndex);
       startTimer(activeStage!);
