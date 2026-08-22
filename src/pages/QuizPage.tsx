@@ -12,6 +12,8 @@ import AdminAdDebugPanel from '@/components/ads/AdminAdDebugPanel';
 import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
 import QuizContent from '@/components/quiz/QuizContent';
@@ -74,14 +76,17 @@ const QuizPage: React.FC = () => {
       setMilestoneCheckTrigger(prev => prev + 1);
     }, 500);
 
-    // Every 2-3 answered questions, surface a VAST video interstitial.
+    // Every 2 answered questions, surface an interstitial (web only).
     answeredSinceAdRef.current += 1;
-    if (answeredSinceAdRef.current >= nextAdThresholdRef.current) {
+    if (answeredSinceAdRef.current >= 2) {
       answeredSinceAdRef.current = 0;
-      nextAdThresholdRef.current = 2 + Math.floor(Math.random() * 2);
+      nextAdThresholdRef.current = 2;
+      // Network interstitial script (web only, throttled internally)
+      triggerWebInterstitial();
       // Small delay so the answer feedback shows before the ad overlay.
       setTimeout(() => showVideoAd(() => {}), 800);
     }
+
   };
   
   useMonthlyReset();
