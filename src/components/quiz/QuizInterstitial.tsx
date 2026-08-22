@@ -17,6 +17,7 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
   countdownSeconds = 10,
 }) => {
   const [remaining, setRemaining] = useState(countdownSeconds);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const isWeb = !Capacitor.isNativePlatform();
   const hasAd = isWeb || getAdSlotsByPosition('quiz-interstitial').length > 0;
