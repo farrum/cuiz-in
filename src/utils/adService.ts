@@ -137,6 +137,16 @@ export const triggerAdSlotsUpdate = (slots: any[] = []) => {
   }));
 };
 
+/**
+ * Force every mounted ad banner to pull a fresh creative immediately.
+ * Used when the user advances to a new quiz question.
+ */
+export const triggerAdRefresh = () => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('refreshAllAds'));
+};
+
+
 // Function to get available ad slots for a specific position
 export const getAdSlotsByPosition = (position: string): any[] => {
   try {
