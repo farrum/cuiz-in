@@ -192,6 +192,11 @@ const QuizPlayPage: React.FC = () => {
       return;
     }
 
+    // Web interstitial ad network (web only) after every 2 questions
+    if (newCount > 0 && newCount % 2 === 0) {
+      triggerWebInterstitial();
+    }
+
     // Interstitial Check
     const isInterstitialTurn = newCount > 0 && newCount % INTERSTITIAL_EVERY === 0;
 
