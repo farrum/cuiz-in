@@ -57,7 +57,7 @@ export default function QuizStoryScreen() {
   // Full-screen ads are capped by time as well as by question count: back-to-back
   // interstitials pile up native ad memory and were crashing the app mid-session.
   const lastAdAt = useRef(0);
-  const AD_COOLDOWN_MS = 90_000;
+  const AD_COOLDOWN_MS = 20_000;
   const [loadError, setLoadError] = useState(false);
   const [revealMood, setRevealMood] = useState<import('@/mobile/mascots/registry').Mood>('neutral');
   const motivation = isCorrect == null ? null : getMotivationSync(moodToContext(revealMood));
@@ -238,13 +238,24 @@ export default function QuizStoryScreen() {
         setTimeout(() => setShakeOpt(null), 500);
       }
 
-      // After the 10s reveal, advance. Mid-quiz interstitial ad spam is disabled.
+      // After the 10s reveal, advance — but every 2 answered questions we show
+      // a full-screen ad break first (the interstitial itself advances on close).
       answerCount.current += 1;
       const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3;
       if (!isRevivePossible) {
+        const now = Date.now();
+        const adDue =
+          answerCount.current % 2 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
+
         advanceTimer.current = window.setTimeout(() => {
           if (!mountedRef.current) return;
-          loadNext();
+          if (adDue) {
+            lastAdAt.current = Date.now();
+            closingRef.current = false;
+            setShowInterstitial(true);
+          } else {
+            loadNext();
+          }
         }, 10000);
       }
     }, wait);

@@ -1516,6 +1516,7 @@ export type Database = {
         }[]
       }
       get_quiz_question_count: { Args: never; Returns: number }
+      get_user_rank: { Args: { p_user_id: string }; Returns: string }
       has_user_been_active_in_days: {
         Args: { p_days: number; p_user_id: string }
         Returns: boolean

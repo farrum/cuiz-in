@@ -373,8 +373,20 @@ export const useTeamLeaderDashboard = (redirectNonLeaders = true) => {
             .select('role')
             .eq('user_id', storedUserId);
 
-          if (roleRows && roleRows.length > 0) {
-            const best = roleRows
+          let rows = roleRows as any[] | null;
+
+          // RLS can hide user_roles when the Supabase session hasn't hydrated
+          // yet (common in the native app). Fall back to a security-definer RPC
+          // so manually promoted commanders still unlock the War Room.
+          if (!rows || rows.length === 0) {
+            const { data: rpcRole } = await supabase.rpc('get_user_rank' as any, {
+              p_user_id: storedUserId,
+            });
+            if (rpcRole) rows = [{ role: rpcRole }];
+          }
+
+          if (rows && rows.length > 0) {
+            const best = rows
               .map((r: any) => String(r.role || '').toLowerCase())
               .sort((a, b) => RANK_ORDER.indexOf(b) - RANK_ORDER.indexOf(a))[0];
             if (best && RANK_ORDER.indexOf(best) > RANK_ORDER.indexOf(userRole)) {

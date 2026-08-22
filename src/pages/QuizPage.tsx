@@ -13,6 +13,7 @@ import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
@@ -39,6 +40,8 @@ const QuizPage: React.FC = () => {
   const [showGameModeSelector, setShowGameModeSelector] = useState(false);
   const [milestoneCheckTrigger, setMilestoneCheckTrigger] = useState(0);
   const [showLeaderboards, setShowLeaderboards] = useState(false);
+  // Web ad break shown before every 3rd question.
+  const [adBreakOpen, setAdBreakOpen] = useState(false);
   // VAST video interstitial between questions (fills on mobile-web; on desktop
   // the network returns no video inventory and it auto-skips harmlessly).
   const { showVideoAd, adElement } = useMiniGameVideoAd();
@@ -76,7 +79,7 @@ const QuizPage: React.FC = () => {
       setMilestoneCheckTrigger(prev => prev + 1);
     }, 500);
 
-    // Every 2 answered questions, surface an interstitial (web only).
+    // Every 2 answered questions, surface an ad break before the next question.
     answeredSinceAdRef.current += 1;
     if (answeredSinceAdRef.current >= 2) {
       answeredSinceAdRef.current = 0;
@@ -84,7 +87,10 @@ const QuizPage: React.FC = () => {
       // Network interstitial script (web only, throttled internally)
       triggerWebInterstitial();
       // Small delay so the answer feedback shows before the ad overlay.
-      setTimeout(() => showVideoAd(() => {}), 800);
+      setTimeout(() => {
+        setAdBreakOpen(true);
+        showVideoAd(() => {});
+      }, 800);
     }
 
   };
@@ -331,6 +337,14 @@ const QuizPage: React.FC = () => {
       
       <Footer />
       {adElement}
+
+      {adBreakOpen && (
+        <div className="fixed inset-0 z-[120] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <QuizInterstitial onContinue={() => setAdBreakOpen(false)} countdownSeconds={8} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
