@@ -62,12 +62,18 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
         style={{ minHeight: 280 }}
       >
         {isWeb ? (
-          <ProxiedVastVideoAd
-            tagUrl="https://vast.yomeno.xyz/vast?spot_id=1465097"
-            onUnavailable={onContinue}
-            onComplete={onContinue}
-            className="rounded-xl overflow-hidden max-h-[300px]"
-          />
+          videoFailed ? (
+            // No video inventory — fall back to a managed display slot so the
+            // break still shows an ad instead of silently skipping.
+            <SimpleAdBanner position="middle" pageSection="quiz-interstitial" />
+          ) : (
+            <ProxiedVastVideoAd
+              tagUrl="https://vast.yomeno.xyz/vast?spot_id=1465097"
+              onUnavailable={() => setVideoFailed(true)}
+              onComplete={onContinue}
+              className="rounded-xl overflow-hidden max-h-[300px]"
+            />
+          )
         ) : (
           <SimpleAdBanner position="quiz-interstitial" slotId="quiz-interstitial" />
         )}
