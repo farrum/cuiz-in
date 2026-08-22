@@ -27,6 +27,7 @@ import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 
 export interface QuestStage {
   id: string;
