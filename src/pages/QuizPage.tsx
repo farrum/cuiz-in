@@ -13,6 +13,7 @@ import { DailyChallenges } from '@/components/challenges';
 import { useMonthlyReset } from '@/hooks/challenge/useMonthlyReset';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
+import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
@@ -336,6 +337,14 @@ const QuizPage: React.FC = () => {
       
       <Footer />
       {adElement}
+
+      {adBreakOpen && (
+        <div className="fixed inset-0 z-[120] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <QuizInterstitial onContinue={() => setAdBreakOpen(false)} countdownSeconds={8} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
