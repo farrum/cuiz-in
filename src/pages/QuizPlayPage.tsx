@@ -14,6 +14,7 @@ import { FlashcardMatch } from '@/components/gamification/FlashcardMatch';
 import { BossFight } from '@/components/gamification/BossFight';
 import { ImageReveal } from '@/components/gamification/ImageReveal';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoadingCard from '@/components/LoadingCard';
