@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getAdSlotsByPosition } from '@/utils/adService';
+import { Capacitor } from '@capacitor/core';
+import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
 
 interface QuizInterstitialProps {
   onContinue: () => void;
@@ -16,9 +18,8 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
 }) => {
   const [remaining, setRemaining] = useState(countdownSeconds);
 
-  // If there is no Active managed interstitial slot, don't block the quiz —
-  // advance immediately so players never see a blank break.
-  const hasAd = getAdSlotsByPosition('quiz-interstitial').length > 0;
+  const isWeb = !Capacitor.isNativePlatform();
+  const hasAd = isWeb || getAdSlotsByPosition('quiz-interstitial').length > 0;
 
   useEffect(() => {
     if (!hasAd) onContinue();
@@ -60,7 +61,16 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
         className="w-full flex items-center justify-center"
         style={{ minHeight: 280 }}
       >
-        <SimpleAdBanner position="quiz-interstitial" slotId="quiz-interstitial" />
+        {isWeb ? (
+          <ProxiedVastVideoAd
+            tagUrl="https://vast.yomeno.xyz/vast?spot_id=1465097"
+            onUnavailable={onContinue}
+            onComplete={onContinue}
+            className="rounded-xl overflow-hidden max-h-[300px]"
+          />
+        ) : (
+          <SimpleAdBanner position="quiz-interstitial" slotId="quiz-interstitial" />
+        )}
       </div>
     </div>
   );

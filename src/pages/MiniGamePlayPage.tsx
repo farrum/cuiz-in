@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
+import { Capacitor } from '@capacitor/core';
+import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { minigames } from '@/components/gamification/minigamesData';
@@ -38,6 +40,8 @@ export const MiniGamePlayPage: React.FC = () => {
   // Gamification Play State
   const [hasPaid, setHasPaid] = useState(false);
   const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0);
+  const [showVastAd, setShowVastAd] = useState(false);
+  const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
 
   // States for True/False and Image trivia
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -119,23 +123,33 @@ export const MiniGamePlayPage: React.FC = () => {
   };
 
   const handlePayAndStart = () => {
-    if (isFirstPlayToday()) {
-      // First daily play is free
-      const today = getTodayString();
-      localStorage.setItem(`cuizin-last-play-${gameId}`, today);
-      setHasPaid(true);
-    } else {
-      // Subsequent plays cost 5 Gems
-      // Server-backed games (wheel / scratch) charge the fee server-side
-      const serverCharged = gameId === 'wheel' || gameId === 'scratch';
-      const { gems } = getUserBalances();
-      if (gems < 5) {
-        alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
-        return;
+    const startAction = () => {
+      if (isFirstPlayToday()) {
+        // First daily play is free
+        const today = getTodayString();
+        localStorage.setItem(`cuizin-last-play-${gameId}`, today);
+        setHasPaid(true);
+      } else {
+        // Subsequent plays cost 5 Gems
+        // Server-backed games (wheel / scratch) charge the fee server-side
+        const serverCharged = gameId === 'wheel' || gameId === 'scratch';
+        const { gems } = getUserBalances();
+        if (gems < 5) {
+          alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
+          return;
+        }
+        if (!serverCharged) updateUserBalances(-5, 0);
+        setHasPaid(true);
+        setBalanceUpdateTrigger(prev => prev + 1);
       }
-      if (!serverCharged) updateUserBalances(-5, 0);
-      setHasPaid(true);
-      setBalanceUpdateTrigger(prev => prev + 1);
+    };
+
+    // On website only (not Capacitor), show Clickadilla VAST video interstitial before starting
+    if (!Capacitor.isNativePlatform()) {
+      setPendingStart(() => startAction);
+      setShowVastAd(true);
+    } else {
+      startAction();
     }
   };
 
@@ -627,6 +641,51 @@ export const MiniGamePlayPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Clickadilla VAST video ad overlay for Web only */}
+      {showVastAd && (
+        <div className="fixed inset-0 bg-slate-950/95 flex flex-col justify-center items-center z-[100] p-4 backdrop-blur-md">
+          <div className="w-full max-w-lg relative flex flex-col items-center">
+            <div className="w-full flex justify-between items-center mb-3">
+              <span className="text-[10px] text-yellow-500/50 uppercase tracking-widest font-black">Sponsored Video</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/15"
+                onClick={() => {
+                  setShowVastAd(false);
+                  if (pendingStart) {
+                    pendingStart();
+                    setPendingStart(null);
+                  }
+                }}
+              >
+                Skip Ad
+              </Button>
+            </div>
+            <div className="w-full rounded-3xl border-4 border-double border-yellow-500/30 overflow-hidden bg-black shadow-2xl shadow-yellow-500/5">
+              <ProxiedVastVideoAd
+                tagUrl="https://vast.yomeno.xyz/vast?spot_id=1465097"
+                onReady={() => console.log('Clickadilla VAST ad ready')}
+                onUnavailable={() => {
+                  setShowVastAd(false);
+                  if (pendingStart) {
+                    pendingStart();
+                    setPendingStart(null);
+                  }
+                }}
+                onComplete={() => {
+                  setShowVastAd(false);
+                  if (pendingStart) {
+                    pendingStart();
+                    setPendingStart(null);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {adElement}
     </PageLayout>
   );
