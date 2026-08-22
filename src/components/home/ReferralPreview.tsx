@@ -23,6 +23,7 @@ const ReferralPreview: React.FC = () => {
     activeReferrals: 0,
     totalEarned: 0
   });
+  const [hasLeaderRank, setHasLeaderRank] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,8 +37,19 @@ const ReferralPreview: React.FC = () => {
     
     if (userId) {
       fetchReferralStats(userId);
+      // Users already holding a leader rank (incl. manual admin promotions)
+      // are exempt from the 10-referral unlock requirement.
+      supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .then(({ data }) => {
+          const leaderRoles = ['baron', 'team_leader', 'king', 'admin'];
+          setHasLeaderRank(!!data?.some((r: any) => leaderRoles.includes(String(r.role || '').toLowerCase())));
+        });
     }
   }, []);
+
 
   const fetchReferralStats = async (userId: string) => {
     try {
