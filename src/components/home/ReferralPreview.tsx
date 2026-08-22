@@ -179,8 +179,8 @@ const ReferralPreview: React.FC = () => {
             </Button>
           </div>
 
-          {/* Team Leader Progress */}
-          {stats.activeReferrals < 10 && (
+          {/* Team Leader Progress — hidden for users already holding the rank (incl. manual promotions) */}
+          {!hasLeaderRank && stats.activeReferrals < 10 && (
             <div className="bg-purple-500/10 rounded-lg p-3">
               <div className="flex justify-between text-xs mb-2">
                 <span className="text-muted-foreground">Progress to Team Leader</span>
@@ -197,6 +197,7 @@ const ReferralPreview: React.FC = () => {
               </p>
             </div>
           )}
+
 
           {stats.activeReferrals >= 10 && (
             <Button 
