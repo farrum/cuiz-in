@@ -97,7 +97,16 @@ const QuizPage: React.FC = () => {
 
   };
   
+  // Rotate every banner on this page whenever a new question is shown.
+  useEffect(() => {
+    if (currentQuestion?.id) {
+      triggerAdRefresh();
+    }
+  }, [currentQuestion?.id]);
+
   useMonthlyReset();
+  
+
   
   useEffect(() => {
     const initializeQuiz = async () => {
