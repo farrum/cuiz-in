@@ -8,7 +8,8 @@ import { containsBlockedContent } from '@/utils/adProviderScripts';
 export const useScriptExecution = (
   content: string, 
   containerId: string, 
-  skipTopics: boolean = true
+  skipTopics: boolean = true,
+  refreshGeneration: number = 0
 ): string => {
   const [executionStatus, setExecutionStatus] = useState<string>('');
   const mountedRef = useRef<boolean>(true);
@@ -182,7 +183,7 @@ export const useScriptExecution = (
         c.querySelectorAll('script[data-ad-script]').forEach(s => s.remove());
       }
     };
-  }, [content, containerId, skipTopics]);
+  }, [content, containerId, skipTopics, refreshGeneration]);
   
   return executionStatus;
 };

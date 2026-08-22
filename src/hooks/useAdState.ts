@@ -10,6 +10,7 @@ export interface AdState {
   adDebug: string | null;
   adId: string | null;
   adVersion: string;
+  refreshGeneration: number;
   instanceId: string;
 }
 
@@ -21,6 +22,7 @@ export const useAdState = () => {
   const [adDebug, setAdDebug] = useState<string | null>(null);
   const [adError, setAdError] = useState<string | null>(null);
   const [adVersion, setAdVersion] = useState<string>('');
+  const [refreshGeneration, setRefreshGeneration] = useState(0);
   
   // Refs for handling timing and component lifecycle
   const lastFetchTimeRef = useRef<number>(0);
@@ -58,6 +60,9 @@ export const useAdState = () => {
     setAdLoaded(!!content);
     setAdActive(isActive);
     setAdError(error);
+    // A refresh must re-run the provider script even when this position has
+    // only one creative and its content/version are therefore unchanged.
+    setRefreshGeneration((generation) => generation + 1);
   }, []);
   
   // Handle throttling for ad fetches
@@ -79,6 +84,7 @@ export const useAdState = () => {
       adDebug,
       adId,
       adVersion,
+      refreshGeneration,
       instanceId: instanceId.current
     },
     updateAdState,

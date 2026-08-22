@@ -56,14 +56,14 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
   // every 30s — a visible flash and layout jump on every screen.
   const containerId = `ad-container-${resolvedPosition}-${uniqueId}`;
 
-  const { adContent, adLoaded, adDebug, adError: error } = useAdvertisement({
+  const { adContent, adDebug, adError: error, refreshGeneration } = useAdvertisement({
     position: resolvedPosition,
     slotId,
     pageSection,
   });
 
   // Execute scripts within the ad content safely
-  const executionStatus = useScriptExecution(adContent, containerId);
+  const executionStatus = useScriptExecution(adContent, containerId, true, refreshGeneration);
 
   // Strip the size metadata comment (e.g. <!-- size: 300x250 -->) for the
   // "is there anything to render" check.
