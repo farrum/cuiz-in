@@ -47,14 +47,24 @@ interface EmberBackgroundProps {
  * (the `.ember-particle` class handles that via index.css).
  */
 export function EmberBackground({ count = 22 }: EmberBackgroundProps) {
+  // Native WebViews (Android especially) run out of composited-layer budget
+  // long before desktop Chrome does, and every extra `will-change` particle
+  // adds a full-screen repaint risk. Keep the effect, halve the cost.
+  const nativeSafeCount = useMemo(() => {
+    let isNative = false;
+    try { isNative = Capacitor.isNativePlatform(); } catch { isNative = false; }
+    return isNative ? Math.min(count, 8) : count;
+  }, [count]);
+
   // Memoised so the random values don't regenerate on every parent render
-  const embers = useMemo(() => buildEmbers(count), [count]);
+  const embers = useMemo(() => buildEmbers(nativeSafeCount), [nativeSafeCount]);
 
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden -z-10"
     >
+
       {embers.map((e) => (
         <span
           key={e.id}
