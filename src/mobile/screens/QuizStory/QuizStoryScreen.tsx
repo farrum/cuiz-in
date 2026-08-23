@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled, refreshAdMobBanner } from '@/mobile/ads/admob';
+import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -95,10 +95,6 @@ export default function QuizStoryScreen() {
     clearTimers();
     setLoadError(false);
     
-    // Refresh the native banner ad automatically when quiz question changes
-    if (Capacitor.isNativePlatform()) {
-      refreshAdMobBanner().catch(() => {});
-    }
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);

@@ -26,7 +26,7 @@ export const useMiniGameVideoAd = () => {
 
     inFlight.current = true;
     setAdActive(true);
-    showAdWithFallback('interstitial')
+    showAdWithFallback('rewarded')
       .catch(() => false)
       .then((shown) => {
         inFlight.current = false;

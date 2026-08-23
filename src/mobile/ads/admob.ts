@@ -1,12 +1,17 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import {
   AdMob,
   BannerAdPosition,
   BannerAdSize,
+  BannerAdPluginEvents,
+  InterstitialAdPluginEvents,
+  RewardAdPluginEvents,
+  RewardInterstitialAdPluginEvents,
   type BannerAdOptions,
   type AdOptions,
   type RewardAdOptions,
 } from '@capacitor-community/admob';
+import { audioManager } from '@/utils/audioManager';
 
 // ─── Ad Unit IDs ──────────────────────────────────────────────────────────────
 // App ID: ca-app-pub-2831295465597549~8524102249 (set in AndroidManifest.xml)
@@ -37,29 +42,39 @@ export const isMobileAdsEnabled = true;
 
 let initPromise: Promise<boolean> | null = null;
 
+/**
+ * Initialize AdMob once globally on app boot.
+ * UMP Consent is executed asynchronously in the background so it never blocks
+ * SDK readiness or ad request pipelines.
+ */
 export function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return Promise.resolve(false);
   if (!Capacitor.isNativePlatform()) return Promise.resolve(false);
   if (!initPromise) {
     initPromise = (async () => {
       try {
-        await AdMob.initialize({ initializeForTesting: import.meta.env.DEV as boolean });
-        console.info('[AdMob] initialized');
+        await AdMob.initialize({ initializeForTesting: Boolean(import.meta.env.DEV) });
+        console.info('[AdMob] Initialized successfully');
 
-        // Request UMP Consent Info
-        try {
-          let consentInfo = await AdMob.requestConsentInfo();
-          if (consentInfo.status === 'REQUIRED' && consentInfo.isConsentFormAvailable) {
-            consentInfo = await AdMob.showConsentForm();
+        // Request UMP Consent Info in the background without blocking core initialization
+        void (async () => {
+          try {
+            let consentInfo = await AdMob.requestConsentInfo();
+            if (consentInfo.status === 'REQUIRED' && consentInfo.isConsentFormAvailable) {
+              consentInfo = await AdMob.showConsentForm();
+            }
+            console.info('[AdMob/Consent] Consent status:', consentInfo.status);
+          } catch (consentErr) {
+            console.warn('[AdMob/Consent] Consent form update skipped/failed:', consentErr);
           }
-          console.info('[AdMob/Consent] consent status:', consentInfo.status);
-        } catch (consentErr) {
-          console.warn('[AdMob/Consent] consent form update failed', consentErr);
-        }
+        })();
+
+        // Setup persistent banner listeners once
+        setupBannerListeners();
 
         return true;
       } catch (e) {
-        console.warn('[AdMob] initialization failed', e);
+        console.warn('[AdMob] Initialization failed:', e);
         return false;
       }
     })();
@@ -71,6 +86,33 @@ export function initAdMob(): Promise<boolean> {
 let bannerShown = false;
 let bannerPending: Promise<boolean> | null = null;
 let lastMargin = -1;
+let bannerListenersAttached = false;
+
+function setupBannerListeners() {
+  if (bannerListenersAttached || !Capacitor.isNativePlatform()) return;
+  bannerListenersAttached = true;
+
+  try {
+    void AdMob.addListener(BannerAdPluginEvents.SizeChanged, (size: { width: number; height: number }) => {
+      if (size?.height && size.height > 0) {
+        document.documentElement.style.setProperty('--banner-h', `${Math.ceil(size.height)}px`);
+      }
+    });
+
+    void AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (info: any) => {
+      console.warn('[AdMob] Banner failed to load (no fill):', info);
+      bannerShown = false;
+      document.documentElement.style.setProperty('--banner-h', '0px');
+    });
+
+    void AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
+      console.info('[AdMob] Banner loaded successfully');
+      bannerShown = true;
+    });
+  } catch (e) {
+    console.warn('[AdMob] Error attaching banner listeners:', e);
+  }
+}
 
 /**
  * Compute the bottom margin needed so the banner clears both the WebView
@@ -115,34 +157,10 @@ async function doShowBanner(margin: number, onFailed?: () => void): Promise<bool
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
       margin,
-      isTesting: import.meta.env.DEV as boolean,
+      isTesting: Boolean(import.meta.env.DEV),
     };
     await AdMob.showBanner(options);
     bannerShown = true;
-
-    // Listen for the actual rendered banner height so CSS spacers match.
-    (AdMob as any)
-      .addListener('bannerAdSizeChanged', (size: { width: number; height: number }) => {
-        if (size?.height) {
-          document.documentElement.style.setProperty('--banner-h', `${Math.ceil(size.height)}px`);
-        }
-      })
-      ?.catch?.(() => {/* plugin may not support this listener — safe to ignore */});
-
-    // Listen for ad load failure
-    try {
-      const failListener = await (AdMob as any).addListener('bannerAdFailedToLoad', async (info: any) => {
-        console.warn('[AdMob] Banner failed to load (no fill):', info);
-        bannerShown = false;
-        try { await AdMob.removeBanner(); } catch {}
-        document.documentElement.style.setProperty('--banner-h', '0px');
-        onFailed?.();
-        failListener.remove();
-      });
-    } catch (err) {
-      console.warn('[AdMob] Failed to attach bannerAdFailedToLoad listener:', err);
-    }
-
     return true;
   } catch (e) {
     console.warn('[AdMob] banner show failed', e);
@@ -155,6 +173,7 @@ export async function hideAdMobBanner(keepLayoutSpacer = false): Promise<void> {
   if (!isMobileAdsEnabled) return;
   if (!Capacitor.isNativePlatform() || !bannerShown) return;
   bannerShown = false;
+  lastMargin = -1;
   try {
     await AdMob.removeBanner();
     if (!keepLayoutSpacer) {
@@ -167,24 +186,6 @@ export function isAdMobBannerShown(): boolean {
   return bannerShown;
 }
 
-export async function refreshAdMobBanner(): Promise<void> {
-  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform() || !bannerShown) return;
-  try {
-    const margin = lastMargin !== -1 ? lastMargin : getBottomMargin();
-    const options: BannerAdOptions = {
-      adId: adId('banner'),
-      adSize: BannerAdSize.ADAPTIVE_BANNER,
-      position: BannerAdPosition.BOTTOM_CENTER,
-      margin,
-      isTesting: import.meta.env.DEV as boolean,
-    };
-    await AdMob.showBanner(options);
-    console.info('[AdMob] Banner refreshed successfully');
-  } catch (err) {
-    console.warn('[AdMob] Failed to refresh banner ad:', err);
-  }
-}
-
 // ─── Interstitial ─────────────────────────────────────────────────────────────
 let interstitialPreloading = false;
 
@@ -193,7 +194,7 @@ export async function preloadAdMobInterstitial(): Promise<void> {
   if (!(await initAdMob()) || interstitialPreloading) return;
   interstitialPreloading = true;
   try {
-    const opts: AdOptions = { adId: adId('interstitial'), isTesting: import.meta.env.DEV as boolean };
+    const opts: AdOptions = { adId: adId('interstitial'), isTesting: Boolean(import.meta.env.DEV) };
     await AdMob.prepareInterstitial(opts);
     console.info('[AdMob] Interstitial preloaded successfully');
   } catch (e) {
@@ -210,39 +211,57 @@ export async function showAdMobInterstitial(): Promise<boolean> {
 
   return new Promise<boolean>(async (resolve) => {
     let completed = false;
+    const handles: PluginListenerHandle[] = [];
 
-    const dismissedListener = await (AdMob as any).addListener('interstitialAdDismissed', () => {
-      console.info('[AdMob] Interstitial dismissed by user');
-      if (!completed) {
-        completed = true;
-        dismissedListener.remove();
-        failedListener.remove();
-        resolve(true);
-      }
-    });
+    const cleanup = () => {
+      handles.forEach((h) => { try { h.remove(); } catch {} });
+      handles.length = 0;
+      audioManager.startBGM();
+      preloadAdMobInterstitial().catch(() => {});
+    };
 
-    const failedListener = await (AdMob as any).addListener('interstitialAdFailedToShow', (info: any) => {
-      console.warn('[AdMob] Interstitial failed to show:', info);
-      if (!completed) {
-        completed = true;
-        dismissedListener.remove();
-        failedListener.remove();
-        resolve(false);
-      }
-    });
+    const finish = (result: boolean) => {
+      if (completed) return;
+      completed = true;
+      cleanup();
+      resolve(result);
+    };
+
+    // Safety timeout: 15s max waiting for dismiss
+    const timeoutId = window.setTimeout(() => {
+      console.warn('[AdMob] Interstitial show timed out');
+      finish(false);
+    }, 15000);
 
     try {
+      // Pause background music while full-screen ad plays
+      audioManager.pauseBGM();
+
+      const dismissedListener = await AdMob.addListener(
+        InterstitialAdPluginEvents.Dismissed,
+        () => {
+          console.info('[AdMob] Interstitial dismissed by user');
+          window.clearTimeout(timeoutId);
+          finish(true);
+        }
+      );
+      handles.push(dismissedListener);
+
+      const failedListener = await AdMob.addListener(
+        InterstitialAdPluginEvents.FailedToShow,
+        (info: any) => {
+          console.warn('[AdMob] Interstitial failed to show:', info);
+          window.clearTimeout(timeoutId);
+          finish(false);
+        }
+      );
+      handles.push(failedListener);
+
       await AdMob.showInterstitial();
-      preloadAdMobInterstitial().catch(() => {});
     } catch (e) {
       console.warn('[AdMob] showInterstitial native call failed', e);
-      if (!completed) {
-        completed = true;
-        dismissedListener.remove();
-        failedListener.remove();
-        preloadAdMobInterstitial().catch(() => {});
-        resolve(false);
-      }
+      window.clearTimeout(timeoutId);
+      finish(false);
     }
   });
 }
@@ -255,7 +274,7 @@ export async function preloadAdMobRewarded(): Promise<void> {
   if (!(await initAdMob()) || rewardedPreloading) return;
   rewardedPreloading = true;
   try {
-    const opts: RewardAdOptions = { adId: adId('rewarded'), isTesting: import.meta.env.DEV as boolean };
+    const opts: RewardAdOptions = { adId: adId('rewarded'), isTesting: Boolean(import.meta.env.DEV) };
     await AdMob.prepareRewardVideoAd(opts);
     console.info('[AdMob] Rewarded video preloaded successfully');
   } catch (e) {
@@ -273,47 +292,69 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
   return new Promise<{ shown: boolean; rewarded: boolean }>(async (resolve) => {
     let completed = false;
     let rewardGranted = false;
+    const handles: PluginListenerHandle[] = [];
 
-    const rewardListener = await (AdMob as any).addListener('onAdRewarded', (info: any) => {
-      console.info('[AdMob] User earned reward:', info);
-      rewardGranted = true;
-    });
+    const cleanup = () => {
+      handles.forEach((h) => { try { h.remove(); } catch {} });
+      handles.length = 0;
+      audioManager.startBGM();
+      preloadAdMobRewarded().catch(() => {});
+    };
 
-    const dismissedListener = await (AdMob as any).addListener('rewardedAdDismissed', () => {
-      console.info('[AdMob] Rewarded ad dismissed');
-      if (!completed) {
-        completed = true;
-        rewardListener.remove();
-        dismissedListener.remove();
-        failedListener.remove();
-        resolve({ shown: true, rewarded: rewardGranted });
-      }
-    });
+    const finish = (shown: boolean, rewarded: boolean) => {
+      if (completed) return;
+      completed = true;
+      cleanup();
+      resolve({ shown, rewarded });
+    };
 
-    const failedListener = await (AdMob as any).addListener('rewardedAdFailedToShow', (info: any) => {
-      console.warn('[AdMob] Rewarded ad failed to show:', info);
-      if (!completed) {
-        completed = true;
-        rewardListener.remove();
-        dismissedListener.remove();
-        failedListener.remove();
-        resolve({ shown: false, rewarded: false });
-      }
-    });
+    // Safety timeout: 25s max waiting for reward/dismiss
+    const timeoutId = window.setTimeout(() => {
+      console.warn('[AdMob] Rewarded video timed out');
+      finish(false, rewardGranted);
+    }, 25000);
 
     try {
+      // Pause background music while video ad plays
+      audioManager.pauseBGM();
+
+      // Listen for the reward event (plugin event: onRewardedVideoAdReward)
+      const rewardListener = await AdMob.addListener(
+        RewardAdPluginEvents.Rewarded,
+        (info: any) => {
+          console.info('[AdMob] User earned reward:', info);
+          rewardGranted = true;
+        }
+      );
+      handles.push(rewardListener);
+
+      // Listen for dismiss event (plugin event: onRewardedVideoAdDismissed)
+      const dismissedListener = await AdMob.addListener(
+        RewardAdPluginEvents.Dismissed,
+        () => {
+          console.info('[AdMob] Rewarded ad dismissed. Reward granted:', rewardGranted);
+          window.clearTimeout(timeoutId);
+          finish(true, rewardGranted);
+        }
+      );
+      handles.push(dismissedListener);
+
+      // Listen for failed to show event (plugin event: onRewardedVideoAdFailedToShow)
+      const failedListener = await AdMob.addListener(
+        RewardAdPluginEvents.FailedToShow,
+        (info: any) => {
+          console.warn('[AdMob] Rewarded ad failed to show:', info);
+          window.clearTimeout(timeoutId);
+          finish(false, false);
+        }
+      );
+      handles.push(failedListener);
+
       await AdMob.showRewardVideoAd();
-      preloadAdMobRewarded().catch(() => {});
     } catch (e) {
       console.warn('[AdMob] showRewardVideoAd native call failed', e);
-      if (!completed) {
-        completed = true;
-        rewardListener.remove();
-        dismissedListener.remove();
-        failedListener.remove();
-        preloadAdMobRewarded().catch(() => {});
-        resolve({ shown: false, rewarded: false });
-      }
+      window.clearTimeout(timeoutId);
+      finish(false, false);
     }
   });
 }
@@ -322,18 +363,74 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
 export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
   if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!(await initAdMob())) return { shown: false, rewarded: false };
-  try {
-    const opts: RewardAdOptions = {
-      adId: adId('rewardedInterstitial'),
-      isTesting: import.meta.env.DEV as boolean,
+
+  return new Promise<{ shown: boolean; rewarded: boolean }>(async (resolve) => {
+    let completed = false;
+    let rewardGranted = false;
+    const handles: PluginListenerHandle[] = [];
+
+    const cleanup = () => {
+      handles.forEach((h) => { try { h.remove(); } catch {} });
+      handles.length = 0;
+      audioManager.startBGM();
     };
-    await AdMob.prepareRewardInterstitialAd(opts);
-    const result = await AdMob.showRewardInterstitialAd();
-    return { shown: true, rewarded: !!(result as any)?.amount };
-  } catch (e) {
-    console.warn('[AdMob] rewarded interstitial failed', e);
-    return { shown: false, rewarded: false };
-  }
+
+    const finish = (shown: boolean, rewarded: boolean) => {
+      if (completed) return;
+      completed = true;
+      cleanup();
+      resolve({ shown, rewarded });
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      console.warn('[AdMob] Rewarded interstitial timed out');
+      finish(false, rewardGranted);
+    }, 25000);
+
+    try {
+      audioManager.pauseBGM();
+
+      const rewardListener = await AdMob.addListener(
+        RewardInterstitialAdPluginEvents.Rewarded,
+        (info: any) => {
+          console.info('[AdMob] Rewarded interstitial reward earned:', info);
+          rewardGranted = true;
+        }
+      );
+      handles.push(rewardListener);
+
+      const dismissedListener = await AdMob.addListener(
+        RewardInterstitialAdPluginEvents.Dismissed,
+        () => {
+          console.info('[AdMob] Rewarded interstitial dismissed');
+          window.clearTimeout(timeoutId);
+          finish(true, rewardGranted);
+        }
+      );
+      handles.push(dismissedListener);
+
+      const failedListener = await AdMob.addListener(
+        RewardInterstitialAdPluginEvents.FailedToShow,
+        (info: any) => {
+          console.warn('[AdMob] Rewarded interstitial failed to show:', info);
+          window.clearTimeout(timeoutId);
+          finish(false, false);
+        }
+      );
+      handles.push(failedListener);
+
+      const opts: RewardAdOptions = {
+        adId: adId('rewardedInterstitial'),
+        isTesting: Boolean(import.meta.env.DEV),
+      };
+      await AdMob.prepareRewardInterstitialAd(opts);
+      await AdMob.showRewardInterstitialAd();
+    } catch (e) {
+      console.warn('[AdMob] rewarded interstitial failed', e);
+      window.clearTimeout(timeoutId);
+      finish(false, false);
+    }
+  });
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
@@ -361,7 +458,7 @@ export async function showAdWithFallback(
   if (prefer === 'rewarded') {
     const admobR = await withTimeout(
       showAdMobRewarded(),
-      8000,
+      10000,
       { shown: false, rewarded: false }
     );
     return admobR.shown;
@@ -369,7 +466,7 @@ export async function showAdWithFallback(
 
   const admobI = await withTimeout(
     showAdMobInterstitial(),
-    8000,
+    10000,
     false
   );
   return admobI;

@@ -7,8 +7,6 @@ import { ChevronLeft, ChevronRight, X, Play, Pause, BookOpen, Brain, RefreshCw, 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
-import { Capacitor } from '@capacitor/core';
-import { showAdWithFallback } from '@/mobile/ads/admob';
 import { cn } from '@/lib/utils';
 
 const STORY_AD_TAG = 'https://vast.yomeno.xyz/vast?spot_id=1494657';
