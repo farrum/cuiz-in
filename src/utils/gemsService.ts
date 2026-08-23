@@ -223,8 +223,31 @@ export const logGemsForMonth = async (gems: number, userId?: string | null) => {
         .insert({ user_id: userId, month: monthKey, points: gems });
         
       if (insertError) {
-        console.error('Error inserting monthly gems:', insertError);
-        return;
+        if (insertError.code === '23505') {
+          // Concurrency fallback: another insert occurred in between our SELECT and INSERT.
+          // Fetch the newly created row, aggregate gems, and update it.
+          const { data: retryData } = await supabase
+            .from('monthly_points')
+            .select('gems:points')
+            .eq('user_id', userId)
+            .eq('month', monthKey)
+            .maybeSingle();
+          if (retryData) {
+            monthlyGems = Number(retryData.gems || 0) + gems;
+            const { error: updateError } = await supabase
+              .from('monthly_points')
+              .update({ points: monthlyGems })
+              .eq('user_id', userId)
+              .eq('month', monthKey);
+            if (updateError) {
+              console.error('Error updating monthly gems during retry:', updateError);
+              return;
+            }
+          }
+        } else {
+          console.error('Error inserting monthly gems:', insertError);
+          return;
+        }
       }
     }
     

@@ -318,13 +318,35 @@ const useChallengeData = (
           .update({ points: (monthlyGemsData as any).points + finalScore })
           .eq('id', monthlyGemsData.id);
       } else {
-        await supabase
+        const { error: insertError } = await supabase
           .from('monthly_points')
           .insert([{ 
             user_id: userId, 
             month: monthString, 
             points: finalScore 
           }]);
+        
+        if (insertError) {
+          if (insertError.code === '23505') {
+            // Concurrency fallback: another insert occurred in between our SELECT and INSERT.
+            // Fetch the newly created row, aggregate points, and update it.
+            const { data: retryData, error: retryError } = await supabase
+              .from('monthly_points')
+              .select('*')
+              .eq('user_id', userId)
+              .eq('month', monthString)
+              .maybeSingle();
+            if (retryError) throw retryError;
+            if (retryData) {
+              await supabase
+                .from('monthly_points')
+                .update({ points: (retryData as any).points + finalScore })
+                .eq('id', retryData.id);
+            }
+          } else {
+            throw insertError;
+          }
+        }
       }
       
       toast({
