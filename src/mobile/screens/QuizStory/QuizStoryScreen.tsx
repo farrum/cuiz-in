@@ -371,19 +371,17 @@ export default function QuizStoryScreen() {
     // Applying it to an inner element only grows that element's internal padding
     // but doesn't move content below the physical status bar.
     <div
-      className="fixed inset-0 flex flex-col bg-background overflow-hidden"
-      style={{ paddingTop: 'var(--safe-top)' }}
+      className="fixed inset-0 flex flex-col overflow-hidden"
+      style={{
+        paddingTop: 'var(--safe-top)',
+        // Ambient gradient painted directly on the root container. It used to
+        // be a separate absolutely-positioned `-z-10` layer, which forced the
+        // WebView to re-resolve a negative stacking layer against the parent's
+        // own background on every paint — a major source of the flicker.
+        background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)',
+      }}
     >
-      {/* Ambient background — static gradient, zero GPU cost.
-          MUST stay behind the content (-z-10): as a positioned element it
-          otherwise paints on top of the non-positioned question text and the
-          footer, which made them invisible while transformed elements (the
-          option buttons) still showed through. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{ background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)' }}
-      />
+
 
       {/* Top bar — safe-area handled by outer wrapper */}
       <div className="relative flex items-center justify-between px-4 py-2.5 mx-3 mt-2 rounded-2xl bg-white/85 ring-1 ring-black/[0.06] shadow-sm">
