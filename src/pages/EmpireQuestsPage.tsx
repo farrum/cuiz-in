@@ -26,6 +26,7 @@ import confetti from 'canvas-confetti';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 import QuizInterstitial from '@/components/quiz/QuizInterstitial';
@@ -481,8 +482,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Philosophical 50/50",
             abilityDesc: "Eliminates two incorrect options from the question.",
             starCost: 15,
-            level: Number(localStorage.getItem('hero_socrates_level') || '1'),
-            shards: Number(localStorage.getItem('hero_socrates_shards') || '10'),
+            level: Number(localStorage.getItem('hero_socrates_level') || '0'),
+            shards: Number(localStorage.getItem('hero_socrates_shards') || '0'),
           },
           {
             id: 'aryabhata',
@@ -493,8 +494,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Astronomical Time Shift",
             abilityDesc: "Adds +15 seconds to the question timer.",
             starCost: 15,
-            level: Number(localStorage.getItem('hero_aryabhata_level') || '1'),
-            shards: Number(localStorage.getItem('hero_aryabhata_shards') || '5'),
+            level: Number(localStorage.getItem('hero_aryabhata_level') || '0'),
+            shards: Number(localStorage.getItem('hero_aryabhata_shards') || '0'),
           },
           {
             id: 'chanakya',
@@ -505,8 +506,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Diplomatic Shield",
             abilityDesc: "Deploys a shield that absorbs 1 incorrect answer.",
             starCost: 20,
-            level: Number(localStorage.getItem('hero_chanakya_level') || '1'),
-            shards: Number(localStorage.getItem('hero_chanakya_shards') || '8'),
+            level: Number(localStorage.getItem('hero_chanakya_level') || '0'),
+            shards: Number(localStorage.getItem('hero_chanakya_shards') || '0'),
           },
           {
             id: 'ramanujan',
@@ -517,8 +518,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Infinite Insight",
             abilityDesc: "Reveals direct mathematical clues and rationale.",
             starCost: 20,
-            level: Number(localStorage.getItem('hero_ramanujan_level') || '1'),
-            shards: Number(localStorage.getItem('hero_ramanujan_shards') || '12'),
+            level: Number(localStorage.getItem('hero_ramanujan_level') || '0'),
+            shards: Number(localStorage.getItem('hero_ramanujan_shards') || '0'),
           }
         ];
         setHeroes(staticHeroes);
@@ -539,9 +540,9 @@ export default function EmpireQuestsPage() {
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, remoteGems.toString());
         }
 
-        // Fetch Heroes
-        const { data: userHeroes } = await (supabase as any)
-          .from('user_heroes')
+        // Fetch Heroes from user_characters table
+        const { data: userCharacters } = await (supabase as any)
+          .from('user_characters')
           .select('*')
           .eq('user_id', session.user.id);
 
@@ -553,10 +554,10 @@ export default function EmpireQuestsPage() {
             gradient: "from-blue-600 to-cyan-500",
             title: "The Philosopher King",
             abilityName: "Philosophical 50/50",
-            abilityDesc: "Eliminates two incorrect options.",
+            abilityDesc: "Eliminates two incorrect options from the question.",
             starCost: 15,
-            level: userHeroes?.find((h: any) => h.hero_id === 'socrates')?.level || 1,
-            shards: userHeroes?.find((h: any) => h.hero_id === 'socrates')?.shards || 0,
+            level: userCharacters?.find((h: any) => h.character_id === 'socrates')?.level ?? (Number(localStorage.getItem('hero_socrates_level')) || 0),
+            shards: userCharacters?.find((h: any) => h.character_id === 'socrates')?.shards_collected ?? (Number(localStorage.getItem('hero_socrates_shards')) || 0),
           },
           {
             id: 'aryabhata',
@@ -567,8 +568,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Astronomical Time Shift",
             abilityDesc: "Adds +15 seconds to the question timer.",
             starCost: 15,
-            level: userHeroes?.find((h: any) => h.hero_id === 'aryabhata')?.level || 1,
-            shards: userHeroes?.find((h: any) => h.hero_id === 'aryabhata')?.shards || 0,
+            level: userCharacters?.find((h: any) => h.character_id === 'aryabhata')?.level ?? (Number(localStorage.getItem('hero_aryabhata_level')) || 0),
+            shards: userCharacters?.find((h: any) => h.character_id === 'aryabhata')?.shards_collected ?? (Number(localStorage.getItem('hero_aryabhata_shards')) || 0),
           },
           {
             id: 'chanakya',
@@ -577,10 +578,10 @@ export default function EmpireQuestsPage() {
             gradient: "from-purple-600 to-indigo-500",
             title: "The Royal Strategist",
             abilityName: "Diplomatic Shield",
-            abilityDesc: "Deploys a shield absorbing 1 incorrect answer.",
+            abilityDesc: "Deploys a shield that absorbs 1 incorrect answer.",
             starCost: 20,
-            level: userHeroes?.find((h: any) => h.hero_id === 'chanakya')?.level || 1,
-            shards: userHeroes?.find((h: any) => h.hero_id === 'chanakya')?.shards || 0,
+            level: userCharacters?.find((h: any) => h.character_id === 'chanakya')?.level ?? (Number(localStorage.getItem('hero_chanakya_level')) || 0),
+            shards: userCharacters?.find((h: any) => h.character_id === 'chanakya')?.shards_collected ?? (Number(localStorage.getItem('hero_chanakya_shards')) || 0),
           },
           {
             id: 'ramanujan',
@@ -591,8 +592,8 @@ export default function EmpireQuestsPage() {
             abilityName: "Infinite Insight",
             abilityDesc: "Reveals direct mathematical clues and rationale.",
             starCost: 20,
-            level: userHeroes?.find((h: any) => h.hero_id === 'ramanujan')?.level || 1,
-            shards: userHeroes?.find((h: any) => h.hero_id === 'ramanujan')?.shards || 0,
+            level: userCharacters?.find((h: any) => h.character_id === 'ramanujan')?.level ?? (Number(localStorage.getItem('hero_ramanujan_level')) || 0),
+            shards: userCharacters?.find((h: any) => h.character_id === 'ramanujan')?.shards_collected ?? (Number(localStorage.getItem('hero_ramanujan_shards')) || 0),
           }
         ];
         setHeroes(heroList);
@@ -1140,6 +1141,11 @@ export default function EmpireQuestsPage() {
           </div>
         </div>
 
+        {/* WEB BANNER AD - TOP */}
+        <div className="max-w-6xl mx-auto px-4 mt-4 hidden md:block">
+          <SimpleAdBanner position="header" slotId="quest-web-top" className="rounded-2xl overflow-hidden shadow-lg border border-amber-500/20" />
+        </div>
+
         {/* LOADING INDICATOR */}
         {loading && gameplayStatus === 'idle' ? (
           <div className="flex flex-col items-center justify-center p-24">
@@ -1551,6 +1557,11 @@ export default function EmpireQuestsPage() {
                     })}
                   </div>
                 </div>
+
+                {/* WEB BANNER AD - MIDDLE */}
+                <div className="my-6">
+                  <SimpleAdBanner position="content" slotId="quest-web-middle" className="rounded-2xl overflow-hidden shadow-lg border border-amber-500/20" />
+                </div>
               </div>
             )}
 
@@ -1662,9 +1673,48 @@ export default function EmpireQuestsPage() {
             {/* TAB CONTENT: HEROES */}
             {activeTab === 'heroes' && (
               <div className="space-y-6">
-                <div className="text-center max-w-md mx-auto mb-8">
+                <div className="text-center max-w-md mx-auto mb-6">
                   <h2 className="text-2xl font-black uppercase tracking-widest text-amber-400">Intellectual Counsel</h2>
                   <p className="text-sm font-bold text-slate-400 mt-1">Unlock and upgrade historical counselors. Leveling up boosts their lifeline powers.</p>
+                </div>
+
+                {/* HOW TO EARN SHARDS & ASCEND GUIDE */}
+                <div className="bg-slate-950/90 border-2 border-amber-500/30 rounded-3xl p-5 md:p-6 shadow-xl relative overflow-hidden mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-sm md:text-base font-black uppercase tracking-wider text-amber-400">
+                      How to Earn Shards &amp; Upgrade Counselors
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+                    <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1.5">
+                      <div className="flex items-center gap-2 font-extrabold text-amber-300">
+                        <span>📦</span>
+                        <span>1. Open Treasury Chests</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-slate-400">
+                        Spend Tickets in the <button type="button" onClick={() => setActiveTab('chests')} className="text-amber-400 font-bold underline hover:text-amber-300">Treasury Shop</button> to open Bronze, Gold, or Emperor Chests which drop Counselor Shards.
+                      </p>
+                    </div>
+                    <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1.5">
+                      <div className="flex items-center gap-2 font-extrabold text-amber-300">
+                        <span>⚔️</span>
+                        <span>2. Conquering Quests &amp; Duels</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-slate-400">
+                        Win Quest stages, achieve sector star milestones, or win <button type="button" onClick={() => setActiveTab('hangman')} className="text-amber-400 font-bold underline hover:text-amber-300">Word Duels</button> to earn reward chests with shards.
+                      </p>
+                    </div>
+                    <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1.5">
+                      <div className="flex items-center gap-2 font-extrabold text-amber-300">
+                        <span>⚡</span>
+                        <span>3. Ascend with Stars</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-slate-400">
+                        Once you collect enough Shards for a counselor, spend Treasury Stars to upgrade them and enhance their battle lifelines!
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1673,12 +1723,19 @@ export default function EmpireQuestsPage() {
                       key={hero.id}
                       hero={hero}
                       userId={userId}
+                      userStars={userStars}
                       onRefresh={fetchUserData}
+                      onNavigateToShop={() => setActiveTab('chests')}
                     />
                   ))}
                 </div>
               </div>
             )}
+
+            {/* WEB BANNER AD - FOOTER */}
+            <div className="max-w-5xl mx-auto mt-8 mb-4">
+              <SimpleAdBanner position="footer" slotId="quest-web-bottom" className="rounded-2xl overflow-hidden shadow-lg border border-amber-500/20" />
+            </div>
           </div>
         )}
       </div>
@@ -1728,7 +1785,14 @@ export default function EmpireQuestsPage() {
                   </div>
                   <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
                     <span className="text-[9px] font-black text-slate-400 uppercase block">Hero Shards</span>
-                    <span className="font-bold text-cyan-300">{selectedCouncilHero.shards} / 20 Shards</span>
+                    <span className="font-bold text-cyan-300">
+                      {selectedCouncilHero.shards} / {
+                        selectedCouncilHero.level === 0 ? '10' :
+                        selectedCouncilHero.level === 1 ? '20' :
+                        selectedCouncilHero.level === 2 ? '50' :
+                        selectedCouncilHero.level === 3 ? '100' : 'Max'
+                      } Shards
+                    </span>
                   </div>
                 </div>
               </div>
