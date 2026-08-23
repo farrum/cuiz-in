@@ -141,16 +141,19 @@ export default function QuizStoryScreen() {
     loadNext();
   };
 
-  // Progress ring while asking — 20s soft timer (no penalty, just nudge)
+  // Progress bar while asking — 20s soft timer (no penalty, just a nudge).
+  // Driven by a single state flip + a 20s CSS/motion transition instead of a
+  // 60ms setInterval: the old tick re-rendered this full-screen view ~16x per
+  // second, which forced a full WebView repaint each time (visible flicker).
   useEffect(() => {
-    if (phase !== 'asking') return;
-    const start = Date.now();
-    progressTimer.current = window.setInterval(() => {
-      const p = Math.min(100, ((Date.now() - start) / 20000) * 100);
-      setProgress(p);
-    }, 60);
-    return () => { if (progressTimer.current) window.clearInterval(progressTimer.current); };
+    if (phase !== 'asking') {
+      return;
+    }
+    setProgress(0);
+    const raf = requestAnimationFrame(() => setProgress(100));
+    return () => cancelAnimationFrame(raf);
   }, [phase, question?.id]);
+
 
   const handleAnswer = async (option: string) => {
     if (phase !== 'asking' || !question) return;
@@ -368,19 +371,17 @@ export default function QuizStoryScreen() {
     // Applying it to an inner element only grows that element's internal padding
     // but doesn't move content below the physical status bar.
     <div
-      className="fixed inset-0 flex flex-col bg-background overflow-hidden"
-      style={{ paddingTop: 'var(--safe-top)' }}
+      className="fixed inset-0 flex flex-col overflow-hidden"
+      style={{
+        paddingTop: 'var(--safe-top)',
+        // Ambient gradient painted directly on the root container. It used to
+        // be a separate absolutely-positioned `-z-10` layer, which forced the
+        // WebView to re-resolve a negative stacking layer against the parent's
+        // own background on every paint — a major source of the flicker.
+        background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)',
+      }}
     >
-      {/* Ambient background — static gradient, zero GPU cost.
-          MUST stay behind the content (-z-10): as a positioned element it
-          otherwise paints on top of the non-positioned question text and the
-          footer, which made them invisible while transformed elements (the
-          option buttons) still showed through. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{ background: 'linear-gradient(150deg, hsl(38 60% 93%) 0%, hsl(200 40% 92%) 100%)' }}
-      />
+
 
       {/* Top bar — safe-area handled by outer wrapper */}
       <div className="relative flex items-center justify-between px-4 py-2.5 mx-3 mt-2 rounded-2xl bg-white/85 ring-1 ring-black/[0.06] shadow-sm">
@@ -395,12 +396,19 @@ export default function QuizStoryScreen() {
 
       {/* Session progress bar + gem launch origin anchor */}
       <div className="relative h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}
-          animate={{ width: `${phase === 'asking' ? progress : 100}%` }}
-          transition={{ duration: 0.12 }}
+        {/* One 20s CSS transition per question — no per-frame React state. */}
+        <div
+          className="h-full rounded-full will-change-[width]"
+          style={{
+            background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))',
+            width: `${phase === 'asking' ? progress : 100}%`,
+            transition:
+              phase === 'asking' && progress === 100
+                ? 'width 20s linear'
+                : 'width 0.2s linear',
+          }}
         />
+
         {/* Flying gem — launches from here toward the HUD gem counter */}
         <AnimatePresence>
           {gemLaunchKey > 0 && (

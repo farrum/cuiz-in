@@ -5,6 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { useEffect, useState, lazy, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
+
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
@@ -93,16 +95,23 @@ function AppMobile() {
       } finally {
         if (mounted) {
           setBooted(true);
-          // Gracefully hide native splash screen once React has mounted the initial view
-          if (Capacitor.isNativePlatform()) {
-            requestAnimationFrame(() => {
-              import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-                SplashScreen.hide().catch(() => {});
+          // Gracefully hide the native splash once React has painted the first
+          // view. Fully guarded: a plugin failure here must never bubble up and
+          // leave the splash (or a blank WebView) on screen.
+          try {
+            if (Capacitor.isNativePlatform()) {
+              requestAnimationFrame(() => {
+                import('@capacitor/splash-screen')
+                  .then(({ SplashScreen }) => SplashScreen.hide().catch(() => {}))
+                  .catch(() => {});
               });
-            });
+            }
+          } catch (e) {
+            console.warn('[Mobile] splash hide skipped', e);
           }
         }
       }
+
     })();
 
     // Silent prefetch questions cache for offline gameplay
