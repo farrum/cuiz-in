@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { User, Trophy, History, Star, ShieldAlert, Award, Compass, Play } from 'lucide-react';
+import { User, Users, Trophy, History, Star, ShieldAlert, Award, Compass, Play } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
