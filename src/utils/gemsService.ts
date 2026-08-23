@@ -24,13 +24,10 @@ export const checkDailyGemsReset = async (userId?: string | null) => {
       // Reset in database - update today's record to zero or create a new one
       const { data, error } = await supabase
         .from('daily_points')
-        .upsert({ 
-          user_id: userId, 
-          date: today, 
-          points: 0 
-        })
-        .eq('user_id', userId)
-        .eq('date', today);
+        .upsert(
+          { user_id: userId, date: today, points: 0 },
+          { onConflict: 'user_id,date', ignoreDuplicates: true }
+        );
       
       if (error) {
         console.error('Error resetting daily gems:', error);
@@ -76,13 +73,10 @@ export const checkMonthlyGemsReset = async (userId?: string | null) => {
         // Reset in database - update this month's record to zero or create a new one
         const { data, error } = await supabase
           .from('monthly_points')
-          .upsert({
-            user_id: userId,
-            month: currentMonth,
-            points: 0
-          })
-          .eq('user_id', userId)
-          .eq('month', currentMonth);
+          .upsert(
+            { user_id: userId, month: currentMonth, points: 0 },
+            { onConflict: 'user_id,month', ignoreDuplicates: true }
+          );
         
         if (error) {
           console.error('Error resetting monthly gems:', error);
@@ -151,10 +145,30 @@ export const logGemsForDay = async (gems: number, userId?: string | null) => {
       const { error: insertError } = await supabase
         .from('daily_points')
         .insert({ user_id: userId, date: today, points: gems });
-        
+
       if (insertError) {
-        console.error('Error inserting daily gems:', insertError);
-        return;
+        if (insertError.code === '23505') {
+          // Another write created today's row between our SELECT and INSERT.
+          const { data: retryData } = await supabase
+            .from('daily_points')
+            .select('gems:points')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .maybeSingle();
+          dailyGems = Number(retryData?.gems || 0) + gems;
+          const { error: retryUpdateError } = await supabase
+            .from('daily_points')
+            .update({ points: dailyGems })
+            .eq('user_id', userId)
+            .eq('date', today);
+          if (retryUpdateError) {
+            console.error('Error updating daily gems during retry:', retryUpdateError);
+            return;
+          }
+        } else {
+          console.error('Error inserting daily gems:', insertError);
+          return;
+        }
       }
     }
     

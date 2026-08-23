@@ -294,13 +294,33 @@ const useChallengeData = (
           .update({ points: (dailyGemsData as any).points + finalScore })
           .eq('id', dailyGemsData.id);
       } else {
-        await supabase
+        const { error: dailyInsertError } = await supabase
           .from('daily_points')
           .insert([{ 
             user_id: userId, 
             date: dateString, 
             points: finalScore 
           }]);
+
+        if (dailyInsertError) {
+          if (dailyInsertError.code === '23505') {
+            // Another write created today's row between our SELECT and INSERT.
+            const { data: retryDaily } = await supabase
+              .from('daily_points')
+              .select('*')
+              .eq('user_id', userId)
+              .eq('date', dateString)
+              .maybeSingle();
+            if (retryDaily) {
+              await supabase
+                .from('daily_points')
+                .update({ points: (retryDaily as any).points + finalScore })
+                .eq('id', retryDaily.id);
+            }
+          } else {
+            throw dailyInsertError;
+          }
+        }
       }
       
       const { data: monthlyGemsData, error: monthlyGemsError } = await supabase

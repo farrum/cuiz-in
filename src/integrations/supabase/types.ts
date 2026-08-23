@@ -1294,6 +1294,44 @@ export type Database = {
           },
         ]
       }
+      user_characters: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          level: number
+          shards_collected: number
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          level?: number
+          shards_collected?: number
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          shards_collected?: number
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_characters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_referrals: {
         Row: {
           active_this_month: boolean | null
