@@ -398,12 +398,19 @@ export default function QuizStoryScreen() {
 
       {/* Session progress bar + gem launch origin anchor */}
       <div className="relative h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))' }}
-          animate={{ width: `${phase === 'asking' ? progress : 100}%` }}
-          transition={{ duration: 0.12 }}
+        {/* One 20s CSS transition per question — no per-frame React state. */}
+        <div
+          className="h-full rounded-full will-change-[width]"
+          style={{
+            background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))',
+            width: `${phase === 'asking' ? progress : 100}%`,
+            transition:
+              phase === 'asking' && progress === 100
+                ? 'width 20s linear'
+                : 'width 0.2s linear',
+          }}
         />
+
         {/* Flying gem — launches from here toward the HUD gem counter */}
         <AnimatePresence>
           {gemLaunchKey > 0 && (
