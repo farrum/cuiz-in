@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
 import { cn } from '@/lib/utils';
+import { Capacitor } from '@capacitor/core';
+import { showAdWithFallback } from '@/mobile/ads/admob';
 
 const STORY_AD_TAG = 'https://vast.yomeno.xyz/vast?spot_id=1494657';
 const AD_EVERY = 2;

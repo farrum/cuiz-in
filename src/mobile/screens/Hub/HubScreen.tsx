@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
-import { showAdMobRewarded } from '@/mobile/ads/admob';
+import { showAdMobRewarded, isMobileAdsEnabled } from '@/mobile/ads/admob';
 import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
 import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
