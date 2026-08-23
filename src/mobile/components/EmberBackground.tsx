@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
+
 
 type Ember = {
   id: number;
