@@ -95,16 +95,23 @@ function AppMobile() {
       } finally {
         if (mounted) {
           setBooted(true);
-          // Gracefully hide native splash screen once React has mounted the initial view
-          if (Capacitor.isNativePlatform()) {
-            requestAnimationFrame(() => {
-              import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-                SplashScreen.hide().catch(() => {});
+          // Gracefully hide the native splash once React has painted the first
+          // view. Fully guarded: a plugin failure here must never bubble up and
+          // leave the splash (or a blank WebView) on screen.
+          try {
+            if (Capacitor.isNativePlatform()) {
+              requestAnimationFrame(() => {
+                import('@capacitor/splash-screen')
+                  .then(({ SplashScreen }) => SplashScreen.hide().catch(() => {}))
+                  .catch(() => {});
               });
-            });
+            }
+          } catch (e) {
+            console.warn('[Mobile] splash hide skipped', e);
           }
         }
       }
+
     })();
 
     // Silent prefetch questions cache for offline gameplay
