@@ -141,16 +141,19 @@ export default function QuizStoryScreen() {
     loadNext();
   };
 
-  // Progress ring while asking — 20s soft timer (no penalty, just nudge)
+  // Progress bar while asking — 20s soft timer (no penalty, just a nudge).
+  // Driven by a single state flip + a 20s CSS/motion transition instead of a
+  // 60ms setInterval: the old tick re-rendered this full-screen view ~16x per
+  // second, which forced a full WebView repaint each time (visible flicker).
   useEffect(() => {
-    if (phase !== 'asking') return;
-    const start = Date.now();
-    progressTimer.current = window.setInterval(() => {
-      const p = Math.min(100, ((Date.now() - start) / 20000) * 100);
-      setProgress(p);
-    }, 60);
-    return () => { if (progressTimer.current) window.clearInterval(progressTimer.current); };
+    if (phase !== 'asking') {
+      return;
+    }
+    setProgress(0);
+    const raf = requestAnimationFrame(() => setProgress(100));
+    return () => cancelAnimationFrame(raf);
   }, [phase, question?.id]);
+
 
   const handleAnswer = async (option: string) => {
     if (phase !== 'asking' || !question) return;
