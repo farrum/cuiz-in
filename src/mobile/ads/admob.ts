@@ -102,12 +102,12 @@ function setupBannerListeners() {
     void AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (info: any) => {
       console.warn('[AdMob] Banner failed to load (no fill):', info);
       bannerShown = false;
-      document.documentElement.style.setProperty('--banner-h', '0px');
     });
 
     void AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
       console.info('[AdMob] Banner loaded successfully');
       bannerShown = true;
+      document.documentElement.style.setProperty('--banner-h', '50px');
     });
   } catch (e) {
     console.warn('[AdMob] Error attaching banner listeners:', e);
@@ -119,17 +119,7 @@ function setupBannerListeners() {
  * BottomTabs bar AND the Android system navigation bar.
  */
 function getBottomMargin(): number {
-  try {
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
-    document.body.appendChild(el);
-    const safeBottom = el.offsetHeight || 0;
-    document.body.removeChild(el);
-    // 68px tab bar + safe-area bottom. Minimum 68 so we never drop below the tab bar.
-    return Math.max(68, 68 + safeBottom);
-  } catch {
-    return 80; // safe fallback
-  }
+  return 76; // Clean 68px tab bar + 8px safe margin, no DOM mutation
 }
 
 /**

@@ -25,7 +25,7 @@ function shouldShowBannerForRoute(pathname: string): boolean {
 }
 
 /**
- * Helper to determine if the route displays bottom tabs (requiring a 68px margin offset).
+ * Helper to determine if the route displays bottom tabs (requiring a 76px margin offset).
  */
 function shouldShowTabsForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
@@ -41,37 +41,12 @@ function shouldShowTabsForRoute(pathname: string): boolean {
   return tabRoutes.some(route => p === route || p.startsWith(route + '/'));
 }
 
-function getSafeBottomOnly(): number {
-  try {
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
-    document.body.appendChild(el);
-    const safeBottom = el.offsetHeight || 0;
-    document.body.removeChild(el);
-    return safeBottom;
-  } catch {
-    return 0;
-  }
-}
-
-function getBottomMargin(): number {
-  try {
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
-    document.body.appendChild(el);
-    const safeBottom = el.offsetHeight || 0;
-    document.body.removeChild(el);
-    return Math.max(68, 68 + safeBottom);
-  } catch {
-    return 80;
-  }
-}
+const TAB_BAR_MARGIN = 76; // 68px tab bar + 8px safe margin
+const SAFE_BOTTOM_MARGIN = 8;
 
 /**
  * Owns the native banner surface for the whole app session.
- * Monitors router path changes and toggles banner visibility.
- * If moving between banner-eligible routes, the banner remains visible
- * without being destroyed and recreated, adjusting its bottom offset dynamically.
+ * Monitors router path changes and toggles banner visibility cleanly.
  */
 export function BannerHost() {
   const location = useLocation();
@@ -79,21 +54,25 @@ export function BannerHost() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    const manageBanner = async () => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (!isMounted) return;
       const show = shouldShowBannerForRoute(location.pathname);
       const isShown = isAdMobBannerShown();
 
       if (show) {
         const hasTabs = shouldShowTabsForRoute(location.pathname);
-        const margin = hasTabs ? getBottomMargin() : getSafeBottomOnly();
-        await showAdMobBanner(margin);
+        const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
+        void showAdMobBanner(margin);
       } else if (isShown) {
-        console.log('[BannerHost] Hiding native banner');
-        await hideAdMobBanner();
+        void hideAdMobBanner();
       }
-    };
+    }, 150);
 
-    void manageBanner();
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [location.pathname]);
 
   // Hide the banner when this host component is unmounted
@@ -109,4 +88,3 @@ export function BannerHost() {
 }
 
 export default BannerHost;
-

@@ -91,7 +91,17 @@ function AppMobile() {
           await hydrateMobileSession(data.session.user.id);
         }
       } finally {
-        if (mounted) setBooted(true);
+        if (mounted) {
+          setBooted(true);
+          // Gracefully hide native splash screen once React has mounted the initial view
+          if (Capacitor.isNativePlatform()) {
+            requestAnimationFrame(() => {
+              import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+                SplashScreen.hide().catch(() => {});
+              });
+            });
+          }
+        }
       }
     })();
 

@@ -13,12 +13,11 @@ export function initMobilePlatform() {
       const { App } = await import('@capacitor/app');
 
       try {
+        await StatusBar.setOverlaysWebView({ overlay: true });
         await StatusBar.setStyle({ style: Style.Light });
       } catch (e) { console.warn('StatusBar init failed', e); }
 
-      try { await SplashScreen.hide(); } catch {}
-
-      // AdMob: initialize and warm up interstitial + rewarded
+      // AdMob: initialize and warm up interstitial + rewarded in background
       try {
         const { initAdMob, preloadAdMobInterstitial, preloadAdMobRewarded } =
           await import('@/mobile/ads/admob');
