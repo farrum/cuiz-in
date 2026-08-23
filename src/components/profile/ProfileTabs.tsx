@@ -11,7 +11,7 @@ import { AvatarEvolution } from '@/components/gamification/AvatarEvolution';
 import { ModularAvatar } from '@/components/gamification/ModularAvatar';
 import { SkillTreeContainer } from '@/components/gamification/SkillTreeContainer';
 import { DailyChallengesHub } from '@/components/gamification/DailyChallengesHub';
-import { Palette, Flame } from 'lucide-react';
+import { Palette, Flame, HelpCircle, CheckCircle2, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,8 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const [dayCorrect, setDayCorrect] = useState(0);
   const [monthAttempted, setMonthAttempted] = useState(0);
   const [monthCorrect, setMonthCorrect] = useState(0);
+  const [totalAttempted, setTotalAttempted] = useState(0);
+  const [totalCorrect, setTotalCorrect] = useState(0);
   
   const [teamName, setTeamName] = useState<string | null>(null);
   const [squadSize, setSquadSize] = useState(0);
@@ -108,7 +110,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         { id: 'ramanujan', name: 'Ramanujan', level: localRamanujanLevel, emoji: '🧠' }
       ]);
 
-      const roleKey = localStorage.getItem('cuizin_user_role') || 'infantry';
+      const roleKey = localStorage.getItem('quiz_app_user_role') || 'infantry';
       setUserRole(roleKey);
 
       if (userId) {
@@ -117,25 +119,38 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         const dayStart   = `${today}T00:00:00.000Z`;
         const monthStart = `${month}-01T00:00:00.000Z`;
 
-        const [p, d, m, dAtt, dCorr, mAtt, mCorr] = await Promise.all([
-          supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth, stars, role').eq('id', userId).maybeSingle(),
+        const [p, r, d, m, dAtt, dCorr, mAtt, mCorr, allAtt, allCorr] = await Promise.all([
+          supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth, stars').eq('id', userId).maybeSingle(),
+          supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
           supabase.from('daily_points').select('points').eq('user_id', userId).eq('date', today).maybeSingle(),
           supabase.from('monthly_points').select('points').eq('user_id', userId).eq('month', month).maybeSingle(),
           supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('answered_at', dayStart),
           supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('correct', true).gte('answered_at', dayStart),
           supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('answered_at', monthStart),
           supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('correct', true).gte('answered_at', monthStart),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('correct', true),
         ]);
 
         const pd = p.data as any;
         if (pd) {
           setGems(Number(pd.points ?? 0));
           setStars(Number(pd.stars ?? 0));
-          if (pd.role) {
-            setUserRole(pd.role);
-            localStorage.setItem('cuizin_user_role', pd.role);
-          }
         }
+
+        let userRoleFetched = 'infantry';
+        const rd = r.data as any;
+        if (rd?.role) {
+          userRoleFetched = rd.role;
+        } else {
+          // Fall back to rpc get_user_rank if user_roles returns empty due to hydration/RLS
+          const { data: rpcRole } = await supabase.rpc('get_user_rank' as any, {
+            p_user_id: userId,
+          });
+          if (rpcRole) userRoleFetched = String(rpcRole);
+        }
+        setUserRole(userRoleFetched);
+        localStorage.setItem('quiz_app_user_role', userRoleFetched);
 
         if (d.data) setDailyGems(Number((d.data as any).points ?? 0));
         if (m.data) setMonthlyGems(Number((m.data as any).points ?? 0));
@@ -144,6 +159,8 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         setDayCorrect(dCorr.count ?? 0);
         setMonthAttempted(mAtt.count ?? 0);
         setMonthCorrect(mCorr.count ?? 0);
+        setTotalAttempted(allAtt.count ?? 0);
+        setTotalCorrect(allCorr.count ?? 0);
 
         // Fetch advisor levels from DB
         const { data: dbChars } = await (supabase as any)
@@ -240,6 +257,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         email={email}
         phone={phone}
         provider={provider}
+        userRole={userRole}
         onProfileUpdate={onProfileUpdate}
       />
       
@@ -273,7 +291,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
       </div>
 
       {/* ── Stats Grid ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
           <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-violet-400/10 pointer-events-none" />
           <Play className="w-5 h-5 mb-2 text-violet-600" />
@@ -297,6 +315,24 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <Award className="w-5 h-5 mb-2 text-emerald-600" />
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Battles</span>
           <span className="font-black text-xl text-slate-800">{questionsAnswered} Runs</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-blue-400/10 pointer-events-none" />
+          <HelpCircle className="w-5 h-5 mb-2 text-blue-600" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Attempted</span>
+          <span className="font-black text-xl text-slate-800">{totalAttempted} Qs</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-teal-400/10 pointer-events-none" />
+          <CheckCircle2 className="w-5 h-5 mb-2 text-teal-600" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Correct</span>
+          <span className="font-black text-xl text-slate-800">{totalCorrect} Qs</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-orange-400/10 pointer-events-none" />
+          <Target className="w-5 h-5 mb-2 text-orange-600" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Accuracy</span>
+          <span className="font-black text-xl text-slate-800">{totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0}%</span>
         </div>
       </div>
 

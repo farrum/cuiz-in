@@ -19,6 +19,7 @@ interface ProfileHeaderProps {
   email?: string | null;
   phone?: string | null;
   provider?: string;
+  userRole?: string;
   onProfileUpdate?: (data: {
     displayName?: string;
     upiId?: string;
@@ -38,6 +39,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   email = '',
   phone = '',
   provider = 'email',
+  userRole = 'infantry',
   onProfileUpdate,
 }) => {
   const navigate = useNavigate();
@@ -171,7 +173,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           29 questions answered
         </div>
         <div className="bg-amber-950/40 border border-amber-800/30 text-amber-500 rounded-xl px-4 py-1.5 text-xs font-black uppercase tracking-wider">
-          Active Player
+          Rank: {(() => {
+            const ROLE_LABEL: Record<string, string> = {
+              admin: 'Admin',
+              king: 'King',
+              baron: 'Baron',
+              knight: 'Knight',
+              officer: 'Officer',
+              team_leader: 'Baron',
+              junior_team_leader: 'Officer',
+              player: 'Infantry',
+              infantry: 'Infantry',
+            };
+            return ROLE_LABEL[userRole.toLowerCase()] || 'Infantry';
+          })()}
         </div>
 
         {equippedWeapon && (
