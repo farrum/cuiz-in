@@ -96,8 +96,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <div className={cn(
-      "wooden-door p-6 shadow-xl transition-all duration-500",
-      isNavyBackdrop ? "text-stone-100 bg-gradient-to-b from-slate-900 via-blue-950 to-indigo-900 border-indigo-500/40 shadow-[inset_0_1px_20px_rgba(59,130,246,0.15)]" : "text-stone-900"
+      "panel-3d p-6 shadow-xl transition-all duration-500 border-2",
+      isNavyBackdrop 
+        ? "wooden-door text-stone-100 bg-gradient-to-b from-slate-900 via-blue-950 to-indigo-900 border-indigo-500/40 shadow-[inset_0_1px_20px_rgba(59,130,246,0.15)]" 
+        : "text-stone-900 bg-white border-primary/20"
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -148,7 +150,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </div>
 
-        <Button variant="outline" className="gap-2 border-stone-850 hover:bg-stone-900 text-stone-300" onClick={handleLogout}>
+        <Button 
+          variant="outline" 
+          className={cn(
+            "gap-2 border-stone-300 hover:bg-stone-100",
+            isNavyBackdrop 
+              ? "border-stone-850 hover:bg-stone-900 text-stone-300" 
+              : "border-stone-300 text-stone-700 hover:text-stone-900"
+          )} 
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4 text-red-500" />
           Log Out
         </Button>
