@@ -805,17 +805,15 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   will-change: transform, opacity;
 }
 
-/* ── Living Sky gradient shift ───────────────────────────────────────────── */
-@keyframes skyShift {
-  0%   { background-position: 0%   50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0%   50%; }
-}
+/* ── Living Sky gradient ─────────────────────────────────────────────────
+   Previously this animated `background-position` across a 300%-wide gradient
+   on a full-screen fixed container. `background-position` is not GPU
+   compositable, so the Android WebView repainted the entire viewport every
+   frame — the visible full-screen flicker. The gradient is now static. */
 .living-sky {
-  background-size: 300% 300%;
-  animation: skyShift 12s ease infinite;
-  will-change: background-position;
+  background-size: 100% 100%;
 }
+
 
 /* ── Epic Streak Flame layers ────────────────────────────────────────────── */
 @keyframes flameBase {
