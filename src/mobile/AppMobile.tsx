@@ -5,6 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { useEffect, useState, lazy, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
+
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
