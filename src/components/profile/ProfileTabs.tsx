@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { User, Trophy, History, Star, ShieldAlert, Award, Compass, Play } from 'lucide-react';
+import { User, Users, Trophy, History, Star, ShieldAlert, Award, Compass, Play } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import BadgesSection from '@/components/BadgesSection';
 import ReferralSection from '@/components/ReferralSection';
@@ -160,24 +160,30 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
           ]);
         }
 
-        // Fetch team / squad details
-        if (pd?.referrer_id) {
+        // Fetch team / squad details (leader of this user)
+        const { data: myReferral } = await supabase
+          .from('user_referrals')
+          .select('referrer_id, referrer_name')
+          .eq('referred_id', userId)
+          .maybeSingle();
+
+        if (myReferral?.referrer_id) {
           const { data: refProfile } = await supabase
             .from('profiles')
             .select('display_name, username')
-            .eq('id', pd.referrer_id)
+            .eq('id', myReferral.referrer_id)
             .maybeSingle();
-          if (refProfile) {
-            setTeamName(refProfile.display_name || refProfile.username || 'Baron Squad');
-          }
+          setTeamName(
+            refProfile?.display_name || refProfile?.username || myReferral.referrer_name || 'Baron Squad'
+          );
         }
 
         // Fetch squad size
         const { count } = await supabase
-          .from('profiles')
+          .from('user_referrals')
           .select('id', { count: 'exact', head: true })
           .eq('referrer_id', userId);
-          setSquadSize(count || 0);
+        setSquadSize(count || 0);
       }
     };
 
