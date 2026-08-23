@@ -21,9 +21,15 @@ import {
   purchaseItem,
   getPurchasedItems,
   getEquippedItems,
+  getEquippedTitle,
   equipItem,
   unequipItem
 } from '@/utils/shopData';
+import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
+import { useMoodEngine } from '@/mobile/mascots/useMoodEngine';
+import { moodFromAccuracy, characterOfTheDay } from '@/mobile/mascots/registry';
+import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileTabsProps {
   userId: string | null;
@@ -57,11 +63,28 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   onProfileUpdate,
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { streak, questionsAnswered } = usePersistentQuizStats();
+  const { accuracy, sample } = useMoodEngine();
+  const mirrorMood = moodFromAccuracy(accuracy, sample);
+
   const [gems, setGems] = useState(0);
   const [stars, setStars] = useState(0);
   const [advisors, setAdvisors] = useState<any[]>([]);
   const [purchased, setPurchased] = useState<string[]>([]);
   const [equipped, setEquipped] = useState<Record<string, string>>({});
+  const [equippedTitleId, setEquippedTitleId] = useState('');
+
+  const [dailyGems, setDailyGems] = useState(0);
+  const [monthlyGems, setMonthlyGems] = useState(0);
+  const [dayAttempted, setDayAttempted] = useState(0);
+  const [dayCorrect, setDayCorrect] = useState(0);
+  const [monthAttempted, setMonthAttempted] = useState(0);
+  const [monthCorrect, setMonthCorrect] = useState(0);
+  
+  const [teamName, setTeamName] = useState<string | null>(null);
+  const [squadSize, setSquadSize] = useState(0);
+  const [userRole, setUserRole] = useState('infantry');
 
   useEffect(() => {
     const fetchTreasury = async () => {
@@ -71,6 +94,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
       setStars(localStars);
       setPurchased(getPurchasedItems());
       setEquipped(getEquippedItems());
+      setEquippedTitleId(getEquippedTitle());
 
       const localSocratesLevel = Number(localStorage.getItem('hero_socrates_level') || '0');
       const localAryabhataLevel = Number(localStorage.getItem('hero_aryabhata_level') || '0');
@@ -84,16 +108,42 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         { id: 'ramanujan', name: 'Ramanujan', level: localRamanujanLevel, emoji: '🧠' }
       ]);
 
+      const roleKey = localStorage.getItem('cuizin_user_role') || 'infantry';
+      setUserRole(roleKey);
+
       if (userId) {
-        const { data } = await (supabase as any)
-          .from('profiles')
-          .select('gems:points, stars')
-          .eq('id', userId)
-          .maybeSingle();
-        if (data) {
-          setGems(data.gems || 0);
-          setStars(data.stars || 0);
+        const today      = new Date().toISOString().slice(0, 10);
+        const month      = new Date().toISOString().slice(0, 7);
+        const dayStart   = `${today}T00:00:00.000Z`;
+        const monthStart = `${month}-01T00:00:00.000Z`;
+
+        const [p, d, m, dAtt, dCorr, mAtt, mCorr] = await Promise.all([
+          supabase.from('profiles').select('username, points, display_name, email, phone, upi_id, profile_picture, date_of_birth, stars, role').eq('id', userId).maybeSingle(),
+          supabase.from('daily_points').select('points').eq('user_id', userId).eq('date', today).maybeSingle(),
+          supabase.from('monthly_points').select('points').eq('user_id', userId).eq('month', month).maybeSingle(),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('answered_at', dayStart),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('correct', true).gte('answered_at', dayStart),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('answered_at', monthStart),
+          supabase.from('quiz_answers').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('correct', true).gte('answered_at', monthStart),
+        ]);
+
+        const pd = p.data as any;
+        if (pd) {
+          setGems(Number(pd.points ?? 0));
+          setStars(Number(pd.stars ?? 0));
+          if (pd.role) {
+            setUserRole(pd.role);
+            localStorage.setItem('cuizin_user_role', pd.role);
+          }
         }
+
+        if (d.data) setDailyGems(Number((d.data as any).points ?? 0));
+        if (m.data) setMonthlyGems(Number((m.data as any).points ?? 0));
+
+        setDayAttempted(dAtt.count ?? 0);
+        setDayCorrect(dCorr.count ?? 0);
+        setMonthAttempted(mAtt.count ?? 0);
+        setMonthCorrect(mCorr.count ?? 0);
 
         // Fetch advisor levels from DB
         const { data: dbChars } = await (supabase as any)
@@ -109,6 +159,25 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             { id: 'ramanujan', name: 'Ramanujan', level: dbMap.get('ramanujan') || 0, emoji: '🧠' }
           ]);
         }
+
+        // Fetch team / squad details
+        if (pd?.referrer_id) {
+          const { data: refProfile } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('id', pd.referrer_id)
+            .maybeSingle();
+          if (refProfile) {
+            setTeamName(refProfile.display_name || refProfile.username || 'Baron Squad');
+          }
+        }
+
+        // Fetch squad size
+        const { count } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('referrer_id', userId);
+          setSquadSize(count || 0);
       }
     };
 
@@ -144,6 +213,14 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const handleUnequip = (type: string) => {
     unequipItem(type);
     toast({ title: "Item Unequipped", description: "Your equipment has been updated." });
+  };
+
+  const mirrorMessage: Record<string, string> = {
+    excited: "You're crushing it — keep going!",
+    cheer:   "Solid run. One more quest?",
+    neutral: 'Steady. Play a quick round to warm up.',
+    sad:     'Tough patch. Win one to cheer me up?',
+    align:   'Comeback is real! Keep going!',
   };
 
   return (
@@ -186,6 +263,93 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               <span className="text-xl font-black text-amber-500 drop-shadow-sm">{stars}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-violet-400/10 pointer-events-none" />
+          <Play className="w-5 h-5 mb-2 text-violet-600" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Today</span>
+          <span className="font-black text-xl text-slate-800">{dailyGems.toFixed(1)} 💎</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-amber-400/10 pointer-events-none" />
+          <Trophy className="w-5 h-5 mb-2 text-amber-500" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">This Month</span>
+          <span className="font-black text-xl text-slate-800">{monthlyGems.toFixed(1)} 💎</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-rose-400/10 pointer-events-none" />
+          <Flame className="w-5 h-5 mb-2 text-rose-500" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Streak</span>
+          <span className="font-black text-xl text-slate-800">{streak} Days</span>
+        </div>
+        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 pointer-events-none" />
+          <Award className="w-5 h-5 mb-2 text-emerald-600" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Battles</span>
+          <span className="font-black text-xl text-slate-800">{questionsAnswered} Runs</span>
+        </div>
+      </div>
+
+      {/* ── Court Mirror & Squad Center ── */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Court Mirror (Mascot) */}
+        <div className="md:col-span-6 panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex items-center gap-4 shadow-sm relative overflow-hidden">
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-primary/5 rounded-full blur-xl pointer-events-none" />
+          {sample > 0 ? (
+            <>
+              <MascotPlayer character={characterOfTheDay()} mood={mirrorMood} size={64} noHalo />
+              <div className="flex-1 min-w-0">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block mb-0.5 font-serif">Court Mirror</span>
+                <span className="font-black text-sm text-slate-800 block leading-snug">
+                  {mirrorMessage[mirrorMood] ?? 'Play more to see your mood!'}
+                </span>
+                <span className="text-xs text-slate-500 font-bold block mt-1">
+                  Last {sample} battles · {Math.round(accuracy * 100)}% accuracy
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-4 w-full">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-2xl">
+                🔮
+              </div>
+              <div className="flex-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block mb-0.5 font-serif">Court Mirror</span>
+                <span className="font-black text-sm text-slate-800 block leading-snug">
+                  Answer questions to activate your court mirror!
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Squad Center Widget */}
+        <div className="md:col-span-6 panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-md">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block mb-0.5 font-serif">Squad Center</span>
+              <span className="font-black text-sm text-slate-800 block leading-snug">
+                {squadSize > 0 ? `Commanding ${squadSize} Members` : teamName ? `Member of ${teamName}` : 'No active squad recruited'}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider mt-0.5">
+                {userRole ? userRole.replace('_', ' ') : 'Infantry'} Rank
+              </span>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate('/team-dashboard')}
+            className="medieval-btn text-xs font-black uppercase py-2 h-9 px-4 shrink-0 shadow-sm"
+          >
+            Manage Squad
+          </Button>
         </div>
       </div>
       
