@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { showAdMobRewarded, showAdMobInterstitial } from '@/mobile/ads/admob';
+import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -228,7 +228,7 @@ export default function QuizStoryScreen() {
         setTimeout(() => { setPulseOpt(null); }, 700);
       } else {
         haptics('error');
-        if (Capacitor.isNativePlatform() && streak >= 3) {
+        if (Capacitor.isNativePlatform() && streak >= 3 && isMobileAdsEnabled) {
           setReviveStreakPending(true);
         } else {
           resetStreak();
@@ -241,7 +241,7 @@ export default function QuizStoryScreen() {
       // After the 10s reveal, advance — but every 2 answered questions we show
       // a full-screen ad break first (the interstitial itself advances on close).
       answerCount.current += 1;
-      const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3;
+      const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3 && isMobileAdsEnabled;
       if (!isRevivePossible) {
         const now = Date.now();
         const adDue =
@@ -309,7 +309,7 @@ export default function QuizStoryScreen() {
   };
 
   const exit = () => {
-    if (Capacitor.isNativePlatform() && sessionGems > 0) {
+    if (Capacitor.isNativePlatform() && sessionGems > 0 && isMobileAdsEnabled) {
       setDoubleGemsPending(true);
     } else {
       navigate('/hub');

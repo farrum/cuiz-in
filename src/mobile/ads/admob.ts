@@ -33,9 +33,12 @@ function adId(type: keyof typeof ADMOB_AD_UNITS): string {
 }
 
 // ─── SDK Initialisation ───────────────────────────────────────────────────────
+export const isMobileAdsEnabled = false;
+
 let initPromise: Promise<boolean> | null = null;
 
 export function initAdMob(): Promise<boolean> {
+  if (!isMobileAdsEnabled) return Promise.resolve(false);
   if (!Capacitor.isNativePlatform()) return Promise.resolve(false);
   if (!initPromise) {
     initPromise = (async () => {
@@ -91,6 +94,7 @@ function getBottomMargin(): number {
  * Returns true on success; calls onFailed() and returns false on error.
  */
 export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
+  if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return false;
   if (bannerShown) return true;
   if (bannerPending) return bannerPending;
@@ -144,6 +148,7 @@ async function doShowBanner(onFailed?: () => void): Promise<boolean> {
 }
 
 export async function hideAdMobBanner(keepLayoutSpacer = false): Promise<void> {
+  if (!isMobileAdsEnabled) return;
   if (!Capacitor.isNativePlatform() || !bannerShown) return;
   bannerShown = false;
   try {
@@ -162,6 +167,7 @@ export function isAdMobBannerShown(): boolean {
 let interstitialPreloading = false;
 
 export async function preloadAdMobInterstitial(): Promise<void> {
+  if (!isMobileAdsEnabled) return;
   if (!(await initAdMob()) || interstitialPreloading) return;
   interstitialPreloading = true;
   try {
@@ -177,6 +183,7 @@ export async function preloadAdMobInterstitial(): Promise<void> {
 
 /** Shows an AdMob interstitial. Returns true when an ad was actually displayed. */
 export async function showAdMobInterstitial(): Promise<boolean> {
+  if (!isMobileAdsEnabled) return false;
   if (!(await initAdMob())) return false;
   try {
     await AdMob.showInterstitial();
@@ -195,6 +202,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
 let rewardedPreloading = false;
 
 export async function preloadAdMobRewarded(): Promise<void> {
+  if (!isMobileAdsEnabled) return;
   if (!(await initAdMob()) || rewardedPreloading) return;
   rewardedPreloading = true;
   try {
@@ -213,6 +221,7 @@ export async function preloadAdMobRewarded(): Promise<void> {
  * Returns { shown, rewarded }
  */
 export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: boolean }> {
+  if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!(await initAdMob())) return { shown: false, rewarded: false };
   try {
     const result = await AdMob.showRewardVideoAd();
@@ -228,6 +237,7 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
 
 // ─── Rewarded Interstitial ────────────────────────────────────────────────────────
 export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
+  if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!(await initAdMob())) return { shown: false, rewarded: false };
   try {
     const opts: RewardAdOptions = {
@@ -262,6 +272,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackVa
 export async function showAdWithFallback(
   prefer: 'interstitial' | 'rewarded' = 'interstitial',
 ): Promise<boolean> {
+  if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return false;
 
   if (prefer === 'rewarded') {
