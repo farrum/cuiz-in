@@ -211,7 +211,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
   return new Promise<boolean>(async (resolve) => {
     let completed = false;
 
-    const dismissedListener = await AdMob.addListener('interstitialAdDismissed', () => {
+    const dismissedListener = await (AdMob as any).addListener('interstitialAdDismissed', () => {
       console.info('[AdMob] Interstitial dismissed by user');
       if (!completed) {
         completed = true;
@@ -221,7 +221,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
       }
     });
 
-    const failedListener = await AdMob.addListener('interstitialAdFailedToShow', (info) => {
+    const failedListener = await (AdMob as any).addListener('interstitialAdFailedToShow', (info: any) => {
       console.warn('[AdMob] Interstitial failed to show:', info);
       if (!completed) {
         completed = true;
@@ -274,12 +274,12 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
     let completed = false;
     let rewardGranted = false;
 
-    const rewardListener = await AdMob.addListener('onAdRewarded', (info) => {
+    const rewardListener = await (AdMob as any).addListener('onAdRewarded', (info: any) => {
       console.info('[AdMob] User earned reward:', info);
       rewardGranted = true;
     });
 
-    const dismissedListener = await AdMob.addListener('rewardedAdDismissed', () => {
+    const dismissedListener = await (AdMob as any).addListener('rewardedAdDismissed', () => {
       console.info('[AdMob] Rewarded ad dismissed');
       if (!completed) {
         completed = true;
@@ -290,7 +290,7 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
       }
     });
 
-    const failedListener = await AdMob.addListener('rewardedAdFailedToShow', (info) => {
+    const failedListener = await (AdMob as any).addListener('rewardedAdFailedToShow', (info: any) => {
       console.warn('[AdMob] Rewarded ad failed to show:', info);
       if (!completed) {
         completed = true;

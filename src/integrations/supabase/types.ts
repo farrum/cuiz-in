@@ -526,6 +526,72 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string | null
+          created_at: string
+          current_count: number
+          description: string | null
+          id: string
+          reward_gems: number
+          reward_shards: number
+          reward_stars: number
+          shard_type: string | null
+          status: string
+          target_count: number
+          title: string
+          type: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          current_count?: number
+          description?: string | null
+          id?: string
+          reward_gems?: number
+          reward_shards?: number
+          reward_stars?: number
+          shard_type?: string | null
+          status?: string
+          target_count?: number
+          title: string
+          type?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          current_count?: number
+          description?: string | null
+          id?: string
+          reward_gems?: number
+          reward_shards?: number
+          reward_stars?: number
+          shard_type?: string | null
+          status?: string
+          target_count?: number
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empire_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empire_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faqs: {
         Row: {
           answer: string
@@ -1091,6 +1157,45 @@ export type Database = {
         }
         Relationships: []
       }
+      team_join_requests: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          target_leader_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          target_leader_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          target_leader_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_join_requests_target_leader_id_fkey"
+            columns: ["target_leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_join_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_leader_earnings: {
         Row: {
           active_members: number
@@ -1257,6 +1362,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_task_progress: {
+        Row: {
+          created_at: string
+          id: string
+          progress: number
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          progress?: number
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          progress?: number
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_task_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "empire_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_task_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wheel_spins: {
         Row: {
