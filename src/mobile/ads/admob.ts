@@ -33,7 +33,7 @@ function adId(type: keyof typeof ADMOB_AD_UNITS): string {
 }
 
 // ─── SDK Initialisation ───────────────────────────────────────────────────────
-export const isMobileAdsEnabled = false;
+export const isMobileAdsEnabled = true;
 
 let initPromise: Promise<boolean> | null = null;
 
@@ -70,6 +70,7 @@ export function initAdMob(): Promise<boolean> {
 // ─── Banner ───────────────────────────────────────────────────────────────────
 let bannerShown = false;
 let bannerPending: Promise<boolean> | null = null;
+let lastMargin = -1;
 
 /**
  * Compute the bottom margin needed so the banner clears both the WebView
@@ -93,19 +94,22 @@ function getBottomMargin(): number {
  * Show the AdMob banner (bottom-centre, sits above the tab bar + system nav bar).
  * Returns true on success; calls onFailed() and returns false on error.
  */
-export async function showAdMobBanner(onFailed?: () => void): Promise<boolean> {
+export async function showAdMobBanner(customMargin?: number, onFailed?: () => void): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return false;
-  if (bannerShown) return true;
+
+  const margin = customMargin !== undefined ? customMargin : getBottomMargin();
+  if (bannerShown && lastMargin === margin) return true;
+
+  lastMargin = margin;
   if (bannerPending) return bannerPending;
-  bannerPending = doShowBanner(onFailed).finally(() => { bannerPending = null; });
+  bannerPending = doShowBanner(margin, onFailed).finally(() => { bannerPending = null; });
   return bannerPending;
 }
 
-async function doShowBanner(onFailed?: () => void): Promise<boolean> {
+async function doShowBanner(margin: number, onFailed?: () => void): Promise<boolean> {
   if (!(await initAdMob())) { onFailed?.(); return false; }
   try {
-    const margin = getBottomMargin();
     const options: BannerAdOptions = {
       adId: adId('banner'),
       adSize: BannerAdSize.ADAPTIVE_BANNER,
@@ -163,6 +167,24 @@ export function isAdMobBannerShown(): boolean {
   return bannerShown;
 }
 
+export async function refreshAdMobBanner(): Promise<void> {
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform() || !bannerShown) return;
+  try {
+    const margin = lastMargin !== -1 ? lastMargin : getBottomMargin();
+    const options: BannerAdOptions = {
+      adId: adId('banner'),
+      adSize: BannerAdSize.ADAPTIVE_BANNER,
+      position: BannerAdPosition.BOTTOM_CENTER,
+      margin,
+      isTesting: import.meta.env.DEV as boolean,
+    };
+    await AdMob.showBanner(options);
+    console.info('[AdMob] Banner refreshed successfully');
+  } catch (err) {
+    console.warn('[AdMob] Failed to refresh banner ad:', err);
+  }
+}
+
 // ─── Interstitial ─────────────────────────────────────────────────────────────
 let interstitialPreloading = false;
 
@@ -181,21 +203,48 @@ export async function preloadAdMobInterstitial(): Promise<void> {
   }
 }
 
-/** Shows an AdMob interstitial. Returns true when an ad was actually displayed. */
+/** Shows an AdMob interstitial. Resolves only when the user dismisses the ad or it fails to show. */
 export async function showAdMobInterstitial(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!(await initAdMob())) return false;
-  try {
-    await AdMob.showInterstitial();
-    // Warm up the next interstitial in the background immediately
-    preloadAdMobInterstitial().catch(() => {});
-    return true;
-  } catch (e) {
-    console.warn('[AdMob] interstitial show failed (falling back/preloading next)', e);
-    // Trigger a background preload so an ad is fetched for the next round
-    preloadAdMobInterstitial().catch(() => {});
-    return false;
-  }
+
+  return new Promise<boolean>(async (resolve) => {
+    let completed = false;
+
+    const dismissedListener = await AdMob.addListener('interstitialAdDismissed', () => {
+      console.info('[AdMob] Interstitial dismissed by user');
+      if (!completed) {
+        completed = true;
+        dismissedListener.remove();
+        failedListener.remove();
+        resolve(true);
+      }
+    });
+
+    const failedListener = await AdMob.addListener('interstitialAdFailedToShow', (info) => {
+      console.warn('[AdMob] Interstitial failed to show:', info);
+      if (!completed) {
+        completed = true;
+        dismissedListener.remove();
+        failedListener.remove();
+        resolve(false);
+      }
+    });
+
+    try {
+      await AdMob.showInterstitial();
+      preloadAdMobInterstitial().catch(() => {});
+    } catch (e) {
+      console.warn('[AdMob] showInterstitial native call failed', e);
+      if (!completed) {
+        completed = true;
+        dismissedListener.remove();
+        failedListener.remove();
+        preloadAdMobInterstitial().catch(() => {});
+        resolve(false);
+      }
+    }
+  });
 }
 
 // ─── Rewarded ─────────────────────────────────────────────────────────────────
@@ -216,23 +265,57 @@ export async function preloadAdMobRewarded(): Promise<void> {
   }
 }
 
-/**
- * Shows an AdMob rewarded ad.
- * Returns { shown, rewarded }
- */
+/** Shows an AdMob rewarded ad. Resolves only when the user dismisses the ad or it fails to show. */
 export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: boolean }> {
   if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!(await initAdMob())) return { shown: false, rewarded: false };
-  try {
-    const result = await AdMob.showRewardVideoAd();
-    // Warm up the next one in the background immediately
-    preloadAdMobRewarded().catch(() => {});
-    return { shown: true, rewarded: !!(result as any)?.value };
-  } catch (e) {
-    console.warn('[AdMob] rewarded show failed (falling back/preloading next)', e);
-    preloadAdMobRewarded().catch(() => {});
-    return { shown: false, rewarded: false };
-  }
+
+  return new Promise<{ shown: boolean; rewarded: boolean }>(async (resolve) => {
+    let completed = false;
+    let rewardGranted = false;
+
+    const rewardListener = await AdMob.addListener('onAdRewarded', (info) => {
+      console.info('[AdMob] User earned reward:', info);
+      rewardGranted = true;
+    });
+
+    const dismissedListener = await AdMob.addListener('rewardedAdDismissed', () => {
+      console.info('[AdMob] Rewarded ad dismissed');
+      if (!completed) {
+        completed = true;
+        rewardListener.remove();
+        dismissedListener.remove();
+        failedListener.remove();
+        resolve({ shown: true, rewarded: rewardGranted });
+      }
+    });
+
+    const failedListener = await AdMob.addListener('rewardedAdFailedToShow', (info) => {
+      console.warn('[AdMob] Rewarded ad failed to show:', info);
+      if (!completed) {
+        completed = true;
+        rewardListener.remove();
+        dismissedListener.remove();
+        failedListener.remove();
+        resolve({ shown: false, rewarded: false });
+      }
+    });
+
+    try {
+      await AdMob.showRewardVideoAd();
+      preloadAdMobRewarded().catch(() => {});
+    } catch (e) {
+      console.warn('[AdMob] showRewardVideoAd native call failed', e);
+      if (!completed) {
+        completed = true;
+        rewardListener.remove();
+        dismissedListener.remove();
+        failedListener.remove();
+        preloadAdMobRewarded().catch(() => {});
+        resolve({ shown: false, rewarded: false });
+      }
+    }
+  });
 }
 
 // ─── Rewarded Interstitial ────────────────────────────────────────────────────────
@@ -278,7 +361,7 @@ export async function showAdWithFallback(
   if (prefer === 'rewarded') {
     const admobR = await withTimeout(
       showAdMobRewarded(),
-      5000,
+      8000,
       { shown: false, rewarded: false }
     );
     return admobR.shown;
@@ -286,7 +369,7 @@ export async function showAdWithFallback(
 
   const admobI = await withTimeout(
     showAdMobInterstitial(),
-    5000,
+    8000,
     false
   );
   return admobI;

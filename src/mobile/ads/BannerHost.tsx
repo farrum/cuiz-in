@@ -5,7 +5,6 @@ import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
 
 /**
  * Helper to determine if a route should show the bottom native banner ad.
- * Banner routes correspond to screens displayed inside the main MobileShell (with bottom tabs).
  */
 function shouldShowBannerForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
@@ -16,16 +15,63 @@ function shouldShowBannerForRoute(pathname: string): boolean {
     '/shop',
     '/empire-quests',
     '/kingdoms',
-    '/team-dashboard'
+    '/team-dashboard',
+    '/quiz',
+    '/daily',
+    '/minigames',
+    '/game'
   ];
   return bannerRoutes.some(route => p === route || p.startsWith(route + '/'));
+}
+
+/**
+ * Helper to determine if the route displays bottom tabs (requiring a 68px margin offset).
+ */
+function shouldShowTabsForRoute(pathname: string): boolean {
+  const p = pathname.toLowerCase();
+  const tabRoutes = [
+    '/hub',
+    '/leaderboard',
+    '/profile',
+    '/shop',
+    '/empire-quests',
+    '/kingdoms',
+    '/team-dashboard'
+  ];
+  return tabRoutes.some(route => p === route || p.startsWith(route + '/'));
+}
+
+function getSafeBottomOnly(): number {
+  try {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
+    document.body.appendChild(el);
+    const safeBottom = el.offsetHeight || 0;
+    document.body.removeChild(el);
+    return safeBottom;
+  } catch {
+    return 0;
+  }
+}
+
+function getBottomMargin(): number {
+  try {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none;';
+    document.body.appendChild(el);
+    const safeBottom = el.offsetHeight || 0;
+    document.body.removeChild(el);
+    return Math.max(68, 68 + safeBottom);
+  } catch {
+    return 80;
+  }
 }
 
 /**
  * Owns the native banner surface for the whole app session.
  * Monitors router path changes and toggles banner visibility.
  * If moving between banner-eligible routes, the banner remains visible
- * without being destroyed and recreated, eliminating visual flashes/flickering.
+ * without being destroyed and recreated, adjusting its bottom offset dynamically.
  */
 export function BannerHost() {
   const location = useLocation();
@@ -37,11 +83,12 @@ export function BannerHost() {
       const show = shouldShowBannerForRoute(location.pathname);
       const isShown = isAdMobBannerShown();
 
-      if (show && !isShown) {
-        console.log('[BannerHost] Entering banner-eligible route, showing native banner');
-        await showAdMobBanner();
-      } else if (!show && isShown) {
-        console.log('[BannerHost] Entering full-screen route, hiding native banner');
+      if (show) {
+        const hasTabs = shouldShowTabsForRoute(location.pathname);
+        const margin = hasTabs ? getBottomMargin() : getSafeBottomOnly();
+        await showAdMobBanner(margin);
+      } else if (isShown) {
+        console.log('[BannerHost] Hiding native banner');
         await hideAdMobBanner();
       }
     };
@@ -62,3 +109,4 @@ export function BannerHost() {
 }
 
 export default BannerHost;
+

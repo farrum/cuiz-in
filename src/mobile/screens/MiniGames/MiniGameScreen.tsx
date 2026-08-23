@@ -7,6 +7,7 @@ import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { TopBannerAd } from '../../ads/TopBannerAd';
+import { showAdMobInterstitial } from '@/mobile/ads/admob';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -356,7 +357,17 @@ export default function MiniGameScreen() {
         }}
       >
         <button
-          onClick={() => { haptics('light'); navigate('/hub'); }}
+          onClick={async () => {
+            haptics('light');
+            if (Capacitor.isNativePlatform()) {
+              try {
+                await showAdMobInterstitial();
+              } catch (e) {
+                console.warn('AdMob Interstitial failed on exit', e);
+              }
+            }
+            navigate('/hub');
+          }}
           className="p-2 -ml-1.5 rounded-xl bg-white/80 ring-1 ring-black/[0.06] hover:bg-white transition-colors"
           aria-label="Close"
         >

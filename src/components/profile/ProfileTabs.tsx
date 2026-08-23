@@ -291,48 +291,55 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
       </div>
 
       {/* ── Stats Grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-violet-400/10 pointer-events-none" />
-          <Play className="w-5 h-5 mb-2 text-violet-600" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Today</span>
-          <span className="font-black text-xl text-slate-800">{dailyGems.toFixed(1)} 💎</span>
+      <div className="space-y-4">
+        {/* Row 1: 3 stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-violet-400/10 pointer-events-none" />
+            <Play className="w-5 h-5 mb-2 text-violet-600" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Today</span>
+            <span className="font-black text-xl text-slate-800">{dailyGems.toFixed(1)} 💎</span>
+          </div>
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-amber-400/10 pointer-events-none" />
+            <Trophy className="w-5 h-5 mb-2 text-amber-500" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">This Month</span>
+            <span className="font-black text-xl text-slate-800">{monthlyGems.toFixed(1)} 💎</span>
+          </div>
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-rose-400/10 pointer-events-none" />
+            <Flame className="w-5 h-5 mb-2 text-rose-500" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Streak</span>
+            <span className="font-black text-xl text-slate-800">{streak} Days</span>
+          </div>
         </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-amber-400/10 pointer-events-none" />
-          <Trophy className="w-5 h-5 mb-2 text-amber-500" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">This Month</span>
-          <span className="font-black text-xl text-slate-800">{monthlyGems.toFixed(1)} 💎</span>
-        </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-rose-400/10 pointer-events-none" />
-          <Flame className="w-5 h-5 mb-2 text-rose-500" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Streak</span>
-          <span className="font-black text-xl text-slate-800">{streak} Days</span>
-        </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 pointer-events-none" />
-          <Award className="w-5 h-5 mb-2 text-emerald-600" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Battles</span>
-          <span className="font-black text-xl text-slate-800">{questionsAnswered} Runs</span>
-        </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-blue-400/10 pointer-events-none" />
-          <HelpCircle className="w-5 h-5 mb-2 text-blue-600" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Attempted</span>
-          <span className="font-black text-xl text-slate-800">{totalAttempted} Qs</span>
-        </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-teal-400/10 pointer-events-none" />
-          <CheckCircle2 className="w-5 h-5 mb-2 text-teal-600" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Correct</span>
-          <span className="font-black text-xl text-slate-800">{totalCorrect} Qs</span>
-        </div>
-        <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-          <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-orange-400/10 pointer-events-none" />
-          <Target className="w-5 h-5 mb-2 text-orange-600" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Accuracy</span>
-          <span className="font-black text-xl text-slate-800">{totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0}%</span>
+
+        {/* Row 2: 4 stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-emerald-400/10 pointer-events-none" />
+            <Award className="w-5 h-5 mb-2 text-emerald-600" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Battles</span>
+            <span className="font-black text-xl text-slate-800">{questionsAnswered} Runs</span>
+          </div>
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-blue-400/10 pointer-events-none" />
+            <HelpCircle className="w-5 h-5 mb-2 text-blue-600" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Attempted</span>
+            <span className="font-black text-xl text-slate-800">{totalAttempted} Qs</span>
+          </div>
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-teal-400/10 pointer-events-none" />
+            <CheckCircle2 className="w-5 h-5 mb-2 text-teal-600" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Correct</span>
+            <span className="font-black text-xl text-slate-800">{totalCorrect} Qs</span>
+          </div>
+          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-orange-400/10 pointer-events-none" />
+            <Target className="w-5 h-5 mb-2 text-orange-600" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Accuracy</span>
+            <span className="font-black text-xl text-slate-800">{totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0}%</span>
+          </div>
         </div>
       </div>
 

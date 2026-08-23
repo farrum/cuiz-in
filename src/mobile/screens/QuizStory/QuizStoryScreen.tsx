@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled } from '@/mobile/ads/admob';
+import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled, refreshAdMobBanner } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -21,9 +21,7 @@ import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Capacitor } from '@capacitor/core';
-/* TopBannerAd intentionally NOT imported here — the persistent banner is already
-   managed by BannerHost in AppMobile. Mounting it again caused a double-banner
-   on native and a flash on every question transition. */
+import { TopBannerAd } from '../../ads/TopBannerAd';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -96,6 +94,11 @@ export default function QuizStoryScreen() {
     // otherwise rapid taps or a preference change double-advance the flow.
     clearTimers();
     setLoadError(false);
+    
+    // Refresh the native banner ad automatically when quiz question changes
+    if (Capacitor.isNativePlatform()) {
+      refreshAdMobBanner().catch(() => {});
+    }
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);
@@ -238,14 +241,14 @@ export default function QuizStoryScreen() {
         setTimeout(() => setShakeOpt(null), 500);
       }
 
-      // After the 10s reveal, advance — but every 2 answered questions we show
+      // After the 10s reveal, advance — but every 3 answered questions we show
       // a full-screen ad break first (the interstitial itself advances on close).
       answerCount.current += 1;
       const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3 && isMobileAdsEnabled;
       if (!isRevivePossible) {
         const now = Date.now();
         const adDue =
-          answerCount.current % 2 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
+          answerCount.current % 3 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
 
         advanceTimer.current = window.setTimeout(() => {
           if (!mountedRef.current) return;
@@ -776,6 +779,7 @@ export default function QuizStoryScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+      <TopBannerAd />
     </div>
   );
 }
