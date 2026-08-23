@@ -221,7 +221,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
       }
     });
 
-    const failedListener = await (AdMob as any).addListener('interstitialAdFailedToShow', (info) => {
+    const failedListener = await (AdMob as any).addListener('interstitialAdFailedToShow', (info: any) => {
       console.warn('[AdMob] Interstitial failed to show:', info);
       if (!completed) {
         completed = true;
@@ -274,7 +274,7 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
     let completed = false;
     let rewardGranted = false;
 
-    const rewardListener = await (AdMob as any).addListener('onAdRewarded', (info) => {
+    const rewardListener = await (AdMob as any).addListener('onAdRewarded', (info: any) => {
       console.info('[AdMob] User earned reward:', info);
       rewardGranted = true;
     });
@@ -290,7 +290,7 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
       }
     });
 
-    const failedListener = await (AdMob as any).addListener('rewardedAdFailedToShow', (info) => {
+    const failedListener = await (AdMob as any).addListener('rewardedAdFailedToShow', (info: any) => {
       console.warn('[AdMob] Rewarded ad failed to show:', info);
       if (!completed) {
         completed = true;
