@@ -477,7 +477,7 @@ export default function QuizStoryScreen() {
                 />
               )}
 
-              <h2 className="text-[18px] font-black leading-snug mb-5 tracking-tight text-white">{question.question}</h2>
+              <h2 className="text-[18px] font-black leading-snug mb-5 tracking-tight text-slate-900">{question.question}</h2>
 
               <div className="space-y-2.5">
                 {(question.options || []).map((opt, i) => {
