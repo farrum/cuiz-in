@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
+import { storePendingReferral, claimPendingReferral } from '@/utils/pendingReferral';
 
 import { Loader, Check, X } from 'lucide-react';
 
