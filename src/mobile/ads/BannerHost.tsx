@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
 
 /**
- * Determines if a route should show the LevelPlay banner ad.
+ * Determines if a route should show the native AdMob banner.
  * Activated on:
  * - Homepage ('/hub', '/')
  * - Quiz pages ('/quiz', '/daily')
@@ -53,7 +53,7 @@ const TAB_BAR_MARGIN = 76; // 68px tab bar + 8px safe margin
 const SAFE_BOTTOM_MARGIN = 8;
 
 /**
- * Owns the LevelPlay banner surface for the entire app session.
+ * Owns the AdMob banner surface for the entire app session.
  * Monitors router path changes and manages banner visibility and margins cleanly.
  */
 export function BannerHost() {

@@ -21,6 +21,7 @@ let interstitialReady = false;
 let rewardedReady = false;
 let bannerState: 'hidden' | 'loading' | 'shown' = 'hidden';
 let requestedBannerMargin = 0;
+let activeBannerMargin = -1;
 let fullScreenDepth = 0;
 
 function setBannerHeight(height: number) {
@@ -58,8 +59,11 @@ export async function initAdMob(): Promise<boolean> {
 export async function showAdMobBanner(margin = 0): Promise<boolean> {
   requestedBannerMargin = margin;
   if (!isMobileAdsEnabled || fullScreenDepth > 0) return false;
-  if (bannerState === 'shown' || bannerState === 'loading') return bannerState === 'shown';
+  if (bannerState === 'shown' && activeBannerMargin === margin) return true;
+  if (bannerState === 'loading') return false;
   if (!(await initAdMob())) return false;
+
+  if (bannerState === 'shown') await hideAdMobBanner();
 
   bannerState = 'loading';
   setBannerHeight(0);
@@ -75,6 +79,7 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
       window.clearTimeout(timer);
       await removeHandles([loadedHandle, failedHandle, sizeHandle]);
       bannerState = shown ? 'shown' : 'hidden';
+      activeBannerMargin = shown ? margin : -1;
       setBannerHeight(shown ? height : 0);
       if (!shown) await AdMob.removeBanner().catch(() => undefined);
       resolve(shown);
@@ -105,6 +110,7 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
 
 export async function hideAdMobBanner(): Promise<void> {
   bannerState = 'hidden';
+  activeBannerMargin = -1;
   setBannerHeight(0);
   if (!isMobileAdsEnabled) return;
   await AdMob.removeBanner().catch((error) => console.warn('[AdMob] banner cleanup failed:', error));
@@ -113,12 +119,12 @@ export async function hideAdMobBanner(): Promise<void> {
 async function enterFullScreenAd() {
   fullScreenDepth += 1;
   if (bannerState !== 'hidden') await hideAdMobBanner();
-  window.dispatchEvent(new CustomEvent('cuizin_ad_open'));
+  window.dispatchEvent(new CustomEvent('cuizin_pause_bgm'));
 }
 
 async function leaveFullScreenAd() {
   fullScreenDepth = Math.max(0, fullScreenDepth - 1);
-  window.dispatchEvent(new CustomEvent('cuizin_ad_close'));
+  window.dispatchEvent(new CustomEvent('cuizin_resume_bgm'));
   if (fullScreenDepth === 0) await showAdMobBanner(requestedBannerMargin);
 }
 

@@ -5,9 +5,8 @@ import { showAdWithFallback } from '@/mobile/ads/admob';
 /**
  * Full-screen video ad for mini-game rewards.
  *
- * Native builds: Google AdMob (rewarded → rewarded-interstitial), falling back
- * to Unity LevelPlay via `showAdWithFallback`. Both SDKs render their own
- * full-screen surface with their own skip timer — we never draw an overlay.
+ * Native builds: Google AdMob renders its own full-screen rewarded surface
+ * with its own skip timer — we never draw an overlay.
  *
  * Web/preview builds: no third-party video ad is shown at all (the old VAST
  * overlay has been removed); the reward callback fires immediately.
