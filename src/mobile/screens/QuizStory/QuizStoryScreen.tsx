@@ -5,6 +5,7 @@ import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } fro
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
 import { showLevelPlayRewarded, showLevelPlayInterstitial, isLevelPlayEnabled } from '@/mobile/ads/levelplay';
+import { isMobileAdsEnabled } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';

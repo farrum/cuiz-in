@@ -44,16 +44,16 @@ export async function getDailyTributeStatus(userId?: string | null): Promise<Dai
 
   if (userId && userId !== 'guest') {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_task_progress')
-        .select('current_count, last_updated')
+        .select('progress, updated_at')
         .eq('user_id', userId)
         .eq('task_id', 'daily_tribute_login')
         .maybeSingle();
 
       if (!error && data) {
-        lastDate = data.last_updated ? data.last_updated.split('T')[0] : lastDate;
-        savedStreak = data.current_count || savedStreak;
+        lastDate = data.updated_at ? String(data.updated_at).split('T')[0] : lastDate;
+        savedStreak = data.progress || savedStreak;
         
         if (lastDate) localStorage.setItem(LAST_TRIBUTE_DATE_KEY, lastDate);
         localStorage.setItem(TRIBUTE_STREAK_KEY, String(savedStreak));
@@ -134,7 +134,7 @@ export async function claimDailyTribute(userId?: string | null): Promise<{ succe
     }
     
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('user_task_progress')
         .select('task_id')
         .eq('user_id', userId)
@@ -142,18 +142,16 @@ export async function claimDailyTribute(userId?: string | null): Promise<{ succe
         .maybeSingle();
         
       if (data) {
-        await supabase.from('user_task_progress').update({
-          current_count: nextStreak,
-          last_updated: new Date().toISOString()
+        await (supabase as any).from('user_task_progress').update({
+          progress: nextStreak,
+          updated_at: new Date().toISOString()
         }).eq('user_id', userId).eq('task_id', 'daily_tribute_login');
       } else {
-        await supabase.from('user_task_progress').insert({
+        await (supabase as any).from('user_task_progress').insert({
           user_id: userId,
           task_id: 'daily_tribute_login',
-          current_count: nextStreak,
-          target_count: 7,
-          status: 'in_progress',
-          last_updated: new Date().toISOString()
+          progress: nextStreak,
+          updated_at: new Date().toISOString()
         });
       }
     } catch (e) {

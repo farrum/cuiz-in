@@ -26,7 +26,6 @@ export async function initAdMob(): Promise<boolean> {
   initPromise = (async () => {
     try {
       await AdMob.initialize({
-        requestTrackingAuthorization: true,
         initializeForTesting: false,
       });
       isInitialized = true;

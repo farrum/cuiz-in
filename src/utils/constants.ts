@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   ADMIN_USERNAME: 'quiz_app_admin_username',
   REFERRALS: 'quiz_app_referrals',
   USER_AUTH: 'quiz_app_user_auth',
+  STREAK_COUNT: 'quiz_app_streak_count',
 };
 
 export const DAILY_TARGET = 400;
