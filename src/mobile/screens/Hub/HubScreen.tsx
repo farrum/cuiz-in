@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
-import { showLevelPlayRewarded, isLevelPlayEnabled } from '@/mobile/ads/levelplay';
+import { showAdMobRewarded, isMobileAdsEnabled } from '@/mobile/ads/admob';
 import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
 import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
@@ -364,7 +364,7 @@ export default function HubScreen() {
   };
 
   const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
-    if (Capacitor.isNativePlatform() && gemsReward > 0 && isLevelPlayEnabled) {
+    if (Capacitor.isNativePlatform() && gemsReward > 0 && isMobileAdsEnabled) {
       setBountyClaimPending({ taskId, gemsReward, starsReward, shardsReward, shardType });
     } else {
       await executeClaimTask(taskId, gemsReward, starsReward, shardsReward, shardType);
@@ -1001,7 +1001,7 @@ export default function HubScreen() {
                       haptics('medium');
                       setBountyAdShowing(true);
                       try {
-                        const res = await showLevelPlayRewarded();
+                        const res = await showAdMobRewarded();
                         if (res.rewarded) {
                           await executeClaimTask(
                             bountyClaimPending.taskId,

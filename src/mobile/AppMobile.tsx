@@ -12,7 +12,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { initMobilePlatform } from './platform/init';
+import { hideNativeSplashAfterFirstPaint, initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 import { BannerHost } from './ads/BannerHost';
 
@@ -81,6 +81,10 @@ function AppMobile() {
 
   useEffect(() => {
     initMobilePlatform();
+
+    // The native splash is manual: release it only after this mounted tree has
+    // produced a stable frame, never while Android is still showing the raw WebView.
+    hideNativeSplashAfterFirstPaint();
 
     (async () => {
       try {

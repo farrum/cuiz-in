@@ -4,8 +4,6 @@ import { getAdPool, type AdCreative } from "./adProvider";
 import { getAdSlotsByPosition } from "@/utils/adService";
 import SimpleAdBanner from "@/components/ads/SimpleAdBanner";
 import { Capacitor } from "@capacitor/core";
-import { NativeBannerAd } from "./NativeBannerAd";
-import { isAdMobBannerShown } from "./admob";
 
 // Rotate house creatives slowly — fast swaps read as the screen "blinking".
 const REFRESH_MS = 30000;
@@ -44,7 +42,7 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
 
   if (Capacitor.isNativePlatform()) {
     // On native builds, the banner is persistent. Always render the spacer immediately on mount.
-    return <div className="shrink-0" style={{ height: 'var(--banner-h, 50px)' }} />;
+    return <div aria-hidden className="shrink-0" style={{ height: 'var(--banner-h, 0px)' }} />;
   }
 
   if (hasDbAd) {

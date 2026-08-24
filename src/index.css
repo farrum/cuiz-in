@@ -883,3 +883,40 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
 @media (prefers-reduced-motion: reduce) {
   .gem-launch, .answer-shake, .answer-correct-pulse { animation: none !important; }
 }
+
+/* Android WebView stability mode. Native ads add/remove separate platform
+   surfaces, so keep the WebView itself opaque and avoid expensive continuous
+   compositing that can flash or drop layers on mid-range devices. */
+html.native-app,
+html.native-app body,
+html.native-app #root {
+  min-height: 100%;
+  background: hsl(30 23% 4%);
+}
+
+html.native-app .mobile-screen-skeleton {
+  background: hsl(38 65% 94%);
+}
+
+html.native-app .backdrop-blur-sm,
+html.native-app .backdrop-blur,
+html.native-app .backdrop-blur-md,
+html.native-app .backdrop-blur-lg,
+html.native-app .backdrop-blur-xl,
+html.native-app .backdrop-blur-2xl,
+html.native-app .backdrop-blur-3xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.native-app .ember,
+html.native-app .flame-base,
+html.native-app .flame-inner,
+html.native-app .flame-glow,
+html.native-app .aurora-dot,
+html.native-app .animate-pulse,
+html.native-app .animate-bounce,
+html.native-app .animate-spin {
+  animation: none !important;
+  will-change: auto !important;
+}
