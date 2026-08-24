@@ -1600,6 +1600,7 @@ export type Database = {
         Returns: Json
       }
       check_admin_access: { Args: never; Returns: boolean }
+      claim_referral: { Args: { p_ref_code: string }; Returns: Json }
       create_alliance: {
         Args: {
           p_crest_emoji: string
