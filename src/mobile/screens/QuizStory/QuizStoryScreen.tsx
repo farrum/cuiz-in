@@ -587,6 +587,13 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
+      {/* Fixed bottom spacer reserved for the native AdMob/LevelPlay banner so
+          the session footer is never overlapped by the SDK banner surface. The
+          banner itself is owned by <BannerHost/> (mounted once in AppMobile) and
+          drawn outside the WebView; this spacer just keeps content clear of it.
+          --banner-h is 50px when a banner is shown and 0px otherwise. */}
+      <div aria-hidden className="relative z-10 shrink-0" style={{ height: 'var(--banner-h, 0px)' }} />
+
       <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={10} seed={adSeed} />
 
       {/* Preferences sheet */}
