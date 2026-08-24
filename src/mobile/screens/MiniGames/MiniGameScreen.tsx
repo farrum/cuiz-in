@@ -7,7 +7,7 @@ import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { TopBannerAd } from '../../ads/TopBannerAd';
-import { showAdMobInterstitial } from '@/mobile/ads/admob';
+import { showLevelPlayInterstitial } from '@/mobile/ads/levelplay';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -361,9 +361,9 @@ export default function MiniGameScreen() {
             haptics('light');
             if (Capacitor.isNativePlatform()) {
               try {
-                await showAdMobInterstitial();
+                await showLevelPlayInterstitial();
               } catch (e) {
-                console.warn('AdMob Interstitial failed on exit', e);
+                console.warn('LevelPlay Interstitial failed on exit', e);
               }
             }
             navigate('/hub');

@@ -191,29 +191,17 @@ class GameAudioManager {
     }
   }
 
-  // Starts background music loop
+  // Starts/resumes background music loop via central music player
   public startBGM() {
-    if (!this.bgmEnabled) return;
-
-    if (this.bgmAudio) {
-      this.bgmAudio.play().catch(e => console.log("BGM play deferred until user interaction"));
-      return;
-    }
-
-    try {
-      this.bgmAudio = new Audio(this.activeBgmUrl);
-      this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.15; // Soft ambiance
-      this.bgmAudio.play().catch(e => console.log("BGM play deferred until user interaction"));
-    } catch (e) {
-      console.warn("BGM initialization failed:", e);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cuizin_resume_bgm'));
     }
   }
 
-  // Pauses background music
+  // Pauses background music via central music player
   public pauseBGM() {
-    if (this.bgmAudio) {
-      this.bgmAudio.pause();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cuizin_pause_bgm'));
     }
   }
 

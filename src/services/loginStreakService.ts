@@ -26,17 +26,17 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     return null;
   }
   
-  // Check if bonus has already been shown in this session
-  const bonusShownToday = localStorage.getItem(BONUS_SHOWN_SESSION_KEY);
-  if (bonusShownToday === 'true') {
-    console.log('Login bonus already shown in this session');
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  // Check if bonus has already been shown/claimed today
+  const lastBonusDate = localStorage.getItem('cuizin_last_login_bonus_date');
+  if (lastBonusDate === todayStr) {
+    console.log('Login bonus already claimed today:', todayStr);
     return null;
   }
   
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
     
     console.log('Checking login streak for user:', userId, 'today:', todayStr);
     
@@ -253,7 +253,8 @@ export const checkAndUpdateLoginStreak = async (userId: string): Promise<number 
     // Award the bonus gems
     await awardBonusGems(userId, bonusGems);
     
-    // Mark as shown in this session
+    // Mark as claimed for today
+    localStorage.setItem('cuizin_last_login_bonus_date', todayStr);
     localStorage.setItem(BONUS_SHOWN_SESSION_KEY, 'true');
     
     return bonusGems;

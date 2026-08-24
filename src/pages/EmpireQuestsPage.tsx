@@ -465,8 +465,8 @@ export default function EmpireQuestsPage() {
       setStageStarData(parsedStageStars);
 
       // Read local fallback currency first
-      const localGems = Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '100');
-      const localStars = Number(localStorage.getItem(STORAGE_KEYS.USER_STARS) || '50');
+      const localGems = Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
+      const localStars = Number(localStorage.getItem('quiz_app_user_stars') || localStorage.getItem(STORAGE_KEYS.USER_STARS) || '50');
       setUserGems(localGems);
       setUserStars(localStars);
 
@@ -536,6 +536,7 @@ export default function EmpireQuestsPage() {
           const remoteGems = profile.points ?? localGems;
           setUserStars(remoteStars);
           setUserGems(remoteGems);
+          localStorage.setItem('quiz_app_user_stars', remoteStars.toString());
           localStorage.setItem(STORAGE_KEYS.USER_STARS, remoteStars.toString());
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, remoteGems.toString());
         }
@@ -1080,18 +1081,10 @@ export default function EmpireQuestsPage() {
               {/* Currency Stat Badges */}
               <div className="flex gap-2.5 items-center">
                 <div className="bg-slate-900 border border-amber-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <div>
-                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Total Stars</span>
-                    <span className="text-xs font-black text-amber-400">{totalEarnedStars} ★</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-900 border border-yellow-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
-                  <Coins className="w-4 h-4 text-yellow-400" />
-                  <div>
-                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Tickets</span>
-                    <span className="text-xs font-black text-yellow-400">{userStars}</span>
+                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Stars</span>
+                    <span className="text-xs font-black text-amber-400">{userStars} ⭐</span>
                   </div>
                 </div>
 
@@ -1099,7 +1092,15 @@ export default function EmpireQuestsPage() {
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                   <div>
                     <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Gems</span>
-                    <span className="text-xs font-black text-cyan-300">{userGems}</span>
+                    <span className="text-xs font-black text-cyan-300">{userGems} 💎</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-purple-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                  <Trophy className="w-4 h-4 text-purple-400" />
+                  <div>
+                    <span className="text-[8px] font-extrabold text-slate-400 block uppercase leading-none">Conquest Stars</span>
+                    <span className="text-xs font-black text-purple-300">{totalEarnedStars} / 54 ★</span>
                   </div>
                 </div>
               </div>

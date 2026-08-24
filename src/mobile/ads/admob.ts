@@ -1,98 +1,211 @@
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
-import {
-  AdMob,
-  BannerAdPosition,
-  BannerAdSize,
-  BannerAdPluginEvents,
-  type BannerAdOptions,
-} from '@capacitor-community/admob';
+import { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 import { audioManager } from '@/utils/audioManager';
-import {
-  showLevelPlayInterstitial,
-  showLevelPlayRewarded,
-  showLevelPlayRewardedInterstitial,
-  preloadLevelPlayInterstitial,
-  preloadLevelPlayRewarded,
-  showLevelPlayBanner,
-  hideLevelPlayBanner,
-  isLevelPlayBannerShown,
-  initLevelPlay
-} from './levelplay';
 
-export {
-  showLevelPlayInterstitial,
-  showLevelPlayRewarded,
-  showLevelPlayRewardedInterstitial,
-  preloadLevelPlayInterstitial,
-  preloadLevelPlayRewarded,
-  showLevelPlayBanner,
-  hideLevelPlayBanner,
-  isLevelPlayBannerShown,
-  initLevelPlay
+const ADMOB_CONFIG = {
+  androidBannerId: 'ca-app-pub-2831295465597549/6948956225',
+  androidInterstitialId: 'ca-app-pub-2831295465597549/8851079305',
+  androidRewardedId: 'ca-app-pub-2831295465597549/7154854253',
+  androidRewardedInterstitialId: 'ca-app-pub-2831295465597549/7694056096',
 };
 
 export const isMobileAdsEnabled = true;
 
-// ─── Banner (LevelPlay) ───────────────────────────────────────────────────────
+let isInitialized = false;
+let bannerShown = false;
+let initPromise: Promise<boolean> | null = null;
+
+// Ensure we initialize AdMob natively
+export async function initAdMob(): Promise<boolean> {
+  if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) return true;
+
+  if (isInitialized) return true;
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      await AdMob.initialize({
+        requestTrackingAuthorization: true,
+        initializeForTesting: false,
+      });
+      isInitialized = true;
+      console.log('AdMob Initialized natively via Capacitor');
+
+      // Add listener to resume music when ads close
+      AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
+        console.log('Banner Loaded');
+      });
+
+      return true;
+    } catch (e) {
+      console.error('AdMob Init Error:', e);
+      return false;
+    }
+  })();
+
+  return initPromise;
+}
+
+// ─── Banner Ad Handlers ───────────────────────────────────────────────────────
+
 export async function showAdMobBanner(customMargin?: number, onFailed?: () => void): Promise<boolean> {
-  return showLevelPlayBanner(customMargin, onFailed);
+  if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) {
+    bannerShown = true;
+    return true; // Mock for web
+  }
+
+  await initAdMob();
+
+  if (bannerShown) return true; // Don't show again if already shown
+
+  try {
+    const options = {
+      adId: ADMOB_CONFIG.androidBannerId,
+      adSize: BannerAdSize.BANNER,
+      position: BannerAdPosition.BOTTOM_CENTER,
+      margin: 0,
+      isTesting: false
+    };
+
+    await AdMob.showBanner(options);
+    bannerShown = true;
+    return true;
+  } catch (err) {
+    console.warn('AdMob showBanner error:', err);
+    if (onFailed) onFailed();
+    return false;
+  }
 }
 
 export async function hideAdMobBanner(keepLayoutSpacer = false): Promise<void> {
-  return hideLevelPlayBanner();
+  if (!isMobileAdsEnabled || !bannerShown) return;
+  bannerShown = false;
+
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    await AdMob.hideBanner();
+  } catch (err) {
+    console.warn('AdMob hideBanner error:', err);
+  }
 }
 
 export function isAdMobBannerShown(): boolean {
-  return isLevelPlayBannerShown();
+  return bannerShown;
 }
 
-// ─── Interstitial (LevelPlay) ────────────────────────────────────────────────
+// ─── Full-Screen Ad Handlers ──────────────────────────────────────────────────
+
 export async function preloadAdMobInterstitial(): Promise<void> {
-  return preloadLevelPlayInterstitial();
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  await initAdMob();
+
+  try {
+    await AdMob.prepareInterstitial({
+      adId: ADMOB_CONFIG.androidInterstitialId,
+      isTesting: false,
+    });
+  } catch (e) {
+    console.warn('AdMob prepareInterstitial error:', e);
+  }
 }
 
-/** Shows an interstitial ad via LevelPlay. */
 export async function showAdMobInterstitial(): Promise<boolean> {
-  return showLevelPlayInterstitial();
+  if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) return true;
+
+  await initAdMob();
+  audioManager.pauseBGM();
+
+  return new Promise(async (resolve) => {
+    try {
+      await AdMob.showInterstitial();
+      resolve(true);
+    } catch (e) {
+      console.warn('AdMob showInterstitial error:', e);
+      resolve(false);
+    } finally {
+      audioManager.startBGM();
+    }
+  });
 }
 
-// ─── Rewarded (LevelPlay) ────────────────────────────────────────────────────
 export async function preloadAdMobRewarded(): Promise<void> {
-  return preloadLevelPlayRewarded();
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  await initAdMob();
+
+  try {
+    await AdMob.prepareRewardVideoAd({
+      adId: ADMOB_CONFIG.androidRewardedId,
+      isTesting: false,
+    });
+  } catch (e) {
+    console.warn('AdMob prepareRewardVideoAd error:', e);
+  }
 }
 
-/** Shows a rewarded video ad via LevelPlay. */
 export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: boolean }> {
-  return showLevelPlayRewarded();
+  if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
+  if (!Capacitor.isNativePlatform()) return { shown: true, rewarded: true };
+
+  await initAdMob();
+  audioManager.pauseBGM();
+
+  return new Promise(async (resolve) => {
+    let rewarded = false;
+
+    try {
+      const rewardItem = await AdMob.showRewardVideoAd();
+      if (rewardItem && rewardItem.amount > 0) {
+        rewarded = true;
+      }
+      resolve({ shown: true, rewarded });
+    } catch (e) {
+      console.warn('AdMob showRewardVideoAd error:', e);
+      resolve({ shown: false, rewarded: false });
+    } finally {
+      audioManager.startBGM();
+    }
+  });
 }
 
-// ─── Rewarded Interstitial (LevelPlay) ────────────────────────────────────────
 export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
-  return showLevelPlayRewardedInterstitial();
+  if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
+  if (!Capacitor.isNativePlatform()) return { shown: true, rewarded: true };
+
+  await initAdMob();
+  audioManager.pauseBGM();
+
+  return new Promise(async (resolve) => {
+    let rewarded = false;
+
+    try {
+      await AdMob.prepareRewardVideoAd({
+        adId: ADMOB_CONFIG.androidRewardedInterstitialId,
+        isTesting: false,
+      });
+      const rewardItem = await AdMob.showRewardVideoAd();
+      if (rewardItem && rewardItem.amount > 0) {
+        rewarded = true;
+      }
+      resolve({ shown: true, rewarded });
+    } catch (e) {
+      console.warn('AdMob showRewardVideoAd error:', e);
+      resolve({ shown: false, rewarded: false });
+    } finally {
+      audioManager.startBGM();
+    }
+  });
 }
 
-/**
- * Unified ad entry point for legacy native video/fullscreen slot callers.
- */
 export async function showAdWithFallback(
   prefer: 'interstitial' | 'rewarded' = 'interstitial',
 ): Promise<boolean> {
-  if (!isMobileAdsEnabled) return false;
-  if (!Capacitor.isNativePlatform()) return false;
-
   if (prefer === 'rewarded') {
-    const admobR = await withTimeout(
-      showAdMobRewarded(),
-      10000,
-      { shown: false, rewarded: false }
-    );
-    return admobR.shown;
+    const res = await showAdMobRewarded();
+    return res.shown;
   }
-
-  const admobI = await withTimeout(
-    showAdMobInterstitial(),
-    10000,
-    false
-  );
-  return admobI;
+  return showAdMobInterstitial();
 }

@@ -106,7 +106,8 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
             const prof = profilesMap.get(ref.referred_id);
             const status = (ref.status || 'inactive') as 'active' | 'inactive' | 'suspended';
             const joinDate = ref.date || new Date().toISOString();
-            const lastActive = ref.last_active_date || prof?.created_at || '-';
+            const rawDate = ref.last_active_date || prof?.created_at;
+            const lastActive = rawDate ? new Date(rawDate).toLocaleDateString() + ' ' + new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
 
             return {
               id: ref.referred_id,

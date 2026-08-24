@@ -21,16 +21,25 @@ export function initMobilePlatform() {
         await SplashScreen.hide();
       } catch {}
 
-      // LevelPlay: initialize and warm up interstitial + rewarded in background
+      // AdMob: initialize and warm up interstitial + rewarded in background
       try {
-        const { initLevelPlay, preloadLevelPlayInterstitial, preloadLevelPlayRewarded } =
-          await import('@/mobile/ads/levelplay');
-        if (await initLevelPlay()) {
-          preloadLevelPlayInterstitial();
-          preloadLevelPlayRewarded();
+        const { initAdMob, preloadAdMobInterstitial, preloadAdMobRewarded } =
+          await import('@/mobile/ads/admob');
+        if (await initAdMob()) {
+          preloadAdMobInterstitial();
+          preloadAdMobRewarded();
         }
-      } catch (e) { console.warn('[LevelPlay] init skipped', e); }
+      } catch (e) { console.warn('[AdMob] init skipped', e); }
 
+
+      // App State Change: pause audio when app goes to background
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) {
+          window.dispatchEvent(new CustomEvent('cuizin_app_background'));
+        } else {
+          window.dispatchEvent(new CustomEvent('cuizin_app_foreground'));
+        }
+      });
 
       // Back-button handler: never close the app from inside a story flow.
       // Uses SPA history (pushState + popstate) instead of location.assign so

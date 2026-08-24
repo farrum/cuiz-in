@@ -141,7 +141,8 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           const prof = profilesMap.get(referredId);
           const referrerProf = profilesMap.get(referrerId);
 
-          const lastActiveStr = ref.last_active_date || prof?.created_at || '-';
+          const rawDate = ref.last_active_date || prof?.created_at;
+          const lastActiveStr = rawDate ? new Date(rawDate).toLocaleDateString() + ' ' + new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
           const isOnline = ref.status === 'active' &&
             ref.last_active_date &&
             new Date(ref.last_active_date).getTime() > Date.now() - 30 * 60 * 1000;

@@ -87,19 +87,18 @@ export function StarCounter({ value }: { value: number }) {
       whileTap={{ scale: 0.95 }}
       animate={pop ? { scale: [1, 1.18, 1] } : { scale: 1 }}
       transition={{ duration: 0.38, type: 'spring', stiffness: 420, damping: 18 }}
-      className="relative flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-gradient-to-r from-yellow-500/20 via-amber-400/20 to-yellow-500/20 border overflow-visible"
+      className="relative flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 border border-amber-300/90 shadow-sm overflow-visible"
       style={{
-        borderColor: glow ? 'rgba(255,210,30,0.8)' : 'rgba(234,179,8,0.4)',
         boxShadow: glow
-          ? '0 0 0 3px rgba(255,210,30,0.35), 0 0 14px rgba(255,185,0,0.5)'
-          : 'none',
+          ? '0 0 0 3px rgba(255,210,30,0.45), 0 0 14px rgba(255,185,0,0.6)'
+          : '0 2px 4px rgba(217,119,6,0.2), inset 0 1px 0 rgba(255,255,255,0.6)',
         transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
       }}
     >
       {/* Shimmer sweep */}
       <motion.span
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-full"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent rounded-full"
         animate={{ x: ['-100%', '200%'] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: 'linear' }}
         style={{ mixBlendMode: 'overlay' }}
@@ -107,7 +106,7 @@ export function StarCounter({ value }: { value: number }) {
 
       {/* Star icon + particle origin */}
       <span className="relative z-10 flex items-center">
-        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400/40 relative z-10" />
+        <Star className="w-3.5 h-3.5 text-amber-950 fill-amber-950 drop-shadow-sm relative z-10" />
         <AnimatePresence>
           {burst && particles.map((p) => (
             <StarParticle key={p.id} {...p} />
@@ -115,7 +114,7 @@ export function StarCounter({ value }: { value: number }) {
         </AnimatePresence>
       </span>
 
-      <span className="font-bold text-xs text-yellow-100 relative z-10 tabular-nums">
+      <span className="font-black text-xs text-amber-950 relative z-10 tabular-nums tracking-tight">
         {display}
       </span>
     </motion.div>

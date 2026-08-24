@@ -671,7 +671,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                     )}>
                       {String.fromCharCode(65 + index)}
                     </span>
-                    <span className="font-medium">{option}</span>
+                    <span className="font-medium text-foreground dark:text-white">{option}</span>
                   </div>
 
                   {isAnswered && option === question.correctAnswer && (
@@ -691,8 +691,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-black tracking-wider mb-3">
                 <Landmark className="w-3.5 h-3.5 text-yellow-500" />
                 <span>Council Lifelines</span>
-                <span className="ml-auto text-yellow-500 font-bold flex items-center gap-1 text-[9px]">
-                  <Star className="w-3 h-3 fill-yellow-500/10 text-yellow-550" /> {userStars} stars
+                <span className="ml-auto text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 text-[9px]">
+                  <Star className="w-3 h-3 fill-amber-500/20 text-amber-600 dark:text-amber-400" /> {userStars} stars
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { storePendingReferral, claimPendingReferral } from '@/utils/pendingReferral';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const AuthCallback: React.FC = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const next = params.get('next') || '/quiz';
+    const next = params.get('next') || '/';
     storePendingReferral(params.get('ref'));
 
     let cancelled = false;
@@ -23,6 +24,18 @@ const AuthCallback: React.FC = () => {
         if (data?.session?.user) {
           // Link the new account to the commander whose invite link was used.
           await claimPendingReferral();
+          
+          // Clear guest statistics so they don't persist into the account
+          try {
+            localStorage.removeItem(STORAGE_KEYS.COMPLETED_QUESTIONS);
+            localStorage.removeItem(STORAGE_KEYS.STREAK_COUNT);
+            localStorage.removeItem('quiz_app_user_stars');
+            localStorage.removeItem('quiz_app_user_gems');
+            localStorage.removeItem('cuizin_quest_progress');
+          } catch (e) {
+            console.error('Failed to clear guest local storage data:', e);
+          }
+
           navigate(next, { replace: true });
           return;
         }

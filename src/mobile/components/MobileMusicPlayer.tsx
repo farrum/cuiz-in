@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { useLocation } from 'react-router-dom';
 import { Music, Volume2, VolumeX, Play, Pause, Plus, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -72,7 +74,7 @@ export const MobileMusicProvider: React.FC<{ children: React.ReactNode }> = ({ c
     localStorage.setItem('cuizin_music_custom_tracks', JSON.stringify(customTracks));
   }, [customTracks]);
 
-  // Audio lifecycle management
+  // Audio lifecycle & background pause management
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -88,19 +90,61 @@ export const MobileMusicProvider: React.FC<{ children: React.ReactNode }> = ({ c
       audio.load();
     }
 
-    if (isEnabled) {
+    if (isEnabled && !document.hidden) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          console.warn('[MusicPlayer] Autoplay blocked, waiting for user gesture:', err);
-          setIsEnabled(false);
+          console.warn('[MusicPlayer] Play blocked, waiting for gesture:', err);
         });
       }
     } else {
       audio.pause();
     }
 
+    const handlePauseBgm = () => {
+      audio.pause();
+    };
+
+    const handleResumeBgm = () => {
+      if (isEnabled && !document.hidden) {
+        audio.play().catch(() => {});
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        audio.pause();
+      } else if (isEnabled) {
+        audio.play().catch(() => {});
+      }
+    };
+
+    let appStateListener: any = null;
+    if (Capacitor.isNativePlatform()) {
+      appStateListener = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) {
+          audio.pause();
+        } else if (isEnabled) {
+          audio.play().catch(() => {});
+        }
+      });
+    }
+
+    window.addEventListener('cuizin_pause_bgm', handlePauseBgm);
+    window.addEventListener('cuizin_resume_bgm', handleResumeBgm);
+    window.addEventListener('cuizin_app_background', handlePauseBgm);
+    window.addEventListener('cuizin_app_foreground', handleResumeBgm);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      window.removeEventListener('cuizin_pause_bgm', handlePauseBgm);
+      window.removeEventListener('cuizin_resume_bgm', handleResumeBgm);
+      window.removeEventListener('cuizin_app_background', handlePauseBgm);
+      window.removeEventListener('cuizin_app_foreground', handleResumeBgm);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (appStateListener) {
+        appStateListener.then((listener: any) => listener.remove()).catch(() => {});
+      }
       audio.pause();
     };
   }, [isEnabled, activeTrackIndex, customTracks]);

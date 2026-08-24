@@ -112,22 +112,27 @@ export function MascotReveal({ show, mood, message, emoji, headline, headlineCla
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12 }}
           transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-          className="rounded-2xl panel-3d bg-white p-4 shadow-xl flex items-start gap-3 border-2 border-amber-500/40"
+          className="rounded-2xl bg-white dark:bg-slate-900 p-4 shadow-xl flex items-start gap-3.5 border-2 border-amber-500/60"
+          style={{
+            boxShadow: '0 6px 0 rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,158,11,0.2)',
+          }}
         >
-          <div className="shrink-0 rounded-xl overflow-hidden bg-amber-100/60 p-1 border border-amber-300/60">
+          <div className="shrink-0 rounded-xl overflow-hidden bg-amber-100/80 dark:bg-amber-950/80 p-1 border border-amber-300/80 dark:border-amber-600/50 shadow-sm">
             <MascotPlayer character={pinned} mood={mood} size={size} />
           </div>
           <div className="flex-1 min-w-0">
             {headline && (
-              <p className={cn('font-black text-base mb-1 text-emerald-700', headlineClass)}>{headline}</p>
+              <p className={cn('font-black text-base mb-1 text-emerald-600 dark:text-emerald-400 drop-shadow-sm', headlineClass)}>{headline}</p>
             )}
             {displayMessage && (
-              <p className="text-sm font-bold leading-snug text-slate-800">
+              <p className="text-sm font-black leading-snug text-slate-900 dark:text-white">
                 {displayEmoji && <span className="mr-1">{displayEmoji}</span>}{displayMessage}
               </p>
             )}
             {explanation && (
-              <p className="text-xs font-semibold text-slate-600 mt-2 leading-relaxed">{explanation}</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-2 leading-relaxed bg-amber-50/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-amber-200/50 dark:border-slate-700/60">
+                {explanation}
+              </p>
             )}
           </div>
         </motion.div>

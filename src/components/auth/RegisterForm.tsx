@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { notifyNewRegistration } from '@/utils/notificationUtils';
+import { STORAGE_KEYS } from '@/utils/quizData';
 
 const RegisterForm = () => {
   const [email, setEmail] = useState('');
@@ -81,6 +82,17 @@ const RegisterForm = () => {
         // Create notification about new registration
         await notifyNewRegistration(username, data.user.id);
         
+        // Clear guest statistics so they don't persist into the newly registered account
+        try {
+          localStorage.removeItem(STORAGE_KEYS.COMPLETED_QUESTIONS);
+          localStorage.removeItem(STORAGE_KEYS.STREAK_COUNT);
+          localStorage.removeItem('quiz_app_user_stars');
+          localStorage.removeItem('quiz_app_user_gems');
+          localStorage.removeItem('cuizin_quest_progress');
+        } catch (e) {
+          console.error('Failed to clear guest local storage data:', e);
+        }
+
         toast({
           title: "Registration successful",
           description: "Your account has been created. You can now log in."

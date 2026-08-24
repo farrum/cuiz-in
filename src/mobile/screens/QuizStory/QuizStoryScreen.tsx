@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { showAdMobRewarded, showAdMobInterstitial, isMobileAdsEnabled } from '@/mobile/ads/admob';
+import { showLevelPlayRewarded, showLevelPlayInterstitial, isLevelPlayEnabled } from '@/mobile/ads/levelplay';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -287,7 +287,7 @@ export default function QuizStoryScreen() {
   const handleReviveStreak = async () => {
     setReviveAdShowing(true);
     try {
-      const res = await showAdMobRewarded();
+      const res = await showLevelPlayRewarded();
       if (res.rewarded) {
         toast({ title: '🔥 Streak Saved!', description: `Your streak of ${streak} has been preserved.` });
       } else {
@@ -295,7 +295,7 @@ export default function QuizStoryScreen() {
         toast({ title: 'Ad closed early', description: 'Streak was reset.' });
       }
     } catch (e) {
-      console.warn('AdMob Revive failed', e);
+      console.warn('LevelPlay Revive failed', e);
       resetStreak();
     } finally {
       setReviveAdShowing(false);
@@ -311,7 +311,7 @@ export default function QuizStoryScreen() {
   };
 
   const exit = () => {
-    if (Capacitor.isNativePlatform() && sessionGems > 0 && isMobileAdsEnabled) {
+    if (Capacitor.isNativePlatform() && sessionGems > 0 && isLevelPlayEnabled) {
       setDoubleGemsPending(true);
     } else {
       navigate('/hub');
@@ -321,7 +321,7 @@ export default function QuizStoryScreen() {
   const handleDoubleGems = async () => {
     setDoubleGemsAdShowing(true);
     try {
-      const res = await showAdMobRewarded();
+      const res = await showLevelPlayRewarded();
       if (res.rewarded) {
         const extraGems = sessionGems;
         const next = gems + extraGems;
@@ -348,7 +348,7 @@ export default function QuizStoryScreen() {
         navigate('/hub');
       }
     } catch (e) {
-      console.warn('AdMob Double Gems failed', e);
+      console.warn('LevelPlay Double Gems failed', e);
       setDoubleGemsPending(false);
       navigate('/hub');
     } finally {
@@ -360,7 +360,7 @@ export default function QuizStoryScreen() {
     setDoubleGemsPending(false);
     if (Capacitor.isNativePlatform()) {
       try {
-        await showAdMobInterstitial();
+        await showLevelPlayInterstitial();
       } catch {}
     }
     navigate('/hub');
@@ -476,7 +476,7 @@ export default function QuizStoryScreen() {
                 />
               )}
 
-              <h2 className="text-[18px] font-black leading-snug mb-5 tracking-tight" style={{ color: 'hsl(220 50% 15%)' }}>{question.question}</h2>
+              <h2 className="text-[18px] font-black leading-snug mb-5 tracking-tight text-white">{question.question}</h2>
 
               <div className="space-y-2.5">
                 {(question.options || []).map((opt, i) => {

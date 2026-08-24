@@ -21,10 +21,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
-import { showAdMobRewarded, isMobileAdsEnabled } from '@/mobile/ads/admob';
+import { showLevelPlayRewarded, isLevelPlayEnabled } from '@/mobile/ads/levelplay';
 import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
 import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
+import { getDailyTributeStatus, claimDailyTribute } from '@/services/dailyTributeService';
 
 type Node = {
   id: string;
@@ -363,53 +364,80 @@ export default function HubScreen() {
   };
 
   const handleClaimTask = async (taskId: string, gemsReward: number, starsReward: number, shardsReward: number, shardType: string) => {
-    if (Capacitor.isNativePlatform() && gemsReward > 0 && isMobileAdsEnabled) {
+    if (Capacitor.isNativePlatform() && gemsReward > 0 && isLevelPlayEnabled) {
       setBountyClaimPending({ taskId, gemsReward, starsReward, shardsReward, shardType });
     } else {
       await executeClaimTask(taskId, gemsReward, starsReward, shardsReward, shardType);
     }
   };
 
-  const triggerDailyCheckIn = async (userKey: string, currentStars: number) => {
-    const today = new Date().toLocaleDateString();
-    const lastCheckIn = localStorage.getItem(`last_check_in_date_${userKey}`);
-    const currentStreak = Number(localStorage.getItem(`check_in_streak_${userKey}`) || '0');
-    if (lastCheckIn === today || sessionStorage.getItem('daily_checkin_shown')) return;
-    sessionStorage.setItem('daily_checkin_shown', 'true');
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    let newStreak = lastCheckIn === yesterday.toLocaleDateString() ? Math.min(currentStreak + 1, 7) : 1;
-    const reward = newStreak === 7 ? 50 : newStreak * 5;
-    setCheckInRewardStars(reward); setCheckInStreak(newStreak);
-    setStars(prev => prev + reward);
-    localStorage.setItem(`last_check_in_date_${userKey}`, today);
-    localStorage.setItem(`check_in_streak_${userKey}`, String(newStreak));
-    localStorage.setItem('quiz_app_user_stars', String(currentStars + reward));
-    if (userKey !== 'guest') {
-      try { await (supabase as any).rpc('award_currency', { p_points_delta: 0, p_stars_delta: Math.round(reward), p_reason: 'daily_check_in' }); } catch {}
+  const checkDailyTribute = async (uid?: string | null) => {
+    const status = await getDailyTributeStatus(uid);
+    if (status.canClaim && !sessionStorage.getItem('daily_tribute_modal_dismissed')) {
+      setCheckInRewardStars(status.rewardStars);
+      setCheckInStreak(status.streak);
+      setTimeout(() => {
+        setShowCheckInModal(true);
+        haptics('success');
+        try {
+          import('canvas-confetti').then((m) => m.default({ particleCount: 70, spread: 55, origin: { y: 0.55 } }));
+        } catch {}
+      }, 1200);
     }
-    setTimeout(() => {
-      setShowCheckInModal(true); haptics('success');
-      try { import('canvas-confetti').then((m) => m.default({ particleCount: 70, spread: 55, origin: { y: 0.55 } })); } catch {}
-    }, 1200);
+  };
+
+  const handleClaimDailyTribute = async () => {
+    haptics('medium');
+    const uid = localStorage.getItem(STORAGE_KEYS.USER_ID) || 'guest';
+    const result = await claimDailyTribute(uid);
+    if (result.success) {
+      setStars((prev) => prev + result.rewardStars);
+      toast({
+        title: '👑 Daily Tribute Claimed!',
+        description: `+${result.rewardStars} Stars added to your royal treasury!`,
+      });
+    }
+    sessionStorage.setItem('daily_tribute_modal_dismissed', 'true');
+    setShowCheckInModal(false);
   };
 
   useEffect(() => {
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    if (!uid) { triggerDailyCheckIn('guest', stars); return; }
+    if (!uid) {
+      checkDailyTribute(null);
+      return;
+    }
     supabase.from('profiles').select('username, display_name, points, stars').eq('id', uid).maybeSingle()
       .then(({ data }) => {
         if (data) {
           const balance = (data as any).points ?? 0;
           const starsBalance = (data as any).stars ?? 0;
-          setGems(balance); setStars(starsBalance);
+          setGems(balance);
+          setStars(starsBalance);
           const dn = (data as any).display_name || (data as any).username || 'Adventurer';
           setName(dn);
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(balance));
           localStorage.setItem('quiz_app_user_stars', String(starsBalance));
+          localStorage.setItem(STORAGE_KEYS.USER_STARS, String(starsBalance));
           localStorage.setItem(STORAGE_KEYS.USER_NAME, dn);
-          triggerDailyCheckIn(uid, starsBalance);
+          checkDailyTribute(uid);
         }
       });
+  }, []);
+
+  useEffect(() => {
+    const handleSync = () => {
+      const g = Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
+      const s = Number(localStorage.getItem('quiz_app_user_stars') || localStorage.getItem(STORAGE_KEYS.USER_STARS) || '0');
+      setGems(g);
+      setStars(s);
+    };
+    window.addEventListener('gemsUpdated', handleSync);
+    window.addEventListener('starsUpdated', handleSync);
+    return () => {
+      window.removeEventListener('gemsUpdated', handleSync);
+      window.removeEventListener('starsUpdated', handleSync);
+    };
   }, []);
 
   useEffect(() => {
@@ -918,7 +946,7 @@ export default function HubScreen() {
                 </div>
 
                 <button
-                  onClick={() => { haptics('medium'); setShowCheckInModal(false); }}
+                  onClick={handleClaimDailyTribute}
                   className="w-full rounded-2xl py-3.5 font-black text-sm uppercase tracking-wider text-white"
                   style={{
                     background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 45%))',
@@ -973,7 +1001,7 @@ export default function HubScreen() {
                       haptics('medium');
                       setBountyAdShowing(true);
                       try {
-                        const res = await showAdMobRewarded();
+                        const res = await showLevelPlayRewarded();
                         if (res.rewarded) {
                           await executeClaimTask(
                             bountyClaimPending.taskId,
