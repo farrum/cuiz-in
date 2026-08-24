@@ -2,12 +2,16 @@ import { Capacitor } from '@capacitor/core';
 import { audioManager } from '@/utils/audioManager';
 
 // ─── LevelPlay (ironSource) Configuration ─────────────────────────────────────
-// Live Unity LevelPlay App Key (replace with your production ironSource App Key)
+// Live Unity LevelPlay App Key & Placements from the ironSource Dashboard
 export const LEVELPLAY_CONFIG = {
-  // Replace with your Unity LevelPlay / ironSource App Key from the dashboard
-  appKey: import.meta.env.VITE_LEVELPLAY_APP_KEY || '1d2b83495',
-  testAppKey: '1d2b83495', // Standard ironSource test key
+  appKey: import.meta.env.VITE_LEVELPLAY_APP_KEY || '800078728',
+  testAppKey: '800078728',
   isTesting: Boolean(import.meta.env.DEV),
+  placements: {
+    banner: 'Banner_Android',
+    interstitial: 'Interstitial_Android',
+    rewarded: 'Rewarded_Android',
+  },
 } as const;
 
 export const isLevelPlayEnabled = true;
@@ -36,19 +40,19 @@ export async function initLevelPlay(): Promise<boolean> {
     try {
       console.info('[LevelPlay] Initializing LevelPlay SDK with App Key:', getAppKey());
 
-      // Attempt to interface with native ironSource/LevelPlay plugin if available
+      // Interface with native ironSource/LevelPlay plugin if available
       const ironSourcePlugin = (window as any).ironSource || (window as any).LevelPlay;
       if (ironSourcePlugin && typeof ironSourcePlugin.init === 'function') {
         await ironSourcePlugin.init({
           appKey: getAppKey(),
-          adFormats: ['INTERSTITIAL', 'REWARDED'],
+          adFormats: ['INTERSTITIAL', 'REWARDED', 'BANNER'],
         });
       }
 
       isInitialized = true;
-      console.info('[LevelPlay] Initialized successfully');
+      console.info('[LevelPlay] Initialized successfully with App Key:', getAppKey());
       
-      // Warm up ads immediately
+      // Warm up ads immediately with registered placements
       void preloadLevelPlayInterstitial();
       void preloadLevelPlayRewarded();
 
@@ -73,8 +77,10 @@ export async function preloadLevelPlayInterstitial(): Promise<void> {
   try {
     const ironSourcePlugin = (window as any).ironSource || (window as any).LevelPlay;
     if (ironSourcePlugin && typeof ironSourcePlugin.loadInterstitial === 'function') {
-      await ironSourcePlugin.loadInterstitial();
-      console.info('[LevelPlay] Interstitial loaded successfully');
+      await ironSourcePlugin.loadInterstitial({
+        placementName: LEVELPLAY_CONFIG.placements.interstitial,
+      });
+      console.info('[LevelPlay] Interstitial loaded for placement:', LEVELPLAY_CONFIG.placements.interstitial);
     }
   } catch (err) {
     console.warn('[LevelPlay] Preload interstitial skipped/failed:', err);
@@ -91,7 +97,7 @@ export async function showLevelPlayInterstitial(): Promise<boolean> {
   if (!isLevelPlayEnabled) return false;
   await initLevelPlay();
 
-  console.info('[LevelPlay] Requesting Interstitial Ad');
+  console.info('[LevelPlay] Requesting Interstitial Ad for placement:', LEVELPLAY_CONFIG.placements.interstitial);
 
   if (!Capacitor.isNativePlatform()) {
     // In-browser preview simulation
@@ -131,6 +137,7 @@ export async function showLevelPlayInterstitial(): Promise<boolean> {
       const ironSourcePlugin = (window as any).ironSource || (window as any).LevelPlay;
       if (ironSourcePlugin && typeof ironSourcePlugin.showInterstitial === 'function') {
         ironSourcePlugin.showInterstitial({
+          placementName: LEVELPLAY_CONFIG.placements.interstitial,
           onDismiss: () => finish(true),
           onFailed: (err: any) => {
             console.warn('[LevelPlay] Interstitial failed to show:', err);
@@ -159,8 +166,10 @@ export async function preloadLevelPlayRewarded(): Promise<void> {
   try {
     const ironSourcePlugin = (window as any).ironSource || (window as any).LevelPlay;
     if (ironSourcePlugin && typeof ironSourcePlugin.loadRewardedVideo === 'function') {
-      await ironSourcePlugin.loadRewardedVideo();
-      console.info('[LevelPlay] Rewarded video loaded successfully');
+      await ironSourcePlugin.loadRewardedVideo({
+        placementName: LEVELPLAY_CONFIG.placements.rewarded,
+      });
+      console.info('[LevelPlay] Rewarded video loaded for placement:', LEVELPLAY_CONFIG.placements.rewarded);
     }
   } catch (err) {
     console.warn('[LevelPlay] Preload rewarded skipped/failed:', err);
@@ -177,7 +186,7 @@ export async function showLevelPlayRewarded(): Promise<{ shown: boolean; rewarde
   if (!isLevelPlayEnabled) return { shown: false, rewarded: false };
   await initLevelPlay();
 
-  console.info('[LevelPlay] Requesting Rewarded Video Ad');
+  console.info('[LevelPlay] Requesting Rewarded Video Ad for placement:', LEVELPLAY_CONFIG.placements.rewarded);
 
   if (!Capacitor.isNativePlatform()) {
     // In-browser preview simulation
@@ -218,6 +227,7 @@ export async function showLevelPlayRewarded(): Promise<{ shown: boolean; rewarde
       const ironSourcePlugin = (window as any).ironSource || (window as any).LevelPlay;
       if (ironSourcePlugin && typeof ironSourcePlugin.showRewardedVideo === 'function') {
         ironSourcePlugin.showRewardedVideo({
+          placementName: LEVELPLAY_CONFIG.placements.rewarded,
           onReward: () => {
             console.info('[LevelPlay] User earned reward!');
             rewardGranted = true;
@@ -243,7 +253,6 @@ export async function showLevelPlayRewarded(): Promise<{ shown: boolean; rewarde
 // ─── Rewarded Interstitial Ads ────────────────────────────────────────────────
 
 export async function showLevelPlayRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
-  // In LevelPlay, Rewarded Interstitials use the rewarded video pipeline with automatic placement
   return showLevelPlayRewarded();
 }
 
@@ -273,10 +282,11 @@ export async function showLevelPlayBanner(customMargin?: number, onFailed?: () =
         position: 'BOTTOM',
         margin: customMargin ?? 0,
         size: 'BANNER', // Standard 320x50
+        placementName: LEVELPLAY_CONFIG.placements.banner,
       });
       document.documentElement.style.setProperty('--banner-h', '50px');
       bannerShown = true;
-      console.info('[LevelPlay] Banner shown with bottom margin:', customMargin ?? 0);
+      console.info('[LevelPlay] Banner shown for placement:', LEVELPLAY_CONFIG.placements.banner, 'margin:', customMargin ?? 0);
       return true;
     } else {
       // Fallback: reserve banner space
@@ -333,4 +343,5 @@ export async function destroyLevelPlayBanner(): Promise<void> {
     console.warn('[LevelPlay] destroyBanner error:', err);
   }
 }
+
 
