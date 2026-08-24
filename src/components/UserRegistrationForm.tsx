@@ -277,27 +277,11 @@ const UserRegistrationForm: React.FC = () => {
       // Close the anonymous funnel: this guest session converted to a user
       trackGuestEvent({ event_type: 'registered' });
 
-      // 3. Handle referral if present
+      // 3. Handle referral if present. A direct insert is blocked by RLS
+      // (only the referrer may insert), so this goes through a secure RPC.
       if (referralCode) {
-        setTimeout(async () => {
-          try {
-            const referrerUsername = referralCode.toLowerCase();
-            const referrerId = await getReferrerId(referrerUsername);
-            if (referrerId) {
-              await supabase.from('user_referrals').insert({
-                referrer_id: referrerId,
-                referrer_name: referrerUsername,
-                referred_id: createdUserId,
-                referred_name: username,
-                referred_email: email,
-                date: new Date().toISOString().split('T')[0],
-                status: 'active'
-              });
-            }
-          } catch (err) {
-            console.error('Referral insert error:', err);
-          }
-        }, 500);
+        storePendingReferral(referralCode);
+        await claimPendingReferral(referralCode);
       }
 
       toast({
