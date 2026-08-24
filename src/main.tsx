@@ -31,6 +31,13 @@ const isMobilePlatform =
   // before producing and uploading another Play Store build.
   (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
 
+// Native WebViews need a deliberately conservative composition path. This is
+// set before React mounts so the first app frame cannot briefly use the heavier
+// browser effects and then switch modes.
+if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add('native-app');
+}
+
 const RootComponent = isMobilePlatform ? AppMobile : App;
 
 const CHUNK_RELOAD_KEY = '__lov_chunk_reload__';

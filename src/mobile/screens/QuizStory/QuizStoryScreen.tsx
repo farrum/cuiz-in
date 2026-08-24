@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { showLevelPlayRewarded, showLevelPlayInterstitial, isLevelPlayEnabled } from '@/mobile/ads/levelplay';
-import { isMobileAdsEnabled } from '@/mobile/ads/admob';
+import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -288,7 +287,7 @@ export default function QuizStoryScreen() {
   const handleReviveStreak = async () => {
     setReviveAdShowing(true);
     try {
-      const res = await showLevelPlayRewarded();
+      const res = await showAdMobRewarded();
       if (res.rewarded) {
         toast({ title: '🔥 Streak Saved!', description: `Your streak of ${streak} has been preserved.` });
       } else {
@@ -312,7 +311,7 @@ export default function QuizStoryScreen() {
   };
 
   const exit = () => {
-    if (Capacitor.isNativePlatform() && sessionGems > 0 && isLevelPlayEnabled) {
+    if (Capacitor.isNativePlatform() && sessionGems > 0 && isMobileAdsEnabled) {
       setDoubleGemsPending(true);
     } else {
       navigate('/hub');
@@ -322,7 +321,7 @@ export default function QuizStoryScreen() {
   const handleDoubleGems = async () => {
     setDoubleGemsAdShowing(true);
     try {
-      const res = await showLevelPlayRewarded();
+      const res = await showAdMobRewarded();
       if (res.rewarded) {
         const extraGems = sessionGems;
         const next = gems + extraGems;
@@ -361,7 +360,7 @@ export default function QuizStoryScreen() {
     setDoubleGemsPending(false);
     if (Capacitor.isNativePlatform()) {
       try {
-        await showLevelPlayInterstitial();
+        await showAdMobInterstitial();
       } catch {}
     }
     navigate('/hub');

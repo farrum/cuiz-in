@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core';
-import { hideLevelPlayBanner, showLevelPlayBanner, isLevelPlayBannerShown } from './levelplay';
+import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
 
 /**
  * Determines if a route should show the LevelPlay banner ad.
@@ -65,14 +64,14 @@ export function BannerHost() {
     const timer = setTimeout(() => {
       if (!isMounted) return;
       const show = shouldShowBannerForRoute(location.pathname);
-      const isShown = isLevelPlayBannerShown();
+      const isShown = isAdMobBannerShown();
 
       if (show) {
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
-        void showLevelPlayBanner(margin);
+        void showAdMobBanner(margin);
       } else if (isShown) {
-        void hideLevelPlayBanner();
+        void hideAdMobBanner();
       }
     }, 120);
 
@@ -85,7 +84,7 @@ export function BannerHost() {
   // Hide the banner when host component unmounts
   useEffect(() => {
     return () => {
-      void hideLevelPlayBanner();
+      void hideAdMobBanner();
     };
   }, []);
 
