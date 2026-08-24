@@ -11,7 +11,7 @@ import { Shield } from 'lucide-react';
  */
 export function ScreenSkeleton() {
   return (
-    <div className="p-4 space-y-3" aria-busy="true" aria-label="Loading">
+    <div className="mobile-screen-skeleton min-h-full p-4 space-y-3" aria-busy="true" aria-label="Loading">
       {/* CSS-spin shield — zero JS overhead, no layout reflow */}
       <div className="flex justify-center pt-2 pb-1">
         <Shield

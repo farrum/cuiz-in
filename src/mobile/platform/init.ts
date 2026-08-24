@@ -9,17 +9,12 @@ export function initMobilePlatform() {
       if (!Capacitor.isNativePlatform()) return;
 
       const { StatusBar, Style } = await import('@capacitor/status-bar');
-      const { SplashScreen } = await import('@capacitor/splash-screen');
       const { App } = await import('@capacitor/app');
 
       try {
         await StatusBar.setOverlaysWebView({ overlay: true });
         await StatusBar.setStyle({ style: Style.Light });
       } catch (e) { console.warn('StatusBar init failed', e); }
-
-      try {
-        await SplashScreen.hide();
-      } catch {}
 
       // AdMob: initialize and warm up interstitial + rewarded in background
       try {
@@ -55,6 +50,29 @@ export function initMobilePlatform() {
       });
     } catch (err) {
       console.warn('[Mobile] Capacitor init skipped:', err);
+    }
+  })();
+}
+
+let splashHideStarted = false;
+
+/** Hide the native splash only after React has committed and painted twice. */
+export function hideNativeSplashAfterFirstPaint() {
+  if (splashHideStarted) return;
+  splashHideStarted = true;
+
+  void (async () => {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return;
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      const { SplashScreen } = await import('@capacitor/splash-screen');
+      await SplashScreen.hide();
+      console.info('[Mobile] First paint complete; native splash hidden');
+    } catch (error) {
+      console.warn('[Mobile] Splash hide failed safely:', error);
     }
   })();
 }
