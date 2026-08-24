@@ -4,14 +4,11 @@ const config: CapacitorConfig = {
   appId: 'com.geologon.cuiz',
   appName: 'cuiz-in',
   webDir: 'dist',
-  // server: {
-  //   url: 'https://7e6688c8-dfb8-442e-8fed-a62399ade2ef.lovableproject.com?forceHideBadge=true&mobile=1',
-  //   cleartext: true,
-  // },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1200,
-      backgroundColor: '#0f172a',
+      launchShowDuration: 0,
+      launchAutoHide: true,
+      backgroundColor: '#0c0a09',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
     },

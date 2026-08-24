@@ -10,7 +10,6 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
-import { MobileSplash } from './components/MobileSplash';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { initMobilePlatform } from './platform/init';
@@ -78,11 +77,9 @@ const getSystemTimeTheme = () => {
 };
 
 function AppMobile() {
-  const [booted, setBooted] = useState(false);
-  const [authed, setAuthed] = useState<boolean>(false);
+  const [authed, setAuthed] = useState<boolean>(() => Boolean(localStorage.getItem(STORAGE_KEYS.USER_ID)));
 
   useEffect(() => {
-    let mounted = true;
     initMobilePlatform();
 
     (async () => {
@@ -92,26 +89,9 @@ function AppMobile() {
           setAuthed(true);
           await hydrateMobileSession(data.session.user.id);
         }
-      } finally {
-        if (mounted) {
-          setBooted(true);
-          // Gracefully hide the native splash once React has painted the first
-          // view. Fully guarded: a plugin failure here must never bubble up and
-          // leave the splash (or a blank WebView) on screen.
-          try {
-            if (Capacitor.isNativePlatform()) {
-              requestAnimationFrame(() => {
-                import('@capacitor/splash-screen')
-                  .then(({ SplashScreen }) => SplashScreen.hide().catch(() => {}))
-                  .catch(() => {});
-              });
-            }
-          } catch (e) {
-            console.warn('[Mobile] splash hide skipped', e);
-          }
-        }
+      } catch (err) {
+        console.warn('[Mobile] session check error:', err);
       }
-
     })();
 
     // Silent prefetch questions cache for offline gameplay
@@ -142,12 +122,9 @@ function AppMobile() {
     });
 
     return () => {
-      mounted = false;
       listener.subscription.unsubscribe();
     };
   }, []);
-
-  if (!booted) return <MobileSplash />;
 
   return (
     <HelmetProvider>

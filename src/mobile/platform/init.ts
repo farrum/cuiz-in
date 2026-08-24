@@ -17,15 +17,19 @@ export function initMobilePlatform() {
         await StatusBar.setStyle({ style: Style.Light });
       } catch (e) { console.warn('StatusBar init failed', e); }
 
-      // AdMob: initialize and warm up interstitial + rewarded in background
       try {
-        const { initAdMob, preloadAdMobInterstitial, preloadAdMobRewarded } =
-          await import('@/mobile/ads/admob');
-        if (await initAdMob()) {
-          preloadAdMobInterstitial();
-          preloadAdMobRewarded();
+        await SplashScreen.hide();
+      } catch {}
+
+      // LevelPlay: initialize and warm up interstitial + rewarded in background
+      try {
+        const { initLevelPlay, preloadLevelPlayInterstitial, preloadLevelPlayRewarded } =
+          await import('@/mobile/ads/levelplay');
+        if (await initLevelPlay()) {
+          preloadLevelPlayInterstitial();
+          preloadLevelPlayRewarded();
         }
-      } catch (e) { console.warn('[AdMob] init skipped', e); }
+      } catch (e) { console.warn('[LevelPlay] init skipped', e); }
 
 
       // Back-button handler: never close the app from inside a story flow.

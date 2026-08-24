@@ -6,7 +6,7 @@ import {
   Calendar, Sparkles, Swords, Landmark, Users,
   ChevronRight, Flame, Star, Gem, LogIn, Crown,
   Disc3, ScrollText, ImageIcon, Coins, Dices,
-  Gamepad2, Gift, KeyRound
+  Gamepad2, Gift, KeyRound, Scale, CircleDot
 } from 'lucide-react';
 import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
@@ -45,18 +45,130 @@ const ROYAL_CHAMBERS: Node[] = [
   { id: 'daily',    label: 'Daily Challenge',    to: '/daily',          icon: Calendar, color: 'from-rose-500 to-red-600',       hint: 'Complete the daily special for 2× rewards!', badge: 'HOT' },
 ];
 
-const TAVERN_GAMES: Node[] = [
-  { id: 'wheel',      label: 'Spin Wheel',           to: '/game/wheel',       emoji: '🎡', color: 'from-emerald-400 to-teal-600',    badge: 'Daily' },
-  { id: 'scratch',    label: 'Scratch Card',         to: '/game/scratch',     emoji: '🎫', color: 'from-amber-400 to-orange-500',    badge: 'Daily' },
-  { id: 'true-false', label: 'True / False',         to: '/game/true-false',  emoji: '⚖️', color: 'from-sky-400 to-blue-600',        badge: 'New' },
-  { id: 'image',      label: 'Image Trivia',         to: '/game/image',       emoji: '🖼️', color: 'from-violet-500 to-fuchsia-600' },
-  { id: 'slot',       label: 'Slot Machine',         to: '/game/slot',        emoji: '🎰', color: 'from-red-500 to-amber-500' },
-  { id: 'plinko',     label: 'Plinko Board',         to: '/game/plinko',      emoji: '🔴', color: 'from-green-400 to-emerald-600' },
-  { id: 'rps',        label: 'Rock Paper Scissors',  to: '/game/rps',         emoji: '✊', color: 'from-purple-500 to-indigo-600' },
-  { id: 'treasure',   label: 'Treasure Chest',       to: '/game/treasure',    emoji: '🏴‍☠️', color: 'from-yellow-400 to-orange-500' },
-  { id: 'coinflip',   label: 'Coin Flip',            to: '/game/coinflip',    emoji: '🪙', color: 'from-amber-500 to-orange-600' },
-  { id: 'diceroll',   label: 'Dice Roll',            to: '/game/diceroll',    emoji: '🎲', color: 'from-indigo-400 to-purple-600',   badge: 'Hot' },
-  { id: 'riddlevault',label: 'Riddle Vault',         to: '/game/riddlevault', emoji: '🔑', color: 'from-stone-600 to-stone-900',     badge: 'Daily' },
+interface TavernGameNode {
+  id: string;
+  label: string;
+  subtitle: string;
+  to: string;
+  icon: any;
+  gradient: string;
+  accentGlow: string;
+  badge?: string;
+  badgeColor?: string;
+}
+
+const TAVERN_GAMES: TavernGameNode[] = [
+  { 
+    id: 'wheel', 
+    label: 'Spin Wheel', 
+    subtitle: 'Spin & Win Gems', 
+    to: '/game/wheel', 
+    icon: Disc3, 
+    gradient: 'from-emerald-600 via-teal-600 to-cyan-700',
+    accentGlow: 'rgba(16, 185, 129, 0.4)',
+    badge: 'Daily',
+    badgeColor: 'bg-emerald-400 text-emerald-950',
+  },
+  { 
+    id: 'scratch', 
+    label: 'Scratch Card', 
+    subtitle: 'Instant Stars', 
+    to: '/game/scratch', 
+    icon: Gift, 
+    gradient: 'from-amber-500 via-orange-500 to-amber-700',
+    accentGlow: 'rgba(245, 158, 11, 0.4)',
+    badge: 'Daily',
+    badgeColor: 'bg-amber-300 text-amber-950',
+  },
+  { 
+    id: 'true-false', 
+    label: 'True / False', 
+    subtitle: 'Speed Logic', 
+    to: '/game/true-false', 
+    icon: Scale, 
+    gradient: 'from-sky-600 via-blue-600 to-indigo-700',
+    accentGlow: 'rgba(2, 132, 199, 0.4)',
+    badge: 'New',
+    badgeColor: 'bg-cyan-300 text-cyan-950',
+  },
+  { 
+    id: 'image', 
+    label: 'Image Trivia', 
+    subtitle: 'Visual Puzzle', 
+    to: '/game/image', 
+    icon: ImageIcon, 
+    gradient: 'from-purple-600 via-fuchsia-600 to-pink-700',
+    accentGlow: 'rgba(168, 85, 247, 0.4)',
+  },
+  { 
+    id: 'slot', 
+    label: 'Slot Machine', 
+    subtitle: '777 Jackpot', 
+    to: '/game/slot', 
+    icon: Gamepad2, 
+    gradient: 'from-rose-600 via-red-600 to-amber-700',
+    accentGlow: 'rgba(225, 29, 72, 0.4)',
+    badge: 'Hot',
+    badgeColor: 'bg-rose-300 text-rose-950',
+  },
+  { 
+    id: 'plinko', 
+    label: 'Plinko Board', 
+    subtitle: 'Bounce & Earn', 
+    to: '/game/plinko', 
+    icon: CircleDot, 
+    gradient: 'from-teal-600 via-emerald-600 to-green-700',
+    accentGlow: 'rgba(13, 148, 136, 0.4)',
+  },
+  { 
+    id: 'rps', 
+    label: 'Rock Paper Scissors', 
+    subtitle: 'Tavern Duel', 
+    to: '/game/rps', 
+    icon: Swords, 
+    gradient: 'from-indigo-600 via-violet-600 to-purple-800',
+    accentGlow: 'rgba(99, 102, 241, 0.4)',
+  },
+  { 
+    id: 'treasure', 
+    label: 'Treasure Chest', 
+    subtitle: 'Mystery Loot', 
+    to: '/game/treasure', 
+    icon: Crown, 
+    gradient: 'from-yellow-500 via-amber-600 to-orange-800',
+    accentGlow: 'rgba(234, 179, 8, 0.4)',
+  },
+  { 
+    id: 'coinflip', 
+    label: 'Coin Flip', 
+    subtitle: 'Double Gems', 
+    to: '/game/coinflip', 
+    icon: Coins, 
+    gradient: 'from-amber-500 via-yellow-600 to-orange-700',
+    accentGlow: 'rgba(217, 119, 6, 0.4)',
+  },
+  { 
+    id: 'diceroll', 
+    label: 'Dice Roll', 
+    subtitle: 'Fortune Strike', 
+    to: '/game/diceroll', 
+    icon: Dices, 
+    gradient: 'from-blue-600 via-indigo-600 to-purple-700',
+    accentGlow: 'rgba(79, 70, 229, 0.4)',
+    badge: 'Hot',
+    badgeColor: 'bg-pink-300 text-pink-950',
+  },
+  { 
+    id: 'riddlevault', 
+    label: 'Riddle Vault', 
+    subtitle: 'Solve Daily Lore', 
+    to: '/game/riddlevault', 
+    icon: KeyRound, 
+    gradient: 'from-stone-700 via-amber-900 to-stone-900',
+    accentGlow: 'rgba(120, 53, 15, 0.4)',
+    badge: 'Daily',
+    badgeColor: 'bg-amber-300 text-amber-950',
+  },
 ];
 
 // ── Stagger animation helpers ───────────────────────────────────────────────
@@ -409,21 +521,8 @@ export default function HubScreen() {
           )}
         </motion.section>
 
-        {/* ── Battle Council (Advisors) ─────────────────────────────── */}
-        <motion.section {...fadeUp(0.06)}>
-          <SectionTitle>Your Battle Council</SectionTitle>
-          <MedievalAdvisors
-            onAdvisorTap={(advisor) => {
-              const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
-              setActiveSpeech(quote);
-              setActiveId(advisor.id);
-              setTimeout(() => { setActiveSpeech(null); setActiveId(null); }, 3500);
-            }}
-          />
-        </motion.section>
-
         {/* ── Royal Chambers (main modes) ───────────────────────────── */}
-        <motion.section {...fadeUp(0.10)}>
+        <motion.section {...fadeUp(0.06)}>
           <SectionTitle>Royal Chambers</SectionTitle>
           <div className="space-y-2.5">
             {ROYAL_CHAMBERS.map((node, i) => {
@@ -492,6 +591,19 @@ export default function HubScreen() {
               );
             })}
           </div>
+        </motion.section>
+
+        {/* ── Battle Council (Advisors) ─────────────────────────────── */}
+        <motion.section {...fadeUp(0.10)}>
+          <SectionTitle>Your Battle Council</SectionTitle>
+          <MedievalAdvisors
+            onAdvisorTap={(advisor) => {
+              const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
+              setActiveSpeech(quote);
+              setActiveId(advisor.id);
+              setTimeout(() => { setActiveSpeech(null); setActiveId(null); }, 3500);
+            }}
+          />
         </motion.section>
 
         {/* ── Active Contracts ──────────────────────────────────────── */}
@@ -575,51 +687,63 @@ export default function HubScreen() {
         {/* ── Tavern Games ─────────────────────────────────────────── */}
         <motion.section {...fadeUp(0.18)}>
           <SectionTitle>Tavern Games & Contests</SectionTitle>
-          <div className="grid grid-cols-2 gap-2.5">
-            {TAVERN_GAMES.map((node, i) => (
-              <TiltCard
-                key={node.id}
-                maxTilt={8}
-                glareIntensity={0.15}
-                hoverScale={1.02}
-                onClick={() => { haptics('light'); audioManager.playSFX('click'); navigate(node.to); }}
-                className="relative flex flex-col justify-between p-3.5 h-[120px] rounded-2xl overflow-hidden text-left"
-                style={{
-                  background: 'linear-gradient(145deg, #fff 0%, hsl(38 55% 98%) 100%)',
-                  boxShadow: '0 3px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.06)',
-                }}
-              >
-                {/* Inner colour glow overlay */}
-                <div
-                  aria-hidden
-                  className={cn('absolute inset-0 opacity-[0.07] bg-gradient-to-br pointer-events-none', node.color)}
-                />
-
-                {/* Badge — glowing ring */}
-                {node.badge && (
-                  <span
-                    className="absolute top-2.5 right-2.5 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500 text-white"
-                    style={{ boxShadow: '0 0 0 2px rgba(244,63,94,0.3), 0 0 8px rgba(244,63,94,0.35)' }}
-                  >
-                    {node.badge}
-                  </span>
-                )}
-
-                {/* Emoji icon in a gradient pill */}
-                <div
-                  className={cn('w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br', node.color)}
-                  style={{ boxShadow: '0 3px 10px rgba(0,0,0,0.15)' }}
+          <div className="grid grid-cols-2 gap-3">
+            {TAVERN_GAMES.map((node, i) => {
+              const Icon = node.icon;
+              return (
+                <TiltCard
+                  key={node.id}
+                  maxTilt={8}
+                  glareIntensity={0.2}
+                  hoverScale={1.03}
+                  onClick={() => { haptics('light'); audioManager.playSFX('click'); navigate(node.to); }}
+                  className={cn(
+                    "relative flex flex-col justify-between p-3.5 min-h-[106px] rounded-2xl overflow-hidden text-left bg-gradient-to-br shadow-md transition-all",
+                    node.gradient
+                  )}
+                  style={{
+                    boxShadow: `0 4px 12px ${node.accentGlow}, 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.35)`,
+                    borderBottom: '3px solid rgba(0,0,0,0.25)',
+                  }}
                 >
-                  <span className="text-xl leading-none">{node.emoji}</span>
-                </div>
+                  {/* Subtle radial gloss overlay */}
+                  <div
+                    aria-hidden
+                    className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/15 blur-xl pointer-events-none"
+                  />
 
-                {/* Label */}
-                <p className="font-black text-[13px] leading-tight tracking-tight line-clamp-2 relative z-10"
-                  style={{ color: 'hsl(220 50% 15%)' }}>
-                  {node.label}
-                </p>
-              </TiltCard>
-            ))}
+                  {/* Top row: Crisp Icon + Badge */}
+                  <div className="flex items-center justify-between gap-2 relative z-10">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center bg-black/20 backdrop-blur-sm border border-white/25 shadow-inner"
+                    >
+                      <Icon className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.2} />
+                    </div>
+
+                    {node.badge && (
+                      <span
+                        className={cn(
+                          "text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm",
+                          node.badgeColor || "bg-white/90 text-slate-950"
+                        )}
+                      >
+                        {node.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom: Title and subtitle hint */}
+                  <div className="relative z-10 mt-2">
+                    <p className="font-black text-[14px] leading-tight tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] line-clamp-1">
+                      {node.label}
+                    </p>
+                    <p className="text-[10px] font-bold text-white/80 leading-tight tracking-tight mt-0.5 line-clamp-1">
+                      {node.subtitle}
+                    </p>
+                  </div>
+                </TiltCard>
+              );
+            })}
           </div>
         </motion.section>
 

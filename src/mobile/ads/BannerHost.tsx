@@ -1,10 +1,17 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
+import { hideLevelPlayBanner, showLevelPlayBanner, isLevelPlayBannerShown } from './levelplay';
 
 /**
- * Helper to determine if a route should show the bottom native banner ad.
+ * Determines if a route should show the LevelPlay banner ad.
+ * Activated on:
+ * - Homepage ('/hub', '/')
+ * - Quiz pages ('/quiz', '/daily')
+ * - Quest pages ('/empire-quests', '/quests')
+ * - Profile pages ('/profile', '/settings')
+ * - Team & Leaderboard pages ('/team-dashboard', '/kingdoms', '/leaderboard')
+ * - Shop & Mini-Games ('/shop', '/minigames', '/game')
  */
 function shouldShowBannerForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
@@ -14,6 +21,7 @@ function shouldShowBannerForRoute(pathname: string): boolean {
     '/profile',
     '/shop',
     '/empire-quests',
+    '/quests',
     '/kingdoms',
     '/team-dashboard',
     '/quiz',
@@ -21,11 +29,11 @@ function shouldShowBannerForRoute(pathname: string): boolean {
     '/minigames',
     '/game'
   ];
-  return bannerRoutes.some(route => p === route || p.startsWith(route + '/'));
+  return bannerRoutes.some(route => p === route || p.startsWith(route + '/') || p === '/');
 }
 
 /**
- * Helper to determine if the route displays bottom tabs (requiring a 76px margin offset).
+ * Determines if the route displays bottom tabs (requiring a 76px margin offset).
  */
 function shouldShowTabsForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
@@ -35,6 +43,7 @@ function shouldShowTabsForRoute(pathname: string): boolean {
     '/profile',
     '/shop',
     '/empire-quests',
+    '/quests',
     '/kingdoms',
     '/team-dashboard'
   ];
@@ -45,29 +54,27 @@ const TAB_BAR_MARGIN = 76; // 68px tab bar + 8px safe margin
 const SAFE_BOTTOM_MARGIN = 8;
 
 /**
- * Owns the native banner surface for the whole app session.
- * Monitors router path changes and toggles banner visibility cleanly.
+ * Owns the LevelPlay banner surface for the entire app session.
+ * Monitors router path changes and manages banner visibility and margins cleanly.
  */
 export function BannerHost() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
     let isMounted = true;
     const timer = setTimeout(() => {
       if (!isMounted) return;
       const show = shouldShowBannerForRoute(location.pathname);
-      const isShown = isAdMobBannerShown();
+      const isShown = isLevelPlayBannerShown();
 
       if (show) {
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
-        void showAdMobBanner(margin);
+        void showLevelPlayBanner(margin);
       } else if (isShown) {
-        void hideAdMobBanner();
+        void hideLevelPlayBanner();
       }
-    }, 150);
+    }, 120);
 
     return () => {
       isMounted = false;
@@ -75,12 +82,10 @@ export function BannerHost() {
     };
   }, [location.pathname]);
 
-  // Hide the banner when this host component is unmounted
+  // Hide the banner when host component unmounts
   useEffect(() => {
     return () => {
-      if (Capacitor.isNativePlatform()) {
-        void hideAdMobBanner();
-      }
+      void hideLevelPlayBanner();
     };
   }, []);
 
