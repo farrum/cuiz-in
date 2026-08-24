@@ -37,6 +37,8 @@ const UserRegistrationForm: React.FC = () => {
     
     if (refCode) {
       setReferralCode(refCode);
+      // Persist so the code survives the Google OAuth redirect round-trip.
+      storePendingReferral(refCode);
       (async () => {
         const referrerData = await getReferrerInfo(refCode);
         if (referrerData) {
