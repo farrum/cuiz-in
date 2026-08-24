@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/constants';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
+import { claimPendingReferral } from '@/utils/pendingReferral';
 
 
 const UserLogin: React.FC = () => {
@@ -110,6 +111,10 @@ const UserLogin: React.FC = () => {
         if (userName) localStorage.setItem(STORAGE_KEYS.USER_NAME, userName);
         localStorage.setItem(STORAGE_KEYS.USER_ROLE, data.role || 'player');
       }
+
+      // If this visitor arrived via an invite link but had not signed up yet,
+      // link them to that commander now (no-op if already in a squad).
+      await claimPendingReferral();
 
       toast({
         title: "Login Successful",

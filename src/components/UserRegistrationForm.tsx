@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
+import { storePendingReferral, claimPendingReferral } from '@/utils/pendingReferral';
 
 import { Loader, Check, X } from 'lucide-react';
 
@@ -36,6 +37,8 @@ const UserRegistrationForm: React.FC = () => {
     
     if (refCode) {
       setReferralCode(refCode);
+      // Persist so the code survives the Google OAuth redirect round-trip.
+      storePendingReferral(refCode);
       (async () => {
         const referrerData = await getReferrerInfo(refCode);
         if (referrerData) {
@@ -274,27 +277,11 @@ const UserRegistrationForm: React.FC = () => {
       // Close the anonymous funnel: this guest session converted to a user
       trackGuestEvent({ event_type: 'registered' });
 
-      // 3. Handle referral if present
+      // 3. Handle referral if present. A direct insert is blocked by RLS
+      // (only the referrer may insert), so this goes through a secure RPC.
       if (referralCode) {
-        setTimeout(async () => {
-          try {
-            const referrerUsername = referralCode.toLowerCase();
-            const referrerId = await getReferrerId(referrerUsername);
-            if (referrerId) {
-              await supabase.from('user_referrals').insert({
-                referrer_id: referrerId,
-                referrer_name: referrerUsername,
-                referred_id: createdUserId,
-                referred_name: username,
-                referred_email: email,
-                date: new Date().toISOString().split('T')[0],
-                status: 'active'
-              });
-            }
-          } catch (err) {
-            console.error('Referral insert error:', err);
-          }
-        }, 500);
+        storePendingReferral(referralCode);
+        await claimPendingReferral(referralCode);
       }
 
       toast({

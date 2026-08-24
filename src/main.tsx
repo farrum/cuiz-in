@@ -4,6 +4,12 @@ import App from './App.tsx'
 import AppMobile from './mobile/AppMobile.tsx'
 import './index.css'
 import { Capacitor } from '@capacitor/core'
+import { storePendingReferral } from '@/utils/pendingReferral';
+
+// Capture ?ref= from any entry URL so the invite survives until sign-up/login.
+try {
+  storePendingReferral(new URLSearchParams(window.location.search).get('ref'));
+} catch { /* noop */ }
 
 // Platform switch: when VITE_PLATFORM=mobile (Capacitor build),
 // or when running inside a native Capacitor shell (iOS/Android),

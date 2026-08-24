@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { storePendingReferral, claimPendingReferral } from '@/utils/pendingReferral';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const next = params.get('next') || '/quiz';
+    storePendingReferral(params.get('ref'));
 
     let cancelled = false;
     let attempts = 0;
@@ -19,6 +21,8 @@ const AuthCallback: React.FC = () => {
       while (!cancelled && attempts < 15) {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
+          // Link the new account to the commander whose invite link was used.
+          await claimPendingReferral();
           navigate(next, { replace: true });
           return;
         }
