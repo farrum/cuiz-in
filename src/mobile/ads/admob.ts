@@ -66,6 +66,7 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
   if (bannerState === 'shown' && activeBannerMargin === margin) return true;
   if (bannerState === 'loading' && activeBannerMargin === margin && bannerPromise) return bannerPromise;
   if (!(await initAdMob())) return false;
+  if (!bannerWanted || fullScreenDepth > 0 || requestedBannerMargin !== margin) return false;
 
   // Invalidate an older load before changing margin or replacing a banner.
   const requestId = ++bannerRequestId;
