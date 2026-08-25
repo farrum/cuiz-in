@@ -9,20 +9,16 @@ import {
 
 /**
  * Determines if a route should show the native AdMob banner.
- * Activated on:
- * - Homepage ('/hub', '/')
- * - Quiz pages ('/quiz', '/daily')
- * - Quest pages ('/empire-quests', '/quests')
- * - Profile pages ('/profile', '/settings')
- * - Team & Leaderboard pages ('/team-dashboard', '/kingdoms', '/leaderboard')
- * - Shop & Mini-Games ('/shop', '/minigames', '/game')
  */
 function shouldShowBannerForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
   const bannerRoutes = [
     '/hub',
     '/leaderboard',
+    '/hall',
     '/profile',
+    '/settings',
+    '/herald',
     '/shop',
     '/empire-quests',
     '/quests',
@@ -37,25 +33,28 @@ function shouldShowBannerForRoute(pathname: string): boolean {
 }
 
 /**
- * Determines if the route displays bottom tabs (requiring a 76px margin offset).
+ * Determines if the route displays bottom tabs (requiring a 70px margin offset).
  */
 function shouldShowTabsForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
   const tabRoutes = [
     '/hub',
     '/leaderboard',
+    '/hall',
     '/profile',
+    '/settings',
+    '/herald',
     '/shop',
     '/empire-quests',
     '/quests',
     '/kingdoms',
     '/team-dashboard'
   ];
-  return tabRoutes.some(route => p === route || p.startsWith(route + '/'));
+  return tabRoutes.some(route => p === route || p.startsWith(route + '/') || p === '/');
 }
 
-const TAB_BAR_MARGIN = 76; // 68px tab bar + 8px safe margin
-const SAFE_BOTTOM_MARGIN = 8;
+const TAB_BAR_MARGIN = 70; // 62px bottom tabs + 8px floating safe margin
+const SAFE_BOTTOM_MARGIN = 0; // Stick to bottom above system nav on full-screen quiz/game routes
 
 /**
  * Owns the AdMob banner surface for the entire app session.
@@ -71,10 +70,10 @@ export function BannerHost() {
 
     const requestBanner = async (margin: number) => {
       const shown = await showAdMobBanner(margin);
-      if (!isMounted || shown || attempt >= 2) return;
+      if (!isMounted || shown || attempt >= 3) return;
       attempt += 1;
       // Retry no-fill/transient SDK startup failures without churning native views.
-      retryTimer = window.setTimeout(() => void requestBanner(margin), 15_000);
+      retryTimer = window.setTimeout(() => void requestBanner(margin), 10_000);
     };
 
     const timer = setTimeout(() => {
@@ -82,13 +81,15 @@ export function BannerHost() {
       const show = shouldShowBannerForRoute(location.pathname);
 
       if (show) {
+        document.documentElement.style.setProperty('--banner-h', '56px');
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
         void requestBanner(margin);
       } else {
+        document.documentElement.style.setProperty('--banner-h', '0px');
         void hideAdMobBanner();
       }
-    }, 120);
+    }, 80);
 
     return () => {
       isMounted = false;
@@ -111,6 +112,7 @@ export function BannerHost() {
   // Hide the banner when host component unmounts
   useEffect(() => {
     return () => {
+      document.documentElement.style.setProperty('--banner-h', '0px');
       void hideAdMobBanner();
     };
   }, []);

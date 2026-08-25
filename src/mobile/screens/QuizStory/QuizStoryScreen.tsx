@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Capacitor } from '@capacitor/core';
-import { TopBannerAd } from '../../ads/TopBannerAd';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -573,9 +572,7 @@ export default function QuizStoryScreen() {
       </div>
 
       {/* Session summary footer */}
-      <div className="relative z-10 px-4 py-2.5 mx-3 mb-2 rounded-2xl bg-white/80 ring-1 ring-black/[0.06]"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
-      >
+      <div className="relative z-10 px-4 py-2.5 mx-3 mb-2 rounded-2xl bg-white/80 ring-1 ring-black/[0.06]">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-black tabular-nums px-2 py-1 rounded-full bg-slate-100 text-slate-600">{questionsAnswered} battles</span>
@@ -587,11 +584,8 @@ export default function QuizStoryScreen() {
       </div>
 
       {/* Fixed bottom spacer reserved for the native AdMob banner so
-          the session footer is never overlapped by the SDK banner surface. The
-          banner itself is owned by <BannerHost/> (mounted once in AppMobile) and
-          drawn outside the WebView; this spacer just keeps content clear of it.
-          --banner-h is 50px when a banner is shown and 0px otherwise. */}
-      <div aria-hidden className="relative z-10 shrink-0" style={{ height: 'var(--banner-h, 0px)' }} />
+          the session footer is never overlapped by the SDK banner surface. */}
+      <div aria-hidden className="relative z-10 shrink-0" style={{ height: 'calc(var(--banner-h, 56px) + env(safe-area-inset-bottom, 0px) + 4px)' }} />
 
       <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={10} seed={adSeed} />
 
@@ -790,7 +784,6 @@ export default function QuizStoryScreen() {
           </motion.div>
         )}
       </AnimatePresence>
-      <TopBannerAd />
     </div>
   );
 }

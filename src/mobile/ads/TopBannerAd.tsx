@@ -42,7 +42,7 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
 
   if (Capacitor.isNativePlatform()) {
     // On native builds, the banner is persistent. Always render the spacer immediately on mount.
-    return <div aria-hidden className="shrink-0" style={{ height: 'var(--banner-h, 0px)' }} />;
+    return <div aria-hidden className="shrink-0" style={{ height: 'var(--banner-h, 56px)' }} />;
   }
 
   if (hasDbAd) {

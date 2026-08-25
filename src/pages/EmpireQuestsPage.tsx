@@ -25,7 +25,6 @@ import {
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
-import { TopBannerAd } from '@/mobile/ads/TopBannerAd';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
@@ -1916,10 +1915,6 @@ export default function EmpireQuestsPage() {
         onSuccess={fetchUserData}
       />
 
-      {/* BANNER AD PLACEMENT */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 pointer-events-auto">
-        <TopBannerAd />
-      </div>
 
       {/* INTERSTITIAL AD OVERLAY */}
       {webAdBreakOpen && (

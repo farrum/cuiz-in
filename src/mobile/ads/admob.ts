@@ -51,10 +51,13 @@ export async function initAdMob(): Promise<boolean> {
   return initPromise;
 }
 
+let lastBannerMargin = 0;
+
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
 
 export async function showAdMobBanner(margin = 0): Promise<boolean> {
   bannerWanted = true;
+  lastBannerMargin = margin;
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true; // Mock for web
 
@@ -98,9 +101,7 @@ export async function resumeAdMobBanner(): Promise<void> {
   if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   if (fullScreenDepth > 0) return;
   try {
-    // We assume 0 margin here or ideally use a stored margin, 
-    // but BannerHost will quickly correct it anyway.
-    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin: 0 });
+    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin: lastBannerMargin });
   } catch (err) {}
 }
 

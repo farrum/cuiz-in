@@ -34,6 +34,10 @@ public class CustomAdMobPlugin extends Plugin {
     private AdView adView;
     private InterstitialAd mInterstitialAd;
     private RewardedAd mRewardedAd;
+    private int currentMarginDp = 0;
+    private boolean isAdLoaded = false;
+    private boolean isAdLoading = false;
+    private boolean windowInsetsListenerAttached = false;
 
     @PluginMethod
     public void initialize(PluginCall call) {
@@ -43,6 +47,41 @@ public class CustomAdMobPlugin extends Plugin {
                 call.resolve();
             });
         });
+    }
+
+    private int getSystemBottomInset() {
+        if (getActivity() == null) return 0;
+        androidx.core.view.WindowInsetsCompat insets = 
+            androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
+        if (insets != null) {
+            return insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+            ).bottom;
+        }
+        return 0;
+    }
+
+    private void updateBannerPosition() {
+        if (adView == null || getActivity() == null) return;
+        float density = getActivity().getResources().getDisplayMetrics().density;
+        int marginPx = (int) (currentMarginDp * density);
+        int bottomInset = getSystemBottomInset();
+
+        ViewGroup.LayoutParams lp = adView.getLayoutParams();
+        FrameLayout.LayoutParams flp;
+        if (lp instanceof FrameLayout.LayoutParams) {
+            flp = (FrameLayout.LayoutParams) lp;
+        } else {
+            flp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+        flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        flp.bottomMargin = marginPx + bottomInset;
+        adView.setLayoutParams(flp);
+        adView.bringToFront();
     }
 
     // ---------------------------------------------------------
@@ -58,20 +97,18 @@ public class CustomAdMobPlugin extends Plugin {
         
         Integer marginDpObj = call.getInt("margin");
         final int marginDp = marginDpObj != null ? marginDpObj : 0;
+        currentMarginDp = marginDp;
 
         getActivity().runOnUiThread(() -> {
             float density = getActivity().getResources().getDisplayMetrics().density;
-            final int marginPx = (int) (marginDp * density);
 
             if (adView != null) {
-                // If the view exists, update its layout params in case margin changed
-                ViewGroup.LayoutParams lp = adView.getLayoutParams();
-                if (lp instanceof FrameLayout.LayoutParams) {
-                    FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) lp;
-                    androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
-                    int bottomInset = (insets != null) ? insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom : 0;
-                    flp.bottomMargin = marginPx + bottomInset;
-                    adView.setLayoutParams(flp);
+                adView.setVisibility(android.view.View.VISIBLE);
+                updateBannerPosition();
+                if (!isAdLoaded && !isAdLoading) {
+                    isAdLoading = true;
+                    AdRequest adRequest = new AdRequest.Builder().build();
+                    adView.loadAd(adRequest);
                 }
                 call.resolve();
                 return;
@@ -80,43 +117,68 @@ public class CustomAdMobPlugin extends Plugin {
             adView = new AdView(getContext());
             adView.setAdUnitId(adId);
             
-            // Adaptive Banner Size
-            Display display = getActivity().getWindowManager().getDefaultDisplay();
-            DisplayMetrics outMetrics = new DisplayMetrics();
-            display.getMetrics(outMetrics);
-            float widthPixels = outMetrics.widthPixels;
-            // density is already defined above
-            int adWidth = (int) (widthPixels / density);
+            // Adaptive Banner Size calculation (API 30+ compliant)
+            int adWidthPixels = 0;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                android.view.WindowMetrics windowMetrics = getActivity().getWindowManager().getCurrentWindowMetrics();
+                android.graphics.Rect bounds = windowMetrics.getBounds();
+                adWidthPixels = bounds.width();
+            } else {
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                adWidthPixels = displayMetrics.widthPixels;
+            }
+            int adWidth = (int) (adWidthPixels / density);
+            if (adWidth <= 0) adWidth = 320;
+            
             AdSize adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(getContext(), adWidth);
             adView.setAdSize(adSize);
 
-            // We use FrameLayout.LayoutParams because we are adding this directly to the Activity's root content frame.
+            adView.setAdListener(new com.google.android.gms.ads.AdListener() {
+                @Override
+                public void onAdLoaded() {
+                    Log.d(TAG, "AdMob Banner loaded successfully");
+                    isAdLoaded = true;
+                    isAdLoading = false;
+                    if (adView != null) {
+                        adView.setVisibility(android.view.View.VISIBLE);
+                        updateBannerPosition();
+                    }
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    Log.w(TAG, "AdMob Banner failed to load: " + loadAdError.getMessage() + " (code: " + loadAdError.getCode() + ")");
+                    isAdLoaded = false;
+                    isAdLoading = false;
+                }
+            });
+
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
             );
             params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-            
-            androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
-            int bottomInset = (insets != null) ? insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom : 0;
-            params.bottomMargin = marginPx + bottomInset;
+            params.bottomMargin = (int) (currentMarginDp * density) + getSystemBottomInset();
 
-            // Add the view directly to the Window's content layout (always a FrameLayout).
-            // This prevents issues with CoordinatorLayout or WebView parents overriding gravity.
             ViewGroup content = (ViewGroup) getActivity().findViewById(android.R.id.content);
             content.addView(adView, params);
-            
-            // Listen for window inset changes (e.g., keyboard or navigation bar appearing/disappearing)
-            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView, (v, windowInsets) -> {
-                int newBottomInset = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom;
-                ViewGroup.LayoutParams lp = v.getLayoutParams();
-                if (lp instanceof FrameLayout.LayoutParams) {
-                    ((FrameLayout.LayoutParams) lp).bottomMargin = marginPx + newBottomInset;
-                    v.setLayoutParams(lp);
-                }
-                return windowInsets;
-            });
 
+            if (!windowInsetsListenerAttached) {
+                windowInsetsListenerAttached = true;
+                androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
+                    getActivity().getWindow().getDecorView(),
+                    (v, windowInsets) -> {
+                        androidx.core.view.WindowInsetsCompat ret = androidx.core.view.ViewCompat.onApplyWindowInsets(v, windowInsets);
+                        if (adView != null) {
+                            updateBannerPosition();
+                        }
+                        return ret;
+                    }
+                );
+            }
+
+            isAdLoading = true;
             AdRequest adRequest = new AdRequest.Builder().build();
             adView.loadAd(adRequest);
             call.resolve();
@@ -127,12 +189,15 @@ public class CustomAdMobPlugin extends Plugin {
     public void hideBanner(PluginCall call) {
         getActivity().runOnUiThread(() -> {
             if (adView != null) {
+                adView.setVisibility(android.view.View.GONE);
                 ViewGroup root = (ViewGroup) adView.getParent();
                 if (root != null) {
                     root.removeView(adView);
                 }
                 adView.destroy();
                 adView = null;
+                isAdLoaded = false;
+                isAdLoading = false;
             }
             call.resolve();
         });

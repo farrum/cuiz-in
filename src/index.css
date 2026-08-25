@@ -74,7 +74,7 @@
        Never hard-code px values for bottom padding — always use calc(var(--tab-h) + var(--banner-h))
     ────────────────────────────────────────────────────────────── */
     --tab-h: 68px;
-    --banner-h: 0px;
+    --banner-h: 56px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     /* Content bottom clearance = tab bar + ad banner */
