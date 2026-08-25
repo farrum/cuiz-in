@@ -335,12 +335,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <span className="font-black text-xl text-slate-800">{questionsAnswered} Runs</span>
           </div>
 
-          <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
-            <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-blue-400/10 pointer-events-none" />
-            <HelpCircle className="w-5 h-5 mb-2 text-blue-600" />
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">Attempted</span>
-            <span className="font-black text-xl text-slate-800">{totalAttempted} Qs</span>
-          </div>
+
           <div className="panel-3d bg-white p-5 border-2 border-primary/10 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-teal-400/10 pointer-events-none" />
             <CheckCircle2 className="w-5 h-5 mb-2 text-teal-600" />
