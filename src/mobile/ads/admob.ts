@@ -1,57 +1,49 @@
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
-import {
-  AdMob,
-  BannerAdPluginEvents,
-  BannerAdPosition,
-  BannerAdSize,
-  InterstitialAdPluginEvents,
-  RewardAdPluginEvents,
-} from '@capacitor-community/admob';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+import { audioManager } from '@/utils/audioManager';
 
-export const isMobileAdsEnabled = Capacitor.isNativePlatform();
+// Register the custom plugin we wrote in CustomAdMobPlugin.java
+export interface CustomAdMobPlugin {
+  initialize(): Promise<void>;
+  showBanner(options: { adId: string }): Promise<void>;
+  hideBanner(): Promise<void>;
+  prepareInterstitial(options: { adId: string }): Promise<void>;
+  showInterstitial(): Promise<void>;
+  prepareRewardVideoAd(options: { adId: string }): Promise<void>;
+  showRewardVideoAd(): Promise<{ type: string; amount: number }>;
+}
 
-const ANDROID_AD_UNITS = {
-  banner: 'ca-app-pub-8770216472380779/2955064989',
-  interstitial: 'ca-app-pub-8770216472380779/9160136563',
-  rewarded: 'ca-app-pub-8770216472380779/2888986296',
-} as const;
+const CustomAdMob = registerPlugin<CustomAdMobPlugin>('CustomAdMob');
 
-let initPromise: Promise<boolean> | null = null;
-let interstitialReady = false;
-let rewardedReady = false;
-let bannerState: 'hidden' | 'loading' | 'shown' = 'hidden';
-let requestedBannerMargin = 0;
-let activeBannerMargin = -1;
-let fullScreenDepth = 0;
+const ADMOB_CONFIG = {
+  androidBannerId: 'ca-app-pub-2831295465597549/6948956225',
+  androidInterstitialId: 'ca-app-pub-2831295465597549/8851079305',
+  androidRewardedId: 'ca-app-pub-2831295465597549/7154854253',
+  androidRewardedInterstitialId: 'ca-app-pub-2831295465597549/7694056096',
+};
+
+export const isMobileAdsEnabled = true;
+
+let isInitialized = false;
 let bannerWanted = false;
-let bannerRequestId = 0;
-let bannerPromise: Promise<boolean> | null = null;
+let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently showing
+let initPromise: Promise<boolean> | null = null;
 
-function setBannerHeight(height: number) {
-  document.documentElement.style.setProperty('--banner-h', `${Math.max(0, Math.round(height))}px`);
-  window.dispatchEvent(new CustomEvent('mobile-banner-state', { detail: { shown: height > 0 } }));
-}
-
-async function removeHandles(handles: Array<PluginListenerHandle | undefined>) {
-  await Promise.all(handles.map((handle) => handle?.remove().catch(() => undefined)));
-}
-
-export function isAdMobBannerShown() {
-  return bannerState === 'shown';
-}
-
+// Ensure we initialize AdMob natively
 export async function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) return true;
+
+  if (isInitialized) return true;
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
     try {
-      await AdMob.initialize();
-      console.info('[AdMob] SDK initialized');
+      await CustomAdMob.initialize();
+      isInitialized = true;
+      console.log('CustomAdMob Initialized natively via Capacitor');
       return true;
-    } catch (error) {
-      console.warn('[AdMob] initialization failed:', error);
-      initPromise = null;
+    } catch (e) {
+      console.error('CustomAdMob Init Error:', e);
       return false;
     }
   })();
@@ -59,191 +51,149 @@ export async function initAdMob(): Promise<boolean> {
   return initPromise;
 }
 
+// ─── Banner Ad Handlers ───────────────────────────────────────────────────────
+
 export async function showAdMobBanner(margin = 0): Promise<boolean> {
   bannerWanted = true;
-  requestedBannerMargin = margin;
-  if (!isMobileAdsEnabled || fullScreenDepth > 0) return false;
-  if (bannerState === 'shown' && activeBannerMargin === margin) return true;
-  if (bannerState === 'loading' && activeBannerMargin === margin && bannerPromise) return bannerPromise;
-  if (!(await initAdMob())) return false;
-  if (!bannerWanted || fullScreenDepth > 0 || requestedBannerMargin !== margin) return false;
+  if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) return true; // Mock for web
 
-  // Invalidate an older load before changing margin or replacing a banner.
-  const requestId = ++bannerRequestId;
-  if (bannerState !== 'hidden') {
-    await AdMob.removeBanner().catch(() => undefined);
-  }
+  await initAdMob();
 
-  bannerState = 'loading';
-  activeBannerMargin = margin;
-  setBannerHeight(0);
-  let loadedHandle: PluginListenerHandle | undefined;
-  let failedHandle: PluginListenerHandle | undefined;
-  let sizeHandle: PluginListenerHandle | undefined;
+  if (fullScreenDepth > 0) return false;
 
-  bannerPromise = new Promise<boolean>(async (resolve) => {
-    let settled = false;
-    const finish = async (shown: boolean, height = 50) => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timer);
-      await removeHandles([loadedHandle, failedHandle, sizeHandle]);
-      if (requestId !== bannerRequestId || !bannerWanted || fullScreenDepth > 0) {
-        resolve(false);
-        return;
-      }
-      bannerState = shown ? 'shown' : 'hidden';
-      activeBannerMargin = shown ? margin : -1;
-      setBannerHeight(shown ? height : 0);
-      if (!shown) await AdMob.removeBanner().catch(() => undefined);
-      console.info(shown ? '[AdMob] banner loaded' : '[AdMob] banner unavailable', { margin });
-      resolve(shown);
-    };
-    const timer = window.setTimeout(() => void finish(false), 12_000);
-
-    try {
-      loadedHandle = await AdMob.addListener(BannerAdPluginEvents.Loaded, () => void finish(true));
-      failedHandle = await AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
-        console.warn('[AdMob] banner failed to load:', error);
-        void finish(false);
-      });
-      sizeHandle = await AdMob.addListener(BannerAdPluginEvents.SizeChanged, (size) => {
-        if (bannerState === 'shown' && size.height > 0) setBannerHeight(size.height);
-      });
-      await AdMob.showBanner({
-        adId: ANDROID_AD_UNITS.banner,
-        adSize: BannerAdSize.BANNER,
-        position: BannerAdPosition.BOTTOM_CENTER,
-        margin,
-      });
-    } catch (error) {
-      console.warn('[AdMob] banner request failed:', error);
-      void finish(false);
-    }
-  });
-  const result = await bannerPromise;
-  if (requestId === bannerRequestId) bannerPromise = null;
-  return result;
-}
-
-export async function hideAdMobBanner(preserveIntent = false): Promise<void> {
-  if (!preserveIntent) bannerWanted = false;
-  bannerRequestId += 1;
-  bannerPromise = null;
-  bannerState = 'hidden';
-  activeBannerMargin = -1;
-  setBannerHeight(0);
-  if (!isMobileAdsEnabled) return;
-  await AdMob.removeBanner().catch((error) => console.warn('[AdMob] banner cleanup failed:', error));
-}
-
-async function enterFullScreenAd() {
-  fullScreenDepth += 1;
-  if (bannerState !== 'hidden') await hideAdMobBanner(true);
-  window.dispatchEvent(new CustomEvent('cuizin_pause_bgm'));
-}
-
-async function leaveFullScreenAd() {
-  fullScreenDepth = Math.max(0, fullScreenDepth - 1);
-  window.dispatchEvent(new CustomEvent('cuizin_resume_bgm'));
-  if (fullScreenDepth === 0 && bannerWanted) await showAdMobBanner(requestedBannerMargin);
-}
-
-/** Remove the native view while Android is backgrounded without forgetting the route intent. */
-export async function suspendAdMobBanner(): Promise<void> {
-  if (!isMobileAdsEnabled || bannerState === 'hidden') return;
-  await hideAdMobBanner(true);
-}
-
-/** Restore the banner only when its current route still requests one. */
-export async function resumeAdMobBanner(): Promise<boolean> {
-  if (!bannerWanted || fullScreenDepth > 0) return false;
-  return showAdMobBanner(requestedBannerMargin);
-}
-
-export async function preloadAdMobInterstitial(): Promise<boolean> {
-  if (!isMobileAdsEnabled || !(await initAdMob())) return false;
   try {
-    await AdMob.prepareInterstitial({ adId: ANDROID_AD_UNITS.interstitial });
-    interstitialReady = true;
+    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId });
     return true;
-  } catch (error) {
-    interstitialReady = false;
-    console.warn('[AdMob] interstitial preload failed:', error);
+  } catch (err) {
+    console.warn('CustomAdMob showBanner error:', err);
     return false;
+  }
+}
+
+export async function hideAdMobBanner(): Promise<void> {
+  bannerWanted = false;
+  if (!isMobileAdsEnabled) return;
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    await CustomAdMob.hideBanner();
+  } catch (err) {
+    console.warn('CustomAdMob hideBanner error:', err);
+  }
+}
+
+export function isAdMobBannerShown(): boolean {
+  return bannerWanted;
+}
+
+export async function suspendAdMobBanner(): Promise<void> {
+  if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  try {
+    await CustomAdMob.hideBanner();
+  } catch (err) {}
+}
+
+export async function resumeAdMobBanner(): Promise<void> {
+  if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  if (fullScreenDepth > 0) return;
+  try {
+    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId });
+  } catch (err) {}
+}
+
+// ─── Full-Screen Ad Handlers ──────────────────────────────────────────────────
+
+export async function preloadAdMobInterstitial(): Promise<void> {
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  await initAdMob();
+
+  try {
+    await CustomAdMob.prepareInterstitial({
+      adId: ADMOB_CONFIG.androidInterstitialId,
+    });
+  } catch (e) {
+    console.warn('CustomAdMob prepareInterstitial error:', e);
   }
 }
 
 export async function showAdMobInterstitial(): Promise<boolean> {
-  if (!isMobileAdsEnabled || (!(interstitialReady || await preloadAdMobInterstitial()))) return false;
-  interstitialReady = false;
-  await enterFullScreenAd();
-  let dismissedHandle: PluginListenerHandle | undefined;
-  let failedHandle: PluginListenerHandle | undefined;
+  if (!isMobileAdsEnabled) return false;
+  if (!Capacitor.isNativePlatform()) return true;
+
+  await initAdMob();
+  fullScreenDepth++;
+  await suspendAdMobBanner();
+  audioManager.pauseBGM();
 
   try {
-    const completed = await new Promise<boolean>(async (resolve) => {
-      let settled = false;
-      const finish = async (shown: boolean) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timer);
-        await removeHandles([dismissedHandle, failedHandle]);
-        resolve(shown);
-      };
-      const timer = window.setTimeout(() => void finish(false), 90_000);
-      dismissedHandle = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => void finish(true));
-      failedHandle = await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => void finish(false));
-      try {
-        await AdMob.showInterstitial();
-      } catch (error) {
-        console.warn('[AdMob] interstitial show failed:', error);
-        void finish(false);
-      }
-    });
-    return completed;
+    await CustomAdMob.showInterstitial();
+    return true;
+  } catch (e) {
+    console.warn('CustomAdMob showInterstitial error:', e);
+    return false;
   } finally {
-    await leaveFullScreenAd();
-    void preloadAdMobInterstitial();
+    fullScreenDepth--;
+    if (bannerWanted) await resumeAdMobBanner();
+    audioManager.startBGM();
+    // Preload next
+    preloadAdMobInterstitial();
   }
 }
 
-export async function preloadAdMobRewarded(): Promise<boolean> {
-  if (!isMobileAdsEnabled || !(await initAdMob())) return false;
+export async function preloadAdMobRewarded(): Promise<void> {
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  await initAdMob();
+
   try {
-    await AdMob.prepareRewardVideoAd({ adId: ANDROID_AD_UNITS.rewarded });
-    rewardedReady = true;
-    return true;
-  } catch (error) {
-    rewardedReady = false;
-    console.warn('[AdMob] rewarded preload failed:', error);
-    return false;
+    await CustomAdMob.prepareRewardVideoAd({
+      adId: ADMOB_CONFIG.androidRewardedId,
+    });
+  } catch (e) {
+    console.warn('CustomAdMob prepareRewardVideoAd error:', e);
   }
 }
 
 export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: boolean }> {
-  if (!isMobileAdsEnabled || (!(rewardedReady || await preloadAdMobRewarded()))) {
-    return { shown: false, rewarded: false };
-  }
-  rewardedReady = false;
-  await enterFullScreenAd();
+  if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
+  if (!Capacitor.isNativePlatform()) return { shown: true, rewarded: true };
+
+  await initAdMob();
+  fullScreenDepth++;
+  await suspendAdMobBanner();
+  audioManager.pauseBGM();
+
+  let rewarded = false;
+
   try {
-    const reward = await AdMob.showRewardVideoAd();
-    return { shown: true, rewarded: Boolean(reward) };
-  } catch (error) {
-    console.warn('[AdMob] rewarded show failed:', error);
+    const rewardItem = await CustomAdMob.showRewardVideoAd();
+    if (rewardItem && rewardItem.amount > 0) {
+      rewarded = true;
+    }
+    return { shown: true, rewarded };
+  } catch (e) {
+    console.warn('CustomAdMob showRewardVideoAd error:', e);
     return { shown: false, rewarded: false };
   } finally {
-    await leaveFullScreenAd();
-    void preloadAdMobRewarded();
+    fullScreenDepth--;
+    if (bannerWanted) await resumeAdMobBanner();
+    audioManager.startBGM();
+    // Preload next
+    preloadAdMobRewarded();
   }
 }
 
-/** Compatibility entrypoint retained for existing full-screen ad callers. */
-export async function showAdWithFallback(type: 'interstitial' | 'rewarded'): Promise<boolean> {
-  if (type === 'rewarded') {
-    const result = await showAdMobRewarded();
-    return result.shown && result.rewarded;
+export async function showAdMobRewardedInterstitial(): Promise<{ shown: boolean; rewarded: boolean }> {
+  // Use rewarded ad logic for now as a fallback
+  return showAdMobRewarded();
+}
+
+export async function showAdWithFallback(
+  prefer: 'interstitial' | 'rewarded' = 'interstitial',
+): Promise<boolean> {
+  if (prefer === 'rewarded') {
+    const res = await showAdMobRewarded();
+    return res.shown;
   }
   return showAdMobInterstitial();
 }
