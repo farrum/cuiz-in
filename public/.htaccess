@@ -73,6 +73,8 @@ RewriteCond %{REQUEST_URI} !^/og-image.*\.png$
 </IfModule>
 
 # SPA fallback for all other routes (must be last to allow bot detection above)
+# Serve existing static files directly (robots.txt, ads.txt, etc.) instead of index.html
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.html [L]
 
 
