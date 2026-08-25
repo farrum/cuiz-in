@@ -63,6 +63,7 @@ RewriteCond %{REQUEST_URI} !^/index.html$
 RewriteCond %{REQUEST_URI} !^/ads\.txt$
 RewriteCond %{REQUEST_URI} !^/sitemap.*\.xml$
 RewriteCond %{REQUEST_URI} !^/favicon\.ico$
+RewriteCond %{REQUEST_URI} !^/robots\.txt$
 RewriteCond %{REQUEST_URI} !^/og-image.*\.png$
 <IfModule mod_proxy.c>
   RewriteRule ^(.*)$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/prerender?path=/$1 [P,L]
