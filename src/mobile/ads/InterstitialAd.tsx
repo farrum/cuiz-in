@@ -26,10 +26,9 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
   // No built-in sample creatives: native SDKs or a managed slot only.
   const ad = null as null | { bg: string; sample?: boolean; headline: string; body: string; cta: string; href?: string };
   // Third-party network creatives (Adsterra / ClickAdilla / VAST) are removed.
-  // Interstitials come from AdMob (LevelPlay fallback) on native, or a managed
-  // DB slot on web.
+  // Interstitials come from AdMob on native, or a managed DB slot on web.
   const hasNetworkAd = false;
-  // True while the native AdMob/LevelPlay interstitial is on screen (or being
+  // True while the native AdMob interstitial is on screen (or being
   // requested) — the web overlay must stay hidden in that case.
   const [nativeShowing, setNativeShowing] = useState(false);
 
