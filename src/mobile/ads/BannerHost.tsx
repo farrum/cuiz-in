@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { hideAdMobBanner, showAdMobBanner, isAdMobBannerShown } from './admob';
+import {
+  hideAdMobBanner,
+  resumeAdMobBanner,
+  showAdMobBanner,
+  suspendAdMobBanner,
+} from './admob';
 
 /**
  * Determines if a route should show the native AdMob banner.
@@ -61,16 +66,26 @@ export function BannerHost() {
 
   useEffect(() => {
     let isMounted = true;
+    let retryTimer: number | undefined;
+    let attempt = 0;
+
+    const requestBanner = async (margin: number) => {
+      const shown = await showAdMobBanner(margin);
+      if (!isMounted || shown || attempt >= 2) return;
+      attempt += 1;
+      // Retry no-fill/transient SDK startup failures without churning native views.
+      retryTimer = window.setTimeout(() => void requestBanner(margin), 15_000);
+    };
+
     const timer = setTimeout(() => {
       if (!isMounted) return;
       const show = shouldShowBannerForRoute(location.pathname);
-      const isShown = isAdMobBannerShown();
 
       if (show) {
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
-        void showAdMobBanner(margin);
-      } else if (isShown) {
+        void requestBanner(margin);
+      } else {
         void hideAdMobBanner();
       }
     }, 120);
@@ -78,8 +93,20 @@ export function BannerHost() {
     return () => {
       isMounted = false;
       clearTimeout(timer);
+      if (retryTimer) window.clearTimeout(retryTimer);
     };
   }, [location.pathname]);
+
+  useEffect(() => {
+    const background = () => void suspendAdMobBanner();
+    const foreground = () => void resumeAdMobBanner();
+    window.addEventListener('cuizin_app_background', background);
+    window.addEventListener('cuizin_app_foreground', foreground);
+    return () => {
+      window.removeEventListener('cuizin_app_background', background);
+      window.removeEventListener('cuizin_app_foreground', foreground);
+    };
+  }, []);
 
   // Hide the banner when host component unmounts
   useEffect(() => {
