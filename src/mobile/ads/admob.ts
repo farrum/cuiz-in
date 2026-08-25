@@ -23,6 +23,9 @@ let bannerState: 'hidden' | 'loading' | 'shown' = 'hidden';
 let requestedBannerMargin = 0;
 let activeBannerMargin = -1;
 let fullScreenDepth = 0;
+let bannerWanted = false;
+let bannerRequestId = 0;
+let bannerPromise: Promise<boolean> | null = null;
 
 function setBannerHeight(height: number) {
   document.documentElement.style.setProperty('--banner-h', `${Math.max(0, Math.round(height))}px`);
@@ -57,31 +60,42 @@ export async function initAdMob(): Promise<boolean> {
 }
 
 export async function showAdMobBanner(margin = 0): Promise<boolean> {
+  bannerWanted = true;
   requestedBannerMargin = margin;
   if (!isMobileAdsEnabled || fullScreenDepth > 0) return false;
   if (bannerState === 'shown' && activeBannerMargin === margin) return true;
-  if (bannerState === 'loading') return false;
+  if (bannerState === 'loading' && activeBannerMargin === margin && bannerPromise) return bannerPromise;
   if (!(await initAdMob())) return false;
 
-  if (bannerState === 'shown') await hideAdMobBanner();
+  // Invalidate an older load before changing margin or replacing a banner.
+  const requestId = ++bannerRequestId;
+  if (bannerState !== 'hidden') {
+    await AdMob.removeBanner().catch(() => undefined);
+  }
 
   bannerState = 'loading';
+  activeBannerMargin = margin;
   setBannerHeight(0);
   let loadedHandle: PluginListenerHandle | undefined;
   let failedHandle: PluginListenerHandle | undefined;
   let sizeHandle: PluginListenerHandle | undefined;
 
-  return new Promise<boolean>(async (resolve) => {
+  bannerPromise = new Promise<boolean>(async (resolve) => {
     let settled = false;
     const finish = async (shown: boolean, height = 50) => {
       if (settled) return;
       settled = true;
       window.clearTimeout(timer);
       await removeHandles([loadedHandle, failedHandle, sizeHandle]);
+      if (requestId !== bannerRequestId || !bannerWanted || fullScreenDepth > 0) {
+        resolve(false);
+        return;
+      }
       bannerState = shown ? 'shown' : 'hidden';
       activeBannerMargin = shown ? margin : -1;
       setBannerHeight(shown ? height : 0);
       if (!shown) await AdMob.removeBanner().catch(() => undefined);
+      console.info(shown ? '[AdMob] banner loaded' : '[AdMob] banner unavailable', { margin });
       resolve(shown);
     };
     const timer = window.setTimeout(() => void finish(false), 12_000);
@@ -106,9 +120,15 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
       void finish(false);
     }
   });
+  const result = await bannerPromise;
+  if (requestId === bannerRequestId) bannerPromise = null;
+  return result;
 }
 
-export async function hideAdMobBanner(): Promise<void> {
+export async function hideAdMobBanner(preserveIntent = false): Promise<void> {
+  if (!preserveIntent) bannerWanted = false;
+  bannerRequestId += 1;
+  bannerPromise = null;
   bannerState = 'hidden';
   activeBannerMargin = -1;
   setBannerHeight(0);
@@ -118,14 +138,26 @@ export async function hideAdMobBanner(): Promise<void> {
 
 async function enterFullScreenAd() {
   fullScreenDepth += 1;
-  if (bannerState !== 'hidden') await hideAdMobBanner();
+  if (bannerState !== 'hidden') await hideAdMobBanner(true);
   window.dispatchEvent(new CustomEvent('cuizin_pause_bgm'));
 }
 
 async function leaveFullScreenAd() {
   fullScreenDepth = Math.max(0, fullScreenDepth - 1);
   window.dispatchEvent(new CustomEvent('cuizin_resume_bgm'));
-  if (fullScreenDepth === 0) await showAdMobBanner(requestedBannerMargin);
+  if (fullScreenDepth === 0 && bannerWanted) await showAdMobBanner(requestedBannerMargin);
+}
+
+/** Remove the native view while Android is backgrounded without forgetting the route intent. */
+export async function suspendAdMobBanner(): Promise<void> {
+  if (!isMobileAdsEnabled || bannerState === 'hidden') return;
+  await hideAdMobBanner(true);
+}
+
+/** Restore the banner only when its current route still requests one. */
+export async function resumeAdMobBanner(): Promise<boolean> {
+  if (!bannerWanted || fullScreenDepth > 0) return false;
+  return showAdMobBanner(requestedBannerMargin);
 }
 
 export async function preloadAdMobInterstitial(): Promise<boolean> {

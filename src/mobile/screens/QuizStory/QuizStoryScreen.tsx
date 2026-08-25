@@ -295,7 +295,7 @@ export default function QuizStoryScreen() {
         toast({ title: 'Ad closed early', description: 'Streak was reset.' });
       }
     } catch (e) {
-      console.warn('LevelPlay Revive failed', e);
+      console.warn('AdMob Revive failed', e);
       resetStreak();
     } finally {
       setReviveAdShowing(false);
@@ -348,7 +348,7 @@ export default function QuizStoryScreen() {
         navigate('/hub');
       }
     } catch (e) {
-      console.warn('LevelPlay Double Gems failed', e);
+      console.warn('AdMob Double Gems failed', e);
       setDoubleGemsPending(false);
       navigate('/hub');
     } finally {
@@ -586,7 +586,7 @@ export default function QuizStoryScreen() {
         </div>
       </div>
 
-      {/* Fixed bottom spacer reserved for the native AdMob/LevelPlay banner so
+      {/* Fixed bottom spacer reserved for the native AdMob banner so
           the session footer is never overlapped by the SDK banner surface. The
           banner itself is owned by <BannerHost/> (mounted once in AppMobile) and
           drawn outside the WebView; this spacer just keeps content clear of it.
