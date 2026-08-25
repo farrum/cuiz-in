@@ -142,7 +142,18 @@ export const AdminTeamLeadersRoster: React.FC = () => {
           const referrerProf = profilesMap.get(referrerId);
 
           const rawDate = ref.last_active_date || prof?.created_at;
-          const lastActiveStr = rawDate ? new Date(rawDate).toLocaleDateString() + ' ' + new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+          let lastActiveStr = '-';
+          if (rawDate) {
+            try {
+              const d = new Date(rawDate);
+              if (!isNaN(d.getTime())) {
+                // Keep the same format but ensure it's a valid date
+                lastActiveStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              }
+            } catch (e) {
+              console.error('Invalid date format', rawDate);
+            }
+          }
           const isOnline = ref.status === 'active' &&
             ref.last_active_date &&
             new Date(ref.last_active_date).getTime() > Date.now() - 30 * 60 * 1000;
@@ -157,9 +168,9 @@ export const AdminTeamLeadersRoster: React.FC = () => {
             role: leaderRolesMap.get(referredId) || 'infantry',
             status: prof?.suspended ? 'suspended' : isOnline ? 'active' : 'inactive',
             lastActive: isOnline ? 'Online Today' : lastActiveStr,
-            questionsAnswered: Math.floor(Math.random() * 15 + (isOnline ? 10 : 2)),
-            questionsCorrect: Math.floor(Math.random() * 10 + (isOnline ? 8 : 1)),
-            playTimeMinutes: playMins || (isOnline ? Math.floor(Math.random() * 45 + 15) : 0),
+            questionsAnswered: 0, // Mock removed
+            questionsCorrect: 0, // Mock removed
+            playTimeMinutes: playMins || 0, // Mock removed
             directLeaderId: referrerId,
             directLeaderName: referrerProf?.display_name || referrerProf?.username || ref.referrer_name || 'Commander',
             assignedTaskTitle: taskProg?.empire_tasks?.title || 'Daily Quests',
