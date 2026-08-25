@@ -4,7 +4,7 @@ import { audioManager } from '@/utils/audioManager';
 // Register the custom plugin we wrote in CustomAdMobPlugin.java
 export interface CustomAdMobPlugin {
   initialize(): Promise<void>;
-  showBanner(options: { adId: string }): Promise<void>;
+  showBanner(options: { adId: string, margin?: number }): Promise<void>;
   hideBanner(): Promise<void>;
   prepareInterstitial(options: { adId: string }): Promise<void>;
   showInterstitial(): Promise<void>;
@@ -63,7 +63,7 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
   if (fullScreenDepth > 0) return false;
 
   try {
-    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId });
+    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin });
     return true;
   } catch (err) {
     console.warn('CustomAdMob showBanner error:', err);
@@ -98,7 +98,9 @@ export async function resumeAdMobBanner(): Promise<void> {
   if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   if (fullScreenDepth > 0) return;
   try {
-    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId });
+    // We assume 0 margin here or ideally use a stored margin, 
+    // but BannerHost will quickly correct it anyway.
+    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin: 0 });
   } catch (err) {}
 }
 

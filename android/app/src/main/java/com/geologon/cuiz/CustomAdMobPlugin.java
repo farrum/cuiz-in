@@ -55,9 +55,24 @@ public class CustomAdMobPlugin extends Plugin {
             call.reject("Must provide adId");
             return;
         }
+        
+        Integer marginDpObj = call.getInt("margin");
+        final int marginDp = marginDpObj != null ? marginDpObj : 0;
 
         getActivity().runOnUiThread(() -> {
+            float density = getActivity().getResources().getDisplayMetrics().density;
+            final int marginPx = (int) (marginDp * density);
+
             if (adView != null) {
+                // If the view exists, update its layout params in case margin changed
+                ViewGroup.LayoutParams lp = adView.getLayoutParams();
+                if (lp instanceof FrameLayout.LayoutParams) {
+                    FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) lp;
+                    androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
+                    int bottomInset = (insets != null) ? insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom : 0;
+                    flp.bottomMargin = marginPx + bottomInset;
+                    adView.setLayoutParams(flp);
+                }
                 call.resolve();
                 return;
             }
@@ -70,21 +85,37 @@ public class CustomAdMobPlugin extends Plugin {
             DisplayMetrics outMetrics = new DisplayMetrics();
             display.getMetrics(outMetrics);
             float widthPixels = outMetrics.widthPixels;
-            float density = outMetrics.density;
+            // density is already defined above
             int adWidth = (int) (widthPixels / density);
             AdSize adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(getContext(), adWidth);
             adView.setAdSize(adSize);
 
-            // Create layout params that place it at bottom WITHOUT resizing WebView
+            // We use FrameLayout.LayoutParams because we are adding this directly to the Activity's root content frame.
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
             );
             params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            
+            androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
+            int bottomInset = (insets != null) ? insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom : 0;
+            params.bottomMargin = marginPx + bottomInset;
 
-            // Bridge's WebView parent is typically a FrameLayout where we can stack views overlay-style
-            ViewGroup root = (ViewGroup) bridge.getWebView().getParent();
-            root.addView(adView, params);
+            // Add the view directly to the Window's content layout (always a FrameLayout).
+            // This prevents issues with CoordinatorLayout or WebView parents overriding gravity.
+            ViewGroup content = (ViewGroup) getActivity().findViewById(android.R.id.content);
+            content.addView(adView, params);
+            
+            // Listen for window inset changes (e.g., keyboard or navigation bar appearing/disappearing)
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(adView, (v, windowInsets) -> {
+                int newBottomInset = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom;
+                ViewGroup.LayoutParams lp = v.getLayoutParams();
+                if (lp instanceof FrameLayout.LayoutParams) {
+                    ((FrameLayout.LayoutParams) lp).bottomMargin = marginPx + newBottomInset;
+                    v.setLayoutParams(lp);
+                }
+                return windowInsets;
+            });
 
             AdRequest adRequest = new AdRequest.Builder().build();
             adView.loadAd(adRequest);
