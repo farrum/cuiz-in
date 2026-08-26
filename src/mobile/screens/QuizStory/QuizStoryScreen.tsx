@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded } from '@/mobile/ads/admob';
+import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded, preloadAdMobInterstitial } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -123,7 +123,11 @@ export default function QuizStoryScreen() {
     }
   };
 
-  useEffect(() => { loadNext(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { 
+    loadNext(); 
+    preloadAdMobInterstitial();
+    /* eslint-disable-next-line */ 
+  }, []);
 
   // Load available categories for the preferences picker
   useEffect(() => {
@@ -239,14 +243,17 @@ export default function QuizStoryScreen() {
         setTimeout(() => setShakeOpt(null), 500);
       }
 
-      // After the 10s reveal, advance — but every 3 answered questions we show
+      // After the 10s reveal, advance — every 2 answered questions we show
       // a full-screen ad break first (the interstitial itself advances on close).
       answerCount.current += 1;
       const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3 && isMobileAdsEnabled;
       if (!isRevivePossible) {
         const now = Date.now();
         const adDue =
-          answerCount.current % 3 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
+          answerCount.current % 2 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
+
+        // Warm up / preload the next interstitial continuously
+        preloadAdMobInterstitial();
 
         advanceTimer.current = window.setTimeout(() => {
           if (!mountedRef.current) return;

@@ -4,6 +4,7 @@ import { audioManager } from '@/utils/audioManager';
 // Register the custom plugin we wrote in CustomAdMobPlugin.java
 export interface CustomAdMobPlugin {
   initialize(): Promise<void>;
+  prepareBanner(options: { adId: string, margin?: number }): Promise<void>;
   showBanner(options: { adId: string, margin?: number }): Promise<void>;
   hideBanner(): Promise<void>;
   prepareInterstitial(options: { adId: string }): Promise<void>;
@@ -28,7 +29,7 @@ let bannerWanted = false;
 let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently showing
 let initPromise: Promise<boolean> | null = null;
 
-// Ensure we initialize AdMob natively
+// Ensure we initialize AdMob natively and continuously warm up all ad types
 export async function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true;
@@ -41,6 +42,10 @@ export async function initAdMob(): Promise<boolean> {
       await CustomAdMob.initialize();
       isInitialized = true;
       console.log('CustomAdMob Initialized natively via Capacitor');
+      // Warm up banner, interstitial, and rewarded in advance in the background
+      preloadAdMobBanner(70);
+      preloadAdMobInterstitial();
+      preloadAdMobRewarded();
       return true;
     } catch (e) {
       console.error('CustomAdMob Init Error:', e);
@@ -51,9 +56,19 @@ export async function initAdMob(): Promise<boolean> {
   return initPromise;
 }
 
-let lastBannerMargin = 0;
+let lastBannerMargin = 70;
 
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
+
+export async function preloadAdMobBanner(margin = 70): Promise<void> {
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  lastBannerMargin = margin;
+  try {
+    await CustomAdMob.prepareBanner({ adId: ADMOB_CONFIG.androidBannerId, margin });
+  } catch (e) {
+    console.warn('CustomAdMob prepareBanner error:', e);
+  }
+}
 
 export async function showAdMobBanner(margin = 0): Promise<boolean> {
   bannerWanted = true;
