@@ -70,33 +70,27 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         rolesData.forEach((r: any) => rolesMap.set(r.user_id, r.role));
       }
 
-      // Compute today's start date
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-
-      let clientQuestionsMap = new Map<string, number>();
+      // Today's attempted questions (India time), excluding quest/challenge questions
+      const clientQuestionsMap = new Map<string, number>();
       try {
-        const { data: answersData } = await supabase
-          .from('quiz_answers')
-          .select('user_id')
-          .gte('answered_at', todayStart);
-
-        if (answersData) {
-          answersData.forEach((a: any) => {
-            if (a.user_id) {
-              clientQuestionsMap.set(a.user_id, (clientQuestionsMap.get(a.user_id) || 0) + 1);
-            }
+        const { data: counts, error: countsError } = await supabase.rpc('admin_get_questions_today' as any);
+        if (countsError) {
+          console.warn('admin_get_questions_today error:', countsError.message);
+        } else if (counts) {
+          (counts as any[]).forEach((row) => {
+            if (row?.user_id) clientQuestionsMap.set(row.user_id, Number(row.questions_today) || 0);
           });
         }
       } catch (err) {
-        console.warn('Could not fetch quiz_answers client-side:', err);
+        console.warn('Could not fetch questions-today counts:', err);
       }
 
       const mappedUsers = rawUsers.map((u: any) => ({
         ...u,
         role: rolesMap.get(u.id) || 'infantry',
-        questions_today: u.questions_today ?? clientQuestionsMap.get(u.id) ?? 0,
+        questions_today: clientQuestionsMap.get(u.id) ?? u.questions_today ?? 0,
       }));
+
 
       setUsers(mappedUsers);
     } catch (error: any) {
