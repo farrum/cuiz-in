@@ -1548,6 +1548,13 @@ export type Database = {
           total_team_size: number
         }[]
       }
+      admin_get_questions_today: {
+        Args: never
+        Returns: {
+          questions_today: number
+          user_id: string
+        }[]
+      }
       admin_get_quiz_questions: {
         Args: { p_ids?: string[] }
         Returns: {
