@@ -42,7 +42,23 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   const fetchTopPlayers = useCallback(async () => {
     try {
       setLoading(true);
-      
+
+      // Monthly block: rank by this month's gems (resets on the 1st), not all-time points.
+      if (showMonthlyComparison) {
+        const month = new Date().toISOString().slice(0, 7);
+        const { data, error } = await supabase.rpc('get_monthly_leaderboard', { _month: month, _limit: limit });
+        if (error) throw error;
+
+        const formattedPlayers = (data || []).map((player: any) => ({
+          username: player.display_name || player.username || 'Player',
+          gems: Number(player.points || 0),
+          isCurrentUser: player.user_id === currentUserId
+        }));
+
+        setPlayers(formattedPlayers);
+        return;
+      }
+
       // Derive admin status from the Supabase session + database, never localStorage.
       const { data: { user } } = await supabase.auth.getUser();
       let isAdmin = false;
@@ -97,7 +113,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [limit, currentUserId]);
+  }, [limit, currentUserId, showMonthlyComparison]);
 
   // Optimize monthly gems fetching
   const fetchCurrentUserMonthlyGems = useCallback(async () => {
@@ -198,7 +214,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         <CardHeader className="pb-3">
           <CardTitle className="text-md flex items-center">
             <Trophy className="mr-2 h-4 w-4" />
-            <span>Top Players</span>
+            <span>{showMonthlyComparison ? 'Top Players — This Month' : 'Top Players — All Time'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
@@ -215,10 +231,10 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-md flex items-center">
-          <Trophy className="mr-2 h-4 w-4" />
-          <span>Top Players</span>
-          {showMonthlyComparison && (
+          <CardTitle className="text-md flex items-center">
+            <Trophy className="mr-2 h-4 w-4" />
+            <span>{showMonthlyComparison ? 'Top Players — This Month' : 'Top Players — All Time'}</span>
+            {showMonthlyComparison && (
             <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: {getNextMonthReset()}</Badge>
           )}
         </CardTitle>
