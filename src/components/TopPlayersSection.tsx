@@ -113,7 +113,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [limit, currentUserId]);
+  }, [limit, currentUserId, showMonthlyComparison]);
 
   // Optimize monthly gems fetching
   const fetchCurrentUserMonthlyGems = useCallback(async () => {
