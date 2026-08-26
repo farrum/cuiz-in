@@ -88,10 +88,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Calculate today's start date for today's attempts count
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+    let questionsTodayMap: Record<string, number> = {};
+    try {
+      const { data: answersToday } = await supabaseAdmin
+        .from('quiz_answers')
+        .select('user_id')
+        .gte('answered_at', todayStart);
+
+      if (answersToday) {
+        for (const a of answersToday) {
+          if (a.user_id) {
+            questionsTodayMap[a.user_id] = (questionsTodayMap[a.user_id] || 0) + 1;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Error fetching questions today in edge function:', err);
+    }
+
     const mappedUsers = (users || []).map((user: any) => ({
       ...user,
       gems: user.points || 0,
       gems_balance: user.points || 0,
+      questions_today: questionsTodayMap[user.id] || 0,
     }));
 
     return new Response(

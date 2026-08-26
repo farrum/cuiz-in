@@ -42,27 +42,6 @@ export async function getDailyTributeStatus(userId?: string | null): Promise<Dai
   let lastDate = localStorage.getItem(LAST_TRIBUTE_DATE_KEY);
   let savedStreak = Number(localStorage.getItem(TRIBUTE_STREAK_KEY) || '0');
 
-  if (userId && userId !== 'guest') {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('user_task_progress')
-        .select('progress, updated_at')
-        .eq('user_id', userId)
-        .eq('task_id', 'daily_tribute_login')
-        .maybeSingle();
-
-      if (!error && data) {
-        lastDate = data.updated_at ? String(data.updated_at).split('T')[0] : lastDate;
-        savedStreak = data.progress || savedStreak;
-        
-        if (lastDate) localStorage.setItem(LAST_TRIBUTE_DATE_KEY, lastDate);
-        localStorage.setItem(TRIBUTE_STREAK_KEY, String(savedStreak));
-      }
-    } catch (e) {
-      console.warn('Failed to fetch daily tribute status from DB:', e);
-    }
-  }
-
   // If already claimed on today's calendar date, do not show or grant again
   if (lastDate === todayStr) {
     const streak = Math.max(1, Math.min(savedStreak, 7));
@@ -131,31 +110,6 @@ export async function claimDailyTribute(userId?: string | null): Promise<{ succe
       try {
         await supabase.from('profiles').update({ stars: newStars }).eq('id', userId);
       } catch {}
-    }
-    
-    try {
-      const { data } = await (supabase as any)
-        .from('user_task_progress')
-        .select('task_id')
-        .eq('user_id', userId)
-        .eq('task_id', 'daily_tribute_login')
-        .maybeSingle();
-        
-      if (data) {
-        await (supabase as any).from('user_task_progress').update({
-          progress: nextStreak,
-          updated_at: new Date().toISOString()
-        }).eq('user_id', userId).eq('task_id', 'daily_tribute_login');
-      } else {
-        await (supabase as any).from('user_task_progress').insert({
-          user_id: userId,
-          task_id: 'daily_tribute_login',
-          progress: nextStreak,
-          updated_at: new Date().toISOString()
-        });
-      }
-    } catch (e) {
-      console.warn('Failed to update daily tribute in user_task_progress:', e);
     }
   }
 

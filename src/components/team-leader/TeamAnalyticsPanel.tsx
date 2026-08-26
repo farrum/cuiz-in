@@ -26,6 +26,7 @@ interface TeamAnalyticsPanelProps {
 type MetricKey = 'answers' | 'correct' | 'gems';
 
 const RANGES = [
+  { label: '1D', days: 1 },
   { label: '7D', days: 7 },
   { label: '30D', days: 30 },
   { label: '90D', days: 90 },
@@ -40,7 +41,7 @@ const METRICS: { key: MetricKey; label: string; color: string }[] = [
 const PIE_COLORS = ['#22c55e', '#ef4444'];
 
 const TeamAnalyticsPanel: React.FC<TeamAnalyticsPanelProps> = ({ members, compact = false }) => {
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(7);
   const [memberFilter, setMemberFilter] = useState<string>('all');
   const [metric, setMetric] = useState<MetricKey>('answers');
   const { rows, loading, error, refresh } = useTeamAnalytics(members, days);
@@ -127,7 +128,7 @@ const TeamAnalyticsPanel: React.FC<TeamAnalyticsPanelProps> = ({ members, compac
         'Gems Earned': m.gems,
         'Active Days': m.activeDays,
       })),
-      `team-analytics-last-${days}-days`
+      `team-analytics-${days === 1 ? 'today-24h' : `last-${days}-days`}`
     );
   };
 
@@ -218,7 +219,9 @@ const TeamAnalyticsPanel: React.FC<TeamAnalyticsPanelProps> = ({ members, compac
               <k.icon className={`w-4 h-4 ${k.color}`} />
             </div>
             <p className={`text-2xl font-black ${k.color}`}>{k.value}</p>
-            <p className="text-[9px] text-slate-500 uppercase font-semibold mt-0.5">Last {days} days</p>
+            <p className="text-[9px] text-slate-500 uppercase font-semibold mt-0.5">
+              {days === 1 ? 'Last 24 Hours' : `Last ${days} days`}
+            </p>
           </div>
         ))}
       </div>

@@ -70,9 +70,32 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         rolesData.forEach((r: any) => rolesMap.set(r.user_id, r.role));
       }
 
+      // Compute today's start date
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+      let clientQuestionsMap = new Map<string, number>();
+      try {
+        const { data: answersData } = await supabase
+          .from('quiz_answers')
+          .select('user_id')
+          .gte('answered_at', todayStart);
+
+        if (answersData) {
+          answersData.forEach((a: any) => {
+            if (a.user_id) {
+              clientQuestionsMap.set(a.user_id, (clientQuestionsMap.get(a.user_id) || 0) + 1);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Could not fetch quiz_answers client-side:', err);
+      }
+
       const mappedUsers = rawUsers.map((u: any) => ({
         ...u,
-        role: rolesMap.get(u.id) || 'infantry'
+        role: rolesMap.get(u.id) || 'infantry',
+        questions_today: u.questions_today ?? clientQuestionsMap.get(u.id) ?? 0,
       }));
 
       setUsers(mappedUsers);
@@ -241,6 +264,21 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       cell: (row: any) => (
         <Badge variant="secondary">{row.gems}</Badge>
       )
+    },
+    {
+      header: 'Questions Today',
+      accessorKey: 'questions_today',
+      cell: (row: any) => {
+        const count = Number(row.questions_today || 0);
+        return (
+          <Badge 
+            variant={count > 0 ? "default" : "secondary"}
+            className={count > 0 ? "bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold px-2 py-0.5" : "text-muted-foreground font-medium px-2 py-0.5"}
+          >
+            {count}
+          </Badge>
+        );
+      }
     },
     {
       header: 'Status',

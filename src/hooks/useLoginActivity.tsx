@@ -32,11 +32,12 @@ export const useLoginActivity = (
         // Log the login activity to trigger attendance tracking
         const device = navigator.userAgent;
         const loginTime = new Date().toISOString();
+        const userHandle = localStorage.getItem('cuizin_username') || userName;
         
         const { error: loginLogError } = await supabase
           .from('login_logs')
           .insert({
-            username: userName,
+            username: userHandle,
             ip_address: "client-side",
             device: device,
             login_time: loginTime,
@@ -44,14 +45,9 @@ export const useLoginActivity = (
           });
           
         if (loginLogError) {
-          console.error('Error logging login activity:', loginLogError);
-          toast({
-            variant: "destructive",
-            title: "Login tracking failed",
-            description: "Your login was recorded but attendance tracking failed"
-          });
+          console.warn('Login activity log notice:', loginLogError.message);
         } else {
-          console.log('Login activity logged for user:', userName);
+          console.log('Login activity logged for user:', userHandle);
         }
         
         // Check and update login streak - only do this once per session
