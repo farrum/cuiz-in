@@ -214,7 +214,7 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
         <CardHeader className="pb-3">
           <CardTitle className="text-md flex items-center">
             <Trophy className="mr-2 h-4 w-4" />
-            <span>Top Players</span>
+            <span>{showMonthlyComparison ? 'Top Players — This Month' : 'Top Players — All Time'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
