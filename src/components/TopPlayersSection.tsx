@@ -231,10 +231,10 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-md flex items-center">
-          <Trophy className="mr-2 h-4 w-4" />
-          <span>Top Players</span>
-          {showMonthlyComparison && (
+          <CardTitle className="text-md flex items-center">
+            <Trophy className="mr-2 h-4 w-4" />
+            <span>{showMonthlyComparison ? 'Top Players — This Month' : 'Top Players — All Time'}</span>
+            {showMonthlyComparison && (
             <Badge variant="outline" className="ml-2 text-xs">Monthly Reset: {getNextMonthReset()}</Badge>
           )}
         </CardTitle>
