@@ -42,7 +42,23 @@ const TopPlayersSection: React.FC<TopPlayersSectionProps> = ({
   const fetchTopPlayers = useCallback(async () => {
     try {
       setLoading(true);
-      
+
+      // Monthly block: rank by this month's gems (resets on the 1st), not all-time points.
+      if (showMonthlyComparison) {
+        const month = new Date().toISOString().slice(0, 7);
+        const { data, error } = await supabase.rpc('get_monthly_leaderboard', { _month: month, _limit: limit });
+        if (error) throw error;
+
+        const formattedPlayers = (data || []).map((player: any) => ({
+          username: player.display_name || player.username || 'Player',
+          gems: Number(player.points || 0),
+          isCurrentUser: player.user_id === currentUserId
+        }));
+
+        setPlayers(formattedPlayers);
+        return;
+      }
+
       // Derive admin status from the Supabase session + database, never localStorage.
       const { data: { user } } = await supabase.auth.getUser();
       let isAdmin = false;
