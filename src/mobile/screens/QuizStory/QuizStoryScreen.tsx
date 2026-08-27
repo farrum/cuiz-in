@@ -71,6 +71,8 @@ export default function QuizStoryScreen() {
   const [shakeOpt,        setShakeOpt]        = useState<string | null>(null); // option to shake on wrong
   const [pulseOpt,        setPulseOpt]        = useState<string | null>(null); // option to pulse on correct
   const [launchGems,      setLaunchGems]      = useState(0);   // gem value shown during launch
+  const [isLowTime,       setIsLowTime]       = useState(false);
+  const [floatReward,     setFloatReward]     = useState<number | null>(null);
   const [category, setCategory] = useState<string | null>(() => {
     try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}').category ?? null; } catch { return null; }
   });
@@ -101,6 +103,7 @@ export default function QuizStoryScreen() {
     setCorrectAnswer('');
     setExplanation('');
     setProgress(0);
+    setIsLowTime(false);
     try {
       const q = await getRandomQuestion({ 
         category: categoryRef.current, 
@@ -149,12 +152,23 @@ export default function QuizStoryScreen() {
   // 60ms setInterval: the old tick re-rendered this full-screen view ~16x per
   // second, which forced a full WebView repaint each time (visible flicker).
   useEffect(() => {
+    setIsLowTime(false);
     if (phase !== 'asking') {
       return;
     }
     setProgress(0);
     const raf = requestAnimationFrame(() => setProgress(100));
-    return () => cancelAnimationFrame(raf);
+
+    const lowTimeTimer = window.setTimeout(() => {
+      if (mountedRef.current) {
+        setIsLowTime(true);
+      }
+    }, 15000);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(lowTimeTimer);
+    };
   }, [phase, question?.id]);
 
 
@@ -224,6 +238,8 @@ export default function QuizStoryScreen() {
         localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(next));
         const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
         if (uid) { void logGemsEarned(earned, uid); }
+        setFloatReward(earned);
+        setTimeout(() => setFloatReward(null), 900);
         const burst = moodEngine.snapshot().correctStreak >= 5 ? 200 : moodEngine.snapshot().correctStreak >= 2 ? 130 : 80;
         confetti({ particleCount: burst, spread: 80, origin: { y: 0.4 }, ticks: 140 });
         // Trigger gem launch + correct pulse animations
@@ -404,7 +420,10 @@ export default function QuizStoryScreen() {
       <div className="relative h-1.5 mx-5 mt-3 rounded-full overflow-hidden bg-slate-100">
         {/* One 20s CSS transition per question — no per-frame React state. */}
         <div
-          className="h-full rounded-full will-change-[width]"
+          className={cn(
+            "h-full rounded-full will-change-[width]",
+            isLowTime && "low-time-pulse"
+          )}
           style={{
             background: 'linear-gradient(90deg, hsl(45 95% 55%), hsl(30 90% 50%))',
             width: `${phase === 'asking' ? progress : 100}%`,
@@ -414,6 +433,23 @@ export default function QuizStoryScreen() {
                 : 'width 0.2s linear',
           }}
         />
+
+        {/* Float reward popup */}
+        <AnimatePresence>
+          {floatReward !== null && (
+            <motion.div
+              key="float-reward"
+              className="absolute left-1/2 -translate-x-1/2 -top-12 z-50 pointer-events-none"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <span className="float-text-up text-lg font-black text-amber-500 bg-amber-50/90 border border-amber-200 shadow-md px-3 py-1 rounded-full whitespace-nowrap">
+                💎 +{floatReward} Gems!
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Flying gem — launches from here toward the HUD gem counter */}
         <AnimatePresence>
@@ -502,10 +538,10 @@ export default function QuizStoryScreen() {
                       className={cn(
                         'relative w-full text-left rounded-2xl px-4 py-3.5 font-bold text-[14px] leading-snug transition-colors overflow-hidden',
                         'ring-1 bg-white',
-                        !isSelected && !isThisCorrect && !isThisWrong && 'ring-black/[0.06] text-slate-800 hover:bg-slate-50',
-                        isThisCorrect  && 'ring-emerald-400 bg-emerald-50 text-emerald-800 answer-correct-pulse',
-                        isThisWrong    && 'ring-rose-400 bg-rose-50 text-rose-800',
-                        isSelected && phase === 'revealing' && !isCorrect && 'ring-rose-400 bg-rose-50 text-rose-800',
+                        !isSelected && !isThisCorrect && !isThisWrong && 'ring-black/[0.08] text-slate-800 hover:bg-slate-50',
+                        isThisCorrect  && 'ring-2 ring-emerald-500 bg-emerald-50/95 text-emerald-950 font-black shadow-sm',
+                        isThisWrong    && 'ring-2 ring-rose-500 bg-rose-50/95 text-rose-950 font-black shadow-sm',
+                        isSelected && phase === 'revealing' && !isCorrect && 'ring-2 ring-rose-500 bg-rose-50/95 text-rose-950 font-black shadow-sm',
                         // per-option animation classes
                         opt === shakeOpt  && 'answer-shake',
                         opt === pulseOpt  && 'answer-correct-pulse',

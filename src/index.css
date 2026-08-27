@@ -880,8 +880,47 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   animation: correctPulse 0.6s ease-out forwards;
 }
 
+/* ── Premium Accessibility & Gameplay Enhancements ────────────────────────── */
+@keyframes lowTimeProgressPulse {
+  0%, 100% { background: linear-gradient(90deg, #ef4444, #b91c1c); filter: drop-shadow(0 0 1px rgba(239, 68, 68, 0.5)); }
+  50% { background: linear-gradient(90deg, #f87171, #ef4444); filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.85)); }
+}
+.low-time-pulse {
+  animation: lowTimeProgressPulse 0.8s ease-in-out infinite !important;
+}
+
+@keyframes floatTextUp {
+  0% { transform: translateY(0) scale(0.9); opacity: 0; }
+  25% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-35px) scale(0.95); opacity: 0; }
+}
+.float-text-up {
+  animation: floatTextUp 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes neonWinnerGlow {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(251, 191, 36, 0.4), inset 0 0 8px rgba(251, 191, 36, 0.2); }
+  50% { box-shadow: 0 0 25px 8px rgba(251, 191, 36, 0.95), inset 0 0 15px rgba(251, 191, 36, 0.5); }
+}
+.neon-winner-glow {
+  animation: neonWinnerGlow 1.2s ease-in-out infinite !important;
+}
+
+/* Semi-transparent protective gradient wrapper for text on images to ensure legibility */
+.image-text-overlay {
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 60%, rgba(15, 23, 42, 0) 100%);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Medieval parchment background helper */
+.parchment-glow-card {
+  background: radial-gradient(circle at 50% 50%, hsl(40 80% 98%) 0%, hsl(38 60% 95%) 100%);
+  border: 1px solid rgba(180, 140, 60, 0.25);
+  box-shadow: 0 4px 12px rgba(180, 140, 60, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .gem-launch, .answer-shake, .answer-correct-pulse { animation: none !important; }
+  .gem-launch, .answer-shake, .answer-correct-pulse, .low-time-pulse, .float-text-up, .neon-winner-glow { animation: none !important; }
 }
 
 /* Android WebView stability mode. Native ads add/remove separate platform
@@ -913,10 +952,8 @@ html.native-app .ember,
 html.native-app .flame-base,
 html.native-app .flame-inner,
 html.native-app .flame-glow,
-html.native-app .aurora-dot,
-html.native-app .animate-pulse,
-html.native-app .animate-bounce,
-html.native-app .animate-spin {
+html.native-app .aurora-dot {
   animation: none !important;
   will-change: auto !important;
 }
+

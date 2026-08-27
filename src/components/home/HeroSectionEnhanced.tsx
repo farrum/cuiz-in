@@ -133,6 +133,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
         {/* Right Column - Interactive Quiz Preview */}
         <div className="relative">
+          <SimpleAdBanner position="header" slotId="home-iq-top" className="mb-4 rounded-xl overflow-hidden" />
           <InteractiveQuizPreview />
           
           {/* Decorative elements - hidden on mobile for performance */}

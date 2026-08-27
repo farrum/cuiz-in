@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
 import { pickCharacter, type Character, type Mood } from '@/mobile/mascots/registry';
+import { audioManager } from '@/utils/audioManager';
+import { cn } from '@/lib/utils';
 
 interface Prize {
   id: string;
@@ -43,6 +45,7 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
   const [activePrizes, setActivePrizes] = useState<Prize[]>(defaultPrizes);
   const [loading, setLoading] = useState(true);
   const [chanceUsed, setChanceUsed] = useState(false);
+  const [showNeonGlow, setShowNeonGlow] = useState(false);
   const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
   useEffect(() => {
@@ -80,6 +83,7 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
     setSpinning(true);
     setPrize(null);
     setReaction(null);
+    setShowNeonGlow(false);
     haptics('medium');
 
     try {
@@ -118,8 +122,24 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
 
       setAngle(newAngle);
 
+      // Easing-based woody tick sound effect
+      let currentTick = 0;
+      const totalTicks = 20; // Number of ticks during rotation
+      const playTick = () => {
+        if (currentTick >= totalTicks) return;
+        audioManager.playSFX('click');
+        haptics('light');
+        currentTick++;
+        // Decelerating delay curve (cubic growth)
+        const progress = currentTick / totalTicks;
+        const nextDelay = 50 + Math.pow(progress, 3) * 600; 
+        setTimeout(playTick, nextDelay);
+      };
+      playTick();
+
       // Trigger reveal ONLY when wheel finishes spinning (3.2 seconds duration)
       setTimeout(() => {
+        setShowNeonGlow(true);
         setSpinning(false);
         showVideoAd(() => {
           haptics('success');
@@ -152,22 +172,25 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
   };
 
   return (
-    <div className="flex flex-col items-center justify-center pb-8 w-full max-w-md mx-auto">
+    <div className="flex flex-col items-center justify-center pb-8 w-full max-w-md mx-auto relative z-10">
       {/* Dynamic Wheel Container */}
       <div className="relative w-[min(72vw,17rem)] h-[min(72vw,17rem)] md:w-80 md:h-80 mt-6 mb-4">
         {/* Glow backdrop effect */}
-        <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-2xl animate-pulse" />
+        <div className="absolute inset-0 bg-amber-500/10 rounded-full blur-2xl animate-pulse" />
 
         {/* Triangle Pointer at the top */}
         <div 
           className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 z-20 w-0 h-0 
             border-l-[14px] border-r-[14px] border-t-[28px] 
-            border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-[0_4px_6px_rgba(244,63,94,0.4)]"
+            border-l-transparent border-r-transparent border-t-rose-500 drop-shadow-[0_4px_6px_rgba(244,63,94,0.4)] animate-bounce"
           style={{ transformOrigin: 'top center' }}
         />
 
         {/* The Outer Rim */}
-        <div className="w-full h-full rounded-full border-[10px] border-muted-foreground/20 bg-white panel-3d p-1 relative flex items-center justify-center">
+        <div className={cn(
+          "w-full h-full rounded-full border-[10px] border-amber-900/15 bg-white panel-3d p-1 relative flex items-center justify-center transition-all duration-300",
+          showNeonGlow && "neon-winner-glow"
+        )}>
           
           {/* Inner Spinning Wheel */}
           <motion.div
@@ -207,7 +230,7 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
                     transformOrigin: '50% 50%',
                   }}
                 >
-                  <span className="block max-w-[70px] text-center font-extrabold truncate drop-shadow-sm select-none">
+                  <span className="block max-w-[70px] text-center font-extrabold truncate drop-shadow-sm select-none text-slate-800">
                     {prize.label}
                   </span>
                 </div>
@@ -216,20 +239,24 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
           </motion.div>
 
           {/* Premium Glowing Hub */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-4 border-muted flex items-center justify-center z-10">
-            <div className="w-6 h-6 bg-gradient-to-tr from-indigo-500 to-emerald-400 rounded-full shadow-inner flex items-center justify-center animate-spin [animation-duration:8s]">
-              <span className="text-[10px] select-none">💎</span>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-4 border-amber-250 flex items-center justify-center z-10">
+            <div className="w-6 h-6 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-full shadow-inner flex items-center justify-center">
+              <span className="text-[10px] select-none">👑</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Control Button — hidden once the chance is used, until a new chance is bought/earned */}
+      {/* Control Button */}
       {!chanceUsed && (
         <button
           onClick={spin}
           disabled={spinning || loading}
-          className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base btn-3d btn-3d-primary w-full max-w-[240px]"
+          className="mt-6 rounded-xl px-10 py-4 font-black uppercase text-base text-white w-full max-w-[240px]"
+          style={{
+            background: 'linear-gradient(160deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+            boxShadow: '0 4px 0 hsl(30 80% 35%), 0 4px 12px rgba(245, 158, 11, 0.25)',
+          }}
         >
           {loading ? 'Loading...' : spinning ? 'Spinning…' : chanceLabel}
         </button>
@@ -241,13 +268,13 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
           <motion.p 
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="font-extrabold text-lg text-emerald-400 drop-shadow-sm"
+            className="font-extrabold text-lg text-emerald-600 drop-shadow-sm"
           >
             🎉 {prize}
           </motion.p>
         ) : (
           !spinning && (
-            <p className="text-sm font-bold text-muted-foreground">
+            <p className="text-sm font-bold text-slate-500">
               {uid ? "Spin the fortune wheel to win gems!" : "Sign in to play daily!"}
             </p>
           )
