@@ -40,6 +40,7 @@ import AdminGamificationPanel from '@/components/admin/gamification/AdminGamific
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
 import AdminEmpireTasksMonitor from '@/components/admin/AdminEmpireTasksMonitor';
 import AdminTeamLeadersRoster from '@/components/admin/AdminTeamLeadersRoster';
+import ClientVersionsPanel from '@/components/admin/ClientVersionsPanel';
 import { cn } from '@/lib/utils';
 
 const AdminPage: React.FC = () => {
@@ -415,12 +416,13 @@ const AdminPage: React.FC = () => {
             <TabsContent value="icons" className="mt-0 outline-none">
               <ProfileIconsManagement />
             </TabsContent>
-            <TabsContent value="sync" className="mt-0 outline-none">
+            <TabsContent value="sync" className="mt-0 outline-none space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SyncSettings />
                 <CacheManagement />
                 <RealtimeStatus />
               </div>
+              <ClientVersionsPanel />
             </TabsContent>
             <TabsContent value="blog" className="mt-0 outline-none">
               <BlogManagement />
