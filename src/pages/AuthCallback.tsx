@@ -24,6 +24,33 @@ const AuthCallback: React.FC = () => {
         if (data?.session?.user) {
           // Link the new account to the commander whose invite link was used.
           await claimPendingReferral();
+
+          // Sync guest data (gems, stars, etc.) to their profile in Supabase
+          const guestGems = Number(localStorage.getItem('quiz_app_user_gems') || '0');
+          const guestStars = Number(localStorage.getItem('quiz_app_user_stars') || '0');
+          
+          if (guestGems > 0 || guestStars > 0) {
+            try {
+              const uid = data.session.user.id;
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('points, stars')
+                .eq('id', uid)
+                .maybeSingle();
+                
+              if (profile) {
+                const newPoints = Number(profile.points || 0) + guestGems;
+                const newStars = Number(profile.stars || 0) + guestStars;
+                
+                await supabase
+                  .from('profiles')
+                  .update({ points: newPoints, stars: newStars })
+                  .eq('id', uid);
+              }
+            } catch (err) {
+              console.error('Failed to sync guest stats to profile:', err);
+            }
+          }
           
           // Clear guest statistics so they don't persist into the account
           try {

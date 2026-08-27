@@ -274,6 +274,32 @@ const UserRegistrationForm: React.FC = () => {
       console.log('[Registration] User created successfully:', data.user.id);
       const createdUserId = data.user.id;
 
+      // Sync guest data (gems, stars, etc.) to their profile in Supabase
+      const guestGems = Number(localStorage.getItem('quiz_app_user_gems') || '0');
+      const guestStars = Number(localStorage.getItem('quiz_app_user_stars') || '0');
+      
+      if (guestGems > 0 || guestStars > 0) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('points, stars')
+            .eq('id', createdUserId)
+            .maybeSingle();
+            
+          if (profile) {
+            const newPoints = Number(profile.points || 0) + guestGems;
+            const newStars = Number(profile.stars || 0) + guestStars;
+            
+            await supabase
+              .from('profiles')
+              .update({ points: newPoints, stars: newStars })
+              .eq('id', createdUserId);
+          }
+        } catch (err) {
+          console.error('Failed to sync guest stats to profile:', err);
+        }
+      }
+
       // Close the anonymous funnel: this guest session converted to a user
       trackGuestEvent({ event_type: 'registered' });
 

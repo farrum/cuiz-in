@@ -342,46 +342,127 @@ const CATEGORIES = [
 ];
 
 // --- Static content / utility pages (unique titles + descriptions) ---
+// --- Static content / utility pages (unique titles + descriptions + crawler text) ---
 const STATIC_PAGES = {
+  '/': {
+    title: 'CuizIN - Play Quiz | Free Online Quiz Game',
+    description: 'Play free online quizzes on CuizIN. Test your knowledge across 15,000+ questions, earn rewards, and climb the leaderboard. Play smart, learn more!',
+    bodyHtml: `
+      <h1>CuizIN — Play Free Online Quizzes, Trivia Games & Win Rewards</h1>
+      <p>Welcome to CuizIN, the ultimate medieval trivia kingdom! Test your knowledge across 15,000+ quiz questions in history, science, geography, sports, entertainment, technology, literature, mythology, and more. Answer questions, build streaks, unlock chest rewards, spin the fortune wheel, and climb the rankings to become the Emperor of all knowledge.</p>
+      <h2>Play Trivia & Mini-Games</h2>
+      <ul>
+        <li><strong>Quick Quiz</strong>: Fast-paced trivia battles across all realms.</li>
+        <li><strong>Daily Challenge</strong>: Special themed events for 2x rewards.</li>
+        <li><strong>Tavern Games</strong>: Spin Wheel, Scratch Card, Slot Machine, Plinko Board, Coinflip, Diceroll, and more.</li>
+      </ul>
+      <h2>Explore Quiz Realms</h2>
+      <ul>
+        <li><a href="/categories/general-knowledge">General Knowledge Quiz</a></li>
+        <li><a href="/categories/history">History Quiz</a></li>
+        <li><a href="/categories/science">Science & Nature Quiz</a></li>
+        <li><a href="/categories/geography">Geography Quiz</a></li>
+        <li><a href="/categories/literature">Arts & Literature Quiz</a></li>
+        <li><a href="/categories/sports">Sports Quiz</a></li>
+        <li><a href="/categories/technology">Science & Technology Quiz</a></li>
+        <li><a href="/categories/k-pop-k-drama">K-Pop & Korean Drama Quiz</a></li>
+        <li><a href="/categories/mythology">Mythology & Lore Quiz</a></li>
+      </ul>
+    `
+  },
   '/login': {
     title: 'Login to CuizIN | Access Your Quiz Account',
     description: 'Login to your CuizIN account to play free quizzes across 10+ categories, climb the leaderboard, earn gems and track your daily streaks.',
+    bodyHtml: `
+      <h1>Login to CuizIN</h1>
+      <p>Sign in to your royal account to resume your trivia quests, claim daily tribute rewards, view your active contracts, spend your gems, and check your leaderboard rankings.</p>
+      <p>Don't have an account? <a href="/register">Create a free account here</a> to start saving your quiz history and earning gems.</p>
+    `
   },
   '/register': {
     title: 'Register on CuizIN | Create Your Free Quiz Account',
     description: 'Create a free CuizIN account in seconds. Play trivia quizzes, earn gems, compete on leaderboards and unlock rewards.',
+    bodyHtml: `
+      <h1>Create Your Free Account</h1>
+      <p>Register a new account on CuizIN in seconds to start tracking your quiz statistics, earning gems and stars, protecting your daily streaks, unlocking advisors, and claiming mystery chests.</p>
+      <p>Already have a character? <a href="/login">Login here</a> to continue your trivia adventure.</p>
+    `
   },
   '/profile': {
     title: 'My Profile | CuizIN',
     description: 'View your CuizIN profile — track your quiz stats, gems, achievements, daily streaks and leaderboard position.',
+    bodyHtml: `
+      <h1>Adventurer Profile & Statistics</h1>
+      <p>Manage your CuizIN profile. Track your lifetime stats, correct answer accuracy, earned gems and stars, active daily streaks, and equipped advisor titles.</p>
+      <p>View your Battle Council advisors including Socrates, Chanakya, and Ramanujan, and level up their attributes using shards earned in campaign quests.</p>
+    `
   },
   '/blog': {
     title: 'CuizIN Blog | Trivia Tips, Facts & Quiz Guides',
     description: 'Read the CuizIN blog for trivia tips, fascinating facts, quiz strategies and the latest updates from our quiz community.',
+    bodyHtml: `
+      <h1>CuizIN Blog — Trivia Facts, Tips & Guides</h1>
+      <p>Read the latest articles from the CuizIN scribe. Find fascinating trivia facts, historical stories, science breakthroughs, movie lore, and strategy guides to help you master our quizzes.</p>
+    `
   },
   '/faq': {
     title: 'FAQ | CuizIN - Help & Frequently Asked Questions',
     description: 'Find answers to common questions about CuizIN — how to play, earning gems, leaderboards, rewards and account help.',
+    bodyHtml: `
+      <h1>Frequently Asked Questions (FAQ)</h1>
+      <p>Find answers to common questions about the CuizIN quiz kingdom:</p>
+      <ul>
+        <li><strong>How do I earn gems and stars?</strong> Gems are awarded for correct answers and daily check-ins. Stars are earned by completing campaigns and contract quests.</li>
+        <li><strong>What are advisor shards?</strong> Shards are used to level up your advisors. Each advisor grants passive boosts to your earnings.</li>
+        <li><strong>Is CuizIN free to play?</strong> Yes! You can play all quizzes, tavern games, and campaigns for free.</li>
+      </ul>
+    `
   },
   '/how-to-play': {
     title: 'How to Play | CuizIN Quiz Guide',
     description: 'Learn how to play CuizIN — answer trivia questions, earn gems, build streaks, climb the leaderboard and unlock rewards.',
+    bodyHtml: `
+      <h1>How to Play CuizIN Quiz Guide</h1>
+      <p>Master the trivia games on CuizIN with this simple guide:</p>
+      <ol>
+        <li><strong>Choose your realm</strong>: Pick a category or subcategory from our directory.</li>
+        <li><strong>Answer questions</strong>: You have a 20-second timer to choose the correct answer. The faster you answer, the better.</li>
+        <li><strong>Maintain streaks</strong>: Answering correctly builds your flame streak, increasing your point multiplier.</li>
+        <li><strong>Play tavern games</strong>: Use your daily free spin and scratch chances to win instant stars and jackpot gems.</li>
+      </ol>
+    `
   },
   '/referral-program': {
     title: 'Referral Program | Invite Friends & Earn on CuizIN',
     description: 'Join the CuizIN referral program. Invite friends to play quizzes and earn bonus rewards when they sign up and play.',
+    bodyHtml: `
+      <h1>Referral Program — Invite Friends & Earn Gems</h1>
+      <p>Share your unique referral link with fellow trivia enthusiasts. When they register and start playing, you both earn bonus gems and stars to grow your royal treasury.</p>
+    `
   },
   '/terms': {
     title: 'Terms of Service | CuizIN',
     description: 'Read the CuizIN Terms of Service governing the use of our free quiz platform.',
+    bodyHtml: `
+      <h1>Terms of Service</h1>
+      <p>Read the terms and conditions governing your access to and use of the CuizIN quiz platform. By playing our games, you agree to these terms.</p>
+    `
   },
   '/privacy': {
     title: 'Privacy Policy | CuizIN',
     description: 'Read the CuizIN Privacy Policy to learn how we collect, use and protect your data.',
+    bodyHtml: `
+      <h1>Privacy Policy</h1>
+      <p>Learn about how CuizIN collects, handles, and protects your data, ensuring a secure and transparent gaming environment for all players.</p>
+    `
   },
   '/disclaimer': {
     title: 'Disclaimer | CuizIN',
     description: 'Read the CuizIN disclaimer covering the use of content on our free quiz platform.',
+    bodyHtml: `
+      <h1>Content Disclaimer</h1>
+      <p>View the disclaimer statement regarding the quiz questions, answers, fact accuracy, and reference content hosted on the CuizIN platform.</p>
+    `
   },
 };
 
