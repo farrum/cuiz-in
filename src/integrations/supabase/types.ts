@@ -430,6 +430,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_diagnostics: {
+        Row: {
+          app_platform: string | null
+          app_version: string | null
+          event: string
+          id: string
+          occurred_at: string
+          task_key: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_platform?: string | null
+          app_version?: string | null
+          event: string
+          id?: string
+          occurred_at?: string
+          task_key?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_platform?: string | null
+          app_version?: string | null
+          event?: string
+          id?: string
+          occurred_at?: string
+          task_key?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       daily_challenges: {
         Row: {
           created_at: string | null
@@ -1541,6 +1574,16 @@ export type Database = {
           total_team_size: number
         }[]
       }
+      admin_get_client_diagnostics: {
+        Args: { p_days?: number }
+        Returns: {
+          app_platform: string
+          app_version: string
+          event: string
+          hits: number
+          last_seen: string
+        }[]
+      }
       admin_get_questions_today: {
         Args: never
         Returns: {
@@ -1713,6 +1756,10 @@ export type Database = {
         Returns: Json
       }
       leave_alliance: { Args: { p_user_id: string }; Returns: Json }
+      log_client_diagnostic: {
+        Args: { p_event: string; p_task_key?: string; p_user_id?: string }
+        Returns: undefined
+      }
       process_scratch_card:
         | { Args: { p_context?: string }; Returns: Json }
         | { Args: { p_context?: string; p_paid?: boolean }; Returns: Json }
