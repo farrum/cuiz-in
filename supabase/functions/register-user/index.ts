@@ -3,7 +3,7 @@ import { z } from "https://esm.sh/zod@3.24.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-app-version, x-app-platform",
 };
 
 const RegisterSchema = z.object({
