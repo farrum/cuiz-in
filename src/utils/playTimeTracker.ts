@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 
 export interface PlaySession {
@@ -9,60 +8,34 @@ export interface PlaySession {
   sessionDate: string;
 }
 
+const keyFor = (userId: string, dateStr: string) => `cuizin_playtime_${userId}_${dateStr}`;
+
 /**
- * Log a gameplay session for duration tracking
+ * Log a gameplay session for duration tracking.
+ * Stored locally — there is no `user_play_sessions` table in the database,
+ * and attempting to write to it floods the Postgres logs with errors.
  */
-export const logPlaySession = async (gameType: string, durationSeconds: number) => {
+export const logPlaySession = async (_gameType: string, durationSeconds: number) => {
   try {
     const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId || durationSeconds <= 0) return;
 
     const todayStr = new Date().toISOString().split('T')[0];
-
-    // Persist session to Supabase user_play_sessions table if available, with local fallback storage
-    const { error } = await supabase
-      .from('user_play_sessions' as any)
-      .insert({
-        user_id: userId,
-        game_type: gameType,
-        duration_seconds: durationSeconds,
-        session_date: todayStr
-      });
-
-    if (error) {
-      console.log('Play session logging database notice:', error.message);
-      // Fallback: Store locally in localStorage daily log
-      const key = `cuizin_playtime_${userId}_${todayStr}`;
-      const existingSeconds = Number(localStorage.getItem(key) || '0');
-      localStorage.setItem(key, String(existingSeconds + durationSeconds));
-    }
+    const key = keyFor(userId, todayStr);
+    const existingSeconds = Number(localStorage.getItem(key) || '0');
+    localStorage.setItem(key, String(existingSeconds + durationSeconds));
   } catch (err) {
     console.error('Error logging play session:', err);
   }
 };
 
 /**
- * Get aggregate daily play time in minutes for a user
+ * Get aggregate daily play time in minutes for a user (local storage based).
  */
 export const getDailyPlayTimeMinutes = async (userId: string): Promise<number> => {
   try {
     const todayStr = new Date().toISOString().split('T')[0];
-    
-    // Attempt database query first
-    const { data, error } = await supabase
-      .from('user_play_sessions' as any)
-      .select('duration_seconds')
-      .eq('user_id', userId)
-      .eq('session_date', todayStr);
-
-    if (!error && data && data.length > 0) {
-      const totalSec = data.reduce((acc: number, curr: any) => acc + (curr.duration_seconds || 0), 0);
-      return Math.round(totalSec / 60);
-    }
-
-    // Fallback to local storage
-    const key = `cuizin_playtime_${userId}_${todayStr}`;
-    const localSec = Number(localStorage.getItem(key) || '0');
+    const localSec = Number(localStorage.getItem(keyFor(userId, todayStr)) || '0');
     return Math.round(localSec / 60);
   } catch (err) {
     console.error('Error fetching play time:', err);
