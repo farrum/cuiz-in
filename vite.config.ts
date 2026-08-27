@@ -64,4 +64,11 @@ export default defineConfig(({ mode }) => ({
     // Source maps for production debugging (optional)
     sourcemap: false,
   },
+  // Build stamp sent to the backend as x-app-version so we can tell which
+  // build produced a given request (legacy clients send no header at all).
+  define: {
+    __APP_BUILD_ID__: JSON.stringify(
+      new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)
+    ),
+  },
 }));
