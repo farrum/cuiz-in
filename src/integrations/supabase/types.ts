@@ -1428,13 +1428,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "user_task_progress_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "empire_tasks"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_task_progress_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
