@@ -281,10 +281,11 @@ const AdminReferralsTracker: React.FC = () => {
         </div>
       </div>
       
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-hidden bg-card text-card-foreground shadow-sm">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             <TableRow>
+
               <TableHead>Referrer</TableHead>
               <TableHead>Referred User</TableHead>
               <TableHead>Date</TableHead>
