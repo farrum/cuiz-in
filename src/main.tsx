@@ -91,6 +91,9 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
+// Pick up the native store version for the x-app-version stamp (no-op on web)
+import('@/utils/appVersion').then(m => m.hydrateNativeAppVersion()).catch(() => {});
+
 // Render the app
 try {
   const rootElement = document.getElementById("root");
