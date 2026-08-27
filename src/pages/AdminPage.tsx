@@ -40,6 +40,7 @@ import AdminGamificationPanel from '@/components/admin/gamification/AdminGamific
 import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
 import AdminEmpireTasksMonitor from '@/components/admin/AdminEmpireTasksMonitor';
 import AdminTeamLeadersRoster from '@/components/admin/AdminTeamLeadersRoster';
+import ClientVersionsPanel from '@/components/admin/ClientVersionsPanel';
 import { cn } from '@/lib/utils';
 
 const AdminPage: React.FC = () => {
