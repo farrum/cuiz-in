@@ -7,7 +7,7 @@ const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 // CORS headers for browser compatibility
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-version, x-app-platform',
   'Content-Type': 'application/xml; charset=UTF-8',
   'Content-Encoding': 'gzip',
   'Cache-Control': 'public, max-age=3600',
