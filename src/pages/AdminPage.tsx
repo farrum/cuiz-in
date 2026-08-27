@@ -415,12 +415,13 @@ const AdminPage: React.FC = () => {
             <TabsContent value="icons" className="mt-0 outline-none">
               <ProfileIconsManagement />
             </TabsContent>
-            <TabsContent value="sync" className="mt-0 outline-none">
+            <TabsContent value="sync" className="mt-0 outline-none space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SyncSettings />
                 <CacheManagement />
                 <RealtimeStatus />
               </div>
+              <ClientVersionsPanel />
             </TabsContent>
             <TabsContent value="blog" className="mt-0 outline-none">
               <BlogManagement />
