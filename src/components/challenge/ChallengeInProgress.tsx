@@ -7,6 +7,8 @@ import { QuizQuestion } from '@/utils/quizData';
 import QuizCard from '@/components/QuizCard';
 import MotivationalCharacter from '@/components/MotivationalCharacter';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import QuizInterstitial from '@/components/quiz/QuizInterstitial';
+import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -33,13 +35,14 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
   onNextQuestion
 }) => {
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showInterstitial, setShowInterstitial] = useState(false);
   const [errorState, setErrorState] = useState<{ hasError: boolean, message: string }>({
     hasError: false,
     message: ""
   });
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
-  
+
   const handleExitClick = () => {
     setShowExitDialog(true);
   };
@@ -80,14 +83,31 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
     }
   };
 
-  const handleNextQuestion = () => {
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+  const advanceToNextQuestion = () => {
     // Reset for next question
     setSelectedOption("");
     setAnswerSubmitted(false);
     onNextQuestion();
   };
 
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const handleNextQuestion = () => {
+    // Show a full-screen ad break after every 2 answered questions
+    // (but never right before the challenge completes).
+    const answeredCount = currentQuestionIndex + 1;
+    if (answeredCount % 2 === 0 && !isLastQuestion) {
+      triggerWebInterstitial();
+      setShowInterstitial(true);
+      return;
+    }
+    advanceToNextQuestion();
+  };
+
+  const handleInterstitialContinue = () => {
+    setShowInterstitial(false);
+    advanceToNextQuestion();
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -218,11 +238,19 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelExit}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancelExit}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmExit}>Exit Challenge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showInterstitial && (
+        <div className="fixed inset-0 z-[90] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <QuizInterstitial onContinue={handleInterstitialContinue} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
