@@ -29,8 +29,8 @@ import { getLocalQuestionsBatch, getRandomLocalWordle } from '@/utils/localTrivi
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
 
-// Show the inter-question ad after every answered question.
-const INTERSTITIAL_EVERY = 1;
+// Show the inter-question ad after every 2 answered questions.
+const INTERSTITIAL_EVERY = 2;
 
 const QuizPlayPage: React.FC = () => {
   const { questionId } = useParams<{ questionId: string; questionSlug?: string }>();
