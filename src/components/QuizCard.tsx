@@ -167,6 +167,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
         variant: "destructive"
       });
       setIsSubmitting(false);
+      setHasSubmitted(false);
     }
   };
   
@@ -243,7 +244,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               <div
                 key={index}
                 className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${optionClasses} ${isAnimating && isSelected ? 'bounce-in' : ''}`}
-                onClick={() => !isSubmitting && handleSelectOption(option)}
+                onClick={() => !hasSubmitted && handleSelectOption(option)}
               >
                 <div className="flex items-center gap-3">
                   <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
