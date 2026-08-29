@@ -24,8 +24,8 @@ const DisclaimerPage: React.FC = () => {
   return (
     <PageLayout containerClassName="container max-w-4xl pt-24 pb-12 px-4">
       <SEO
-        title="Game Disclaimer | CuizIN"
-        description="Read the CuizIN Game Disclaimer. Understand our rewards system, content accuracy policies, and platform usage guidelines."
+        title="Content & Game Disclaimer | CuizIN"
+        description="Read the CuizIN content disclaimer regarding trivia accuracy, question sourcing, prize distributions, and platform terms for free online quiz games."
         canonicalUrl="https://cuiz.in/disclaimer"
         keywords={['disclaimer', 'game rules', 'CuizIN disclaimer', 'rewards disclaimer']}
       />

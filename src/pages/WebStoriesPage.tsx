@@ -323,8 +323,8 @@ const WebStoriesPage: React.FC = () => {
   return (
     <>
       <SEO
-        title={currentStory ? `Quiz Stories | ${currentStory.category} | CuizIN` : 'Interactive Stories | CuizIN'}
-        description={currentStory ? `Interactive quiz stories about ${currentStory.category}. Swipe through questions and test your knowledge!` : 'Interact with trivia story clips.'}
+        title={currentStory ? `Quiz Stories: ${currentStory.category} | CuizIN` : 'Trivia Web Stories | Fast Visual Quiz Clips | CuizIN'}
+        description={currentStory ? `Interactive quiz stories about ${currentStory.category}. Tap through visual questions, test your knowledge, and discover fun facts on CuizIN.` : 'Experience interactive trivia Web Stories on CuizIN. Tap through visual quiz questions, test your fast reflexes, and discover fascinating trivia facts.'}
         canonicalUrl={`https://cuiz.in/stories${storyId ? `/${storyId}` : ''}`}
         schemaType="WebPage"
         schemaData={storySchema}

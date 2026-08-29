@@ -346,7 +346,7 @@ const CATEGORIES = [
 const STATIC_PAGES = {
   '/': {
     title: 'CuizIN - Play Quiz | Free Online Quiz Game',
-    description: 'Play free online quizzes on CuizIN. Test your knowledge across 15,000+ questions, earn rewards, and climb the leaderboard. Play smart, learn more!',
+    description: 'Play free online trivia quizzes on CuizIN. Test your knowledge across 15,000+ questions, earn gems, maintain daily streaks, and climb the leaderboard!',
     bodyHtml: `
       <h1>CuizIN — Play Free Online Quizzes, Trivia Games & Win Rewards</h1>
       <p>Welcome to CuizIN, the ultimate medieval trivia kingdom! Test your knowledge across 15,000+ quiz questions in history, science, geography, sports, entertainment, technology, literature, mythology, and more. Answer questions, build streaks, unlock chest rewards, spin the fortune wheel, and climb the rankings to become the Emperor of all knowledge.</p>
@@ -370,9 +370,97 @@ const STATIC_PAGES = {
       </ul>
     `
   },
+  '/quiz': {
+    title: 'Play Free Online Quizzes | CuizIN Quiz Game',
+    description: 'Play free online trivia quizzes on CuizIN. Challenge yourself with timed questions across multiple categories, earn gems, and climb the leaderboard.',
+    bodyHtml: `
+      <h1>Play Online Quizzes on CuizIN</h1>
+      <p>Choose your favorite realm or start a rapid-fire trivia quiz instantly. Answer multiple-choice questions correctly to earn gems and protect your daily streaks.</p>
+      <h2>Popular Quiz Modes</h2>
+      <ul>
+        <li><a href="/categories/general-knowledge">General Knowledge Trivia</a></li>
+        <li><a href="/topics/cricket">Cricket Quiz Challenge</a></li>
+        <li><a href="/topics/bollywood">Bollywood Cinema Trivia</a></li>
+        <li><a href="/topics/science-technology">Science & Technology Quiz</a></li>
+      </ul>
+    `
+  },
+  '/browse': {
+    title: 'Browse 15,000+ Quiz Questions & Answers | CuizIN',
+    description: 'Browse our complete collection of 15,000+ trivia quiz questions. Filter by category, discover new topics, and test your knowledge across all realms.',
+    bodyHtml: `
+      <h1>Browse All Trivia Questions</h1>
+      <p>Search and discover thousands of verified quiz questions across History, Science, Sports, Geography, Entertainment, and Technology on CuizIN.</p>
+      <p><a href="/categories">View All Quiz Categories</a> · <a href="/all-questions">Full Question Directory</a></p>
+    `
+  },
+  '/topics': {
+    title: 'Quiz Topics | Curated Trivia Collections | CuizIN',
+    description: 'Explore curated trivia topics on CuizIN. Choose from Indian history, cricket, Bollywood, science, world geography, mythology, gaming, and more.',
+    bodyHtml: `
+      <h1>Explore Specialized Quiz Topics</h1>
+      <p>Dive deep into our curated collections of themed trivia quizzes:</p>
+      <ul>
+        <li><a href="/topics/indian-history">Indian History Quiz</a></li>
+        <li><a href="/topics/bollywood">Bollywood Movies & Music Quiz</a></li>
+        <li><a href="/topics/cricket">Cricket Trivia Quiz</a></li>
+        <li><a href="/topics/world-geography">World Geography Quiz</a></li>
+        <li><a href="/topics/science-technology">Science & Technology Quiz</a></li>
+        <li><a href="/topics/world-history">World History Quiz</a></li>
+        <li><a href="/topics/mythology">Mythology & Legends Quiz</a></li>
+        <li><a href="/topics/video-games">Video Games Quiz</a></li>
+        <li><a href="/topics/movies-tv">Movies & TV Shows Quiz</a></li>
+        <li><a href="/topics/food-cuisine">Food & World Cuisine Quiz</a></li>
+      </ul>
+    `
+  },
+  '/cricket-quiz': {
+    title: 'Cricket Quiz: 95+ Questions on IPL, World Cup & Legends | CuizIN',
+    description: 'Play the ultimate cricket quiz online. Test your knowledge of IPL, ICC World Cup, Sachin, Kohli, Dhoni, records, and cricket history with free scoring.',
+    bodyHtml: `
+      <h1>Cricket Quiz — Test Your Cricket Knowledge</h1>
+      <p>Cricket is more than a sport in India — it is a passion. Test your knowledge across IPL seasons, ICC World Cups, batting milestones, bowling records, and legends like Sachin Tendulkar, MS Dhoni, and Virat Kohli.</p>
+      <p><a href="/topics/cricket"><strong>Start Playing Cricket Quiz &rarr;</strong></a></p>
+    `
+  },
+  '/bollywood-quiz': {
+    title: 'Bollywood Quiz: Movies, Songs, Actors & Dialogues | CuizIN',
+    description: 'Play the biggest Bollywood quiz online. Answer questions on classic films, blockbuster songs, iconic stars, dialogues, and cinema trivia on CuizIN.',
+    bodyHtml: `
+      <h1>Bollywood Quiz — Hindi Cinema, Songs & Stars</h1>
+      <p>Put your Hindi cinema knowledge to the test with questions covering classic movies, timeless songs, superstar careers, and famous dialogues from Sholay to modern blockbusters.</p>
+      <p><a href="/topics/bollywood"><strong>Start Playing Bollywood Quiz &rarr;</strong></a></p>
+    `
+  },
+  '/gk-quiz': {
+    title: 'GK Quiz: 200+ General Knowledge Questions (India & World) | CuizIN',
+    description: 'Play India\'s favorite GK quiz online. Practice general knowledge questions covering current affairs, history, geography, science, and Indian polity.',
+    bodyHtml: `
+      <h1>GK Quiz — General Knowledge Questions & Answers</h1>
+      <p>Practice daily with bite-sized GK quizzes that mirror competitive exam formats like SSC, UPSC, and banking. Learn explanations while earning points.</p>
+      <p><a href="/categories/general-knowledge"><strong>Start Playing GK Quiz &rarr;</strong></a></p>
+    `
+  },
+  '/gk-questions': {
+    title: '1000+ GK Questions with Answers for Competitive Exams | CuizIN',
+    description: 'Practice 1000+ GK questions with answers for competitive exams: history, geography, science, sports, and general awareness. Free timed quiz mode on CuizIN.',
+    bodyHtml: `
+      <h1>1000+ GK Questions with Answers for Competitive Exams</h1>
+      <p>Read verified questions and answers covering general knowledge, Indian geography, freedom struggle, basic science, and global organizations.</p>
+      <p><a href="/categories/general-knowledge">Browse GK Questions</a></p>
+    `
+  },
+  '/stories': {
+    title: 'Trivia Web Stories | Fast Visual Quiz Clips | CuizIN',
+    description: 'Experience interactive trivia Web Stories on CuizIN. Tap through visual quiz questions, test your fast reflexes, and discover fascinating trivia facts.',
+    bodyHtml: `
+      <h1>Trivia Web Stories</h1>
+      <p>Swipe and tap through fast-paced visual quiz cards covering trending trivia facts, science wonders, movie milestones, and history clips.</p>
+    `
+  },
   '/login': {
     title: 'Login to CuizIN | Access Your Quiz Account',
-    description: 'Login to your CuizIN account to play free quizzes across 10+ categories, climb the leaderboard, earn gems and track your daily streaks.',
+    description: 'Login to your CuizIN account to play free quizzes across 15,000+ questions, earn gems, maintain daily streaks, and compete on global leaderboards.',
     bodyHtml: `
       <h1>Login to CuizIN</h1>
       <p>Sign in to your royal account to resume your trivia quests, claim daily tribute rewards, view your active contracts, spend your gems, and check your leaderboard rankings.</p>
@@ -381,7 +469,7 @@ const STATIC_PAGES = {
   },
   '/register': {
     title: 'Register on CuizIN | Create Your Free Quiz Account',
-    description: 'Create a free CuizIN account in seconds. Play trivia quizzes, earn gems, compete on leaderboards and unlock rewards.',
+    description: 'Create a free CuizIN account in seconds. Play trivia quizzes, earn gems and stars, unlock advisor boosts, and compete for top leaderboard rewards.',
     bodyHtml: `
       <h1>Create Your Free Account</h1>
       <p>Register a new account on CuizIN in seconds to start tracking your quiz statistics, earning gems and stars, protecting your daily streaks, unlocking advisors, and claiming mystery chests.</p>
@@ -389,8 +477,8 @@ const STATIC_PAGES = {
     `
   },
   '/profile': {
-    title: 'My Profile | CuizIN',
-    description: 'View your CuizIN profile — track your quiz stats, gems, achievements, daily streaks and leaderboard position.',
+    title: 'My Profile | CuizIN Quiz Account & Stats',
+    description: 'Manage your CuizIN profile — track your lifetime quiz accuracy, earned gems and stars, active daily streaks, achievements, and leaderboard rank.',
     bodyHtml: `
       <h1>Adventurer Profile & Statistics</h1>
       <p>Manage your CuizIN profile. Track your lifetime stats, correct answer accuracy, earned gems and stars, active daily streaks, and equipped advisor titles.</p>
@@ -399,7 +487,7 @@ const STATIC_PAGES = {
   },
   '/blog': {
     title: 'CuizIN Blog | Trivia Tips, Facts & Quiz Guides',
-    description: 'Read the CuizIN blog for trivia tips, fascinating facts, quiz strategies and the latest updates from our quiz community.',
+    description: 'Explore the CuizIN Blog for trivia tips, fascinating facts, quiz strategies, and educational guides to help you master quizzes across all categories.',
     bodyHtml: `
       <h1>CuizIN Blog — Trivia Facts, Tips & Guides</h1>
       <p>Read the latest articles from the CuizIN scribe. Find fascinating trivia facts, historical stories, science breakthroughs, movie lore, and strategy guides to help you master our quizzes.</p>
@@ -407,7 +495,7 @@ const STATIC_PAGES = {
   },
   '/faq': {
     title: 'FAQ | CuizIN - Help & Frequently Asked Questions',
-    description: 'Find answers to common questions about CuizIN — how to play, earning gems, leaderboards, rewards and account help.',
+    description: 'Find comprehensive answers to common questions about CuizIN — gameplay rules, earning gems, claiming rewards, leaderboards, and account security.',
     bodyHtml: `
       <h1>Frequently Asked Questions (FAQ)</h1>
       <p>Find answers to common questions about the CuizIN quiz kingdom:</p>
@@ -419,8 +507,8 @@ const STATIC_PAGES = {
     `
   },
   '/how-to-play': {
-    title: 'How to Play | CuizIN Quiz Guide',
-    description: 'Learn how to play CuizIN — answer trivia questions, earn gems, build streaks, climb the leaderboard and unlock rewards.',
+    title: 'How to Play | CuizIN Quiz Guide & Rules',
+    description: 'Learn how to play CuizIN quizzes — answer timed trivia questions, maintain flame streaks, spin tavern wheels, and earn gems to climb leaderboards.',
     bodyHtml: `
       <h1>How to Play CuizIN Quiz Guide</h1>
       <p>Master the trivia games on CuizIN with this simple guide:</p>
@@ -434,7 +522,7 @@ const STATIC_PAGES = {
   },
   '/referral-program': {
     title: 'Referral Program | Invite Friends & Earn on CuizIN',
-    description: 'Join the CuizIN referral program. Invite friends to play quizzes and earn bonus rewards when they sign up and play.',
+    description: 'Join the CuizIN referral program. Invite friends to play trivia quizzes, earn bonus gems and stars, and become a Team Leader for monthly earnings.',
     bodyHtml: `
       <h1>Referral Program — Invite Friends & Earn Gems</h1>
       <p>Share your unique referral link with fellow trivia enthusiasts. When they register and start playing, you both earn bonus gems and stars to grow your royal treasury.</p>
@@ -442,7 +530,7 @@ const STATIC_PAGES = {
   },
   '/terms': {
     title: 'Terms of Service | CuizIN',
-    description: 'Read the CuizIN Terms of Service governing the use of our free quiz platform.',
+    description: 'Read the official CuizIN Terms of Service governing platform usage, player accounts, rewards system, leaderboard fair play rules, and intellectual property.',
     bodyHtml: `
       <h1>Terms of Service</h1>
       <p>Read the terms and conditions governing your access to and use of the CuizIN quiz platform. By playing our games, you agree to these terms.</p>
@@ -450,21 +538,94 @@ const STATIC_PAGES = {
   },
   '/privacy': {
     title: 'Privacy Policy | CuizIN',
-    description: 'Read the CuizIN Privacy Policy to learn how we collect, use and protect your data.',
+    description: 'Read the CuizIN Privacy Policy to learn how we collect, safeguard, and process your personal information, gaming statistics, and account data securely.',
     bodyHtml: `
       <h1>Privacy Policy</h1>
       <p>Learn about how CuizIN collects, handles, and protects your data, ensuring a secure and transparent gaming environment for all players.</p>
     `
   },
   '/disclaimer': {
-    title: 'Disclaimer | CuizIN',
-    description: 'Read the CuizIN disclaimer covering the use of content on our free quiz platform.',
+    title: 'Content & Game Disclaimer | CuizIN',
+    description: 'Read the CuizIN content disclaimer regarding trivia accuracy, question sourcing, prize distributions, and platform terms for free online quiz games.',
     bodyHtml: `
       <h1>Content Disclaimer</h1>
       <p>View the disclaimer statement regarding the quiz questions, answers, fact accuracy, and reference content hosted on the CuizIN platform.</p>
     `
   },
 };
+
+const TOPICS = [
+  {
+    slug: 'indian-history',
+    title: 'Indian History',
+    description: 'Test your knowledge of Indian history from ancient civilizations to modern India. Answer questions covering the Mughal Empire, British Raj, and freedom movement.',
+    keywords: ['india', 'indian', 'mughal', 'british', 'gandhi', 'nehru', 'delhi', 'empire', 'independence', 'partition'],
+    categories: ['History']
+  },
+  {
+    slug: 'bollywood',
+    title: 'Bollywood Movies & Music',
+    description: 'How well do you know Bollywood? Answer questions about iconic Hindi movies, legendary actors, blockbuster songs, and memorable cinema dialogues on CuizIN.',
+    keywords: ['bollywood', 'hindi', 'movie', 'film', 'actor', 'actress', 'song', 'music', 'india'],
+    categories: ['Entertainment', 'Entertainment: Film', 'Entertainment: Music', 'Celebrities']
+  },
+  {
+    slug: 'cricket',
+    title: 'Cricket Trivia',
+    description: 'For cricket lovers! Test your knowledge about cricket legends, ICC World Cups, IPL tournaments, famous matches, world records, and history on CuizIN.',
+    keywords: ['cricket', 'ipl', 'world cup', 'sachin', 'kohli', 'dhoni', 'test', 'odi', 't20', 'wicket', 'century'],
+    categories: ['Cricket', 'Sports']
+  },
+  {
+    slug: 'world-geography',
+    title: 'World Geography',
+    description: 'Explore the world through geography questions. Learn about countries, world capitals, landmarks, rivers, mountain ranges, and natural wonders on CuizIN.',
+    keywords: ['country', 'capital', 'river', 'mountain', 'ocean', 'continent', 'border', 'island', 'desert'],
+    categories: ['Geography']
+  },
+  {
+    slug: 'science-technology',
+    title: 'Science & Technology',
+    description: 'Explore scientific discoveries, modern inventions, technology, space exploration, physics, chemistry, and biology with verified answers on CuizIN.',
+    keywords: ['science', 'technology', 'invention', 'discovery', 'space', 'computer', 'physics', 'chemistry', 'biology'],
+    categories: ['Science', 'Science & Nature', 'Science: Computers', 'Science and Technology']
+  },
+  {
+    slug: 'world-history',
+    title: 'World History',
+    description: 'Journey through world history with trivia questions about ancient civilizations, world wars, revolutions, empires, and influential historical leaders on CuizIN.',
+    keywords: ['war', 'revolution', 'empire', 'king', 'queen', 'president', 'battle', 'treaty', 'civilization'],
+    categories: ['History']
+  },
+  {
+    slug: 'mythology',
+    title: 'Mythology & Legends',
+    description: 'Dive into world mythologies with questions on Greek gods, Hindu epics, Norse legends, and ancient folklore. Play free trivia quizzes on CuizIN.',
+    keywords: ['god', 'goddess', 'myth', 'legend', 'zeus', 'vishnu', 'thor', 'epic', 'hero'],
+    categories: ['Mythology']
+  },
+  {
+    slug: 'video-games',
+    title: 'Video Games',
+    description: 'For gamers! Answer questions about popular video games, gaming history, iconic characters, game developers, and gaming culture on CuizIN.',
+    keywords: ['game', 'gaming', 'nintendo', 'playstation', 'xbox', 'pc', 'character', 'level', 'player'],
+    categories: ['Entertainment: Video Games']
+  },
+  {
+    slug: 'movies-tv',
+    title: 'Movies & TV Shows',
+    description: 'Test your entertainment knowledge with questions on Hollywood hits, TV series, Oscar winners, famous directors, and iconic streaming shows on CuizIN.',
+    keywords: ['movie', 'film', 'actor', 'director', 'oscar', 'tv', 'series', 'hollywood', 'netflix'],
+    categories: ['Entertainment: Film', 'Entertainment: Television', 'Entertainment']
+  },
+  {
+    slug: 'food-cuisine',
+    title: 'Food & World Cuisine',
+    description: 'Explore global dishes, culinary ingredients, international cooking traditions, and famous cuisines in this delicious food trivia challenge on CuizIN.',
+    keywords: ['food', 'cuisine', 'dish', 'cooking', 'spice', 'recipe', 'culinary', 'restaurant'],
+    categories: ['Food & Drink', 'Food and Drinks']
+  }
+];
 
 async function run() {
   let allQuestions = [];
@@ -638,12 +799,59 @@ async function run() {
 
       write(`/categories/${catSlug}/${sub.slug}`, {
         title: `${sub.name} Quiz Questions - ${catName} | CuizIN`,
-        description: `Browse ${sub.name} quiz questions in ${catName}. Play free trivia and test your knowledge on CuizIN.`,
+        description: `Explore ${sub.name} quiz questions under ${catName} on CuizIN. Test your trivia knowledge, answer timed challenges, earn gems, and climb rankings.`,
         canonical: `${SITE_URL}/categories/${catSlug}/${sub.slug}`,
         bodyHtml: subDetailHtml
       });
       count++;
     }
+  }
+
+  // 2.7. GENERATE TOPIC DETAIL PAGES
+  for (const topic of TOPICS) {
+    let topicDetailHtml = null;
+
+    if (databaseAvailable) {
+      let matchedQuestions = allQuestions.filter(q => {
+        if (topic.categories && topic.categories.includes(q.category)) return true;
+        if (topic.keywords && topic.keywords.length > 0) {
+          const lowerQ = q.question.toLowerCase();
+          return topic.keywords.some(kw => lowerQ.includes(kw.toLowerCase()));
+        }
+        return false;
+      });
+
+      const questionListItems = matchedQuestions
+        .slice(0, 300)
+        .map(q => {
+          const qSlug = createSlug(q.question);
+          const catSlug = getCategorySlug(q.category);
+          const subSlug = getQuestionSubcategorySlug(q.category, q.question);
+          const urlPath = subSlug
+            ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}`
+            : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
+          return `<li><a href="${urlPath}">${esc(q.question)}</a></li>`;
+        })
+        .join('\n');
+
+      topicDetailHtml = `
+        <nav class="bc"><a href="/">Home</a> &rsaquo; <a href="/topics">Topics</a> &rsaquo; ${esc(topic.title)}</nav>
+        <h1>${esc(topic.title)} Quiz Questions</h1>
+        <p>${esc(topic.description)}</p>
+        <h2>Sample Questions</h2>
+        <ul>
+          ${questionListItems || '<li>No questions found in this topic.</li>'}
+        </ul>
+      `;
+    }
+
+    write(`/topics/${topic.slug}`, {
+      title: `${topic.title} Quiz | Test Your Knowledge | CuizIN`,
+      description: topic.description,
+      canonical: `${SITE_URL}/topics/${topic.slug}`,
+      bodyHtml: topicDetailHtml
+    });
+    count++;
   }
 
   // 3. GENERATE ALL-QUESTIONS HTML SITEMAP PAGE
@@ -805,13 +1013,71 @@ async function run() {
       </article>
     `;
 
+    let blogDesc = blog.excerpt ? blog.excerpt.trim() : '';
+    if (!blogDesc || blogDesc.length < 120) {
+      blogDesc = `Read "${blog.title}" on the CuizIN Blog. Discover trivia tips, fascinating facts, quiz strategies, and learning guides to master your knowledge.`;
+    }
+    if (blogDesc.length > 160) {
+      blogDesc = blogDesc.substring(0, 157) + '...';
+    }
+
     write(`/blog/${blog.slug}`, {
       title: `${blog.title} | CuizIN Blog`,
-      description: blog.excerpt || `${blog.title} - Read this article on the CuizIN Blog.`,
+      description: blogDesc,
       canonical: `${SITE_URL}/blog/${blog.slug}`,
       bodyHtml: blogHtml
     });
     count++;
+  }
+
+  // 5.5. GENERATE INDIVIDUAL FAQ PAGES (Dynamic from Supabase)
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data: faqs } = await supabase
+        .from('faqs')
+        .select('id, question, answer, category')
+        .eq('is_published', true);
+
+      if (faqs && faqs.length > 0) {
+        console.log(`[seo-pages] Pre-rendering ${faqs.length} FAQ pages...`);
+        for (const faq of faqs) {
+          const slug = createSlug(faq.question);
+          if (!slug) continue;
+
+          let faqDesc = faq.answer ? faq.answer.replace(/\s+/g, ' ').trim() : '';
+          if (faqDesc.length < 120) {
+            faqDesc = `Find the answer to "${faq.question}" on CuizIN. ${faqDesc} Learn more about quizzes, rules, rewards, and gameplay tips.`;
+          }
+          if (faqDesc.length > 160) {
+            faqDesc = faqDesc.substring(0, 157) + '...';
+          }
+
+          const faqHtml = `
+            <nav class="bc"><a href="/">Home</a> &rsaquo; <a href="/faq">FAQ</a> &rsaquo; ${esc(faq.question)}</nav>
+            <article>
+              <h1>${esc(faq.question)}</h1>
+              <div style="font-size: 16px; line-height: 1.6; color: #334155; margin-top: 16px;">
+                ${esc(faq.answer)}
+              </div>
+              <div style="margin-top: 24px;">
+                <a href="/faq" style="color: #2563eb; text-decoration: none; font-weight: 500;">&larr; Back to all FAQs</a>
+              </div>
+            </article>
+          `;
+
+          write(`/faq/${faq.id}/${slug}`, {
+            title: `${faq.question} | CuizIN FAQ`,
+            description: faqDesc,
+            canonical: `${SITE_URL}/faq/${faq.id}/${slug}`,
+            bodyHtml: faqHtml
+          });
+          count++;
+        }
+      }
+    } catch (err) {
+      console.warn('[seo-pages] Warning: Failed to fetch and pre-render FAQs:', err.message);
+    }
   }
   // 6. GENERATE INDIVIDUAL QUESTION PAGES
   if (databaseAvailable && allQuestions.length > 0) {

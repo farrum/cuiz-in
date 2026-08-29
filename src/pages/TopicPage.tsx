@@ -236,8 +236,8 @@ const TopicPage: React.FC = () => {
     return (
       <PageLayout>
         <SEO
-          title="Topics | CuizIN"
-          description="Browse quiz topics and test your knowledge on various subjects."
+          title="Quiz Topics | Curated Trivia Collections | CuizIN"
+          description="Explore curated trivia topics on CuizIN. Choose from Indian history, cricket, Bollywood, science, world geography, mythology, gaming, and more."
           canonicalUrl="https://cuiz.in/topics"
         />
         <NewsTicker className="mt-16" />
@@ -273,8 +273,8 @@ const TopicPage: React.FC = () => {
     return (
       <PageLayout>
         <SEO
-          title="Topics | CuizIN"
-          description="Browse quiz topics and test your knowledge on various subjects."
+          title="Quiz Topics | Curated Trivia Collections | CuizIN"
+          description="Explore curated trivia topics on CuizIN. Choose from Indian history, cricket, Bollywood, science, world geography, mythology, gaming, and more."
           canonicalUrl="https://cuiz.in/topics"
         />
         <NewsTicker className="mt-16" />

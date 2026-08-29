@@ -25,7 +25,7 @@ const PrivacyPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
         title="Privacy Policy | CuizIN"
-        description="Read CuizIN's Privacy Policy. Learn how we collect, use, and protect your personal information on our quiz platform."
+        description="Read the CuizIN Privacy Policy to learn how we collect, safeguard, and process your personal information, gaming statistics, and account data securely."
         canonicalUrl="https://cuiz.in/privacy"
         keywords={['privacy policy', 'data protection', 'CuizIN privacy', 'personal information']}
       />

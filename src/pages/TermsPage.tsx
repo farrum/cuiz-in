@@ -25,7 +25,7 @@ const TermsPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <SEO
         title="Terms of Service | CuizIN"
-        description="Read the Terms of Service for CuizIN. Learn about user eligibility, account responsibilities, rewards system, and platform usage policies."
+        description="Read the official CuizIN Terms of Service governing platform usage, player accounts, rewards system, leaderboard fair play rules, and intellectual property."
         canonicalUrl="https://cuiz.in/terms"
         keywords={['terms of service', 'user agreement', 'CuizIN terms', 'quiz platform rules']}
       />

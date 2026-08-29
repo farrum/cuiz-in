@@ -53,7 +53,7 @@ const FaqPage: React.FC = () => {
     <PageLayout showNewsTicker containerClassName="container max-w-4xl pt-12 pb-16 px-4">
       <SEO
         title="Frequently Asked Questions | CuizIN"
-        description="Find answers to the most common questions about CuizIN quiz game, gems system, and how to get the most out of playing."
+        description="Find comprehensive answers to common questions about CuizIN — gameplay rules, earning gems, claiming rewards, leaderboards, and account security."
         canonicalUrl="https://cuiz.in/faq"
         schemaType="FAQPage"
         schemaData={faqSchema}

@@ -408,36 +408,18 @@ ${mainEntries.join('\n')}
     console.warn('Warning: Could not write questions cache file:', err.message);
   }
 
-  // 3. GENERATE AMP SITEMAP (sitemaps/amp.xml)
-  console.log('Generating AMP sitemap...');
-  const ampEntries = [];
-  
-  // Sort in memory by created_at DESC to put newest first
-  const sortedQuestions = [...allQuestions].sort((a, b) => {
-    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-    return dateB - dateA;
-  });
-
-  for (const q of sortedQuestions) {
-    const lastmod = q.created_at ? q.created_at.split('T')[0] : today;
-    ampEntries.push(`  <url>
-    <loc>${SITE_URL}/amp/question/${q.id}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>`);
+  // Remove obsolete amp.xml if it exists
+  const oldAmpPath = path.join(sitemapsDir, 'amp.xml');
+  if (fs.existsSync(oldAmpPath)) {
+    try {
+      fs.unlinkSync(oldAmpPath);
+      console.log('Removed obsolete amp.xml sitemap file.');
+    } catch (e) {
+      console.warn('Could not remove old amp.xml:', e.message);
+    }
   }
 
-  const ampXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${ampEntries.join('\n')}
-</urlset>`;
-
-  fs.writeFileSync(path.join(sitemapsDir, 'amp.xml'), ampXml);
-  console.log(`Generated AMP sitemap with ${ampEntries.length} entries.`);
-
-  // 4. GENERATE CATEGORY SITEMAPS (sitemaps/category/[category]/sitemap.xml)
+  // 3. GENERATE CATEGORY SITEMAPS (sitemaps/category/[category]/sitemap.xml)
   const categories = Object.keys(slugToCategoriesMap);
   for (const cat of categories) {
     console.log(`Generating category sitemap for ${cat}...`);
@@ -496,9 +478,6 @@ ${catEntries.join('\n')}
   for (const cat of categories) {
     indexXml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
   }
-  
-  // AMP
-  indexXml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/amp.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
   
   indexXml += '</sitemapindex>';
 
