@@ -76,7 +76,7 @@ const AdminPaymentsOverview: React.FC = () => {
       
       <PaymentStats payments={filteredPayments} />
       
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-hidden bg-card text-card-foreground shadow-sm">
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <Loader className="w-8 h-8 mx-auto mb-2 text-muted-foreground animate-spin" />

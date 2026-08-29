@@ -185,10 +185,10 @@ const FaqManagement = () => {
       ) : (
         <div className="grid gap-4">
           {faqs?.map((faq) => (
-            <div key={faq.id} className="p-4 border rounded-lg">
-              <h3 className="font-semibold">{faq.question}</h3>
-              <p className="text-sm text-muted-foreground">{faq.answer}</p>
-              <div className="mt-2 flex gap-2">
+            <div key={faq.id} className="p-5 border rounded-xl bg-card text-card-foreground shadow-sm space-y-2">
+              <h3 className="font-semibold text-base text-foreground">{faq.question}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+              <div className="pt-2 flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => openEditDialog(faq)}>Edit</Button>
                 <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(faq)}>Delete</Button>
               </div>

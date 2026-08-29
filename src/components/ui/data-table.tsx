@@ -22,7 +22,7 @@ export const DataTable: React.FC<DataTableProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div>
+      <div className="rounded-md border overflow-hidden bg-card text-card-foreground shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -48,7 +48,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   }
 
   return (
-    <div>
+    <div className="rounded-md border overflow-hidden bg-card text-card-foreground shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>

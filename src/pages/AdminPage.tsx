@@ -301,7 +301,7 @@ const AdminPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex bg-slate-50/50 dark:bg-slate-950/20">
+    <div className="min-h-screen flex bg-slate-100 dark:bg-slate-950 text-foreground">
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -314,7 +314,7 @@ const AdminPage: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {/* Top Header / Mobile Bar */}
-        <header className="sticky top-0 z-30 bg-card/85 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 lg:px-8">
+        <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-3">
             {/* Mobile Sheet Trigger */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

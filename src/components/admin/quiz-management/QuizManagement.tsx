@@ -144,7 +144,7 @@ const QuizManagement: React.FC = () => {
               }
             />
           ) : (
-            <div className={activeTab === 'image' ? "mt-4" : "border rounded-md"}>
+            <div className={activeTab === 'image' ? "mt-4" : "border rounded-md overflow-hidden bg-card text-card-foreground shadow-sm"}>
               <PaginatedDataTable
                 columns={activeTab === 'text' ? textColumns : imageColumns}
                 data={filteredQuestions}

@@ -248,7 +248,7 @@ const AdminBadgeManagement: React.FC = () => {
         </div>
       </div>
       
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-hidden bg-card text-card-foreground shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
