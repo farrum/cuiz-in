@@ -456,8 +456,15 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       if (!isAnswered && ramanujanUsed && option === question.correctAnswer) {
         return 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/15 border-2';
       }
+      if (isAnswered) {
+        // Suspense phase: keep the pick visible but hide the verdict.
+        return option === selectedAnswer
+          ? 'border-primary bg-primary/10 animate-pulse'
+          : 'border-border opacity-70';
+      }
       return 'border-border hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-[0.98]';
     }
+
 
     if (option === question.correctAnswer) {
       return 'border-accent bg-accent/10';
