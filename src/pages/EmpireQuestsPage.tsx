@@ -1142,10 +1142,18 @@ export default function EmpireQuestsPage() {
           </div>
         </div>
 
+        {/* DAILY TRIBUTE + CONTRACTS (parity with the mobile Hub) */}
+        {gameplayStatus === 'idle' && (
+          <div className="max-w-6xl mx-auto px-4 mt-4">
+            <QuestDailyPanel />
+          </div>
+        )}
+
         {/* WEB BANNER AD - TOP */}
         <div className="max-w-6xl mx-auto px-4 mt-4 hidden md:block">
           <SimpleAdBanner position="header" slotId="quest-web-top" className="rounded-2xl overflow-hidden shadow-lg border border-amber-500/20" />
         </div>
+
 
         {/* LOADING INDICATOR */}
         {loading && gameplayStatus === 'idle' ? (
