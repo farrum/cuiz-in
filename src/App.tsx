@@ -98,6 +98,9 @@ const QuizPlayPage = React.lazy(() => import("@/pages/QuizPlayPage"));
 const EmpireQuestsPage = React.lazy(() => import("@/pages/EmpireQuestsPage"));
 const KingdomsPage = React.lazy(() => import("@/pages/KingdomsPage"));
 const ShopScreen = React.lazy(() => import("@/mobile/screens/Shop/ShopScreen"));
+const EntityPage = React.lazy(() => import("@/pages/EntityPage"));
+const EntitiesDirectoryPage = React.lazy(() => import("@/pages/EntitiesDirectoryPage"));
+const ApiDocsPage = React.lazy(() => import("@/pages/ApiDocsPage"));
 
 // Lazy load components that aren't needed immediately
 const ScrollToTop = React.lazy(() => import("@/components/ScrollToTop"));
@@ -463,6 +466,66 @@ function App() {
                   <HtmlSitemapPage />
                 </Suspense>
               } />
+
+              {/* Knowledge Graph Entity Routes */}
+              <Route path="/entities" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntitiesDirectoryPage />
+                </Suspense>
+              } />
+              <Route path="/people" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntitiesDirectoryPage initialType="person" />
+                </Suspense>
+              } />
+              <Route path="/people/:slug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntityPage entityType="person" />
+                </Suspense>
+              } />
+              <Route path="/places" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntitiesDirectoryPage initialType="place" />
+                </Suspense>
+              } />
+              <Route path="/places/:slug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntityPage entityType="place" />
+                </Suspense>
+              } />
+              <Route path="/events" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntitiesDirectoryPage initialType="event" />
+                </Suspense>
+              } />
+              <Route path="/events/:slug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntityPage entityType="event" />
+                </Suspense>
+              } />
+              <Route path="/concepts" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntitiesDirectoryPage initialType="concept" />
+                </Suspense>
+              } />
+              <Route path="/concepts/:slug" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EntityPage entityType="concept" />
+                </Suspense>
+              } />
+
+              {/* Developer & AI Knowledge API Routes */}
+              <Route path="/developers" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ApiDocsPage />
+                </Suspense>
+              } />
+              <Route path="/api-docs" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ApiDocsPage />
+                </Suspense>
+              } />
+              
               <Route path="/stories/:storyId" element={
                 <Suspense fallback={<PageLoader />}>
                   <WebStoriesPage />

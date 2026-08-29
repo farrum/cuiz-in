@@ -18,7 +18,11 @@ import {
   AlertCircle,
   BookOpen,
   ShieldCheck,
-  ExternalLink
+  ExternalLink,
+  HelpCircle,
+  CalendarCheck,
+  Flame,
+  Sparkles
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
@@ -41,12 +45,13 @@ import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
 import { getQuestionSources, getFactType, getProvenanceBadge } from '@/utils/provenanceUtils';
+import { generateQuestionVariants, getKnowledgeClaimId, getFactReviewMetadata } from '@/utils/questionNormalization';
+import { findMatchingEntityForQuestion } from '@/utils/entityData';
 import ReportErrorModal from '@/components/quiz/ReportErrorModal';
 import RelatedQuestions from '@/components/RelatedQuestions';
 import RelatedArticles from '@/components/RelatedArticles';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
 import { isUserLoggedIn } from '@/utils/guestPlayService';
-import { Flame, Sparkles } from 'lucide-react';
 
 const SESSION_STREAK_KEY = 'cuizin_web_session_streak';
 const SESSION_ANSWERED_KEY = 'cuizin_web_session_answered';
@@ -343,6 +348,10 @@ const QuizQuestionPage: React.FC = () => {
     };
   };
 
+  const questionVariants = question ? generateQuestionVariants(question.question, question.category) : [];
+  const claimId = question ? getKnowledgeClaimId(question.id) : '';
+  const factReviewMeta = question ? getFactReviewMetadata(question.createdAt) : { verifiedDate: 'August 2026', isoModifiedDate: '2026-08-29T00:00:00Z' };
+
   // Generate clean, authentic Question / Answer schema for AI and Search Engines
   const generateQuestionAnswerSchema = () => {
     if (!question) return null;
@@ -353,13 +362,15 @@ const QuizQuestionPage: React.FC = () => {
       ? `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${subSlug}/${canonicalSlug}`
       : `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${canonicalSlug}`;
     const datePublishedStr = question.createdAt ? new Date(question.createdAt).toISOString() : '2024-01-01T00:00:00Z';
-    const dateModifiedStr = new Date().toISOString().split('T')[0];
+    const dateModifiedStr = factReviewMeta.isoModifiedDate;
     
     return {
       '@context': 'https://schema.org',
       '@type': 'Question',
+      '@id': `${questionUrl}#claim`,
       'name': question.question,
       'text': question.question,
+      'alternateName': questionVariants.length > 0 ? questionVariants : undefined,
       'url': questionUrl,
       'answerCount': 1,
       'datePublished': datePublishedStr,
@@ -547,6 +558,31 @@ const QuizQuestionPage: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
             {question ? question.question : 'Loading question...'}
           </h1>
+
+          {/* Linked Knowledge Graph Entity Node Banner */}
+          {matchedEntity && (
+            <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-sm">
+                  🏛️
+                </span>
+                <div>
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <span>Knowledge Graph Node:</span>
+                    <strong className="text-primary">{matchedEntity.name}</strong>
+                    <Badge variant="outline" className="text-[10px] py-0 uppercase">{matchedEntity.type}</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground line-clamp-1">{matchedEntity.summary}</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" asChild className="h-7 text-xs shrink-0 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground self-start sm:self-auto">
+                <Link to={`/${matchedEntity.type === 'person' ? 'people' : matchedEntity.type === 'place' ? 'places' : matchedEntity.type === 'event' ? 'events' : 'concepts'}/${matchedEntity.slug}`}>
+                  View Entity Hub &rarr;
+                </Link>
+              </Button>
+            </div>
+          )}
+
           {question && keywords.length > 0 && (
             <p className="text-muted-foreground mt-3 text-sm">
               <span className="font-medium text-foreground">Keywords:</span> {keywords.slice(0, 8).join(', ')}
@@ -661,6 +697,26 @@ const QuizQuestionPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Also Asked As (Query Normalization & Semantic Variants) */}
+              {questionVariants.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <HelpCircle className="h-3.5 w-3.5 text-primary" />
+                    Also Asked As &amp; Semantic Query Variants
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {questionVariants.map((variant, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center text-xs bg-muted/70 text-foreground px-2.5 py-1 rounded-md border border-border"
+                      >
+                        "{variant}"
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Authoritative Citations Section */}
               {sources.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
@@ -687,9 +743,16 @@ const QuizQuestionPage: React.FC = () => {
 
               {/* Provenance & Fact-Check Metadata */}
               <div className="pt-4 mt-4 border-t border-border flex flex-wrap items-center justify-between text-xs text-muted-foreground gap-2">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  <span>Fact-checked by <strong>CuizIN Editorial Team</strong> · <Link to="/editorial-policy" className="text-primary hover:underline">Editorial Policy</Link> · <Link to="/our-sources" className="text-primary hover:underline">Our Sources</Link></span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    <span>Fact-checked by <strong>CuizIN Editorial Team</strong> · <Link to="/editorial-policy" className="text-primary hover:underline">Editorial Policy</Link> · <Link to="/our-sources" className="text-primary hover:underline">Our Sources</Link></span>
+                  </div>
+                  <span className="text-slate-300 dark:text-slate-700">|</span>
+                  <span className="font-mono bg-muted/80 px-1.5 py-0.5 rounded text-[11px] text-foreground font-semibold border">
+                    {claimId}
+                  </span>
+                  <span>· Verified: <strong className="text-foreground">{factReviewMeta.verifiedDate}</strong></span>
                 </div>
                 <div>
                   <button

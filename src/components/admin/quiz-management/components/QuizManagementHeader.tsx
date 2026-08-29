@@ -49,6 +49,10 @@ const QuizManagementHeader: React.FC<QuizManagementHeaderProps> = ({
           <Users className="h-4 w-4" />
           Team Quiz
         </TabsTrigger>
+        <TabsTrigger value="deduplication" className="flex items-center gap-1">
+          <Sparkles className="h-4 w-4 text-primary" />
+          Quality &amp; Deduplication
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="text">

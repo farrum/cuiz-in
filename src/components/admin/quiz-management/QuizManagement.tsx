@@ -16,6 +16,7 @@ import {
 } from './components';
 import TeamQuizManagement from './team-quiz/TeamQuizManagement';
 import RefetchImagesButton from './image-quiz/RefetchImagesButton';
+import QuestionQualityDeduplicationPanel from './QuestionQualityDeduplicationPanel';
 
 const QuizManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('text');
@@ -93,7 +94,28 @@ const QuizManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {activeTab !== 'team-quiz' && (
+      {activeTab === 'deduplication' && (
+        <>
+          <QuizManagementHeader 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onAddQuestion={() => setIsAddDialogOpen(true)}
+            onImportQuestions={() => setIsImportDialogOpen(true)}
+            onLearnTrivia={() => setIsLearnTriviaDialogOpen(true)}
+            onExport={() => exportToExcel(activeTab, filteredQuestions)}
+            onAddImageQuestion={() => setIsImageQuizDialogOpen(true)}
+            onLearnImageTrivia={() => setIsLearnImageTriviaDialogOpen(true)}
+            onCleanupImages={handleCleanupImageQuizzes}
+            onAiGenerate={() => setIsAiGenerateDialogOpen(true)}
+          />
+          <QuestionQualityDeduplicationPanel 
+            questions={questions}
+            onRefreshQuestions={fetchQuestions}
+          />
+        </>
+      )}
+
+      {activeTab !== 'deduplication' && activeTab !== 'team-quiz' && (
         <>
           <QuizManagementHeader 
             activeTab={activeTab}

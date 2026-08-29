@@ -1,0 +1,111 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CuizIN Knowledge Graph & Fact-Checked Trivia API",
+    "version": "1.0.0",
+    "description": "Public REST and structured knowledge API for retrieving fact-verified quiz questions, authoritative citations, query normalization variants, and Knowledge Graph entity nodes.",
+    "contact": {
+      "name": "CuizIN Editorial & Developer Team",
+      "url": "https://cuiz.in/editorial-policy",
+      "email": "editorial@cuiz.in"
+    },
+    "license": {
+      "name": "Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0)",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://cuiz.in",
+      "description": "Production CuizIN Global CDN"
+    }
+  ],
+  "paths": {
+    "/api/v1/questions.json": {
+      "get": {
+        "summary": "List Verified Knowledge Claims & Questions",
+        "description": "Returns a compressed index of all fact-verified questions, correct answers, knowledge claim IDs, difficulty levels, and canonical permalinks.",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of knowledge index",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": { "type": "string", "example": "1.0" },
+                    "total": { "type": "integer", "example": 12432 },
+                    "lastUpdated": { "type": "string", "format": "date-time" },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QuestionSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities.json": {
+      "get": {
+        "summary": "List Knowledge Graph Entity Nodes",
+        "description": "Returns all structured Knowledge Graph entities (People, Places, Events, Concepts) with summary facts, sameAs external identifiers, and category tags.",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of entity nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer", "example": 14 },
+                    "entities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityNode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "QuestionSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "claimId": { "type": "string", "example": "CUIZ-FACT-0000D0F0" },
+          "question": { "type": "string", "example": "Which Indian city hosts the iconic Wankhede Stadium?" },
+          "category": { "type": "string", "example": "Cricket" },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "correctAnswer": { "type": "string", "example": "Mumbai" },
+          "canonicalUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "EntityNode": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string", "example": "jawaharlal-nehru" },
+          "type": { "type": "string", "enum": ["person", "place", "event", "concept"] },
+          "name": { "type": "string", "example": "Jawaharlal Nehru" },
+          "category": { "type": "string", "example": "History" },
+          "summary": { "type": "string" },
+          "sameAs": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          }
+        }
+      }
+    }
+  }
+}

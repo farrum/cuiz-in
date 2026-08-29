@@ -592,6 +592,30 @@ const STATIC_PAGES = {
       <p>CuizIN is committed to rapid, transparent factual corrections. Learn about our review lifecycle and how to submit a question correction report.</p>
     `
   },
+  '/developers': {
+    title: 'Public Knowledge API & Developer Documentation | CuizIN',
+    description: 'Public REST and structured knowledge API for retrieving fact-verified quiz questions, Knowledge Graph entities, and claim IDs for AI agents and LLM grounding.',
+    bodyHtml: `
+      <h1>CuizIN Public Knowledge API &amp; LLM Endpoints</h1>
+      <p>Programmatic access to 12,000+ fact-verified trivia questions, query variants, and Knowledge Graph entities. Open access under Creative Commons Attribution-ShareAlike 4.0.</p>
+      <h2>Available Endpoints</h2>
+      <ul>
+        <li><code>GET /api/v1/questions.json</code> — Compressed index of verified trivia claims and canonical links.</li>
+        <li><code>GET /api/v1/entities.json</code> — Structured Knowledge Graph entity nodes.</li>
+        <li><code>GET /api/v1/openapi.json</code> — OpenAPI 3.1 specification.</li>
+      </ul>
+      <p><a href="/api/v1/openapi.json" target="_blank">View OpenAPI Spec</a> · <a href="/llms-full.txt" target="_blank">View llms-full.txt</a></p>
+    `
+  },
+  '/api-docs': {
+    title: 'API Reference & LLM Grounding Endpoints | CuizIN',
+    description: 'Developer documentation, OpenAPI spec, and endpoints for programmatic trivia question querying and Knowledge Graph retrieval.',
+    bodyHtml: `
+      <h1>CuizIN API Reference &amp; LLM Grounding</h1>
+      <p>Query verified factual claims and knowledge graph nodes with low-latency JSON endpoints. Free for academic researchers and AI systems with standard attribution.</p>
+      <p><a href="/developers">Explore Full Developer Portal &rarr;</a></p>
+    `
+  },
 };
 
 const TOPICS = [
@@ -945,6 +969,477 @@ async function run() {
     count++;
   }
 
+  // 2.6 GENERATE KNOWLEDGE GRAPH ENTITY PAGES (/entities, /people, /places, /events, /concepts)
+  const ENTITY_REGISTRY = [
+    {
+      slug: 'jawaharlal-nehru',
+      type: 'person',
+      name: 'Jawaharlal Nehru',
+      category: 'History',
+      roleOrDesignation: 'First Prime Minister of India (1947–1964)',
+      eraOrPeriod: 'Modern Indian History (1889–1964)',
+      summary: 'Jawaharlal Nehru was an Indian anti-colonial nationalist, secular humanist, social democrat, and statesman who served as the first Prime Minister of India from 1947 until his death in 1964. Author of "The Discovery of India".',
+      keyFacts: [
+        { label: 'Born', value: 'November 14, 1889, Allahabad, India' },
+        { label: 'Died', value: 'May 27, 1964, New Delhi, India' },
+        { label: 'Office', value: 'Prime Minister of India (15 August 1947 – 27 May 1964)' },
+        { label: 'Key Works', value: 'The Discovery of India, Glimpses of World History' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Jawaharlal_Nehru',
+        'https://www.wikidata.org/wiki/Q1047',
+        'https://www.britannica.com/biography/Jawaharlal-Nehru'
+      ],
+      keywords: ['nehru', 'jawaharlal', 'discovery of india', 'first prime minister of india', 'chacha nehru'],
+      sources: [
+        { title: 'National Archives of India — Nehru Papers', url: 'http://nationalarchives.nic.in' },
+        { title: 'Prime Ministers Museum & Library (PMML)', url: 'https://pmml.nic.in' }
+      ]
+    },
+    {
+      slug: 'mahatma-gandhi',
+      type: 'person',
+      name: 'Mahatma Gandhi',
+      category: 'History',
+      roleOrDesignation: 'Leader of the Indian Independence Movement',
+      eraOrPeriod: 'Modern Indian History (1869–1948)',
+      summary: 'Mohandas Karamchand Gandhi was an Indian lawyer, anti-colonial nationalist, and political ethicist who employed nonviolent resistance to lead the successful campaign for India\'s independence from British rule.',
+      keyFacts: [
+        { label: 'Born', value: 'October 2, 1869, Porbandar, Gujarat, India' },
+        { label: 'Died', value: 'January 30, 1948, New Delhi, India' },
+        { label: 'Philosophy', value: 'Satyagraha (Truth-force), Ahimsa (Nonviolence)' },
+        { label: 'Major Campaigns', value: 'Non-Cooperation (1920), Salt March (1930), Quit India (1942)' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Mahatma_Gandhi',
+        'https://www.wikidata.org/wiki/Q1001',
+        'https://www.britannica.com/biography/Mahatma-Gandhi'
+      ],
+      keywords: ['gandhi', 'mahatma', 'bapu', 'satyagraha', 'ahimsa', 'salt march', 'dandi march', 'sabarmati'],
+      sources: [
+        { title: 'Gandhi Heritage Portal', url: 'https://www.gandhiheritageportal.org' },
+        { title: 'National Archives of India', url: 'http://nationalarchives.nic.in' }
+      ]
+    },
+    {
+      slug: 'albert-einstein',
+      type: 'person',
+      name: 'Albert Einstein',
+      category: 'Science',
+      roleOrDesignation: 'Theoretical Physicist & Nobel Laureate',
+      eraOrPeriod: '20th Century Physics (1879–1955)',
+      summary: 'Albert Einstein was a theoretical physicist widely acknowledged to be one of the greatest and most influential physicists of all time. Best known for developing the theory of relativity and E = mc².',
+      keyFacts: [
+        { label: 'Born', value: 'March 14, 1879, Ulm, Germany' },
+        { label: 'Died', value: 'April 18, 1955, Princeton, USA' },
+        { label: 'Nobel Prize', value: 'Physics (1921) for Photoelectric Effect' },
+        { label: 'Core Formula', value: 'E = mc²' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Albert_Einstein',
+        'https://www.wikidata.org/wiki/Q937',
+        'https://www.britannica.com/biography/Albert-Einstein'
+      ],
+      keywords: ['einstein', 'relativity', 'photoelectric', 'emc2', 'brownian motion'],
+      sources: [
+        { title: 'Nobel Prize Official Archives — Albert Einstein', url: 'https://www.nobelprize.org/prizes/physics/1921/einstein/biographical/' }
+      ]
+    },
+    {
+      slug: 'marie-curie',
+      type: 'person',
+      name: 'Marie Curie',
+      category: 'Science',
+      roleOrDesignation: 'Physicist & Chemist, Double Nobel Laureate',
+      eraOrPeriod: 'Late 19th & Early 20th Century (1867–1934)',
+      summary: 'Marie Skłodowska-Curie was a pioneering physicist and chemist who conducted research on radioactivity. The first woman to win a Nobel Prize and the only person to win in two scientific fields.',
+      keyFacts: [
+        { label: 'Born', value: 'November 7, 1867, Warsaw, Poland' },
+        { label: 'Died', value: 'July 4, 1934, Passy, France' },
+        { label: 'Nobel Prizes', value: 'Physics (1903), Chemistry (1911)' },
+        { label: 'Discovered Elements', value: 'Polonium (Po), Radium (Ra)' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Marie_Curie',
+        'https://www.wikidata.org/wiki/Q7186',
+        'https://www.britannica.com/biography/Marie-Curie'
+      ],
+      keywords: ['curie', 'marie curie', 'radium', 'polonium', 'radioactivity'],
+      sources: [
+        { title: 'Nobel Prize Official Archives — Marie Curie', url: 'https://www.nobelprize.org/prizes/physics/1903/marie-curie/biographical/' }
+      ]
+    },
+    {
+      slug: 'apj-abdul-kalam',
+      type: 'person',
+      name: 'A. P. J. Abdul Kalam',
+      category: 'Science',
+      roleOrDesignation: '11th President of India & Aerospace Scientist',
+      eraOrPeriod: 'Modern India (1931–2015)',
+      summary: 'Dr. A. P. J. Abdul Kalam was an aerospace scientist and statesman who served as the 11th President of India. Widely revered as the "Missile Man of India".',
+      keyFacts: [
+        { label: 'Born', value: 'October 15, 1931, Rameswaram, India' },
+        { label: 'Died', value: 'July 27, 2015, Shillong, India' },
+        { label: 'Moniker', value: 'Missile Man of India / People\'s President' },
+        { label: 'Key Works', value: 'Wings of Fire, Ignited Minds' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/A._P._J._Abdul_Kalam',
+        'https://www.wikidata.org/wiki/Q9513',
+        'https://www.britannica.com/biography/A-P-J-Abdul-Kalam'
+      ],
+      keywords: ['kalam', 'abdul kalam', 'missile man', 'wings of fire', 'pokhran'],
+      sources: [
+        { title: 'ISRO Official History & Pioneers', url: 'https://www.isro.gov.in' }
+      ]
+    },
+    {
+      slug: 'sachin-tendulkar',
+      type: 'person',
+      name: 'Sachin Tendulkar',
+      category: 'Sports',
+      roleOrDesignation: 'Legendary Indian International Cricketer',
+      eraOrPeriod: 'Contemporary Sports (1973–present)',
+      summary: 'Sachin Tendulkar is an Indian former international cricketer widely regarded as one of the greatest batsmen in history, holding the world record for 100 international centuries.',
+      keyFacts: [
+        { label: 'Born', value: 'April 24, 1973, Mumbai, India' },
+        { label: 'Centuries', value: '100 International Centuries (51 Test, 49 ODI)' },
+        { label: 'Total Runs', value: '34,357 International Runs' },
+        { label: 'Honour', value: 'Bharat Ratna (2014)' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Sachin_Tendulkar',
+        'https://www.wikidata.org/wiki/Q9448',
+        'https://www.espncricinfo.com/cricketers/sachin-tendulkar-35320'
+      ],
+      keywords: ['tendulkar', 'sachin', 'master blaster', '100 centuries', 'wankhede'],
+      sources: [
+        { title: 'BCCI Official Portal', url: 'https://www.bcci.tv' }
+      ]
+    },
+    {
+      slug: 'taj-mahal',
+      type: 'place',
+      name: 'Taj Mahal',
+      category: 'Geography',
+      roleOrDesignation: 'UNESCO World Heritage Site & Mughal Monument',
+      eraOrPeriod: 'Mughal Empire (1632–1653 CE)',
+      summary: 'The Taj Mahal is an ivory-white marble mausoleum in Agra, India, commissioned in 1632 by the Mughal emperor Shah Jahan to house the tomb of his favourite wife, Mumtaz Mahal.',
+      keyFacts: [
+        { label: 'Location', value: 'Agra, Uttar Pradesh, India' },
+        { label: 'Builder', value: 'Mughal Emperor Shah Jahan' },
+        { label: 'UNESCO Status', value: 'World Heritage Site (1983)' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Taj_Mahal',
+        'https://www.wikidata.org/wiki/Q9141',
+        'https://whc.unesco.org/en/list/252'
+      ],
+      keywords: ['taj mahal', 'shah jahan', 'mumtaz mahal', 'agra', 'makrana marble'],
+      sources: [
+        { title: 'Archaeological Survey of India (ASI)', url: 'https://asi.nic.in' }
+      ]
+    },
+    {
+      slug: 'mount-everest',
+      type: 'place',
+      name: 'Mount Everest',
+      category: 'Geography',
+      roleOrDesignation: 'Highest Mountain Peak on Earth',
+      eraOrPeriod: 'Geological Formation (Himalayas)',
+      summary: 'Mount Everest is Earth\'s highest mountain above sea level, located in the Mahalangur Himal sub-range of the Himalayas on the border of Nepal and China (Tibet).',
+      keyFacts: [
+        { label: 'Elevation', value: '8,848.86 metres (29,031.7 ft)' },
+        { label: 'Location', value: 'Himalayas, Border of Nepal and China' },
+        { label: 'First Ascent', value: 'Edmund Hillary & Tenzing Norgay (May 29, 1953)' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Mount_Everest',
+        'https://www.wikidata.org/wiki/Q513'
+      ],
+      keywords: ['everest', 'mount everest', 'sagarmatha', 'chomolungma', 'hillary', 'tenzing norgay'],
+      sources: [
+        { title: 'Survey of India', url: 'https://www.surveyofindia.gov.in' }
+      ]
+    },
+    {
+      slug: 'indian-independence-movement',
+      type: 'event',
+      name: 'Indian Independence Movement',
+      category: 'History',
+      roleOrDesignation: 'Anti-Colonial Liberation Struggle (1857–1947)',
+      eraOrPeriod: 'Modern Era (1857–1947)',
+      summary: 'The Indian Independence Movement was a series of historic events and mass campaigns aimed at ending British colonial rule in India, culminating on August 15, 1947.',
+      keyFacts: [
+        { label: 'Timeframe', value: '1857 – 15 August 1947' },
+        { label: 'Key Leaders', value: 'Mahatma Gandhi, Jawaharlal Nehru, Sardar Patel, Subhas Chandra Bose' },
+        { label: 'Outcome', value: 'Sovereign Republic of India & Dominion of Pakistan' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Indian_independence_movement',
+        'https://www.wikidata.org/wiki/Q124317'
+      ],
+      keywords: ['indian independence', 'freedom struggle', 'swaraj', '15 august 1947', 'british raj'],
+      sources: [
+        { title: 'National Archives of India', url: 'http://nationalarchives.nic.in' }
+      ]
+    },
+    {
+      slug: 'quit-india-movement',
+      type: 'event',
+      name: 'Quit India Movement',
+      category: 'History',
+      roleOrDesignation: 'All-India Mass Civil Disobedience Campaign (1942)',
+      eraOrPeriod: 'World War II Era (August 1942)',
+      summary: 'The Quit India Movement (August Kranti) was launched by Mahatma Gandhi at the Bombay session of the AICC on 8 August 1942 with the historic call "Do or Die".',
+      keyFacts: [
+        { label: 'Date', value: 'August 8, 1942' },
+        { label: 'Slogan', value: '"Do or Die" (Karo ya Maro)' },
+        { label: 'Venue', value: 'Gowalia Tank Maidan, Bombay' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Quit_India_Movement',
+        'https://www.wikidata.org/wiki/Q1333333'
+      ],
+      keywords: ['quit india', 'august kranti', 'do or die', 'karo ya maro', 'gowalia tank'],
+      sources: [
+        { title: 'National Archives of India', url: 'http://nationalarchives.nic.in' }
+      ]
+    },
+    {
+      slug: 'theory-of-relativity',
+      type: 'concept',
+      name: 'Theory of Relativity',
+      category: 'Science',
+      roleOrDesignation: 'Pillar of Modern Physics',
+      eraOrPeriod: 'Special (1905), General (1915)',
+      summary: 'The theory of relativity by Albert Einstein encompasses special relativity and general relativity, describing gravity as the geometric curvature of spacetime.',
+      keyFacts: [
+        { label: 'Proponent', value: 'Albert Einstein' },
+        { label: 'Core Formula', value: 'E = mc²' },
+        { label: 'Key Predictions', value: 'Gravitational lensing, Time dilation, Black holes' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Theory_of_relativity',
+        'https://www.wikidata.org/wiki/Q43514'
+      ],
+      keywords: ['theory of relativity', 'special relativity', 'general relativity', 'spacetime', 'time dilation'],
+      sources: [
+        { title: 'Max Planck Institute for Gravitational Physics', url: 'https://www.aei.mpg.de' }
+      ]
+    },
+    {
+      slug: 'quantum-mechanics',
+      type: 'concept',
+      name: 'Quantum Mechanics',
+      category: 'Science',
+      roleOrDesignation: 'Fundamental Theory in Physics',
+      eraOrPeriod: '20th Century to Present',
+      summary: 'Quantum mechanics is a fundamental theory in physics providing description of nature at atomic and subatomic scales, establishing wave-particle duality and uncertainty.',
+      keyFacts: [
+        { label: 'Pioneers', value: 'Planck, Einstein, Bohr, Heisenberg, Schrödinger' },
+        { label: 'Principles', value: 'Wave-particle duality, Uncertainty principle, Superposition' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Quantum_mechanics',
+        'https://www.wikidata.org/wiki/Q944'
+      ],
+      keywords: ['quantum mechanics', 'quantum physics', 'schrodinger', 'heisenberg uncertainty', 'superposition'],
+      sources: [
+        { title: 'CERN Quantum Technology Initiative', url: 'https://quantum.cern' }
+      ]
+    },
+    {
+      slug: 'photosynthesis',
+      type: 'concept',
+      name: 'Photosynthesis',
+      category: 'Science',
+      roleOrDesignation: 'Biological Energy Conversion Process',
+      eraOrPeriod: 'Fundamental Biochemical Process',
+      summary: 'Photosynthesis is a biological process used by plants, algae, and cyanobacteria to convert light energy into chemical energy, producing glucose and releasing oxygen.',
+      keyFacts: [
+        { label: 'Equation', value: '6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂' },
+        { label: 'Pigment', value: 'Chlorophyll' },
+        { label: 'Organelle', value: 'Chloroplasts' }
+      ],
+      sameAs: [
+        'https://en.wikipedia.org/wiki/Photosynthesis',
+        'https://www.wikidata.org/wiki/Q11990'
+      ],
+      keywords: ['photosynthesis', 'chlorophyll', 'chloroplast', 'calvin cycle'],
+      sources: [
+        { title: 'National Geographic Resource Library', url: 'https://www.nationalgeographic.org' }
+      ]
+    }
+  ];
+
+  const entityTypePrefixMap = {
+    person: '/people',
+    place: '/places',
+    event: '/events',
+    concept: '/concepts'
+  };
+
+  // Generate /entities, /people, /places, /events, /concepts directory pages
+  const typeDirs = [
+    { path: '/entities', title: 'Knowledge Graph & Entity Directory', typeFilter: null },
+    { path: '/people', title: 'People & Historical Figures Directory', typeFilter: 'person' },
+    { path: '/places', title: 'Places & World Landmarks Directory', typeFilter: 'place' },
+    { path: '/events', title: 'Historic Events & Eras Directory', typeFilter: 'event' },
+    { path: '/concepts', title: 'Concepts & Scientific Theories Directory', typeFilter: 'concept' }
+  ];
+
+  for (const dir of typeDirs) {
+    const list = dir.typeFilter 
+      ? ENTITY_REGISTRY.filter(e => e.type === dir.typeFilter)
+      : ENTITY_REGISTRY;
+
+    const cardsHtml = list.map(e => {
+      const prefix = entityTypePrefixMap[e.type];
+      return `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="tag" style="text-transform:capitalize;">${esc(e.type)}</span>
+            <span style="font-size:12px;color:#64748b;">${esc(e.category)}</span>
+          </div>
+          <h2 style="font-size:18px;font-weight:700;margin:4px 0;"><a href="${prefix}/${e.slug}" style="color:#2563eb;text-decoration:none;">${esc(e.name)}</a></h2>
+          ${e.roleOrDesignation ? `<div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:6px;">${esc(e.roleOrDesignation)}</div>` : ''}
+          <p style="font-size:13px;color:#64748b;margin:6px 0;">${esc(e.summary)}</p>
+          <div style="margin-top:10px;"><a href="${prefix}/${e.slug}" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;">Explore Entity Facts &amp; Trivia &rarr;</a></div>
+        </div>
+      `;
+    }).join('');
+
+    const dirHtml = `
+      <nav class="bc">
+        <a href="/">Home</a> &rsaquo; 
+        <a href="/entities">Knowledge Graph</a>
+        ${dir.typeFilter ? ` &rsaquo; <span>${esc(dir.title)}</span>` : ''}
+      </nav>
+      <article>
+        <h1>${esc(dir.title)}</h1>
+        <p>Explore CuizIN's structured Knowledge Graph: comprehensive directory of notable figures, world landmarks, historical milestones, and scientific theories with verified trivia tests.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;margin-top:20px;">
+          ${cardsHtml}
+        </div>
+      </article>
+    `;
+
+    write(dir.path, {
+      title: `${dir.title} | CuizIN Knowledge Graph`,
+      description: `Explore structured knowledge entities, historical figures, geography landmarks, and science concepts on CuizIN.`,
+      canonical: `${SITE_URL}${dir.path}`,
+      bodyHtml: dirHtml,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": dir.title,
+        "url": `${SITE_URL}${dir.path}`,
+        "description": "CuizIN Knowledge Graph entity directory"
+      }
+    });
+    count++;
+  }
+
+  // Pre-render individual entity pages
+  console.log(`[seo-pages] Pre-rendering ${ENTITY_REGISTRY.length} Knowledge Graph entity pages...`);
+  for (const entity of ENTITY_REGISTRY) {
+    const prefix = entityTypePrefixMap[entity.type];
+    const canonical = `${SITE_URL}${prefix}/${entity.slug}`;
+
+    // Filter matched questions
+    const matchedQuestions = allQuestions.filter(q => {
+      const lower = (q.question || '').toLowerCase();
+      const lowerExpl = (q.explanation || '').toLowerCase();
+      return entity.keywords.some(kw => lower.includes(kw) || lowerExpl.includes(kw));
+    }).slice(0, 25);
+
+    const factsRows = entity.keyFacts.map(f => 
+      `<tr><th style="text-align:left;padding:8px 12px;border:1px solid #e2e8f0;background:#f8fafc;width:30%;">${esc(f.label)}</th><td style="padding:8px 12px;border:1px solid #e2e8f0;">${esc(f.value)}</td></tr>`
+    ).join('');
+
+    const sourcesHtml = entity.sources.map(s => 
+      `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;margin:3px 6px 3px 0;text-decoration:none;border:1px solid #e2e8f0;">${esc(s.title)} ↗</a>`
+    ).join('');
+
+    const questionsListHtml = matchedQuestions.map(q => {
+      const qSlug = createSlug(q.question);
+      const catSlug = getCategorySlug(q.category);
+      const subSlug = getQuestionSubcategorySlug(q.category, q.question);
+      const qUrl = subSlug ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}` : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
+      const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+      return `
+        <li style="margin-bottom:12px;background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #e2e8f0;">
+          <a href="${qUrl}" style="font-weight:600;font-size:14px;color:#2563eb;text-decoration:none;">${esc(q.question)}</a>
+          <div style="font-size:12px;color:#475569;margin-top:4px;">Ans: <strong>${esc(ans)}</strong> &bull; <span style="text-transform:capitalize;">${esc(q.difficulty || 'medium')}</span></div>
+        </li>
+      `;
+    }).join('');
+
+    const entityBodyHtml = `
+      <nav class="bc">
+        <a href="/">Home</a> &rsaquo; 
+        <a href="/entities">Knowledge Graph</a> &rsaquo; 
+        <a href="${prefix}">${esc(entity.type.toUpperCase())}</a> &rsaquo; 
+        <span>${esc(entity.name)}</span>
+      </nav>
+      <article>
+        <div style="margin-bottom:12px;">
+          <span class="tag" style="text-transform:capitalize;">${esc(entity.type)}</span>
+          <span class="tag">${esc(entity.category)}</span>
+          <span class="tag" style="background:#e0f2fe;color:#0369a1;font-weight:600;">✓ Fact-Verified Node</span>
+        </div>
+        <h1>${esc(entity.name)}</h1>
+        ${entity.roleOrDesignation ? `<div style="font-size:16px;font-weight:600;color:#2563eb;margin-bottom:12px;">${esc(entity.roleOrDesignation)}</div>` : ''}
+        <p style="font-size:15px;line-height:1.6;color:#334155;">${esc(entity.summary)}</p>
+
+        <h2 style="font-size:20px;font-weight:700;margin-top:24px;margin-bottom:12px;">Key Facts &amp; Chronology</h2>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tbody>
+            ${factsRows}
+          </tbody>
+        </table>
+
+        ${matchedQuestions.length > 0 ? `
+          <h2 style="font-size:20px;font-weight:700;margin-top:28px;margin-bottom:12px;">Verified Trivia Questions &amp; Knowledge Tests (${matchedQuestions.length})</h2>
+          <ul style="list-style:none;padding:0;">
+            ${questionsListHtml}
+          </ul>
+        ` : ''}
+
+        <div style="margin-top:24px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Authoritative References &amp; External IDs</div>
+          <div>${sourcesHtml}</div>
+        </div>
+
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
+          <p>Indexed in <strong>CuizIN Knowledge Graph</strong> &bull; <a href="/editorial-policy">Editorial Standards</a> &bull; <a href="/entities">All Knowledge Nodes &rarr;</a></p>
+        </div>
+      </article>
+    `;
+
+    const schemaType = entity.type === 'person' ? 'Person' : entity.type === 'place' ? 'Place' : entity.type === 'event' ? 'Event' : 'DefinedTerm';
+
+    const entityJsonLd = {
+      "@context": "https://schema.org",
+      "@type": schemaType,
+      "@id": `${canonical}#entity`,
+      "name": entity.name,
+      "description": entity.summary,
+      "url": canonical,
+      "sameAs": entity.sameAs
+    };
+
+    write(`${prefix}/${entity.slug}`, {
+      title: `${entity.name} — Facts, Timeline & Quiz Questions | CuizIN`,
+      description: `Explore facts, timeline milestones, authoritative citations, and verified quiz questions about ${entity.name} on CuizIN.`,
+      canonical,
+      bodyHtml: entityBodyHtml,
+      jsonLd: entityJsonLd
+    });
+    count++;
+  }
+
   // 3. GENERATE ALL-QUESTIONS HTML SITEMAP PAGE
   let allQuestionsHtml = null;
   if (databaseAvailable) {
@@ -1247,9 +1742,85 @@ function isDynamicFact(questionText, category) {
   return category === 'Guinness World Records' || dynamicPatterns.some(p => p.test(text));
 }
 
+function generateQuestionVariants(questionText) {
+  if (!questionText || typeof questionText !== 'string') return [];
+  const raw = questionText.trim().replace(/[.?]+$/, '');
+  const variants = [];
+
+  if (/^who was the first\s+(.+?)\s+of\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^who was the first\s+(.+?)\s+of\s+(.+)$/i);
+    if (match) {
+      const [, role, entity] = match;
+      variants.push(`Who became the first ${role} of ${entity}?`);
+      variants.push(`First ${role} of ${entity}`);
+      variants.push(`Who was ${entity}'s first ${role}?`);
+    }
+  } else if (/^who was the\s+(.+?)\s+of\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^who was the\s+(.+?)\s+of\s+(.+)$/i);
+    if (match) {
+      const [, role, entity] = match;
+      variants.push(`Who served as the ${role} of ${entity}?`);
+      variants.push(`Who was ${entity}'s ${role}?`);
+    }
+  } else if (/^what is the capital of\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^what is the capital of\s+(.+)$/i);
+    if (match) {
+      const [, place] = match;
+      variants.push(`Which city is the capital of ${place}?`);
+      variants.push(`Capital city of ${place}`);
+    }
+  } else if (/^when did\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^when did\s+(.+)$/i);
+    if (match) {
+      const [, event] = match;
+      variants.push(`In what year did ${event}?`);
+    }
+  } else if (/^which is the\s+(largest|smallest|highest|fastest|longest|deepest|oldest|hottest|coldest)\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^which is the\s+(largest|smallest|highest|fastest|longest|deepest|oldest|hottest|coldest)\s+(.+)$/i);
+    if (match) {
+      const [, superlative, object] = match;
+      variants.push(`What is the ${superlative} ${object}?`);
+      variants.push(`Record for ${superlative} ${object}`);
+    }
+  } else if (/^who (invented|discovered|wrote|painted|directed|composed)\s+(.+)$/i.test(raw)) {
+    const match = raw.match(/^who (invented|discovered|wrote|painted|directed|composed)\s+(.+)$/i);
+    if (match) {
+      const [, verb, subject] = match;
+      const nounMap = { invented: 'inventor of', discovered: 'discoverer of', wrote: 'author of', painted: 'painter of' };
+      const noun = nounMap[verb.toLowerCase()] || 'creator of';
+      variants.push(`Who was the ${noun} ${subject}?`);
+    }
+  }
+
+  if (variants.length === 0) {
+    if (raw.toLowerCase().startsWith('which ')) {
+      variants.push(raw.replace(/^which /i, 'What ') + '?');
+    } else if (raw.toLowerCase().startsWith('what ')) {
+      variants.push(raw.replace(/^what /i, 'Which ') + '?');
+    }
+  }
+
+  return Array.from(new Set(variants)).filter(v => v.toLowerCase() !== raw.toLowerCase()).slice(0, 3);
+}
+
+function getKnowledgeClaimId(questionId) {
+  if (!questionId) return 'CUIZ-CLAIM-GEN';
+  const prefix = String(questionId).replace(/-/g, '').slice(0, 8).toUpperCase();
+  return `CUIZ-FACT-${prefix}`;
+}
+
   // 6. GENERATE INDIVIDUAL QUESTION PAGES
   if (databaseAvailable && allQuestions.length > 0) {
     console.log(`[seo-pages] Generating static pages for ${allQuestions.length} quiz questions...`);
+    
+    // Group questions by category for fast related lookups
+    const questionsByCategoryMap = {};
+    for (const q of allQuestions) {
+      const cat = q.category || 'General';
+      if (!questionsByCategoryMap[cat]) questionsByCategoryMap[cat] = [];
+      questionsByCategoryMap[cat].push(q);
+    }
+
     let qCount = 0;
     for (const q of allQuestions) {
       const qSlug = createSlug(q.question);
@@ -1274,9 +1845,63 @@ function isDynamicFact(questionText, category) {
         ? 'background:#fef3c7;color:#92400e;font-weight:600;'
         : 'background:#e0f2fe;color:#0369a1;font-weight:600;';
 
+      const claimId = getKnowledgeClaimId(q.id);
+      const variants = generateQuestionVariants(q.question);
+
       const sourcesHtml = authorities.map(a => 
         `<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;margin:3px 6px 3px 0;text-decoration:none;border:1px solid #e2e8f0;">${esc(a.title)} ↗</a>`
       ).join('');
+
+      const variantsHtml = variants.length > 0 ? `
+        <div style="margin-top:16px;padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Also Asked As / Semantic Queries</div>
+          <div>
+            ${variants.map(v => `<span style="display:inline-block;background:#ffffff;color:#334155;padding:3px 8px;border-radius:12px;font-size:12px;margin:2px 4px 2px 0;border:1px solid #cbd5e1;">"${esc(v)}"</span>`).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      // Extract 4-6 related questions from the same category
+      const sameCatList = questionsByCategoryMap[q.category] || [];
+      const relatedList = sameCatList
+        .filter(rq => rq.id !== q.id)
+        .slice(0, 6);
+
+      const relatedGridHtml = relatedList.length > 0 ? `
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e2e8f0;">
+          <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:12px;">Related Trivia &amp; Knowledge Questions</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:10px;">
+            ${relatedList.map(rq => {
+              const rqSlug = createSlug(rq.question);
+              const rCatSlug = getCategorySlug(rq.category);
+              const rSubSlug = getQuestionSubcategorySlug(rq.category, rq.question);
+              const rUrl = rSubSlug ? `/quiz/question/${rq.id}/${rCatSlug}/${rSubSlug}/${rqSlug}` : `/quiz/question/${rq.id}/${rCatSlug}/${rqSlug}`;
+              const rAns = rq.correct_answer || rq.correctAnswer || (Array.isArray(rq.options) ? rq.options[0] : '');
+              return `
+                <div style="padding:10px 12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
+                  <a href="${rUrl}" style="font-weight:600;font-size:13px;color:#2563eb;text-decoration:none;display:block;margin-bottom:4px;">${esc(rq.question)}</a>
+                  <div style="font-size:11px;color:#64748b;">Ans: <strong>${esc(rAns)}</strong> &bull; <span style="text-transform:capitalize;">${esc(rq.difficulty || 'medium')}</span></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      const matchedEntity = ENTITY_REGISTRY.find(e => {
+        const lower = (q.question || '').toLowerCase();
+        return e.keywords.some(kw => lower.includes(kw));
+      });
+
+      const entityBadgeHtml = matchedEntity ? `
+        <div style="margin-top:12px;margin-bottom:16px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:13px;color:#1e3a8a;">
+            <strong>Knowledge Node:</strong> <a href="${entityTypePrefixMap[matchedEntity.type]}/${matchedEntity.slug}" style="color:#1d4ed8;font-weight:700;text-decoration:underline;">${esc(matchedEntity.name)}</a>
+            <span style="font-size:11px;color:#64748b;margin-left:6px;text-transform:capitalize;">(${esc(matchedEntity.type)})</span>
+          </div>
+          <a href="${entityTypePrefixMap[matchedEntity.type]}/${matchedEntity.slug}" style="font-size:12px;font-weight:600;color:#2563eb;text-decoration:none;background:#ffffff;padding:3px 8px;border-radius:4px;border:1px solid #93c5fd;">View Hub &rarr;</a>
+        </div>
+      ` : '';
 
       const bodyHtml = `
         <nav class="bc">
@@ -1286,13 +1911,16 @@ function isDynamicFact(questionText, category) {
           ${subSlug ? ` &rsaquo; <a href="/categories/${categorySlug}/${subSlug}">${esc(getQuestionSubcategoryName(q.category, q.question))}</a>` : ''}
         </nav>
         <article>
-          <div style="margin-bottom:12px;">
+          <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
+            <span class="tag" style="font-family:monospace;font-weight:600;">${esc(claimId)}</span>
             <span class="tag">${esc(q.difficulty || 'medium')}</span>
             <span class="tag">${esc(q.category)}</span>
             <span class="tag" style="${badgeStyle}">${esc(badgeLabel)}</span>
           </div>
           <h1>${esc(q.question)}</h1>
           
+          ${entityBadgeHtml}
+
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;padding:14px 16px;border-radius:8px;margin:16px 0;">
             <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Verified Answer</div>
             <div style="font-size:18px;font-weight:700;color:#0f172a;">${esc(correctAnswer)}</div>
@@ -1308,10 +1936,14 @@ function isDynamicFact(questionText, category) {
           <p>${esc(q.explanation)}</p>
           ` : ''}
 
+          ${variantsHtml}
+
           <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
             <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Authoritative Sources &amp; Citations</div>
             <div>${sourcesHtml}</div>
           </div>
+
+          ${relatedGridHtml}
 
           <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
             <p>Fact-checked by <strong>CuizIN Editorial Team</strong> · Published under <a href="/editorial-policy">Editorial Standards</a> · <a href="/quiz/play/${q.id}/${qSlug}">Play this quiz interactively →</a></p>
@@ -1322,8 +1954,10 @@ function isDynamicFact(questionText, category) {
       const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Question",
+        "@id": `${canonical}#claim`,
         "name": q.question,
         "text": q.question,
+        "alternateName": variants.length > 0 ? variants : undefined,
         "answerCount": 1,
         "datePublished": q.created_at || "2024-01-01T00:00:00Z",
         "dateModified": today,
@@ -1365,6 +1999,46 @@ function isDynamicFact(questionText, category) {
     console.log(`[seo-pages] Successfully pre-rendered ${qCount} quiz question pages.`);
     count += qCount;
   }
+
+  // 7. GENERATE PUBLIC API JSON MANIFESTS (/api/v1/questions.json & /api/v1/entities.json)
+  const apiDir = path.join(__dirname, 'dist', 'api', 'v1');
+  if (!fs.existsSync(apiDir)) {
+    fs.mkdirSync(apiDir, { recursive: true });
+  }
+
+  const questionsApiData = {
+    version: "1.0",
+    total: allQuestions.length,
+    lastUpdated: new Date().toISOString(),
+    questions: allQuestions.slice(0, 1000).map(q => ({
+      id: q.id,
+      claimId: getKnowledgeClaimId(q.id),
+      question: q.question,
+      category: q.category,
+      difficulty: q.difficulty || 'medium',
+      correctAnswer: q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : ''),
+      canonicalUrl: `${SITE_URL}/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`
+    }))
+  };
+  fs.writeFileSync(path.join(apiDir, 'questions.json'), JSON.stringify(questionsApiData, null, 2));
+
+  const entitiesApiData = {
+    version: "1.0",
+    total: ENTITY_REGISTRY.length,
+    lastUpdated: new Date().toISOString(),
+    entities: ENTITY_REGISTRY.map(e => ({
+      slug: e.slug,
+      type: e.type,
+      name: e.name,
+      category: e.category,
+      roleOrDesignation: e.roleOrDesignation,
+      summary: e.summary,
+      sameAs: e.sameAs,
+      hubUrl: `${SITE_URL}/${entityTypePrefixMap[e.type]}/${e.slug}`
+    }))
+  };
+  fs.writeFileSync(path.join(apiDir, 'entities.json'), JSON.stringify(entitiesApiData, null, 2));
+  console.log('[seo-pages] Successfully generated public /api/v1/questions.json and /api/v1/entities.json endpoints.');
 
   console.log(`[seo-pages] Successfully generated ${count} per-route static HTML files.`);
 
