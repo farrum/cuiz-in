@@ -26,6 +26,9 @@ interface Question {
   question: string;
   category: string;
   difficulty: string | null;
+  correct_answer?: string;
+  explanation?: string;
+  options?: string[] | Record<string, string>;
 }
 
 // Topic configuration with keywords for database search
@@ -178,6 +181,8 @@ const TopicPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [dynamicTopic, setDynamicTopic] = useState<any>(null);
 
+  const [expandedQId, setExpandedQId] = useState<string | null>(null);
+
   // Determine the topic configuration
   useEffect(() => {
     if (!topicSlug) {
@@ -214,7 +219,7 @@ const TopicPage: React.FC = () => {
         // Using keywords and categories from the config
         const { data, error } = await supabase
           .from('quiz_questions')
-          .select('id, question, category, difficulty')
+          .select('id, question, category, difficulty, correct_answer, explanation, options')
           .or(`category.in.(${dynamicTopic.categories.map((c: string) => `"${c}"`).join(',')}),${dynamicTopic.keywords.map((k: string) => `question.ilike.%${k}%`).join(',')}`)
           .limit(50);
 
@@ -311,11 +316,11 @@ const TopicPage: React.FC = () => {
     { name: topic.title, url: `https://cuiz.in/topics/${topicSlug}` }
   ];
 
-  // Schema for topic page
+  // Schema for topic page with Question and Answer ItemList
   const topicSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    'name': `${topic.title} Quiz Questions`,
+    'name': `${topic.title} Quiz Questions & Verified Facts`,
     'description': topic.description,
     'url': `https://cuiz.in/topics/${topicSlug}`,
     'numberOfItems': questions.length,
@@ -326,11 +331,23 @@ const TopicPage: React.FC = () => {
     'mainEntity': {
       '@type': 'ItemList',
       'numberOfItems': questions.length,
-      'itemListElement': questions.slice(0, 10).map((q, i) => ({
-        '@type': 'ListItem',
-        'position': i + 1,
-        'url': `https://cuiz.in/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`
-      }))
+      'itemListElement': questions.slice(0, 20).map((q, i) => {
+        const catSlug = getCategorySlug(q.category);
+        const qSlug = createSlug(q.question);
+        return {
+          '@type': 'ListItem',
+          'position': i + 1,
+          'item': {
+            '@type': 'Question',
+            'name': q.question,
+            'url': `https://cuiz.in/quiz/question/${q.id}/${catSlug}/${qSlug}`,
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': q.correct_answer || ''
+            }
+          }
+        };
+      })
     }
   };
 
@@ -434,20 +451,49 @@ const TopicPage: React.FC = () => {
                     <div className="flex-1">
                       <Link
                         to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question)}`}
-                        className="text-foreground hover:text-primary transition-colors font-medium"
+                        className="text-foreground hover:text-primary transition-colors font-medium text-base block mb-1"
                       >
                         {question.question}
                       </Link>
-                      <div className="flex gap-2 mt-2">
-                        <span className="text-xs bg-secondary px-2 py-1 rounded">
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="text-xs bg-secondary px-2 py-0.5 rounded font-medium">
                           {question.category}
                         </span>
                         {question.difficulty && (
-                          <span className="text-xs bg-secondary px-2 py-1 rounded">
+                          <span className="text-xs bg-secondary px-2 py-0.5 rounded capitalize">
                             {question.difficulty}
                           </span>
                         )}
+                        {question.correct_answer && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedQId(expandedQId === question.id ? null : question.id)}
+                            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
+                          >
+                            {expandedQId === question.id ? 'Hide Fact & Answer ▲' : 'Reveal Answer & Facts ▼'}
+                          </button>
+                        )}
                       </div>
+
+                      {expandedQId === question.id && question.correct_answer && (
+                        <div className="mt-3 p-3 bg-muted/60 rounded-lg text-xs border border-border/80 space-y-1.5 animate-in fade-in-50">
+                          <div>
+                            <span className="font-semibold text-muted-foreground uppercase text-[11px]">Verified Answer: </span>
+                            <strong className="text-foreground text-sm">{question.correct_answer}</strong>
+                          </div>
+                          {question.explanation && (
+                            <p className="text-muted-foreground leading-relaxed">{question.explanation}</p>
+                          )}
+                          <div className="pt-1">
+                            <Link
+                              to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question)}`}
+                              className="text-primary hover:underline font-medium text-xs"
+                            >
+                              View full question page &amp; citations →
+                            </Link>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

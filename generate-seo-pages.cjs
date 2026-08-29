@@ -850,6 +850,7 @@ async function run() {
   // 2.7. GENERATE TOPIC DETAIL PAGES
   for (const topic of TOPICS) {
     let topicDetailHtml = null;
+    let jsonLd = null;
 
     if (databaseAvailable) {
       let matchedQuestions = allQuestions.filter(q => {
@@ -862,7 +863,7 @@ async function run() {
       });
 
       const questionListItems = matchedQuestions
-        .slice(0, 300)
+        .slice(0, 150)
         .map(q => {
           const qSlug = createSlug(q.question);
           const catSlug = getCategorySlug(q.category);
@@ -870,26 +871,76 @@ async function run() {
           const urlPath = subSlug
             ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}`
             : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
-          return `<li><a href="${urlPath}">${esc(q.question)}</a></li>`;
+          const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+          return `
+            <li style="margin-bottom: 12px; padding: 12px 14px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; list-style: none;">
+              <div style="font-weight: 600; margin-bottom: 4px;"><a href="${urlPath}">${esc(q.question)}</a></div>
+              <div style="font-size: 13px; color: #0f172a;"><strong>Verified Answer:</strong> ${esc(ans)}</div>
+              ${q.explanation ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">${esc(q.explanation)}</div>` : ''}
+            </li>
+          `;
         })
         .join('\n');
 
+      const relatedTopicLinks = TOPICS
+        .filter(t => t.slug !== topic.slug)
+        .slice(0, 6)
+        .map(t => `<a href="/topics/${t.slug}" style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;margin:3px 6px 3px 0;text-decoration:none;border:1px solid #e2e8f0;">${esc(t.title)} &rsaquo;</a>`)
+        .join('');
+
       topicDetailHtml = `
         <nav class="bc"><a href="/">Home</a> &rsaquo; <a href="/topics">Topics</a> &rsaquo; ${esc(topic.title)}</nav>
-        <h1>${esc(topic.title)} Quiz Questions</h1>
+        <h1>${esc(topic.title)} Quiz Questions &amp; Verified Facts</h1>
         <p>${esc(topic.description)}</p>
-        <h2>Sample Questions</h2>
-        <ul>
+        
+        <h2>Featured Fact-Checked Questions (${matchedQuestions.length} Total)</h2>
+        <ul style="padding: 0; margin: 16px 0;">
           ${questionListItems || '<li>No questions found in this topic.</li>'}
         </ul>
+
+        <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+          <h3 style="margin-top:0;">Related Quiz Topics</h3>
+          <div>${relatedTopicLinks}</div>
+        </div>
       `;
+
+      jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": `${topic.title} Quiz Questions & Verified Facts`,
+        "description": topic.description,
+        "url": `${SITE_URL}/topics/${topic.slug}`,
+        "mainEntity": {
+          "@type": "ItemList",
+          "numberOfItems": matchedQuestions.length,
+          "itemListElement": matchedQuestions.slice(0, 20).map((q, idx) => {
+            const qSlug = createSlug(q.question);
+            const catSlug = getCategorySlug(q.category);
+            const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+            return {
+              "@type": "ListItem",
+              "position": idx + 1,
+              "item": {
+                "@type": "Question",
+                "name": q.question,
+                "url": `${SITE_URL}/quiz/question/${q.id}/${catSlug}/${qSlug}`,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": ans
+                }
+              }
+            };
+          })
+        }
+      };
     }
 
     write(`/topics/${topic.slug}`, {
-      title: `${topic.title} Quiz | Test Your Knowledge | CuizIN`,
+      title: `${topic.title} Quiz Questions & Verified Facts | CuizIN`,
       description: topic.description,
       canonical: `${SITE_URL}/topics/${topic.slug}`,
-      bodyHtml: topicDetailHtml
+      bodyHtml: topicDetailHtml,
+      jsonLd
     });
     count++;
   }
