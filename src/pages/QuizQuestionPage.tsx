@@ -460,7 +460,9 @@ const QuizQuestionPage: React.FC = () => {
       {/* Soft, dismissible registration nudge for guests after a few questions — no login wall */}
       {isGuest && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
-      <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">
+      <main className="flex-1 container max-w-6xl pt-24 pb-12 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-8 xl:col-span-9 min-w-0">
         {/* Breadcrumb Navigation */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
