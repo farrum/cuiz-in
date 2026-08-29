@@ -15,6 +15,11 @@ import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
 import { getPotionCount, consumePotion } from '@/utils/shopData';
+import { confetti } from '@/utils/animations';
+import { emitQuizReward } from '@/components/quiz/FloatingReward';
+import { useWebRewardedAd } from '@/hooks/useWebRewardedAd';
+
+export const REVIVE_STREAK_EVENT = 'cuizin:revive-streak';
 
 // Streak bonus multipliers
 const STREAK_BONUSES = [
@@ -83,10 +88,30 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [gemsEarned, setGemsEarned] = useState<number | null>(null);
   const [showStreakBonus, setShowStreakBonus] = useState(false);
+  // Suspense phase — mirrors the mobile Quiz Story reveal.
+  const [revealReady, setRevealReady] = useState(false);
+  const [boosterUsed, setBoosterUsed] = useState(false);
+  const [lastCorrect, setLastCorrect] = useState(false);
+  const advanceTimerRef = useRef<number | null>(null);
+  const revealTimerRef = useRef<number | null>(null);
+  const resultRef = useRef<{ isCorrect: boolean; answer: string } | null>(null);
+  const { showRewardedAd, rewardedAdElement } = useWebRewardedAd();
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
   const { toast } = useToast();
   const haptics = useHaptics();
+
+  // Reset the reveal/booster state whenever a new question mounts in place.
+  useEffect(() => {
+    setRevealReady(false);
+    setBoosterUsed(false);
+    setLastCorrect(false);
+    resultRef.current = null;
+    return () => {
+      if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+      if (revealTimerRef.current) window.clearTimeout(revealTimerRef.current);
+    };
+  }, [question.id]);
   const [userStars, setUserStars] = useState<number>(0);
   const [heroes, setHeroes] = useState<any[]>([]);
   const [socratesUsed, setSocratesUsed] = useState(false);
@@ -393,10 +418,58 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       console.error('Error saving answer:', error);
     }
 
-    // Auto-advance after feedback (10s to allow reading explanation)
-    setTimeout(() => {
+    resultRef.current = { isCorrect, answer: answer || 'timeout' };
+    setLastCorrect(isCorrect);
+
+    // Suspense: hold the verdict for 2.5s, then reveal (matches mobile).
+    revealTimerRef.current = window.setTimeout(() => {
+      setRevealReady(true);
+      if (isCorrect) {
+        confetti();
+        if (gems > 0) emitQuizReward(gems, streak + 1);
+      }
+    }, 2500);
+
+    // Auto-advance after feedback (10s after reveal to allow reading explanation)
+    advanceTimerRef.current = window.setTimeout(() => {
       onComplete(isCorrect, answer || 'timeout');
-    }, 10000);
+    }, 12500);
+  };
+
+  const finishNow = () => {
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    const res = resultRef.current;
+    if (res) onComplete(res.isCorrect, res.answer);
+  };
+
+  const handleDoubleGems = () => {
+    if (boosterUsed) return;
+    setBoosterUsed(true);
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    showRewardedAd(async (rewarded) => {
+      if (rewarded && gemsEarned) {
+        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (userId) {
+          try { await logGemsEarned(gemsEarned, userId); } catch (e) { console.warn(e); }
+        }
+        emitQuizReward(gemsEarned);
+        toast({ title: '💎 Gems doubled!', description: `+${gemsEarned} extra gems added.` });
+      }
+      finishNow();
+    });
+  };
+
+  const handleReviveStreak = () => {
+    if (boosterUsed) return;
+    setBoosterUsed(true);
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    showRewardedAd((rewarded) => {
+      if (rewarded) {
+        window.dispatchEvent(new CustomEvent(REVIVE_STREAK_EVENT, { detail: { streak } }));
+        toast({ title: '🔥 Streak saved!', description: `Your streak of ${streak} lives on.` });
+      }
+      finishNow();
+    });
   };
 
   const toggleSound = () => {
@@ -415,12 +488,19 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   };
 
   const getOptionStyle = (option: string) => {
-    if (!isAnswered) {
-      if (ramanujanUsed && option === question.correctAnswer) {
+    if (!isAnswered || !revealReady) {
+      if (!isAnswered && ramanujanUsed && option === question.correctAnswer) {
         return 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/15 border-2';
+      }
+      if (isAnswered) {
+        // Suspense phase: keep the pick visible but hide the verdict.
+        return option === selectedAnswer
+          ? 'border-primary bg-primary/10 animate-pulse'
+          : 'border-border opacity-70';
       }
       return 'border-border hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-[0.98]';
     }
+
 
     if (option === question.correctAnswer) {
       return 'border-accent bg-accent/10';
@@ -851,16 +931,25 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           )}
 
+          {/* Suspense while the verdict is held back */}
+          {isAnswered && !revealReady && (
+            <div className="mt-4 p-3 rounded-xl bg-muted/60 text-center font-medium text-foreground flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Checking your answer...
+            </div>
+          )}
+
           {/* Feedback / Gems earned with streak bonus info */}
-          {isAnswered && gemsEarned !== null && (
+          {isAnswered && revealReady && gemsEarned !== null && (
             <div className={cn(
-              "mt-4 p-3 rounded-xl text-center font-medium",
+              "mt-4 p-3 rounded-xl text-center font-medium animate-scale-in",
               selectedAnswer === question.correctAnswer
                 ? "bg-accent/10 text-accent"
                 : "bg-destructive/10 text-destructive"
             )}>
               {selectedAnswer === question.correctAnswer ? (
                 <div className="flex flex-col items-center gap-1">
+                  <span className="text-2xl" aria-hidden>🎉</span>
                   <span className="flex items-center justify-center gap-2">
                     <CheckCircle2 className="w-5 h-5" />
                     Correct! +{gemsEarned} gems
@@ -879,6 +968,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                 </span>
               ) : (
                 <div className="flex flex-col items-center gap-1">
+                  <span className="text-2xl" aria-hidden>😅</span>
                   <span className="flex items-center justify-center gap-2">
                     <XCircle className="w-5 h-5" />
                     Wrong! Correct: {question.correctAnswer}
@@ -893,8 +983,34 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           )}
 
+          {/* Boosters — watch an ad to double gems or save the streak */}
+          {isAnswered && revealReady && !boosterUsed && (
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              {lastCorrect && (gemsEarned ?? 0) > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 gap-1.5"
+                  onClick={handleDoubleGems}
+                >
+                  🎬 Watch ad · Double {gemsEarned} gems
+                </Button>
+              )}
+              {!lastCorrect && streak > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 gap-1.5"
+                  onClick={handleReviveStreak}
+                >
+                  🔥 Watch ad · Save {streak} streak
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Explanation */}
-          {isAnswered && question.explanation && (
+          {isAnswered && revealReady && question.explanation && (
             <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
               <h4 className="font-semibold text-sm text-primary flex items-center gap-1.5 mb-1.5">
                 💡 Did you know?
@@ -904,12 +1020,13 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
 
           {/* Loading next */}
-          {isAnswered && (
+          {isAnswered && revealReady && (
             <div className="mt-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading next question...
             </div>
           )}
+
 
           {/* Guest warning */}
           {!isLoggedIn && remainingPlays > 0 && remainingPlays <= 5 && !isAnswered && (
@@ -922,6 +1039,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
         </div>
       </div>
+
+      {rewardedAdElement}
 
       <GuestPlayLimitModal 
         isOpen={showGuestLimitModal} 

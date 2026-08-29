@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuizGems } from './useQuizGems';
 import { useQuizQuestion } from './useQuizQuestion';
@@ -12,6 +12,8 @@ import { useGameMode } from './useGameMode';
 import { useToast } from '@/hooks/use-toast';
 import { confetti } from '@/utils/animations';
 import { logGemsEarned } from '@/utils/gemsService';
+import { readQuizPreferences, QUIZ_PREFS_EVENT } from './useQuizPreferences';
+import { REVIVE_STREAK_EVENT } from '@/components/quiz/EnhancedQuizCard';
 
 export const useQuizState = () => {
   const [searchParams] = useSearchParams();
@@ -29,6 +31,7 @@ export const useQuizState = () => {
   } = usePersistentQuizStats();
   
   const [forceReloadAds, setForceReloadAds] = useState(0);
+  const reviveStreakRef = useRef(false);
   const [nextBadgeThreshold, setNextBadgeThreshold] = useState(10);
   const [isGameActive, setIsGameActive] = useState(true);
   const { toast } = useToast();
@@ -84,6 +87,30 @@ export const useQuizState = () => {
     }
   }, [dbQuestionsAnswered, syncWithDatabase]);
   
+  // Category/difficulty preferences shared with the mobile Quiz Story screen.
+  const buildFilter = useCallback(() => {
+    const prefs = readQuizPreferences();
+    return {
+      category: prefs.category,
+      difficulty: prefs.difficulty,
+      questionType: isImageMode ? ('image' as const) : null,
+    };
+  }, [isImageMode]);
+
+  // Booster: a rewarded ad can preserve the streak on a wrong answer.
+  useEffect(() => {
+    const onRevive = () => { reviveStreakRef.current = true; };
+    window.addEventListener(REVIVE_STREAK_EVENT, onRevive);
+    return () => window.removeEventListener(REVIVE_STREAK_EVENT, onRevive);
+  }, []);
+
+  // Reload the question when preferences change.
+  useEffect(() => {
+    const onPrefs = () => { loadNewQuestion(buildFilter()); };
+    window.addEventListener(QUIZ_PREFS_EVENT, onPrefs);
+    return () => window.removeEventListener(QUIZ_PREFS_EVENT, onPrefs);
+  }, [buildFilter]);
+
   const loadInitialData = async () => {
     // Explicitly fetch gems which includes questions answered
     await fetchGems();
@@ -92,7 +119,7 @@ export const useQuizState = () => {
     await syncAdSlots();
     
     // Load the first question
-    await loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
+    await loadNewQuestion(buildFilter());
     
     setIsGameActive(true);
   };
@@ -154,8 +181,12 @@ export const useQuizState = () => {
         });
       }
     } else {
-      // Reset streak on wrong answer
-      resetStreak();
+      // Reset streak on wrong answer unless a rewarded-ad revive was used
+      if (reviveStreakRef.current) {
+        reviveStreakRef.current = false;
+      } else {
+        resetStreak();
+      }
       
       // Show message for lost streak
       if (streak >= 3) {
@@ -171,7 +202,7 @@ export const useQuizState = () => {
     await fetchGems();
     
     // Load the next question
-    await loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
+    await loadNewQuestion(buildFilter());
   };
   
   // Using our hook's implementation instead of redefining it
@@ -186,7 +217,7 @@ export const useQuizState = () => {
     if (currentMode === 'time-attack' && config.timeLimit) {
       setTimeRemaining(config.timeLimit);
     }
-    loadNewQuestion(isImageMode ? { questionType: 'image' } : undefined);
+    loadNewQuestion(buildFilter());
   };
 
   return {

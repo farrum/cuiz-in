@@ -19,6 +19,8 @@ import QuizInterstitial from '@/components/quiz/QuizInterstitial';
 
 import { useQuizState } from '@/hooks/quiz';
 import CompactStatsBar from '@/components/quiz/CompactStatsBar';
+import QuizPreferencesBar from '@/components/quiz/QuizPreferencesBar';
+import FloatingReward from '@/components/quiz/FloatingReward';
 import QuizContent from '@/components/quiz/QuizContent';
 import GameModeSelector from '@/components/quiz/GameModeSelector';
 import GuestGemsBanner from '@/components/quiz/GuestGemsBanner';
@@ -200,6 +202,7 @@ const QuizPage: React.FC = () => {
       <NewsTicker className="mt-16" />
       
       <MilestoneCelebration triggerCheck={milestoneCheckTrigger} />
+      <FloatingReward />
       
       <main className="flex-1 container max-w-4xl pt-4 pb-6 px-3 md:px-4">
         {/* Breadcrumb - compact */}
@@ -265,6 +268,9 @@ const QuizPage: React.FC = () => {
               </div>
             )}
             
+            {/* Category / difficulty preferences (shared with the app) */}
+            <QuizPreferencesBar className="mb-3" />
+
             {/* Compact stats bar */}
             <CompactStatsBar
               questionsAnswered={questionsAnswered}
