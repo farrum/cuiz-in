@@ -15,6 +15,11 @@ import GuestPlayLimitModal from '@/components/GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { Link } from 'react-router-dom';
 import { getPotionCount, consumePotion } from '@/utils/shopData';
+import { confetti } from '@/utils/animations';
+import { emitQuizReward } from '@/components/quiz/FloatingReward';
+import { useWebRewardedAd } from '@/hooks/useWebRewardedAd';
+
+export const REVIVE_STREAK_EVENT = 'cuizin:revive-streak';
 
 // Streak bonus multipliers
 const STREAK_BONUSES = [
@@ -83,10 +88,30 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [gemsEarned, setGemsEarned] = useState<number | null>(null);
   const [showStreakBonus, setShowStreakBonus] = useState(false);
+  // Suspense phase — mirrors the mobile Quiz Story reveal.
+  const [revealReady, setRevealReady] = useState(false);
+  const [boosterUsed, setBoosterUsed] = useState(false);
+  const [lastCorrect, setLastCorrect] = useState(false);
+  const advanceTimerRef = useRef<number | null>(null);
+  const revealTimerRef = useRef<number | null>(null);
+  const resultRef = useRef<{ isCorrect: boolean; answer: string } | null>(null);
+  const { showRewardedAd, rewardedAdElement } = useWebRewardedAd();
   const [streakBonusApplied, setStreakBonusApplied] = useState<typeof STREAK_BONUSES[0] | null>(null);
   
   const { toast } = useToast();
   const haptics = useHaptics();
+
+  // Reset the reveal/booster state whenever a new question mounts in place.
+  useEffect(() => {
+    setRevealReady(false);
+    setBoosterUsed(false);
+    setLastCorrect(false);
+    resultRef.current = null;
+    return () => {
+      if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+      if (revealTimerRef.current) window.clearTimeout(revealTimerRef.current);
+    };
+  }, [question.id]);
   const [userStars, setUserStars] = useState<number>(0);
   const [heroes, setHeroes] = useState<any[]>([]);
   const [socratesUsed, setSocratesUsed] = useState(false);
@@ -393,10 +418,22 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
       console.error('Error saving answer:', error);
     }
 
-    // Auto-advance after feedback (10s to allow reading explanation)
-    setTimeout(() => {
+    resultRef.current = { isCorrect, answer: answer || 'timeout' };
+    setLastCorrect(isCorrect);
+
+    // Suspense: hold the verdict for 2.5s, then reveal (matches mobile).
+    revealTimerRef.current = window.setTimeout(() => {
+      setRevealReady(true);
+      if (isCorrect) {
+        confetti();
+        if (gems > 0) emitQuizReward(gems, streak + 1);
+      }
+    }, 2500);
+
+    // Auto-advance after feedback (10s after reveal to allow reading explanation)
+    advanceTimerRef.current = window.setTimeout(() => {
       onComplete(isCorrect, answer || 'timeout');
-    }, 10000);
+    }, 12500);
   };
 
   const toggleSound = () => {
@@ -415,8 +452,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   };
 
   const getOptionStyle = (option: string) => {
-    if (!isAnswered) {
-      if (ramanujanUsed && option === question.correctAnswer) {
+    if (!isAnswered || !revealReady) {
+      if (!isAnswered && ramanujanUsed && option === question.correctAnswer) {
         return 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/15 border-2';
       }
       return 'border-border hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-[0.98]';
