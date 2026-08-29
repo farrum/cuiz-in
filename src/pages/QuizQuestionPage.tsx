@@ -17,7 +17,8 @@ import {
   Brain,
   AlertCircle,
   BookOpen,
-  ShieldCheck
+  ShieldCheck,
+  ExternalLink
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
@@ -38,6 +39,8 @@ import { createSlug } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
+import { getQuestionSources, getFactType, getProvenanceBadge } from '@/utils/provenanceUtils';
+import ReportErrorModal from '@/components/quiz/ReportErrorModal';
 import RelatedQuestions from '@/components/RelatedQuestions';
 import RelatedArticles from '@/components/RelatedArticles';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
@@ -67,6 +70,7 @@ const QuizQuestionPage: React.FC = () => {
     const v = Number(sessionStorage.getItem(SESSION_ANSWERED_KEY) || '0');
     return Number.isFinite(v) ? v : 0;
   });
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const isGuest = !isUserLoggedIn();
   const navigate = useNavigate();
 
@@ -406,6 +410,10 @@ const QuizQuestionPage: React.FC = () => {
   const subSlug = question ? getQuestionSubcategorySlug(question.category, question.question) : undefined;
   const subDef = question && subSlug ? getSubcategory(categorySlug, subSlug) : undefined;
 
+  const factType = question ? getFactType(question.question, question.category) : 'timeless';
+  const provenance = getProvenanceBadge(factType);
+  const sources = question ? getQuestionSources(question.category, question.sources) : [];
+
   // JSON-LD breadcrumbs
   const breadcrumbs = question ? [
     createBreadcrumbs.home(),
@@ -499,9 +507,26 @@ const QuizQuestionPage: React.FC = () => {
         
         {/* Visible, SEO-optimized heading */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-primary font-semibold mb-2">
-            <Brain className="h-5 w-5" />
-            {question ? `${question.category} Quiz` : 'Quiz Question'}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="flex items-center gap-1.5 text-primary font-semibold text-sm">
+              <Brain className="h-4 w-4" />
+              {question ? `${question.category} Quiz` : 'Quiz Question'}
+            </div>
+            {question && (
+              <span className={`inline-flex items-center gap-1 rounded-full text-xs font-semibold px-2.5 py-0.5 border ${
+                provenance.isDynamic 
+                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300' 
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+              }`}>
+                <ShieldCheck className="h-3 w-3" />
+                {provenance.label}
+              </span>
+            )}
+            {question && (
+              <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5 border capitalize">
+                {question.difficulty}
+              </span>
+            )}
           </div>
           {/* App-like engagement hook */}
           {sessionAnswered > 0 && (
@@ -633,6 +658,30 @@ const QuizQuestionPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Authoritative Citations Section */}
+              {sources.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5 text-primary" />
+                    Authoritative Reference Citations
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {sources.map((src, idx) => (
+                      <a
+                        key={idx}
+                        href={src.url || '#'}
+                        target={src.url ? '_blank' : undefined}
+                        rel={src.url ? 'noopener noreferrer' : undefined}
+                        className="inline-flex items-center gap-1 text-xs bg-muted/70 hover:bg-muted text-foreground px-2.5 py-1 rounded-md border transition-colors"
+                      >
+                        <span>{src.title}</span>
+                        {src.url && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Provenance & Fact-Check Metadata */}
               <div className="pt-4 mt-4 border-t border-border flex flex-wrap items-center justify-between text-xs text-muted-foreground gap-2">
                 <div className="flex items-center gap-1.5">
@@ -640,9 +689,13 @@ const QuizQuestionPage: React.FC = () => {
                   <span>Fact-checked by <strong>CuizIN Editorial Team</strong> · <Link to="/editorial-policy" className="text-primary hover:underline">Editorial Policy</Link> · <Link to="/our-sources" className="text-primary hover:underline">Our Sources</Link></span>
                 </div>
                 <div>
-                  <Link to="/corrections" className="text-muted-foreground hover:text-foreground underline">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="text-muted-foreground hover:text-foreground underline text-xs cursor-pointer bg-transparent border-0 p-0"
+                  >
                     Report an error / Suggest source
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -743,6 +796,18 @@ const QuizQuestionPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Interactive Fact Correction / Source Suggestion Modal */}
+      {question && (
+        <ReportErrorModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          questionId={question.id}
+          questionText={question.question}
+          currentAnswer={question.correctAnswer}
+          category={question.category}
+        />
+      )}
     </PageLayout>
   );
 };

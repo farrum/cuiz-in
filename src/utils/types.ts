@@ -1,4 +1,12 @@
 
+export interface QuestionSource {
+  title: string;
+  url?: string;
+  domain?: string;
+}
+
+export type FactType = 'timeless' | 'dynamic' | 'record' | 'historical' | 'scientific' | 'geographical' | 'current';
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -11,6 +19,12 @@ export interface QuizQuestion {
   imageUrl?: string; // URL for image-based questions
   questionType?: 'text' | 'image' | 'multiple-choice' | 'true-false'; // Type of question (default is text)
   createdAt?: string; // Date the question was created
+  updatedAt?: string;
+  sources?: QuestionSource[] | string[];
+  factType?: FactType;
+  lastReviewedAt?: string;
+  reviewedBy?: string;
+  verificationStatus?: 'verified' | 'needs_update' | 'disputed';
 }
 
 export type GameMode = 'normal' | 'time-attack' | 'team-quiz' | 'streak' | 'true-false' | 'flashcards';

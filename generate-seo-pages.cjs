@@ -1119,6 +1119,83 @@ async function run() {
       console.warn('[seo-pages] Warning: Failed to fetch and pre-render FAQs:', err.message);
     }
   }
+// Curated authoritative primary sources by category for crawlers
+const CATEGORY_AUTHORITIES = {
+  'History': [
+    { title: 'National Archives of India', url: 'http://nationalarchives.nic.in' },
+    { title: 'Archaeological Survey of India', url: 'https://asi.nic.in' }
+  ],
+  'Indian History': [
+    { title: 'National Archives of India', url: 'http://nationalarchives.nic.in' },
+    { title: 'Indian Council of Historical Research', url: 'http://ichr.ac.in' }
+  ],
+  'Science': [
+    { title: 'NCERT Scientific Resources', url: 'https://ncert.nic.in' },
+    { title: 'Encyclopaedia Britannica — Science', url: 'https://www.britannica.com/science' }
+  ],
+  'Science & Nature': [
+    { title: 'Nature Publishing Group', url: 'https://www.nature.com' },
+    { title: 'Encyclopaedia Britannica', url: 'https://www.britannica.com' }
+  ],
+  'Geography': [
+    { title: 'Survey of India', url: 'https://surveyofindia.gov.in' },
+    { title: 'UNESCO World Heritage Centre', url: 'https://whc.unesco.org' }
+  ],
+  'Sports': [
+    { title: 'International Olympic Committee', url: 'https://olympics.com' },
+    { title: 'Ministry of Youth Affairs and Sports', url: 'https://yas.nic.in' }
+  ],
+  'Cricket': [
+    { title: 'International Cricket Council (ICC)', url: 'https://www.icc-cricket.com' },
+    { title: 'Board of Control for Cricket in India (BCCI)', url: 'https://www.bcci.tv' }
+  ],
+  'Entertainment': [
+    { title: 'National Film Archive of India', url: 'https://www.nfdcindia.com' },
+    { title: 'Academy of Motion Picture Arts and Sciences', url: 'https://www.oscars.org' }
+  ],
+  'Bollywood': [
+    { title: 'National Film Archive of India', url: 'https://www.nfdcindia.com' },
+    { title: 'Directorate of Film Festivals', url: 'https://dff.gov.in' }
+  ],
+  'Arts & Literature': [
+    { title: 'Sahitya Akademi', url: 'https://sahitya-akademi.gov.in' },
+    { title: 'The Nobel Prize Foundation', url: 'https://www.nobelprize.org' }
+  ],
+  'Mythology': [
+    { title: 'Indira Gandhi National Centre for the Arts', url: 'http://ignca.gov.in' },
+    { title: 'Encyclopaedia Britannica — World Religions', url: 'https://www.britannica.com' }
+  ],
+  'General Knowledge': [
+    { title: 'National Portal of India', url: 'https://www.india.gov.in' },
+    { title: 'Encyclopaedia Britannica', url: 'https://www.britannica.com' }
+  ],
+  'Science: Computers': [
+    { title: 'IEEE Computer Society', url: 'https://www.computer.org' },
+    { title: 'World Wide Web Consortium (W3C)', url: 'https://www.w3.org' }
+  ],
+  'Guinness World Records': [
+    { title: 'Guinness World Records Official Database', url: 'https://www.guinnessworldrecords.com' }
+  ]
+};
+
+const DEFAULT_AUTHORITY = [
+  { title: 'CuizIN Editorial & Fact-Checking Board', url: 'https://cuiz.in/editorial-policy' },
+  { title: 'National Portal of India', url: 'https://www.india.gov.in' }
+];
+
+function getAuthorities(category) {
+  return CATEGORY_AUTHORITIES[category] || DEFAULT_AUTHORITY;
+}
+
+function isDynamicFact(questionText, category) {
+  const text = (questionText || '').toLowerCase();
+  const dynamicPatterns = [
+    /\b(current|present|latest|active|holds the record|fastest|highest score|world record|champion|won the 202[0-9]|in 202[0-9]|ipl 202[0-9]|icc 202[0-9])\b/i,
+    /\b(prime minister of india as of|chief minister of|president of|governor of|captain of)\b/i
+  ];
+  return category === 'Guinness World Records' || dynamicPatterns.some(p => p.test(text));
+}
+
   // 6. GENERATE INDIVIDUAL QUESTION PAGES
   if (databaseAvailable && allQuestions.length > 0) {
     console.log(`[seo-pages] Generating static pages for ${allQuestions.length} quiz questions...`);
@@ -1139,6 +1216,16 @@ async function run() {
         .join('\n');
 
       const correctAnswer = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+      const authorities = getAuthorities(q.category);
+      const dynamic = isDynamicFact(q.question, q.category);
+      const badgeLabel = dynamic ? `⏱️ Verified for ${new Date().getFullYear()}` : '✓ Fact-Verified';
+      const badgeStyle = dynamic
+        ? 'background:#fef3c7;color:#92400e;font-weight:600;'
+        : 'background:#e0f2fe;color:#0369a1;font-weight:600;';
+
+      const sourcesHtml = authorities.map(a => 
+        `<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#f1f5f9;color:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;margin:3px 6px 3px 0;text-decoration:none;border:1px solid #e2e8f0;">${esc(a.title)} ↗</a>`
+      ).join('');
 
       const bodyHtml = `
         <nav class="bc">
@@ -1151,7 +1238,7 @@ async function run() {
           <div style="margin-bottom:12px;">
             <span class="tag">${esc(q.difficulty || 'medium')}</span>
             <span class="tag">${esc(q.category)}</span>
-            <span class="tag" style="background:#e0f2fe;color:#0369a1;font-weight:600;">✓ Fact-Verified</span>
+            <span class="tag" style="${badgeStyle}">${esc(badgeLabel)}</span>
           </div>
           <h1>${esc(q.question)}</h1>
           
@@ -1170,6 +1257,11 @@ async function run() {
           <p>${esc(q.explanation)}</p>
           ` : ''}
 
+          <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+            <div style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Authoritative Sources &amp; Citations</div>
+            <div>${sourcesHtml}</div>
+          </div>
+
           <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
             <p>Fact-checked by <strong>CuizIN Editorial Team</strong> · Published under <a href="/editorial-policy">Editorial Standards</a> · <a href="/quiz/play/${q.id}/${qSlug}">Play this quiz interactively →</a></p>
           </div>
@@ -1184,6 +1276,7 @@ async function run() {
         "answerCount": 1,
         "datePublished": q.created_at || "2024-01-01T00:00:00Z",
         "dateModified": today,
+        "citation": authorities.map(a => ({ "@type": "CreativeWork", "name": a.title, "url": a.url })),
         "author": {
           "@type": "Organization",
           "name": "CuizIN Editorial Team",
