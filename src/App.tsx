@@ -73,6 +73,9 @@ const HowToPlay = React.lazy(() => import('@/pages/HowToPlay'));
 const TermsPage = React.lazy(() => import('@/pages/TermsPage'));
 const DisclaimerPage = React.lazy(() => import('@/pages/DisclaimerPage'));
 const PrivacyPage = React.lazy(() => import('@/pages/PrivacyPage'));
+const EditorialPolicyPage = React.lazy(() => import('@/pages/EditorialPolicyPage'));
+const OurSourcesPage = React.lazy(() => import('@/pages/OurSourcesPage'));
+const CorrectionsPolicyPage = React.lazy(() => import('@/pages/CorrectionsPolicyPage'));
 const FaqPage = React.lazy(() => import('@/pages/FaqPage'));
 const FaqDetailPage = React.lazy(() => import('@/pages/FaqDetailPage'));
 const BlogPage = React.lazy(() => import('@/pages/BlogPage'));
@@ -376,6 +379,21 @@ function App() {
               <Route path="/privacy" element={
                 <Suspense fallback={<PageLoader />}>
                   <PrivacyPage />
+                </Suspense>
+              } />
+              <Route path="/editorial-policy" element={
+                <Suspense fallback={<PageLoader />}>
+                  <EditorialPolicyPage />
+                </Suspense>
+              } />
+              <Route path="/our-sources" element={
+                <Suspense fallback={<PageLoader />}>
+                  <OurSourcesPage />
+                </Suspense>
+              } />
+              <Route path="/corrections" element={
+                <Suspense fallback={<PageLoader />}>
+                  <CorrectionsPolicyPage />
                 </Suspense>
               } />
               

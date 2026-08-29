@@ -1,9 +1,11 @@
 # Robots.txt for Cuiz.in
-# Updated: 2026-04-04
+# Updated: 2026-08-29 - AI & Search Engine Optimization
 
+# Default rules for all web crawlers
 User-agent: *
 Allow: /
 
+# Disallow private/account sections
 Disallow: /admin/
 Disallow: /admin-login/
 Disallow: /team-dashboard/
@@ -12,6 +14,10 @@ Disallow: /referral/
 Disallow: /challenge/
 Disallow: /archived-challenges/
 
+# Public Knowledge & SEO Routes
+Allow: /editorial-policy
+Allow: /our-sources
+Allow: /corrections
 Allow: /answer/
 Allow: /quiz
 Allow: /quiz/question/
@@ -32,11 +38,54 @@ Allow: /referral-program
 Allow: /terms
 Allow: /privacy
 Allow: /disclaimer
-Allow: /login
-Allow: /register
+
+# Explicitly allow AI Search & Knowledge Agents
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: Applebot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
 
 Crawl-delay: 1
 
 Sitemap: https://cuiz.in/sitemap.xml
-
 Host: https://cuiz.in

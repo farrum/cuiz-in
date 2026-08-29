@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2, Search, Compass, Layers } from 'lucide-react';
+import { Home, Play, Users, User, FileText, Shield, Lock, Map, UserPlus, Book, HelpCircle, Grid2X2, Search, Compass, Layers, ShieldCheck, Library, CheckCircle } from 'lucide-react';
 import { AppDownloadCard } from '@/components/app-promo/GooglePlay';
 
 const Footer: React.FC = () => {
@@ -156,6 +156,24 @@ const Footer: React.FC = () => {
                 <Link to="/stories" className="text-muted-foreground hover:text-foreground flex items-center">
                   <Layers className="w-4 h-4 mr-2" />
                   Quiz Stories
+                </Link>
+              </li>
+              <li>
+                <Link to="/editorial-policy" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Editorial Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/our-sources" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <Library className="w-4 h-4 mr-2" />
+                  Our Sources &amp; Citations
+                </Link>
+              </li>
+              <li>
+                <Link to="/corrections" className="text-muted-foreground hover:text-foreground flex items-center">
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Corrections Policy
                 </Link>
               </li>
               <li>

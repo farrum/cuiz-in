@@ -16,7 +16,8 @@ import {
   Home,
   Brain,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  ShieldCheck
 } from 'lucide-react';
 import LoadingCard from '@/components/LoadingCard';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
@@ -337,38 +338,47 @@ const QuizQuestionPage: React.FC = () => {
     };
   };
 
-  // Generate QAPage schema for Q&A style rich results
-  const generateQAPageSchema = () => {
-    const questionUrl = `https://cuiz.in/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 80)}`;
-    const dateStr = question.createdAt ? new Date(question.createdAt).toISOString() : new Date('2024-01-01').toISOString();
+  // Generate clean, authentic Question / Answer schema for AI and Search Engines
+  const generateQuestionAnswerSchema = () => {
+    if (!question) return null;
+    const categorySlug = getCategorySlug(question.category);
+    const canonicalSlug = createSlug(question.question, 80);
+    const subSlug = getQuestionSubcategorySlug(question.category, question.question);
+    const questionUrl = subSlug
+      ? `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${subSlug}/${canonicalSlug}`
+      : `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${canonicalSlug}`;
+    const datePublishedStr = question.createdAt ? new Date(question.createdAt).toISOString() : '2024-01-01T00:00:00Z';
+    const dateModifiedStr = new Date().toISOString().split('T')[0];
     
     return {
       '@context': 'https://schema.org',
-      '@type': 'QAPage',
-      'mainEntity': {
-        '@type': 'Question',
-        'name': question.question,
-        'text': question.question,
-        'url': questionUrl,
-        'answerCount': 1,
-        'upvoteCount': Math.floor(Math.random() * 50) + 10,
-        'dateCreated': dateStr,
+      '@type': 'Question',
+      'name': question.question,
+      'text': question.question,
+      'url': questionUrl,
+      'answerCount': 1,
+      'datePublished': datePublishedStr,
+      'dateModified': dateModifiedStr,
+      'author': {
+        '@type': 'Organization',
+        'name': 'CuizIN Editorial Team',
+        'url': 'https://cuiz.in/editorial-policy'
+      },
+      'publisher': {
+        '@type': 'Organization',
+        'name': 'CuizIN',
+        'url': 'https://cuiz.in'
+      },
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': question.correctAnswer,
+        'url': `${questionUrl}#answer`,
+        'datePublished': datePublishedStr,
+        'dateModified': dateModifiedStr,
         'author': {
           '@type': 'Organization',
-          'name': 'CuizIN',
-          'url': 'https://cuiz.in'
-        },
-        'acceptedAnswer': {
-          '@type': 'Answer',
-          'text': question.correctAnswer,
-          'url': `${questionUrl}#answer`,
-          'upvoteCount': Math.floor(Math.random() * 30) + 5,
-          'dateCreated': dateStr,
-          'author': {
-            '@type': 'Organization',
-            'name': 'CuizIN',
-            'url': 'https://cuiz.in'
-          }
+          'name': 'CuizIN Editorial Team',
+          'url': 'https://cuiz.in/editorial-policy'
         }
       }
     };
@@ -429,12 +439,12 @@ const QuizQuestionPage: React.FC = () => {
           }}
         />
       )}
-      {/* QAPage schema for Q&A rich results */}
+      {/* Schema.org Question + Answer structured data for AI & search indexing */}
       {question && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generateQAPageSchema())
+            __html: JSON.stringify(generateQuestionAnswerSchema())
           }}
         />
       )}
@@ -621,6 +631,19 @@ const QuizQuestionPage: React.FC = () => {
                     Mastering these topics will help you perform better in our comprehensive {question.category} trivia challenges and expand your overall expertise in the subject matter.
                   </p>
                 )}
+              </div>
+
+              {/* Provenance & Fact-Check Metadata */}
+              <div className="pt-4 mt-4 border-t border-border flex flex-wrap items-center justify-between text-xs text-muted-foreground gap-2">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span>Fact-checked by <strong>CuizIN Editorial Team</strong> · <Link to="/editorial-policy" className="text-primary hover:underline">Editorial Policy</Link> · <Link to="/our-sources" className="text-primary hover:underline">Our Sources</Link></span>
+                </div>
+                <div>
+                  <Link to="/corrections" className="text-muted-foreground hover:text-foreground underline">
+                    Report an error / Suggest source
+                  </Link>
+                </div>
               </div>
             </div>
             

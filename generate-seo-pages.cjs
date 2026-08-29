@@ -71,6 +71,7 @@ function cleanBaseTemplate(rawHtml) {
 }
 
 const base = cleanBaseTemplate(fs.readFileSync(TEMPLATE, 'utf8'));
+const today = new Date().toISOString().split('T')[0];
 
 const esc = (s) =>
   String(s ?? '')
@@ -251,7 +252,7 @@ function getCategorySlug(cat) {
   return categoryToSlugMap[cat] || 'general-knowledge';
 }
 
-function buildHtml({ title, description, canonical, bodyHtml }) {
+function buildHtml({ title, description, canonical, bodyHtml, jsonLd }) {
   let html = cleanBaseTemplate(base);
   const t = esc(title);
   const d = esc(description);
@@ -297,6 +298,12 @@ function buildHtml({ title, description, canonical, bodyHtml }) {
     /<meta\s+name="twitter:url"[^>]*>/i,
     `<meta name="twitter:url" content="${url}" data-rh="true"/>`
   );
+
+  // Inject JSON-LD structured data if provided
+  if (jsonLd) {
+    const jsonStr = typeof jsonLd === 'string' ? jsonLd : JSON.stringify(jsonLd);
+    html = html.replace('</head>', `<script type="application/ld+json">\n${jsonStr}\n</script>\n</head>`);
+  }
 
   // Hybrid SSR/SPA body HTML injection
   if (bodyHtml) {
@@ -559,6 +566,30 @@ const STATIC_PAGES = {
     bodyHtml: `
       <h1>Content Disclaimer</h1>
       <p>View the disclaimer statement regarding the quiz questions, answers, fact accuracy, and reference content hosted on the CuizIN platform.</p>
+    `
+  },
+  '/editorial-policy': {
+    title: 'Editorial Policy & Fact-Checking Standards | CuizIN',
+    description: 'Learn about CuizIN\'s rigorous editorial standards, question fact-checking processes, verification methodology, and ongoing accuracy commitments.',
+    bodyHtml: `
+      <h1>Editorial Policy &amp; Fact-Checking Standards</h1>
+      <p>CuizIN maintains strict editorial and verification standards across our 15,000+ trivia question library. Every question undergoes factual verification against trusted primary references.</p>
+    `
+  },
+  '/our-sources': {
+    title: 'Our Sources & Citation Standards | CuizIN',
+    description: 'Learn how CuizIN selects and cites authoritative reference sources, academic databases, and government archives for fact-checked quiz questions.',
+    bodyHtml: `
+      <h1>Our Sources &amp; Citation Standards</h1>
+      <p>CuizIN relies on primary historical records, constitutional archives, international sporting bodies, and peer-reviewed scientific institutions for all trivia facts.</p>
+    `
+  },
+  '/corrections': {
+    title: 'Corrections Policy & Question Error Reporting | CuizIN',
+    description: 'Read CuizIN\'s public corrections policy, error review workflow, and learn how to report an inaccurate quiz question to our editorial team.',
+    bodyHtml: `
+      <h1>Corrections Policy &amp; Error Reporting</h1>
+      <p>CuizIN is committed to rapid, transparent factual corrections. Learn about our review lifecycle and how to submit a question correction report.</p>
     `
   },
 };
@@ -1107,6 +1138,8 @@ async function run() {
         .map(opt => `<li>${esc(opt)}</li>`)
         .join('\n');
 
+      const correctAnswer = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+
       const bodyHtml = `
         <nav class="bc">
           <a href="/">Home</a> &rsaquo; 
@@ -1115,21 +1148,58 @@ async function run() {
           ${subSlug ? ` &rsaquo; <a href="/categories/${categorySlug}/${subSlug}">${esc(getQuestionSubcategoryName(q.category, q.question))}</a>` : ''}
         </nav>
         <article>
-          <span class="tag">${esc(q.difficulty || 'medium')}</span>
-          <span class="tag">${esc(q.category)}</span>
+          <div style="margin-bottom:12px;">
+            <span class="tag">${esc(q.difficulty || 'medium')}</span>
+            <span class="tag">${esc(q.category)}</span>
+            <span class="tag" style="background:#e0f2fe;color:#0369a1;font-weight:600;">✓ Fact-Verified</span>
+          </div>
           <h1>${esc(q.question)}</h1>
           
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;padding:14px 16px;border-radius:8px;margin:16px 0;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Verified Answer</div>
+            <div style="font-size:18px;font-weight:700;color:#0f172a;">${esc(correctAnswer)}</div>
+          </div>
+
           <h2>Quiz Options</h2>
           <ul>
             ${optionsList}
           </ul>
           
           ${q.explanation ? `
-          <h2>Explanation</h2>
+          <h2>Explanation &amp; Context</h2>
           <p>${esc(q.explanation)}</p>
           ` : ''}
+
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
+            <p>Fact-checked by <strong>CuizIN Editorial Team</strong> · Published under <a href="/editorial-policy">Editorial Standards</a> · <a href="/quiz/play/${q.id}/${qSlug}">Play this quiz interactively →</a></p>
+          </div>
         </article>
       `;
+
+      const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Question",
+        "name": q.question,
+        "text": q.question,
+        "answerCount": 1,
+        "datePublished": q.created_at || "2024-01-01T00:00:00Z",
+        "dateModified": today,
+        "author": {
+          "@type": "Organization",
+          "name": "CuizIN Editorial Team",
+          "url": `${SITE_URL}/editorial-policy`
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "CuizIN",
+          "url": SITE_URL
+        },
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": correctAnswer,
+          "url": canonical
+        }
+      };
 
       const title = `${q.question.substring(0, 60)}${q.question.length > 60 ? '...' : ''} | ${q.category} Quiz Question`;
       const cleanQ = q.question.replace(/"/g, "'");
@@ -1143,7 +1213,8 @@ async function run() {
         title,
         description,
         canonical,
-        bodyHtml
+        bodyHtml,
+        jsonLd
       });
       qCount++;
     }
