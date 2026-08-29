@@ -43,6 +43,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
   const isLoggedIn = isUserLoggedIn();
   
   const handleSelectOption = (option: string) => {
+    if (hasSubmitted) return;
     setSelectedOption(option);
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 300);
@@ -58,13 +59,29 @@ const QuizCard: React.FC<QuizCardProps> = ({
       setIsSubmitting(false);
       return;
     }
+
+    // Lock the options and reveal the correct/incorrect highlighting.
+    setHasSubmitted(true);
+    setIsSubmitting(true);
     
     try {
       // Get user ID from local storage
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       
-      // Check if the selected answer is correct
-      const isCorrect = selectedOption === question.correctAnswer;
+      // Resolve the correct answer (server-side when it isn't available client-side)
+      let correctAnswer = question.correctAnswer || '';
+      if (!correctAnswer) {
+        try {
+          const { data } = await supabase.functions.invoke('validate-quiz-answer', {
+            body: { question_id: question.id, selected_answer: selectedOption },
+          });
+          if (data?.correct_answer) correctAnswer = data.correct_answer;
+        } catch (e) {
+          console.warn('[QuizCard] answer validation failed', e);
+        }
+      }
+      setRevealedCorrect(correctAnswer);
+      const isCorrect = selectedOption === correctAnswer;
       
       // Calculate gems based on difficulty
       let gemsEarned = 0;
