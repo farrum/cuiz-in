@@ -436,6 +436,42 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     }, 12500);
   };
 
+  const finishNow = () => {
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    const res = resultRef.current;
+    if (res) onComplete(res.isCorrect, res.answer);
+  };
+
+  const handleDoubleGems = () => {
+    if (boosterUsed) return;
+    setBoosterUsed(true);
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    showRewardedAd(async (rewarded) => {
+      if (rewarded && gemsEarned) {
+        const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+        if (userId) {
+          try { await logGemsEarned(gemsEarned, userId); } catch (e) { console.warn(e); }
+        }
+        emitQuizReward(gemsEarned);
+        toast({ title: '💎 Gems doubled!', description: `+${gemsEarned} extra gems added.` });
+      }
+      finishNow();
+    });
+  };
+
+  const handleReviveStreak = () => {
+    if (boosterUsed) return;
+    setBoosterUsed(true);
+    if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    showRewardedAd((rewarded) => {
+      if (rewarded) {
+        window.dispatchEvent(new CustomEvent(REVIVE_STREAK_EVENT, { detail: { streak } }));
+        toast({ title: '🔥 Streak saved!', description: `Your streak of ${streak} lives on.` });
+      }
+      finishNow();
+    });
+  };
+
   const toggleSound = () => {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
@@ -1003,6 +1039,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
         </div>
       </div>
+
+      {rewardedAdElement}
 
       <GuestPlayLimitModal 
         isOpen={showGuestLimitModal} 
