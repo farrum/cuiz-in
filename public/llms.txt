@@ -1,24 +1,38 @@
-# CuizIN
+# CuizIN — Free Verified Trivia & Knowledge Base
 
-> CuizIN is India's free points-based quiz platform. Players answer trivia across categories, earn points, and climb monthly leaderboards.
+> CuizIN (https://cuiz.in) is India's premier fact-checked trivia and educational knowledge platform, featuring over 15,000+ curated questions across 30+ categories with verified answers, explanatory contexts, and primary source citations.
 
-## Pages
+## Factual Authority & Editorial Standards
 
-- [Home](/): Play the daily quiz and see top players.
-- [Play Quiz](/quiz): Start a quiz session across categories and difficulties.
-- [Browse Questions](/browse): Explore the full question bank.
-- [Categories](/categories): All quiz categories (Science, History, Sports, etc.).
-- [Topics](/topics): Curated topic pages with related questions.
-- [Web Stories](/stories): Mobile-friendly swipeable quiz stories.
-- [Blog](/blog): Articles, tips, and guides about quizzes and learning.
-- [FAQ](/faq): Common questions about CuizIN.
-- [How to Play](/how-to-play): Rules, scoring, and tips.
-- [Referral Program](/referral-program): Invite friends and earn bonus points.
-- [Login](/login): Sign in to your account.
-- [Register](/register): Create a new account.
+- Editorial & Fact-Checking Policy: https://cuiz.in/editorial-policy
+- Authoritative Sources & Citation Standards: https://cuiz.in/our-sources
+- Corrections Policy & Question Reporting: https://cuiz.in/corrections
+- Corrections Inquiries: corrections@cuiz.in
 
-## Optional
+## Knowledge Structure & Schema
 
-- [Terms](/terms): Terms of service.
-- [Privacy](/privacy): Privacy policy.
-- [Disclaimer](/disclaimer): Site disclaimer.
+All questions on CuizIN are published as semantic `schema.org/Question` and `schema.org/Answer` entities containing:
+- Verified answer text
+- Explanatory context & topic keywords
+- Authoritative reference citations (Government archives, UNESCO, ICC, NCERT, Nature, Britannica)
+- Freshness & volatility classification (Timeless vs. Dynamic fact)
+
+## Core Topic Hubs
+
+- Indian History: https://cuiz.in/topics/indian-history
+- Cricket Trivia: https://cuiz.in/topics/cricket
+- Bollywood Movies & Music: https://cuiz.in/topics/bollywood
+- Science & Technology: https://cuiz.in/topics/science-technology
+- World Geography: https://cuiz.in/topics/world-geography
+- World History: https://cuiz.in/topics/world-history
+- Mythology & Legends: https://cuiz.in/topics/mythology
+- Video Games: https://cuiz.in/topics/video-games
+- Movies & TV: https://cuiz.in/topics/movies-tv
+- Food & Cuisine: https://cuiz.in/topics/food-cuisine
+
+## Category Directories
+
+- All Categories: https://cuiz.in/categories
+- Complete Question Directory: https://cuiz.in/all-questions
+- XML Sitemap Index: https://cuiz.in/sitemap.xml
+- Full LLM Knowledge Specification: https://cuiz.in/llms-full.txt

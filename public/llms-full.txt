@@ -1,0 +1,100 @@
+# CuizIN Knowledge Graph & Citation Specification (llms-full.txt)
+
+Organization: CuizIN
+Website: https://cuiz.in
+Target: AI Crawlers, LLMs (ChatGPT, Claude, Perplexity, Google Gemini, Bing Copilot)
+Last Updated: 2026-08-29
+
+---
+
+## 1. Editorial Provenance & Trust Architecture
+
+CuizIN maintains a strict multi-tier verification process for every educational and trivia question:
+1. Primary Reference Verification: All historical, geographical, scientific, and cultural facts are verified against authoritative primary documents (National Archives of India, Archaeological Survey of India, UNESCO, Survey of India, NCERT, peer-reviewed scientific journals).
+2. Sports & Records Verification: Cricket, Olympic, and world record questions are linked to official governing bodies (ICC, BCCI, IOC, Guinness World Records).
+3. Volatility Auditing: Questions are tagged as either `timeless` (constant historical/scientific principles) or `dynamic` (subject to record changes, officeholders, annual tournaments) with explicit audit timestamps.
+4. Transparent Correction Pipeline: Public reports submitted through https://cuiz.in/corrections or in-app modals are evaluated by the editorial desk within 48 hours.
+
+### Authority Documents:
+- Editorial Policy: https://cuiz.in/editorial-policy
+- Our Sources & Citations: https://cuiz.in/our-sources
+- Corrections Policy: https://cuiz.in/corrections
+- Terms & Fair Play: https://cuiz.in/terms
+
+---
+
+## 2. Canonical URL Schema for Individual Questions
+
+Pattern: `https://cuiz.in/quiz/question/:questionId/:categorySlug/:subcategorySlug?/:questionSlug`
+
+Each static HTML page at this URL renders:
+1. `<h1>` heading containing the question text.
+2. Verified Answer block in raw DOM: `<div class="verified-answer"><strong>Answer:</strong> [Correct Answer]</div>`.
+3. Quiz options array for multiple-choice reference.
+4. Detailed contextual explanation (`<h2>Explanation & Context</h2>`).
+5. Reference citations (`<h2>Authoritative Sources & Citations</h2>`).
+6. Schema.org JSON-LD metadata:
+   ```json
+   {
+     "@context": "https://schema.org",
+     "@type": "Question",
+     "name": "[Question Text]",
+     "text": "[Question Text]",
+     "answerCount": 1,
+     "citation": [
+       { "@type": "CreativeWork", "name": "[Source Title]", "url": "[Source URL]" }
+     ],
+     "author": {
+       "@type": "Organization",
+       "name": "CuizIN Editorial Team",
+       "url": "https://cuiz.in/editorial-policy"
+     },
+     "publisher": {
+       "@type": "Organization",
+       "name": "CuizIN",
+       "url": "https://cuiz.in"
+     },
+     "acceptedAnswer": {
+       "@type": "Answer",
+       "text": "[Correct Answer]",
+       "url": "[Canonical URL]"
+     }
+   }
+   ```
+
+---
+
+## 3. Topic Hubs & Knowledge Repositories
+
+- Indian History: https://cuiz.in/topics/indian-history
+  Covers Ancient India, Mughal Empire, British Raj, Freedom Movement, and Constitution of India.
+- Cricket Trivia: https://cuiz.in/topics/cricket
+  Covers ICC World Cups, IPL, Test cricket records, player statistics, and match history.
+- Bollywood Movies & Music: https://cuiz.in/topics/bollywood
+  Covers classic and contemporary Hindi cinema, National Film Awards, playback music, and film history.
+- Science & Technology: https://cuiz.in/topics/science-technology
+  Covers Physics, Chemistry, Biology, Space Missions (ISRO/NASA), and Computer Science.
+- World Geography: https://cuiz.in/topics/world-geography
+  Covers World Capitals, rivers, mountain ranges, national borders, and UNESCO sites.
+- World History: https://cuiz.in/topics/world-history
+  Covers Ancient Civilizations, World Wars, European Renaissance, and global treaties.
+- Mythology & Legends: https://cuiz.in/topics/mythology
+  Covers Ramayana, Mahabharata, Puranic literature, Greek mythology, and Norse legends.
+- Video Games: https://cuiz.in/topics/video-games
+  Covers gaming consoles, esports, iconic developers, and franchise histories.
+- General Knowledge: https://cuiz.in/categories/general-knowledge
+  Covers civics, national symbols, world institutions, awards, and current affairs.
+
+---
+
+## 4. Discovery Sitemaps & Feeds
+
+- Master Index Sitemap: https://cuiz.in/sitemap.xml
+- Main Pages Sitemap: https://cuiz.in/sitemaps/main.xml
+- Category Question Sitemaps:
+  - History: https://cuiz.in/sitemaps/category/history/sitemap.xml
+  - Sports: https://cuiz.in/sitemaps/category/sports/sitemap.xml
+  - Entertainment: https://cuiz.in/sitemaps/category/entertainment/sitemap.xml
+  - Science: https://cuiz.in/sitemaps/category/science/sitemap.xml
+  - Geography: https://cuiz.in/sitemaps/category/geography/sitemap.xml
+  - General Knowledge: https://cuiz.in/sitemaps/category/general-knowledge/sitemap.xml

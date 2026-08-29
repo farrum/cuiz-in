@@ -89,3 +89,5 @@ Crawl-delay: 1
 
 Sitemap: https://cuiz.in/sitemap.xml
 Host: https://cuiz.in
+llms: https://cuiz.in/llms.txt
+llms-full: https://cuiz.in/llms-full.txt
