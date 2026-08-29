@@ -224,7 +224,7 @@ const TopicPage: React.FC = () => {
           .limit(50);
 
         if (error) throw error;
-        setQuestions(data || []);
+        setQuestions((data as any) || []);
       } catch (error) {
         console.error('Error fetching topic questions:', error);
       } finally {

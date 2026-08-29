@@ -1555,10 +1555,15 @@ export type Database = {
         Args: { p_icon_id: string }
         Returns: boolean
       }
-      admin_disable_team: {
-        Args: { p_dissolve_members?: boolean; p_leader_id: string }
-        Returns: boolean
-      }
+      admin_disable_team:
+        | {
+            Args: { p_dissolve_members?: boolean; p_leader_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: { p_dissolve_members?: boolean; p_leader_id: string }
+            Returns: boolean
+          }
       admin_get_all_team_leaders_performance: {
         Args: never
         Returns: {
@@ -1632,6 +1637,14 @@ export type Database = {
       }
       admin_reassign_member_leader: {
         Args: { p_member_id: string; p_new_leader_id: string }
+        Returns: boolean
+      }
+      admin_remove_member_from_team: {
+        Args: { p_member_id: string }
+        Returns: boolean
+      }
+      admin_set_user_role: {
+        Args: { p_role: string; p_user_id: string }
         Returns: boolean
       }
       award_currency: {

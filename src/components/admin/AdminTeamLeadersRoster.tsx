@@ -288,24 +288,14 @@ export const AdminTeamLeadersRoster: React.FC = () => {
 
   const handleChangeRole = async (userId: string, newRole: string) => {
     try {
-      // 1. Delete existing roles (except admin)
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .neq('role', 'admin');
-        
-      if (deleteError) throw deleteError;
+      // Replace ALL existing ranks (including admin) atomically, server-side
+      const { error } = await supabase.rpc('admin_set_user_role' as any, {
+        p_user_id: userId,
+        p_role: newRole
+      });
 
-      // 2. Insert the new rank
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: newRole
-        });
+      if (error) throw error;
 
-      if (insertError) throw insertError;
 
       toast({
         title: "Rank Adjusted",
