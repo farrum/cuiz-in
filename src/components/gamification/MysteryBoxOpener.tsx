@@ -168,7 +168,7 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
     /* Guest path – always local */
     if (!userId) {
       const result = generateLocalReward(boxTier);
-      await creditLocalStorage(result);
+      await creditLocalStorage(result, userId);
       finalize(result);
       return;
     }
@@ -194,7 +194,7 @@ export const MysteryBoxOpener: React.FC<MysteryBoxOpenerProps> = ({
     } catch {
       // Fallback: generate reward locally so the user is never blocked
       const result = generateLocalReward(boxTier);
-      await creditLocalStorage(result);
+      await creditLocalStorage(result, userId);
       finalize(result);
     }
   };
