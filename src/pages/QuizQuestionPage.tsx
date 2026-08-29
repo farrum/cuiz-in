@@ -9,6 +9,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import QuizCard from '@/components/QuizCard';
 import ImageQuizContent from '@/components/quiz/ImageQuizContent';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -425,6 +426,7 @@ const QuizQuestionPage: React.FC = () => {
   const factType = question ? getFactType(question.question, question.category) : 'timeless';
   const provenance = getProvenanceBadge(factType);
   const sources = question ? getQuestionSources(question.category, question.sources) : [];
+  const matchedEntity = question ? findMatchingEntityForQuestion(question.question) : undefined;
 
   // JSON-LD breadcrumbs
   const breadcrumbs = question ? [

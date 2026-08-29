@@ -542,10 +542,38 @@ export default function EmpireQuestsPage() {
         }
 
         // Fetch Heroes from user_characters table
-        const { data: userCharacters } = await (supabase as any)
+        let { data: userCharacters } = await (supabase as any)
           .from('user_characters')
           .select('*')
           .eq('user_id', session.user.id);
+
+        // One-time migration: push shards that only exist on this device into the DB
+        const CHAR_IDS = ['socrates', 'aryabhata', 'chanakya', 'ramanujan'];
+        let syncedAny = false;
+        for (const cid of CHAR_IDS) {
+          const localShards = Number(localStorage.getItem(`hero_${cid}_shards`) || '0');
+          const syncedKey = `hero_${cid}_shards_synced`;
+          const alreadySynced = Number(localStorage.getItem(syncedKey) || '0');
+          const pending = localShards - alreadySynced;
+          if (pending > 0) {
+            const { data: res } = await (supabase as any).rpc('award_character_shards', {
+              p_character_id: cid,
+              p_amount: Math.min(pending, 100),
+            });
+            if (res?.success) {
+              localStorage.setItem(syncedKey, String(alreadySynced + Math.min(pending, 100)));
+              syncedAny = true;
+            }
+          }
+        }
+        if (syncedAny) {
+          const { data: refreshed } = await (supabase as any)
+            .from('user_characters')
+            .select('*')
+            .eq('user_id', session.user.id);
+          userCharacters = refreshed;
+        }
+
 
         const heroList: HeroData[] = [
           {

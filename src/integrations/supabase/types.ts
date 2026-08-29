@@ -1642,6 +1642,10 @@ export type Database = {
         Args: { p_role: string; p_user_id: string }
         Returns: boolean
       }
+      award_character_shards: {
+        Args: { p_amount: number; p_character_id: string }
+        Returns: Json
+      }
       award_currency: {
         Args: {
           p_points_delta?: number
