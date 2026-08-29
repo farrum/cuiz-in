@@ -601,22 +601,22 @@ const QuizQuestionPage: React.FC = () => {
             )}
 
             {answered && (
-              <div className={`rounded-xl border p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 ${
-                answered.isCorrect ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-100' : 'bg-destructive/10 border-destructive/20 text-destructive-foreground'
+              <div className={`rounded-xl border-2 p-5 shadow-sm bg-card text-card-foreground animate-in fade-in slide-in-from-bottom-2 ${
+                answered.isCorrect ? 'border-emerald-500/60' : 'border-destructive/60'
               }`}>
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <h3 className={`text-lg font-bold ${answered.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
                     {answered.isCorrect ? '✅ Correct!' : '❌ Not quite'}
                   </h3>
                   <span className="text-xs text-muted-foreground">Next question in {countdown}s…</span>
                 </div>
                 {!answered.isCorrect && (
-                  <p className="text-sm mb-2 text-stone-200">
-                    Correct answer: <strong className="text-white">{question.correctAnswer}</strong>
+                  <p className="text-sm mb-2 text-foreground">
+                    Correct answer: <strong className="font-semibold">{question.correctAnswer}</strong>
                   </p>
                 )}
                 {question.explanation && (
-                  <p className="text-sm text-muted-foreground mb-3">{question.explanation}</p>
+                  <p className="text-sm text-foreground/80 mb-3">{question.explanation}</p>
                 )}
                 <Button
                   onClick={goToNextQuestion}
