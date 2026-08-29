@@ -279,9 +279,9 @@ export default function ProfileScreen() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
+              <span className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
                 Herald Profile
-              </h1>
+              </span>
             </div>
             {/* HUD stats with soft glow ring */}
             <div
@@ -380,9 +380,9 @@ export default function ProfileScreen() {
         />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
+            <span className="text-lg font-black tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
               Herald Profile
-            </h1>
+            </span>
           </div>
           {/* HUD stats with soft glow ring */}
           <div

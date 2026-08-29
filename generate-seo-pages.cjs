@@ -61,7 +61,16 @@ if (!fs.existsSync(TEMPLATE)) {
   process.exit(0);
 }
 
-const base = fs.readFileSync(TEMPLATE, 'utf8');
+function cleanBaseTemplate(rawHtml) {
+  let cleaned = rawHtml;
+  // Remove any previously injected ssr style blocks
+  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?\.ssr-content[\s\S]*?<\/style>\s*/gi, '');
+  // Remove any previously injected ssr-content divs
+  cleaned = cleaned.replace(/<div\s+class="ssr-content">[\s\S]*?<\/div>\s*/gi, '');
+  return cleaned;
+}
+
+const base = cleanBaseTemplate(fs.readFileSync(TEMPLATE, 'utf8'));
 
 const esc = (s) =>
   String(s ?? '')
@@ -243,7 +252,7 @@ function getCategorySlug(cat) {
 }
 
 function buildHtml({ title, description, canonical, bodyHtml }) {
-  let html = base;
+  let html = cleanBaseTemplate(base);
   const t = esc(title);
   const d = esc(description);
   const url = esc(canonical);
