@@ -1795,6 +1795,10 @@ export type Database = {
         }
         Returns: Json
       }
+      upgrade_character: {
+        Args: { char_id: string; user_uuid: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
