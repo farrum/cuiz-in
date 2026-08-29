@@ -797,6 +797,15 @@ const QuizQuestionPage: React.FC = () => {
             </div>
           </div>
         )}
+          </div>
+
+          <aside className="lg:col-span-4 xl:col-span-3">
+            <div className="sticky top-24 space-y-4">
+              <SimpleAdBanner position="sidebar" slotId="question-sidebar" />
+              <SidebarVideoAd alwaysVideo />
+            </div>
+          </aside>
+        </div>
       </main>
 
       {/* Interactive Fact Correction / Source Suggestion Modal */}
