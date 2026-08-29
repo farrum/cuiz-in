@@ -895,16 +895,25 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           )}
 
+          {/* Suspense while the verdict is held back */}
+          {isAnswered && !revealReady && (
+            <div className="mt-4 p-3 rounded-xl bg-muted/60 text-center font-medium text-foreground flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Checking your answer...
+            </div>
+          )}
+
           {/* Feedback / Gems earned with streak bonus info */}
-          {isAnswered && gemsEarned !== null && (
+          {isAnswered && revealReady && gemsEarned !== null && (
             <div className={cn(
-              "mt-4 p-3 rounded-xl text-center font-medium",
+              "mt-4 p-3 rounded-xl text-center font-medium animate-scale-in",
               selectedAnswer === question.correctAnswer
                 ? "bg-accent/10 text-accent"
                 : "bg-destructive/10 text-destructive"
             )}>
               {selectedAnswer === question.correctAnswer ? (
                 <div className="flex flex-col items-center gap-1">
+                  <span className="text-2xl" aria-hidden>🎉</span>
                   <span className="flex items-center justify-center gap-2">
                     <CheckCircle2 className="w-5 h-5" />
                     Correct! +{gemsEarned} gems
@@ -923,6 +932,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                 </span>
               ) : (
                 <div className="flex flex-col items-center gap-1">
+                  <span className="text-2xl" aria-hidden>😅</span>
                   <span className="flex items-center justify-center gap-2">
                     <XCircle className="w-5 h-5" />
                     Wrong! Correct: {question.correctAnswer}
@@ -937,8 +947,34 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             </div>
           )}
 
+          {/* Boosters — watch an ad to double gems or save the streak */}
+          {isAnswered && revealReady && !boosterUsed && (
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              {lastCorrect && (gemsEarned ?? 0) > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 gap-1.5"
+                  onClick={handleDoubleGems}
+                >
+                  🎬 Watch ad · Double {gemsEarned} gems
+                </Button>
+              )}
+              {!lastCorrect && streak > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 gap-1.5"
+                  onClick={handleReviveStreak}
+                >
+                  🔥 Watch ad · Save {streak} streak
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* Explanation */}
-          {isAnswered && question.explanation && (
+          {isAnswered && revealReady && question.explanation && (
             <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
               <h4 className="font-semibold text-sm text-primary flex items-center gap-1.5 mb-1.5">
                 💡 Did you know?
@@ -948,12 +984,13 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
 
           {/* Loading next */}
-          {isAnswered && (
+          {isAnswered && revealReady && (
             <div className="mt-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading next question...
             </div>
           )}
+
 
           {/* Guest warning */}
           {!isLoggedIn && remainingPlays > 0 && remainingPlays <= 5 && !isAnswered && (
