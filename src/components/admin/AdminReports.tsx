@@ -14,7 +14,10 @@ import {
   PlayCircle, 
   LogIn,
   Trophy,
-  Loader2
+  Loader2,
+  Layers,
+  DollarSign,
+  HelpCircle
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -30,6 +33,9 @@ import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { generateExcelFile, prepareAdTrackingDataForExport } from "@/utils/excelUtils";
 import DailyChallengesReport from './DailyChallengesReport';
+import CategoryAnalyticsReport from './reports/CategoryAnalyticsReport';
+import FinancialLedgerReport from './reports/FinancialLedgerReport';
+import QuestionQualityReport from './reports/QuestionQualityReport';
 
 const downloadCSV = (data: any[], filename: string) => {
   const csvContent = data.reduce((csv, row) => {
@@ -1151,35 +1157,59 @@ const AdminReports = () => {
         </div>
       </div>
       
-      <TabsList className="mb-4">
-        <TabsTrigger value="top-performers" className="flex items-center">
-          <Trophy className="w-4 h-4 mr-2" />
+      <TabsList className="mb-4 flex flex-wrap gap-1">
+        <TabsTrigger value="top-performers" className="flex items-center text-xs">
+          <Trophy className="w-3.5 h-3.5 mr-1.5" />
           Top Performers
         </TabsTrigger>
-        <TabsTrigger value="login-reports" className="flex items-center">
-          <LogIn className="w-4 h-4 mr-2" />
+        <TabsTrigger value="category-analytics" className="flex items-center text-xs">
+          <Layers className="w-3.5 h-3.5 mr-1.5" />
+          Category Analytics
+        </TabsTrigger>
+        <TabsTrigger value="financial-ledger" className="flex items-center text-xs">
+          <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+          Financial Ledger
+        </TabsTrigger>
+        <TabsTrigger value="question-quality" className="flex items-center text-xs">
+          <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
+          Question Quality
+        </TabsTrigger>
+        <TabsTrigger value="login-reports" className="flex items-center text-xs">
+          <LogIn className="w-3.5 h-3.5 mr-1.5" />
           Login Reports
         </TabsTrigger>
-        <TabsTrigger value="play-reports" className="flex items-center">
-          <PlayCircle className="w-4 h-4 mr-2" />
+        <TabsTrigger value="play-reports" className="flex items-center text-xs">
+          <PlayCircle className="w-3.5 h-3.5 mr-1.5" />
           Play Reports
         </TabsTrigger>
-        <TabsTrigger value="challenges-reports" className="flex items-center">
-          <Calendar className="w-4 h-4 mr-2" />
+        <TabsTrigger value="challenges-reports" className="flex items-center text-xs">
+          <Calendar className="w-3.5 h-3.5 mr-1.5" />
           Challenges Reports
         </TabsTrigger>
-        <TabsTrigger value="ad-reports" className="flex items-center">
-          <BarChart3 className="w-4 h-4 mr-2" />
+        <TabsTrigger value="ad-reports" className="flex items-center text-xs">
+          <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
           Ad Reports
         </TabsTrigger>
-        <TabsTrigger value="team-reports" className="flex items-center">
-          <Users className="w-4 h-4 mr-2" />
-          Team & Ads
+        <TabsTrigger value="team-reports" className="flex items-center text-xs">
+          <Users className="w-3.5 h-3.5 mr-1.5" />
+          Team &amp; Ads
         </TabsTrigger>
       </TabsList>
       
       <TabsContent value="top-performers">
         <TopPerformersReport />
+      </TabsContent>
+      
+      <TabsContent value="category-analytics">
+        <CategoryAnalyticsReport />
+      </TabsContent>
+      
+      <TabsContent value="financial-ledger">
+        <FinancialLedgerReport />
+      </TabsContent>
+      
+      <TabsContent value="question-quality">
+        <QuestionQualityReport />
       </TabsContent>
       
       <TabsContent value="login-reports">

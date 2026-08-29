@@ -14,8 +14,12 @@ import {
   UserCheck, 
   CreditCard, 
   RefreshCw, 
-  Calendar 
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createSlug } from '@/utils/urlUtils';
+import { getCategorySlug } from '@/utils/categoryMapping';
 import { 
   approveReactivationRequest, 
   denyReactivationRequest, 
@@ -43,11 +47,28 @@ interface PaymentRequest {
   method: string | null;
 }
 
+interface QuestionReport {
+  id: string;
+  question_id: string;
+  question_text: string;
+  current_answer: string;
+  category: string;
+  issue_type: string;
+  details: string;
+  source_url?: string;
+  contact_email?: string;
+  status: 'pending' | 'under_review' | 'resolved' | 'dismissed';
+  editorial_notes?: string;
+  created_at: string;
+}
+
 const RequestsManagementPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('reactivation');
+  const [activeTab, setActiveTab] = useState('question-reports');
   const [isLoading, setIsLoading] = useState(true);
   const [reactivationRequests, setReactivationRequests] = useState<ReactivationRequest[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PaymentRequest[]>([]);
+  const [questionReports, setQuestionReports] = useState<QuestionReport[]>([]);
+  const [reportFilter, setReportFilter] = useState<string>('all');
   const { toast } = useToast();
   
   const loadAllRequests = async () => {
@@ -69,9 +90,19 @@ const RequestsManagementPanel: React.FC = () => {
         .order('created_at', { ascending: false });
         
       if (paymentError) throw paymentError;
+
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('question_reports' as any)
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (reportsError) {
+        console.warn('question_reports table query note:', reportsError);
+      }
       
       setReactivationRequests(reactivationData || []);
       setPendingPayments(paymentData || []);
+      setQuestionReports(reportsData || []);
       
       await adminNotificationsApi.markAllAsRead();
     } catch (error) {
@@ -393,62 +424,292 @@ const RequestsManagementPanel: React.FC = () => {
       )
     }
   ];
+
+  const handleUpdateReportStatus = async (reportId: string, status: 'under_review' | 'resolved' | 'dismissed') => {
+    try {
+      const { error } = await supabase
+        .from('question_reports' as any)
+        .update({ 
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reportId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Status Updated',
+        description: `Question error report marked as ${status.replace('_', ' ')}`,
+      });
+      loadAllRequests();
+    } catch (err: any) {
+      console.error('Error updating question report:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update report status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const filteredQuestionReports = questionReports.filter(r => {
+    if (reportFilter === 'pending') return r.status === 'pending';
+    if (reportFilter === 'under_review') return r.status === 'under_review';
+    if (reportFilter === 'resolved') return r.status === 'resolved';
+    if (reportFilter === 'dismissed') return r.status === 'dismissed';
+    return true;
+  });
+
+  const questionReportColumns = [
+    {
+      header: 'Question & Category',
+      accessorKey: 'question_text',
+      cell: (row: QuestionReport) => {
+        const catSlug = getCategorySlug(row.category || 'general');
+        const qSlug = createSlug(row.question_text || 'question');
+        return (
+          <div className="max-w-[320px] space-y-1">
+            <Link
+              to={`/quiz/question/${row.question_id}/${catSlug}/${qSlug}`}
+              target="_blank"
+              className="font-semibold text-xs text-foreground hover:text-primary transition-colors flex items-start gap-1"
+            >
+              <span>{row.question_text}</span>
+              <ExternalLink className="w-3 h-3 shrink-0 opacity-60 mt-0.5" />
+            </Link>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Badge variant="outline" className="text-[10px] py-0">{row.category || 'General'}</Badge>
+              {row.current_answer && (
+                <span>Current Ans: <strong className="text-foreground">{row.current_answer}</strong></span>
+              )}
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: 'Issue & Details',
+      accessorKey: 'issue_type',
+      cell: (row: QuestionReport) => (
+        <div className="max-w-[280px] space-y-1">
+          <Badge 
+            variant="outline" 
+            className={
+              row.issue_type === 'incorrect_answer' 
+                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-300' 
+                : row.issue_type === 'outdated_fact'
+                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300'
+                  : 'bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }
+          >
+            {row.issue_type.replace('_', ' ').toUpperCase()}
+          </Badge>
+          <p className="text-xs text-muted-foreground leading-snug line-clamp-2">
+            {row.details}
+          </p>
+          {row.source_url && (
+            <a 
+              href={row.source_url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[11px] text-primary hover:underline flex items-center gap-1 truncate block max-w-[240px]"
+            >
+              <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+              {row.source_url}
+            </a>
+          )}
+        </div>
+      )
+    },
+    {
+      header: 'Reported',
+      accessorKey: 'created_at',
+      cell: (row: QuestionReport) => (
+        <div className="text-xs text-muted-foreground">
+          <div>{format(new Date(row.created_at || Date.now()), 'MMM d, yyyy')}</div>
+          <div className="text-[11px]">
+            {formatDistanceToNow(new Date(row.created_at || Date.now()), { addSuffix: true })}
+          </div>
+          {row.contact_email && (
+            <div className="text-[10px] text-slate-400 truncate max-w-[120px]">
+              {row.contact_email}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: (row: QuestionReport) => {
+        const s = row.status || 'pending';
+        return (
+          <Badge
+            variant="outline"
+            className={
+              s === 'resolved'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300'
+                : s === 'under_review'
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-300'
+                  : s === 'dismissed'
+                    ? 'bg-slate-100 text-slate-500'
+                    : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300'
+            }
+          >
+            {s.replace('_', ' ').toUpperCase()}
+          </Badge>
+        );
+      }
+    },
+    {
+      header: 'Actions',
+      accessorKey: 'actions',
+      cell: (row: QuestionReport) => (
+        <div className="flex flex-wrap gap-1.5 min-w-[160px]">
+          {row.status !== 'resolved' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => handleUpdateReportStatus(row.id, 'resolved')}
+            >
+              <CheckCircle className="w-3 h-3 mr-1" /> Resolve
+            </Button>
+          )}
+          {row.status === 'pending' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
+              onClick={() => handleUpdateReportStatus(row.id, 'under_review')}
+            >
+              Review
+            </Button>
+          )}
+          {row.status !== 'dismissed' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => handleUpdateReportStatus(row.id, 'dismissed')}
+            >
+              Dismiss
+            </Button>
+          )}
+        </div>
+      )
+    }
+  ];
   
   return (
-    <Card>
+    <Card className="bg-card text-card-foreground shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5" /> Pending Requests
-        </CardTitle>
-        <CardDescription>
-          Manage account reactivation and payment requests
-        </CardDescription>
-        <div className="flex justify-end">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-primary" /> Support &amp; Community Reports
+            </CardTitle>
+            <CardDescription>
+              Triage user-submitted fact checks, citation suggestions, account reactivation requests, and withdrawals.
+            </CardDescription>
+          </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={loadAllRequests}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 self-start sm:self-auto"
+            disabled={isLoading}
           >
-            <RefreshCw className="h-4 w-4" /> Refresh
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="reactivation" className="flex items-center gap-1">
-              <UserCheck className="h-4 w-4" /> Reactivation
+          <TabsList className="mb-4 flex flex-wrap gap-1">
+            <TabsTrigger value="question-reports" className="flex items-center gap-1 text-xs">
+              <AlertCircle className="h-3.5 w-3.5" /> Question Fact Reports
+              {questionReports.filter(r => r.status === 'pending').length > 0 && (
+                <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-[10px]">
+                  {questionReports.filter(r => r.status === 'pending').length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="reactivation" className="flex items-center gap-1 text-xs">
+              <UserCheck className="h-3.5 w-3.5" /> Reactivations
               {reactivationRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
                   {reactivationRequests.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="payment" className="flex items-center gap-1">
-              <CreditCard className="h-4 w-4" /> Payments
+            <TabsTrigger value="payment" className="flex items-center gap-1 text-xs">
+              <CreditCard className="h-3.5 w-3.5" /> Payments
               {pendingPayments.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
                   {pendingPayments.length}
                 </Badge>
               )}
             </TabsTrigger>
           </TabsList>
+
+          {/* Question Reports Tab */}
+          <TabsContent value="question-reports" className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Filter by Status:</span>
+                <div className="flex gap-1">
+                  {['all', 'pending', 'under_review', 'resolved', 'dismissed'].map(st => (
+                    <Button
+                      key={st}
+                      variant={reportFilter === st ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 text-xs capitalize"
+                      onClick={() => setReportFilter(st)}
+                    >
+                      {st.replace('_', ' ')}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Showing {filteredQuestionReports.length} of {questionReports.length} tickets
+              </div>
+            </div>
+
+            <PaginatedDataTable 
+              columns={questionReportColumns} 
+              data={filteredQuestionReports} 
+              isLoading={isLoading} 
+              pageSize={10}
+              searchPlaceholder="Search reported questions or details..."
+            />
+            
+            {!isLoading && filteredQuestionReports.length === 0 && (
+              <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
+                <h3 className="font-medium text-base text-foreground">Inbox Zero! No question reports</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  No community error reports matching this filter.
+                </p>
+              </div>
+            )}
+          </TabsContent>
           
           <TabsContent value="reactivation">
             <PaginatedDataTable 
               columns={reactivationColumns} 
               data={reactivationRequests} 
               isLoading={isLoading} 
-              pageSize={5}
+              pageSize={10}
               searchPlaceholder="Search users..."
             />
             
             {!isLoading && reactivationRequests.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <UserCheck className="h-12 w-12 mb-3 text-muted-foreground" />
-                <h3 className="font-medium text-lg">No reactivation requests</h3>
-                <p>There are no pending reactivation requests at this time.</p>
+                <UserCheck className="h-10 w-10 mb-2 text-muted-foreground" />
+                <h3 className="font-medium text-base text-foreground">No reactivation requests</h3>
+                <p className="text-xs text-muted-foreground mt-1">There are no pending reactivation requests at this time.</p>
               </div>
             )}
           </TabsContent>
@@ -458,15 +719,15 @@ const RequestsManagementPanel: React.FC = () => {
               columns={paymentColumns} 
               data={pendingPayments} 
               isLoading={isLoading} 
-              pageSize={5}
+              pageSize={10}
               searchPlaceholder="Search payments..."
             />
             
             {!isLoading && pendingPayments.length === 0 && (
               <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                <CreditCard className="h-12 w-12 mb-3 text-muted-foreground" />
-                <h3 className="font-medium text-lg">No payment requests</h3>
-                <p>There are no pending payment requests at this time.</p>
+                <CreditCard className="h-10 w-10 mb-2 text-muted-foreground" />
+                <h3 className="font-medium text-base text-foreground">No payment requests</h3>
+                <p className="text-xs text-muted-foreground mt-1">There are no pending payment requests at this time.</p>
               </div>
             )}
           </TabsContent>
