@@ -9,6 +9,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import QuizCard from '@/components/QuizCard';
 import ImageQuizContent from '@/components/quiz/ImageQuizContent';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, 
   ChevronRight, 
