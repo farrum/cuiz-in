@@ -33,6 +33,7 @@ import {
 import { QuizQuestion } from '@/utils/quizData';
 import { getRandomQuestion } from '@/utils/quizData';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import { triggerAdRefresh } from '@/utils/adService';
 
 import { createSlug } from '@/utils/urlUtils';
