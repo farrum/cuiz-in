@@ -102,7 +102,7 @@ const RequestsManagementPanel: React.FC = () => {
       
       setReactivationRequests(reactivationData || []);
       setPendingPayments(paymentData || []);
-      setQuestionReports(reportsData || []);
+      setQuestionReports((reportsData as any) || []);
       
       await adminNotificationsApi.markAllAsRead();
     } catch (error) {

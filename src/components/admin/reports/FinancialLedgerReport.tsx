@@ -50,7 +50,7 @@ export const FinancialLedgerReport: React.FC = () => {
 
       // 2. Fetch ad views tracking
       const { data: adData } = await supabase
-        .from('ad_views_tracking')
+        .from('ad_views_tracking' as any)
         .select('*')
         .order('created_at', { ascending: false });
 

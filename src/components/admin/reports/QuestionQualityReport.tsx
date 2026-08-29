@@ -75,7 +75,7 @@ export const QuestionQualityReport: React.FC = () => {
       const uniqueCats = Array.from(new Set((qData || []).map(q => q.category).filter(Boolean)));
       setCategories(uniqueCats as string[]);
 
-      const qualityList: QualityQuestion[] = (qData || []).map(q => {
+      const qualityList: QualityQuestion[] = ((qData || []) as any[]).map((q: any) => {
         const repCount = reportCountMap[q.id] || 0;
         const hasExplanation = Boolean(q.explanation && q.explanation.trim().length > 10);
         const hasSource = Boolean(q.explanation && (q.explanation.includes('http') || q.explanation.includes('Source')));

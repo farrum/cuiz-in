@@ -47,7 +47,7 @@ export const CategoryAnalyticsReport: React.FC = () => {
 
       // 2. Fetch game sessions / submissions to compute plays per category
       const { data: sessionsData } = await supabase
-        .from('game_sessions')
+        .from('game_sessions' as any)
         .select('category, score, total_questions')
         .limit(2000);
 
