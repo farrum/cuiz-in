@@ -221,9 +221,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
       <CardContent>
         <div className="space-y-3">
           {question.options.map((option, index) => {
-            const isCorrectOption = option === question.correctAnswer;
+            const correctAnswer = revealedCorrect ?? question.correctAnswer;
+            const isCorrectOption = !!correctAnswer && option === correctAnswer;
             const isSelected = selectedOption === option;
-            const reveal = isSubmitting; // answer submitted — reveal correct/incorrect
+            const reveal = hasSubmitted; // answer submitted — reveal correct/incorrect
 
             let optionClasses = '';
             if (reveal && isCorrectOption) {
