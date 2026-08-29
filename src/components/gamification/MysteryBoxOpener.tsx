@@ -63,14 +63,32 @@ function generateLocalReward(boxTier: 'bronze' | 'gold' | 'legendary'): RewardRe
   }
 }
 
-function creditLocalStorage(result: RewardResult) {
+async function creditLocalStorage(result: RewardResult, userId?: string | null) {
   const localStars = Number(localStorage.getItem('quiz_app_user_stars') || '50');
   const localGems = Number(localStorage.getItem('quiz_app_user_gems') || '100');
   localStorage.setItem('quiz_app_user_stars', String(localStars + result.stars));
   localStorage.setItem('quiz_app_user_gems', String(localGems + result.gems));
   if (result.reward_type === 'shards' && result.character_id) {
+    const amount = result.shards || 0;
     const currentShards = Number(localStorage.getItem(`hero_${result.character_id}_shards`) || '0');
-    localStorage.setItem(`hero_${result.character_id}_shards`, String(currentShards + (result.shards || 0)));
+    localStorage.setItem(`hero_${result.character_id}_shards`, String(currentShards + amount));
+
+    // Persist to the database for signed-in players so upgrades validate server-side
+    if (userId && amount > 0) {
+      try {
+        const { data } = await (supabase as any).rpc('award_character_shards', {
+          p_character_id: result.character_id,
+          p_amount: amount,
+        });
+        if (data?.success) {
+          const syncedKey = `hero_${result.character_id}_shards_synced`;
+          const alreadySynced = Number(localStorage.getItem(syncedKey) || '0');
+          localStorage.setItem(syncedKey, String(alreadySynced + amount));
+        }
+      } catch {
+        // keep local credit; the quest page will sync it on next load
+      }
+    }
   }
 }
 
