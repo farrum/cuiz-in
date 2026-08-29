@@ -201,26 +201,49 @@ const QuizCard: React.FC<QuizCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {question.options.map((option, index) => (
-            <div
-              key={index}
-              className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
-                selectedOption === option
-                  ? 'border-primary bg-primary/10 transform scale-105'
-                  : 'hover:bg-accent hover:border-accent hover:shadow-md'
-              } ${isAnimating && selectedOption === option ? 'bounce-in' : ''}`}
-              onClick={() => handleSelectOption(option)}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
-                  selectedOption === option ? 'border-primary bg-primary text-white' : 'border-muted-foreground'
-                }`}>
-                  {String.fromCharCode(65 + index)}
+          {question.options.map((option, index) => {
+            const isCorrectOption = option === question.correctAnswer;
+            const isSelected = selectedOption === option;
+            const reveal = isSubmitting; // answer submitted — reveal correct/incorrect
+
+            let optionClasses = '';
+            if (reveal && isCorrectOption) {
+              optionClasses = 'border-emerald-500 bg-emerald-500/15 text-emerald-900 dark:text-emerald-100';
+            } else if (reveal && isSelected && !isCorrectOption) {
+              optionClasses = 'border-destructive bg-destructive/10 text-destructive';
+            } else if (isSelected) {
+              optionClasses = 'border-primary bg-primary/10 transform scale-105';
+            } else {
+              optionClasses = reveal
+                ? 'opacity-70'
+                : 'hover:bg-accent hover:border-accent hover:shadow-md';
+            }
+
+            return (
+              <div
+                key={index}
+                className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${optionClasses} ${isAnimating && isSelected ? 'bounce-in' : ''}`}
+                onClick={() => !isSubmitting && handleSelectOption(option)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
+                    reveal && isCorrectOption
+                      ? 'border-emerald-500 bg-emerald-500 text-white'
+                      : reveal && isSelected
+                        ? 'border-destructive bg-destructive text-white'
+                        : isSelected
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-muted-foreground'
+                  }`}>
+                    {String.fromCharCode(65 + index)}
+                  </div>
+                  <div className="flex-1">{option}</div>
+                  {reveal && isCorrectOption && <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">✓ Correct</span>}
+                  {reveal && isSelected && !isCorrectOption && <span className="text-destructive font-semibold text-sm">✗ Your pick</span>}
                 </div>
-                <div className="flex-1">{option}</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
       <CardFooter className="flex-col gap-2">
