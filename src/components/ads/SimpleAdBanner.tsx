@@ -1,9 +1,12 @@
 import React, { useId } from "react";
 import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
+import { useAdFillCheck } from "@/hooks/useAdFillCheck";
+import HouseBanner from "./HouseBanner";
 import { cn } from "@/lib/utils";
 import { getPositionClasses } from "./adStyles";
 import { Capacitor } from "@capacitor/core";
+
 
 interface SimpleAdBannerProps {
   position:
@@ -71,6 +74,16 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     ? adContent.replace(/<!-- size: \d+x\d+ -->/, "").trim()
     : "";
 
+  // The network can answer with an empty document (dead key, unapproved
+  // domain, no fill). Detect that and swap in a house promo instead of
+  // leaving a blank band on the page.
+  const fillState = useAdFillCheck(
+    containerId,
+    !!renderableContent,
+    refreshGeneration
+  );
+  const isEmpty = fillState === "empty";
+
   // Only Active slots produce content. When there is nothing to show, render
   // nothing at all (collapse) — no placeholder, no empty gap.
   if (!renderableContent) {
@@ -89,12 +102,28 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     >
       <div
         id={containerId}
-        className="ad-container min-h-[1px] w-full flex justify-center"
+        className={cn(
+          "ad-container min-h-[1px] w-full flex justify-center",
+          isEmpty && "hidden"
+        )}
         dangerouslySetInnerHTML={{ __html: adContent }}
         data-ad-position={resolvedPosition}
         data-ad-debug={adDebug}
         data-execution-status={executionStatus}
+        data-ad-fill={fillState}
       />
+
+      {isEmpty && (
+        <HouseBanner
+          variant={resolvedPosition === "sidebar" ? "box" : "banner"}
+        />
+      )}
+
+      {isEmpty && import.meta.env.DEV && (
+        <div className="text-[10px] text-muted-foreground text-center mt-1">
+          Ad slot loaded but the network returned no creative.
+        </div>
+      )}
 
       {error && import.meta.env.DEV && (
         <div className="text-[10px] text-destructive text-center mt-1">
@@ -104,6 +133,7 @@ const SimpleAdBanner: React.FC<SimpleAdBannerProps> = ({
     </div>
   );
 };
+
 
 export default SimpleAdBanner;
 

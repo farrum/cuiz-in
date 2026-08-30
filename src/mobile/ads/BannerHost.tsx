@@ -68,9 +68,25 @@ export function BannerHost() {
     let retryTimer: number | undefined;
     let attempt = 0;
 
+    const announceFill = (filled: boolean) => {
+      window.dispatchEvent(
+        new CustomEvent('cuizin_banner_fill', { detail: { filled } })
+      );
+    };
+
     const requestBanner = async (margin: number) => {
       const shown = await showAdMobBanner(margin);
-      if (!isMounted || shown || attempt >= 3) return;
+      if (!isMounted) return;
+      if (shown) {
+        announceFill(true);
+        return;
+      }
+      if (attempt >= 3) {
+        // AdMob never delivered (no fill / init failure): let the layout show
+        // an in-house promo instead of an empty strip.
+        announceFill(false);
+        return;
+      }
       attempt += 1;
       // Retry no-fill/transient SDK startup failures without churning native views.
       retryTimer = window.setTimeout(() => void requestBanner(margin), 10_000);
@@ -87,9 +103,11 @@ export function BannerHost() {
         void requestBanner(margin);
       } else {
         document.documentElement.style.setProperty('--banner-h', '0px');
+        announceFill(true);
         void hideAdMobBanner();
       }
     }, 80);
+
 
     return () => {
       isMounted = false;
