@@ -69,13 +69,19 @@ const AdminAdDebugPanel: React.FC<{ className?: string }> = ({ className = '' })
               providers[slot.position] = 'AdCash (aclib)';
             } else if (slot.code.includes('adsbygoogle')) {
               providers[slot.position] = 'Google AdSense';
-            } else if (slot.code.includes('monetag') || slot.code.includes('highperformanceformat')) {
+            } else if (
+              slot.code.includes('highperformanceformat') ||
+              slot.code.includes('profitableratecpm')
+            ) {
+              providers[slot.position] = 'Adsterra';
+            } else if (slot.code.includes('monetag')) {
               providers[slot.position] = 'Monetag';
             } else if (slot.code.includes('propellerads')) {
               providers[slot.position] = 'PropellerAds';
             } else {
               providers[slot.position] = 'Custom/Unknown';
             }
+
           });
           setProviderInfo(providers);
           
