@@ -18,6 +18,7 @@ import { getPotionCount, consumePotion } from '@/utils/shopData';
 import { confetti } from '@/utils/animations';
 import { emitQuizReward } from '@/components/quiz/FloatingReward';
 import { useWebRewardedAd } from '@/hooks/useWebRewardedAd';
+import { asUuidOrNull } from '@/utils/uuid';
 
 export const REVIVE_STREAK_EVENT = 'cuizin:revive-streak';
 
@@ -404,7 +405,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
         
         await (supabase as any).from('quiz_answers').insert({
           user_id: userId,
-          question_id: question.id,
+          question_id: asUuidOrNull(question.id),
           selected_answer: answer || 'timeout',
           correct: isCorrect,
           points_earned: gems,

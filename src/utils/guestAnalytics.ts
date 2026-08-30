@@ -7,6 +7,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { isUserLoggedIn } from '@/utils/guestPlayService';
+import { asUuidOrNull } from '@/utils/uuid';
 
 const SESSION_KEY = 'cuizin_guest_session_id';
 
@@ -48,7 +49,7 @@ export const trackGuestEvent = (payload: GuestEventPayload): void => {
       session_id: getGuestSessionId(),
       event_type: payload.event_type,
       path: payload.path ?? (typeof window !== 'undefined' ? window.location.pathname : undefined),
-      question_id: payload.question_id,
+      question_id: asUuidOrNull(payload.question_id),
       correct: payload.correct,
       points: payload.points,
       referrer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,

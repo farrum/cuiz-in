@@ -119,6 +119,7 @@ export type Database = {
           id: string
           last_updated: string | null
           name: string
+          page_section: string | null
           position: string
           version_number: number | null
         }
@@ -129,6 +130,7 @@ export type Database = {
           id?: string
           last_updated?: string | null
           name: string
+          page_section?: string | null
           position: string
           version_number?: number | null
         }
@@ -139,6 +141,7 @@ export type Database = {
           id?: string
           last_updated?: string | null
           name?: string
+          page_section?: string | null
           position?: string
           version_number?: number | null
         }
@@ -1438,6 +1441,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_updated: string | null
           progress: number
           task_id: string | null
           updated_at: string
@@ -1446,6 +1450,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_updated?: string | null
           progress?: number
           task_id?: string | null
           updated_at?: string
@@ -1454,6 +1459,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_updated?: string | null
           progress?: number
           task_id?: string | null
           updated_at?: string
@@ -1522,6 +1528,53 @@ export type Database = {
           },
         ]
       }
+      ad_views_tracking: {
+        Row: {
+          ad_id: string | null
+          ad_position: string | null
+          created_at: string | null
+          device_info: string | null
+          id: string | null
+          page_section: string | null
+          page_url: string | null
+          session_id: string | null
+          slot_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ad_id?: string | null
+          ad_position?: string | null
+          created_at?: string | null
+          device_info?: string | null
+          id?: string | null
+          page_section?: string | null
+          page_url?: string | null
+          session_id?: string | null
+          slot_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ad_id?: string | null
+          ad_position?: string | null
+          created_at?: string | null
+          device_info?: string | null
+          id?: string | null
+          page_section?: string | null
+          page_url?: string | null
+          session_id?: string | null
+          slot_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_views_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_ad_reports: {
         Row: {
           ad_id: string | null
@@ -1539,6 +1592,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      game_sessions: {
+        Row: {
+          category: string | null
+          score: number | null
+          total_questions: number | null
+        }
+        Relationships: []
       }
       sitemap_entries: {
         Row: {
