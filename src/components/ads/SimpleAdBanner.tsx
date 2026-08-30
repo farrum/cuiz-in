@@ -1,9 +1,12 @@
 import React, { useId } from "react";
 import { useAdvertisement } from "@/hooks/useAdvertisement";
 import { useScriptExecution } from "@/hooks/useScriptExecution";
+import { useAdFillCheck } from "@/hooks/useAdFillCheck";
+import HouseBanner from "./HouseBanner";
 import { cn } from "@/lib/utils";
 import { getPositionClasses } from "./adStyles";
 import { Capacitor } from "@capacitor/core";
+
 
 interface SimpleAdBannerProps {
   position:
