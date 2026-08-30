@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { QuizQuestion } from '@/utils/quizData';
 import { getRandomMessage } from '@/utils/funMessages';
 import { createSlug } from '@/utils/urlUtils';
+import { isUuid } from '@/utils/uuid';
 
 export const useQuizAnswer = (questionId: string | undefined, selectedOption: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +44,7 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
         // Fetch the specific question directly by ID (avoids the 1000-row cap)
         let foundQuestion: QuizQuestion | undefined;
 
-        if (!questionId.includes('image-')) {
+        if (isUuid(questionId)) {
           const { data: q, error } = await supabase
             .from('quiz_questions')
             .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')
@@ -86,9 +87,11 @@ export const useQuizAnswer = (questionId: string | undefined, selectedOption: st
           // Validate answer server-side
           let correct = false;
           try {
-            const { data, error } = await supabase.functions.invoke('validate-quiz-answer', {
-              body: { question_id: questionId, selected_answer: selectedOption }
-            });
+            const { data, error } = isUuid(questionId)
+              ? await supabase.functions.invoke('validate-quiz-answer', {
+                  body: { question_id: questionId, selected_answer: selectedOption }
+                })
+              : { data: null, error: new Error('local question') };
             if (!error && data) {
               correct = data.is_correct;
               foundQuestion.correctAnswer = data.correct_answer;

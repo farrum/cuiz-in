@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Capacitor } from '@capacitor/core';
+import { asUuidOrNull } from '@/utils/uuid';
 
 type Phase = 'loading' | 'asking' | 'revealing' | 'between';
 
@@ -217,7 +218,7 @@ export default function QuizStoryScreen() {
         if (uid) {
           void supabase.from('quiz_answers').insert({
             user_id: uid,
-            question_id: question.id,
+            question_id: asUuidOrNull(question.id),
             selected_answer: option,
             correct,
             points_earned: correct ? (question.gems || 10) : 0,

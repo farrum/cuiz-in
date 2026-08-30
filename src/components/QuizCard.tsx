@@ -12,6 +12,7 @@ import { createSlug } from '@/utils/urlUtils';
 import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlays } from '@/utils/guestPlayService';
 import GuestPlayLimitModal from './GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
+import { asUuidOrNull } from '@/utils/uuid';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -127,7 +128,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
         // Save answer to the quiz_answers table regardless of challenge type
         await supabase.from('quiz_answers').insert({
           user_id: userId,
-          question_id: question.id,
+          question_id: asUuidOrNull(question.id),
           selected_answer: selectedOption,
           correct: isCorrect,
           points_earned: gemsEarned,
