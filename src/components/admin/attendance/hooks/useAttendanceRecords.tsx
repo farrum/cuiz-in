@@ -4,9 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
-interface UserAttendance {
+export interface UserAttendance {
   user_id: string;
   username: string;
+  role?: string;
+  directLeaderUsername?: string;
+  status?: string;
+  suspended?: boolean;
   dates: Record<string, boolean>;
 }
 
@@ -43,46 +47,44 @@ export const useAttendanceRecords = (
       
       console.log(`Fetched ${attendanceData?.length || 0} attendance records for current month`);
       
+      // Process attendance data by user
+      const attendanceByUser: Record<string, Record<string, boolean>> = {};
+      
+      // Initialize attendance data for all users first
+      users.forEach(user => {
+        attendanceByUser[user.id] = {};
+      });
+      
       if (attendanceData && attendanceData.length > 0) {
         setAttendanceRecords(attendanceData);
         
-        // Process attendance data by user
-        const attendanceByUser: Record<string, Record<string, boolean>> = {};
-        
-        // Initialize attendance data for all users first
-        users.forEach(user => {
-          attendanceByUser[user.id] = {};
-        });
-        
-        // Fill in attendance records where they exist
+        // Fill in attendance records where they exist (normalize date to YYYY-MM-DD)
         attendanceData.forEach((record) => {
           if (record.user_id && record.attendance_date) {
             if (!attendanceByUser[record.user_id]) {
               attendanceByUser[record.user_id] = {};
             }
-            attendanceByUser[record.user_id][record.attendance_date] = true;
+            const cleanDate = String(record.attendance_date).split('T')[0];
+            attendanceByUser[record.user_id][cleanDate] = true;
           }
         });
-        
-        // Create attendance records for each user
-        const formattedAttendance = users.map(user => ({
-          user_id: user.id,
-          username: user.username,
-          dates: attendanceByUser[user.id] || {}
-        }));
-        
-        setAttendance(formattedAttendance);
-        console.log("Processed attendance data for", formattedAttendance.length, "users");
       } else {
-        // If no attendance data, create empty records
-        const emptyAttendance = users.map(user => ({
-          user_id: user.id,
-          username: user.username,
-          dates: {}
-        }));
-        setAttendance(emptyAttendance);
-        console.log("No attendance data found for current month, creating empty records");
+        setAttendanceRecords([]);
       }
+
+      // Create attendance records for each user
+      const formattedAttendance: UserAttendance[] = users.map(user => ({
+        user_id: user.id,
+        username: user.name || user.username || user.display_name || 'Mercenary',
+        role: user.role || 'infantry',
+        directLeaderUsername: user.directLeaderUsername || '',
+        status: user.status || 'active',
+        suspended: user.suspended || user.status === 'suspended',
+        dates: attendanceByUser[user.id] || {}
+      }));
+      
+      setAttendance(formattedAttendance);
+      console.log("Processed attendance data for", formattedAttendance.length, "users");
     } catch (error: any) {
       console.error('Error fetching attendance data:', error);
       setError(`Failed to load attendance data: ${error.message}`);

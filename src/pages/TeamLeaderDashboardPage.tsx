@@ -866,7 +866,7 @@ export default function TeamLeaderDashboardPage() {
                 📅 Daily Check-ins & Attendance Logs
               </h2>
               <div className="bg-stone-900/90 border-4 border-double border-amber-500/20 rounded-3xl p-6 shadow-xl text-slate-100">
-                <TeamLeaderAttendanceTracker />
+                <TeamLeaderAttendanceTracker members={teamMembers} />
               </div>
             </div>
           )}

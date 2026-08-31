@@ -849,7 +849,7 @@ export default function MobileTeamDashboard() {
               📅 Troop Daily Attendance & Check-ins
             </h3>
             <div className="bg-white/80 ring-1 ring-black/[0.06] rounded-2xl p-4 shadow-sm overflow-hidden text-slate-800">
-              <TeamLeaderAttendanceTracker />
+              <TeamLeaderAttendanceTracker members={teamMembers} />
             </div>
           </div>
         )}

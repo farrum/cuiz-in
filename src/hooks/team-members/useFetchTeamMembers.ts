@@ -73,17 +73,41 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
         console.warn('[TeamMembers] RPC get_my_team_hierarchy unavailable, switching to table query:', rpcErr);
       }
 
-      // 2. Fallback: Direct query to user_referrals table if RPC returned no members or failed
+      // 2. Fallback: Recursive multi-level traversal of user_referrals table
       if (members.length === 0) {
-        const { data: refData, error: refError } = await supabase
-          .from('user_referrals')
-          .select('*')
-          .eq('referrer_id', userId);
+        const allReferredIds = new Set<string>();
+        let currentLevelIds = [userId];
+        const allReferralRecords: any[] = [];
+        let depth = 0;
+        const MAX_DEPTH = 10;
 
-        if (refError) {
-          console.error('[TeamMembers] Fallback user_referrals query error:', refError);
-        } else if (refData && refData.length > 0) {
-          const referredIds = refData.map(r => r.referred_id).filter(Boolean);
+        while (currentLevelIds.length > 0 && depth < MAX_DEPTH) {
+          const { data: refData, error: refError } = await supabase
+            .from('user_referrals')
+            .select('*')
+            .in('referrer_id', currentLevelIds);
+
+          if (refError) {
+            console.error('[TeamMembers] Fallback user_referrals query error:', refError);
+            break;
+          }
+
+          if (!refData || refData.length === 0) break;
+
+          const nextLevelIds: string[] = [];
+          for (const ref of refData) {
+            if (ref.referred_id && !allReferredIds.has(ref.referred_id) && ref.referred_id !== userId) {
+              allReferredIds.add(ref.referred_id);
+              allReferralRecords.push(ref);
+              nextLevelIds.push(ref.referred_id);
+            }
+          }
+          currentLevelIds = nextLevelIds;
+          depth++;
+        }
+
+        if (allReferralRecords.length > 0) {
+          const referredIds = Array.from(allReferredIds);
 
           let profilesMap = new Map<string, any>();
           let rolesMap = new Map<string, string>();
@@ -102,7 +126,7 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
             }
           }
 
-          members = refData.map(ref => {
+          members = allReferralRecords.map(ref => {
             const prof = profilesMap.get(ref.referred_id);
             const status = (ref.status || 'inactive') as 'active' | 'inactive' | 'suspended';
             const joinDate = ref.date || new Date().toISOString();
@@ -119,8 +143,8 @@ export const useFetchTeamMembers = (teamLeaderId?: string | null) => {
               joinDate: joinDate,
               totalEarned: status === 'active' ? 500 : 0,
               role: rolesMap.get(ref.referred_id) || 'player',
-              directLeaderId: userId,
-              directLeaderUsername: '',
+              directLeaderId: ref.referrer_id || userId,
+              directLeaderUsername: ref.referrer_name || '',
               questionsAnswered: 0,
               questionsCorrect: 0
             };

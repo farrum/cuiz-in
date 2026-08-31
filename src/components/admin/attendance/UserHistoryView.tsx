@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, RefreshCw, Calendar, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, RefreshCw, Calendar, User, Flame, Award, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { format, parseISO, isValid } from 'date-fns';
+import MemberSearchDropdown, { getRoleInfo, DropdownMember } from './components/MemberSearchDropdown';
 
 interface UserHistoryViewProps {
-  users: any[];
+  users: DropdownMember[];
   selectedUser: string | null;
   userHistory: Record<string, any[]>;
   userHistoryLoading: boolean;
@@ -33,6 +27,10 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
   getLastLoginDate,
   formatAttendanceDate
 }) => {
+  // Find current user object
+  const currentMember = users.find(u => u.id === selectedUser) || null;
+  const roleInfo = currentMember ? getRoleInfo(currentMember.role) : null;
+
   // Calculate consecutive days streak if we have history
   const calculateStreak = (history: any[]): number => {
     if (!history || history.length === 0) return 0;
@@ -40,7 +38,7 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
     // Sort by date (most recent first)
     const sortedDates = [...history]
       .sort((a, b) => new Date(b.attendance_date).getTime() - new Date(a.attendance_date).getTime())
-      .map(record => record.attendance_date);
+      .map(record => String(record.attendance_date).split('T')[0]);
     
     // Get unique dates (in case there are multiple logins per day)
     const uniqueDates = Array.from(new Set(sortedDates));
@@ -94,194 +92,251 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
   }, [selectedUser]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <Select
-            value={selectedUser || ''}
-            onValueChange={(value) => onUserSelect(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select user" />
-            </SelectTrigger>
-            <SelectContent>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.username} {user.suspended ? "(Suspended)" : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-5">
+      {/* Top Search & Member Selector */}
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-slate-50 dark:bg-stone-850 p-3 rounded-2xl border border-slate-200/80 dark:border-stone-700">
+        <div className="flex-1 w-full sm:w-auto">
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+            Selected Squad Member
+          </label>
+          <MemberSearchDropdown
+            members={users}
+            selectedUserId={selectedUser}
+            onSelectUser={(id) => {
+              if (id) onUserSelect(id);
+            }}
+            className="w-full"
+            placeholder="Select a member from downline..."
+          />
         </div>
         
         {selectedUser && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onRefresh(selectedUser)}
-            disabled={userHistoryLoading}
-          >
-            {userHistoryLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-          </Button>
+          <div className="self-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onRefresh(selectedUser)}
+              disabled={userHistoryLoading}
+              className="h-9 px-3 rounded-xl border-slate-200 dark:border-stone-700 text-xs font-bold"
+            >
+              {userHistoryLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-500 mr-1.5" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-1.5 text-slate-500" />
+              )}
+              Refresh Logs
+            </Button>
+          </div>
         )}
       </div>
       
-      {selectedUser && !userHistoryLoading && userHistory[selectedUser] && (
+      {/* If member is selected and not loading */}
+      {selectedUser && !userHistoryLoading && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4 flex items-center space-x-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <User className="h-6 w-6 text-primary" />
+          {/* Member Card Header */}
+          {currentMember && (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-xl font-bold">
+                  {roleInfo?.emoji || '🏹'}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm">
+                      {currentMember.name || currentMember.username}
+                    </h3>
+                    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 border font-black ${roleInfo?.badgeBg}`}>
+                      {roleInfo?.label}
+                    </Badge>
+                    {currentMember.suspended && (
+                      <Badge variant="destructive" className="text-[10px] px-2 py-0.5 font-bold">
+                        Suspended
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                    {currentMember.directLeaderUsername && (
+                      <span>Direct Commander: <strong className="text-slate-700 dark:text-slate-200">{currentMember.directLeaderUsername}</strong></span>
+                    )}
+                    {currentMember.email && (
+                      <span>• {currentMember.email}</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Last Login</p>
-                <p className="font-medium">{getLastLoginDate(selectedUser)}</p>
+            </div>
+          )}
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Card className="p-3.5 flex items-center space-x-3 rounded-2xl border-slate-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm">
+              <div className="bg-sky-500/10 p-2.5 rounded-xl text-sky-600 dark:text-sky-400 shrink-0">
+                <User className="h-5 w-5" />
               </div>
-            </Card>
-            
-            <Card className="p-4 flex items-center space-x-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Attendance Streak</p>
-                <p className="font-medium">
-                  {calculateStreak(userHistory[selectedUser])} days
+              <div className="truncate">
+                <p className="text-[11px] font-semibold text-slate-400">Last Login Date</p>
+                <p className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 truncate">
+                  {getLastLoginDate(selectedUser)}
                 </p>
               </div>
             </Card>
             
-            <Card className="p-4 flex items-center space-x-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Calendar className="h-6 w-6 text-primary" />
+            <Card className="p-3.5 flex items-center space-x-3 rounded-2xl border-slate-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm">
+              <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-600 dark:text-amber-400 shrink-0">
+                <Flame className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Logins</p>
-                <p className="font-medium">
+                <p className="text-[11px] font-semibold text-slate-400">Attendance Streak</p>
+                <p className="font-black text-xs sm:text-sm text-amber-600 dark:text-amber-400">
+                  {calculateStreak(userHistory[selectedUser] || [])} Days
+                </p>
+              </div>
+            </Card>
+            
+            <Card className="p-3.5 flex items-center space-x-3 rounded-2xl border-slate-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm">
+              <div className="bg-emerald-500/10 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400 shrink-0">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400">Total Check-ins</p>
+                <p className="font-black text-xs sm:text-sm text-slate-800 dark:text-slate-200">
                   {userHistory[selectedUser]?.length || 0}
                 </p>
               </div>
             </Card>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-lg overflow-hidden">
-              <h3 className="text-lg font-semibold p-4 bg-muted">Login History</h3>
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Login Time
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {userHistory[selectedUser] && userHistory[selectedUser].length > 0 ? (
-                    userHistory[selectedUser].map((record) => (
-                      <tr key={record.id} className="hover:bg-muted/50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {formatAttendanceDate(record.attendance_date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {new Date(record.login_time).toLocaleTimeString()}
+          {/* Tables: Login History & Quiz Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Login History Table */}
+            <div className="rounded-2xl border border-slate-200/80 dark:border-stone-800 overflow-hidden bg-white dark:bg-stone-900 shadow-sm">
+              <div className="px-4 py-3 bg-slate-50/80 dark:bg-stone-850/80 border-b border-slate-100 dark:border-stone-800 flex items-center justify-between">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  📅 Login Records ({userHistory[selectedUser]?.length || 0})
+                </h4>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                <table className="min-w-full divide-y divide-slate-100 dark:divide-stone-800 text-xs">
+                  <thead className="bg-slate-50/50 dark:bg-stone-850/50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-bold text-slate-500 text-[11px]">
+                        Date
+                      </th>
+                      <th className="px-4 py-2 text-left font-bold text-slate-500 text-[11px]">
+                        Login Time
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-stone-800">
+                    {userHistory[selectedUser] && userHistory[selectedUser].length > 0 ? (
+                      userHistory[selectedUser].map((record) => (
+                        <tr key={record.id} className="hover:bg-slate-50/80 dark:hover:bg-stone-800/40">
+                          <td className="px-4 py-2.5 whitespace-nowrap font-medium text-slate-800 dark:text-slate-200">
+                            {formatAttendanceDate(record.attendance_date)}
+                          </td>
+                          <td className="px-4 py-2.5 whitespace-nowrap text-slate-500">
+                            {record.login_time ? new Date(record.login_time).toLocaleTimeString() : '-'}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={2} className="px-4 py-8 text-center text-xs text-slate-400">
+                          No login history recorded for this member.
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No login history found for this user.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
-              <h3 className="text-lg font-semibold p-4 bg-muted">Quiz Activity</h3>
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Questions Attempted
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Gems Earned
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {loadingQuizActivity ? (
+            {/* Quiz Activity Table */}
+            <div className="rounded-2xl border border-slate-200/80 dark:border-stone-800 overflow-hidden bg-white dark:bg-stone-900 shadow-sm">
+              <div className="px-4 py-3 bg-slate-50/80 dark:bg-stone-850/80 border-b border-slate-100 dark:border-stone-800 flex items-center justify-between">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  ⚔️ Quiz Activity Logs
+                </h4>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                <table className="min-w-full divide-y divide-slate-100 dark:divide-stone-800 text-xs">
+                  <thead className="bg-slate-50/50 dark:bg-stone-850/50 sticky top-0">
                     <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center">
-                        <div className="flex justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                        </div>
-                      </td>
+                      <th className="px-4 py-2 text-left font-bold text-slate-500 text-[11px]">
+                        Date
+                      </th>
+                      <th className="px-4 py-2 text-center font-bold text-slate-500 text-[11px]">
+                        Questions
+                      </th>
+                      <th className="px-4 py-2 text-right font-bold text-slate-500 text-[11px]">
+                        Gems Earned
+                      </th>
                     </tr>
-                  ) : quizActivity.length > 0 ? (
-                    // Group quiz activity by date
-                    Object.entries(
-                      quizActivity.reduce((acc: any, curr) => {
-                        const date = new Date(curr.created_at).toLocaleDateString();
-                        if (!acc[date]) {
-                          acc[date] = {
-                            count: 0,
-                            gems: 0
-                          };
-                        }
-                        acc[date].count++;
-                        acc[date].gems += curr.points_earned || 0;
-                        return acc;
-                      }, {})
-                    ).map(([date, stats]: [string, any]) => (
-                      <tr key={date} className="hover:bg-muted/50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {stats.count}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {stats.gems}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-stone-800">
+                    {loadingQuizActivity ? (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center">
+                          <Loader2 className="animate-spin h-5 w-5 text-amber-500 mx-auto" />
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No quiz activity found for this user.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ) : quizActivity.length > 0 ? (
+                      Object.entries(
+                        quizActivity.reduce((acc: any, curr) => {
+                          const date = new Date(curr.created_at).toLocaleDateString();
+                          if (!acc[date]) {
+                            acc[date] = { count: 0, gems: 0 };
+                          }
+                          acc[date].count++;
+                          acc[date].gems += curr.points_earned || 0;
+                          return acc;
+                        }, {})
+                      ).map(([date, stats]: [string, any]) => (
+                        <tr key={date} className="hover:bg-slate-50/80 dark:hover:bg-stone-800/40">
+                          <td className="px-4 py-2.5 whitespace-nowrap font-medium text-slate-800 dark:text-slate-200">
+                            {date}
+                          </td>
+                          <td className="px-4 py-2.5 whitespace-nowrap text-center">
+                            <Badge variant="outline" className="text-[10px] font-bold">
+                              {stats.count}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2.5 whitespace-nowrap text-right font-bold text-amber-600 dark:text-amber-400">
+                            +{stats.gems} 💎
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-400">
+                          No quiz activity recorded for this member.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </>
       )}
       
       {userHistoryLoading && (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="ml-3">Loading user history...</span>
+        <div className="flex flex-col justify-center items-center py-16 gap-2">
+          <Loader2 className="h-7 w-7 animate-spin text-amber-500" />
+          <span className="text-xs font-semibold text-slate-500">Loading squad member history...</span>
         </div>
       )}
       
       {!selectedUser && (
-        <div className="text-center py-8 text-muted-foreground">
-          Select a user to view their login history.
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-stone-800 bg-slate-50/50 dark:bg-stone-900/30">
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3">
+            <User className="h-6 w-6" />
+          </div>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Troop Member Selected</h4>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Use the searchable dropdown above to select a squad member and inspect their daily check-ins, attendance streak, and quiz activity.
+          </p>
         </div>
       )}
     </div>
@@ -289,3 +344,4 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
 };
 
 export default UserHistoryView;
+

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -10,15 +10,41 @@ import { useAttendanceData } from './useAttendanceData';
 import AttendanceHeader from './components/AttendanceHeader';
 import LoadingState from './components/LoadingState';
 import { downloadCSV } from '@/utils/excelUtils';
+import { DropdownMember } from './components/MemberSearchDropdown';
 
-const TeamLeaderAttendanceTracker: React.FC = () => {
+interface TeamLeaderAttendanceTrackerProps {
+  members?: any[];
+}
+
+const TeamLeaderAttendanceTracker: React.FC<TeamLeaderAttendanceTrackerProps> = ({ members: propMembers }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<DropdownMember[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  
+  const [fetchingMembers, setFetchingMembers] = useState(false);
+
+  // Sync propMembers if provided by parent dashboard
+  useEffect(() => {
+    if (propMembers && propMembers.length > 0) {
+      const formatted: DropdownMember[] = propMembers.map(m => ({
+        id: m.id || m.member_id,
+        name: m.name || m.display_name || m.username || 'Mercenary',
+        username: m.username || m.name || 'Mercenary',
+        role: m.role || 'infantry',
+        status: m.status || 'active',
+        suspended: m.suspended || m.status === 'suspended',
+        directLeaderUsername: m.directLeaderUsername || m.direct_leader_username || '',
+        directLeaderId: m.directLeaderId || m.direct_leader_id || '',
+        email: m.email || '',
+        lastActive: m.lastActive || m.last_active || '-'
+      }));
+      setTeamMembers(formatted);
+    } else {
+      fetchTeamMembers();
+    }
+  }, [propMembers]);
+
   // Use the shared attendance data hook
   const { 
     attendance,
@@ -30,73 +56,138 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
     fetchUserHistory,
     getLastLoginDate,
     formatAttendanceDate,
-    getUserAttendanceStats,
     fetchAttendanceData,
-    loading
+    loading: attendanceLoading
   } = useAttendanceData(currentMonth, teamMembers);
 
-  // Fetch team members on component mount
-  useEffect(() => {
-    fetchTeamMembers();
-  }, []);
-
-  // Filter team members when search term changes
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredMembers(teamMembers);
-    } else {
-      const lowercaseSearch = searchTerm.toLowerCase();
-      const filtered = teamMembers.filter(member => 
-        member.username.toLowerCase().includes(lowercaseSearch)
-      );
-      setFilteredMembers(filtered);
+  // Filter attendance for Calendar view based on selected user or search term
+  const displayedAttendance = useMemo(() => {
+    if (selectedUser) {
+      return attendance.filter(a => a.user_id === selectedUser);
     }
-  }, [searchTerm, teamMembers]);
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      return attendance.filter(a => 
+        a.username.toLowerCase().includes(q) ||
+        (a.role && a.role.toLowerCase().includes(q)) ||
+        (a.directLeaderUsername && a.directLeaderUsername.toLowerCase().includes(q))
+      );
+    }
+    return attendance;
+  }, [attendance, selectedUser, searchTerm]);
 
+  // Recursive downline fetch function
   const fetchTeamMembers = async () => {
     setError(null);
+    setFetchingMembers(true);
     try {
-      // Prefer the live Supabase session; fall back to the stored id
       const { data: authData } = await supabase.auth.getUser();
-      const teamLeaderId = authData?.user?.id || localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const currentUserId = authData?.user?.id || localStorage.getItem(STORAGE_KEYS.USER_ID);
 
-      if (!teamLeaderId) {
+      if (!currentUserId) {
         setTeamMembers([]);
-        setFilteredMembers([]);
-        throw new Error('Team leader session not found. Please sign in again.');
+        setFetchingMembers(false);
+        return;
       }
 
-      console.log('Fetching team members for team leader:', teamLeaderId);
-      
-      const { data: referrals, error } = await supabase
-        .from('user_referrals')
-        .select('referred_id, referred_name')
-        .eq('referrer_id', teamLeaderId);
-        
-      if (error) throw error;
-      
-      if (referrals && referrals.length > 0) {
-        const memberIds = referrals.map(r => r.referred_id);
-        
-        // Get the detailed user info from profiles table
-        const { data: membersData, error: membersError } = await supabase
-          .from('profiles')
-          .select('id, username, suspended')
-          .in('id', memberIds);
-          
-        if (membersError) throw membersError;
-        
-        console.log(`Fetched ${membersData?.length || 0} team members`);
-        setTeamMembers(membersData || []);
-        setFilteredMembers(membersData || []);
-      } else {
-        console.log("No team members found");
-        setTeamMembers([]);
-        setFilteredMembers([]);
+      console.log('[Attendance] Fetching full team hierarchy for user:', currentUserId);
+      let hierarchyMembers: DropdownMember[] = [];
+
+      // 1. Try PostgreSQL RPC get_my_team_hierarchy for fast recursive tree fetch
+      try {
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_my_team_hierarchy' as any);
+
+        if (!rpcError && rpcData && (rpcData as any).length > 0) {
+          hierarchyMembers = (rpcData as any).map((m: any) => ({
+            id: m.member_id || m.id,
+            name: m.display_name || m.username || 'Mercenary',
+            username: m.username || m.display_name || 'Mercenary',
+            role: m.role || 'infantry',
+            status: m.status || 'active',
+            suspended: m.status === 'suspended',
+            directLeaderUsername: m.direct_leader_username || '',
+            directLeaderId: m.direct_leader_id || '',
+            email: m.email || '',
+            lastActive: m.last_active_date || '-'
+          }));
+        }
+      } catch (e) {
+        console.warn('[Attendance] RPC get_my_team_hierarchy error, using recursive fallback:', e);
       }
+
+      // 2. Fallback: Recursive multi-level client traversal of user_referrals
+      if (hierarchyMembers.length === 0) {
+        console.log('[Attendance] Executing multi-level downline traversal fallback...');
+        const allReferredIds = new Set<string>();
+        let currentLevelIds = [currentUserId];
+        const allReferralRecords: any[] = [];
+        let depth = 0;
+        const MAX_DEPTH = 10;
+
+        while (currentLevelIds.length > 0 && depth < MAX_DEPTH) {
+          const { data: refData } = await supabase
+            .from('user_referrals')
+            .select('*')
+            .in('referrer_id', currentLevelIds);
+
+          if (!refData || refData.length === 0) break;
+
+          const nextLevelIds: string[] = [];
+          for (const ref of refData) {
+            if (ref.referred_id && !allReferredIds.has(ref.referred_id) && ref.referred_id !== currentUserId) {
+              allReferredIds.add(ref.referred_id);
+              allReferralRecords.push(ref);
+              nextLevelIds.push(ref.referred_id);
+            }
+          }
+          currentLevelIds = nextLevelIds;
+          depth++;
+        }
+
+        if (allReferralRecords.length > 0) {
+          const uniqueIds = Array.from(allReferredIds);
+          const [profilesRes, rolesRes] = await Promise.all([
+            supabase.from('profiles').select('id, username, display_name, suspended, created_at').in('id', uniqueIds),
+            supabase.from('user_roles' as any).select('user_id, role').in('user_id', uniqueIds)
+          ]);
+
+          const profilesMap = new Map<string, any>();
+          const rolesMap = new Map<string, string>();
+
+          if (profilesRes.data) {
+            profilesRes.data.forEach(p => profilesMap.set(p.id, p));
+          }
+          if (rolesRes.data) {
+            (rolesRes.data as any[]).forEach(r => rolesMap.set(r.user_id, r.role));
+          }
+
+          hierarchyMembers = allReferralRecords.map(ref => {
+            const prof = profilesMap.get(ref.referred_id);
+            const userRole = rolesMap.get(ref.referred_id) || 'infantry';
+            return {
+              id: ref.referred_id,
+              name: prof?.display_name || prof?.username || ref.referred_name || 'Mercenary',
+              username: prof?.username || prof?.display_name || ref.referred_name || 'Mercenary',
+              role: userRole,
+              status: ref.status || (prof?.suspended ? 'suspended' : 'active'),
+              suspended: prof?.suspended || ref.status === 'suspended',
+              directLeaderUsername: ref.referrer_name || '',
+              directLeaderId: ref.referrer_id || '',
+              email: ref.referred_email || '',
+              lastActive: ref.last_active_date || prof?.created_at || '-'
+            };
+          });
+        }
+      }
+
+      console.log(`[Attendance] Successfully loaded ${hierarchyMembers.length} team members across all downline levels.`);
+      setTeamMembers(hierarchyMembers);
     } catch (error: any) {
-      console.error('Error fetching team members:', error);
-      setError(`Failed to load team members: ${error.message}`);
+      console.error('[Attendance] Error fetching team members:', error);
+      setError(`Failed to load squad members: ${error.message}`);
+    } finally {
+      setFetchingMembers(false);
     }
   };
 
@@ -113,22 +204,21 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
     });
   };
 
-  const handleUserSelect = (userId: string) => {
+  const handleUserSelect = (userId: string | null) => {
     setSelectedUser(userId);
-    fetchUserHistory(userId);
+    if (userId) {
+      fetchUserHistory(userId);
+    }
   };
 
   // Create and download CSV file with attendance data
   const exportAttendance = () => {
-    // Create CSV array with headers and data
     const csvData = [
-      ['Username', ...daysInMonth.map(day => day.toISOString().split('T')[0]), 'Total Days Present']
+      ['Username', 'Role', 'Direct Commander', ...daysInMonth.map(day => day.toISOString().split('T')[0]), 'Total Days Present']
     ];
     
-    // Add data for each user
-    attendance.forEach(user => {
-      const row = [user.username];
-      
+    displayedAttendance.forEach(user => {
+      const row = [user.username, user.role || 'infantry', user.directLeaderUsername || '-'];
       let totalPresent = 0;
       daysInMonth.forEach(day => {
         const dateStr = day.toISOString().split('T')[0];
@@ -136,12 +226,10 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
         row.push(isPresent ? 'Present' : 'Absent');
         if (isPresent) totalPresent++;
       });
-      
       row.push(totalPresent.toString());
       csvData.push(row);
     });
     
-    // Download CSV using utility function
     downloadCSV(
       csvData.map(row => {
         const obj: Record<string, string> = {};
@@ -150,51 +238,68 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
         });
         return obj;
       }),
-      `team-attendance-${currentMonth.toISOString().split('T')[0].substring(0, 7)}`
+      `squad-attendance-${currentMonth.toISOString().split('T')[0].substring(0, 7)}`
     );
   };
 
+  const isLoading = attendanceLoading || fetchingMembers;
+
   return (
-    <Card className="max-w-full overflow-hidden">
-      <CardHeader>
+    <Card className="max-w-full overflow-hidden border-0 shadow-none bg-transparent">
+      <CardHeader className="p-0 pb-4">
         <AttendanceHeader
           currentMonth={currentMonth}
           view={view}
           searchTerm={searchTerm}
-          loading={loading}
-          attendanceCount={attendance.length}
+          loading={isLoading}
+          attendanceCount={displayedAttendance.length}
+          members={teamMembers}
+          selectedUserId={selectedUser}
+          onSelectUser={handleUserSelect}
           onMonthChange={handleMonthChange}
           onViewChange={setView}
           onSearchChange={setSearchTerm}
-          onRefresh={fetchAttendanceData}
+          onRefresh={() => {
+            fetchTeamMembers();
+            fetchAttendanceData();
+            if (selectedUser) fetchUserHistory(selectedUser);
+          }}
           onExport={exportAttendance}
         />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {error && (
-          <ErrorMessage error={error} onDismiss={() => setError(null)} />
+          <div className="mb-4">
+            <ErrorMessage error={error} onDismiss={() => setError(null)} />
+          </div>
         )}
         
-        {loading ? (
-          <LoadingState message="Loading team attendance data..." />
+        {isLoading && teamMembers.length === 0 ? (
+          <LoadingState message="Loading squad hierarchy and attendance logs..." />
         ) : teamMembers.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            No squad members yet — attendance will appear once players join your team.
+          <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-stone-800 bg-slate-50/50 dark:bg-stone-900/30">
+            <p className="text-xs font-semibold text-slate-500">
+              No squad members found under your command yet. Recruits will appear here automatically across all tiers.
+            </p>
           </div>
         ) : (
           <>
             {view === 'calendar' && (
               <AttendanceCalendarView 
-                attendance={attendance} 
+                attendance={displayedAttendance} 
                 daysInMonth={daysInMonth} 
-                loading={loading} 
+                loading={attendanceLoading}
+                onResetFilter={() => {
+                  setSelectedUser(null);
+                  setSearchTerm('');
+                }}
               />
             )}
             
             {view === 'list' && (
               <UserHistoryView 
-                users={filteredMembers}
-                selectedUser={selectedUser}
+                users={teamMembers}
+                selectedUser={selectedUser || (teamMembers.length > 0 ? teamMembers[0].id : null)}
                 userHistory={userHistory}
                 userHistoryLoading={userHistoryLoading}
                 onUserSelect={handleUserSelect}
@@ -211,3 +316,4 @@ const TeamLeaderAttendanceTracker: React.FC = () => {
 };
 
 export default TeamLeaderAttendanceTracker;
+

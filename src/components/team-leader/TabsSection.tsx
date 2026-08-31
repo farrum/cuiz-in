@@ -69,7 +69,7 @@ const TabsSection: React.FC<TabsSectionProps> = ({
       </TabsContent>
       
       <TabsContent value="attendance">
-        <TeamLeaderAttendanceTracker />
+        <TeamLeaderAttendanceTracker members={teamMembers} />
       </TabsContent>
       
       <TabsContent value="earnings">
