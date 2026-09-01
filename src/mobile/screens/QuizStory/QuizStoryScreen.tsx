@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded, preloadAdMobInterstitial } from '@/mobile/ads/admob';
+import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded, preloadAdMobInterstitial, refreshAdMobBanner } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -96,6 +96,11 @@ export default function QuizStoryScreen() {
     // otherwise rapid taps or a preference change double-advance the flow.
     clearTimers();
     setLoadError(false);
+
+    // Periodically refresh the bottom banner ad during continuous quiz gameplay
+    if (answerCount.current > 0 && answerCount.current % 3 === 0) {
+      void refreshAdMobBanner();
+    }
     
     setPhase('loading');
     setSelected(null);

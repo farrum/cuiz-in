@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 // IronSource / LevelPlay Mediation SDK
 import com.ironsource.mediationsdk.IronSource;
 import com.ironsource.mediationsdk.ISBannerSize;
+import com.ironsource.mediationsdk.ISContainerParams;
 import com.ironsource.mediationsdk.IronSourceBannerLayout;
 import com.ironsource.mediationsdk.logger.IronSourceError;
 import com.ironsource.mediationsdk.model.Placement;
@@ -53,6 +55,12 @@ public class CustomAdMobPlugin extends Plugin {
     public static final String DEFAULT_UNITY_INTERSTITIAL_ID = "Interstitial_Android";
     public static final String DEFAULT_UNITY_REWARDED_ID = "Rewarded_Android";
 
+    // Banner auto-refresh & throttle constants
+    private static final long BANNER_REFRESH_INTERVAL_MS = 30000; // 30 seconds auto-refresh
+    private static final long MIN_REFRESH_INTERVAL_MS = 15000;    // 15 seconds minimum throttle
+    private long lastBannerLoadTime = 0;
+    private boolean isRefreshScheduled = false;
+
     // Banner container & views
     private FrameLayout bannerContainer;
     private IronSourceBannerLayout levelPlayBanner;
@@ -81,6 +89,29 @@ public class CustomAdMobPlugin extends Plugin {
     private int currentMarginDp = 0;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    private final Runnable bannerRefreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            isRefreshScheduled = false;
+            if (bannerWanted && getActivity() != null && !getActivity().isFinishing()) {
+                refreshBannerInternal();
+                scheduleBannerRefresh();
+            }
+        }
+    };
+
+    private void scheduleBannerRefresh() {
+        if (isRefreshScheduled) return;
+        mainHandler.removeCallbacks(bannerRefreshRunnable);
+        mainHandler.postDelayed(bannerRefreshRunnable, BANNER_REFRESH_INTERVAL_MS);
+        isRefreshScheduled = true;
+    }
+
+    private void cancelBannerRefresh() {
+        mainHandler.removeCallbacks(bannerRefreshRunnable);
+        isRefreshScheduled = false;
+    }
 
     @PluginMethod
     public void initialize(PluginCall call) {
@@ -261,15 +292,17 @@ public class CustomAdMobPlugin extends Plugin {
     private void ensureBannerContainer() {
         if (bannerContainer != null || getActivity() == null) return;
 
-        float density = getActivity().getResources().getDisplayMetrics().density;
-        int widthPx = (int) (320 * density);
-        int heightPx = (int) (50 * density);
-        int marginPx = (int) (currentMarginDp * density);
+        DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
+        int heightPx = (int) (56 * dm.density);
+        int marginPx = (int) (currentMarginDp * dm.density);
 
         bannerContainer = new FrameLayout(getActivity());
         bannerContainer.setVisibility(View.GONE);
 
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(widthPx, heightPx);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            heightPx
+        );
         params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         params.bottomMargin = marginPx;
 
@@ -281,18 +314,17 @@ public class CustomAdMobPlugin extends Plugin {
 
     private void updateBannerPosition() {
         if (bannerContainer == null || getActivity() == null) return;
-        float density = getActivity().getResources().getDisplayMetrics().density;
-        int widthPx = (int) (320 * density);
-        int heightPx = (int) (50 * density);
-        int marginPx = (int) (currentMarginDp * density);
+        DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
+        int heightPx = (int) (56 * dm.density);
+        int marginPx = (int) (currentMarginDp * dm.density);
 
         ViewGroup.LayoutParams lp = bannerContainer.getLayoutParams();
         if (lp instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) lp;
-            if (flp.bottomMargin == marginPx && flp.width == widthPx && flp.height == heightPx) {
+            if (flp.bottomMargin == marginPx && flp.width == FrameLayout.LayoutParams.MATCH_PARENT && flp.height == heightPx) {
                 return; // Already up to date; avoid layout trigger
             }
-            flp.width = widthPx;
+            flp.width = FrameLayout.LayoutParams.MATCH_PARENT;
             flp.height = heightPx;
             flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
             flp.bottomMargin = marginPx;
@@ -305,15 +337,11 @@ public class CustomAdMobPlugin extends Plugin {
         ensureBannerContainer();
         updateBannerPosition();
 
-        if (isLpBannerLoaded && levelPlayBanner != null) {
-            if (bannerWanted) bannerContainer.setVisibility(View.VISIBLE);
-            return;
-        }
-
         if (isBannerLoading) return;
         isBannerLoading = true;
+        lastBannerLoadTime = System.currentTimeMillis();
 
-        Log.d(TAG, "Requesting LevelPlay Banner...");
+        Log.d(TAG, "Requesting LevelPlay Adaptive Banner...");
         try {
             if (levelPlayBanner != null) {
                 IronSource.destroyBanner(levelPlayBanner);
@@ -321,7 +349,15 @@ public class CustomAdMobPlugin extends Plugin {
                 levelPlayBanner = null;
             }
 
-            levelPlayBanner = IronSource.createBanner(getActivity(), ISBannerSize.BANNER);
+            DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
+            int widthDp = (int) (dm.widthPixels / dm.density);
+            ISBannerSize bannerSize = ISBannerSize.BANNER;
+            bannerSize.setAdaptive(true);
+            int adaptiveHeight = ISBannerSize.getMaximalAdaptiveHeight(widthDp);
+            int heightDp = adaptiveHeight > 0 ? adaptiveHeight : 50;
+            bannerSize.setContainerParams(new ISContainerParams(widthDp, heightDp));
+
+            levelPlayBanner = IronSource.createBanner(getActivity(), bannerSize);
             if (levelPlayBanner == null) {
                 Log.w(TAG, "IronSource.createBanner returned null, falling back to Unity Banner");
                 loadUnityBannerFallback();
@@ -331,9 +367,10 @@ public class CustomAdMobPlugin extends Plugin {
             levelPlayBanner.setLevelPlayBannerListener(new LevelPlayBannerListener() {
                 @Override
                 public void onAdLoaded(AdInfo adInfo) {
-                    Log.i(TAG, "LevelPlay Banner loaded successfully!");
+                    Log.i(TAG, "LevelPlay Adaptive Banner loaded successfully!");
                     isLpBannerLoaded = true;
                     isBannerLoading = false;
+                    lastBannerLoadTime = System.currentTimeMillis();
 
                     mainHandler.post(() -> {
                         if (bannerContainer != null && levelPlayBanner != null) {
@@ -341,11 +378,17 @@ public class CustomAdMobPlugin extends Plugin {
                                 bannerContainer.removeView(unityBannerView);
                             }
                             if (levelPlayBanner.getParent() == null) {
-                                bannerContainer.addView(levelPlayBanner);
+                                FrameLayout.LayoutParams bannerLp = new FrameLayout.LayoutParams(
+                                    FrameLayout.LayoutParams.MATCH_PARENT,
+                                    FrameLayout.LayoutParams.MATCH_PARENT
+                                );
+                                bannerLp.gravity = Gravity.CENTER;
+                                bannerContainer.addView(levelPlayBanner, bannerLp);
                             }
                             if (bannerWanted) {
                                 bannerContainer.setVisibility(View.VISIBLE);
                                 updateBannerPosition();
+                                scheduleBannerRefresh();
                             }
                         }
                     });
@@ -374,8 +417,37 @@ public class CustomAdMobPlugin extends Plugin {
 
             IronSource.loadBanner(levelPlayBanner);
         } catch (Exception e) {
-            Log.e(TAG, "Exception creating LevelPlay banner:", e);
+            Log.e(TAG, "Exception creating LevelPlay adaptive banner:", e);
             loadUnityBannerFallback();
+        }
+    }
+
+    private void refreshBannerInternal() {
+        if (getActivity() == null || !bannerWanted) return;
+        if (isBannerLoading) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastBannerLoadTime < MIN_REFRESH_INTERVAL_MS) {
+            Log.d(TAG, "Banner refresh throttled (< 15s since last load)");
+            return;
+        }
+
+        Log.d(TAG, "Refreshing banner ad...");
+        lastBannerLoadTime = now;
+
+        if (levelPlayBanner != null && !levelPlayBanner.isDestroyed() && isLpBannerLoaded) {
+            isBannerLoading = true;
+            try {
+                IronSource.loadBanner(levelPlayBanner);
+            } catch (Exception e) {
+                Log.w(TAG, "Error in IronSource.loadBanner refresh: " + e.getMessage());
+                isBannerLoading = false;
+                createAndLoadBannerInternal();
+            }
+        } else if (unityBannerView != null && isUnityBannerLoaded) {
+            unityBannerView.load();
+        } else {
+            createAndLoadBannerInternal();
         }
     }
 
@@ -385,6 +457,7 @@ public class CustomAdMobPlugin extends Plugin {
         if (unityBannerView != null) {
             if (isUnityBannerLoaded && bannerWanted) {
                 bannerContainer.setVisibility(View.VISIBLE);
+                scheduleBannerRefresh();
             } else if (UnityAds.isInitialized()) {
                 unityBannerView.load();
             }
@@ -398,14 +471,22 @@ public class CustomAdMobPlugin extends Plugin {
             public void onBannerLoaded(BannerView bv) {
                 Log.i(TAG, "Secondary Unity Banner loaded!");
                 isUnityBannerLoaded = true;
+                lastBannerLoadTime = System.currentTimeMillis();
                 mainHandler.post(() -> {
                     if (bannerContainer != null && !isLpBannerLoaded) {
                         if (bv.getParent() == null) {
-                            bannerContainer.addView(bv);
+                            float density = getActivity().getResources().getDisplayMetrics().density;
+                            FrameLayout.LayoutParams unityLp = new FrameLayout.LayoutParams(
+                                (int) (320 * density),
+                                (int) (50 * density)
+                            );
+                            unityLp.gravity = Gravity.CENTER;
+                            bannerContainer.addView(bv, unityLp);
                         }
                         if (bannerWanted) {
                             bannerContainer.setVisibility(View.VISIBLE);
                             updateBannerPosition();
+                            scheduleBannerRefresh();
                         }
                     }
                 });
@@ -445,6 +526,7 @@ public class CustomAdMobPlugin extends Plugin {
     @PluginMethod
     public void showBanner(PluginCall call) {
         Integer marginDpObj = call.getInt("margin");
+        Boolean forceRefresh = call.getBoolean("forceRefresh", false);
         currentMarginDp = marginDpObj != null ? marginDpObj : 0;
         bannerWanted = true;
 
@@ -453,12 +535,29 @@ public class CustomAdMobPlugin extends Plugin {
                 createAndLoadBannerInternal();
             } else {
                 updateBannerPosition();
-                if (isLpBannerLoaded || isUnityBannerLoaded) {
-                    bannerContainer.setVisibility(View.VISIBLE);
-                } else {
-                    createAndLoadBannerInternal();
+                bannerContainer.setVisibility(View.VISIBLE);
+
+                long now = System.currentTimeMillis();
+                boolean timeToRefresh = (now - lastBannerLoadTime) >= MIN_REFRESH_INTERVAL_MS;
+
+                if (forceRefresh || timeToRefresh) {
+                    if (isLpBannerLoaded || isUnityBannerLoaded) {
+                        refreshBannerInternal();
+                    } else {
+                        createAndLoadBannerInternal();
+                    }
                 }
+                scheduleBannerRefresh();
             }
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
+    public void refreshBanner(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            refreshBannerInternal();
+            scheduleBannerRefresh();
             call.resolve();
         });
     }
@@ -467,6 +566,7 @@ public class CustomAdMobPlugin extends Plugin {
     public void hideBanner(PluginCall call) {
         bannerWanted = false;
         getActivity().runOnUiThread(() -> {
+            cancelBannerRefresh();
             if (bannerContainer != null) {
                 bannerContainer.setVisibility(View.GONE);
             }
@@ -640,5 +740,37 @@ public class CustomAdMobPlugin extends Plugin {
                 call.resolve(ret);
             }
         });
+    }
+
+    @Override
+    protected void handleOnPause() {
+        super.handleOnPause();
+        cancelBannerRefresh();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        if (bannerWanted) {
+            scheduleBannerRefresh();
+        }
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        cancelBannerRefresh();
+        if (levelPlayBanner != null) {
+            try {
+                IronSource.destroyBanner(levelPlayBanner);
+            } catch (Exception ignored) {}
+            levelPlayBanner = null;
+        }
+        if (unityBannerView != null) {
+            try {
+                unityBannerView.destroy();
+            } catch (Exception ignored) {}
+            unityBannerView = null;
+        }
+        super.handleOnDestroy();
     }
 }

@@ -74,8 +74,8 @@ export function BannerHost() {
       );
     };
 
-    const requestBanner = async (margin: number) => {
-      const shown = await showAdMobBanner(margin);
+    const requestBanner = async (margin: number, forceRefresh = false) => {
+      const shown = await showAdMobBanner(margin, forceRefresh);
       if (!isMounted) return;
       if (shown) {
         announceFill(true);
@@ -89,7 +89,7 @@ export function BannerHost() {
       }
       attempt += 1;
       // Retry no-fill/transient SDK startup failures without churning native views.
-      retryTimer = window.setTimeout(() => void requestBanner(margin), 10_000);
+      retryTimer = window.setTimeout(() => void requestBanner(margin, false), 10_000);
     };
 
     const timer = setTimeout(() => {
@@ -100,7 +100,7 @@ export function BannerHost() {
         document.documentElement.style.setProperty('--banner-h', '56px');
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
-        void requestBanner(margin);
+        void requestBanner(margin, true);
       } else {
         document.documentElement.style.setProperty('--banner-h', '0px');
         announceFill(true);

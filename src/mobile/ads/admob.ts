@@ -5,7 +5,8 @@ import { audioManager } from '@/utils/audioManager';
 export interface CustomAdMobPlugin {
   initialize(options?: { levelPlayAppKey?: string; gameId?: string; testMode?: boolean }): Promise<void>;
   prepareBanner(options: { adId?: string, margin?: number }): Promise<void>;
-  showBanner(options: { adId?: string, margin?: number }): Promise<void>;
+  showBanner(options: { adId?: string, margin?: number, forceRefresh?: boolean }): Promise<void>;
+  refreshBanner(): Promise<void>;
   hideBanner(): Promise<void>;
   prepareInterstitial(options?: { adId?: string }): Promise<void>;
   showInterstitial(): Promise<void>;
@@ -75,6 +76,7 @@ export async function initAdMob(): Promise<boolean> {
 }
 
 let lastBannerMargin = 70;
+let lastClientRefresh = 0;
 
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ export async function preloadAdMobBanner(margin = 70): Promise<void> {
   }
 }
 
-export async function showAdMobBanner(margin = 0): Promise<boolean> {
+export async function showAdMobBanner(margin = 0, forceRefresh = false): Promise<boolean> {
   bannerWanted = true;
   lastBannerMargin = margin;
   if (!isMobileAdsEnabled) return false;
@@ -99,11 +101,26 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
   if (fullScreenDepth > 0) return false;
 
   try {
-    await CustomAdMob.showBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin });
+    await CustomAdMob.showBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin, forceRefresh });
     return true;
   } catch (err) {
     console.warn('CustomAdMob showBanner error:', err);
     return false;
+  }
+}
+
+/**
+ * Manually requests a fresh banner ad from the waterfall, subject to a 15-second throttle.
+ */
+export async function refreshAdMobBanner(): Promise<void> {
+  if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
+  const now = Date.now();
+  if (now - lastClientRefresh < 15_000) return;
+  lastClientRefresh = now;
+  try {
+    await CustomAdMob.refreshBanner();
+  } catch (err) {
+    console.warn('CustomAdMob refreshBanner error:', err);
   }
 }
 

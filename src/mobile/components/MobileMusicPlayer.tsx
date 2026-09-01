@@ -241,10 +241,26 @@ export const MobileMusicPlayer: React.FC = () => {
 
   const activeTrack = tracks[activeTrackIndex] || tracks[0];
 
+  // Determine if current route displays bottom tabs (requiring higher vertical offset for floating button)
+  const isTabRoute = [
+    '/hub',
+    '/leaderboard',
+    '/profile',
+    '/empire-quests',
+    '/kingdoms',
+    '/shop',
+    '/team-dashboard',
+    '/hall',
+    '/herald'
+  ].some(r => location.pathname === r || location.pathname.startsWith(r + '/'));
+
   return (
     <>
-      {/* Floating Music Button */}
-      <div className="fixed right-4 bottom-24 z-[999] pointer-events-auto">
+      {/* Floating Music Button (positioned above bottom banner & tabs) */}
+      <div className={cn(
+        "fixed right-4 z-[999] pointer-events-auto transition-all duration-300",
+        isTabRoute ? "bottom-[138px]" : "bottom-[72px]"
+      )}>
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
