@@ -70,6 +70,7 @@ public class CustomAdMobPlugin extends Plugin {
     private boolean isUnityBannerLoaded = false;
     private boolean isBannerLoading = false;
     private boolean bannerWanted = false;
+    private boolean fullScreenAdShowing = false;
 
     // Interstitial state
     private boolean isLpInterstitialReady = false;
@@ -95,7 +96,7 @@ public class CustomAdMobPlugin extends Plugin {
         @Override
         public void run() {
             isRefreshScheduled = false;
-            if (bannerWanted && getActivity() != null && !getActivity().isFinishing()) {
+            if (bannerWanted && !fullScreenAdShowing && getActivity() != null && !getActivity().isFinishing()) {
                 refreshBannerInternal();
                 scheduleBannerRefresh();
             }
@@ -204,11 +205,15 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onAdOpened(AdInfo adInfo) {
                 Log.d(TAG, "LevelPlay Interstitial opened");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
             }
 
             @Override
             public void onAdClosed(AdInfo adInfo) {
                 Log.d(TAG, "LevelPlay Interstitial closed");
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 isLpInterstitialReady = false;
                 if (pendingInterstitialCall != null) {
                     pendingInterstitialCall.resolve();
@@ -221,6 +226,8 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onAdShowFailed(IronSourceError error, AdInfo adInfo) {
                 Log.w(TAG, "LevelPlay Interstitial show failed: " + error);
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 if (pendingInterstitialCall != null) {
                     // Fallback to Unity Ads if available
                     showUnityInterstitialFallback(pendingInterstitialCall);
@@ -255,11 +262,15 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onAdOpened(AdInfo adInfo) {
                 Log.d(TAG, "LevelPlay Rewarded opened");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
             }
 
             @Override
             public void onAdClosed(AdInfo adInfo) {
                 Log.d(TAG, "LevelPlay Rewarded closed");
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 isLpRewardedAvailable = false;
                 if (pendingRewardedCall != null) {
                     JSObject ret = new JSObject();
@@ -285,6 +296,8 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onAdShowFailed(IronSourceError error, AdInfo adInfo) {
                 Log.w(TAG, "LevelPlay Rewarded show failed: " + error);
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 if (pendingRewardedCall != null) {
                     showUnityRewardedFallback(pendingRewardedCall);
                     pendingRewardedCall = null;
@@ -414,7 +427,6 @@ public class CustomAdMobPlugin extends Plugin {
                     Log.w(TAG, "LevelPlay Banner load failed: " + error + " -> trying Unity Ads fallback");
                     isLpBannerLoaded = false;
                     isBannerLoading = false;
-                    notifyBannerState("failed", 0, error != null ? error.getErrorMessage() : "LevelPlay banner failed");
                     mainHandler.post(() -> loadUnityBannerFallback());
                 }
 
@@ -439,12 +451,12 @@ public class CustomAdMobPlugin extends Plugin {
     }
 
     private void refreshBannerInternal() {
-        if (getActivity() == null || !bannerWanted) return;
+        if (getActivity() == null || !bannerWanted || fullScreenAdShowing) return;
         if (isBannerLoading) return;
 
         long now = System.currentTimeMillis();
         if (now - lastBannerLoadTime < MIN_REFRESH_INTERVAL_MS) {
-            Log.d(TAG, "Banner refresh throttled (< 15s since last load)");
+            Log.d(TAG, "Banner refresh throttled (< 19s since last load)");
             return;
         }
 
@@ -458,7 +470,9 @@ public class CustomAdMobPlugin extends Plugin {
             } catch (Exception e) {
                 Log.w(TAG, "Error in IronSource.loadBanner refresh: " + e.getMessage());
                 isBannerLoading = false;
-                createAndLoadBannerInternal();
+                // Keep the current creative visible. Destructive recreation here
+                // caused the native surface to disappear while WebView repainted.
+                notifyBannerState("failed", currentBannerHeightDp, e.getMessage());
             }
         } else if (unityBannerView != null && isUnityBannerLoaded) {
             unityBannerView.load();
@@ -472,7 +486,9 @@ public class CustomAdMobPlugin extends Plugin {
 
         if (unityBannerView != null) {
             if (isUnityBannerLoaded && bannerWanted) {
-                bannerContainer.setVisibility(View.VISIBLE);
+                if (isLpBannerLoaded || isUnityBannerLoaded) {
+                    bannerContainer.setVisibility(View.VISIBLE);
+                }
                 scheduleBannerRefresh();
             } else if (UnityAds.isInitialized()) {
                 unityBannerView.load();
@@ -559,7 +575,7 @@ public class CustomAdMobPlugin extends Plugin {
                 long now = System.currentTimeMillis();
                 boolean timeToRefresh = (now - lastBannerLoadTime) >= MIN_REFRESH_INTERVAL_MS;
 
-                if (forceRefresh || timeToRefresh) {
+                if (timeToRefresh) {
                     if (isLpBannerLoaded || isUnityBannerLoaded) {
                         refreshBannerInternal();
                     } else {
@@ -636,12 +652,17 @@ public class CustomAdMobPlugin extends Plugin {
         getActivity().runOnUiThread(() -> {
             if (IronSource.isInterstitialReady()) {
                 Log.i(TAG, "Showing LevelPlay Interstitial (Primary)");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
                 pendingInterstitialCall = call;
                 IronSource.showInterstitial();
             } else if (isUnityInterstitialLoaded) {
                 Log.i(TAG, "Showing Unity Interstitial (Secondary Fallback)");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
                 showUnityInterstitialFallback(call);
             } else {
+                fullScreenAdShowing = false;
                 Log.d(TAG, "No interstitial ready; requesting loads");
                 loadLevelPlayInterstitialInternal();
                 loadUnityInterstitialInternal();
@@ -660,6 +681,8 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onUnityAdsShowFailure(String placementId, UnityAds.UnityAdsShowError error, String message) {
                 Log.w(TAG, "Unity fallback show failed: " + message);
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 loadUnityInterstitialInternal();
                 call.reject(message);
             }
@@ -673,6 +696,8 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) {
                 Log.d(TAG, "Unity fallback show complete");
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 loadUnityInterstitialInternal();
                 call.resolve();
             }
@@ -713,12 +738,17 @@ public class CustomAdMobPlugin extends Plugin {
         getActivity().runOnUiThread(() -> {
             if (IronSource.isRewardedVideoAvailable()) {
                 Log.i(TAG, "Showing LevelPlay Rewarded Video (Primary)");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
                 pendingRewardedCall = call;
                 IronSource.showRewardedVideo();
             } else if (isUnityRewardedLoaded) {
                 Log.i(TAG, "Showing Unity Rewarded Video (Secondary Fallback)");
+                fullScreenAdShowing = true;
+                cancelBannerRefresh();
                 showUnityRewardedFallback(call);
             } else {
+                fullScreenAdShowing = false;
                 Log.d(TAG, "No rewarded video ready; requesting preload");
                 loadUnityRewardedInternal();
                 call.reject("Rewarded video ad was not ready yet.");
@@ -736,6 +766,8 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onUnityAdsShowFailure(String placementId, UnityAds.UnityAdsShowError error, String message) {
                 Log.w(TAG, "Unity Rewarded fallback show failed: " + message);
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 loadUnityRewardedInternal();
                 call.reject(message);
             }
@@ -748,6 +780,8 @@ public class CustomAdMobPlugin extends Plugin {
 
             @Override
             public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) {
+                fullScreenAdShowing = false;
+                if (bannerWanted) scheduleBannerRefresh();
                 loadUnityRewardedInternal();
                 JSObject ret = new JSObject();
                 if (state == UnityAds.UnityAdsShowCompletionState.COMPLETED) {

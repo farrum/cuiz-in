@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useLocation } from 'react-router-dom';
 import {
   hideAdMobBanner,
+  listenForBannerState,
   resumeAdMobBanner,
   showAdMobBanner,
   suspendAdMobBanner,
@@ -33,7 +35,7 @@ function shouldShowBannerForRoute(pathname: string): boolean {
 }
 
 /**
- * Determines if the route displays bottom tabs (requiring a 70px margin offset).
+ * Determines if the route displays bottom tabs.
  */
 function shouldShowTabsForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
@@ -53,8 +55,21 @@ function shouldShowTabsForRoute(pathname: string): boolean {
   return tabRoutes.some(route => p === route || p.startsWith(route + '/') || p === '/');
 }
 
-const TAB_BAR_MARGIN = 70; // 62px bottom tabs + 8px floating safe margin
-const SAFE_BOTTOM_MARGIN = 0; // Stick to bottom above system nav on full-screen quiz/game routes
+const DEFAULT_BANNER_HEIGHT = 50;
+
+function measureBottomOffset(hasTabs: boolean): number {
+  if (hasTabs) {
+    const tabs = document.getElementById('mobile-bottom-tabs');
+    if (tabs) return Math.max(0, Math.round(tabs.getBoundingClientRect().height));
+  }
+
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)';
+  document.body.appendChild(probe);
+  const inset = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).paddingBottom) || 0));
+  probe.remove();
+  return inset;
+}
 
 /**
  * Owns the AdMob banner surface for the entire app session.
@@ -62,6 +77,28 @@ const SAFE_BOTTOM_MARGIN = 0; // Stick to bottom above system nav on full-screen
  */
 export function BannerHost() {
   const location = useLocation();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let disposed = false;
+    let handle: Awaited<ReturnType<typeof listenForBannerState>> = null;
+
+    void listenForBannerState((event) => {
+      if (disposed) return;
+      const filled = event.state === 'loaded';
+      const height = filled ? Math.max(1, event.heightDp || DEFAULT_BANNER_HEIGHT) : 0;
+      document.documentElement.style.setProperty('--banner-h', `${height}px`);
+      window.dispatchEvent(new CustomEvent('cuizin_banner_fill', { detail: { filled } }));
+    }).then((listenerHandle) => {
+      if (disposed) void listenerHandle?.remove();
+      else handle = listenerHandle;
+    });
+
+    return () => {
+      disposed = true;
+      void handle?.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -77,10 +114,7 @@ export function BannerHost() {
     const requestBanner = async (margin: number, forceRefresh = false) => {
       const shown = await showAdMobBanner(margin, forceRefresh);
       if (!isMounted) return;
-      if (shown) {
-        announceFill(true);
-        return;
-      }
+      if (shown) return; // native loaded/failed event owns visible fill state
       if (attempt >= 3) {
         // AdMob never delivered (no fill / init failure): let the layout show
         // an in-house promo instead of an empty strip.
@@ -97,10 +131,12 @@ export function BannerHost() {
       const show = shouldShowBannerForRoute(location.pathname);
 
       if (show) {
-        document.documentElement.style.setProperty('--banner-h', '56px');
+        // Reserve the standard height while the first creative is loading; the
+        // native loaded event replaces this with the actual adaptive height.
+        document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
         const hasTabs = shouldShowTabsForRoute(location.pathname);
-        const margin = hasTabs ? TAB_BAR_MARGIN : SAFE_BOTTOM_MARGIN;
-        void requestBanner(margin, true);
+        const margin = measureBottomOffset(hasTabs);
+        void requestBanner(margin, false);
       } else {
         document.documentElement.style.setProperty('--banner-h', '0px');
         announceFill(true);

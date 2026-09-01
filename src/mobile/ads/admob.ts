@@ -66,8 +66,8 @@ export async function initAdMob(): Promise<boolean> {
       });
       isInitialized = true;
       console.log('Unity LevelPlay & Unity Ads Initialized natively via Capacitor');
-      // Warm up banner, interstitial, and rewarded in advance in the background
-      preloadAdMobBanner(70);
+      // BannerHost owns banner creation and positioning after the route layout
+      // has been measured. Only full-screen formats are warmed here.
       preloadAdMobInterstitial();
       preloadAdMobRewarded();
       return true;
@@ -80,7 +80,7 @@ export async function initAdMob(): Promise<boolean> {
   return initPromise;
 }
 
-let lastBannerMargin = 70;
+let lastBannerMargin = 0;
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
 
 export async function preloadAdMobBanner(margin = 70): Promise<void> {
