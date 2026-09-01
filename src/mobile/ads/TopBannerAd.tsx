@@ -6,11 +6,11 @@ import SimpleAdBanner from "@/components/ads/SimpleAdBanner";
 import { Capacitor } from "@capacitor/core";
 
 // Rotate house creatives slowly — fast swaps read as the screen "blinking".
-const REFRESH_MS = 30000;
+const REFRESH_MS = 20000;
 
 /**
  * Thin banner ad (rendered at the bottom, above the tab bar) that
- * refreshes its creative every 30 seconds.
+ * refreshes its creative every 20 seconds on mobile web.
  * Renders nothing when no creative is available for the current user.
  */
 interface TopBannerAdProps {
@@ -41,8 +41,8 @@ export function TopBannerAd({ noMargin = false }: TopBannerAdProps) {
   const marginClass = noMargin ? "" : "mb-1";
 
   if (Capacitor.isNativePlatform()) {
-    // On native builds, the banner is persistent. Always render the spacer immediately on mount.
-    return <div aria-hidden className="shrink-0" style={{ height: 'var(--banner-h, 56px)' }} />;
+    // Native routes use NativeBannerAd so fill state and spacing have one owner.
+    return null;
   }
 
   if (hasDbAd) {

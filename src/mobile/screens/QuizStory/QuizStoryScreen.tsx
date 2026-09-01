@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, SlidersHorizontal, Check, Shield, Scroll, Gem, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
-import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded, preloadAdMobInterstitial, refreshAdMobBanner } from '@/mobile/ads/admob';
+import { isMobileAdsEnabled, showAdMobInterstitial, showAdMobRewarded, preloadAdMobInterstitial } from '@/mobile/ads/admob';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getRandomQuestion, getAvailableCategories, STORAGE_KEYS } from '@/utils/quizData';
@@ -19,7 +19,7 @@ import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine, moodToContext } from '@/mobile/mascots/useMoodEngine';
 import { cn } from '@/lib/utils';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
-import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { NativeBannerAd } from '@/mobile/ads/NativeBannerAd';
 import { Capacitor } from '@capacitor/core';
 import { asUuidOrNull } from '@/utils/uuid';
 
@@ -52,6 +52,7 @@ export default function QuizStoryScreen() {
   const progressTimer = useRef<number | null>(null);
   const answerCount = useRef(0);
   const mountedRef = useRef(true);
+  const loadingNextRef = useRef(false);
   // Full-screen ads are capped by time as well as by question count: back-to-back
   // interstitials pile up native ad memory and were crashing the app mid-session.
   const lastAdAt = useRef(0);
@@ -92,16 +93,13 @@ export default function QuizStoryScreen() {
   };
 
   const loadNext = async () => {
+    if (loadingNextRef.current) return;
+    loadingNextRef.current = true;
     // Any pending reveal/advance timer from the previous question must die,
     // otherwise rapid taps or a preference change double-advance the flow.
     clearTimers();
     setLoadError(false);
 
-    // Periodically refresh the bottom banner ad during continuous quiz gameplay
-    if (answerCount.current > 0 && answerCount.current % 3 === 0) {
-      void refreshAdMobBanner();
-    }
-    
     setPhase('loading');
     setSelected(null);
     setIsCorrect(null);
@@ -129,6 +127,8 @@ export default function QuizStoryScreen() {
       if (!mountedRef.current) return;
       setLoadError(true);
       setPhase('loading');
+    } finally {
+      loadingNextRef.current = false;
     }
   };
 
@@ -302,7 +302,7 @@ export default function QuizStoryScreen() {
     setShowInterstitial(false);
     setAdSeed((s) => s + 1);
     loadNext();
-    window.setTimeout(() => { closingRef.current = false; }, 500);
+    window.setTimeout(() => { closingRef.current = false; }, 1500);
   }, []);
 
   useEffect(() => {
@@ -389,7 +389,9 @@ export default function QuizStoryScreen() {
     if (Capacitor.isNativePlatform()) {
       try {
         await showAdMobInterstitial();
-      } catch {}
+      } catch (error) {
+        console.warn('[QuizStory] Exit interstitial was unavailable', error);
+      }
     }
     navigate('/hub');
   };
@@ -605,10 +607,6 @@ export default function QuizStoryScreen() {
           )}
       </div>
 
-      <div className="shrink-0 px-3">
-        <SimpleAdBanner position="bottom" slotId="quiz-mobile-bottom" />
-      </div>
-
       {/* Preferences button — floating pill */}
       <div className="relative z-10 px-4 pt-2">
         <button
@@ -634,7 +632,7 @@ export default function QuizStoryScreen() {
 
       {/* Fixed bottom spacer reserved for the native AdMob banner so
           the session footer is never overlapped by the SDK banner surface. */}
-      <div aria-hidden className="relative z-10 shrink-0" style={{ height: 'calc(var(--banner-h, 56px) + env(safe-area-inset-bottom, 0px) + 4px)' }} />
+      <NativeBannerAd noMargin />
 
       <InterstitialAd open={showInterstitial} onClose={closeInterstitial} skipSeconds={10} seed={adSeed} />
 

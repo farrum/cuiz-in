@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Shield, Scroll } from 'lucide-react';
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
-import { TopBannerAd } from '../../ads/TopBannerAd';
+import { NativeBannerAd } from '../../ads/NativeBannerAd';
 
 export default function DailyChallengeStoryScreen() {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function DailyChallengeStoryScreen() {
           Challenge UI is coming.
         </p>
       </div>
-      <TopBannerAd />
+      <NativeBannerAd noMargin />
     </div>
   );
 }

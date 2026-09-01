@@ -4,7 +4,7 @@ import { BottomTabs } from './BottomTabs';
 import { motion } from 'framer-motion';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ScreenSkeleton } from '@/mobile/components/ScreenSkeleton';
-import { TopBannerAd } from '../ads/TopBannerAd';
+import { NativeBannerAd } from '../ads/NativeBannerAd';
 
 /**
  * MobileShell — root layout wrapper for all shell routes (Hub, Profile, etc.)
@@ -16,9 +16,8 @@ import { TopBannerAd } from '../ads/TopBannerAd';
  *   [BottomTabs]          → fixed height ~68px + env(safe-area-inset-bottom)
  *
  * The native banner is managed by BannerHost (mounted once in AppMobile).
- * It is drawn OUTSIDE the WebView by the AdMob SDK. We never mount TopBannerAd
- * here — the NativeBannerAd spacer (h-[var(--banner-h)]) is all that's needed
- * to prevent scroll content from being hidden behind the SDK banner surface.
+ * NativeBannerAd only reserves the matching space and supplies the no-fill
+ * house fallback; it never starts or stops the native SDK surface.
  */
 export function MobileShell() {
   const location = useLocation();
@@ -48,7 +47,7 @@ export function MobileShell() {
           </ErrorBoundary>
         </div>
       </div>
-      <TopBannerAd />
+      <NativeBannerAd />
       <BottomTabs />
     </div>
   );

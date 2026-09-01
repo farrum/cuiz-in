@@ -18,6 +18,7 @@ export function BottomTabs() {
 
   return (
     <nav
+      id="mobile-bottom-tabs"
       className="relative z-40 overflow-hidden"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',

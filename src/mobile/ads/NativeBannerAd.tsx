@@ -34,7 +34,13 @@ export function NativeBannerAd({ noMargin = false }: NativeBannerAdProps) {
     );
   }
 
-  return <div aria-hidden className="h-[var(--banner-h)] shrink-0" />;
+  return (
+    <div
+      aria-hidden
+      className="shrink-0"
+      style={{ height: 'var(--banner-h, 0px)' }}
+    />
+  );
 }
 
 export default NativeBannerAd;

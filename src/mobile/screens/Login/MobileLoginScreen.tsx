@@ -7,6 +7,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { EmberBackground } from '@/mobile/components/EmberBackground';
+import { NativeBannerAd } from '@/mobile/ads/NativeBannerAd';
 import { cn } from '@/lib/utils';
 
 // ── Animated input field with focus glow ─────────────────────────────────────
@@ -167,8 +168,8 @@ export default function MobileLoginScreen() {
         haptics('success');
         navigate('/hub');
       }
-    } catch (err: any) {
-      const msg = err.message || 'The kingdom gates refused entry';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'The kingdom gates refused entry';
       setErrorMessage(msg);
       haptics('error');
       toast({ title: 'Alas!', description: msg, variant: 'destructive' });
@@ -353,8 +354,7 @@ export default function MobileLoginScreen() {
         </div>
       </div>
 
-      {/* Spacer for bottom safe-area */}
-      <div aria-hidden className="h-[var(--banner-h)] shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
+      <NativeBannerAd />
     </div>
   );
 }
