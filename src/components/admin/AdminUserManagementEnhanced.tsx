@@ -243,24 +243,45 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Gems',
+      header: 'Gems (Total)',
       accessorKey: 'gems',
       cell: (row: any) => (
         <Badge variant="secondary">{row.gems}</Badge>
       )
     },
     {
+      header: 'Gems Today',
+      accessorKey: 'gems_today',
+      cell: (row: any) => {
+        const today = Number(row.gems_today || 0);
+        return (
+          <Badge
+            variant={today > 0 ? 'default' : 'secondary'}
+            className={today > 0 ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-0.5' : 'text-muted-foreground font-medium px-2 py-0.5'}
+          >
+            {today}
+          </Badge>
+        );
+      }
+    },
+    {
       header: 'Questions Today',
       accessorKey: 'questions_today',
       cell: (row: any) => {
         const count = Number(row.questions_today || 0);
+        const quest = Number(row.questions_quest_today || 0);
         return (
-          <Badge 
-            variant={count > 0 ? "default" : "secondary"}
-            className={count > 0 ? "bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold px-2 py-0.5" : "text-muted-foreground font-medium px-2 py-0.5"}
-          >
-            {count}
-          </Badge>
+          <div className="flex items-center gap-1" title={`${count} attempted today (${quest} from quests/challenges)`}>
+            <Badge
+              variant={count > 0 ? "default" : "secondary"}
+              className={count > 0 ? "bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold px-2 py-0.5" : "text-muted-foreground font-medium px-2 py-0.5"}
+            >
+              {count}
+            </Badge>
+            {quest > 0 && (
+              <span className="text-xs text-muted-foreground">+{quest} quest</span>
+            )}
+          </div>
         );
       }
     },
