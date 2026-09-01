@@ -350,8 +350,8 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center pb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-center gap-3 pb-4">
+        <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
@@ -359,6 +359,24 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8 w-[300px]"
           />
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Not loaded yet'}
+          </span>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="accent-current"
+            />
+            Auto refresh
+          </label>
+          <Button variant="outline" size="sm" onClick={fetchUsers} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 
