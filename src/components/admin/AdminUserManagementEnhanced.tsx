@@ -70,29 +70,17 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         rolesData.forEach((r: any) => rolesMap.set(r.user_id, r.role));
       }
 
-      // Today's attempted questions (India time), excluding quest/challenge questions
-      const clientQuestionsMap = new Map<string, number>();
-      try {
-        const { data: counts, error: countsError } = await supabase.rpc('admin_get_questions_today' as any);
-        if (countsError) {
-          console.warn('admin_get_questions_today error:', countsError.message);
-        } else if (counts) {
-          (counts as any[]).forEach((row) => {
-            if (row?.user_id) clientQuestionsMap.set(row.user_id, Number(row.questions_today) || 0);
-          });
-        }
-      } catch (err) {
-        console.warn('Could not fetch questions-today counts:', err);
-      }
-
+      // Today's activity comes from the edge function (single source of truth)
       const mappedUsers = rawUsers.map((u: any) => ({
         ...u,
         role: rolesMap.get(u.id) || 'infantry',
-        questions_today: clientQuestionsMap.get(u.id) ?? u.questions_today ?? 0,
+        questions_today: Number(u.questions_today ?? 0),
+        questions_quest_today: Number(u.questions_quest_today ?? 0),
+        gems_today: Number(u.gems_today ?? 0),
       }));
 
-
       setUsers(mappedUsers);
+      setLastUpdated(new Date());
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
