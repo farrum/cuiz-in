@@ -63,6 +63,41 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
     return streak;
   };
 
+  // Recruiter / reporting officer lookup (falls back to user_referrals when the
+  // member list doesn't carry the leader link)
+  const [lineage, setLineage] = useState<{ referrer: string | null; joinDate: string | null }>({
+    referrer: null,
+    joinDate: null,
+  });
+
+  useEffect(() => {
+    const fetchLineage = async () => {
+      if (!selectedUser) {
+        setLineage({ referrer: null, joinDate: null });
+        return;
+      }
+      try {
+        const [refRes, profRes] = await Promise.all([
+          supabase
+            .from('user_referrals')
+            .select('referrer_name, date')
+            .eq('referred_id', selectedUser)
+            .order('date', { ascending: false })
+            .limit(1),
+          supabase.from('profiles').select('created_at').eq('id', selectedUser).maybeSingle(),
+        ]);
+        const ref = refRes.data && refRes.data.length > 0 ? refRes.data[0] : null;
+        setLineage({
+          referrer: ref?.referrer_name || null,
+          joinDate: profRes.data?.created_at || ref?.date || null,
+        });
+      } catch (err) {
+        console.error('Error fetching member lineage:', err);
+      }
+    };
+    fetchLineage();
+  }, [selectedUser]);
+
   // Add function to fetch quiz activity
   const [quizActivity, setQuizActivity] = useState<any[]>([]);
   const [loadingQuizActivity, setLoadingQuizActivity] = useState(false);
@@ -154,9 +189,23 @@ const UserHistoryView: React.FC<UserHistoryViewProps> = ({
                       </Badge>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
-                    {currentMember.directLeaderUsername && (
-                      <span>Direct Commander: <strong className="text-slate-700 dark:text-slate-200">{currentMember.directLeaderUsername}</strong></span>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="inline-flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-purple-500" />
+                      Reporting Officer:{' '}
+                      <strong className="text-slate-700 dark:text-slate-200">
+                        {currentMember.directLeaderUsername || lineage.referrer || 'None (direct signup)'}
+                      </strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Award className="h-3 w-3 text-amber-500" />
+                      Recruited by:{' '}
+                      <strong className="text-slate-700 dark:text-slate-200">
+                        {lineage.referrer || 'Organic (no referral)'}
+                      </strong>
+                    </span>
+                    {lineage.joinDate && (
+                      <span>• Joined {formatAttendanceDate(lineage.joinDate)}</span>
                     )}
                     {currentMember.email && (
                       <span>• {currentMember.email}</span>
