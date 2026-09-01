@@ -1,4 +1,4 @@
-import { registerPlugin, Capacitor } from '@capacitor/core';
+import { registerPlugin, Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { audioManager } from '@/utils/audioManager';
 
 // Register the custom native ads plugin (powered by LevelPlay + Unity Ads SDKs)
@@ -12,6 +12,10 @@ export interface CustomAdMobPlugin {
   showInterstitial(): Promise<void>;
   prepareRewardVideoAd(options?: { adId?: string }): Promise<void>;
   showRewardVideoAd(): Promise<{ type: string; amount: number }>;
+  addListener(
+    eventName: 'bannerState',
+    listenerFunc: (event: { state: 'loaded' | 'failed' | 'hidden'; heightDp?: number; message?: string }) => void,
+  ): Promise<PluginListenerHandle>;
 }
 
 const CustomAdMob = registerPlugin<CustomAdMobPlugin>('CustomAdMob');
@@ -43,6 +47,7 @@ let isInitialized = false;
 let bannerWanted = false;
 let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently showing
 let initPromise: Promise<boolean> | null = null;
+let fullScreenPromise: Promise<unknown> | null = null;
 
 // Initialize LevelPlay (Primary) + Unity Ads (Secondary) and warm up all ad units
 export async function initAdMob(): Promise<boolean> {
@@ -76,8 +81,6 @@ export async function initAdMob(): Promise<boolean> {
 }
 
 let lastBannerMargin = 70;
-let lastClientRefresh = 0;
-
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
 
 export async function preloadAdMobBanner(margin = 70): Promise<void> {
@@ -110,13 +113,12 @@ export async function showAdMobBanner(margin = 0, forceRefresh = false): Promise
 }
 
 /**
- * Manually requests a fresh banner ad from the waterfall, subject to a 15-second throttle.
+ * Manually requests a fresh banner. BannerHost owns the 20-second cadence;
+ * the native plugin protects against overlapping loads.
  */
 export async function refreshAdMobBanner(): Promise<void> {
   if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
-  const now = Date.now();
-  if (now - lastClientRefresh < 15_000) return;
-  lastClientRefresh = now;
+  if (fullScreenDepth > 0) return;
   try {
     await CustomAdMob.refreshBanner();
   } catch (err) {
@@ -138,6 +140,13 @@ export async function hideAdMobBanner(): Promise<void> {
 
 export function isAdMobBannerShown(): boolean {
   return bannerWanted;
+}
+
+export async function listenForBannerState(
+  listener: (event: { state: 'loaded' | 'failed' | 'hidden'; heightDp?: number; message?: string }) => void,
+): Promise<PluginListenerHandle | null> {
+  if (!Capacitor.isNativePlatform()) return null;
+  return CustomAdMob.addListener('bannerState', listener);
 }
 
 export async function suspendAdMobBanner(): Promise<void> {
@@ -174,23 +183,28 @@ export async function showAdMobInterstitial(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true;
 
+  if (fullScreenPromise) return false;
   await initAdMob();
-  fullScreenDepth++;
-  await suspendAdMobBanner();
-  audioManager.pauseBGM();
-
+  const operation = (async () => {
+    fullScreenDepth++;
+    audioManager.pauseBGM();
+    try {
+      await CustomAdMob.showInterstitial();
+      return true;
+    } catch (e) {
+      console.warn('CustomAdMob showInterstitial error:', e);
+      return false;
+    } finally {
+      fullScreenDepth--;
+      audioManager.startBGM();
+      preloadAdMobInterstitial();
+    }
+  })();
+  fullScreenPromise = operation;
   try {
-    await CustomAdMob.showInterstitial();
-    return true;
-  } catch (e) {
-    console.warn('CustomAdMob showInterstitial error:', e);
-    return false;
+    return await operation;
   } finally {
-    fullScreenDepth--;
-    if (bannerWanted) await resumeAdMobBanner();
-    audioManager.startBGM();
-    // Preload next
-    preloadAdMobInterstitial();
+    fullScreenPromise = null;
   }
 }
 
@@ -211,9 +225,10 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
   if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!Capacitor.isNativePlatform()) return { shown: true, rewarded: true };
 
+  if (fullScreenPromise) return { shown: false, rewarded: false };
   await initAdMob();
+  const operation = (async () => {
   fullScreenDepth++;
-  await suspendAdMobBanner();
   audioManager.pauseBGM();
 
   let rewarded = false;
@@ -229,10 +244,16 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
     return { shown: false, rewarded: false };
   } finally {
     fullScreenDepth--;
-    if (bannerWanted) await resumeAdMobBanner();
     audioManager.startBGM();
     // Preload next
     preloadAdMobRewarded();
+  }
+  })();
+  fullScreenPromise = operation;
+  try {
+    return await operation;
+  } finally {
+    fullScreenPromise = null;
   }
 }
 

@@ -6,7 +6,7 @@ import { X, Shield, Disc3, ScrollText, Swords, ImageIcon, Target, Coins, Dices, 
 import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
-import { TopBannerAd } from '../../ads/TopBannerAd';
+import { NativeBannerAd } from '../../ads/NativeBannerAd';
 import { showAdMobInterstitial } from '@/mobile/ads/admob';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
@@ -446,7 +446,7 @@ export default function MiniGameScreen() {
         </div>
       </div>
 
-      <TopBannerAd />
+      <NativeBannerAd noMargin />
     </div>
   );
 }

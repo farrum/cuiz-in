@@ -56,8 +56,8 @@ public class CustomAdMobPlugin extends Plugin {
     public static final String DEFAULT_UNITY_REWARDED_ID = "Rewarded_Android";
 
     // Banner auto-refresh & throttle constants
-    private static final long BANNER_REFRESH_INTERVAL_MS = 30000; // 30 seconds auto-refresh
-    private static final long MIN_REFRESH_INTERVAL_MS = 15000;    // 15 seconds minimum throttle
+    private static final long BANNER_REFRESH_INTERVAL_MS = 20000; // one deterministic cadence
+    private static final long MIN_REFRESH_INTERVAL_MS = 19000;    // reject duplicate callers
     private long lastBannerLoadTime = 0;
     private boolean isRefreshScheduled = false;
 
@@ -87,6 +87,7 @@ public class CustomAdMobPlugin extends Plugin {
     private boolean isLevelPlayInit = false;
     private boolean isUnityInit = false;
     private int currentMarginDp = 0;
+    private int currentBannerHeightDp = 0;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -111,6 +112,15 @@ public class CustomAdMobPlugin extends Plugin {
     private void cancelBannerRefresh() {
         mainHandler.removeCallbacks(bannerRefreshRunnable);
         isRefreshScheduled = false;
+    }
+
+    private void notifyBannerState(String state, int heightDp, String message) {
+        JSObject event = new JSObject();
+        event.put("state", state);
+        event.put("heightDp", heightDp);
+        if (message != null) event.put("message", message);
+        notifyListeners("bannerState", event);
+        Log.d(TAG, "Banner state=" + state + " heightDp=" + heightDp + " marginDp=" + currentMarginDp);
     }
 
     @PluginMethod
@@ -293,7 +303,8 @@ public class CustomAdMobPlugin extends Plugin {
         if (bannerContainer != null || getActivity() == null) return;
 
         DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
-        int heightPx = (int) (56 * dm.density);
+        int heightDp = currentBannerHeightDp > 0 ? currentBannerHeightDp : 50;
+        int heightPx = (int) (heightDp * dm.density);
         int marginPx = (int) (currentMarginDp * dm.density);
 
         bannerContainer = new FrameLayout(getActivity());
@@ -315,7 +326,8 @@ public class CustomAdMobPlugin extends Plugin {
     private void updateBannerPosition() {
         if (bannerContainer == null || getActivity() == null) return;
         DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
-        int heightPx = (int) (56 * dm.density);
+        int heightDp = currentBannerHeightDp > 0 ? currentBannerHeightDp : 50;
+        int heightPx = (int) (heightDp * dm.density);
         int marginPx = (int) (currentMarginDp * dm.density);
 
         ViewGroup.LayoutParams lp = bannerContainer.getLayoutParams();
@@ -355,6 +367,8 @@ public class CustomAdMobPlugin extends Plugin {
             bannerSize.setAdaptive(true);
             int adaptiveHeight = ISBannerSize.getMaximalAdaptiveHeight(widthDp);
             int heightDp = adaptiveHeight > 0 ? adaptiveHeight : 50;
+            currentBannerHeightDp = heightDp;
+            updateBannerPosition();
             bannerSize.setContainerParams(new ISContainerParams(widthDp, heightDp));
 
             levelPlayBanner = IronSource.createBanner(getActivity(), bannerSize);
@@ -388,6 +402,7 @@ public class CustomAdMobPlugin extends Plugin {
                             if (bannerWanted) {
                                 bannerContainer.setVisibility(View.VISIBLE);
                                 updateBannerPosition();
+                                notifyBannerState("loaded", currentBannerHeightDp, null);
                                 scheduleBannerRefresh();
                             }
                         }
@@ -399,6 +414,7 @@ public class CustomAdMobPlugin extends Plugin {
                     Log.w(TAG, "LevelPlay Banner load failed: " + error + " -> trying Unity Ads fallback");
                     isLpBannerLoaded = false;
                     isBannerLoading = false;
+                    notifyBannerState("failed", 0, error != null ? error.getErrorMessage() : "LevelPlay banner failed");
                     mainHandler.post(() -> loadUnityBannerFallback());
                 }
 
@@ -471,6 +487,7 @@ public class CustomAdMobPlugin extends Plugin {
             public void onBannerLoaded(BannerView bv) {
                 Log.i(TAG, "Secondary Unity Banner loaded!");
                 isUnityBannerLoaded = true;
+                currentBannerHeightDp = 50;
                 lastBannerLoadTime = System.currentTimeMillis();
                 mainHandler.post(() -> {
                     if (bannerContainer != null && !isLpBannerLoaded) {
@@ -486,6 +503,7 @@ public class CustomAdMobPlugin extends Plugin {
                         if (bannerWanted) {
                             bannerContainer.setVisibility(View.VISIBLE);
                             updateBannerPosition();
+                            notifyBannerState("loaded", currentBannerHeightDp, null);
                             scheduleBannerRefresh();
                         }
                     }
@@ -496,6 +514,7 @@ public class CustomAdMobPlugin extends Plugin {
             public void onBannerFailedToLoad(BannerView bv, BannerErrorInfo errorInfo) {
                 Log.w(TAG, "Secondary Unity Banner load failed: " + (errorInfo != null ? errorInfo.errorMessage : ""));
                 isUnityBannerLoaded = false;
+                notifyBannerState("failed", 0, errorInfo != null ? errorInfo.errorMessage : "Unity banner failed");
             }
 
             @Override
@@ -570,6 +589,7 @@ public class CustomAdMobPlugin extends Plugin {
             if (bannerContainer != null) {
                 bannerContainer.setVisibility(View.GONE);
             }
+            notifyBannerState("hidden", 0, null);
             call.resolve();
         });
     }

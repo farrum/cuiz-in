@@ -74,7 +74,7 @@
        Never hard-code px values for bottom padding — always use calc(var(--tab-h) + var(--banner-h))
     ────────────────────────────────────────────────────────────── */
     --tab-h: 68px;
-    --banner-h: 56px;
+    --banner-h: 0px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     /* Content bottom clearance = tab bar + ad banner */
@@ -955,5 +955,15 @@ html.native-app .flame-glow,
 html.native-app .aurora-dot {
   animation: none !important;
   will-change: auto !important;
+}
+
+html.native-app .living-sky,
+html.native-app .fixed.inset-0 {
+  background-color: hsl(38 65% 94%);
+}
+
+html.native-app .living-sky {
+  animation: none !important;
+  background-attachment: initial !important;
 }
 
