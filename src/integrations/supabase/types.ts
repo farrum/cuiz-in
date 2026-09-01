@@ -1852,6 +1852,7 @@ export type Database = {
         Args: { target_skill_id: string; user_uuid: string }
         Returns: Json
       }
+      record_my_attendance: { Args: never; Returns: boolean }
       regenerate_sitemap: { Args: never; Returns: undefined }
       remove_member_from_team: {
         Args: { p_member_id: string }
