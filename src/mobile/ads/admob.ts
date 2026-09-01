@@ -21,7 +21,9 @@ export const UNITY_CONFIG = {
   androidBannerId: 'Banner_Android',
   androidInterstitialId: 'Interstitial_Android',
   androidRewardedId: 'Rewarded_Android',
-  testMode: false,
+  // Set to true so ads show immediately on test/sideloaded devices without NO_FILL errors.
+  // Switch to false before publishing release build to Google Play Console.
+  testMode: true,
 };
 
 // Backward-compatible alias for existing callers

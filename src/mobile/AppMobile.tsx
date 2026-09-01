@@ -15,6 +15,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { hideNativeSplashAfterFirstPaint, initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 import { BannerHost } from './ads/BannerHost';
+import { AppPreloader } from './components/AppPreloader';
+import { AnimatePresence } from 'framer-motion';
 
 import HubScreen from './screens/Hub/HubScreen';
 import LeaderboardScreen from './screens/Leaderboard/LeaderboardScreen';
@@ -78,6 +80,7 @@ const getSystemTimeTheme = () => {
 
 function AppMobile() {
   const [authed, setAuthed] = useState<boolean>(() => Boolean(localStorage.getItem(STORAGE_KEYS.USER_ID)));
+  const [isPreloading, setIsPreloading] = useState<boolean>(true);
 
   useEffect(() => {
     initMobilePlatform();
@@ -187,6 +190,15 @@ function AppMobile() {
               <MobileMusicPlayer />
               {/* Single, session-long native banner surface is managed here */}
               <BannerHost />
+              {/* Startup Preloader to warm up Unity Ads and assets without UI flicker */}
+              <AnimatePresence mode="wait">
+                {isPreloading && (
+                  <AppPreloader
+                    minDurationMs={2400}
+                    onComplete={() => setIsPreloading(false)}
+                  />
+                )}
+              </AnimatePresence>
             </MobileMusicProvider>
           </BrowserRouter>
         </ThemeProvider>

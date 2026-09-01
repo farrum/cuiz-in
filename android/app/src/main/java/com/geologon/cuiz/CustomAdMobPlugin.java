@@ -1,6 +1,7 @@
 package com.geologon.cuiz;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -8,8 +9,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
-import androidx.annotation.NonNull;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -43,13 +42,16 @@ public class CustomAdMobPlugin extends Plugin {
 
     private boolean isBannerLoaded = false;
     private boolean isBannerLoading = false;
+    private boolean bannerWanted = false;
+
     private boolean isInterstitialLoaded = false;
     private boolean isInterstitialLoading = false;
+
     private boolean isRewardedLoaded = false;
     private boolean isRewardedLoading = false;
 
+    private boolean isInitializing = false;
     private int currentMarginDp = 0;
-    private boolean windowInsetsListenerAttached = false;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -66,148 +68,148 @@ public class CustomAdMobPlugin extends Plugin {
                 return;
             }
 
-            Log.d(TAG, "Initializing Unity Ads with Game ID: " + gameId + " (testMode=" + testMode + ")");
-            UnityAds.initialize(getContext(), gameId, testMode, new IUnityAdsInitializationListener() {
+            if (isInitializing) {
+                Log.d(TAG, "Unity Ads initialization already in progress");
+                call.resolve();
+                return;
+            }
+
+            isInitializing = true;
+            Log.i(TAG, "Initializing Unity Ads with Game ID: " + gameId + " (testMode=" + testMode + ")");
+
+            Context appContext = getActivity() != null ? getActivity().getApplicationContext() : getContext();
+            UnityAds.initialize(appContext, gameId, testMode, new IUnityAdsInitializationListener() {
                 @Override
                 public void onInitializationComplete() {
-                    Log.d(TAG, "Unity Ads initialized successfully!");
+                    Log.i(TAG, "Unity Ads initialized successfully!");
+                    isInitializing = false;
+
+                    // Trigger any pending preloads
+                    if (bannerWanted && bannerView == null) {
+                        createAndLoadBannerInternal(lastBannerPlacementId);
+                    }
+                    if (lastInterstitialPlacementId != null && !isInterstitialLoaded && !isInterstitialLoading) {
+                        loadInterstitialInternal(lastInterstitialPlacementId);
+                    }
+                    if (lastRewardedPlacementId != null && !isRewardedLoaded && !isRewardedLoading) {
+                        loadRewardedInternal(lastRewardedPlacementId);
+                    }
+
                     call.resolve();
                 }
 
                 @Override
                 public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
                     Log.e(TAG, "Unity Ads initialization failed: [" + error + "] " + message);
+                    isInitializing = false;
                     call.reject("Unity Ads init failed: " + message);
                 }
             });
         });
     }
 
-    private int getSystemBottomInset() {
-        if (getActivity() == null) return 0;
-        androidx.core.view.WindowInsetsCompat insets = 
-            androidx.core.view.ViewCompat.getRootWindowInsets(getActivity().getWindow().getDecorView());
-        if (insets != null) {
-            return insets.getInsets(
-                androidx.core.view.WindowInsetsCompat.Type.systemBars() |
-                androidx.core.view.WindowInsetsCompat.Type.displayCutout()
-            ).bottom;
-        }
-        return 0;
-    }
-
+    // ---------------------------------------------------------
+    // BANNER (Flicker-Free, Isolated Layout, Safe Positioning)
+    // ---------------------------------------------------------
     private void updateBannerPosition() {
         if (bannerView == null || getActivity() == null) return;
         float density = getActivity().getResources().getDisplayMetrics().density;
+        int widthPx = (int) (320 * density);
+        int heightPx = (int) (50 * density);
         int marginPx = (int) (currentMarginDp * density);
-        int bottomInset = getSystemBottomInset();
 
         ViewGroup.LayoutParams lp = bannerView.getLayoutParams();
-        FrameLayout.LayoutParams flp;
         if (lp instanceof FrameLayout.LayoutParams) {
-            flp = (FrameLayout.LayoutParams) lp;
+            FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) lp;
+            if (flp.bottomMargin == marginPx && flp.width == widthPx && flp.height == heightPx) {
+                // Already in correct position and size; don't trigger layout pass
+                return;
+            }
+            flp.width = widthPx;
+            flp.height = heightPx;
+            flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            flp.bottomMargin = marginPx;
+            bannerView.setLayoutParams(flp);
         } else {
-            flp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(widthPx, heightPx);
+            flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            flp.bottomMargin = marginPx;
+            bannerView.setLayoutParams(flp);
         }
-        flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        flp.bottomMargin = marginPx + bottomInset;
-        bannerView.setLayoutParams(flp);
-        bannerView.bringToFront();
     }
 
-    // ---------------------------------------------------------
-    // BANNER (Preloading + Visibility + Auto-Positioning)
-    // ---------------------------------------------------------
-    private void createAndLoadBannerInternal(String placementId, boolean makeVisible, int marginDp) {
+    private void createAndLoadBannerInternal(String placementId) {
         if (getActivity() == null) return;
-        currentMarginDp = marginDp;
         lastBannerPlacementId = (placementId != null && !placementId.isEmpty()) ? placementId : DEFAULT_BANNER_ID;
 
-        float density = getActivity().getResources().getDisplayMetrics().density;
-
         if (bannerView != null) {
-            if (makeVisible) {
+            updateBannerPosition();
+            if (bannerWanted && isBannerLoaded) {
                 bannerView.setVisibility(View.VISIBLE);
-                updateBannerPosition();
             }
-            if (!isBannerLoaded && !isBannerLoading) {
+            if (!isBannerLoaded && !isBannerLoading && UnityAds.isInitialized()) {
                 isBannerLoading = true;
                 bannerView.load();
             }
             return;
         }
 
+        float density = getActivity().getResources().getDisplayMetrics().density;
+        int widthPx = (int) (320 * density);
+        int heightPx = (int) (50 * density);
+        int marginPx = (int) (currentMarginDp * density);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(widthPx, heightPx);
+        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        params.bottomMargin = marginPx;
+
         bannerView = new BannerView(getActivity(), lastBannerPlacementId, new UnityBannerSize(320, 50));
         bannerView.setListener(new BannerView.IListener() {
             @Override
-            public void onBannerLoaded(BannerView bannerView) {
-                Log.d(TAG, "Unity Banner loaded successfully");
+            public void onBannerLoaded(BannerView bv) {
+                Log.i(TAG, "Unity Banner loaded successfully");
                 isBannerLoaded = true;
                 isBannerLoading = false;
-                if (bannerView != null && bannerView.getVisibility() == View.VISIBLE) {
+                if (bannerWanted) {
+                    bv.setVisibility(View.VISIBLE);
                     updateBannerPosition();
                 }
             }
 
             @Override
-            public void onBannerFailedToLoad(BannerView bannerView, BannerErrorInfo bannerErrorInfo) {
+            public void onBannerFailedToLoad(BannerView bv, BannerErrorInfo bannerErrorInfo) {
                 Log.w(TAG, "Unity Banner failed to load: " + (bannerErrorInfo != null ? bannerErrorInfo.errorMessage : "unknown"));
                 isBannerLoaded = false;
                 isBannerLoading = false;
-                // Auto-retry in 8 seconds so a banner is always available
-                mainHandler.postDelayed(() -> {
-                    if (!isBannerLoaded && !isBannerLoading && bannerView != null) {
-                        isBannerLoading = true;
-                        bannerView.load();
-                    }
-                }, 8000);
+                bv.setVisibility(View.GONE);
             }
 
             @Override
-            public void onBannerShown(BannerView bannerView) {
-                Log.d(TAG, "Unity Banner shown");
+            public void onBannerShown(BannerView bv) {
+                Log.d(TAG, "Unity Banner displayed");
             }
 
             @Override
-            public void onBannerClick(BannerView bannerView) {
+            public void onBannerClick(BannerView bv) {
                 Log.d(TAG, "Unity Banner clicked");
             }
 
             @Override
-            public void onBannerLeftApplication(BannerView bannerView) { }
+            public void onBannerLeftApplication(BannerView bv) { }
         });
 
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        params.bottomMargin = (int) (currentMarginDp * density) + getSystemBottomInset();
-
-        bannerView.setVisibility(makeVisible ? View.VISIBLE : View.GONE);
+        // Always keep initially GONE to eliminate layout jumping/flickering
+        bannerView.setVisibility(View.GONE);
 
         ViewGroup content = (ViewGroup) getActivity().findViewById(android.R.id.content);
-        content.addView(bannerView, params);
-
-        if (!windowInsetsListenerAttached) {
-            windowInsetsListenerAttached = true;
-            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(
-                getActivity().getWindow().getDecorView(),
-                (v, windowInsets) -> {
-                    androidx.core.view.WindowInsetsCompat ret = androidx.core.view.ViewCompat.onApplyWindowInsets(v, windowInsets);
-                    if (bannerView != null) {
-                        updateBannerPosition();
-                    }
-                    return ret;
-                }
-            );
+        if (content != null) {
+            content.addView(bannerView, params);
         }
 
-        isBannerLoading = true;
-        bannerView.load();
+        if (UnityAds.isInitialized()) {
+            isBannerLoading = true;
+            bannerView.load();
+        }
     }
 
     @PluginMethod
@@ -215,9 +217,10 @@ public class CustomAdMobPlugin extends Plugin {
         String adId = call.getString("adId", DEFAULT_BANNER_ID);
         Integer marginDpObj = call.getInt("margin");
         final int marginDp = marginDpObj != null ? marginDpObj : 0;
+        currentMarginDp = marginDp;
 
         getActivity().runOnUiThread(() -> {
-            createAndLoadBannerInternal(adId, false, marginDp);
+            createAndLoadBannerInternal(adId);
             call.resolve();
         });
     }
@@ -227,15 +230,28 @@ public class CustomAdMobPlugin extends Plugin {
         String adId = call.getString("adId", DEFAULT_BANNER_ID);
         Integer marginDpObj = call.getInt("margin");
         final int marginDp = marginDpObj != null ? marginDpObj : 0;
+        currentMarginDp = marginDp;
+        bannerWanted = true;
 
         getActivity().runOnUiThread(() -> {
-            createAndLoadBannerInternal(adId, true, marginDp);
+            if (bannerView == null) {
+                createAndLoadBannerInternal(adId);
+            } else {
+                updateBannerPosition();
+                if (isBannerLoaded) {
+                    bannerView.setVisibility(View.VISIBLE);
+                } else if (!isBannerLoading && UnityAds.isInitialized()) {
+                    isBannerLoading = true;
+                    bannerView.load();
+                }
+            }
             call.resolve();
         });
     }
 
     @PluginMethod
     public void hideBanner(PluginCall call) {
+        bannerWanted = false;
         getActivity().runOnUiThread(() -> {
             if (bannerView != null) {
                 bannerView.setVisibility(View.GONE);
@@ -245,20 +261,25 @@ public class CustomAdMobPlugin extends Plugin {
     }
 
     // ---------------------------------------------------------
-    // INTERSTITIAL (Continuous Buffer & Auto-Reload)
+    // INTERSTITIAL (Buffered & Auto-Reload)
     // ---------------------------------------------------------
     private void loadInterstitialInternal(String placementId) {
         if (placementId == null || placementId.isEmpty()) placementId = DEFAULT_INTERSTITIAL_ID;
+        if (!UnityAds.isInitialized()) {
+            lastInterstitialPlacementId = placementId;
+            return;
+        }
         if (isInterstitialLoaded || isInterstitialLoading) return;
 
         lastInterstitialPlacementId = placementId;
         isInterstitialLoading = true;
 
         final String finalPlacementId = placementId;
+        Log.d(TAG, "Loading Unity Interstitial for placement: " + finalPlacementId);
         UnityAds.load(finalPlacementId, new IUnityAdsLoadListener() {
             @Override
             public void onUnityAdsAdLoaded(String pId) {
-                Log.d(TAG, "Unity Interstitial loaded and ready in memory: " + pId);
+                Log.i(TAG, "Unity Interstitial loaded and ready: " + pId);
                 isInterstitialLoaded = true;
                 isInterstitialLoading = false;
             }
@@ -268,12 +289,6 @@ public class CustomAdMobPlugin extends Plugin {
                 Log.w(TAG, "Unity Interstitial failed to load [" + error + "]: " + message);
                 isInterstitialLoaded = false;
                 isInterstitialLoading = false;
-                // Auto-retry in 8 seconds
-                mainHandler.postDelayed(() -> {
-                    if (!isInterstitialLoaded && !isInterstitialLoading && lastInterstitialPlacementId != null) {
-                        loadInterstitialInternal(lastInterstitialPlacementId);
-                    }
-                }, 8000);
             }
         });
     }
@@ -325,20 +340,25 @@ public class CustomAdMobPlugin extends Plugin {
     }
 
     // ---------------------------------------------------------
-    // REWARDED (Continuous Buffer & Auto-Reload)
+    // REWARDED (Buffered & Auto-Reload)
     // ---------------------------------------------------------
     private void loadRewardedInternal(String placementId) {
         if (placementId == null || placementId.isEmpty()) placementId = DEFAULT_REWARDED_ID;
+        if (!UnityAds.isInitialized()) {
+            lastRewardedPlacementId = placementId;
+            return;
+        }
         if (isRewardedLoaded || isRewardedLoading) return;
 
         lastRewardedPlacementId = placementId;
         isRewardedLoading = true;
 
         final String finalPlacementId = placementId;
+        Log.d(TAG, "Loading Unity Rewarded video for placement: " + finalPlacementId);
         UnityAds.load(finalPlacementId, new IUnityAdsLoadListener() {
             @Override
             public void onUnityAdsAdLoaded(String pId) {
-                Log.d(TAG, "Unity Rewarded video loaded and ready in memory: " + pId);
+                Log.i(TAG, "Unity Rewarded video loaded and ready: " + pId);
                 isRewardedLoaded = true;
                 isRewardedLoading = false;
             }
@@ -348,11 +368,6 @@ public class CustomAdMobPlugin extends Plugin {
                 Log.w(TAG, "Unity Rewarded video failed to load [" + error + "]: " + message);
                 isRewardedLoaded = false;
                 isRewardedLoading = false;
-                mainHandler.postDelayed(() -> {
-                    if (!isRewardedLoaded && !isRewardedLoading && lastRewardedPlacementId != null) {
-                        loadRewardedInternal(lastRewardedPlacementId);
-                    }
-                }, 8000);
             }
         });
     }
