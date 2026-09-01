@@ -168,8 +168,8 @@ export default function MobileLoginScreen() {
         haptics('success');
         navigate('/hub');
       }
-    } catch (err: any) {
-      const msg = err.message || 'The kingdom gates refused entry';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'The kingdom gates refused entry';
       setErrorMessage(msg);
       haptics('error');
       toast({ title: 'Alas!', description: msg, variant: 'destructive' });
