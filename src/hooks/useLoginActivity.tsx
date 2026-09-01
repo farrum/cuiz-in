@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+import { recordAttendance } from '@/services/attendanceService';
 import { useToast } from '@/hooks/use-toast';
 
 interface LoginBonusState {
@@ -50,6 +51,9 @@ export const useLoginActivity = (
           console.log('Login activity logged for user:', userHandle);
         }
         
+        // Mark attendance server-side (works even when login_logs insert is blocked)
+        await recordAttendance();
+
         // Check and update login streak - only do this once per session
         const bonus = await checkAndUpdateLoginStreak(userId);
         
