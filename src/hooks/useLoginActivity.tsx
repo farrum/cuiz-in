@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
+import { recordAttendance } from '@/services/attendanceService';
 import { useToast } from '@/hooks/use-toast';
 
 interface LoginBonusState {
