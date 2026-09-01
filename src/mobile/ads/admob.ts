@@ -1,9 +1,9 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { audioManager } from '@/utils/audioManager';
 
-// Register the custom plugin we wrote in CustomAdMobPlugin.java
+// Register the custom native ads plugin (powered by Unity Ads Android SDK)
 export interface CustomAdMobPlugin {
-  initialize(): Promise<void>;
+  initialize(options?: { gameId?: string; testMode?: boolean }): Promise<void>;
   prepareBanner(options: { adId: string, margin?: number }): Promise<void>;
   showBanner(options: { adId: string, margin?: number }): Promise<void>;
   hideBanner(): Promise<void>;
@@ -15,12 +15,17 @@ export interface CustomAdMobPlugin {
 
 const CustomAdMob = registerPlugin<CustomAdMobPlugin>('CustomAdMob');
 
-const ADMOB_CONFIG = {
-  androidBannerId: 'ca-app-pub-2831295465597549/6948956225',
-  androidInterstitialId: 'ca-app-pub-2831295465597549/8851079305',
-  androidRewardedId: 'ca-app-pub-2831295465597549/7154854253',
-  androidRewardedInterstitialId: 'ca-app-pub-2831295465597549/7694056096',
+export const UNITY_CONFIG = {
+  gameId: '800078728',
+  userId: 'cae8dcab-c6a2-4fa1-a3f0-4ebb5ab2b644',
+  androidBannerId: 'Banner_Android',
+  androidInterstitialId: 'Interstitial_Android',
+  androidRewardedId: 'Rewarded_Android',
+  testMode: false,
 };
+
+// Backward-compatible alias for existing callers
+const ADMOB_CONFIG = UNITY_CONFIG;
 
 export const isMobileAdsEnabled = true;
 
@@ -29,7 +34,7 @@ let bannerWanted = false;
 let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently showing
 let initPromise: Promise<boolean> | null = null;
 
-// Ensure we initialize AdMob natively and continuously warm up all ad types
+// Ensure we initialize Unity Ads natively and continuously warm up all ad types
 export async function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true;
@@ -39,16 +44,19 @@ export async function initAdMob(): Promise<boolean> {
 
   initPromise = (async () => {
     try {
-      await CustomAdMob.initialize();
+      await CustomAdMob.initialize({
+        gameId: UNITY_CONFIG.gameId,
+        testMode: UNITY_CONFIG.testMode,
+      });
       isInitialized = true;
-      console.log('CustomAdMob Initialized natively via Capacitor');
+      console.log('Unity Ads Initialized natively via Capacitor');
       // Warm up banner, interstitial, and rewarded in advance in the background
       preloadAdMobBanner(70);
       preloadAdMobInterstitial();
       preloadAdMobRewarded();
       return true;
     } catch (e) {
-      console.error('CustomAdMob Init Error:', e);
+      console.error('Unity Ads Init Error:', e);
       return false;
     }
   })();
