@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Key, Search, UserCheck, User } from 'lucide-react';
+import { Ban, Key, Search, UserCheck, User, RefreshCw } from 'lucide-react';
 
 interface AdminUserManagementEnhancedProps {
   onResetPassword: (userId: string) => void;
@@ -21,6 +21,8 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -70,29 +72,17 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
         rolesData.forEach((r: any) => rolesMap.set(r.user_id, r.role));
       }
 
-      // Today's attempted questions (India time), excluding quest/challenge questions
-      const clientQuestionsMap = new Map<string, number>();
-      try {
-        const { data: counts, error: countsError } = await supabase.rpc('admin_get_questions_today' as any);
-        if (countsError) {
-          console.warn('admin_get_questions_today error:', countsError.message);
-        } else if (counts) {
-          (counts as any[]).forEach((row) => {
-            if (row?.user_id) clientQuestionsMap.set(row.user_id, Number(row.questions_today) || 0);
-          });
-        }
-      } catch (err) {
-        console.warn('Could not fetch questions-today counts:', err);
-      }
-
+      // Today's activity comes from the edge function (single source of truth)
       const mappedUsers = rawUsers.map((u: any) => ({
         ...u,
         role: rolesMap.get(u.id) || 'infantry',
-        questions_today: clientQuestionsMap.get(u.id) ?? u.questions_today ?? 0,
+        questions_today: Number(u.questions_today ?? 0),
+        questions_quest_today: Number(u.questions_quest_today ?? 0),
+        gems_today: Number(u.gems_today ?? 0),
       }));
 
-
       setUsers(mappedUsers);
+      setLastUpdated(new Date());
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
@@ -144,6 +134,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchUsers();
+    }, 60000);
+    return () => window.clearInterval(id);
+  }, [autoRefresh]);
 
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
@@ -253,24 +251,45 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Gems',
+      header: 'Gems (Total)',
       accessorKey: 'gems',
       cell: (row: any) => (
         <Badge variant="secondary">{row.gems}</Badge>
       )
     },
     {
+      header: 'Gems Today',
+      accessorKey: 'gems_today',
+      cell: (row: any) => {
+        const today = Number(row.gems_today || 0);
+        return (
+          <Badge
+            variant={today > 0 ? 'default' : 'secondary'}
+            className={today > 0 ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-0.5' : 'text-muted-foreground font-medium px-2 py-0.5'}
+          >
+            {today}
+          </Badge>
+        );
+      }
+    },
+    {
       header: 'Questions Today',
       accessorKey: 'questions_today',
       cell: (row: any) => {
         const count = Number(row.questions_today || 0);
+        const quest = Number(row.questions_quest_today || 0);
         return (
-          <Badge 
-            variant={count > 0 ? "default" : "secondary"}
-            className={count > 0 ? "bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold px-2 py-0.5" : "text-muted-foreground font-medium px-2 py-0.5"}
-          >
-            {count}
-          </Badge>
+          <div className="flex items-center gap-1" title={`${count} attempted today (${quest} from quests/challenges)`}>
+            <Badge
+              variant={count > 0 ? "default" : "secondary"}
+              className={count > 0 ? "bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold px-2 py-0.5" : "text-muted-foreground font-medium px-2 py-0.5"}
+            >
+              {count}
+            </Badge>
+            {quest > 0 && (
+              <span className="text-xs text-muted-foreground">+{quest} quest</span>
+            )}
+          </div>
         );
       }
     },
@@ -339,8 +358,8 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center pb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-center gap-3 pb-4">
+        <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
@@ -348,6 +367,24 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8 w-[300px]"
           />
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Not loaded yet'}
+          </span>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="accent-current"
+            />
+            Auto refresh
+          </label>
+          <Button variant="outline" size="sm" onClick={fetchUsers} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 

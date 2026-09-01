@@ -1687,6 +1687,15 @@ export type Database = {
           total_team_size: number
         }[]
       }
+      admin_get_user_activity_today: {
+        Args: never
+        Returns: {
+          gems_today: number
+          questions_quest: number
+          questions_total: number
+          user_id: string
+        }[]
+      }
       admin_insert_profile_icon: {
         Args: { icon_name: string; icon_url: string; is_active?: boolean }
         Returns: string
