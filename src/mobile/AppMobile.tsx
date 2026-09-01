@@ -95,6 +95,8 @@ function AppMobile() {
         if (data?.session?.user) {
           setAuthed(true);
           await hydrateMobileSession(data.session.user.id);
+          const { recordAttendance } = await import('@/services/attendanceService');
+          void recordAttendance();
         }
       } catch (err) {
         console.warn('[Mobile] session check error:', err);

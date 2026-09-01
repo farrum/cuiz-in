@@ -51,6 +51,9 @@ export const useLoginActivity = (
           console.log('Login activity logged for user:', userHandle);
         }
         
+        // Mark attendance server-side (works even when login_logs insert is blocked)
+        await recordAttendance();
+
         // Check and update login streak - only do this once per session
         const bonus = await checkAndUpdateLoginStreak(userId);
         
