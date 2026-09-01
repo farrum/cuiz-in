@@ -19,7 +19,7 @@ const isNative = (): boolean => {
  */
 export const triggerWebInterstitial = (): void => {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  if (isNative() || import.meta.env.VITE_PLATFORM === 'mobile') return;
+  if (isNative() || import.meta.env.VITE_PLATFORM === 'mobile' || window.location.pathname.startsWith('/hub') || window.location.pathname.startsWith('/m/')) return;
 
   const now = Date.now();
   if (now - lastFired < MIN_GAP_MS) return;

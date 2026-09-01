@@ -1,33 +1,40 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { audioManager } from '@/utils/audioManager';
 
-// Register the custom native ads plugin (powered by Unity Ads Android SDK)
+// Register the custom native ads plugin (powered by LevelPlay + Unity Ads SDKs)
 export interface CustomAdMobPlugin {
-  initialize(options?: { gameId?: string; testMode?: boolean }): Promise<void>;
-  prepareBanner(options: { adId: string, margin?: number }): Promise<void>;
-  showBanner(options: { adId: string, margin?: number }): Promise<void>;
+  initialize(options?: { levelPlayAppKey?: string; gameId?: string; testMode?: boolean }): Promise<void>;
+  prepareBanner(options: { adId?: string, margin?: number }): Promise<void>;
+  showBanner(options: { adId?: string, margin?: number }): Promise<void>;
   hideBanner(): Promise<void>;
-  prepareInterstitial(options: { adId: string }): Promise<void>;
+  prepareInterstitial(options?: { adId?: string }): Promise<void>;
   showInterstitial(): Promise<void>;
-  prepareRewardVideoAd(options: { adId: string }): Promise<void>;
+  prepareRewardVideoAd(options?: { adId?: string }): Promise<void>;
   showRewardVideoAd(): Promise<{ type: string; amount: number }>;
 }
 
 const CustomAdMob = registerPlugin<CustomAdMobPlugin>('CustomAdMob');
 
+// LevelPlay (ironSource) Configuration - Primary
+export const LEVELPLAY_CONFIG = {
+  appKey: '268f29025',
+  bannerId: 'nfbd7er5vhgheohp',
+  interstitialId: '5kn5xibxgrngcju9g',
+  rewardedId: 'l396uc79p1ajnsmt',
+};
+
+// Unity Ads Standalone Configuration - Secondary / Direct Fallback
 export const UNITY_CONFIG = {
   gameId: '800078728',
   userId: 'cae8dcab-c6a2-4fa1-a3f0-4ebb5ab2b644',
   androidBannerId: 'Banner_Android',
   androidInterstitialId: 'Interstitial_Android',
   androidRewardedId: 'Rewarded_Android',
-  // Set to true so ads show immediately on test/sideloaded devices without NO_FILL errors.
-  // Switch to false before publishing release build to Google Play Console.
-  testMode: true,
+  testMode: false,
 };
 
 // Backward-compatible alias for existing callers
-const ADMOB_CONFIG = UNITY_CONFIG;
+const ADMOB_CONFIG = LEVELPLAY_CONFIG;
 
 export const isMobileAdsEnabled = true;
 
@@ -36,7 +43,7 @@ let bannerWanted = false;
 let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently showing
 let initPromise: Promise<boolean> | null = null;
 
-// Ensure we initialize Unity Ads natively and continuously warm up all ad types
+// Initialize LevelPlay (Primary) + Unity Ads (Secondary) and warm up all ad units
 export async function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true;
@@ -47,18 +54,19 @@ export async function initAdMob(): Promise<boolean> {
   initPromise = (async () => {
     try {
       await CustomAdMob.initialize({
+        levelPlayAppKey: LEVELPLAY_CONFIG.appKey,
         gameId: UNITY_CONFIG.gameId,
         testMode: UNITY_CONFIG.testMode,
       });
       isInitialized = true;
-      console.log('Unity Ads Initialized natively via Capacitor');
+      console.log('Unity LevelPlay & Unity Ads Initialized natively via Capacitor');
       // Warm up banner, interstitial, and rewarded in advance in the background
       preloadAdMobBanner(70);
       preloadAdMobInterstitial();
       preloadAdMobRewarded();
       return true;
     } catch (e) {
-      console.error('Unity Ads Init Error:', e);
+      console.error('LevelPlay / Unity Ads Init Error:', e);
       return false;
     }
   })();
@@ -74,7 +82,7 @@ export async function preloadAdMobBanner(margin = 70): Promise<void> {
   if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   lastBannerMargin = margin;
   try {
-    await CustomAdMob.prepareBanner({ adId: ADMOB_CONFIG.androidBannerId, margin });
+    await CustomAdMob.prepareBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin });
   } catch (e) {
     console.warn('CustomAdMob prepareBanner error:', e);
   }
@@ -91,7 +99,7 @@ export async function showAdMobBanner(margin = 0): Promise<boolean> {
   if (fullScreenDepth > 0) return false;
 
   try {
-    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin });
+    await CustomAdMob.showBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin });
     return true;
   } catch (err) {
     console.warn('CustomAdMob showBanner error:', err);
@@ -126,7 +134,7 @@ export async function resumeAdMobBanner(): Promise<void> {
   if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   if (fullScreenDepth > 0) return;
   try {
-    await CustomAdMob.showBanner({ adId: ADMOB_CONFIG.androidBannerId, margin: lastBannerMargin });
+    await CustomAdMob.showBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin: lastBannerMargin });
   } catch (err) {}
 }
 
@@ -138,7 +146,7 @@ export async function preloadAdMobInterstitial(): Promise<void> {
 
   try {
     await CustomAdMob.prepareInterstitial({
-      adId: ADMOB_CONFIG.androidInterstitialId,
+      adId: LEVELPLAY_CONFIG.interstitialId,
     });
   } catch (e) {
     console.warn('CustomAdMob prepareInterstitial error:', e);
@@ -175,7 +183,7 @@ export async function preloadAdMobRewarded(): Promise<void> {
 
   try {
     await CustomAdMob.prepareRewardVideoAd({
-      adId: ADMOB_CONFIG.androidRewardedId,
+      adId: LEVELPLAY_CONFIG.rewardedId,
     });
   } catch (e) {
     console.warn('CustomAdMob prepareRewardVideoAd error:', e);

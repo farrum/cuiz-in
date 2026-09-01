@@ -109,7 +109,7 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
 
   return (
     <AnimatePresence>
-      {open && !nativeShowing && (hasDbAd || ad || hasNetworkAd) && (
+      {!Capacitor.isNativePlatform() && open && !nativeShowing && (hasDbAd || ad || hasNetworkAd) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

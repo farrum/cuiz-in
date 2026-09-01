@@ -8,6 +8,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.ActionBar;
 
 import com.getcapacitor.BridgeActivity;
+import com.ironsource.mediationsdk.IronSource;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -31,5 +32,17 @@ public class MainActivity extends BridgeActivity {
             nativeBar.hide();
         }
         setTitle("");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        IronSource.onResume(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        IronSource.onPause(this);
     }
 }

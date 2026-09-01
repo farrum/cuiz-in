@@ -27,10 +27,16 @@
 }
 
 
-# Unity Ads
+# Unity Ads & Unity LevelPlay (ironSource)
 -keep class com.unity3d.ads.** { *; }
 -keep interface com.unity3d.ads.** { *; }
 -keep class com.unity3d.services.** { *; }
 -keep interface com.unity3d.services.** { *; }
 -dontwarn com.unity3d.services.**
 -dontwarn com.unity3d.ads.**
+
+-keep class com.ironsource.** { *; }
+-dontwarn com.ironsource.**
+-keepclassmembers class * implements com.ironsource.mediationsdk.sdk.IronSourceInterface {
+    public *;
+}

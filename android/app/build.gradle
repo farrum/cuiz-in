@@ -77,6 +77,9 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
 
+    // Unity LevelPlay (IronSource) Mediation SDK & Unity Ads
+    implementation 'com.ironsource.sdk:mediationsdk:8.6.0'
+    implementation 'com.ironsource.adapters:unityadsadapter:4.3.45'
     implementation 'com.unity3d.ads:unity-ads:4.12.2'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

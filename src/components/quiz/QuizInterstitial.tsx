@@ -20,7 +20,7 @@ const QuizInterstitial: React.FC<QuizInterstitialProps> = ({
   const [videoFailed, setVideoFailed] = useState(false);
 
   const isWeb = !Capacitor.isNativePlatform();
-  const hasAd = isWeb || getAdSlotsByPosition('quiz-interstitial').length > 0;
+  const hasAd = isWeb && (getAdSlotsByPosition('quiz-interstitial').length > 0 || !videoFailed);
 
   useEffect(() => {
     if (!hasAd) onContinue();
