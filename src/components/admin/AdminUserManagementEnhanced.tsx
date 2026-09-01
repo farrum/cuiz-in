@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Key, Search, UserCheck, User } from 'lucide-react';
+import { Ban, Key, Search, UserCheck, User, RefreshCw } from 'lucide-react';
 
 interface AdminUserManagementEnhancedProps {
   onResetPassword: (userId: string) => void;
@@ -21,6 +21,8 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
