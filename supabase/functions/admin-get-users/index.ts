@@ -88,28 +88,38 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Today's attempted questions (India time), excluding quest/challenge questions
-    let questionsTodayMap: Record<string, number> = {};
+    // Today's activity (India time): total attempts, quest attempts, gems earned today
+    const activityMap: Record<string, { total: number; quest: number; gems: number }> = {};
     try {
-      const { data: counts, error: countsError } = await supabaseAdmin.rpc('admin_get_questions_today');
+      const { data: counts, error: countsError } = await supabaseAdmin.rpc('admin_get_user_activity_today');
       if (countsError) {
-        console.warn('admin_get_questions_today error:', countsError.message);
+        console.warn('admin_get_user_activity_today error:', countsError.message);
       } else if (counts) {
         for (const row of counts as any[]) {
-          if (row?.user_id) questionsTodayMap[row.user_id] = Number(row.questions_today) || 0;
+          if (row?.user_id) {
+            activityMap[row.user_id] = {
+              total: Number(row.questions_total) || 0,
+              quest: Number(row.questions_quest) || 0,
+              gems: Number(row.gems_today) || 0,
+            };
+          }
         }
       }
     } catch (err) {
-      console.warn('Error fetching questions today in edge function:', err);
+      console.warn('Error fetching today activity in edge function:', err);
     }
 
-
-    const mappedUsers = (users || []).map((user: any) => ({
-      ...user,
-      gems: user.points || 0,
-      gems_balance: user.points || 0,
-      questions_today: questionsTodayMap[user.id] || 0,
-    }));
+    const mappedUsers = (users || []).map((user: any) => {
+      const activity = activityMap[user.id];
+      return {
+        ...user,
+        gems: user.points || 0,
+        gems_balance: user.points || 0,
+        questions_today: activity?.total || 0,
+        questions_quest_today: activity?.quest || 0,
+        gems_today: activity?.gems || 0,
+      };
+    });
 
     return new Response(
       JSON.stringify({ users: mappedUsers }),
