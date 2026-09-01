@@ -7,6 +7,7 @@ import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { EmberBackground } from '@/mobile/components/EmberBackground';
+import { NativeBannerAd } from '@/mobile/ads/NativeBannerAd';
 import { cn } from '@/lib/utils';
 
 // ── Animated input field with focus glow ─────────────────────────────────────
@@ -353,8 +354,7 @@ export default function MobileLoginScreen() {
         </div>
       </div>
 
-      {/* Spacer for bottom safe-area */}
-      <div aria-hidden className="h-[var(--banner-h)] shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
+      <NativeBannerAd />
     </div>
   );
 }

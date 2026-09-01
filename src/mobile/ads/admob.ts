@@ -83,7 +83,7 @@ export async function initAdMob(): Promise<boolean> {
 let lastBannerMargin = 0;
 // ─── Banner Ad Handlers ───────────────────────────────────────────────────────
 
-export async function preloadAdMobBanner(margin = 70): Promise<void> {
+export async function preloadAdMobBanner(margin = 0): Promise<void> {
   if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   lastBannerMargin = margin;
   try {
