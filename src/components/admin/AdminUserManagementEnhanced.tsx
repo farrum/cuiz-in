@@ -135,6 +135,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchUsers();
+    }, 60000);
+    return () => window.clearInterval(id);
+  }, [autoRefresh]);
+
   const toggleUserSuspension = async (userId: string, currentStatus: boolean) => {
     try {
       // Call edge function - include adminUserId for legacy auth
