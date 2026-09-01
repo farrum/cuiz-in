@@ -1853,6 +1853,10 @@ export type Database = {
         Returns: Json
       }
       regenerate_sitemap: { Args: never; Returns: undefined }
+      remove_member_from_team: {
+        Args: { p_member_id: string }
+        Returns: boolean
+      }
       request_withdrawal: {
         Args: { p_amount: number; p_method?: string }
         Returns: Json
