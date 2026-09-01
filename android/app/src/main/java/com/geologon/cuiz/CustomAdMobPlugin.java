@@ -561,7 +561,6 @@ public class CustomAdMobPlugin extends Plugin {
     @PluginMethod
     public void showBanner(PluginCall call) {
         Integer marginDpObj = call.getInt("margin");
-        Boolean forceRefresh = call.getBoolean("forceRefresh", false);
         currentMarginDp = marginDpObj != null ? marginDpObj : 0;
         bannerWanted = true;
 
@@ -570,7 +569,9 @@ public class CustomAdMobPlugin extends Plugin {
                 createAndLoadBannerInternal();
             } else {
                 updateBannerPosition();
-                bannerContainer.setVisibility(View.VISIBLE);
+                if (isLpBannerLoaded || isUnityBannerLoaded) {
+                    bannerContainer.setVisibility(View.VISIBLE);
+                }
 
                 long now = System.currentTimeMillis();
                 boolean timeToRefresh = (now - lastBannerLoadTime) >= MIN_REFRESH_INTERVAL_MS;

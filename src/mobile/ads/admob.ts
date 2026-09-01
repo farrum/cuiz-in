@@ -153,7 +153,9 @@ export async function suspendAdMobBanner(): Promise<void> {
   if (!bannerWanted || !isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
   try {
     await CustomAdMob.hideBanner();
-  } catch (err) {}
+  } catch (error) {
+    console.warn('[AdMob] Could not suspend banner', error);
+  }
 }
 
 export async function resumeAdMobBanner(): Promise<void> {
@@ -161,7 +163,9 @@ export async function resumeAdMobBanner(): Promise<void> {
   if (fullScreenDepth > 0) return;
   try {
     await CustomAdMob.showBanner({ adId: LEVELPLAY_CONFIG.bannerId, margin: lastBannerMargin });
-  } catch (err) {}
+  } catch (error) {
+    console.warn('[AdMob] Could not resume banner', error);
+  }
 }
 
 // ─── Full-Screen Ad Handlers ──────────────────────────────────────────────────

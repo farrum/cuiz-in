@@ -389,7 +389,9 @@ export default function QuizStoryScreen() {
     if (Capacitor.isNativePlatform()) {
       try {
         await showAdMobInterstitial();
-      } catch {}
+      } catch (error) {
+        console.warn('[QuizStory] Exit interstitial was unavailable', error);
+      }
     }
     navigate('/hub');
   };
