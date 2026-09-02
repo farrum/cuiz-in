@@ -49,6 +49,16 @@ let fullScreenDepth = 0; // Tracks if an interstitial/rewarded is currently show
 let initPromise: Promise<boolean> | null = null;
 let fullScreenPromise: Promise<unknown> | null = null;
 
+export function isFullScreenAdActive(): boolean {
+  return fullScreenDepth > 0;
+}
+
+function notifyFullScreenAdState(active: boolean) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cuizin_fullscreen_ad_active', { detail: { active } }));
+  }
+}
+
 // Initialize LevelPlay (Primary) + Unity Ads (Secondary) and warm up all ad units
 export async function initAdMob(): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
@@ -191,6 +201,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
   await initAdMob();
   const operation = (async () => {
     fullScreenDepth++;
+    notifyFullScreenAdState(true);
     audioManager.pauseBGM();
     try {
       await CustomAdMob.showInterstitial();
@@ -200,6 +211,7 @@ export async function showAdMobInterstitial(): Promise<boolean> {
       return false;
     } finally {
       fullScreenDepth--;
+      notifyFullScreenAdState(false);
       audioManager.startBGM();
       preloadAdMobInterstitial();
     }
@@ -232,26 +244,28 @@ export async function showAdMobRewarded(): Promise<{ shown: boolean; rewarded: b
   if (fullScreenPromise) return { shown: false, rewarded: false };
   await initAdMob();
   const operation = (async () => {
-  fullScreenDepth++;
-  audioManager.pauseBGM();
+    fullScreenDepth++;
+    notifyFullScreenAdState(true);
+    audioManager.pauseBGM();
 
-  let rewarded = false;
+    let rewarded = false;
 
-  try {
-    const rewardItem = await CustomAdMob.showRewardVideoAd();
-    if (rewardItem && rewardItem.amount > 0) {
-      rewarded = true;
+    try {
+      const rewardItem = await CustomAdMob.showRewardVideoAd();
+      if (rewardItem && rewardItem.amount > 0) {
+        rewarded = true;
+      }
+      return { shown: true, rewarded };
+    } catch (e) {
+      console.warn('CustomAdMob showRewardVideoAd error:', e);
+      return { shown: false, rewarded: false };
+    } finally {
+      fullScreenDepth--;
+      notifyFullScreenAdState(false);
+      audioManager.startBGM();
+      // Preload next
+      preloadAdMobRewarded();
     }
-    return { shown: true, rewarded };
-  } catch (e) {
-    console.warn('CustomAdMob showRewardVideoAd error:', e);
-    return { shown: false, rewarded: false };
-  } finally {
-    fullScreenDepth--;
-    audioManager.startBGM();
-    // Preload next
-    preloadAdMobRewarded();
-  }
   })();
   fullScreenPromise = operation;
   try {

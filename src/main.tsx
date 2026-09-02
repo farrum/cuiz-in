@@ -64,22 +64,21 @@ window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error || event.message);
   const msg = String(event?.message || event?.error?.message || '');
   if (tryChunkReload(msg)) return;
-  // Prevent blank screen by rendering error message if the app fails to load
-  // Prevent blank screen by rendering error message if the app fails to load
-  const root = document.getElementById('root');
-  if (!root || root.innerHTML.trim() === '') {
-    const errorDetail = event.error ? `<pre style="font-family: monospace; font-size: 11px; color: #ef4444; background: #fef2f2; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px; text-align: left; overflow-x: auto; max-width: 90%; white-space: pre-wrap; word-break: break-all;">${event.error.stack || event.error.message || event.error}</pre>` : `<p style="font-size: 11px; color: #ef4444;">Error: ${msg}</p>`;
-    document.body.innerHTML = `
-      <div style="padding: 30px 20px; text-align: center; font-family: sans-serif; background: #0c0a09; color: #f5f5f4; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;">
-        <h2 style="color: #eab308; margin-bottom: 8px; font-family: serif;">Kingdom Gates Locked</h2>
-        <p style="font-size: 13px; color: #a8a29e; max-width: 320px; margin-bottom: 16px;">The application encountered an error while entering the realm. Please try refreshing.</p>
-        ${errorDetail}
-        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #eab308; color: #0c0a09; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 16px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">
-          Re-enter Realm
-        </button>
-      </div>
-    `;
-  }
+  // If React has not mounted after 5 seconds and there is a fatal error, show a friendly fallback
+  setTimeout(() => {
+    const root = document.getElementById('root');
+    if (!root || root.innerHTML.trim() === '') {
+      document.body.innerHTML = `
+        <div style="padding: 30px 20px; text-align: center; font-family: sans-serif; background: #0c0a09; color: #f5f5f4; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;">
+          <h2 style="color: #eab308; margin-bottom: 8px; font-family: serif;">Kingdom Gates Locked</h2>
+          <p style="font-size: 13px; color: #a8a29e; max-width: 320px; margin-bottom: 16px;">The application encountered an error while entering the realm. Please try refreshing.</p>
+          <button onclick="window.location.reload()" style="padding: 10px 20px; background: #eab308; color: #0c0a09; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 16px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">
+            Re-enter Realm
+          </button>
+        </div>
+      `;
+    }
+  }, 4000);
 });
 
 // Dynamic import failures surface as unhandled promise rejections

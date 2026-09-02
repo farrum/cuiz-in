@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Shield } from 'lucide-react';
 import { getAdSlotsByPosition } from '@/utils/adService';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Capacitor } from '@capacitor/core';
@@ -109,6 +109,44 @@ export function InterstitialAd({ open, onClose, skipSeconds = 10, seed = 0 }: In
 
   return (
     <AnimatePresence>
+      {/* Native transition scrim: covers the screen seamlessly during the 400ms–1000ms window
+          while the native Android ad Activity is starting, eliminating the white screen. */}
+      {Capacitor.isNativePlatform() && open && nativeShowing && (
+        <motion.div
+          key="native-ad-scrim"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-[#0c0a09] text-white select-none px-6"
+          style={{
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          }}
+        >
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+          </div>
+
+          <div className="relative mb-4">
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-900/40 border border-amber-500/40 flex items-center justify-center shadow-lg shadow-amber-500/20"
+            >
+              <Shield className="w-8 h-8 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+            </motion.div>
+          </div>
+
+          <h3 className="text-base font-black tracking-wider text-amber-200 uppercase mb-1 font-serif">
+            Royal Challenge
+          </h3>
+          <p className="text-xs text-stone-400 font-medium tracking-wide">
+            Preparing your scroll...
+          </p>
+        </motion.div>
+      )}
+
       {!Capacitor.isNativePlatform() && open && !nativeShowing && (hasDbAd || ad || hasNetworkAd) && (
         <motion.div
           initial={{ opacity: 0 }}

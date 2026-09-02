@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import HouseBanner from '@/components/ads/HouseBanner';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Layout spacer for the native banner. The banner itself is owned by
@@ -7,8 +8,8 @@ import HouseBanner from '@/components/ads/HouseBanner';
  * the WebView — this component must never start or stop the ad, otherwise
  * every navigation tears the banner down and re-requests it (visible flicker).
  *
- * When AdMob reports no fill, the spacer shows an in-house promo so the strip
- * is never just empty space.
+ * When AdMob reports no fill on web, the spacer shows an in-house promo so the strip
+ * is never just empty space. On native, the spacer height remains stable.
  */
 interface NativeBannerAdProps {
   noMargin?: boolean;
@@ -26,7 +27,7 @@ export function NativeBannerAd({ noMargin = false }: NativeBannerAdProps) {
     return () => window.removeEventListener('cuizin_banner_fill', onFill);
   }, []);
 
-  if (!filled) {
+  if (!filled && !Capacitor.isNativePlatform()) {
     return (
       <div className={noMargin ? '' : 'px-3 pb-2'}>
         <HouseBanner variant="banner" />

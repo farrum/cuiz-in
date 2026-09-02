@@ -265,14 +265,14 @@ export default function QuizStoryScreen() {
         setTimeout(() => setShakeOpt(null), 500);
       }
 
-      // After the 10s reveal, advance — every 2 answered questions we show
+      // After the reveal, advance — every 4 answered questions we show
       // a full-screen ad break first (the interstitial itself advances on close).
       answerCount.current += 1;
       const isRevivePossible = Capacitor.isNativePlatform() && !correct && streak >= 3 && isMobileAdsEnabled;
       if (!isRevivePossible) {
         const now = Date.now();
         const adDue =
-          answerCount.current % 2 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
+          answerCount.current % 4 === 0 && now - lastAdAt.current > AD_COOLDOWN_MS;
 
         // Warm up / preload the next interstitial continuously
         preloadAdMobInterstitial();

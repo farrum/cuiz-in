@@ -7,6 +7,7 @@ import {
   resumeAdMobBanner,
   showAdMobBanner,
   suspendAdMobBanner,
+  isFullScreenAdActive,
 } from './admob';
 
 /**
@@ -85,8 +86,13 @@ export function BannerHost() {
 
     void listenForBannerState((event) => {
       if (disposed) return;
+      // If the banner is temporarily hidden (e.g. during a full-screen interstitial),
+      // do NOT collapse the layout space to 0px — that causes the viewport to jump and flicker.
+      if (event.state === 'hidden' && shouldShowBannerForRoute(location.pathname)) {
+        return;
+      }
       const filled = event.state === 'loaded';
-      const height = filled ? Math.max(1, event.heightDp || DEFAULT_BANNER_HEIGHT) : 0;
+      const height = filled ? Math.max(1, event.heightDp || DEFAULT_BANNER_HEIGHT) : (shouldShowBannerForRoute(location.pathname) ? DEFAULT_BANNER_HEIGHT : 0);
       document.documentElement.style.setProperty('--banner-h', `${height}px`);
       window.dispatchEvent(new CustomEvent('cuizin_banner_fill', { detail: { filled } }));
     }).then((listenerHandle) => {
@@ -98,7 +104,7 @@ export function BannerHost() {
       disposed = true;
       void handle?.remove();
     };
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     let isMounted = true;
@@ -153,7 +159,12 @@ export function BannerHost() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const background = () => void suspendAdMobBanner();
+    const background = () => {
+      // Do not suspend the banner if the app state change is just an interstitial video opening
+      if (!isFullScreenAdActive()) {
+        void suspendAdMobBanner();
+      }
+    };
     const foreground = () => void resumeAdMobBanner();
     window.addEventListener('cuizin_app_background', background);
     window.addEventListener('cuizin_app_foreground', foreground);

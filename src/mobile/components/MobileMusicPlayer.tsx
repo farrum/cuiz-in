@@ -224,10 +224,21 @@ export const MobileMusicPlayer: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [newTrackName, setNewTrackName] = useState('');
   const [newTrackUrl, setNewTrackUrl] = useState('');
+  const [isAdActive, setIsAdActive] = useState(false);
   const location = useLocation();
 
-  // Hide the player panel on login and onboarding routes
-  const isHiddenRoute = ['/login', '/onboarding'].some(route => location.pathname.startsWith(route));
+  useEffect(() => {
+    const handleAdState = (e: Event) => {
+      const active = Boolean((e as CustomEvent)?.detail?.active);
+      setIsAdActive(active);
+      if (active) setIsOpen(false);
+    };
+    window.addEventListener('cuizin_fullscreen_ad_active', handleAdState);
+    return () => window.removeEventListener('cuizin_fullscreen_ad_active', handleAdState);
+  }, []);
+
+  // Hide the player panel on login, onboarding routes, or while full screen video ads are active
+  const isHiddenRoute = isAdActive || ['/login', '/onboarding'].some(route => location.pathname.startsWith(route));
 
   if (isHiddenRoute) return null;
 
