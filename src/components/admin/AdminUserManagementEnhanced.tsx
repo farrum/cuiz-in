@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Key, Search, UserCheck, User, RefreshCw } from 'lucide-react';
+import { Ban, Key, Search, UserCheck, User, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 interface AdminUserManagementEnhancedProps {
   onResetPassword: (userId: string) => void;
@@ -23,7 +23,34 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const [searchTerm, setSearchTerm] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  type SortKey = 'username' | 'phone' | 'role' | 'gems' | 'gems_today' | 'questions_today' | 'status';
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'username' || key === 'phone' || key === 'role' ? 'asc' : 'desc');
+    }
+  };
+
+  const SortHeader: React.FC<{ label: string; k: SortKey }> = ({ label, k }) => (
+    <button
+      type="button"
+      onClick={() => toggleSort(k)}
+      className="inline-flex items-center gap-1 font-medium hover:text-foreground transition-colors"
+    >
+      <span>{label}</span>
+      {sortKey === k ? (
+        sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
+  );
 
   const fetchUsers = async () => {
     try {
