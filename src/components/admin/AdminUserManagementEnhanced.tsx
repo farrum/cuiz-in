@@ -202,7 +202,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const columns = [
     {
-      header: 'User',
+      header: <SortHeader label="User" k="username" />,
       accessorKey: 'username',
       cell: (row: any) => (
         <div className="flex items-center gap-2">
@@ -256,12 +256,12 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Phone',
+      header: <SortHeader label="Phone" k="phone" />,
       accessorKey: 'phone',
       cell: (row: any) => row.phone || '-'
     },
     {
-      header: 'Rank',
+      header: <SortHeader label="Rank" k="role" />,
       accessorKey: 'role',
       cell: (row: any) => (
         <select
@@ -278,14 +278,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Gems (Total)',
+      header: <SortHeader label="Gems (Total)" k="gems" />,
       accessorKey: 'gems',
       cell: (row: any) => (
         <Badge variant="secondary">{row.gems}</Badge>
       )
     },
     {
-      header: 'Gems Today',
+      header: <SortHeader label="Gems Today" k="gems_today" />,
       accessorKey: 'gems_today',
       cell: (row: any) => {
         const today = Number(row.gems_today || 0);
@@ -300,7 +300,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       }
     },
     {
-      header: 'Questions Today',
+      header: <SortHeader label="Questions Today" k="questions_today" />,
       accessorKey: 'questions_today',
       cell: (row: any) => {
         const count = Number(row.questions_today || 0);
@@ -321,7 +321,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       }
     },
     {
-      header: 'Status',
+      header: <SortHeader label="Status" k="status" />,
       accessorKey: 'suspended',
       cell: (row: any) => (
         <Badge variant={row.suspended ? 'destructive' : 'success'}>
