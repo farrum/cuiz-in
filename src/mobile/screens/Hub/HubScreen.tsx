@@ -26,6 +26,7 @@ import { audioManager } from '@/utils/audioManager';
 import { useToast } from '@/hooks/use-toast';
 import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
 import { getDailyTributeStatus, claimDailyTribute } from '@/services/dailyTributeService';
+import { ScrollAdBanner } from '@/mobile/ads/ScrollAdBanner';
 
 type Node = {
   id: string;
@@ -621,6 +622,11 @@ export default function HubScreen() {
           </div>
         </motion.section>
 
+        {/* ── Sponsored Banner 1 (Lazy loads on scroll) ───────────────── */}
+        <motion.div {...fadeUp(0.08)}>
+          <ScrollAdBanner slotId="hub-feed-1" fallbackIndex={0} />
+        </motion.div>
+
         {/* ── Battle Council (Advisors) ─────────────────────────────── */}
         <motion.section {...fadeUp(0.10)}>
           <SectionTitle>Your Battle Council</SectionTitle>
@@ -711,6 +717,11 @@ export default function HubScreen() {
         <motion.section {...fadeUp(0.15)}>
           <DailyBountyBoard />
         </motion.section>
+
+        {/* ── Sponsored Banner 2 (Lazy loads on scroll) ───────────────── */}
+        <motion.div {...fadeUp(0.165)}>
+          <ScrollAdBanner slotId="hub-feed-2" fallbackIndex={1} />
+        </motion.div>
 
         {/* ── Tavern Games ─────────────────────────────────────────── */}
         <motion.section {...fadeUp(0.18)}>
