@@ -383,6 +383,31 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     return terms.every((t) => haystack.includes(t) || compact.includes(t.replace(/\s+/g, '')));
   });
 
+  const getSortValue = (u: any, k: SortKey): string | number => {
+    switch (k) {
+      case 'username': return (u.display_name || u.username || '').toLowerCase();
+      case 'phone': return (u.phone || '').toLowerCase();
+      case 'role': return (u.role || '').toLowerCase();
+      case 'gems': return Number(u.gems ?? 0);
+      case 'gems_today': return Number(u.gems_today ?? 0);
+      case 'questions_today': return Number(u.questions_today ?? 0);
+      case 'status': return u.suspended ? 1 : 0;
+      default: return 0;
+    }
+  };
+
+  const sortedUsers = React.useMemo(() => {
+    if (!sortKey) return filteredUsers;
+    return [...filteredUsers].sort((a, b) => {
+      const va = getSortValue(a, sortKey);
+      const vb = getSortValue(b, sortKey);
+      const cmp = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredUsers, sortKey, sortDir]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 pb-4">
@@ -417,7 +442,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
       <PaginatedDataTable
         columns={columns}
-        data={filteredUsers}
+        data={sortedUsers}
         isLoading={isLoading}
         pageSize={10}
         searchPlaceholder="Search users..."
