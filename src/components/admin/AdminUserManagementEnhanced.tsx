@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Key, Search, UserCheck, User, RefreshCw } from 'lucide-react';
+import { Ban, Key, Search, UserCheck, User, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 interface AdminUserManagementEnhancedProps {
   onResetPassword: (userId: string) => void;
@@ -23,7 +23,34 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
   const [searchTerm, setSearchTerm] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  type SortKey = 'username' | 'phone' | 'role' | 'gems' | 'gems_today' | 'questions_today' | 'status';
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'username' || key === 'phone' || key === 'role' ? 'asc' : 'desc');
+    }
+  };
+
+  const SortHeader: React.FC<{ label: string; k: SortKey }> = ({ label, k }) => (
+    <button
+      type="button"
+      onClick={() => toggleSort(k)}
+      className="inline-flex items-center gap-1 font-medium hover:text-foreground transition-colors"
+    >
+      <span>{label}</span>
+      {sortKey === k ? (
+        sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
+  );
 
   const fetchUsers = async () => {
     try {
@@ -175,7 +202,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
   const columns = [
     {
-      header: 'User',
+      header: <SortHeader label="User" k="username" />,
       accessorKey: 'username',
       cell: (row: any) => (
         <div className="flex items-center gap-2">
@@ -229,12 +256,12 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Phone',
+      header: <SortHeader label="Phone" k="phone" />,
       accessorKey: 'phone',
       cell: (row: any) => row.phone || '-'
     },
     {
-      header: 'Rank',
+      header: <SortHeader label="Rank" k="role" />,
       accessorKey: 'role',
       cell: (row: any) => (
         <select
@@ -251,14 +278,14 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       )
     },
     {
-      header: 'Gems (Total)',
+      header: <SortHeader label="Gems (Total)" k="gems" />,
       accessorKey: 'gems',
       cell: (row: any) => (
         <Badge variant="secondary">{row.gems}</Badge>
       )
     },
     {
-      header: 'Gems Today',
+      header: <SortHeader label="Gems Today" k="gems_today" />,
       accessorKey: 'gems_today',
       cell: (row: any) => {
         const today = Number(row.gems_today || 0);
@@ -273,7 +300,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       }
     },
     {
-      header: 'Questions Today',
+      header: <SortHeader label="Questions Today" k="questions_today" />,
       accessorKey: 'questions_today',
       cell: (row: any) => {
         const count = Number(row.questions_today || 0);
@@ -294,7 +321,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       }
     },
     {
-      header: 'Status',
+      header: <SortHeader label="Status" k="status" />,
       accessorKey: 'suspended',
       cell: (row: any) => (
         <Badge variant={row.suspended ? 'destructive' : 'success'}>
@@ -356,6 +383,31 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
     return terms.every((t) => haystack.includes(t) || compact.includes(t.replace(/\s+/g, '')));
   });
 
+  const getSortValue = (u: any, k: SortKey): string | number => {
+    switch (k) {
+      case 'username': return (u.display_name || u.username || '').toLowerCase();
+      case 'phone': return (u.phone || '').toLowerCase();
+      case 'role': return (u.role || '').toLowerCase();
+      case 'gems': return Number(u.gems ?? 0);
+      case 'gems_today': return Number(u.gems_today ?? 0);
+      case 'questions_today': return Number(u.questions_today ?? 0);
+      case 'status': return u.suspended ? 1 : 0;
+      default: return 0;
+    }
+  };
+
+  const sortedUsers = React.useMemo(() => {
+    if (!sortKey) return filteredUsers;
+    return [...filteredUsers].sort((a, b) => {
+      const va = getSortValue(a, sortKey);
+      const vb = getSortValue(b, sortKey);
+      const cmp = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredUsers, sortKey, sortDir]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 pb-4">
@@ -390,7 +442,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
 
       <PaginatedDataTable
         columns={columns}
-        data={filteredUsers}
+        data={sortedUsers}
         isLoading={isLoading}
         pageSize={10}
         searchPlaceholder="Search users..."

@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Column {
-  header: string;
+  header: React.ReactNode;
   accessorKey: string;
   cell?: (row: any) => React.ReactNode;
 }

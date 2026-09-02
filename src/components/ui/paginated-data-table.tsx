@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/pagination';
 
 interface Column {
-  header: string;
+  header: React.ReactNode;
   accessorKey: string;
   cell?: (row: any) => React.ReactNode;
 }
