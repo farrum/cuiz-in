@@ -39,7 +39,14 @@ export function NativeBannerAd({ noMargin = false }: NativeBannerAdProps) {
     <div
       aria-hidden
       className="shrink-0"
-      style={{ height: 'var(--banner-h, 0px)' }}
+      style={{
+        // Screens without bottom tabs sit flush against the system gesture bar,
+        // and the native banner is positioned above that inset — so the spacer
+        // must reserve the inset too, otherwise the banner covers the last row.
+        height: noMargin
+          ? 'calc(var(--banner-h, 0px) + env(safe-area-inset-bottom, 0px))'
+          : 'var(--banner-h, 0px)',
+      }}
     />
   );
 }
