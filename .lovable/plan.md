@@ -29,7 +29,7 @@ A smaller related issue: the banner code changes a shared size object in place, 
 
 In LevelPlay: **Setup → App-ads.txt** (or SDK Networks → app-ads.txt lines). It generates the exact lines for every network you've enabled. Paste them to me and I'll add them.
 
-Also worth confirming while you're there: how many demand networks are actually enabled. If Unity Ads is the only one, fill in India will stay very low no matter what the app does; adding one or two more networks (for example Google AdMob, which you already have an account for) is the real fix for volume.
+Also worth confirming while you're there: how many demand networks are actually enabled. If Unity Ads is the only one, fill in India will stay very low no matter what the app does; adding one or two more LevelPlay-supported networks — without Google AdMob, options include Meta Audience Network, ironSource Ads, Vungle (Liftoff), Unity bidding, and others in the LevelPlay marketplace — is the real fix for volume.
 
 ## Technical notes
 
