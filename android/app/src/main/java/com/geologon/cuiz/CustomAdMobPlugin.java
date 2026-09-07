@@ -90,6 +90,12 @@ public class CustomAdMobPlugin extends Plugin {
     private int currentMarginDp = 0;
     private int currentBannerHeightDp = 0;
 
+    // Last error text per ad format — surfaced through adDiagnostics()
+    private String lastBannerError = null;
+    private String lastInterstitialError = null;
+    private String lastRewardedError = null;
+    private String lastInitError = null;
+
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final Runnable bannerRefreshRunnable = new Runnable() {
@@ -146,33 +152,15 @@ public class CustomAdMobPlugin extends Plugin {
                     Log.i(TAG, "LevelPlay init invoked successfully");
                 } catch (Exception e) {
                     Log.e(TAG, "LevelPlay init exception:", e);
+                    lastInitError = String.valueOf(e);
                 }
             }
 
-            // 2. Initialize Unity Ads Standalone (Secondary / Direct Fallback)
-            if (!UnityAds.isInitialized()) {
-                Context appContext = getActivity() != null ? getActivity().getApplicationContext() : getContext();
-                UnityAds.initialize(appContext, gameId, testMode, new IUnityAdsInitializationListener() {
-                    @Override
-                    public void onInitializationComplete() {
-                        Log.i(TAG, "Unity Ads standalone initialized successfully");
-                        isUnityInit = true;
-                        if (!isUnityInterstitialLoaded) {
-                            loadUnityInterstitialInternal();
-                        }
-                        if (!isUnityRewardedLoaded) {
-                            loadUnityRewardedInternal();
-                        }
-                    }
-
-                    @Override
-                    public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
-                        Log.w(TAG, "Unity Ads standalone init failed: " + message);
-                    }
-                });
-            } else {
-                isUnityInit = true;
-            }
+            // 2. Unity Ads standalone (Secondary) is NOT started here.
+            // LevelPlay already starts the Unity Ads adapter with the same game
+            // ID; a second direct start on one game ID makes both paths refuse
+            // to serve. The direct path is initialized lazily the first time a
+            // LevelPlay format actually fails to fill (see ensureUnityDirectInit).
 
             // Pre-load initial ads
             loadLevelPlayInterstitialInternal();
@@ -196,6 +184,7 @@ public class CustomAdMobPlugin extends Plugin {
             @Override
             public void onAdLoadFailed(IronSourceError error) {
                 Log.w(TAG, "LevelPlay Interstitial load failed: " + error);
+                lastInterstitialError = String.valueOf(error);
                 isLpInterstitialReady = false;
                 isInterstitialLoading = false;
                 // Preload Unity Ads fallback
@@ -254,6 +243,7 @@ public class CustomAdMobPlugin extends Plugin {
 
             @Override
             public void onAdUnavailable() {
+                lastRewardedError = "LevelPlay rewarded unavailable (no fill)";
                 isLpRewardedAvailable = false;
                 isRewardedLoading = false;
                 loadUnityRewardedInternal();
@@ -376,7 +366,9 @@ public class CustomAdMobPlugin extends Plugin {
 
             DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
             int widthDp = (int) (dm.widthPixels / dm.density);
-            ISBannerSize bannerSize = ISBannerSize.BANNER;
+            // Fresh instance per request — mutating the shared ISBannerSize.BANNER
+            // static leaks stale size into subsequent requests.
+            ISBannerSize bannerSize = new ISBannerSize("BANNER");
             bannerSize.setAdaptive(true);
             int adaptiveHeight = ISBannerSize.getMaximalAdaptiveHeight(widthDp);
             int heightDp = adaptiveHeight > 0 ? adaptiveHeight : 50;
@@ -425,6 +417,7 @@ public class CustomAdMobPlugin extends Plugin {
                 @Override
                 public void onAdLoadFailed(IronSourceError error) {
                     Log.w(TAG, "LevelPlay Banner load failed: " + error + " -> trying Unity Ads fallback");
+                    lastBannerError = String.valueOf(error);
                     isLpBannerLoaded = false;
                     isBannerLoading = false;
                     mainHandler.post(() -> loadUnityBannerFallback());
@@ -481,7 +474,43 @@ public class CustomAdMobPlugin extends Plugin {
         }
     }
 
+    /**
+     * Initializes the standalone Unity Ads kit only when actually needed
+     * (LevelPlay reported no fill for a format). Never called alongside
+     * LevelPlay's own adapter startup for the same game ID.
+     */
+    private void ensureUnityDirectInit(Runnable afterInit) {
+        if (UnityAds.isInitialized()) {
+            isUnityInit = true;
+            if (afterInit != null) afterInit.run();
+            return;
+        }
+        if (isUnityInit) return; // start already in flight
+        isUnityInit = true;
+        Context appContext = getActivity() != null ? getActivity().getApplicationContext() : getContext();
+        UnityAds.initialize(appContext, DEFAULT_UNITY_GAME_ID, false, new IUnityAdsInitializationListener() {
+            @Override
+            public void onInitializationComplete() {
+                Log.i(TAG, "Unity Ads standalone initialized (lazy fallback)");
+                if (afterInit != null) afterInit.run();
+                if (!isUnityInterstitialLoaded) loadUnityInterstitialInternal();
+                if (!isUnityRewardedLoaded) loadUnityRewardedInternal();
+            }
+
+            @Override
+            public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
+                Log.w(TAG, "Unity Ads standalone init failed: " + message);
+                isUnityInit = false; // allow retry on next fallback
+                lastInitError = "unity-direct: " + message;
+            }
+        });
+    }
+
     private void loadUnityBannerFallback() {
+        if (!UnityAds.isInitialized()) {
+            ensureUnityDirectInit(() -> loadUnityBannerFallback());
+            return;
+        }
         if (getActivity() == null || bannerContainer == null) return;
 
         if (unityBannerView != null) {
@@ -530,7 +559,9 @@ public class CustomAdMobPlugin extends Plugin {
             public void onBannerFailedToLoad(BannerView bv, BannerErrorInfo errorInfo) {
                 Log.w(TAG, "Secondary Unity Banner load failed: " + (errorInfo != null ? errorInfo.errorMessage : ""));
                 isUnityBannerLoaded = false;
-                notifyBannerState("failed", 0, errorInfo != null ? errorInfo.errorMessage : "Unity banner failed");
+                String msg = errorInfo != null ? errorInfo.errorMessage : "Unity banner failed";
+                lastBannerError = msg;
+                notifyBannerState("failed", 0, msg);
             }
 
             @Override
@@ -622,7 +653,11 @@ public class CustomAdMobPlugin extends Plugin {
     }
 
     private void loadUnityInterstitialInternal() {
-        if (!UnityAds.isInitialized() || isUnityInterstitialLoaded) return;
+        if (!UnityAds.isInitialized()) {
+            ensureUnityDirectInit(null);
+            return;
+        }
+        if (isUnityInterstitialLoaded) return;
         Log.d(TAG, "Preloading secondary Unity Interstitial...");
         UnityAds.load(DEFAULT_UNITY_INTERSTITIAL_ID, new IUnityAdsLoadListener() {
             @Override
@@ -709,7 +744,11 @@ public class CustomAdMobPlugin extends Plugin {
     // REWARDED VIDEO (LevelPlay Primary + Unity Ads Secondary)
     // ---------------------------------------------------------
     private void loadUnityRewardedInternal() {
-        if (!UnityAds.isInitialized() || isUnityRewardedLoaded) return;
+        if (!UnityAds.isInitialized()) {
+            ensureUnityDirectInit(null);
+            return;
+        }
+        if (isUnityRewardedLoaded) return;
         Log.d(TAG, "Preloading secondary Unity Rewarded Video...");
         UnityAds.load(DEFAULT_UNITY_REWARDED_ID, new IUnityAdsLoadListener() {
             @Override
@@ -795,6 +834,25 @@ public class CustomAdMobPlugin extends Plugin {
                 call.resolve(ret);
             }
         });
+    }
+
+    @PluginMethod
+    public void adDiagnostics(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("levelPlayInit", isLevelPlayInit);
+        ret.put("unityDirectInit", UnityAds.isInitialized());
+        ret.put("bannerWanted", bannerWanted);
+        ret.put("lpBannerLoaded", isLpBannerLoaded);
+        ret.put("unityBannerLoaded", isUnityBannerLoaded);
+        ret.put("lpInterstitialReady", IronSource.isInterstitialReady());
+        ret.put("unityInterstitialLoaded", isUnityInterstitialLoaded);
+        ret.put("lpRewardedAvailable", IronSource.isRewardedVideoAvailable());
+        ret.put("unityRewardedLoaded", isUnityRewardedLoaded);
+        ret.put("lastInitError", lastInitError);
+        ret.put("lastBannerError", lastBannerError);
+        ret.put("lastInterstitialError", lastInterstitialError);
+        ret.put("lastRewardedError", lastRewardedError);
+        call.resolve(ret);
     }
 
     @Override
