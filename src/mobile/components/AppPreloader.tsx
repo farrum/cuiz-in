@@ -50,6 +50,7 @@ export function AppPreloader({ onComplete, minDurationMs = 2600 }: AppPreloaderP
       transition={{ duration: 0.4, ease: 'easeInOut' }}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0c0a09] text-white select-none px-6"
       style={{
+        backgroundColor: '#0c0a09',
         paddingTop: 'var(--safe-top, 0px)',
         paddingBottom: 'var(--safe-bottom, 0px)',
       }}

@@ -25,6 +25,7 @@ import com.ironsource.mediationsdk.IronSourceBannerLayout;
 import com.ironsource.mediationsdk.logger.IronSourceError;
 import com.ironsource.mediationsdk.model.Placement;
 import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
+import com.ironsource.mediationsdk.sdk.InitializationListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayBannerListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener;
@@ -143,27 +144,34 @@ public class CustomAdMobPlugin extends Plugin {
                 try {
                     Log.i(TAG, "Initializing LevelPlay with App Key: " + lpKey);
                     setupLevelPlayListeners();
-                    IronSource.init(getActivity(), lpKey, 
+                    IronSource.init(getActivity(), lpKey, new InitializationListener() {
+                        @Override
+                        public void onInitializationComplete() {
+                            Log.i(TAG, "LevelPlay init completed successfully");
+                            isLevelPlayInit = true;
+                            mainHandler.post(() -> {
+                                if (bannerWanted) {
+                                    createAndLoadBannerInternal();
+                                }
+                                loadLevelPlayInterstitialInternal();
+                            });
+                        }
+                    },
                         IronSource.AD_UNIT.REWARDED_VIDEO, 
                         IronSource.AD_UNIT.INTERSTITIAL, 
                         IronSource.AD_UNIT.BANNER
                     );
-                    isLevelPlayInit = true;
-                    Log.i(TAG, "LevelPlay init invoked successfully");
                 } catch (Exception e) {
                     Log.e(TAG, "LevelPlay init exception:", e);
                     lastInitError = String.valueOf(e);
                 }
+            } else {
+                if (bannerWanted) {
+                    createAndLoadBannerInternal();
+                }
+                loadLevelPlayInterstitialInternal();
             }
 
-            // 2. Unity Ads standalone (Secondary) is NOT started here.
-            // LevelPlay already starts the Unity Ads adapter with the same game
-            // ID; a second direct start on one game ID makes both paths refuse
-            // to serve. The direct path is initialized lazily the first time a
-            // LevelPlay format actually fails to fill (see ensureUnityDirectInit).
-
-            // Pre-load initial ads
-            loadLevelPlayInterstitialInternal();
             call.resolve();
         });
     }
@@ -364,17 +372,9 @@ public class CustomAdMobPlugin extends Plugin {
                 levelPlayBanner = null;
             }
 
-            DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
-            int widthDp = (int) (dm.widthPixels / dm.density);
-            // Fresh instance per request — mutating the shared ISBannerSize.BANNER
-            // static leaks stale size into subsequent requests.
-            ISBannerSize bannerSize = new ISBannerSize("BANNER");
-            bannerSize.setAdaptive(true);
-            int adaptiveHeight = ISBannerSize.getMaximalAdaptiveHeight(widthDp);
-            int heightDp = adaptiveHeight > 0 ? adaptiveHeight : 50;
-            currentBannerHeightDp = heightDp;
+            ISBannerSize bannerSize = new ISBannerSize("BANNER", 320, 50);
+            currentBannerHeightDp = 50;
             updateBannerPosition();
-            bannerSize.setContainerParams(new ISContainerParams(widthDp, heightDp));
 
             levelPlayBanner = IronSource.createBanner(getActivity(), bannerSize);
             if (levelPlayBanner == null) {
@@ -597,25 +597,31 @@ public class CustomAdMobPlugin extends Plugin {
 
         getActivity().runOnUiThread(() -> {
             if (bannerContainer == null) {
-                createAndLoadBannerInternal();
-            } else {
-                updateBannerPosition();
-                if (isLpBannerLoaded || isUnityBannerLoaded) {
-                    bannerContainer.setVisibility(View.VISIBLE);
-                }
-
-                long now = System.currentTimeMillis();
-                boolean timeToRefresh = (now - lastBannerLoadTime) >= MIN_REFRESH_INTERVAL_MS;
-
-                if (timeToRefresh) {
-                    if (isLpBannerLoaded || isUnityBannerLoaded) {
-                        refreshBannerInternal();
-                    } else {
-                        createAndLoadBannerInternal();
-                    }
-                }
-                scheduleBannerRefresh();
+                ensureBannerContainer();
             }
+            updateBannerPosition();
+
+            if (!isLevelPlayInit) {
+                Log.d(TAG, "LevelPlay not initialized yet; banner queued");
+                call.resolve();
+                return;
+            }
+
+            if (isLpBannerLoaded || isUnityBannerLoaded) {
+                bannerContainer.setVisibility(View.VISIBLE);
+            }
+
+            long now = System.currentTimeMillis();
+            boolean timeToRefresh = (now - lastBannerLoadTime) >= MIN_REFRESH_INTERVAL_MS;
+
+            if (timeToRefresh || (!isLpBannerLoaded && !isUnityBannerLoaded)) {
+                if (isLpBannerLoaded || isUnityBannerLoaded) {
+                    refreshBannerInternal();
+                } else {
+                    createAndLoadBannerInternal();
+                }
+            }
+            scheduleBannerRefresh();
             call.resolve();
         });
     }

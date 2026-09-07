@@ -957,12 +957,8 @@ html.native-app .aurora-dot {
   will-change: auto !important;
 }
 
-html.native-app .living-sky,
-html.native-app .fixed.inset-0 {
-  background-color: hsl(38 65% 94%);
-}
-
 html.native-app .living-sky {
+  background-color: hsl(38 65% 94%);
   animation: none !important;
   background-attachment: initial !important;
 }

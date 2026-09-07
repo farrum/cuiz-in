@@ -381,9 +381,11 @@ export default function HubScreen() {
         setShowCheckInModal(true);
         haptics('success');
         try {
-          import('canvas-confetti').then((m) => m.default({ particleCount: 70, spread: 55, origin: { y: 0.55 } }));
+          if (!Capacitor.isNativePlatform()) {
+            import('canvas-confetti').then((m) => m.default({ particleCount: 70, spread: 55, origin: { y: 0.55 } }));
+          }
         } catch {}
-      }, 1200);
+      }, 800);
     }
   };
 
