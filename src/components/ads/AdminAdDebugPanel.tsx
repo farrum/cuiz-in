@@ -235,6 +235,31 @@ const AdminAdDebugPanel: React.FC<{ className?: string }> = ({ className = '' })
             </div>
           </div>
           
+          {/* Native (Android) ad kit diagnostics */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Native Ad Kit (Android app):</p>
+            {nativeDiag ? (
+              <div className="text-[10px] font-mono bg-muted/30 rounded p-2 space-y-0.5">
+                <div>LevelPlay started: {String(nativeDiag.levelPlayInit)} • Unity direct: {String(nativeDiag.unityDirectInit)}</div>
+                <div>Banner — LP: {String(nativeDiag.lpBannerLoaded)} / Unity: {String(nativeDiag.unityBannerLoaded)}</div>
+                <div>Interstitial — LP: {String(nativeDiag.lpInterstitialReady)} / Unity: {String(nativeDiag.unityInterstitialLoaded)}</div>
+                <div>Rewarded — LP: {String(nativeDiag.lpRewardedAvailable)} / Unity: {String(nativeDiag.unityRewardedLoaded)}</div>
+                {(nativeDiag.lastInitError || nativeDiag.lastBannerError || nativeDiag.lastInterstitialError || nativeDiag.lastRewardedError) && (
+                  <div className="text-destructive">
+                    {[nativeDiag.lastInitError, nativeDiag.lastBannerError, nativeDiag.lastInterstitialError, nativeDiag.lastRewardedError]
+                      .filter(Boolean).map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">Only available inside the Android app — tap "Native Diagnostics" there.</p>
+            )}
+            <Button size="sm" variant="outline" onClick={refreshNativeDiag} className="w-full text-xs">
+              <Bug className="w-3 h-3 mr-1" />
+              Native Diagnostics
+            </Button>
+          </div>
+
           {/* Actions */}
           <Button size="sm" variant="outline" onClick={handleRefresh} className="w-full text-xs">
             <RefreshCw className="w-3 h-3 mr-1" />
