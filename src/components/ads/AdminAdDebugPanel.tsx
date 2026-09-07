@@ -28,6 +28,18 @@ const AdminAdDebugPanel: React.FC<{ className?: string }> = ({ className = '' })
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [adBlockDetected, setAdBlockDetected] = useState(false);
   const [providerInfo, setProviderInfo] = useState<Record<string, string>>({});
+  const [nativeDiag, setNativeDiag] = useState<import('@/mobile/ads/admob').AdDiagnostics | null>(null);
+
+  const refreshNativeDiag = async () => {
+    try {
+      const { getAdDiagnostics } = await import('@/mobile/ads/admob');
+      const diag = await getAdDiagnostics();
+      setNativeDiag(diag);
+      if (diag) addLog('info', 'Native ad diagnostics refreshed');
+    } catch (err) {
+      addLog('error', `Native diagnostics failed: ${err}`);
+    }
+  };
   
   // Check if user is admin
   useEffect(() => {
