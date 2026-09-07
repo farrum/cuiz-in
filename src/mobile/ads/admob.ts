@@ -12,13 +12,40 @@ export interface CustomAdMobPlugin {
   showInterstitial(): Promise<void>;
   prepareRewardVideoAd(options?: { adId?: string }): Promise<void>;
   showRewardVideoAd(): Promise<{ type: string; amount: number }>;
+  adDiagnostics(): Promise<AdDiagnostics>;
   addListener(
     eventName: 'bannerState',
     listenerFunc: (event: { state: 'loaded' | 'failed' | 'hidden'; heightDp?: number; message?: string }) => void,
   ): Promise<PluginListenerHandle>;
 }
 
+export interface AdDiagnostics {
+  levelPlayInit: boolean;
+  unityDirectInit: boolean;
+  bannerWanted: boolean;
+  lpBannerLoaded: boolean;
+  unityBannerLoaded: boolean;
+  lpInterstitialReady: boolean;
+  unityInterstitialLoaded: boolean;
+  lpRewardedAvailable: boolean;
+  unityRewardedLoaded: boolean;
+  lastInitError: string | null;
+  lastBannerError: string | null;
+  lastInterstitialError: string | null;
+  lastRewardedError: string | null;
+}
+
 const CustomAdMob = registerPlugin<CustomAdMobPlugin>('CustomAdMob');
+
+/** Live ad-kit state for the admin debug panel (native only). */
+export async function getAdDiagnostics(): Promise<AdDiagnostics | null> {
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    return await CustomAdMob.adDiagnostics();
+  } catch {
+    return null;
+  }
+}
 
 // LevelPlay (ironSource) Configuration - Primary
 export const LEVELPLAY_CONFIG = {
