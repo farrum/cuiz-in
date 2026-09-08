@@ -132,13 +132,29 @@ export function BannerHost() {
       retryTimer = window.setTimeout(() => void requestBanner(margin, false), 10_000);
     };
 
-    const timer = setTimeout(() => {
+    // 300 ms gives the route content time to render and the layout to settle
+    // before we measure tab height and trigger the native banner request.
+    // Also wait for any ongoing full-screen ad to close before re-requesting.
+    const timer = setTimeout(async () => {
       if (!isMounted) return;
       const show = shouldShowBannerForRoute(location.pathname);
 
       if (show) {
-        // Reserve the standard height while the first creative is loading; the
-        // native loaded event replaces this with the actual adaptive height.
+        // If a full-screen ad is still active, defer the banner re-request
+        // by listening for the fullscreen-complete event.
+        if (isFullScreenAdActive()) {
+          const onFsComplete = () => {
+            if (!isMounted) return;
+            document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
+            const hasTabs = shouldShowTabsForRoute(location.pathname);
+            void requestBanner(measureBottomOffset(hasTabs), false);
+            window.removeEventListener('cuizin_fullscreen_ad_active', onFsComplete);
+          };
+          window.addEventListener('cuizin_fullscreen_ad_active', onFsComplete);
+          return;
+        }
+        // Reserve the standard height while the first creative is loading;
+        // the native loaded event replaces this with the actual adaptive height.
         document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
         const hasTabs = shouldShowTabsForRoute(location.pathname);
         const margin = measureBottomOffset(hasTabs);
@@ -148,7 +164,7 @@ export function BannerHost() {
         announceFill(true);
         void hideAdMobBanner();
       }
-    }, 80);
+    }, 300);
 
 
     return () => {

@@ -4,27 +4,23 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/ui/theme-provider';
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { useEffect, useState } from 'react';
 
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MobileShell } from './layout/MobileShell';
-import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { hideNativeSplashAfterFirstPaint, initMobilePlatform } from './platform/init';
 import { MobileMusicProvider, MobileMusicPlayer } from './components/MobileMusicPlayer';
 import { BannerHost } from './ads/BannerHost';
 import { AppPreloader } from './components/AppPreloader';
-import { AnimatePresence } from 'framer-motion';
 
+// All screens are statically imported — no Suspense needed and no lazy-load blinks
 import HubScreen from './screens/Hub/HubScreen';
 import LeaderboardScreen from './screens/Leaderboard/LeaderboardScreen';
 import ProfileScreen from './screens/Profile/ProfileScreen';
 import MobileTeamDashboard from './screens/Profile/MobileTeamDashboard';
 import ShopScreen from './screens/Shop/ShopScreen';
-
-// Static imports for all screens to eliminate dynamic dynamic import/Suspense blinks
 import QuizStoryScreen from './screens/QuizStory/QuizStoryScreen';
 import OnboardingScreen from './screens/Onboarding/OnboardingScreen';
 import MobileLoginScreen from './screens/Login/MobileLoginScreen';
@@ -58,9 +54,7 @@ async function hydrateMobileSession(userId: string) {
     if (profileResult.data) {
       const pd = profileResult.data as any;
       localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-      // USER_NAME is the display greeting (can be display_name)
       localStorage.setItem(STORAGE_KEYS.USER_NAME, pd.display_name || pd.username);
-      // USER_USERNAME is the stable login handle — always used for referral links
       localStorage.setItem('cuizin_username', pd.username || '');
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(pd.gems ?? 0));
     }
@@ -74,19 +68,21 @@ async function hydrateMobileSession(userId: string) {
 
 const getSystemTimeTheme = () => {
   const hour = new Date().getHours();
-  // Day theme from 6 AM to 6 PM (18:00), Night/Twilight dark theme otherwise
   return (hour >= 6 && hour < 18) ? 'light' : 'dark';
 };
 
 function AppMobile() {
   const [authed, setAuthed] = useState<boolean>(() => Boolean(localStorage.getItem(STORAGE_KEYS.USER_ID)));
-  const [isPreloading, setIsPreloading] = useState<boolean>(true);
+
+  // Preloader gates the entire route tree. While it shows, the app warms up
+  // in background (session check, questions cache, AdMob init).
+  // The preloader div has a solid dark background so the WebView never shows white.
+  const [preloadDone, setPreloadDone] = useState<boolean>(false);
 
   useEffect(() => {
     initMobilePlatform();
 
-    // The native splash is manual: release it only after this mounted tree has
-    // produced a stable frame, never while Android is still showing the raw WebView.
+    // Native splash is hidden by the preloader taking over immediately.
     hideNativeSplashAfterFirstPaint();
 
     (async () => {
@@ -108,7 +104,6 @@ function AppMobile() {
       try {
         const lastFetched = localStorage.getItem('last_questions_fetch_time');
         const now = Date.now();
-        // If empty or older than 24 hours (86,400,000 ms), fetch questions
         if (!lastFetched || now - Number(lastFetched) > 86400000) {
           const { fetchQuizQuestions } = await import('@/utils/quizData');
           await fetchQuizQuestions();
@@ -130,10 +125,14 @@ function AppMobile() {
       }
     });
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => { listener.subscription.unsubscribe(); };
   }, []);
+
+  // Render preloader before anything else. It's full-screen with a solid
+  // dark background (no opacity, no transparency) so WebView can't bleed through.
+  if (!preloadDone) {
+    return <AppPreloader minDurationMs={2400} onComplete={() => setPreloadDone(true)} />;
+  }
 
   return (
     <HelmetProvider>
@@ -143,10 +142,7 @@ function AppMobile() {
           <Sonner />
           <BrowserRouter>
             <MobileMusicProvider>
-              {/* Routes inside MobileShell have their own Suspense + error
-                  boundary so navigation never blanks the whole viewport. */}
               <ErrorBoundary>
-              <Suspense fallback={<ScreenSkeleton />}>
                 <Routes>
                   <Route path="/onboarding" element={<OnboardingScreen />} />
                   <Route path="/login" element={<MobileLoginScreen />} />
@@ -160,9 +156,6 @@ function AppMobile() {
                       <Route path="/shop" element={<ShopScreen />} />
                       <Route path="/team-dashboard" element={<MobileTeamDashboard />} />
                     </Route>
-                    {/* Full-screen routes live outside the shell, so they need
-                        their own boundary — otherwise one bad render blanks
-                        the entire app instead of just this screen. */}
                     <Route
                       path="/quiz"
                       element={<ErrorBoundary compact resetKey="/quiz"><QuizStoryScreen /></ErrorBoundary>}
@@ -187,20 +180,10 @@ function AppMobile() {
                   <Route path="/" element={<Navigate to="/hub" replace />} />
                   <Route path="*" element={<Navigate to="/hub" replace />} />
                 </Routes>
-              </Suspense>
               </ErrorBoundary>
               <MobileMusicPlayer />
-              {/* Single, session-long native banner surface is managed here */}
+              {/* Single, session-long native banner surface — managed here, never per-screen */}
               <BannerHost />
-              {/* Startup Preloader to warm up Unity Ads and assets without UI flicker */}
-              <AnimatePresence mode="wait">
-                {isPreloading && (
-                  <AppPreloader
-                    minDurationMs={2400}
-                    onComplete={() => setIsPreloading(false)}
-                  />
-                )}
-              </AnimatePresence>
             </MobileMusicProvider>
           </BrowserRouter>
         </ThemeProvider>

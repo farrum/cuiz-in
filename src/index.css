@@ -79,6 +79,14 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     /* Content bottom clearance = tab bar + ad banner */
     --bottom-clearance: calc(var(--tab-h) + var(--banner-h));
+
+    /* ── Mobile Shell Background ──────────────────────────────────
+       --shell-bg is the ground-truth background for the mobile app.
+       It must NEVER be white. All mobile screens inherit from this.
+       The value is the warm parchment that MobileShell uses.
+    ────────────────────────────────────────────────────────────── */
+    --shell-bg: hsl(38 65% 94%);
+    --shell-bg-dark: hsl(30 25% 12%);
   }
 
   .dark {
@@ -961,5 +969,74 @@ html.native-app .living-sky {
   background-color: hsl(38 65% 94%);
   animation: none !important;
   background-attachment: initial !important;
+}
+
+/* ── Mobile Screen Base ─────────────────────────────────────────────────────
+   Every mobile screen must use this base to prevent white flash.
+   White flash occurs when a screen's background transitions through
+   the WebView's default white before React renders.
+─────────────────────────────────────────────────────────────────────────── */
+html.native-app,
+html.native-app body {
+  background-color: var(--shell-bg) !important;
+}
+
+/* Hub tabbed layout — tab content panel fade */
+@keyframes hubTabFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.hub-tab-panel {
+  animation: hubTabFade 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Improved parchment card with premium inset */
+.parchment-card {
+  background: linear-gradient(145deg, hsl(40 70% 97%) 0%, hsl(36 55% 93%) 100%);
+  border: 1px solid rgba(180, 140, 60, 0.22);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 4px 16px rgba(120, 80, 20, 0.10);
+}
+
+/* Premium game card glow on hover */
+.game-card-glow {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.game-card-glow:hover,
+.game-card-glow:active {
+  transform: translateY(-2px);
+}
+
+/* Tribute modal entrance */
+@keyframes tributeModalIn {
+  0%   { opacity: 0; transform: scale(0.88) translateY(20px); }
+  70%  { transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.tribute-modal-in {
+  animation: tributeModalIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Streak star burst */
+@keyframes starBurst {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.star-burst { animation: starBurst 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Hub section divider shimmer */
+@keyframes sectionShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.section-divider-shimmer {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(180,140,60,0.35) 40%,
+    rgba(220,180,80,0.6) 50%, rgba(180,140,60,0.35) 60%,
+    transparent 100%);
+  background-size: 200% auto;
+  animation: sectionShimmer 3s linear infinite;
 }
 

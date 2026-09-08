@@ -332,7 +332,7 @@ export default function MiniGameScreen() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background overflow-hidden">
+    <div className="fixed inset-0 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--shell-bg, hsl(38 65% 94%))' }}>
       {/* Static gradient background — replaced the animated blur-3xl motion.div.
           An animated `filter: blur` forces a full GPU repaint every frame on Android
           WebView, causing visible frame drops. A static gradient is zero-cost. */}
