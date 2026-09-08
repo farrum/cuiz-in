@@ -372,7 +372,7 @@ public class CustomAdMobPlugin extends Plugin {
                 levelPlayBanner = null;
             }
 
-            ISBannerSize bannerSize = new ISBannerSize("BANNER", 320, 50);
+            ISBannerSize bannerSize = ISBannerSize.BANNER;
             currentBannerHeightDp = 50;
             updateBannerPosition();
 
@@ -865,11 +865,21 @@ public class CustomAdMobPlugin extends Plugin {
     protected void handleOnPause() {
         super.handleOnPause();
         cancelBannerRefresh();
+        if (getActivity() != null) {
+            try {
+                IronSource.onPause(getActivity());
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
     protected void handleOnResume() {
         super.handleOnResume();
+        if (getActivity() != null) {
+            try {
+                IronSource.onResume(getActivity());
+            } catch (Exception ignored) {}
+        }
         if (bannerWanted) {
             scheduleBannerRefresh();
         }

@@ -1,43 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useLocation } from 'react-router-dom';
 import {
-  hideAdMobBanner,
+  hideBanner,
   listenForBannerState,
-  resumeAdMobBanner,
-  showAdMobBanner,
-  suspendAdMobBanner,
+  resumeBanner,
+  showBanner,
+  suspendBanner,
   isFullScreenAdActive,
-} from './admob';
+} from './adManager';
 
-/**
- * Determines if a route should show the native AdMob banner.
- */
 function shouldShowBannerForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
-  const bannerRoutes = [
-    '/hub',
-    '/leaderboard',
-    '/hall',
-    '/profile',
-    '/settings',
-    '/herald',
-    '/shop',
-    '/empire-quests',
-    '/quests',
-    '/kingdoms',
-    '/team-dashboard',
-    '/quiz',
-    '/daily',
-    '/minigames',
-    '/game'
-  ];
-  return bannerRoutes.some(route => p === route || p.startsWith(route + '/') || p === '/');
+  const nonBannerRoutes = ['/onboarding', '/login'];
+  if (nonBannerRoutes.some(r => p === r || p.startsWith(r + '/'))) {
+    return false;
+  }
+  return true;
 }
 
-/**
- * Determines if the route displays bottom tabs.
- */
 function shouldShowTabsForRoute(pathname: string): boolean {
   const p = pathname.toLowerCase();
   const tabRoutes = [
@@ -51,7 +32,7 @@ function shouldShowTabsForRoute(pathname: string): boolean {
     '/empire-quests',
     '/quests',
     '/kingdoms',
-    '/team-dashboard'
+    '/team-dashboard',
   ];
   return tabRoutes.some(route => p === route || p.startsWith(route + '/') || p === '/');
 }
@@ -73,12 +54,14 @@ function measureBottomOffset(hasTabs: boolean): number {
 }
 
 /**
- * Owns the AdMob banner surface for the entire app session.
- * Monitors router path changes and manages banner visibility and margins cleanly.
+ * Owns the native ad banner surface for the mobile app session.
+ * Keeps banner dimensions stable to eliminate layout shift and screen flickering.
  */
 export function BannerHost() {
   const location = useLocation();
+  const lastRequestedPath = useRef<string>('');
 
+  // Native banner listener
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     let disposed = false;
@@ -86,14 +69,7 @@ export function BannerHost() {
 
     void listenForBannerState((event) => {
       if (disposed) return;
-      // If the banner is temporarily hidden (e.g. during a full-screen interstitial),
-      // do NOT collapse the layout space to 0px — that causes the viewport to jump and flicker.
-      if (event.state === 'hidden' && shouldShowBannerForRoute(location.pathname)) {
-        return;
-      }
       const filled = event.state === 'loaded';
-      const height = filled ? Math.max(1, event.heightDp || DEFAULT_BANNER_HEIGHT) : (shouldShowBannerForRoute(location.pathname) ? DEFAULT_BANNER_HEIGHT : 0);
-      document.documentElement.style.setProperty('--banner-h', `${height}px`);
       window.dispatchEvent(new CustomEvent('cuizin_banner_fill', { detail: { filled } }));
     }).then((listenerHandle) => {
       if (disposed) void listenerHandle?.remove();
@@ -104,97 +80,56 @@ export function BannerHost() {
       disposed = true;
       void handle?.remove();
     };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    let isMounted = true;
-    let retryTimer: number | undefined;
-    let attempt = 0;
-
-    const announceFill = (filled: boolean) => {
-      window.dispatchEvent(
-        new CustomEvent('cuizin_banner_fill', { detail: { filled } })
-      );
-    };
-
-    const requestBanner = async (margin: number, forceRefresh = false) => {
-      const shown = await showAdMobBanner(margin, forceRefresh);
-      if (!isMounted) return;
-      if (shown) return; // native loaded/failed event owns visible fill state
-      if (attempt >= 3) {
-        // AdMob never delivered (no fill / init failure): let the layout show
-        // an in-house promo instead of an empty strip.
-        announceFill(false);
-        return;
-      }
-      attempt += 1;
-      // Retry no-fill/transient SDK startup failures without churning native views.
-      retryTimer = window.setTimeout(() => void requestBanner(margin, false), 10_000);
-    };
-
-    // 300 ms gives the route content time to render and the layout to settle
-    // before we measure tab height and trigger the native banner request.
-    // Also wait for any ongoing full-screen ad to close before re-requesting.
-    const timer = setTimeout(async () => {
-      if (!isMounted) return;
-      const show = shouldShowBannerForRoute(location.pathname);
-
-      if (show) {
-        // If a full-screen ad is still active, defer the banner re-request
-        // by listening for the fullscreen-complete event.
-        if (isFullScreenAdActive()) {
-          const onFsComplete = () => {
-            if (!isMounted) return;
-            document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
-            const hasTabs = shouldShowTabsForRoute(location.pathname);
-            void requestBanner(measureBottomOffset(hasTabs), false);
-            window.removeEventListener('cuizin_fullscreen_ad_active', onFsComplete);
-          };
-          window.addEventListener('cuizin_fullscreen_ad_active', onFsComplete);
-          return;
-        }
-        // Reserve the standard height while the first creative is loading;
-        // the native loaded event replaces this with the actual adaptive height.
-        document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
-        const hasTabs = shouldShowTabsForRoute(location.pathname);
-        const margin = measureBottomOffset(hasTabs);
-        void requestBanner(margin, false);
-      } else {
-        document.documentElement.style.setProperty('--banner-h', '0px');
-        announceFill(true);
-        void hideAdMobBanner();
-      }
-    }, 300);
-
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      if (retryTimer) window.clearTimeout(retryTimer);
-    };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const background = () => {
-      // Do not suspend the banner if the app state change is just an interstitial video opening
-      if (!isFullScreenAdActive()) {
-        void suspendAdMobBanner();
-      }
-    };
-    const foreground = () => void resumeAdMobBanner();
-    window.addEventListener('cuizin_app_background', background);
-    window.addEventListener('cuizin_app_foreground', foreground);
-    return () => {
-      window.removeEventListener('cuizin_app_background', background);
-      window.removeEventListener('cuizin_app_foreground', foreground);
-    };
   }, []);
 
-  // Hide the banner when host component unmounts
+  // Route change handler
+  useEffect(() => {
+    const show = shouldShowBannerForRoute(location.pathname);
+
+    if (show) {
+      document.documentElement.style.setProperty('--banner-h', `${DEFAULT_BANNER_HEIGHT}px`);
+      if (!Capacitor.isNativePlatform()) return;
+
+      if (isFullScreenAdActive()) return;
+
+      const timer = setTimeout(() => {
+        const hasTabs = shouldShowTabsForRoute(location.pathname);
+        const margin = measureBottomOffset(hasTabs);
+        lastRequestedPath.current = location.pathname;
+        void showBanner(margin, false);
+      }, 200);
+
+      return () => clearTimeout(timer);
+    } else {
+      document.documentElement.style.setProperty('--banner-h', '0px');
+      if (Capacitor.isNativePlatform()) {
+        void hideBanner();
+      }
+    }
+  }, [location.pathname]);
+
+  // Handle app background/foreground
+  useEffect(() => {
+    const onBackground = () => {
+      if (!isFullScreenAdActive()) void suspendBanner();
+    };
+    const onForeground = () => {
+      if (!isFullScreenAdActive() && shouldShowBannerForRoute(location.pathname)) {
+        void resumeBanner();
+      }
+    };
+    window.addEventListener('cuizin_app_background', onBackground);
+    window.addEventListener('cuizin_app_foreground', onForeground);
+    return () => {
+      window.removeEventListener('cuizin_app_background', onBackground);
+      window.removeEventListener('cuizin_app_foreground', onForeground);
+    };
+  }, [location.pathname]);
+
+  // Unmount cleanup
   useEffect(() => {
     return () => {
-      document.documentElement.style.setProperty('--banner-h', '0px');
-      void hideAdMobBanner();
+      void hideBanner();
     };
   }, []);
 
