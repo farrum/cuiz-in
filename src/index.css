@@ -976,6 +976,9 @@ html.native-app .living-sky {
    White flash occurs when a screen's background transitions through
    the WebView's default white before React renders.
 ─────────────────────────────────────────────────────────────────────────── */
+html,
+body,
+#root,
 html.native-app,
 html.native-app body {
   background-color: var(--shell-bg) !important;

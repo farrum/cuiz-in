@@ -7,12 +7,13 @@ import {
   SlidersHorizontal,
   Check,
   Shield,
-  Scroll,
   Crown,
   Flame,
   ArrowRight,
   Trophy,
   Loader2,
+  AlertTriangle,
+  Play,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +30,7 @@ import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine } from '@/mobile/mascots/useMoodEngine';
 import { Mascot } from '@/mobile/components/Mascot';
 import { NativeBannerAd } from '@/mobile/ads/NativeBannerAd';
-import { showRewarded } from '@/mobile/ads/adManager';
+import { showInterstitial, showRewarded } from '@/mobile/ads/adManager';
 import { Capacitor } from '@capacitor/core';
 import { asUuidOrNull } from '@/utils/uuid';
 import { cn } from '@/lib/utils';
@@ -69,9 +70,20 @@ export default function QuizStoryScreen() {
   const [sessionGems, setSessionGems] = useState(0);
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
 
+  // 10-Second Pause countdown timer
+  const [countdown, setCountdown] = useState(10);
+  const countdownTimerRef = useRef<number | null>(null);
+
+  // Question answer counter for interstitial ads (every 2 questions)
+  const answerCount = useRef(0);
+
   // Daily challenge progress (1 to 5)
   const [dailyStep, setDailyStep] = useState(1);
   const [dailyComplete, setDailyComplete] = useState(false);
+
+  // Streak in Danger modal state
+  const [streakInDangerOpen, setStreakInDangerOpen] = useState(false);
+  const [revivingStreak, setRevivingStreak] = useState(false);
 
   // Animations & visuals
   const [floatReward, setFloatReward] = useState<number | null>(null);
@@ -108,14 +120,13 @@ export default function QuizStoryScreen() {
   categoryRef.current = category;
   difficultyRef.current = difficulty;
 
-  const advanceTimer = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const loadingNextRef = useRef(false);
 
   const clearTimers = () => {
-    if (advanceTimer.current) {
-      window.clearTimeout(advanceTimer.current);
-      advanceTimer.current = null;
+    if (countdownTimerRef.current) {
+      window.clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
     }
   };
 
@@ -137,6 +148,7 @@ export default function QuizStoryScreen() {
     setIsCorrect(null);
     setCorrectAnswer('');
     setExplanation('');
+    setCountdown(10);
 
     try {
       const q = await getRandomQuestion({
@@ -203,7 +215,6 @@ export default function QuizStoryScreen() {
         serverCorrectAnswer = data.correct_answer || '';
         serverExplanation = data.explanation || '';
       } else {
-        // Fallback: local check if server check fails
         correct = (question.options || [])[0] === option;
         serverCorrectAnswer = (question.options || [])[0];
       }
@@ -212,7 +223,7 @@ export default function QuizStoryScreen() {
       serverCorrectAnswer = (question.options || [])[0];
     }
 
-    // Fast, responsive 650ms check
+    // Responsive 650ms check
     window.setTimeout(() => {
       if (!mountedRef.current) return;
 
@@ -224,6 +235,9 @@ export default function QuizStoryScreen() {
       incrementQuestionsAnswered();
       moodEngine.recordAnswer(correct);
       setRevealMood(moodEngine.snapshot().lastMood);
+
+      // Increment question answer count for interstitial trigger
+      answerCount.current += 1;
 
       // Multiplier: 2x for Daily Challenge
       const baseGems = question.gems || 10;
@@ -246,14 +260,26 @@ export default function QuizStoryScreen() {
 
         setFloatReward(earned);
         setTimeout(() => setFloatReward(null), 1100);
-        confetti({ particleCount: 70, spread: 70, origin: { y: 0.45 }, ticks: 120 });
+        confetti({ particleCount: 75, spread: 75, origin: { y: 0.45 }, ticks: 120 });
         setPulseOpt(option);
         setTimeout(() => setPulseOpt(null), 700);
+
+        // Start 10-second countdown pause after correct answer
+        startCountdownPause();
       } else {
         haptics('error');
-        resetStreak();
         setShakeOpt(option);
         setTimeout(() => setShakeOpt(null), 500);
+
+        // "Streak in Danger!" feature:
+        // If streak >= 3, give user a chance to save their streak via rewarded ad
+        if (streak >= 3 && Capacitor.isNativePlatform()) {
+          setStreakInDangerOpen(true);
+        } else {
+          resetStreak();
+          // Start 10-second countdown pause
+          startCountdownPause();
+        }
       }
 
       // Record answer attempt in DB
@@ -267,46 +293,110 @@ export default function QuizStoryScreen() {
           points_earned: earned,
         });
       }
-
-      // Smooth auto-advance after 3.2s so the user can read the explanation,
-      // or tap "Next Trial ⚔️" immediately
-      advanceTimer.current = window.setTimeout(() => {
-        if (!mountedRef.current) return;
-        handleManualAdvance();
-      }, 3200);
     }, 650);
   };
 
-  const handleManualAdvance = () => {
+  /**
+   * 10-Second Pause countdown timer.
+   * Decrements each second. When it reaches 0, advances to the next question.
+   */
+  const startCountdownPause = () => {
     clearTimers();
-    if (isDailyMode) {
-      if (dailyStep >= 5) {
-        // Daily Challenge complete!
-        const today = new Date().toISOString().split('T')[0];
-        localStorage.setItem(`daily_challenge_completed_${today}`, 'true');
-        const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (uid) {
-          // Log challenge completion
-          void supabase.from('user_challenge_progress').upsert(
-            {
-              user_id: uid,
-              challenge_id: 'daily-' + today,
-              completed: true,
-              completed_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id,challenge_id' },
-          );
+    setCountdown(10);
+
+    countdownTimerRef.current = window.setInterval(() => {
+      if (!mountedRef.current) return;
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearTimers();
+          handleAdvanceAfterPause();
+          return 0;
         }
-        setDailyComplete(true);
-        confetti({ particleCount: 150, spread: 90, origin: { y: 0.4 } });
-        haptics('success');
-      } else {
-        setDailyStep((s) => s + 1);
-        loadNext();
-      }
-    } else {
-      loadNext();
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  /**
+   * Called when the 10-second countdown ends OR when user taps "Skip →" / "Next Trial ⚔️".
+   * Triggers an interstitial ad after every 2 questions, then loads next.
+   */
+  const handleAdvanceAfterPause = async () => {
+    clearTimers();
+
+    // Check if daily challenge completed
+    if (isDailyMode && dailyStep >= 5) {
+      completeDailyChallenge();
+      return;
     }
+
+    // Interstitial ad trigger: Every 2 questions answered
+    const shouldShowAd = answerCount.current % 2 === 0;
+
+    if (shouldShowAd && Capacitor.isNativePlatform()) {
+      try {
+        await showInterstitial(2500);
+      } catch (e) {
+        console.warn('[QuizStory] Interstitial failed:', e);
+      }
+    }
+
+    if (isDailyMode) {
+      setDailyStep((s) => s + 1);
+    }
+    loadNext();
+  };
+
+  const completeDailyChallenge = () => {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(`daily_challenge_completed_${today}`, 'true');
+    const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (uid) {
+      void supabase.from('user_challenge_progress').upsert(
+        {
+          user_id: uid,
+          challenge_id: 'daily-' + today,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,challenge_id' },
+      );
+    }
+    setDailyComplete(true);
+    confetti({ particleCount: 160, spread: 95, origin: { y: 0.4 } });
+    haptics('success');
+  };
+
+  // Streak in Danger - Save Streak with Rewarded Video
+  const handleSaveStreakWithAd = async () => {
+    setRevivingStreak(true);
+    try {
+      const res = await showRewarded(3000);
+      if (res.rewarded) {
+        toast({
+          title: '🔥 Streak Preserved!',
+          description: `The Crown has protected your streak of ${streak} battles!`,
+        });
+      } else {
+        resetStreak();
+        toast({
+          title: 'Streak Broken',
+          description: 'Ad was closed early. Streak has been reset.',
+        });
+      }
+    } catch {
+      resetStreak();
+    } finally {
+      setRevivingStreak(false);
+      setStreakInDangerOpen(false);
+      startCountdownPause();
+    }
+  };
+
+  const handleDeclineSaveStreak = () => {
+    resetStreak();
+    setStreakInDangerOpen(false);
+    startCountdownPause();
   };
 
   const exitQuiz = () => {
@@ -320,7 +410,7 @@ export default function QuizStoryScreen() {
   const handleDoubleGems = async () => {
     setDoubleGemsAdShowing(true);
     try {
-      const res = await showRewarded(2500);
+      const res = await showRewarded(3000);
       if (res.rewarded) {
         const bonus = sessionGems;
         const newTotal = gems + bonus;
@@ -328,10 +418,10 @@ export default function QuizStoryScreen() {
         localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(newTotal));
         const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
         if (uid) void logGemsEarned(bonus, uid);
-        toast({ title: '👑 Royal Bonus!', description: `Gems doubled! Added +${bonus} gems to your treasury.` });
+        toast({ title: '👑 Royal Bonus!', description: `Treasury doubled! +${bonus} bonus gems awarded.` });
       }
     } catch {
-      // Move ahead cleanly if ad is unavailable
+      // Move ahead cleanly
     } finally {
       setDoubleGemsAdShowing(false);
       navigate('/hub');
@@ -370,7 +460,7 @@ export default function QuizStoryScreen() {
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-900/70 font-serif">
+            <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-900/70 font-serif">
               <Shield className="w-3.5 h-3.5 text-amber-700" />
               <span>{category || 'Royal Keep Quiz'}</span>
             </div>
@@ -386,7 +476,7 @@ export default function QuizStoryScreen() {
 
       {/* Daily Progress Dots */}
       {isDailyMode && (
-        <div className="px-6 py-1.5 flex items-center justify-center gap-2">
+        <div className="px-6 py-1 flex items-center justify-center gap-2">
           {[1, 2, 3, 4, 5].map((step) => (
             <div
               key={step}
@@ -493,13 +583,13 @@ export default function QuizStoryScreen() {
           </div>
         ) : question ? (
           <div className="flex-1 flex flex-col justify-between max-w-md mx-auto w-full">
-            {/* Question Card */}
+            {/* 3D Layered Question Card */}
             <div
-              className="rounded-3xl p-5 mb-4 relative"
+              className="rounded-3xl p-5 mb-3.5 relative"
               style={{
                 background: 'linear-gradient(145deg, hsl(40 70% 97%) 0%, hsl(36 55% 93%) 100%)',
-                border: '1px solid rgba(180,140,60,0.25)',
-                boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 16px rgba(120,80,20,0.08)',
+                border: '1px solid rgba(180,140,60,0.28)',
+                boxShadow: '0 1px 0 rgba(255,255,255,0.95) inset, 0 6px 20px rgba(120,80,20,0.09)',
               }}
             >
               {/* Question Meta Tags */}
@@ -539,8 +629,8 @@ export default function QuizStoryScreen() {
               </h2>
             </div>
 
-            {/* Answer Options */}
-            <div className="space-y-2.5 mb-4">
+            {/* Answer Options with 3D Tactile Buttons */}
+            <div className="space-y-2.5 mb-3">
               {(question.options || []).map((opt, i) => {
                 const isSelected = selected === opt;
                 const isReveal = phase === 'revealing' && correctAnswer;
@@ -550,14 +640,14 @@ export default function QuizStoryScreen() {
                 return (
                   <motion.button
                     key={opt}
-                    whileTap={{ scale: phase === 'asking' ? 0.98 : 1 }}
+                    whileTap={{ scale: phase === 'asking' ? 0.98 : 1, y: phase === 'asking' ? 2 : 0 }}
                     disabled={phase !== 'asking'}
                     onClick={() => handleAnswer(opt)}
                     className={cn(
                       'relative w-full text-left rounded-2xl px-4 py-3.5 font-bold text-[14px] leading-snug transition-all flex items-center overflow-hidden',
                       'border',
                       !isSelected && !isThisCorrect && !isThisWrong &&
-                        'bg-white/85 text-amber-950 hover:bg-white border-amber-800/15 shadow-sm',
+                        'bg-white/85 text-amber-950 hover:bg-white border-amber-800/15 shadow-sm active:shadow-none',
                       isSelected && phase === 'checking' &&
                         'bg-amber-100 border-amber-600 text-amber-950 font-black shadow-md',
                       isThisCorrect &&
@@ -567,18 +657,23 @@ export default function QuizStoryScreen() {
                       opt === shakeOpt && 'animate-shake',
                       opt === pulseOpt && 'animate-pulse',
                     )}
+                    style={{
+                      boxShadow: !isSelected && !isThisCorrect && !isThisWrong
+                        ? '0 3px 0 rgba(180,140,60,0.22), 0 2px 6px rgba(0,0,0,0.04)'
+                        : undefined,
+                    }}
                   >
-                    {/* Letter badge (A, B, C, D) */}
+                    {/* 3D Letter badge (A, B, C, D) */}
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center w-7 h-7 rounded-xl text-xs font-black mr-3 shrink-0 border',
+                        'inline-flex items-center justify-center w-7 h-7 rounded-xl text-xs font-black mr-3 shrink-0 border shadow-xs',
                         isThisCorrect
                           ? 'bg-emerald-600 text-white border-emerald-700'
                           : isThisWrong
                           ? 'bg-rose-600 text-white border-rose-700'
                           : isSelected
                           ? 'bg-amber-600 text-white border-amber-700'
-                          : 'bg-amber-100/70 text-amber-900 border-amber-300/60',
+                          : 'bg-amber-100/80 text-amber-900 border-amber-300/70',
                       )}
                     >
                       {String.fromCharCode(65 + i)}
@@ -586,7 +681,7 @@ export default function QuizStoryScreen() {
 
                     <span className="flex-1 min-w-0 pr-2">{opt}</span>
 
-                    {/* Check / Cross status icon */}
+                    {/* Status Check Icon */}
                     {isThisCorrect && <Check className="w-5 h-5 text-emerald-600 shrink-0" />}
                   </motion.button>
                 );
@@ -594,7 +689,7 @@ export default function QuizStoryScreen() {
             </div>
 
             {/* Feedback & Mascot Reveal or Checking Status */}
-            <div className="min-h-[90px] mb-3">
+            <div className="min-h-[85px] mb-3">
               {phase === 'checking' && (
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 text-xs font-black uppercase tracking-wider">
                   <Loader2 className="w-4 h-4 animate-spin text-amber-700" />
@@ -614,31 +709,48 @@ export default function QuizStoryScreen() {
               )}
             </div>
 
-            {/* Next Question Control Button */}
+            {/* ── 10-Second Pause Progress & Advance Control ─────────────── */}
             {phase === 'revealing' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-2"
+                className="mb-2 space-y-2"
               >
-                <Button
-                  onClick={handleManualAdvance}
-                  className="w-full py-6 font-black uppercase text-sm rounded-2xl text-white shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                  style={{
-                    background: 'linear-gradient(135deg, hsl(45 95% 55%), hsl(30 90% 48%))',
-                    boxShadow: '0 4px 0 hsl(30 80% 35%)',
-                  }}
-                >
-                  <span>{isDailyMode && dailyStep >= 5 ? 'Crown Victory 👑' : 'Next Trial ⚔️'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                {/* 10-second countdown bar */}
+                <div className="w-full bg-amber-900/10 h-2 rounded-full overflow-hidden border border-amber-900/15 relative">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full"
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${(countdown / 10) * 100}%` }}
+                    transition={{ duration: 1, ease: 'linear' }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-black text-amber-900/70 uppercase tracking-wide tabular-nums">
+                    Next trial in {countdown}s
+                  </span>
+
+                  {/* 3D Depressable Next Button / Skip Button */}
+                  <Button
+                    onClick={handleAdvanceAfterPause}
+                    className="flex-1 py-5 font-black uppercase text-xs rounded-xl text-white shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+                      boxShadow: '0 3px 0 hsl(30 80% 35%), 0 4px 12px rgba(245,158,11,0.2)',
+                    }}
+                  >
+                    <span>{isDailyMode && dailyStep >= 5 ? 'Crown Victory 👑' : 'Next Trial ⚔️'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </motion.div>
             )}
           </div>
         ) : null}
       </div>
 
-      {/* ── Footer: Realm Preferences Pill ──────────────────────────── */}
+      {/* ── Preferences Pill ────────────────────────────────────────── */}
       {!dailyComplete && !isDailyMode && (
         <div className="px-4 pb-1 z-10">
           <button
@@ -651,8 +763,67 @@ export default function QuizStoryScreen() {
         </div>
       )}
 
-      {/* Fixed bottom banner ad spacer */}
+      {/* Fixed bottom banner ad */}
       <NativeBannerAd noMargin />
+
+      {/* ── Streak in Danger Modal (Rewarded Ad to Revive) ─────────── */}
+      <AnimatePresence>
+        {streakInDangerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              className="w-full max-w-sm rounded-3xl p-6 text-center relative overflow-hidden"
+              style={{
+                backgroundColor: 'var(--shell-bg, hsl(38 65% 94%))',
+                border: '2px solid rgba(220, 38, 38, 0.4)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+              }}
+            >
+              <div className="w-16 h-16 rounded-full bg-red-100 border-2 border-red-300 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <Flame className="w-8 h-8 text-red-600 animate-pulse fill-red-500" />
+              </div>
+
+              <h3 className="text-xl font-black text-amber-950 font-serif mb-1">
+                Streak in Danger!
+              </h3>
+              <p className="text-xs text-amber-900/80 font-semibold mb-5 leading-relaxed">
+                You have a hard-earned streak of <strong className="text-red-600 font-black">{streak} battles</strong>! Watch a quick scroll video to preserve it and keep marching forward!
+              </p>
+
+              <div className="space-y-2.5">
+                <Button
+                  disabled={revivingStreak}
+                  onClick={handleSaveStreakWithAd}
+                  className="w-full py-6 text-xs font-black uppercase rounded-2xl text-white shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(45 95% 55%), hsl(30 90% 48%))',
+                    boxShadow: '0 4px 0 hsl(30 80% 35%)',
+                  }}
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>{revivingStreak ? 'Preparing Scroll...' : '⚔️ Watch to Save Streak'}</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  disabled={revivingStreak}
+                  onClick={handleDeclineSaveStreak}
+                  className="w-full py-4 text-xs font-black uppercase text-amber-900/60 hover:text-amber-900"
+                >
+                  No thanks, let it break
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Preferences Bottom Sheet ─────────────────────────────────── */}
       <AnimatePresence>

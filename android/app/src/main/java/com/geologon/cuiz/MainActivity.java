@@ -18,9 +18,9 @@ public class MainActivity extends BridgeActivity {
         EdgeToEdge.enable(this);
 
         super.onCreate(savedInstanceState);
-        getWindow().getDecorView().setBackgroundColor(Color.rgb(12, 10, 9));
+        getWindow().getDecorView().setBackgroundColor(Color.rgb(247, 243, 232));
         if (getBridge() != null && getBridge().getWebView() != null) {
-            getBridge().getWebView().setBackgroundColor(Color.rgb(12, 10, 9));
+            getBridge().getWebView().setBackgroundColor(Color.rgb(247, 243, 232));
             getBridge().getWebView().setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
         ActionBar actionBar = getSupportActionBar();

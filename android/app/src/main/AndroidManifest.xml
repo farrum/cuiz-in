@@ -10,7 +10,8 @@
         android:resizeableActivity="true"
         android:theme="@style/AppTheme"
         android:appCategory="game"
-        android:isGame="true">
+        android:isGame="true"
+        android:usesCleartextTraffic="true">
 
 
 

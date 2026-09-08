@@ -8,6 +8,8 @@ export function initMobilePlatform() {
       const { Capacitor } = await import('@capacitor/core');
       if (!Capacitor.isNativePlatform()) return;
 
+      document.documentElement.classList.add('native-app');
+
       const { StatusBar, Style } = await import('@capacitor/status-bar');
       const { App } = await import('@capacitor/app');
 

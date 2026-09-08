@@ -20,6 +20,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 // IronSource / LevelPlay Mediation SDK
 import com.ironsource.mediationsdk.IronSource;
 import com.ironsource.mediationsdk.ISBannerSize;
+import com.ironsource.mediationsdk.integration.IntegrationHelper;
 import com.ironsource.mediationsdk.ISContainerParams;
 import com.ironsource.mediationsdk.IronSourceBannerLayout;
 import com.ironsource.mediationsdk.logger.IronSourceError;
@@ -143,12 +144,18 @@ public class CustomAdMobPlugin extends Plugin {
             if (!isLevelPlayInit) {
                 try {
                     Log.i(TAG, "Initializing LevelPlay with App Key: " + lpKey);
+                    IronSource.setAdaptersDebug(true);
                     setupLevelPlayListeners();
                     IronSource.init(getActivity(), lpKey, new InitializationListener() {
                         @Override
                         public void onInitializationComplete() {
                             Log.i(TAG, "LevelPlay init completed successfully");
                             isLevelPlayInit = true;
+                            if (getActivity() != null) {
+                                try {
+                                    IntegrationHelper.validateIntegration(getActivity());
+                                } catch (Exception ignored) {}
+                            }
                             mainHandler.post(() -> {
                                 if (bannerWanted) {
                                     createAndLoadBannerInternal();

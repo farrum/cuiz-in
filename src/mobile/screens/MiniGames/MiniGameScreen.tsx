@@ -7,7 +7,7 @@ import { Mascot } from '@/mobile/components/Mascot';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { NativeBannerAd } from '../../ads/NativeBannerAd';
-import { showAdMobInterstitial } from '@/mobile/ads/admob';
+import { showInterstitial } from '@/mobile/ads/adManager';
 import { WheelGame } from './games/WheelGame';
 import { ScratchGame } from './games/ScratchGame';
 import { TrueFalseGame } from './games/TrueFalseGame';
@@ -357,21 +357,18 @@ export default function MiniGameScreen() {
         }}
       >
         <button
-          onClick={async () => {
+          onClick={() => {
             haptics('light');
-            if (Capacitor.isNativePlatform()) {
-              try {
-                await showAdMobInterstitial();
-              } catch (e) {
-                console.warn('AdMob interstitial failed on exit', e);
-              }
-            }
             navigate('/hub');
+            if (Capacitor.isNativePlatform()) {
+              void showInterstitial(1500);
+            }
           }}
-          className="p-2 -ml-1.5 rounded-xl bg-white/80 ring-1 ring-black/[0.06] hover:bg-white transition-colors"
+          className="p-2 -ml-1.5 rounded-xl bg-amber-900/5 hover:bg-amber-900/10 active:scale-95 transition-all text-amber-900"
+          style={{ border: '1px solid rgba(180,140,60,0.25)' }}
           aria-label="Close"
         >
-          <X className="w-5 h-5 text-slate-400" />
+          <X className="w-5 h-5 text-amber-900/80" />
         </button>
         <h1 className="font-black text-[17px] tracking-tight" style={{ color: 'hsl(30 60% 18%)' }}>
           {current?.title || 'Tavern Games'}
