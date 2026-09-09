@@ -545,6 +545,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
                 </button>
               </div>
             </motion.div>
+          </div>
         </AnimatePresence>
       ), document.body)}
     </div>
