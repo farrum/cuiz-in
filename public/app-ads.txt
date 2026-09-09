@@ -8,3 +8,16 @@ google.com, pub-2831295465597549, DIRECT, f08c47fec0942fa0
 # and every network you have enabled). The Unity line below uses the app's
 # Unity game ID; confirm it against your dashboard before publishing.
 unity3d.com, 800078728, DIRECT
+
+# Unity Ads Authorized Resellers (from Unity Monetization Dashboard)
+appads.in, 106246, RESELLER
+appnexus.com, 11826, RESELLER, f5ab79cb980f11d1
+appnexus.com, 14230, RESELLER, f5ab79cb980f11d1
+appnexus.com, 17779, RESELLER
+appnexus.com, 6849, RESELLER
+bid-matrix.com, f2c71a45ea149366, RESELLER
+bigo.sg, adidz3dyfp, RESELLER
+bluexad.ai, 1996418805747683328, RESELLER
+bold-win.com, 1189, RESELLER, 71746737d0bab951
+brightcom.com, 23120, RESELLER
+brightmountainmedia.com, 2686958, RESELLER
