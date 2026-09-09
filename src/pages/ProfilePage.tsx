@@ -71,6 +71,7 @@ const ProfilePage: React.FC = () => {
           </aside>
         </div>
         
+        <SimpleAdBanner position="middle" slotId="profile-middle" className="mt-4" />
         <SimpleAdBanner position="bottom" className="mt-4" />
       </main>
       
