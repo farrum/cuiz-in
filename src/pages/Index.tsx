@@ -6,6 +6,7 @@ import { useHomePageState } from '@/hooks/useHomePageState';
 import HeroSectionEnhanced from '@/components/home/HeroSectionEnhanced';
 import TryQuestionSection from '@/components/home/TryQuestionSection';
 import HowItWorksSection from '@/components/home/HowItWorksSection';
+import TestimonialsSection from '@/components/home/TestimonialsSection';
 import CallToAction from '@/components/home/CallToAction';
 import DailyStreakTracker from '@/components/home/DailyStreakTracker';
 import ReferralPreview from '@/components/home/ReferralPreview';
