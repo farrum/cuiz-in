@@ -281,7 +281,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
       {/* Advisor cards */}
       <div className={cn(
         "grid gap-3 sm:gap-4",
-        compact ? "grid-cols-4" : "grid-cols-2"
+        compact ? "grid-cols-4" : "grid-cols-2 md:grid-cols-4"
       )}>
         {ADVISORS.map((advisor, i) => {
           const level = Number(localStorage.getItem(`hero_${advisor.id}_level`) || '0');

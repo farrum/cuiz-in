@@ -36,7 +36,7 @@ const PageLayout = ({
   containerClassName
 }: PageLayoutProps) => {
   return (
-    <div className={cn("min-h-screen flex flex-col bg-background glass-diamond-bg", className)}>
+    <div className={cn("min-h-screen flex flex-col royal-parchment-bg text-stone-900", className)}>
       {!isMobile && <Header />}
       
       {/* 

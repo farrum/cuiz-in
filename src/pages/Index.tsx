@@ -13,8 +13,9 @@ import { DailyBountyBoard } from '@/components/home/DailyBountyBoard';
 import RegistrationIncentiveModal from '@/components/home/RegistrationIncentiveModal';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
 import DailyRewardsSection from '@/components/home/DailyRewardsSection';
-import TestimonialsSection from '@/components/home/TestimonialsSection';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
+import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
+import { MiniGamesPavilion } from '@/components/home/MiniGamesPavilion';
 
 
 const CategoryPreviewSection = lazy(() => import('@/components/home/CategoryPreviewSection'));
@@ -98,9 +99,33 @@ const Index: React.FC = () => {
           navigateToLogin={navigateToLogin}
         />
       </section>
+
+      {/* Curia Regis (Royal Council) Section */}
+      <section className="py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4" aria-labelledby="curia-regis-heading">
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+          <div className="text-center px-4">
+            <span className="text-xs font-black tracking-[0.25em] uppercase text-amber-900/70 block font-cinzel">
+              Curia Regis
+            </span>
+            <h2 id="curia-regis-heading" className="text-xl md:text-2xl font-black text-amber-950 font-cinzel">
+              The Royal Council & Legendary Advisors
+            </h2>
+            <p className="text-xs text-amber-800/60 font-semibold mt-0.5">
+              Consult your councillors for lifelines or forge shards with gems & royal decrees to ascend their rank
+            </p>
+          </div>
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+        </div>
+
+        <MedievalAdvisors />
+      </section>
       
-      {/* Try a Question Section - Important for engagement */}
+      {/* Try a Question Section - Knowledge Trial */}
       <TryQuestionSection />
+
+      {/* Mini-Games Arcade Pavilion */}
+      <MiniGamesPavilion />
 
       {/* Ad placement - Top of homepage */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

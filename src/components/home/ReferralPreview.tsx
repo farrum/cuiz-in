@@ -134,7 +134,7 @@ const ReferralPreview: React.FC = () => {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-purple-500/10 via-card to-blue-500/10 rounded-2xl p-6 border border-purple-500/20 shadow-lg">
+    <div className="scroll-paper rounded-3xl p-6 shadow-xl border border-amber-700/25 relative overflow-hidden">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">

@@ -490,28 +490,24 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
   const getOptionStyle = (option: string) => {
     if (!isAnswered || !revealReady) {
-      if (!isAnswered && ramanujanUsed && option === question.correctAnswer) {
-        return 'border-purple-500 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/15 border-2';
+      if (ramanujanUsed && option === question.correctAnswer) {
+        return 'border-purple-500 bg-purple-500/10 cursor-pointer animate-pulse ring-2 ring-purple-400 font-bold';
       }
-      if (isAnswered) {
-        // Suspense phase: keep the pick visible but hide the verdict.
-        return option === selectedAnswer
-          ? 'border-primary bg-primary/10 animate-pulse'
-          : 'border-border opacity-70';
+      if (isAnswered && option === selectedAnswer) {
+        return 'border-amber-600 bg-amber-500/15 animate-pulse font-bold';
       }
-      return 'border-border hover:border-primary hover:bg-primary/5 cursor-pointer active:scale-[0.98]';
+      return 'border-amber-900/25 bg-white/70 hover:bg-white hover:border-amber-600 cursor-pointer active:scale-[0.98] shadow-sm btn-3d text-amber-950 font-semibold';
     }
 
-
     if (option === question.correctAnswer) {
-      return 'border-accent bg-accent/10';
+      return 'border-emerald-600 bg-emerald-500/15 text-emerald-950 font-bold ring-2 ring-emerald-500/40';
     }
 
     if (option === selectedAnswer && option !== question.correctAnswer) {
-      return 'border-destructive bg-destructive/10';
+      return 'border-rose-600 bg-rose-500/15 text-rose-950 ring-2 ring-rose-500/40';
     }
 
-    return 'border-border opacity-50';
+    return 'border-amber-900/10 opacity-40 bg-stone-100/50';
   };
 
   const getTimerColor = () => {
@@ -541,7 +537,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
   return (
     <>
-      <div className="bg-card border rounded-2xl overflow-hidden shadow-lg relative">
+      <div className="scroll-paper rounded-3xl overflow-hidden shadow-2xl relative border border-amber-700/30">
         {/* Animated Timer Bar */}
         {timerStarted && !isAnswered && (
           <div className="h-2 bg-muted/50 overflow-hidden relative">

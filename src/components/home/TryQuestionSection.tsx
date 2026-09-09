@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, ArrowRight, Sparkles, Brain, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -117,122 +116,127 @@ const TryQuestionSection: React.FC = () => {
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <Card className="border-2 border-primary/20 shadow-2xl bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-6 md:p-8">
-              {/* Category badge */}
-              <div className="flex items-center justify-between mb-6">
-                <span className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  {question?.category || 'General'}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  +{question?.gems || 10} gems
-                </span>
-              </div>
+          <div className="scroll-paper rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden border border-amber-700/30">
+            {/* Ambient watermarks */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Question */}
-              <h3 className="text-xl md:text-2xl font-semibold text-center mb-8 leading-relaxed">
-                {question?.question}
-              </h3>
+            {/* Category badge */}
+            <div className="flex items-center justify-between mb-6">
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-950 border border-amber-600/30 px-3.5 py-1 rounded-full text-xs font-bold font-cinzel">
+                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                {question?.category || 'General Knowledge'}
+              </span>
+              <span className="text-xs font-black text-amber-900/70 bg-white/70 px-2.5 py-1 rounded-full border border-amber-600/20">
+                +{question?.gems || 10} 💎 Gems
+              </span>
+            </div>
 
-              {/* Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                {question?.options.map((option, index) => {
-                  const isSelected = selectedAnswer === option;
-                  const isCorrectAnswer = option === question.correctAnswer;
-                  
-                  let optionClasses = "relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer text-left font-medium";
-                  
-                  if (!isAnswered) {
-                    optionClasses += " border-border hover:border-primary hover:bg-primary/5 hover:scale-[1.02]";
-                  } else if (isCorrectAnswer) {
-                    optionClasses += " border-green-500 bg-green-500/10 text-green-700 dark:text-green-400";
-                  } else if (isSelected && !isCorrectAnswer) {
-                    optionClasses += " border-red-500 bg-red-500/10 text-red-700 dark:text-red-400";
-                  } else {
-                    optionClasses += " border-border opacity-50";
-                  }
+            {/* Question */}
+            <h3 className="text-xl md:text-2xl font-bold text-center mb-8 leading-relaxed font-cinzel text-amber-950">
+              {question?.question}
+            </h3>
 
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswerSelect(option)}
-                      disabled={isAnswered}
-                      className={optionClasses}
-                    >
-                      <span className="flex items-center gap-3">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <span>{option}</span>
-                      </span>
-                      {isAnswered && isCorrectAnswer && (
-                        <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
-                      )}
-                      {isAnswered && isSelected && !isCorrectAnswer && (
-                        <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              {question?.options.map((option, index) => {
+                const isSelected = selectedAnswer === option;
+                const isCorrectAnswer = option === question.correctAnswer;
+                
+                let optionClasses = "relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left font-semibold btn-3d";
+                
+                if (!isAnswered) {
+                  optionClasses += " border-amber-700/25 bg-white/80 hover:bg-white hover:border-amber-600 hover:shadow-md text-amber-950";
+                } else if (isCorrectAnswer) {
+                  optionClasses += " border-emerald-600 bg-emerald-500/15 text-emerald-950 ring-2 ring-emerald-500/50 font-bold";
+                } else if (isSelected && !isCorrectAnswer) {
+                  optionClasses += " border-rose-600 bg-rose-500/15 text-rose-950 ring-2 ring-rose-500/50";
+                } else {
+                  optionClasses += " border-amber-800/10 opacity-40 bg-stone-100/50 text-stone-500";
+                }
 
-              {/* Result message */}
-              {isAnswered && (
-                <div className={cn(
-                  "p-4 rounded-xl text-center mb-6 animate-fade-in",
-                  isCorrect ? "bg-green-500/10 border border-green-500/30" : "bg-amber-500/10 border border-amber-500/30"
-                )}>
-                  {isCorrect ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Trophy className="w-5 h-5 text-green-500" />
-                      <span className="font-semibold text-green-700 dark:text-green-400">
-                        Correct! You earned {question?.gems || 10} gems!
-                      </span>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">
-                        Not quite! The correct answer was: {question?.correctAnswer}
-                      </p>
-                      {question?.explanation && (
-                        <p className="text-sm text-muted-foreground">{question.explanation}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Action buttons */}
-              {isAnswered && (
-                <div className="flex flex-col sm:flex-row gap-3 animate-fade-in">
-                  <Button
-                    onClick={handlePlayMore}
-                    size="lg"
-                    className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg"
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(option)}
+                    disabled={isAnswered}
+                    className={optionClasses}
                   >
-                    <Trophy className="w-5 h-5 mr-2" />
-                    Continue Playing
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                  <Button
-                    onClick={handleTryAnother}
-                    variant="outline"
-                    size="lg"
-                    className="flex-1"
-                  >
-                    Try Another Question
-                  </Button>
-                </div>
-              )}
+                    <span className="flex items-center gap-3">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 text-amber-900 border border-amber-600/30 flex items-center justify-center text-xs font-black">
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      <span className="text-sm font-medium">{option}</span>
+                    </span>
+                    {isAnswered && isCorrectAnswer && (
+                      <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                    )}
+                    {isAnswered && isSelected && !isCorrectAnswer && (
+                      <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-600" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-              {!isAnswered && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Click an option to see if you're right!
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            {/* Result message */}
+            {isAnswered && (
+              <div className={cn(
+                "p-4 rounded-2xl text-center mb-6 animate-fade-in",
+                isCorrect ? "bg-emerald-500/15 border border-emerald-600/30 text-emerald-950" : "bg-amber-500/15 border border-amber-600/30 text-amber-950"
+              )}>
+                {isCorrect ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Trophy className="w-5 h-5 text-emerald-600" />
+                    <span className="font-bold text-sm">
+                      Thy answer is true! Awarded +{question?.gems || 10} Royal Gems!
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-bold text-sm text-rose-900 mb-1">
+                      Alas, incorrect! The true path was: {question?.correctAnswer}
+                    </p>
+                    {question?.explanation && (
+                      <p className="text-xs text-amber-900/80 font-medium">{question.explanation}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            {isAnswered && (
+              <div className="flex flex-col sm:flex-row gap-3 animate-fade-in">
+                <Button
+                  onClick={handlePlayMore}
+                  size="lg"
+                  className="flex-1 btn-3d font-black uppercase text-xs tracking-wider text-stone-950 border-0 shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(42 90% 50%) 0%, hsl(34 92% 44%) 100%)',
+                    boxShadow: '0 3px 0 hsl(34 92% 26%), 0 6px 18px rgba(245, 158, 11, 0.25)',
+                  }}
+                >
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Continue Imperial Quest
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button
+                  onClick={handleTryAnother}
+                  variant="outline"
+                  size="lg"
+                  className="btn-3d border-2 border-amber-800/40 bg-white/70 text-amber-950 font-black text-xs uppercase tracking-wider hover:bg-white"
+                >
+                  Next Trial
+                </Button>
+              </div>
+            )}
+
+            {!isAnswered && (
+              <p className="text-center text-xs text-amber-900/60 font-semibold mt-4">
+                Choose an answer above to test thy wit!
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </section>

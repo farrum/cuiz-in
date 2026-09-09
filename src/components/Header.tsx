@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Award, User, Home, Target, Shield, LogIn, BarChartIcon, Menu, X, Play, BookOpen, HelpCircle, Landmark, Volume2, VolumeX, Bell } from 'lucide-react';
+import { 
+  Award, User, Home, Target, Shield, LogIn, BarChartIcon, 
+  Menu, X, Play, Landmark, Volume2, VolumeX, Bell, Flame, Sparkles, Gamepad2
+} from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { DAILY_TARGET, MONTHLY_TARGET, STORAGE_KEYS } from '@/utils/quizData';
-import { Progress } from '@/components/ui/progress';
+import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import GuestGemsDisplay from './GuestGemsDisplay';
@@ -11,15 +13,19 @@ import { audioManager } from '@/utils/audioManager';
 import { getUnreadCount, checkScheduledReminders } from '@/utils/notificationManager';
 import { NotificationCenterModal } from '@/components/notifications/NotificationCenterModal';
 import { GooglePlayBadge } from '@/components/app-promo/GooglePlay';
+import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { streak } = usePersistentQuizStats();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [bgmEnabled, setBgmEnabled] = useState(audioManager.isBgmEnabled());
   const [todayGems, setTodayGems] = useState(0);
   const [monthlyGems, setMonthlyGems] = useState(0);
+  const [userName, setUserName] = useState('Adventurer');
+  const [userRole, setUserRole] = useState('player');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTeamLeader, setIsTeamLeader] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -46,13 +52,15 @@ const Header: React.FC = () => {
   useEffect(() => {
     const syncFromCache = () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-      const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
-      const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+      const name = localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Adventurer';
+      const role = localStorage.getItem(STORAGE_KEYS.USER_ROLE) || 'player';
       
-      const userLoggedIn = !!userName && !!userId;
+      const userLoggedIn = !!userId;
       setIsLoggedIn(userLoggedIn);
-      setIsAdmin(userRole === 'admin');
-      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader');
+      setUserName(name);
+      setUserRole(role);
+      setIsAdmin(role === 'admin');
+      setIsTeamLeader(role === 'team_leader' || role === 'teamleader');
       
       if (!userLoggedIn) {
         setTodayGems(0);
@@ -60,12 +68,9 @@ const Header: React.FC = () => {
       }
     };
     
-    // Initial sync from localStorage (populated by App.tsx auth listener)
     syncFromCache();
 
-    // Re-sync when auth state changes (App.tsx updates localStorage, then this fires)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      // Defer to let App.tsx hydration complete first
       setTimeout(syncFromCache, 50);
     });
     
@@ -85,18 +90,15 @@ const Header: React.FC = () => {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) {
         setTodayGems(0);
-        setMonthlyGems(0); // Used for Stars now
+        setMonthlyGems(0);
         return;
       }
       
       try {
         const { data } = await supabase.from('profiles').select('points, stars').eq('id', userId).maybeSingle();
-        
         if (data) {
           setTodayGems(data.points ?? 0);
           setMonthlyGems(data.stars ?? 0);
-          
-          // Update local storage too for consistency
           localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(data.points ?? 0));
           localStorage.setItem(STORAGE_KEYS.USER_STARS, String(data.stars ?? 0));
         }
@@ -108,30 +110,30 @@ const Header: React.FC = () => {
     if (isLoggedIn) {
       updateGems();
       window.addEventListener('gemsUpdated', updateGems);
-      window.addEventListener('shardsUpdated', updateGems); // Optional, trigger generic refresh
+      window.addEventListener('advisorShardsUpdated', updateGems);
       const intervalId = setInterval(updateGems, 15000);
       return () => {
         window.removeEventListener('gemsUpdated', updateGems);
-        window.removeEventListener('shardsUpdated', updateGems);
+        window.removeEventListener('advisorShardsUpdated', updateGems);
         clearInterval(intervalId);
       };
     }
   }, [isLoggedIn]);
 
-  // Simplified navigation (decluttered - Categories, FAQ, Games moved to footer)
+  // Grand Citadel navigation
   const mainNavItems = [
-    { path: '/', label: 'Home', icon: Home },
+    { path: '/', label: 'Citadel', icon: Home },
+    { path: '/quiz', label: 'Play & Quests', icon: Award },
+    { path: '/kingdoms', label: 'Kingdoms', icon: Landmark },
+    { path: '/minigames', label: 'Mini-Games', icon: Gamepad2 },
   ];
 
   const loggedInNavItems = [
-    { path: '/quiz', label: 'Play', icon: Award },
-    { path: '/empire-quests', label: 'Quests', icon: Target },
-    { path: '/kingdoms', label: 'Kingdoms', icon: Landmark },
-    { path: '/profile', label: 'Profile', icon: User },
+    { path: '/profile', label: 'Crest & Profile', icon: User },
   ];
 
-  const adminNavItems = isAdmin ? [{ path: '/admin', label: 'Admin', icon: Shield }] : [];
-  const teamLeaderNavItems = isTeamLeader ? [{ path: '/team-dashboard', label: 'Team', icon: BarChartIcon }] : [];
+  const adminNavItems = isAdmin ? [{ path: '/admin', label: 'Grand Admin', icon: Shield }] : [];
+  const teamLeaderNavItems = isTeamLeader ? [{ path: '/team-dashboard', label: 'Squad', icon: BarChartIcon }] : [];
   
   const navItems = isLoggedIn 
     ? [...mainNavItems, ...loggedInNavItems, ...teamLeaderNavItems, ...adminNavItems]
@@ -146,190 +148,203 @@ const Header: React.FC = () => {
     <header className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
       scrolled 
-        ? "bg-background/95 backdrop-blur-md shadow-md border-b border-border/50" 
-        : "bg-transparent"
+        ? "bg-[#18130E]/95 backdrop-blur-md shadow-2xl border-b border-amber-600/30" 
+        : "bg-[#1C1611]/90 backdrop-blur-sm border-b border-amber-800/30 shadow-md"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center group" aria-label="CuizIN Home - Go to homepage">
-            <img
-              src="/cuizin-logo.png"
-              alt="CuizIN - Quiz and Learning Platform Logo"
-              width={160}
-              height={44}
-              fetchPriority="high"
-              loading="eager"
-              className="h-10 md:h-11 w-auto object-contain group-hover:scale-105 transition-transform"
-            />
-          </Link>
+          {/* Logo & Realm Badge */}
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center group" aria-label="CuizIN Home - Royal Citadel">
+              <img
+                src="/cuizin-logo.png"
+                alt="CuizIN - Royal Quiz Platform Logo"
+                width={150}
+                height={40}
+                fetchPriority="high"
+                loading="eager"
+                className="h-9 md:h-10 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-[0_2px_8px_rgba(245,158,11,0.25)]"
+              />
+            </Link>
+
+            <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              👑 Royal Citadel
+            </span>
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-current={location.pathname === item.path ? "page" : undefined}
-                className={cn(
-                  "px-3 py-2 rounded-lg text-xs font-black transition-all uppercase tracking-wider",
-                  location.pathname === item.path
-                    ? "text-amber-700 bg-amber-500/20 border-b-2 border-amber-700 rounded-b-none"
-                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/50"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <nav className="hidden lg:flex items-center gap-1.5" aria-label="Main navigation">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider",
+                    isActive
+                      ? "text-amber-300 bg-amber-500/20 border border-amber-500/40 shadow-sm"
+                      : "text-amber-200/70 hover:text-amber-100 hover:bg-white/5"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5 opacity-80" strokeWidth={2.2} />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* Right side: Gems + CTA */}
-          <div className="flex items-center gap-3">
-            {/* Gems & Stars display - desktop only */}
+          {/* Right side: Player Realm Stats + CTA */}
+          <div className="flex items-center gap-2.5">
+            {/* Player Currencies (Desktop Web) */}
             {isLoggedIn ? (
-              <div className="hidden lg:flex flex-col gap-1 w-32">
-                <div className="flex text-xs items-center justify-between gap-1 bg-sky-100/50 px-2 py-0.5 rounded-md border border-sky-200 shadow-inner">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[12px] drop-shadow-sm">💎</span>
-                    <span className="text-[10px] font-black tracking-widest uppercase text-sky-800">Gems</span>
-                  </div>
-                  <span className="text-xs font-black text-sky-600 drop-shadow-sm">{todayGems.toFixed(0)}</span>
+              <div className="hidden sm:flex items-center gap-2">
+                {/* Gems */}
+                <div 
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-200 shadow-sm"
+                  title="Royal Gems"
+                >
+                  <span className="text-xs">💎</span>
+                  <span className="text-xs font-black">{todayGems.toLocaleString()}</span>
                 </div>
-                <div className="flex text-xs items-center justify-between gap-1 bg-amber-100/50 px-2 py-0.5 rounded-md border border-amber-200 shadow-inner">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[12px] drop-shadow-sm">⭐</span>
-                    <span className="text-[10px] font-black tracking-widest uppercase text-amber-800">Stars</span>
-                  </div>
-                  <span className="text-xs font-black text-amber-600 drop-shadow-sm">{monthlyGems.toFixed(0)}</span>
+
+                {/* Stars */}
+                <div 
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/80 border border-amber-500/30 text-amber-200 shadow-sm"
+                  title="Imperial Stars"
+                >
+                  <span className="text-xs">⭐</span>
+                  <span className="text-xs font-black">{monthlyGems.toLocaleString()}</span>
                 </div>
+
+                {/* Streak */}
+                {streak > 0 && (
+                  <div 
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-950/80 border border-rose-500/30 text-rose-200 shadow-sm"
+                    title="Daily Streak"
+                  >
+                    <Flame className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                    <span className="text-xs font-black">{streak}</span>
+                  </div>
+                )}
               </div>
             ) : (
-              <GuestGemsDisplay className="hidden lg:flex" />
+              <GuestGemsDisplay className="hidden md:flex" />
             )}
 
-            {/* Notification Center Bell Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-slate-400 hover:text-white relative"
-              onClick={() => setNotifModalOpen(true)}
-              title="Notifications"
-              aria-label="Open notifications"
-            >
-              <Bell className="w-5 h-5 text-amber-400" />
-              {unreadNotifCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-black font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse border border-black">
-                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                </span>
-              )}
-            </Button>
-
-            {/* Background Music Mute Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-slate-400 hover:text-white"
+            {/* Background Music Toggle */}
+            <button
               onClick={() => {
                 audioManager.toggleBGM();
                 setBgmEnabled(audioManager.isBgmEnabled());
               }}
-              title={bgmEnabled ? "Mute Background Music" : "Unmute Background Music"}
-              aria-label={bgmEnabled ? "Mute background music" : "Unmute background music"}
-              aria-pressed={!bgmEnabled}
+              title={bgmEnabled ? "Mute Citadel Music" : "Play Citadel Music"}
+              className="w-8 h-8 rounded-full bg-white/5 border border-amber-700/30 text-amber-200/80 hover:text-amber-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              aria-label="Toggle background music"
             >
-              {bgmEnabled ? <Volume2 className="w-5 h-5" aria-hidden="true" /> : <VolumeX className="w-5 h-5 text-red-500" aria-hidden="true" />}
-            </Button>
+              {bgmEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4 text-stone-500" />}
+            </button>
 
-            {/* Get the app CTA */}
-            <GooglePlayBadge size="sm" className="hidden lg:inline-flex" />
+            {/* Notification Bell */}
+            <button
+              onClick={() => setNotifModalOpen(true)}
+              title="Royal Decrees"
+              className="w-8 h-8 rounded-full bg-white/5 border border-amber-700/30 text-amber-200/80 hover:text-amber-100 relative flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              aria-label="Open notifications"
+            >
+              <Bell className="w-4 h-4 text-amber-400" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-stone-950 font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-stone-900 animate-pulse">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
+            </button>
 
-            {/* Play Now CTA - always visible */}
+            {/* Google Play App Badge */}
+            <GooglePlayBadge size="sm" className="hidden xl:inline-flex" />
+
+            {/* Embark / Play CTA */}
             <Button
               onClick={handlePlayNow}
               size="sm"
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md hidden sm:flex"
+              className="btn-3d font-black uppercase text-xs tracking-wider border-0 shadow-md text-stone-950"
+              style={{
+                background: 'linear-gradient(135deg, hsl(42 90% 50%) 0%, hsl(34 92% 44%) 100%)',
+                boxShadow: '0 2px 0 hsl(34 92% 28%), 0 4px 12px rgba(245, 158, 11, 0.25)',
+              }}
             >
-              <Play className="w-4 h-4 mr-1.5 fill-current" />
-              Play Now
+              <Play className="w-3.5 h-3.5 mr-1 fill-current" />
+              {isLoggedIn ? 'Play Quiz' : 'Embark'}
             </Button>
 
-            {/* Auth buttons for logged out users */}
+            {/* Login for guests */}
             {!isLoggedIn && (
               <Link to="/login" className="hidden sm:block">
-                <Button variant="outline" size="sm">
-                  <LogIn className="w-4 h-4 mr-1.5" />
-                  Login
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-xs font-bold border-amber-700/40 bg-white/5 text-amber-200 hover:bg-white/10 hover:text-white"
+                >
+                  <LogIn className="w-3.5 h-3.5 mr-1" />
+                  Sign In
                 </Button>
               </Link>
             )}
 
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
+            {/* Mobile menu hamburger */}
+            <button
+              className="lg:hidden w-8 h-8 rounded-lg bg-white/5 border border-amber-700/30 text-amber-200 flex items-center justify-center"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
-            </Button>
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile / Tablet Dropdown Menu */}
       {mobileMenuOpen && (
-        <nav id="mobile-menu" className="md:hidden bg-background/98 backdrop-blur-lg border-t border-border animate-fade-in" aria-label="Mobile navigation">
-          <div className="px-4 py-4 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                aria-current={location.pathname === item.path ? "page" : undefined}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                  location.pathname === item.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <item.icon className="w-5 h-5" aria-hidden="true" />
-                {item.label}
-              </Link>
-            ))}
-            
-            <div className="pt-4 space-y-2">
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2"
-                onClick={() => {
-                  audioManager.toggleBGM();
-                  setBgmEnabled(audioManager.isBgmEnabled());
-                }}
-              >
-                {bgmEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-red-500" />}
-                {bgmEnabled ? 'Mute Music' : 'Unmute Music'}
-              </Button>
-
-              <Button onClick={handlePlayNow} className="w-full">
-                <Play className="w-4 h-4 mr-2 fill-current" />
-                Play Now
-              </Button>
-
-              <GooglePlayBadge size="md" className="w-full justify-center" />
-              
-              {!isLoggedIn && (
-                <Link to="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Login
-                  </Button>
-                </Link>
+        <nav className="lg:hidden bg-[#18130E]/98 backdrop-blur-xl border-t border-amber-800/40 p-4 space-y-2 animate-fade-in">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors",
+                location.pathname === item.path
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : "text-amber-100/70 hover:text-white hover:bg-white/5"
               )}
-            </div>
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          ))}
+          
+          <div className="pt-3 border-t border-amber-800/30 flex flex-col gap-2">
+            <Button
+              onClick={handlePlayNow}
+              className="w-full btn-3d font-black uppercase text-xs tracking-wider text-stone-950"
+              style={{
+                background: 'linear-gradient(135deg, hsl(42 90% 50%) 0%, hsl(34 92% 44%) 100%)',
+              }}
+            >
+              <Play className="w-4 h-4 mr-2 fill-current" />
+              {isLoggedIn ? 'Play Quiz' : 'Embark Quest'}
+            </Button>
+
+            {!isLoggedIn && (
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" className="w-full border-amber-700/40 text-amber-200">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </nav>
       )}
@@ -344,3 +359,4 @@ const Header: React.FC = () => {
 };
 
 export default Header;
+

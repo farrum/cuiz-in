@@ -26,27 +26,29 @@ const Footer: React.FC = () => {
   ];
   
   return (
-    <footer className="py-8 border-t border-border bg-background" role="contentinfo" aria-label="Site footer">
+    <footer className="py-12 border-t border-amber-800/40 bg-[#16120E] text-amber-100/80 shadow-2xl relative" role="contentinfo" aria-label="Site footer">
       <div className="container mx-auto px-4">
         {/* Google Play app promo */}
         <AppDownloadCard className="mb-8" />
 
         {/* SEO: Static category link grid for crawler depth */}
-        <nav aria-label="Quiz categories" className="mb-8 pb-8 border-b border-border">
-          <h3 className="text-lg font-semibold mb-4">Browse Quiz Categories</h3>
-          <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 text-sm" role="list">
+        <nav aria-label="Quiz categories" className="mb-8 pb-8 border-b border-amber-800/30">
+          <h3 className="text-sm font-black uppercase tracking-wider text-amber-400 font-cinzel mb-4">
+            👑 Browse Realm Knowledge Categories
+          </h3>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 text-xs" role="list">
             <li>
-              <Link to="/gk-quiz" className="text-primary hover:underline font-medium">
+              <Link to="/gk-quiz" className="text-amber-300 hover:underline font-bold">
                 GK Quiz
               </Link>
             </li>
             <li>
-              <Link to="/cricket-quiz" className="text-primary hover:underline font-medium">
+              <Link to="/cricket-quiz" className="text-amber-300 hover:underline font-bold">
                 Cricket Quiz
               </Link>
             </li>
             <li>
-              <Link to="/bollywood-quiz" className="text-primary hover:underline font-medium">
+              <Link to="/bollywood-quiz" className="text-amber-300 hover:underline font-bold">
                 Bollywood Quiz
               </Link>
             </li>
@@ -54,14 +56,14 @@ const Footer: React.FC = () => {
               <li key={c.slug}>
                 <Link
                   to={`/categories/${c.slug}`}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-amber-200/60 hover:text-amber-300 transition-colors font-medium"
                 >
                   {c.name} Quiz
                 </Link>
               </li>
             ))}
             <li>
-              <Link to="/categories" className="text-primary hover:underline font-medium">
+              <Link to="/categories" className="text-amber-400 hover:underline font-bold">
                 View all categories →
               </Link>
             </li>
@@ -71,42 +73,44 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* First Column - Navigation Links */}
           <nav className="space-y-3" aria-label="Quick links">
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2" role="list">
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-400 font-cinzel mb-4">
+              Citadel Portals
+            </h3>
+            <ul className="space-y-2 text-xs" role="list">
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Home className="w-4 h-4 mr-2" />
-                  Home
+                <Link to="/" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Home className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Citadel Home
                 </Link>
               </li>
               <li>
-                <Link to="/quiz" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Play className="w-4 h-4 mr-2" />
-                  Play Quiz
+                <Link to="/quiz" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Play className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Play Quiz &amp; Quests
                 </Link>
               </li>
               <li>
-                <Link to="/referral" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Users className="w-4 h-4 mr-2" />
-                  Referral Dashboard
+                <Link to="/referral" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Users className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Squad &amp; Covenant
                 </Link>
               </li>
               <li>
-                <Link to="/referral-program" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Referral Program
+                <Link to="/referral-program" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <UserPlus className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Recruitment Program
                 </Link>
               </li>
               <li>
-                <Link to="/minigames" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Play className="w-4 h-4 mr-2" />
-                  Mini Games
+                <Link to="/minigames" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Play className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Mini-Games Arcade
                 </Link>
               </li>
               <li>
-                <Link to="/profile" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
+                <Link to="/profile" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <User className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Royal Crest &amp; Profile
                 </Link>
               </li>
             </ul>
@@ -114,121 +118,87 @@ const Footer: React.FC = () => {
           
           {/* Second Column - Content Pages */}
           <nav className="space-y-3" aria-label="Resources">
-            <h3 className="text-lg font-semibold mb-4">Resources</h3>
-            <ul className="space-y-2" role="list">
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-400 font-cinzel mb-4">
+              Archives &amp; Decrees
+            </h3>
+            <ul className="space-y-2 text-xs" role="list">
               <li>
-                <Link to="/blog" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Book className="w-4 h-4 mr-2" />
-                  Blog
+                <Link to="/blog" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Book className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Chronicles (Blog)
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  FAQ
+                <Link to="/faq" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <HelpCircle className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Scholar FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/categories" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Grid2X2 className="w-4 h-4 mr-2" />
+                <Link to="/categories" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Grid2X2 className="w-3.5 h-3.5 mr-2 text-amber-500" />
                   Quiz Categories
                 </Link>
               </li>
               <li>
-                <Link to="/browse" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Search className="w-4 h-4 mr-2" />
+                <Link to="/browse" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Search className="w-3.5 h-3.5 mr-2 text-amber-500" />
                   Browse Questions
                 </Link>
               </li>
               <li>
-                <Link to="/gk-questions" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Search className="w-4 h-4 mr-2" />
-                  GK Questions with Answers
+                <Link to="/gk-questions" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Search className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  GK Questions &amp; Answers
                 </Link>
               </li>
               <li>
-                <Link to="/topics" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Compass className="w-4 h-4 mr-2" />
-                  Quiz Topics
-                </Link>
-              </li>
-              <li>
-                <Link to="/stories" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Layers className="w-4 h-4 mr-2" />
-                  Quiz Stories
-                </Link>
-              </li>
-              <li>
-                <Link to="/editorial-policy" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <ShieldCheck className="w-4 h-4 mr-2" />
+                <Link to="/editorial-policy" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-2 text-amber-500" />
                   Editorial Policy
                 </Link>
               </li>
               <li>
-                <Link to="/our-sources" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Library className="w-4 h-4 mr-2" />
-                  Our Sources &amp; Citations
+                <Link to="/our-sources" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Library className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                  Scholarly Sources
                 </Link>
               </li>
               <li>
-                <Link to="/corrections" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Corrections Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <FileText className="w-4 h-4 mr-2" />
+                <Link to="/terms" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <FileText className="w-3.5 h-3.5 mr-2 text-amber-500" />
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link to="/disclaimer" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Game Disclaimer
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Lock className="w-4 h-4 mr-2" />
+                <Link to="/privacy" className="text-amber-200/65 hover:text-amber-300 flex items-center transition-colors">
+                  <Lock className="w-3.5 h-3.5 mr-2 text-amber-500" />
                   Privacy Policy
                 </Link>
-              </li>
-              <li>
-                <Link to="/all-questions" className="text-muted-foreground hover:text-foreground flex items-center">
-                  <Map className="w-4 h-4 mr-2" aria-hidden="true" />
-                  All Questions
-                </Link>
-              </li>
-              <li>
-                <a href="/sitemap.xml" className="text-muted-foreground hover:text-foreground flex items-center" aria-label="View XML Sitemap">
-                  <Map className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Sitemap
-                </a>
               </li>
             </ul>
           </nav>
           
           {/* Third Column - Summary */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold mb-4">About CuizIN</h3>
-            <p className="text-muted-foreground">
-              CuizIN is a completely free quiz platform. Players can earn a fixed monthly income 
-              by completing assigned tasks and maintaining active play. No payment is required to start 
-              playing and earning rewards.
+            <h3 className="text-sm font-black uppercase tracking-wider text-amber-400 font-cinzel mb-4">
+              About The Citadel
+            </h3>
+            <p className="text-xs text-amber-200/70 leading-relaxed font-medium">
+              CuizIN is a completely free realm quiz platform. Scholars and warriors can earn rewards, unlock legendary councillors, and conquer historic dynasties. No deposit or payment is ever required to play.
             </p>
-            <p className="text-muted-foreground">
-              <Link to="/referral-program" className="text-primary hover:underline">
-                Refer friends and build your team
-              </Link> to increase your monthly earnings.
+            <p className="text-xs text-amber-200/70">
+              <Link to="/referral-program" className="text-amber-400 font-bold hover:underline">
+                Recruit squadmates and build your alliance
+              </Link> to forge recurring gems together.
             </p>
           </div>
         </div>
         
         {/* Copyright */}
-        <div className="mt-8 pt-4 border-t border-border">
-          <p className="text-center text-sm text-muted-foreground">
-            © {currentYear} Cuiz<span className="text-green-500">IN</span>. All rights reserved.
+        <div className="mt-10 pt-4 border-t border-amber-800/30">
+          <p className="text-center text-xs text-amber-200/50">
+            © {currentYear} Cuiz<span className="text-amber-400 font-black">IN</span>. All rights reserved across the Realms.
           </p>
         </div>
       </div>

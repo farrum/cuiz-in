@@ -97,7 +97,7 @@ const DailyStreakTracker: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-orange-500/10 via-card to-red-500/10 rounded-2xl p-6 border border-orange-500/20 shadow-lg">
+    <div className="scroll-paper rounded-3xl p-6 shadow-xl border border-amber-700/25 relative overflow-hidden">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="relative">
