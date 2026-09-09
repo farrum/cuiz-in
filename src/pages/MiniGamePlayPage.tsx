@@ -87,7 +87,10 @@ export const MiniGamePlayPage: React.FC = () => {
 
   useEffect(() => {
     const fetchBalances = () => {
-      setUserBalances(getUserBalances());
+      const next = getUserBalances();
+      setUserBalances((prev) =>
+        prev.gems === next.gems && prev.stars === next.stars ? prev : next
+      );
     };
     fetchBalances();
     window.addEventListener('gemsUpdated', fetchBalances);
