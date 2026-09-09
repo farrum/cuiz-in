@@ -129,6 +129,13 @@ const Index: React.FC = () => {
         <MedievalAdvisors />
       </section>
       
+      {/* Ad placement - after the Royal Council */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Suspense fallback={null}>
+          <SimpleAdBanner position="content" slotId="home-council" className="rounded-xl overflow-hidden" />
+        </Suspense>
+      </div>
+
       {/* Try a Question Section - Knowledge Trial */}
       <TryQuestionSection />
 
