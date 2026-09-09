@@ -951,7 +951,7 @@ export default function QuizStoryScreen() {
                 boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
               }}
             >
-              <Mascot mood="cheer" size={80} className="mx-auto mb-3" />
+              <Mascot mood="happy" size={80} className="mx-auto mb-3" />
               <h3 className="text-xl font-black text-amber-950 font-serif mb-1">
                 Trial Concluded
               </h3>

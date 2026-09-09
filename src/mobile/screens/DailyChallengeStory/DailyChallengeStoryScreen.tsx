@@ -48,7 +48,7 @@ export default function DailyChallengeStoryScreen() {
           .maybeSingle();
 
         if (!error && data) {
-          setChallenge(data as DailyChallenge);
+          setChallenge(data as unknown as DailyChallenge);
         }
 
         // Check user completion from Supabase
@@ -124,7 +124,7 @@ export default function DailyChallengeStoryScreen() {
         >
           {/* King Mascot */}
           <Mascot
-            mood={isCompletedToday ? 'celebrating' : 'cheer'}
+            mood={isCompletedToday ? 'celebrating' : 'happy'}
             size={105}
             className="mx-auto mb-3 drop-shadow-sm"
           />

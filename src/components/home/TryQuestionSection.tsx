@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, ArrowRight, Sparkles, Brain, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { getRandomQuestion, QuizQuestion } from '@/utils/quizData';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
