@@ -411,7 +411,6 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
       {selectedAdvisor && createPortal((
         <AnimatePresence>
           <div
-          <div
             className="fixed inset-0 z-[850] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm"
             onClick={() => setSelectedAdvisor(null)}
           >
