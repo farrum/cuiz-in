@@ -169,20 +169,28 @@ const EQUIPPED_TITLE_KEY = 'cuizin_active_title';
 export const initializeStartingBalances = () => {
   const currentGems = localStorage.getItem(STORAGE_KEYS.USER_GEMS);
   const currentStars = localStorage.getItem(STORAGE_KEYS.USER_STARS);
+  let seeded = false;
 
   if (!currentGems || parseInt(currentGems) === 0) {
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, '500');
+    seeded = true;
   }
   if (!currentStars || parseInt(currentStars) === 0) {
     localStorage.setItem(STORAGE_KEYS.USER_STARS, '50');
+    seeded = true;
   }
-  window.dispatchEvent(new CustomEvent('gemsUpdated'));
+  // Only notify when values actually changed — dispatching unconditionally can
+  // trigger infinite render loops when this runs during a component render.
+  if (seeded) {
+    window.dispatchEvent(new CustomEvent('gemsUpdated'));
+  }
 };
 
 // Get current user currency balances
 export const getUserBalances = () => {
   // Ensure seeded balances
   initializeStartingBalances();
+  
   
   const gems = parseInt(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
   const stars = parseInt(localStorage.getItem(STORAGE_KEYS.USER_STARS) || '0');
