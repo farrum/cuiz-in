@@ -65,6 +65,7 @@ const MiniGamePlayPage = lazyWithRetry(() =>
 );
 
 const Profile = lazyWithRetry(() => import("@/pages/Profile"));
+const DailyChallengePage = lazyWithRetry(() => import("@/pages/DailyChallengePage"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
 const AdminPage = lazyWithRetry(() => import("@/pages/AdminPage"));
