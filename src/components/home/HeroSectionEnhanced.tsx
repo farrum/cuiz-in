@@ -127,6 +127,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 };
