@@ -34,7 +34,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
     <div className="w-full" aria-labelledby="hero-heading">
       {/* Full-width leader banner */}
       <div className="w-full mb-8 overflow-hidden shadow-xl ring-1 ring-amber-700/25">
-        <MedievalCharacterBanner compact={false} className="rounded-none border-x-0 h-full [&_.h-48]:h-56 md:[&_.h-48]:h-72" />
+        <MedievalCharacterBanner compact={false} className="rounded-none border-x-0 [&>div:first-child]:h-56 md:[&>div:first-child]:h-80" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
