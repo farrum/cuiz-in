@@ -142,28 +142,35 @@ const TryQuestionSection: React.FC = () => {
               {question?.options.map((option, index) => {
                 const isSelected = selectedAnswer === option;
                 const isCorrectAnswer = option === question.correctAnswer;
-                
-                let optionClasses = "relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left font-semibold btn-3d";
-                
-                if (!isAnswered) {
-                  optionClasses += " border-amber-700/25 bg-white/80 hover:bg-white hover:border-amber-600 hover:shadow-md text-amber-950";
-                } else if (isCorrectAnswer) {
-                  optionClasses += " border-emerald-600 bg-emerald-500/15 text-emerald-950 ring-2 ring-emerald-500/50 font-bold";
-                } else if (isSelected && !isCorrectAnswer) {
-                  optionClasses += " border-rose-600 bg-rose-500/15 text-rose-950 ring-2 ring-rose-500/50";
-                } else {
-                  optionClasses += " border-amber-800/10 opacity-40 bg-stone-100/50 text-stone-500";
-                }
+
+                const baseClasses = "relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left font-semibold shadow-sm";
+
+                const stateClasses = !isAnswered
+                  ? "bg-white border-amber-800/20 text-amber-950 hover:bg-amber-50/80 hover:border-amber-600/60 hover:shadow-md hover:scale-[1.01]"
+                  : isCorrectAnswer
+                  ? "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-400/60 font-bold"
+                  : isSelected && !isCorrectAnswer
+                  ? "bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-400/60"
+                  : "bg-stone-100 border-stone-200 text-stone-500 opacity-60";
 
                 return (
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(option)}
                     disabled={isAnswered}
-                    className={optionClasses}
+                    className={cn(baseClasses, stateClasses)}
                   >
                     <span className="flex items-center gap-3">
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 text-amber-900 border border-amber-600/30 flex items-center justify-center text-xs font-black">
+                      <span className={cn(
+                        "flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center text-xs font-black",
+                        !isAnswered
+                          ? "bg-amber-100 text-amber-900 border-amber-300"
+                          : isCorrectAnswer
+                          ? "bg-emerald-200 text-emerald-900 border-emerald-400"
+                          : isSelected && !isCorrectAnswer
+                          ? "bg-rose-200 text-rose-900 border-rose-400"
+                          : "bg-stone-200 text-stone-500 border-stone-300"
+                      )}>
                         {String.fromCharCode(65 + index)}
                       </span>
                       <span className="text-sm font-medium">{option}</span>
