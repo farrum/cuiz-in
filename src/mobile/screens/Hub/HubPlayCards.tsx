@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { ScrollAdBanner } from '@/mobile/ads/ScrollAdBanner';
+import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
 import { cn } from '@/lib/utils';
 
 interface PlayNode {
@@ -151,6 +152,24 @@ export function HubPlayCards({ onNavigate }: Props) {
       {/* In-tab ad banner */}
       <div className="pt-2">
         <ScrollAdBanner slotId="hub-play-tab" position="hub-play" fallbackIndex={0} />
+      </div>
+
+      {/* Curia Regis (Royal Council) Section */}
+      <div className="pt-3 pb-2">
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+          <div className="text-center px-1">
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase text-amber-900/70 block">
+              Curia Regis
+            </span>
+            <span className="text-[8.5px] font-semibold tracking-wider text-amber-800/40 uppercase block">
+              Royal Council
+            </span>
+          </div>
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+        </div>
+
+        <MedievalAdvisors />
       </div>
     </div>
   );

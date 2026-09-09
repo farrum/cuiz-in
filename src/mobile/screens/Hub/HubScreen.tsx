@@ -34,7 +34,6 @@ import { HubGamesGrid } from './HubGamesGrid';
 import { HubRewardsTab } from './HubRewardsTab';
 import { DailyTributeModal } from './DailyTributeModal';
 import { MedievalCharacterBanner } from '@/mobile/components/MedievalCharacterBanner';
-import { MedievalAdvisors } from '@/mobile/components/MedievalAdvisors';
 import { EmberBackground } from '@/mobile/components/EmberBackground';
 
 // ── Tab definition ────────────────────────────────────────────────────────────
@@ -73,9 +72,6 @@ export default function HubScreen() {
     shardsReward: number; shardType: string;
   } | null>(null);
 
-  // ── Advisor speech ──────────────────────────────────────────────────────────
-  const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
-  const [activeId,     setActiveId]     = useState<string | null>(null);
 
   // ── Profile fetch + tribute check (runs once on mount) ─────────────────────
   useEffect(() => {
@@ -375,19 +371,6 @@ export default function HubScreen() {
         </div>
       )}
 
-      {/* ── Advisors (shown on Play tab only) ──────────────────────────── */}
-      {activeTab === 'play' && (
-        <div className="px-4 pt-3">
-          <MedievalAdvisors
-            onAdvisorTap={(advisor) => {
-              const quote = advisor.quotes[Math.floor(Math.random() * advisor.quotes.length)];
-              setActiveSpeech(quote);
-              setActiveId(advisor.id);
-              setTimeout(() => { setActiveSpeech(null); setActiveId(null); }, 3500);
-            }}
-          />
-        </div>
-      )}
 
       {/* ── Tab content panels ──────────────────────────────────────────── */}
       <div className="pb-4" style={{ paddingBottom: 'calc(var(--bottom-clearance, 120px) + 16px)' }}>
