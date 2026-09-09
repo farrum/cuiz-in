@@ -31,14 +31,17 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
+    <div className="w-full" aria-labelledby="hero-heading">
+      {/* Full-width leader banner */}
+      <div className="w-full mb-8 overflow-hidden shadow-xl ring-1 ring-amber-700/25">
+        <MedievalCharacterBanner compact={false} className="rounded-none border-x-0 [&>div:first-child]:h-56 md:[&>div:first-child]:h-80" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (7 cols): Character Banner + Royal Intro & CTA */}
+        {/* Left Column (7 cols): Royal Intro & CTA */}
         <div className="lg:col-span-7 space-y-5">
-          {/* Character Banner Card */}
-          <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-amber-700/25">
-            <MedievalCharacterBanner compact={false} />
-          </div>
+
 
           {/* Headline & Description */}
           <div className="space-y-2">
@@ -123,6 +126,7 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
             <RoyalChambersDesktop />
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

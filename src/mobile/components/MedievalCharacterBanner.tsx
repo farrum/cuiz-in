@@ -19,7 +19,7 @@ interface PathNode {
 
 export function MedievalCharacterBanner({ compact = false, className }: MedievalCharacterBannerProps) {
   const [role, setRole] = useState<string>('infantry');
-  const [username, setUsername] = useState<string>('Infantry');
+  const [username, setUsername] = useState<string>('');
   const [hierarchyPath, setHierarchyPath] = useState<PathNode[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -187,7 +187,7 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
             getRankColorClass(role).split(' ')[0]
           )}
         >
-          {getRankName(role)} {username}
+          {getRankName(role)}{username ? ` ${username}` : ''}
         </motion.p>
       </div>
 

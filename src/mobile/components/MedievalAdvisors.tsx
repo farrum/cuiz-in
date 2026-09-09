@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Sparkles, Zap, Flame, Star, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -407,8 +408,8 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
       </div>
 
       {/* ── Shard Acquisition Modal ────────────────────────────────────── */}
-      <AnimatePresence>
-        {selectedAdvisor && (
+      {selectedAdvisor && createPortal((
+        <AnimatePresence>
           <div
             className="fixed inset-0 z-[850] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm"
             onClick={() => setSelectedAdvisor(null)}
@@ -545,8 +546,8 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
               </div>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      ), document.body)}
     </div>
   );
 }

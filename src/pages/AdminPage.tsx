@@ -41,6 +41,7 @@ import GuestActivityPanel from '@/components/admin/GuestActivityPanel';
 import AdminEmpireTasksMonitor from '@/components/admin/AdminEmpireTasksMonitor';
 import AdminTeamLeadersRoster from '@/components/admin/AdminTeamLeadersRoster';
 import ClientVersionsPanel from '@/components/admin/ClientVersionsPanel';
+import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { cn } from '@/lib/utils';
 
 const AdminPage: React.FC = () => {
@@ -345,6 +346,7 @@ const AdminPage: React.FC = () => {
 
         {/* Tab contents wrapped inside standard Tab view */}
         <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
+          <SimpleAdBanner position="header" slotId="admin-top" className="mb-4 rounded-xl overflow-hidden" />
           <Tabs value={activeTab} className="w-full">
             <TabsContent value="users" className="mt-0 outline-none space-y-4">
               <div className="flex justify-between items-center mb-2">
@@ -452,6 +454,7 @@ const AdminPage: React.FC = () => {
               <AdminEmpireTasksMonitor />
             </TabsContent>
           </Tabs>
+          <SimpleAdBanner position="footer" slotId="admin-bottom" className="mt-6 rounded-xl overflow-hidden" />
         </main>
       </div>
     </div>

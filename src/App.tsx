@@ -65,6 +65,7 @@ const MiniGamePlayPage = lazyWithRetry(() =>
 );
 
 const Profile = lazyWithRetry(() => import("@/pages/Profile"));
+const DailyChallengePage = lazyWithRetry(() => import("@/pages/DailyChallengePage"));
 const ForgotPasswordPage = React.lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = React.lazy(() => import("@/pages/ResetPasswordPage"));
 const AdminPage = lazyWithRetry(() => import("@/pages/AdminPage"));
@@ -543,7 +544,13 @@ function App() {
                   <Profile />
                 </LazyProtectedRoute>
               } />
-              
+
+              <Route path="/daily" element={
+                <Suspense fallback={<PageLoader />}>
+                  <DailyChallengePage />
+                </Suspense>
+              } />
+
               {/* Admin routes */}
               <Route path="/admin" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/users" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />

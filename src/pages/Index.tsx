@@ -91,6 +91,13 @@ const Index: React.FC = () => {
       
       {!isLoggedIn && <RegistrationIncentiveModal triggerAfterQuestions={3} />}
       
+      {/* Ad placement - very top of homepage */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
+        <Suspense fallback={null}>
+          <SimpleAdBanner position="header" slotId="home-hero-top" className="rounded-xl overflow-hidden" />
+        </Suspense>
+      </div>
+
       {/* Hero Section - Critical, loads immediately */}
       <section className="py-8 md:py-12">
         <HeroSectionEnhanced 
@@ -122,6 +129,13 @@ const Index: React.FC = () => {
         <MedievalAdvisors />
       </section>
       
+      {/* Ad placement - after the Royal Council */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Suspense fallback={null}>
+          <SimpleAdBanner position="content" slotId="home-council" className="rounded-xl overflow-hidden" />
+        </Suspense>
+      </div>
+
       {/* Try a Question Section - Knowledge Trial */}
       <TryQuestionSection />
 
