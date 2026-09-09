@@ -20,7 +20,7 @@ const DailyChallengePage: React.FC = () => {
 
       <Header />
 
-      <main className="flex-1 container max-w-5xl px-4 pt-6 pb-10">
+      <main className="flex-1 container max-w-5xl px-4 pt-24 pb-10">
         <h1 className="text-2xl md:text-3xl font-black font-cinzel text-amber-950">
           Daily Challenge
         </h1>
