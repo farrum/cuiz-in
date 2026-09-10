@@ -11,7 +11,7 @@ export const MiniGamesPavilion: React.FC = () => {
 
   const handlePlayGame = (gameId: string) => {
     haptics('medium');
-    navigate(`/game/${gameId}`);
+    navigate(`/minigames/${gameId}`);
   };
 
   return (

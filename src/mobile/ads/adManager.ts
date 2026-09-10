@@ -179,7 +179,7 @@ export async function listenForBannerState(
   return NativeAds.addListener('bannerState', listener);
 }
 
-// ─── Full-Screen Ads (With Strict Zero-Struggle Timeouts) ────────────────────
+// ─── Full-Screen Ads ─────────────────────────────────────────────────────────
 
 export async function preloadInterstitial(): Promise<void> {
   if (!isMobileAdsEnabled || !Capacitor.isNativePlatform()) return;
@@ -192,40 +192,32 @@ export async function preloadInterstitial(): Promise<void> {
 }
 
 /**
- * Show interstitial ad with a strict timeout.
- * If no ad is ready, or if showing fails, resolves immediately with false
- * so the player's game flow is NEVER blocked or stalled.
+ * Show an interstitial and wait for the native close/failure callback before
+ * allowing gameplay to continue. The native SDK rejects promptly when no ad
+ * is ready, so a JavaScript timeout must not race an ad that is still playing.
  */
-export async function showInterstitial(timeoutMs = 1500): Promise<boolean> {
+export async function showInterstitial(_timeoutMs?: number): Promise<boolean> {
   if (!isMobileAdsEnabled) return false;
   if (!Capacitor.isNativePlatform()) return true;
 
   if (fullScreenDepth > 0) return false;
   await initAdManager();
 
-  const adPromise = (async (): Promise<boolean> => {
-    fullScreenDepth++;
-    notifyFullScreenAdState(true);
-    audioManager.pauseBGM();
-    try {
-      await NativeAds.showInterstitial();
-      return true;
-    } catch (e) {
-      console.warn('[AdManager] Interstitial unavailable/rejected:', e);
-      return false;
-    } finally {
-      fullScreenDepth--;
-      notifyFullScreenAdState(false);
-      audioManager.startBGM();
-      preloadInterstitial();
-    }
-  })();
-
-  const timeoutPromise = new Promise<boolean>((resolve) => {
-    setTimeout(() => resolve(false), timeoutMs);
-  });
-
-  return Promise.race([adPromise, timeoutPromise]);
+  fullScreenDepth++;
+  notifyFullScreenAdState(true);
+  audioManager.pauseBGM();
+  try {
+    await NativeAds.showInterstitial();
+    return true;
+  } catch (e) {
+    console.warn('[AdManager] Interstitial unavailable/rejected:', e);
+    return false;
+  } finally {
+    fullScreenDepth--;
+    notifyFullScreenAdState(false);
+    audioManager.startBGM();
+    preloadInterstitial();
+  }
 }
 
 export async function preloadRewarded(): Promise<void> {
@@ -239,44 +231,33 @@ export async function preloadRewarded(): Promise<void> {
 }
 
 /**
- * Show rewarded video ad with a clean resolution.
- * If no ad feed is available, fails gracefully and promptly without hanging.
+ * Show a rewarded video and wait for the native reward/close callback. A short
+ * JavaScript timeout cannot distinguish an unavailable ad from one being
+ * watched and would deny rewards before a normal video finishes.
  */
-export async function showRewarded(timeoutMs = 2500): Promise<{ shown: boolean; rewarded: boolean }> {
+export async function showRewarded(_timeoutMs?: number): Promise<{ shown: boolean; rewarded: boolean }> {
   if (!isMobileAdsEnabled) return { shown: false, rewarded: false };
   if (!Capacitor.isNativePlatform()) return { shown: true, rewarded: true };
 
   if (fullScreenDepth > 0) return { shown: false, rewarded: false };
   await initAdManager();
 
-  const adPromise = (async (): Promise<{ shown: boolean; rewarded: boolean }> => {
-    fullScreenDepth++;
-    notifyFullScreenAdState(true);
-    audioManager.pauseBGM();
-    let rewarded = false;
+  fullScreenDepth++;
+  notifyFullScreenAdState(true);
+  audioManager.pauseBGM();
 
-    try {
-      const rewardItem = await NativeAds.showRewardVideoAd();
-      if (rewardItem && rewardItem.amount > 0) {
-        rewarded = true;
-      }
-      return { shown: true, rewarded };
-    } catch (e) {
-      console.warn('[AdManager] Rewarded ad unavailable:', e);
-      return { shown: false, rewarded: false };
-    } finally {
-      fullScreenDepth--;
-      notifyFullScreenAdState(false);
-      audioManager.startBGM();
-      preloadRewarded();
-    }
-  })();
-
-  const timeoutPromise = new Promise<{ shown: boolean; rewarded: boolean }>((resolve) => {
-    setTimeout(() => resolve({ shown: false, rewarded: false }), timeoutMs);
-  });
-
-  return Promise.race([adPromise, timeoutPromise]);
+  try {
+    const rewardItem = await NativeAds.showRewardVideoAd();
+    return { shown: true, rewarded: Boolean(rewardItem && rewardItem.amount > 0) };
+  } catch (e) {
+    console.warn('[AdManager] Rewarded ad unavailable:', e);
+    return { shown: false, rewarded: false };
+  } finally {
+    fullScreenDepth--;
+    notifyFullScreenAdState(false);
+    audioManager.startBGM();
+    preloadRewarded();
+  }
 }
 
 export async function getAdDiagnostics(): Promise<AdDiagnostics | null> {
