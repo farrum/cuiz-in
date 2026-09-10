@@ -32,7 +32,7 @@ export async function showAdWithFallback(
 ): Promise<boolean> {
   if (prefer === 'rewarded') {
     const res = await showRewarded();
-    return res.shown;
+    return res.rewarded;
   }
   return showInterstitial();
 }
