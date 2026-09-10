@@ -85,6 +85,7 @@ public class CustomAdMobPlugin extends Plugin {
     private boolean isUnityRewardedLoaded = false;
     private boolean isRewardedLoading = false;
     private PluginCall pendingRewardedCall = null;
+    private boolean pendingRewardEarned = false;
 
     // Initialization state
     private boolean isLevelPlayInit = false;
@@ -279,23 +280,20 @@ public class CustomAdMobPlugin extends Plugin {
                 isLpRewardedAvailable = false;
                 if (pendingRewardedCall != null) {
                     JSObject ret = new JSObject();
-                    ret.put("type", "closed");
-                    ret.put("amount", 0);
+                    ret.put("type", pendingRewardEarned ? "gems" : "closed");
+                    ret.put("amount", pendingRewardEarned ? 1 : 0);
                     pendingRewardedCall.resolve(ret);
                     pendingRewardedCall = null;
                 }
+                pendingRewardEarned = false;
             }
 
             @Override
             public void onAdRewarded(Placement placement, AdInfo adInfo) {
                 Log.i(TAG, "LevelPlay Rewarded completed reward: " + (placement != null ? placement.getRewardName() : ""));
-                if (pendingRewardedCall != null) {
-                    JSObject ret = new JSObject();
-                    ret.put("type", "gems");
-                    ret.put("amount", 1);
-                    pendingRewardedCall.resolve(ret);
-                    pendingRewardedCall = null;
-                }
+                // Record the earned reward, but keep the bridge call pending
+                // until onAdClosed so React cannot advance beneath the ad.
+                pendingRewardEarned = true;
             }
 
             @Override
@@ -304,6 +302,7 @@ public class CustomAdMobPlugin extends Plugin {
                 fullScreenAdShowing = false;
                 if (bannerWanted) scheduleBannerRefresh();
                 if (pendingRewardedCall != null) {
+                    pendingRewardEarned = false;
                     showUnityRewardedFallback(pendingRewardedCall);
                     pendingRewardedCall = null;
                 }
@@ -793,6 +792,7 @@ public class CustomAdMobPlugin extends Plugin {
                 Log.i(TAG, "Showing LevelPlay Rewarded Video (Primary)");
                 fullScreenAdShowing = true;
                 cancelBannerRefresh();
+                pendingRewardEarned = false;
                 pendingRewardedCall = call;
                 IronSource.showRewardedVideo();
             } else if (isUnityRewardedLoaded) {
