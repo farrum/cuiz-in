@@ -32,17 +32,20 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
 
   return (
     <div className="w-full" aria-labelledby="hero-heading">
-      {/* Full-width leader banner */}
-      <div className="w-full mb-8 overflow-hidden shadow-xl ring-1 ring-amber-700/25">
-        <MedievalCharacterBanner compact={false} className="rounded-none border-x-0 [&>div:first-child]:h-56 md:[&>div:first-child]:h-80" />
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (7 cols): Royal Intro & CTA */}
-        <div className="lg:col-span-7 space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        {/* Portrait-first leader panel: the square source stays fully visible. */}
+        <div className="lg:col-span-4 lg:sticky lg:top-24">
+          <MedievalCharacterBanner
+            compact={false}
+            className="rounded-t-[5rem] rounded-b-2xl border-[6px] border-amber-700/60 bg-stone-950 shadow-2xl ring-2 ring-amber-500/50 ring-offset-4 ring-offset-background [&>div:first-child]:h-auto [&>div:first-child]:aspect-square [&_img]:scale-100 [&_img]:object-contain"
+          />
+        </div>
 
-
+        <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 xl:grid-cols-8 gap-8 items-start">
+        {/* Main quest introduction */}
+        <div className="xl:col-span-5 space-y-5 xl:pt-5">
           {/* Headline & Description */}
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-600/30 text-amber-900 text-xs font-bold font-cinzel">
@@ -120,12 +123,24 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
           )}
         </div>
 
-        {/* Right Column (5 cols): Royal Chambers Action Stack */}
-        <div className="lg:col-span-5">
-          <div className="scroll-paper rounded-3xl p-4 sm:p-5 shadow-xl">
+        {/* Royal Chambers Action Stack */}
+        <div className="xl:col-span-3">
+          <div className="scroll-paper rounded-2xl p-4 shadow-xl">
             <RoyalChambersDesktop />
           </div>
         </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Restored horizontal network placement below the complete hero. */}
+      <div className="w-full pt-8">
+        <SimpleAdBanner
+          position="content"
+          slotId="hero-left-banner"
+          pageSection="hero-left"
+          className="overflow-hidden rounded-lg"
+        />
       </div>
       </div>
     </div>
