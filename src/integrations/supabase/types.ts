@@ -1024,6 +1024,8 @@ export type Database = {
           gems_balance: number
           id: string
           is_admin: boolean | null
+          last_platform: string | null
+          last_seen_at: string | null
           phone: string | null
           points: number | null
           profile_picture: string | null
@@ -1045,6 +1047,8 @@ export type Database = {
           gems_balance?: number
           id?: string
           is_admin?: boolean | null
+          last_platform?: string | null
+          last_seen_at?: string | null
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
@@ -1066,6 +1070,8 @@ export type Database = {
           gems_balance?: number
           id?: string
           is_admin?: boolean | null
+          last_platform?: string | null
+          last_seen_at?: string | null
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
@@ -1856,6 +1862,10 @@ export type Database = {
         Returns: Json
       }
       record_my_attendance: { Args: never; Returns: boolean }
+      record_session_platform: {
+        Args: { p_platform: string }
+        Returns: boolean
+      }
       regenerate_sitemap: { Args: never; Returns: undefined }
       remove_member_from_team: {
         Args: { p_member_id: string }
