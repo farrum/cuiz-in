@@ -761,6 +761,7 @@ export type Database = {
           id: string
           ip_address: string | null
           login_time: string | null
+          platform: string | null
           successful: boolean | null
           username: string
         }
@@ -770,6 +771,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           login_time?: string | null
+          platform?: string | null
           successful?: boolean | null
           username: string
         }
@@ -779,6 +781,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           login_time?: string | null
+          platform?: string | null
           successful?: boolean | null
           username?: string
         }

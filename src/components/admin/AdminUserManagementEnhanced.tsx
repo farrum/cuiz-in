@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Key, Search, UserCheck, User, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Ban, Key, Search, UserCheck, User, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown, Smartphone, Monitor } from 'lucide-react';
 
 interface AdminUserManagementEnhancedProps {
   onResetPassword: (userId: string) => void;
@@ -261,6 +261,33 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       cell: (row: any) => row.phone || '-'
     },
     {
+      header: 'Platform',
+      accessorKey: 'last_platform',
+      cell: (row: any) => {
+        const p = (row.last_platform || '').toLowerCase();
+        if (!p) return <span className="text-muted-foreground text-xs">-</span>;
+        if (p === 'app') {
+          return (
+            <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30 gap-1">
+              <Smartphone className="h-3 w-3" /> App
+            </Badge>
+          );
+        }
+        if (p === 'mobile web') {
+          return (
+            <Badge variant="outline" className="bg-sky-500/10 text-sky-500 border-sky-500/30 gap-1">
+              <Smartphone className="h-3 w-3" /> Mobile Web
+            </Badge>
+          );
+        }
+        return (
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1">
+            <Monitor className="h-3 w-3" /> Web
+          </Badge>
+        );
+      }
+    },
+    {
       header: <SortHeader label="Rank" k="role" />,
       accessorKey: 'role',
       cell: (row: any) => (
@@ -376,6 +403,7 @@ const AdminUserManagementEnhanced: React.FC<AdminUserManagementEnhancedProps> = 
       user.email,
       user.phone,
       user.id,
+      user.last_platform,
     ]
       .map(normalize)
       .join(' ');
