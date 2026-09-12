@@ -142,6 +142,15 @@ Deno.serve(async (req) => {
 
     const mappedUsers = (users || []).map((user: any) => {
       const activity = activityMap[user.id];
+      // Live session platform (recorded by the app on every session) wins over
+      // the older login_logs based inference.
+      const sessionPlatform = String(user.last_platform || '').toLowerCase();
+      let platform: string | null = null;
+      if (sessionPlatform === 'android' || sessionPlatform === 'ios') {
+        platform = 'app';
+      } else if (sessionPlatform === 'web') {
+        platform = 'web';
+      }
       return {
         ...user,
         gems: user.points || 0,
@@ -149,7 +158,8 @@ Deno.serve(async (req) => {
         questions_today: activity?.total || 0,
         questions_quest_today: activity?.quest || 0,
         gems_today: activity?.gems || 0,
-        last_platform: platformMap[(user.username || '').toLowerCase()] || null,
+        last_platform: platform || platformMap[(user.username || '').toLowerCase()] || null,
+        last_seen_at: user.last_seen_at || null,
       };
     });
 
