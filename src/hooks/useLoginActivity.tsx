@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { checkAndUpdateLoginStreak } from '@/services/loginStreakService';
 import { recordAttendance } from '@/services/attendanceService';
 import { useToast } from '@/hooks/use-toast';
+import { getAppPlatform } from '@/utils/appVersion';
 
 interface LoginBonusState {
   showBonusPopup: boolean;
