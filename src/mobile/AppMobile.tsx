@@ -47,6 +47,8 @@ function RequireAuth({ authed }: { authed: boolean }) {
 
 async function hydrateMobileSession(userId: string) {
   try {
+    // Stamp this session's platform (android / ios / web) for admin visibility
+    import('@/utils/sessionPlatform').then(m => m.reportSessionPlatform(userId)).catch(() => {});
     const [profileResult, roleResult] = await Promise.all([
       supabase.from('profiles').select('username, display_name, gems:points').eq('id', userId).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', userId),
