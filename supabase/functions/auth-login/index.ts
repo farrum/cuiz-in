@@ -36,11 +36,14 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
+    const platform = req.headers.get("x-app-platform") || "web";
+
     const logLogin = async (usernameToLog: string, successful: boolean) => {
       await supabaseAdmin.from("login_logs").insert({
         username: usernameToLog,
         ip_address: req.headers.get("x-forwarded-for") || "unknown",
         device: req.headers.get("user-agent") || "unknown",
+        platform,
         login_time: new Date().toISOString(),
         successful,
       });

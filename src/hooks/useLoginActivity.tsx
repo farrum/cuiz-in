@@ -41,6 +41,7 @@ export const useLoginActivity = (
             username: userHandle,
             ip_address: "client-side",
             device: device,
+            platform: getAppPlatform(),
             login_time: loginTime,
             successful: true
           });
