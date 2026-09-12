@@ -1,0 +1,1 @@
+ALTER TABLE public.login_logs ADD COLUMN IF NOT EXISTS platform text;
