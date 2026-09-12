@@ -109,6 +109,37 @@ Deno.serve(async (req) => {
       console.warn('Error fetching today activity in edge function:', err);
     }
 
+    // Latest login platform per user (app vs web), from recent login_logs
+    const platformMap: Record<string, string> = {};
+    try {
+      const { data: logs, error: logsError } = await supabaseAdmin
+        .from('login_logs')
+        .select('username, platform, device, login_time')
+        .eq('successful', true)
+        .order('login_time', { ascending: false })
+        .limit(5000);
+
+      if (logsError) {
+        console.warn('login_logs platform fetch error:', logsError.message);
+      } else if (logs) {
+        for (const log of logs as any[]) {
+          const uname = (log?.username || '').toLowerCase();
+          if (!uname || platformMap[uname]) continue;
+          let p = (log.platform || '').toLowerCase();
+          if (!p) {
+            // Older rows: infer from the device user-agent
+            const ua = String(log.device || '');
+            p = /mobile|android|iphone/i.test(ua) ? 'mobile web' : 'web';
+          } else if (p === 'android' || p === 'ios') {
+            p = 'app';
+          }
+          platformMap[uname] = p;
+        }
+      }
+    } catch (err) {
+      console.warn('Error fetching login platforms in edge function:', err);
+    }
+
     const mappedUsers = (users || []).map((user: any) => {
       const activity = activityMap[user.id];
       return {
@@ -118,6 +149,7 @@ Deno.serve(async (req) => {
         questions_today: activity?.total || 0,
         questions_quest_today: activity?.quest || 0,
         gems_today: activity?.gems || 0,
+        last_platform: platformMap[(user.username || '').toLowerCase()] || null,
       };
     });
 
