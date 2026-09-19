@@ -296,6 +296,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
     setAryabhataUsed(false);
     setChanakyaUsed(false);
     setRamanujanUsed(false);
+    setUsedLifelines([]);
+    setAudiencePoll(null);
     
     // Reload potion inventory counts
     setElixirCount(getPotionCount('elixir_time'));
