@@ -802,6 +802,20 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
                     <span className="font-medium text-foreground dark:text-white">{option}</span>
                   </div>
 
+                  {audiencePoll && !isAnswered && (
+                    <span className="flex items-center gap-2 shrink-0 ml-3">
+                      <span className="hidden sm:block w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <span
+                          className="block h-full bg-rose-400"
+                          style={{ width: `${audiencePoll[option] || 0}%` }}
+                        />
+                      </span>
+                      <span className="text-xs font-bold text-muted-foreground tabular-nums">
+                        {audiencePoll[option] || 0}%
+                      </span>
+                    </span>
+                  )}
+
                   {isAnswered && option === question.correctAnswer && (
                     <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
                   )}
