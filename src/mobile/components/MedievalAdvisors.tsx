@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { showRewarded } from '@/mobile/ads/adManager';
 import { supabase } from '@/integrations/supabase/client';
-import { awardAdvisorShards, syncAdvisorShards } from '@/utils/advisorShards';
+import { awardAdvisorShards, syncAdvisorShards, type AdvisorId } from '@/utils/advisorShards';
 import confetti from 'canvas-confetti';
 
 export interface Advisor {
@@ -155,7 +155,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     const nextGems = currentGems - 50;
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(nextGems));
 
-    void awardAdvisorShards(selectedAdvisor.id, 5);
+    void awardAdvisorShards(selectedAdvisor.id as AdvisorId, 5);
 
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (uid) {
@@ -185,7 +185,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     try {
       const res = await showRewarded(3000);
       if (res.rewarded) {
-        void awardAdvisorShards(selectedAdvisor.id, 2);
+        void awardAdvisorShards(selectedAdvisor.id as AdvisorId, 2);
 
         haptics('success');
         window.dispatchEvent(new CustomEvent('profileUpdated'));

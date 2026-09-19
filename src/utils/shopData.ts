@@ -1,3 +1,4 @@
+import { awardAdvisorShards, type AdvisorId } from '@/utils/advisorShards';
 import { STORAGE_KEYS } from './constants';
 
 export interface ShopItem {
