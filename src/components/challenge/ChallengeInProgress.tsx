@@ -14,6 +14,8 @@ import Footer from '@/components/Footer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import CountdownButton from '@/components/CountdownButton';
+import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
+import { buildAudiencePoll, type AdvisorId, type LifelineKind } from '@/utils/advisorShards';
 
 interface ChallengeInProgressProps {
   challenge: Challenge;
@@ -42,6 +44,9 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
   });
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [eliminatedOptions, setEliminatedOptions] = useState<string[]>([]);
+  const [audiencePoll, setAudiencePoll] = useState<Record<string, number> | null>(null);
+  const [usedLifelines, setUsedLifelines] = useState<AdvisorId[]>([]);
 
   const handleExitClick = () => {
     setShowExitDialog(true);
@@ -85,10 +90,36 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
 
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
+  const currentQuestion = questions[currentQuestionIndex];
+
+  const handleLifeline = (kind: LifelineKind, advisorId: AdvisorId) => {
+    if (!currentQuestion) return;
+    setUsedLifelines((prev) => [...prev, advisorId]);
+
+    if (kind === 'fifty_fifty') {
+      const wrongs = currentQuestion.options.filter(
+        (o) => o !== currentQuestion.correctAnswer && !eliminatedOptions.includes(o),
+      );
+      setEliminatedOptions((prev) => [...prev, ...wrongs.sort(() => 0.5 - Math.random()).slice(0, 2)]);
+    } else if (kind === 'audience_poll') {
+      setAudiencePoll(
+        buildAudiencePoll(
+          currentQuestion.options.filter((o) => !eliminatedOptions.includes(o)),
+          currentQuestion.correctAnswer,
+        ),
+      );
+    } else if (kind === 'skip') {
+      advanceToNextQuestion();
+    }
+  };
+
   const advanceToNextQuestion = () => {
     // Reset for next question
     setSelectedOption("");
     setAnswerSubmitted(false);
+    setEliminatedOptions([]);
+    setAudiencePoll(null);
+    setUsedLifelines([]);
     onNextQuestion();
   };
 
@@ -169,7 +200,7 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
               <h3 className="text-lg font-medium mb-4">{questions[currentQuestionIndex].question}</h3>
               
               <div className="space-y-3">
-                {questions[currentQuestionIndex].options.map((option) => (
+                {questions[currentQuestionIndex].options.filter((o) => !eliminatedOptions.includes(o)).map((option) => (
                   <button
                     key={option}
                     onClick={() => handleSelectOption(option)}
@@ -184,10 +215,27 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
                     }`}
                     disabled={answerSubmitted}
                   >
-                    {option}
+                    <span className="flex items-center justify-between gap-3">
+                      <span>{option}</span>
+                      {audiencePoll && !answerSubmitted && (
+                        <span className="text-xs font-bold text-muted-foreground tabular-nums">
+                          {audiencePoll[option] || 0}%
+                        </span>
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>
+
+              {!answerSubmitted && (
+                <div className="mt-5 border-t border-border pt-4">
+                  <AdvisorLifelineBar
+                    used={usedLifelines}
+                    onUse={handleLifeline}
+                    unsupported={['extra_time']}
+                  />
+                </div>
+              )}
               
               {answerSubmitted && (
                 <div className="mt-4 p-4 bg-accent/50 rounded-md">
