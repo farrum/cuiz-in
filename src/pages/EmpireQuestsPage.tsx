@@ -25,6 +25,8 @@ import {
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
+import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
+import { buildAudiencePoll, type AdvisorId, type LifelineKind } from '@/utils/advisorShards';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { triggerWebInterstitial } from '@/utils/webInterstitialAd';
@@ -414,6 +416,8 @@ export default function EmpireQuestsPage() {
   const [activeStage, setActiveStage] = useState<QuestStage | null>(null);
   const [questQuestions, setQuestQuestions] = useState<QuizQuestion[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [usedLifelines, setUsedLifelines] = useState<AdvisorId[]>([]);
+  const [questPoll, setQuestPoll] = useState<Record<string, number> | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -809,6 +813,31 @@ export default function EmpireQuestsPage() {
     }
   };
 
+  const handleAdvisorLifeline = (kind: LifelineKind, advisorId: AdvisorId) => {
+    const question = questQuestions[currentQIndex];
+    setUsedLifelines((prev) => [...prev, advisorId]);
+    haptics('medium');
+    if (!question) return;
+
+    if (kind === 'fifty_fifty') {
+      const wrongs = question.options.filter(
+        (o: string) => o !== question.correctAnswer && !eliminatedOptions.includes(o),
+      );
+      setEliminatedOptions((prev) => [...prev, ...wrongs.sort(() => 0.5 - Math.random()).slice(0, 2)]);
+    } else if (kind === 'extra_time') {
+      setTimer((prev) => prev + 15);
+    } else if (kind === 'audience_poll') {
+      setQuestPoll(
+        buildAudiencePoll(
+          question.options.filter((o: string) => !eliminatedOptions.includes(o)),
+          question.correctAnswer,
+        ),
+      );
+    } else if (kind === 'skip') {
+      handleNextQuestion();
+    }
+  };
+
   // Hero Lifeline Handlers
   const handleUseSocrates = async () => {
     const soc = heroes.find(h => h.id === 'socrates');
@@ -976,6 +1005,8 @@ export default function EmpireQuestsPage() {
 
   const handleNextQuestion = () => {
     setHasAnswered(false);
+    setUsedLifelines([]);
+    setQuestPoll(null);
     setSelectedOption(null);
     setEliminatedOptions([]);
     setSmartClue(null);
@@ -1223,46 +1254,26 @@ export default function EmpireQuestsPage() {
                 </div>
               </div>
 
-              {/* Hero Lifeline Bar */}
-              <div className="flex justify-center items-center gap-2 sm:gap-3 mb-6 bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800 overflow-x-auto">
-                <span className="text-[9px] uppercase font-black tracking-widest text-slate-400 mr-1 hidden sm:inline">Lifelines:</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={socratesUsed || hasAnswered}
-                  onClick={handleUseSocrates}
-                  className="bg-slate-950 border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold gap-1 rounded-xl"
-                >
-                  🏛️ Socrates 50/50
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={aryabhataUsed || hasAnswered}
-                  onClick={handleUseAryabhata}
-                  className="bg-slate-950 border-amber-500/30 hover:border-amber-400 text-amber-300 text-xs font-bold gap-1 rounded-xl"
-                >
-                  📐 +15s Time
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={chanakyaUsed || isShieldActive || hasAnswered}
-                  onClick={handleUseChanakya}
-                  className="bg-slate-950 border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs font-bold gap-1 rounded-xl"
-                >
-                  🛡️ Shield
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={ramanujanUsed || hasAnswered}
-                  onClick={handleUseRamanujan}
-                  className="bg-slate-950 border-emerald-500/30 hover:border-emerald-400 text-emerald-300 text-xs font-bold gap-1 rounded-xl"
-                >
-                  ♾️ Clue
-                </Button>
+              {/* Royal Council Lifelines (advisor shards) */}
+              <div className="mb-6 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+                <AdvisorLifelineBar
+                  variant="dark"
+                  used={usedLifelines}
+                  onUse={handleAdvisorLifeline}
+                  disabled={hasAnswered}
+                />
               </div>
+
+              {questPoll && !hasAnswered && (
+                <div className="mb-6 grid grid-cols-2 gap-2">
+                  {Object.entries(questPoll).map(([opt, pct]) => (
+                    <div key={opt} className="text-[11px] font-bold text-slate-300 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1.5">
+                      <span className="truncate">{opt}</span>
+                      <span className="text-amber-300 tabular-nums">{pct}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Smart Clue Banner */}
               {smartClue && (
