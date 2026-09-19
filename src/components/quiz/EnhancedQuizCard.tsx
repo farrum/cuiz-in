@@ -66,6 +66,8 @@ interface EnhancedQuizCardProps {
   streak?: number;
   isChallenge?: boolean;
   totalGems?: number;
+  /** Enables the Skip lifeline — advance without answering. */
+  onSkipQuestion?: () => void;
 }
 
 const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
@@ -77,7 +79,8 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   questionsAnswered = 0,
   streak = 0,
   isChallenge = false,
-  totalGems = 0
+  totalGems = 0,
+  onSkipQuestion
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
