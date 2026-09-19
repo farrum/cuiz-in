@@ -34,6 +34,8 @@ import { showInterstitial, showRewarded } from '@/mobile/ads/adManager';
 import { Capacitor } from '@capacitor/core';
 import { asUuidOrNull } from '@/utils/uuid';
 import { cn } from '@/lib/utils';
+import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
+import type { AdvisorId, LifelineKind } from '@/utils/advisorShards';
 
 type Phase = 'loading' | 'asking' | 'checking' | 'revealing';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -67,6 +69,7 @@ export default function QuizStoryScreen() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
+  const [usedLifelines, setUsedLifelines] = useState<AdvisorId[]>([]);
   const [sessionGems, setSessionGems] = useState(0);
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
 
@@ -148,6 +151,7 @@ export default function QuizStoryScreen() {
     setIsCorrect(null);
     setCorrectAnswer('');
     setExplanation('');
+    setUsedLifelines([]);
     setCountdown(10);
 
     try {
@@ -193,6 +197,13 @@ export default function QuizStoryScreen() {
     localStorage.setItem(PREF_KEY, JSON.stringify({ category: nextCategory, difficulty: nextDifficulty }));
     setPrefsOpen(false);
     loadNext();
+  };
+
+  const handleLifeline = (kind: LifelineKind, advisorId: AdvisorId) => {
+    setUsedLifelines((prev) => [...prev, advisorId]);
+    if (kind === 'skip') {
+      loadNext();
+    }
   };
 
   const handleAnswer = async (option: string) => {
@@ -687,6 +698,18 @@ export default function QuizStoryScreen() {
                 );
               })}
             </div>
+
+            {/* Council lifelines */}
+            {phase === 'asking' && (
+              <div className="mb-3">
+                <AdvisorLifelineBar
+                  variant="dark"
+                  used={usedLifelines}
+                  onUse={handleLifeline}
+                  unsupported={['fifty_fifty', 'audience_poll', 'extra_time']}
+                />
+              </div>
+            )}
 
             {/* Feedback & Mascot Reveal or Checking Status */}
             <div className="min-h-[85px] mb-3">
