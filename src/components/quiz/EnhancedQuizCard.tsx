@@ -134,6 +134,45 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const [smartClue, setSmartClue] = useState<string | null>(null);
   const [counselorDialogue, setCounselorDialogue] = useState<{ name: string; avatar: string; quote: string } | null>(null);
 
+  // Advisor lifelines (shard-powered)
+  const [usedLifelines, setUsedLifelines] = useState<AdvisorId[]>([]);
+  const [audiencePoll, setAudiencePoll] = useState<Record<string, number> | null>(null);
+
+  const handleLifeline = (kind: LifelineKind, advisorId: AdvisorId) => {
+    const advisor = ADVISOR_LIFELINES.find((a) => a.id === advisorId);
+    setUsedLifelines((prev) => [...prev, advisorId]);
+    haptics('medium');
+    audioManager.playSFX(advisorId as any);
+    if (advisor) {
+      setCounselorDialogue({ name: advisor.shortName, avatar: advisor.emoji, quote: advisor.quote });
+    }
+
+    switch (kind) {
+      case 'fifty_fifty': {
+        const wrongs = question.options.filter(
+          (o) => o !== question.correctAnswer && !eliminatedOptions.includes(o),
+        );
+        const toEliminate = wrongs.sort(() => 0.5 - Math.random()).slice(0, 2);
+        setEliminatedOptions((prev) => [...prev, ...toEliminate]);
+        break;
+      }
+      case 'extra_time':
+        setTimeRemaining((prev) => prev + 15);
+        break;
+      case 'audience_poll':
+        setAudiencePoll(
+          buildAudiencePoll(
+            question.options.filter((o) => !eliminatedOptions.includes(o)),
+            question.correctAnswer,
+          ),
+        );
+        break;
+      case 'skip':
+        onSkipQuestion?.();
+        break;
+    }
+  };
+
   // Consumable Potions State
   const [elixirCount, setElixirCount] = useState(0);
   const [scribeCount, setScribeCount] = useState(0);
