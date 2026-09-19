@@ -762,143 +762,15 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
             })}
           </div>
 
-          {/* Council Lifelines */}
-          {!isAnswered && !isChallenge && heroes.some(h => h.level > 0) && (
+          {/* Council Lifelines — powered by advisor shards */}
+          {!isAnswered && (
             <div className="border-t border-muted/50 pt-4 mt-6">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-black tracking-wider mb-3">
-                <Landmark className="w-3.5 h-3.5 text-yellow-500" />
-                <span>Council Lifelines</span>
-                <span className="ml-auto text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 text-[9px]">
-                  <Star className="w-3 h-3 fill-amber-500/20 text-amber-600 dark:text-amber-400" /> {userStars} stars
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {/* Socrates */}
-                {heroes.find(h => h.character_id === 'socrates')?.level > 0 && (
-                  <Button
-                    size="sm"
-                    disabled={socratesUsed}
-                    onClick={async () => {
-                      const cost = 15;
-                      if (userStars < cost) {
-                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
-                        return;
-                      }
-                      haptics('medium');
-                      audioManager.playSFX('socrates');
-                      setCounselorDialogue({
-                        name: 'Socrates',
-                        avatar: '🏛️',
-                        quote: 'An unexamined choice is not worth choosing, Knight. Let us discard two falsehoods.'
-                      });
-                      const { data: { session } } = await supabase.auth.getSession();
-                      await updateTotalStars(-cost, session?.user?.id);
-                      setUserStars(prev => prev - cost);
-                      setSocratesUsed(true);
-                      const wrongs = question.options.filter(o => o !== question.correctAnswer);
-                      const toEliminate = wrongs.sort(() => 0.5 - Math.random()).slice(0, 2);
-                      setEliminatedOptions(toEliminate);
-                    }}
-                    className="bg-slate-900 border border-slate-800 text-cyan-400 hover:text-cyan-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
-                  >
-                    <span>🏛️ Socrates</span>
-                    <span className="text-[7px] text-muted-foreground">50/50 (15★)</span>
-                  </Button>
-                )}
-
-                {/* Aryabhata */}
-                {heroes.find(h => h.character_id === 'aryabhata')?.level > 0 && (
-                  <Button
-                    size="sm"
-                    disabled={aryabhataUsed}
-                    onClick={async () => {
-                      const cost = 20;
-                      if (userStars < cost) {
-                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
-                        return;
-                      }
-                      haptics('medium');
-                      audioManager.playSFX('aryabhata');
-                      setCounselorDialogue({
-                        name: 'Aryabhata',
-                        avatar: '📐',
-                        quote: 'Time, like the movement of stars, can be bent. Take 15 more seconds.'
-                      });
-                      const { data: { session } } = await supabase.auth.getSession();
-                      await updateTotalStars(-cost, session?.user?.id);
-                      setUserStars(prev => prev - cost);
-                      setAryabhataUsed(true);
-                      setTimeRemaining(prev => prev + 15);
-                    }}
-                    className="bg-slate-900 border border-slate-800 text-amber-400 hover:text-amber-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
-                  >
-                    <span>📐 Aryabhata</span>
-                    <span className="text-[7px] text-muted-foreground">+15s (20★)</span>
-                  </Button>
-                )}
-
-                {/* Chanakya */}
-                {heroes.find(h => h.character_id === 'chanakya')?.level > 0 && (
-                  <Button
-                    size="sm"
-                    disabled={chanakyaUsed}
-                    onClick={async () => {
-                      const cost = 25;
-                      if (userStars < cost) {
-                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
-                        return;
-                      }
-                      haptics('medium');
-                      audioManager.playSFX('chanakya');
-                      setCounselorDialogue({
-                        name: 'Chanakya',
-                        avatar: '📜',
-                        quote: "A king's best shield is foresight. Your streak is protected."
-                      });
-                      const { data: { session } } = await supabase.auth.getSession();
-                      await updateTotalStars(-cost, session?.user?.id);
-                      setUserStars(prev => prev - cost);
-                      setChanakyaUsed(true);
-                      setIsShieldActive(true);
-                    }}
-                    className="bg-slate-900 border border-slate-800 text-rose-400 hover:text-rose-350 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
-                  >
-                    <span>📜 Chanakya</span>
-                    <span className="text-[7px] text-muted-foreground">Shield (25★)</span>
-                  </Button>
-                )}
-
-                {/* Ramanujan */}
-                {heroes.find(h => h.character_id === 'ramanujan')?.level > 0 && (
-                  <Button
-                    size="sm"
-                    disabled={ramanujanUsed}
-                    onClick={async () => {
-                      const cost = 35;
-                      if (userStars < cost) {
-                        toast({ title: 'Treasury Empty', description: 'Not enough Stars.', variant: 'destructive' });
-                        return;
-                      }
-                      haptics('medium');
-                      audioManager.playSFX('ramanujan');
-                      setCounselorDialogue({
-                        name: 'Ramanujan',
-                        avatar: '🧠',
-                        quote: `The equation of truth points directly to: "${question.correctAnswer}"!`
-                      });
-                      const { data: { session } } = await supabase.auth.getSession();
-                      await updateTotalStars(-cost, session?.user?.id);
-                      setUserStars(prev => prev - cost);
-                      setRamanujanUsed(true);
-                      setSmartClue(question.correctAnswer);
-                    }}
-                    className="bg-slate-900 border border-slate-800 text-purple-400 hover:text-purple-300 text-[10px] font-bold h-11 flex flex-col justify-center items-center hover:bg-slate-850"
-                  >
-                    <span>🧠 Ramanujan</span>
-                    <span className="text-[7px] text-muted-foreground">Hint (35★)</span>
-                  </Button>
-                )}
-              </div>
+              <AdvisorLifelineBar
+                used={usedLifelines}
+                onUse={handleLifeline}
+                disabled={isAnswered}
+                unsupported={onSkipQuestion ? [] : ['skip']}
+              />
 
               {/* Consumable Potions Section */}
               <div className="flex items-center text-[10px] text-stone-500 font-black uppercase tracking-wider mb-2 mt-4 border-t border-stone-800 pt-3">
