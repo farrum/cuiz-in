@@ -473,6 +473,7 @@ const QuizPlayPage: React.FC = () => {
                 key={question.id}
                 question={question}
                 onComplete={(isCorrect) => handleComplete(isCorrect)}
+                onSkipQuestion={goToNextQuestion}
                 streak={streak}
                 questionsAnswered={questionsAnswered}
               />
