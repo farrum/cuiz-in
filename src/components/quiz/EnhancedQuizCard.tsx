@@ -19,6 +19,13 @@ import { confetti } from '@/utils/animations';
 import { emitQuizReward } from '@/components/quiz/FloatingReward';
 import { useWebRewardedAd } from '@/hooks/useWebRewardedAd';
 import { asUuidOrNull } from '@/utils/uuid';
+import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
+import {
+  ADVISOR_LIFELINES,
+  buildAudiencePoll,
+  type AdvisorId,
+  type LifelineKind,
+} from '@/utils/advisorShards';
 
 export const REVIVE_STREAK_EVENT = 'cuizin:revive-streak';
 
