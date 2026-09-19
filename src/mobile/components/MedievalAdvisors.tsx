@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { showRewarded } from '@/mobile/ads/adManager';
 import { supabase } from '@/integrations/supabase/client';
+import { awardAdvisorShards, syncAdvisorShards } from '@/utils/advisorShards';
 import confetti from 'canvas-confetti';
 
 export interface Advisor {
@@ -154,17 +155,10 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     const nextGems = currentGems - 50;
     localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(nextGems));
 
-    const currentShards = Number(localStorage.getItem(`hero_${selectedAdvisor.id}_shards`) || '0');
-    const nextShards = currentShards + 5;
-    localStorage.setItem(`hero_${selectedAdvisor.id}_shards`, String(nextShards));
+    void awardAdvisorShards(selectedAdvisor.id, 5);
 
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (uid) {
-      void (supabase as any).rpc('award_character_shards', {
-        user_uuid: uid,
-        char_id: selectedAdvisor.id,
-        shards_delta: 5,
-      });
       void (supabase as any).rpc('award_currency', {
         p_points_delta: -50,
         p_stars_delta: 0,
@@ -191,18 +185,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     try {
       const res = await showRewarded(3000);
       if (res.rewarded) {
-        const currentShards = Number(localStorage.getItem(`hero_${selectedAdvisor.id}_shards`) || '0');
-        const nextShards = currentShards + 2;
-        localStorage.setItem(`hero_${selectedAdvisor.id}_shards`, String(nextShards));
-
-        const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (uid) {
-          void (supabase as any).rpc('award_character_shards', {
-            user_uuid: uid,
-            char_id: selectedAdvisor.id,
-            shards_delta: 2,
-          });
-        }
+        void awardAdvisorShards(selectedAdvisor.id, 2);
 
         haptics('success');
         window.dispatchEvent(new CustomEvent('profileUpdated'));
@@ -245,7 +228,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
       void (supabase as any).rpc('upgrade_character', {
         user_uuid: uid,
         char_id: selectedAdvisor.id,
-      });
+      }).then(() => syncAdvisorShards());
     }
 
     haptics('success');
