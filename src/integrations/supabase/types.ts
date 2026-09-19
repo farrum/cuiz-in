@@ -1346,6 +1346,8 @@ export type Database = {
           id: string
           level: number
           shards_collected: number
+          shards_purchased: number
+          shards_spent: number
           unlocked_at: string | null
           user_id: string
         }
@@ -1355,6 +1357,8 @@ export type Database = {
           id?: string
           level?: number
           shards_collected?: number
+          shards_purchased?: number
+          shards_spent?: number
           unlocked_at?: string | null
           user_id: string
         }
@@ -1364,6 +1368,8 @@ export type Database = {
           id?: string
           level?: number
           shards_collected?: number
+          shards_purchased?: number
+          shards_spent?: number
           unlocked_at?: string | null
           user_id?: string
         }
@@ -1735,6 +1741,10 @@ export type Database = {
       }
       check_admin_access: { Args: never; Returns: boolean }
       claim_referral: { Args: { p_ref_code: string }; Returns: Json }
+      consume_advisor_shards: {
+        Args: { p_amount?: number; p_character_id: string }
+        Returns: Json
+      }
       create_alliance: {
         Args: {
           p_crest_emoji: string

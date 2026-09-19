@@ -1,3 +1,4 @@
+import { awardAdvisorShards, type AdvisorId } from '@/utils/advisorShards';
 import { STORAGE_KEYS } from './constants';
 
 export interface ShopItem {
@@ -249,28 +250,21 @@ export const purchaseItem = (itemId: string): { success: boolean; message: strin
     return { success: true, message: `Successfully purchased ${item.name}! You now have ${current + 1} of them.` };
   }
 
-  // Shard purchase handling
+  // Shard purchase handling — shards persist until spent on a lifeline
   if (item.type === 'counselor_shard') {
     const heroId = itemId.replace('shard_', ''); // chanakya, socrates, etc.
     const shardKey = `hero_${heroId}_shards`;
     const levelKey = `hero_${heroId}_level`;
 
-    const currentShards = parseInt(localStorage.getItem(shardKey) || '0') + 5;
-    localStorage.setItem(shardKey, currentShards.toString());
+    void awardAdvisorShards(heroId as AdvisorId, 5);
+    const currentShards = parseInt(localStorage.getItem(shardKey) || '0');
 
-    // If shards hit a threshold, let's auto-unlock or level up
-    let level = parseInt(localStorage.getItem(levelKey) || '0');
-    if (level === 0 && currentShards >= 5) {
+    // First shards unlock the advisor; levels never consume shards.
+    const level = parseInt(localStorage.getItem(levelKey) || '0');
+    if (level === 0) {
       localStorage.setItem(levelKey, '1');
       window.dispatchEvent(new CustomEvent('profileUpdated'));
       return { success: true, message: `Acquired 5 shards! Emperor ${heroId.toUpperCase()} is now UNLOCKED at Level 1!` };
-    } else if (currentShards >= level * 10) {
-      // Level up
-      level += 1;
-      localStorage.setItem(levelKey, level.toString());
-      localStorage.setItem(shardKey, (currentShards - (level - 1) * 10).toString());
-      window.dispatchEvent(new CustomEvent('profileUpdated'));
-      return { success: true, message: `Acquired shards! Emperor ${heroId.toUpperCase()} has leveled up to Level ${level}!` };
     }
 
     window.dispatchEvent(new CustomEvent('profileUpdated'));

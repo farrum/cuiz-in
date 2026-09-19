@@ -8,3 +8,5 @@
 - [x] Realign the homepage leader portrait and restore the banner below Speed Quizzing
 - [x] Wait for native full-screen ads to finish before resolving rewards and navigation
 - [x] Route homepage mini-game buttons to the web mini-game pages
+
+- [x] Advisor shard lifelines usable in quiz, quests and daily challenge; shards persist until spent

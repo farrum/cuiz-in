@@ -34,6 +34,8 @@ import { showInterstitial, showRewarded } from '@/mobile/ads/adManager';
 import { Capacitor } from '@capacitor/core';
 import { asUuidOrNull } from '@/utils/uuid';
 import { cn } from '@/lib/utils';
+import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
+import type { AdvisorId, LifelineKind } from '@/utils/advisorShards';
 
 type Phase = 'loading' | 'asking' | 'checking' | 'revealing';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -67,6 +69,9 @@ export default function QuizStoryScreen() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
+  const [usedLifelines, setUsedLifelines] = useState<AdvisorId[]>([]);
+  const [eliminatedOptions, setEliminatedOptions] = useState<string[]>([]);
+  const [audiencePoll, setAudiencePoll] = useState<Record<string, number> | null>(null);
   const [sessionGems, setSessionGems] = useState(0);
   const [gems, setGems] = useState<number>(() => Number(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || 0));
 
@@ -148,6 +153,9 @@ export default function QuizStoryScreen() {
     setIsCorrect(null);
     setCorrectAnswer('');
     setExplanation('');
+    setUsedLifelines([]);
+    setEliminatedOptions([]);
+    setAudiencePoll(null);
     setCountdown(10);
 
     try {
@@ -193,6 +201,28 @@ export default function QuizStoryScreen() {
     localStorage.setItem(PREF_KEY, JSON.stringify({ category: nextCategory, difficulty: nextDifficulty }));
     setPrefsOpen(false);
     loadNext();
+  };
+
+  const handleLifeline = async (kind: LifelineKind, advisorId: AdvisorId) => {
+    setUsedLifelines((prev) => [...prev, advisorId]);
+    if (kind === 'skip') {
+      loadNext();
+      return;
+    }
+    if (!question) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('quiz-lifeline', {
+        body: { question_id: question.id, kind },
+      });
+      if (error || !data) return;
+      if (kind === 'fifty_fifty' && Array.isArray(data.eliminated)) {
+        setEliminatedOptions((prev) => [...prev, ...data.eliminated]);
+      } else if (kind === 'audience_poll' && data.poll) {
+        setAudiencePoll(data.poll as Record<string, number>);
+      }
+    } catch (err) {
+      console.warn('[QuizStory] lifeline failed', err);
+    }
   };
 
   const handleAnswer = async (option: string) => {
@@ -631,7 +661,7 @@ export default function QuizStoryScreen() {
 
             {/* Answer Options with 3D Tactile Buttons */}
             <div className="space-y-2.5 mb-3">
-              {(question.options || []).map((opt, i) => {
+              {(question.options || []).filter((o) => !eliminatedOptions.includes(o)).map((opt, i) => {
                 const isSelected = selected === opt;
                 const isReveal = phase === 'revealing' && correctAnswer;
                 const isThisCorrect = isReveal && opt === correctAnswer;
@@ -681,12 +711,30 @@ export default function QuizStoryScreen() {
 
                     <span className="flex-1 min-w-0 pr-2">{opt}</span>
 
+                    {audiencePoll && phase === 'asking' && (
+                      <span className="text-[11px] font-black text-amber-700 tabular-nums shrink-0 mr-1">
+                        {audiencePoll[opt] || 0}%
+                      </span>
+                    )}
+
                     {/* Status Check Icon */}
                     {isThisCorrect && <Check className="w-5 h-5 text-emerald-600 shrink-0" />}
                   </motion.button>
                 );
               })}
             </div>
+
+            {/* Council lifelines */}
+            {phase === 'asking' && (
+              <div className="mb-3">
+                <AdvisorLifelineBar
+                  variant="dark"
+                  used={usedLifelines}
+                  onUse={handleLifeline}
+                  unsupported={['extra_time']}
+                />
+              </div>
+            )}
 
             {/* Feedback & Mascot Reveal or Checking Status */}
             <div className="min-h-[85px] mb-3">
