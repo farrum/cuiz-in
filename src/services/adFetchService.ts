@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getAdPositionKey, setAdInCache } from './adCacheService';
+import { normalizeAdsterraCode } from '@/utils/adsterraNative';
 
 interface AdSlot {
   id: string;
@@ -111,7 +112,7 @@ export const processSelectedAd = (
   const adPositionKey = getAdPositionKey(position, slotId, pageSection);
   
   // Process the ad code to remove problematic scripts
-  let cleanedCode = selectedAd.code;
+  let cleanedCode = normalizeAdsterraCode(selectedAd.code);
   
   // Preserve script tags and only replace document.write calls
   cleanedCode = cleanedCode.replace(
