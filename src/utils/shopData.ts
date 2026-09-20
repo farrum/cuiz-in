@@ -1,5 +1,6 @@
 import { awardAdvisorShards, type AdvisorId } from '@/utils/advisorShards';
 import { STORAGE_KEYS } from './constants';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ShopItem {
   id: string;
@@ -180,8 +181,6 @@ export const initializeStartingBalances = () => {
     localStorage.setItem(STORAGE_KEYS.USER_STARS, '50');
     seeded = true;
   }
-  // Only notify when values actually changed — dispatching unconditionally can
-  // trigger infinite render loops when this runs during a component render.
   if (seeded) {
     window.dispatchEvent(new CustomEvent('gemsUpdated'));
   }
@@ -189,16 +188,13 @@ export const initializeStartingBalances = () => {
 
 // Get current user currency balances
 export const getUserBalances = () => {
-  // Ensure seeded balances
   initializeStartingBalances();
-  
-  
   const gems = parseInt(localStorage.getItem(STORAGE_KEYS.USER_GEMS) || '0');
   const stars = parseInt(localStorage.getItem(STORAGE_KEYS.USER_STARS) || '0');
   return { gems, stars };
 };
 
-// Update user currency balances
+// Update user currency balances (syncs locally and to Supabase profiles)
 export const updateUserBalances = (gemsDelta: number, starsDelta: number) => {
   const { gems, stars } = getUserBalances();
   
@@ -208,10 +204,119 @@ export const updateUserBalances = (gemsDelta: number, starsDelta: number) => {
   localStorage.setItem(STORAGE_KEYS.USER_GEMS, newGems.toString());
   localStorage.setItem(STORAGE_KEYS.USER_STARS, newStars.toString());
   
-  // Dispatch custom events so headers update instantly
+  // Dispatch custom events so headers and UI update instantly
   window.dispatchEvent(new CustomEvent('gemsUpdated'));
   window.dispatchEvent(new CustomEvent('starsUpdated'));
+
+  // Sync to database server if user is logged in
+  if (gemsDelta !== 0 || starsDelta !== 0) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        (supabase as any).rpc('award_currency', {
+          p_points_delta: Math.round(gemsDelta),
+          p_stars_delta: Math.round(starsDelta),
+          p_reason: gemsDelta < 0 ? 'shop_purchase' : 'balance_update',
+        }).then((res: any) => {
+          if (res?.data?.points !== undefined) {
+            localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(res.data.points));
+            if (res.data.stars !== undefined) {
+              localStorage.setItem(STORAGE_KEYS.USER_STARS, String(res.data.stars));
+            }
+          }
+        }).catch((err: any) => {
+          console.warn('[shopData] server currency sync warning', err);
+        });
+      }
+    }).catch(() => {});
+  }
+
   return { gems: newGems, stars: newStars };
+};
+
+// Persist an inventory item / potion / title to user_task_progress for cross-device sync
+const persistServerInventoryItem = async (inventoryKey: string, progressValue: number = 1) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    const userId = session.user.id;
+
+    await (supabase as any)
+      .from('user_task_progress')
+      .upsert({
+        user_id: userId,
+        task_id: `inv_${inventoryKey}`,
+        progress: progressValue,
+        last_updated: new Date().toISOString(),
+      }, { onConflict: 'user_id,task_id' });
+  } catch (err) {
+    console.warn('[shopData] failed to persist inventory item to server', err);
+  }
+};
+
+// Pull all server-stored purchases, potions, equipped items, and titles to local cache
+export const syncAccountPurchases = async (userId?: string): Promise<void> => {
+  try {
+    let effectiveUserId = userId;
+    if (!effectiveUserId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      effectiveUserId = session?.user?.id;
+    }
+    if (!effectiveUserId) return;
+
+    // Pull inventory records
+    const { data, error } = await (supabase as any)
+      .from('user_task_progress')
+      .select('task_id, progress')
+      .eq('user_id', effectiveUserId)
+      .like('task_id', 'inv_%');
+
+    if (error || !Array.isArray(data)) return;
+
+    const purchasedList = new Set<string>(getPurchasedItems());
+
+    data.forEach((row) => {
+      const key = (row.task_id as string).replace('inv_', '');
+      if (key.startsWith('potion_')) {
+        const potionId = key.replace('potion_', '');
+        localStorage.setItem(`${POTION_COUNT_PREFIX}${potionId}`, String(row.progress || 0));
+        purchasedList.add(potionId);
+      } else if (key.startsWith('title_')) {
+        purchasedList.add(key);
+      } else if (key.startsWith('equipped_title_')) {
+        const titleId = key.replace('equipped_title_', '');
+        localStorage.setItem(EQUIPPED_TITLE_KEY, titleId);
+      } else if (key.startsWith('item_')) {
+        const itemId = key.replace('item_', '');
+        purchasedList.add(itemId);
+      } else if (key.startsWith('equipped_')) {
+        try {
+          const parts = key.split('_');
+          const type = parts[1]; // weapon, shield, etc.
+          const itemId = parts.slice(2).join('_');
+          const equipped = getEquippedItems();
+          equipped[type] = itemId;
+          localStorage.setItem(EQUIPPED_ITEMS_KEY, JSON.stringify(equipped));
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    localStorage.setItem(BOUGHT_ITEMS_KEY, JSON.stringify(Array.from(purchasedList)));
+    window.dispatchEvent(new CustomEvent('profileUpdated'));
+  } catch (err) {
+    console.warn('[shopData] syncAccountPurchases failed', err);
+  }
+};
+
+export const clearPurchasesCache = () => {
+  localStorage.removeItem(BOUGHT_ITEMS_KEY);
+  localStorage.removeItem(EQUIPPED_ITEMS_KEY);
+  localStorage.removeItem(EQUIPPED_TITLE_KEY);
+  ARMORY_ITEMS.filter(i => i.type === 'potion').forEach(p => {
+    localStorage.removeItem(`${POTION_COUNT_PREFIX}${p.id}`);
+  });
+  window.dispatchEvent(new CustomEvent('profileUpdated'));
 };
 
 // Get list of purchased items
@@ -230,14 +335,15 @@ export const purchaseItem = (itemId: string): { success: boolean; message: strin
     return { success: false, message: 'Insufficient gems or stars.' };
   }
 
-  // Deduct costs
+  // Deduct costs (authoritative server sync via updateUserBalances)
   updateUserBalances(-item.costGems, -item.costStars);
 
   // Potions increment handling
   if (item.type === 'potion') {
     const key = `${POTION_COUNT_PREFIX}${itemId}`;
     const current = parseInt(localStorage.getItem(key) || '0');
-    localStorage.setItem(key, (current + 1).toString());
+    const nextCount = current + 1;
+    localStorage.setItem(key, nextCount.toString());
     
     // Add to purchased list as owned
     const purchased = getPurchasedItems();
@@ -246,18 +352,19 @@ export const purchaseItem = (itemId: string): { success: boolean; message: strin
       localStorage.setItem(BOUGHT_ITEMS_KEY, JSON.stringify(purchased));
     }
     
+    void persistServerInventoryItem(`potion_${itemId}`, nextCount);
     window.dispatchEvent(new CustomEvent('profileUpdated'));
-    return { success: true, message: `Successfully purchased ${item.name}! You now have ${current + 1} of them.` };
+    return { success: true, message: `Successfully purchased ${item.name}! You now have ${nextCount} of them.` };
   }
 
-  // Shard purchase handling — shards persist until spent on a lifeline
+  // Shard purchase handling — shards persist server-side until spent on a lifeline
   if (item.type === 'counselor_shard') {
     const heroId = itemId.replace('shard_', ''); // chanakya, socrates, etc.
     const shardKey = `hero_${heroId}_shards`;
     const levelKey = `hero_${heroId}_level`;
 
-    void awardAdvisorShards(heroId as AdvisorId, 5);
-    const currentShards = parseInt(localStorage.getItem(shardKey) || '0');
+    void awardAdvisorShards(heroId as AdvisorId, 5, 'shop_purchase');
+    const currentShards = parseInt(localStorage.getItem(shardKey) || '0') + 5;
 
     // First shards unlock the advisor; levels never consume shards.
     const level = parseInt(localStorage.getItem(levelKey) || '0');
@@ -279,6 +386,12 @@ export const purchaseItem = (itemId: string): { success: boolean; message: strin
   // Save purchased non-shard item
   purchased.push(itemId);
   localStorage.setItem(BOUGHT_ITEMS_KEY, JSON.stringify(purchased));
+
+  if (item.type === 'prestige_title') {
+    void persistServerInventoryItem(`title_${itemId}`, 1);
+  } else {
+    void persistServerInventoryItem(`item_${itemId}`, 1);
+  }
 
   // Auto-equip item of this category
   equipItem(itemId);
@@ -302,6 +415,7 @@ export const equipItem = (itemId: string): boolean => {
 
   if (item.type === 'prestige_title') {
     localStorage.setItem(EQUIPPED_TITLE_KEY, itemId);
+    void persistServerInventoryItem(`equipped_title_${itemId}`, 1);
     window.dispatchEvent(new CustomEvent('profileUpdated'));
     return true;
   }
@@ -309,6 +423,7 @@ export const equipItem = (itemId: string): boolean => {
   const equipped = getEquippedItems();
   equipped[item.type] = itemId;
   localStorage.setItem(EQUIPPED_ITEMS_KEY, JSON.stringify(equipped));
+  void persistServerInventoryItem(`equipped_${item.type}_${itemId}`, 1);
   
   window.dispatchEvent(new CustomEvent('profileUpdated'));
   return true;
@@ -318,8 +433,10 @@ export const equipItem = (itemId: string): boolean => {
 export const unequipItem = (type: string): void => {
   const equipped = getEquippedItems();
   if (equipped[type]) {
+    const oldItem = equipped[type];
     equipped[type] = '';
     localStorage.setItem(EQUIPPED_ITEMS_KEY, JSON.stringify(equipped));
+    void persistServerInventoryItem(`equipped_${type}_${oldItem}`, 0);
     window.dispatchEvent(new CustomEvent('profileUpdated'));
   }
 };
@@ -334,7 +451,9 @@ export const consumePotion = (potionId: string): boolean => {
   const current = parseInt(localStorage.getItem(key) || '0');
   if (current <= 0) return false;
 
-  localStorage.setItem(key, (current - 1).toString());
+  const next = current - 1;
+  localStorage.setItem(key, next.toString());
+  void persistServerInventoryItem(`potion_${potionId}`, next);
   window.dispatchEvent(new CustomEvent('profileUpdated'));
   return true;
 };
@@ -346,6 +465,7 @@ export const getEquippedTitle = (): string => {
 
 export const equipTitle = (itemId: string): void => {
   localStorage.setItem(EQUIPPED_TITLE_KEY, itemId);
+  void persistServerInventoryItem(`equipped_title_${itemId}`, 1);
   window.dispatchEvent(new CustomEvent('profileUpdated'));
 };
 

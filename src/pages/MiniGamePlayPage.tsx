@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
-import { Capacitor } from '@capacitor/core';
-import ProxiedVastVideoAd from '@/components/ads/ProxiedVastVideoAd';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { minigames } from '@/components/gamification/minigamesData';
@@ -38,10 +36,7 @@ export const MiniGamePlayPage: React.FC = () => {
   const { showVideoAd, adElement } = useMiniGameVideoAd();
 
   // Gamification Play State
-  const [hasPaid, setHasPaid] = useState(false);
   const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0);
-  const [showVastAd, setShowVastAd] = useState(false);
-  const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
 
   // States for True/False and Image trivia
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -98,7 +93,6 @@ export const MiniGamePlayPage: React.FC = () => {
   }, [balanceUpdateTrigger]);
 
   useEffect(() => {
-    setHasPaid(false);
     if (gameId === 'true-false' || gameId === 'image') {
       loadQuestions();
     } else if (gameId === 'scratch') {
@@ -124,38 +118,6 @@ export const MiniGamePlayPage: React.FC = () => {
     const lastPlay = localStorage.getItem(`cuizin-last-play-${gameId}`);
     return lastPlay !== today;
   };
-
-  const handlePayAndStart = () => {
-    const startAction = () => {
-      if (isFirstPlayToday()) {
-        // First daily play is free
-        const today = getTodayString();
-        localStorage.setItem(`cuizin-last-play-${gameId}`, today);
-        setHasPaid(true);
-      } else {
-        // Subsequent plays cost 5 Gems
-        // Server-backed games (wheel / scratch) charge the fee server-side
-        const serverCharged = gameId === 'wheel' || gameId === 'scratch';
-        const { gems } = getUserBalances();
-        if (gems < 5) {
-          alert("You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.");
-          return;
-        }
-        if (!serverCharged) updateUserBalances(-5, 0);
-        setHasPaid(true);
-        setBalanceUpdateTrigger(prev => prev + 1);
-      }
-    };
-
-    // On website only (not Capacitor), show Clickadilla VAST video interstitial before starting
-    if (!Capacitor.isNativePlatform()) {
-      setPendingStart(() => startAction);
-      setShowVastAd(true);
-    } else {
-      startAction();
-    }
-  };
-
   const handleOpenDailyChest = async () => {
     if (isChestClaimed || chestAnimState !== 'idle' || !gameId) return;
 
@@ -189,41 +151,6 @@ export const MiniGamePlayPage: React.FC = () => {
         }, 2500);
       }, 1200);
     }, 1000);
-  };
-
-  const renderLaunchScreen = () => {
-    const isFree = isFirstPlayToday();
-    const { gems } = getUserBalances();
-
-    return (
-      <div className="flex flex-col items-center justify-center text-center p-6 max-w-sm mx-auto space-y-6 animate-in fade-in duration-300">
-        <span className="text-6xl animate-[float_4s_ease-in-out_infinite] select-none">{activeGame?.emoji}</span>
-        <div>
-          <h2 className="text-xl font-black text-white uppercase tracking-wider">{activeGame?.name}</h2>
-          <p className="text-slate-400 text-xs mt-2 leading-relaxed">{activeGame?.description}</p>
-        </div>
-        
-        <div className="bg-slate-950/60 border border-yellow-500/20 rounded-2xl p-4 w-full flex justify-between items-center text-left">
-          <div>
-            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Your Balance</span>
-            <span className="text-sm font-black text-amber-500 mt-1 block">💎 {gems} Gems</span>
-          </div>
-          <div className="text-right">
-            <span className="text-[9px] text-slate-500 font-black uppercase block leading-none">Entry Fee</span>
-            <span className="text-sm font-black text-yellow-500 mt-1 block">
-              {isFree ? 'FREE (Daily)' : '💎 5 Gems'}
-            </span>
-          </div>
-        </div>
-
-        <Button 
-          onClick={handlePayAndStart}
-          className="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black h-12 uppercase tracking-widest text-xs border-0 shadow-md shadow-yellow-500/10"
-        >
-          {isFree ? '🎮 Start Free Play' : '🪙 Pay 5 Gems & Play'}
-        </Button>
-      </div>
-    );
   };
 
   // Handle scratch card init
@@ -632,7 +559,7 @@ export const MiniGamePlayPage: React.FC = () => {
           )}
 
           <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-xl shadow-yellow-500/5 min-h-[450px] flex items-center justify-center">
-            {hasPaid ? renderGameContent() : renderLaunchScreen()}
+            {renderGameContent()}
           </div>
           
           {/* Ad slot directly underneath the game */}
@@ -644,50 +571,6 @@ export const MiniGamePlayPage: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* Clickadilla VAST video ad overlay for Web only */}
-      {showVastAd && (
-        <div className="fixed inset-0 bg-slate-950/95 flex flex-col justify-center items-center z-[100] p-4 backdrop-blur-md">
-          <div className="w-full max-w-lg relative flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-3">
-              <span className="text-[10px] text-yellow-500/50 uppercase tracking-widest font-black">Sponsored Video</span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/15"
-                onClick={() => {
-                  setShowVastAd(false);
-                  if (pendingStart) {
-                    pendingStart();
-                    setPendingStart(null);
-                  }
-                }}
-              >
-                Skip Ad
-              </Button>
-            </div>
-            <div className="w-full rounded-3xl border-4 border-double border-yellow-500/30 overflow-hidden bg-black shadow-2xl shadow-yellow-500/5">
-              <ProxiedVastVideoAd
-                tagUrl="https://vast.yomeno.xyz/vast?spot_id=1465097"
-                onReady={() => console.log('Clickadilla VAST ad ready')}
-                onUnavailable={() => {
-                  setShowVastAd(false);
-                  if (pendingStart) {
-                    pendingStart();
-                    setPendingStart(null);
-                  }
-                }}
-                onComplete={() => {
-                  setShowVastAd(false);
-                  if (pendingStart) {
-                    pendingStart();
-                    setPendingStart(null);
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {adElement}
     </PageLayout>

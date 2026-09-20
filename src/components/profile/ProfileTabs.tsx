@@ -11,7 +11,8 @@ import { AvatarEvolution } from '@/components/gamification/AvatarEvolution';
 import { ModularAvatar } from '@/components/gamification/ModularAvatar';
 import { SkillTreeContainer } from '@/components/gamification/SkillTreeContainer';
 import { DailyChallengesHub } from '@/components/gamification/DailyChallengesHub';
-import { Palette, Flame, HelpCircle, CheckCircle2, Target } from 'lucide-react';
+import { Palette, Flame, HelpCircle, CheckCircle2, Target, Sparkles } from 'lucide-react';
+import { ShardHistoryTab } from './ShardHistoryTab';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -436,6 +437,10 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <Award className="w-4 h-4 mr-2 text-yellow-500 data-[state=active]:text-amber-900" />
             Royal Shop
           </TabsTrigger>
+          <TabsTrigger value="shards" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_0_0_#0891b2] data-[state=active]:translate-y-0 data-[state=active]:border-cyan-600 border-2 border-transparent bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-xl px-5 py-2.5 font-black text-[11px] uppercase tracking-wider transition-all shadow-sm">
+            <Sparkles className="w-4 h-4 mr-2 text-cyan-500 data-[state=active]:text-white" />
+            Shard History
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -599,6 +604,10 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="shards">
+          <ShardHistoryTab />
         </TabsContent>
       </Tabs>
     </div>

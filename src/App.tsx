@@ -154,6 +154,10 @@ async function hydrateUserFromSession(userId: string) {
     if (role === 'admin') {
       localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
     }
+
+    // Sync advisor shards & shop purchases across devices
+    import('@/utils/advisorShards').then(m => m.syncAdvisorShards(userId)).catch(() => {});
+    import('@/utils/shopData').then(m => m.syncAccountPurchases(userId)).catch(() => {});
   } catch (err) {
     console.error('Error hydrating user session:', err);
   }
@@ -166,6 +170,8 @@ function clearUserCache() {
   localStorage.removeItem(STORAGE_KEYS.USER_STARS);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+  import('@/utils/advisorShards').then(m => m.clearLocalShardCache()).catch(() => {});
+  import('@/utils/shopData').then(m => m.clearPurchasesCache()).catch(() => {});
 }
 
 function App() {
@@ -578,6 +584,7 @@ function App() {
               <Route path="/admin/guests" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/team-leaders" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/tasks" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
+              <Route path="/admin/shards" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               <Route path="/admin/*" element={<LazyProtectedRoute><AdminPage /></LazyProtectedRoute>} />
               
               <Route path="/quiz/question/:questionId/:questionSlug" element={

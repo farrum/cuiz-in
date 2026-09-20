@@ -64,20 +64,79 @@ export const DailyBountyBoard: React.FC = () => {
     }
   ];
 
+  useEffect(() => {
+    // Pull server state for today's quests on mount or auth change
+    const syncServerBounties = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) return;
+        const userId = session.user.id;
+
+        const { data } = await (supabase as any)
+          .from('user_task_progress')
+          .select('task_id, progress')
+          .eq('user_id', userId)
+          .like('task_id', `bounty_%_${today}`);
+
+        if (Array.isArray(data)) {
+          let updated = false;
+          data.forEach((row) => {
+            const taskId = row.task_id as string;
+            quests.forEach((q) => {
+              if (taskId === `bounty_prog_${q.id}_${today}`) {
+                const current = parseInt(localStorage.getItem(q.progressKey) || '0');
+                if (row.progress > current) {
+                  localStorage.setItem(q.progressKey, String(row.progress));
+                  updated = true;
+                }
+              } else if (taskId === `bounty_claim_${q.id}_${today}`) {
+                if (row.progress > 0) {
+                  localStorage.setItem(q.claimedKey, 'true');
+                  updated = true;
+                }
+              }
+            });
+          });
+          if (updated) setUpdateTrigger((p) => p + 1);
+        }
+      } catch (e) {
+        console.warn('[DailyBountyBoard] server sync failed', e);
+      }
+    };
+    syncServerBounties();
+  }, [today]);
+
   const getQuestState = (quest: Quest) => {
     const progress = parseInt(localStorage.getItem(quest.progressKey) || '0');
     const claimed = localStorage.getItem(quest.claimedKey) === 'true';
     return { progress, claimed };
   };
 
-  const handleClaim = (quest: Quest) => {
+  const handleClaim = async (quest: Quest) => {
     const { progress, claimed } = getQuestState(quest);
     if (progress < quest.goal || claimed) return;
 
-    // Award balances
+    // Award balances (automatically synced to profiles by updateUserBalances)
     updateUserBalances(quest.rewardGems, quest.rewardStars);
     localStorage.setItem(quest.claimedKey, 'true');
-    setUpdateTrigger(prev => prev + 1);
+    setUpdateTrigger((prev) => prev + 1);
+
+    // Persist claim to server
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await (supabase as any)
+          .from('user_task_progress')
+          .upsert({
+            user_id: session.user.id,
+            task_id: `bounty_claim_${quest.id}_${today}`,
+            progress: 1,
+            last_updated: new Date().toISOString(),
+          }, { onConflict: 'user_id,task_id' });
+      }
+    } catch {
+      // ignore
+    }
 
     confetti({ particleCount: 80, spread: 60 });
 

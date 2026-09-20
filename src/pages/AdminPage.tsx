@@ -21,11 +21,12 @@ import { SyncSettings } from '@/components/admin/SyncSettings';
 import ProfileIconsManagement from '@/components/admin/ProfileIconsManagement';
 import RequestsManagementPanel from '@/components/admin/RequestsManagementPanel';
 import AdminDailyChallenges from '@/components/admin/AdminDailyChallenges';
+import AdminShardHistory from '@/components/admin/AdminShardHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   BarChart, MessageSquare, Megaphone, Image, AlertCircle, Calendar, Book, 
   HelpCircle, Link2, Search, Gamepad2, UserSearch, Clock, RefreshCw, 
-  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye, ClipboardList, ShieldCheck
+  Users, Award, DollarSign, Volume2, Shield, LogOut, Menu, User, Eye, ClipboardList, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -105,6 +106,7 @@ const AdminPage: React.FC = () => {
     else if (path.includes('/search-console')) tab = 'search-console';
     else if (path.includes('/gamification')) tab = 'gamification';
     else if (path.includes('/guests')) tab = 'guests';
+    else if (path.includes('/shards')) tab = 'shards';
     else if (path === '/admin') {
       navigate('/admin/users', { replace: true });
       tab = 'users';
@@ -185,6 +187,7 @@ const AdminPage: React.FC = () => {
       title: 'User Management',
       items: [
         { value: 'users', label: 'User Directory', icon: UserSearch },
+        { value: 'shards', label: 'Advisor Shards & History', icon: Sparkles },
         { value: 'team-leaders', label: 'Team Leaders & Roster', icon: ShieldCheck },
         { value: 'guests', label: 'Guest Activity', icon: Eye },
         { value: 'referrals', label: 'Referrals Program', icon: Users },
@@ -452,6 +455,9 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="tasks" className="mt-0 outline-none">
               <AdminEmpireTasksMonitor />
+            </TabsContent>
+            <TabsContent value="shards" className="mt-0 outline-none">
+              <AdminShardHistory />
             </TabsContent>
           </Tabs>
           <SimpleAdBanner position="footer" slotId="admin-bottom" className="mt-6 rounded-xl overflow-hidden" />

@@ -63,6 +63,10 @@ async function hydrateMobileSession(userId: string) {
     const roles = new Set((roleResult.data || []).map((r) => r.role).filter(Boolean));
     const role = roles.has('admin') ? 'admin' : roles.has('team_leader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
+
+    // Sync advisor shards & shop purchases across devices
+    import('@/utils/advisorShards').then(m => m.syncAdvisorShards(userId)).catch(() => {});
+    import('@/utils/shopData').then(m => m.syncAccountPurchases(userId)).catch(() => {});
   } catch (err) {
     console.error('[Mobile] hydrate error:', err);
   }
@@ -124,6 +128,8 @@ function AppMobile() {
         setAuthed(false);
         [STORAGE_KEYS.USER_ID, STORAGE_KEYS.USER_NAME, STORAGE_KEYS.USER_GEMS, STORAGE_KEYS.USER_ROLE]
           .forEach((k) => localStorage.removeItem(k));
+        import('@/utils/advisorShards').then(m => m.clearLocalShardCache()).catch(() => {});
+        import('@/utils/shopData').then(m => m.clearPurchasesCache()).catch(() => {});
       }
     });
 
