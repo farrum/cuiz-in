@@ -118,30 +118,69 @@ const setLocalShards = (id: AdvisorId, balance: number, purchased?: number) => {
   }
 };
 
-/** Pull the authoritative balances from the database into the local mirror. */
+const migrationKey = (userId: string, id: AdvisorId) => `hero_${id}_shards_migrated_${userId}`;
+
+/**
+ * Pull the authoritative balances from the database into the local mirror.
+ *
+ * Shards that only ever existed on this device (bought before shards were
+ * stored server-side, or collected while signed out) are pushed up to the
+ * server once per account, so the balance shown always matches what spending
+ * checks against.
+ */
 export const syncAdvisorShards = async (): Promise<ShardBalances> => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return getAllShardBalances();
 
+    const userId = session.user.id;
     const { data, error } = await (supabase as any)
       .from('user_characters')
       .select('character_id, shards_collected, shards_purchased')
-      .eq('user_id', session.user.id);
+      .eq('user_id', userId);
 
     if (error || !data) return getAllShardBalances();
 
+    const serverBalances: Partial<Record<AdvisorId, { shards: number; purchased: number }>> = {};
     (data as any[]).forEach((row) => {
       if (ADVISOR_IDS.includes(row.character_id)) {
-        setLocalShards(row.character_id, row.shards_collected || 0, row.shards_purchased || 0);
+        serverBalances[row.character_id as AdvisorId] = {
+          shards: row.shards_collected || 0,
+          purchased: row.shards_purchased || 0,
+        };
       }
     });
+
+    for (const id of ADVISOR_IDS) {
+      const server = serverBalances[id] || { shards: 0, purchased: 0 };
+      const local = getShardBalance(id);
+      const migrated = localStorage.getItem(migrationKey(userId, id)) === '1';
+
+      if (!migrated && local > server.shards) {
+        // One-time upload of device-only shards into the account.
+        const delta = local - server.shards;
+        const { data: res, error: rpcError } = await (supabase as any).rpc(
+          'award_character_shards',
+          { p_character_id: id, p_amount: delta },
+        );
+        localStorage.setItem(migrationKey(userId, id), '1');
+        if (!rpcError && typeof res?.shards === 'number') {
+          setLocalShards(id, res.shards, res.purchased ?? server.purchased);
+          continue;
+        }
+      }
+
+      localStorage.setItem(migrationKey(userId, id), '1');
+      setLocalShards(id, server.shards, server.purchased);
+    }
+
     notifyShardsUpdated();
   } catch (e) {
     console.warn('[advisorShards] sync failed', e);
   }
   return getAllShardBalances();
 };
+
 
 /** Credit shards (purchase, reward, quest drop). Persists server-side when signed in. */
 export const awardAdvisorShards = async (
