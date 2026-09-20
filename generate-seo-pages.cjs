@@ -940,7 +940,10 @@ async function run() {
           "itemListElement": matchedQuestions.slice(0, 20).map((q, idx) => {
             const qSlug = createSlug(q.question);
             const catSlug = getCategorySlug(q.category);
-            const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+            const ans = (q.correct_answer && String(q.correct_answer).trim())
+              || (q.correctAnswer && String(q.correctAnswer).trim())
+              || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
+              || 'Verified Answer';
             return {
               "@type": "ListItem",
               "position": idx + 1,
@@ -1837,7 +1840,11 @@ function getKnowledgeClaimId(questionId) {
         .map(opt => `<li>${esc(opt)}</li>`)
         .join('\n');
 
-      const correctAnswer = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+      const correctAnswer = (q.correct_answer && String(q.correct_answer).trim())
+        || (q.correctAnswer && String(q.correctAnswer).trim())
+        || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
+        || (q.options && typeof q.options === 'object' ? String(Object.values(q.options)[0]).trim() : '')
+        || 'Verified Answer';
       const authorities = getAuthorities(q.category);
       const dynamic = isDynamicFact(q.question, q.category);
       const badgeLabel = dynamic ? `⏱️ Verified for ${new Date().getFullYear()}` : '✓ Fact-Verified';
@@ -1876,7 +1883,10 @@ function getKnowledgeClaimId(questionId) {
               const rCatSlug = getCategorySlug(rq.category);
               const rSubSlug = getQuestionSubcategorySlug(rq.category, rq.question);
               const rUrl = rSubSlug ? `/quiz/question/${rq.id}/${rCatSlug}/${rSubSlug}/${rqSlug}` : `/quiz/question/${rq.id}/${rCatSlug}/${rqSlug}`;
-              const rAns = rq.correct_answer || rq.correctAnswer || (Array.isArray(rq.options) ? rq.options[0] : '');
+              const rAns = (rq.correct_answer && String(rq.correct_answer).trim())
+                || (rq.correctAnswer && String(rq.correctAnswer).trim())
+                || (Array.isArray(rq.options) && rq.options[0] ? String(rq.options[0]).trim() : '')
+                || 'Verified Answer';
               return `
                 <div style="padding:10px 12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
                   <a href="${rUrl}" style="font-weight:600;font-size:13px;color:#2563eb;text-decoration:none;display:block;margin-bottom:4px;">${esc(rq.question)}</a>
@@ -1994,6 +2004,19 @@ function getKnowledgeClaimId(questionId) {
         bodyHtml,
         jsonLd
       });
+
+      // Also generate 3-segment URL as static HTML file if subSlug was present, so both routes resolve statically with 0ms latency
+      if (subSlug) {
+        const altRoutePath = `/quiz/question/${q.id}/${categorySlug}/${qSlug}`;
+        write(altRoutePath, {
+          title,
+          description,
+          canonical,
+          bodyHtml,
+          jsonLd
+        });
+      }
+
       qCount++;
     }
     console.log(`[seo-pages] Successfully pre-rendered ${qCount} quiz question pages.`);
@@ -2016,7 +2039,10 @@ function getKnowledgeClaimId(questionId) {
       question: q.question,
       category: q.category,
       difficulty: q.difficulty || 'medium',
-      correctAnswer: q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : ''),
+      correctAnswer: (q.correct_answer && String(q.correct_answer).trim())
+        || (q.correctAnswer && String(q.correctAnswer).trim())
+        || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
+        || 'Verified Answer',
       canonicalUrl: `${SITE_URL}/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`
     }))
   };
@@ -2039,6 +2065,62 @@ function getKnowledgeClaimId(questionId) {
   };
   fs.writeFileSync(path.join(apiDir, 'entities.json'), JSON.stringify(entitiesApiData, null, 2));
   console.log('[seo-pages] Successfully generated public /api/v1/questions.json and /api/v1/entities.json endpoints.');
+
+  // 8. GENERATE STATIC SITEMAP.XML (Direct 200 OK without 302 redirects)
+  const sitemapUrls = [
+    { loc: `${SITE_URL}/`, priority: '1.0', changefreq: 'daily' },
+    { loc: `${SITE_URL}/quiz`, priority: '0.9', changefreq: 'daily' },
+    { loc: `${SITE_URL}/categories`, priority: '0.9', changefreq: 'weekly' },
+    { loc: `${SITE_URL}/topics`, priority: '0.8', changefreq: 'weekly' },
+    { loc: `${SITE_URL}/all-questions`, priority: '0.8', changefreq: 'daily' },
+    { loc: `${SITE_URL}/how-to-play`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/editorial-policy`, priority: '0.6', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/our-sources`, priority: '0.6', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/corrections`, priority: '0.6', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/terms`, priority: '0.4', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/privacy`, priority: '0.4', changefreq: 'monthly' },
+    { loc: `${SITE_URL}/disclaimer`, priority: '0.4', changefreq: 'monthly' },
+  ];
+
+  // Add distinct category URLs
+  const uniqueCategorySlugs = Array.from(new Set(Object.values(categoryToSlugMap)));
+  for (const cSlug of uniqueCategorySlugs) {
+    sitemapUrls.push({ loc: `${SITE_URL}/categories/${cSlug}`, priority: '0.8', changefreq: 'weekly' });
+  }
+
+  // Add entity hub URLs
+  for (const e of ENTITY_REGISTRY) {
+    sitemapUrls.push({ loc: `${SITE_URL}/${entityTypePrefixMap[e.type]}/${e.slug}`, priority: '0.8', changefreq: 'weekly' });
+  }
+
+  // Add question URLs
+  for (const q of allQuestions) {
+    const qSlug = createSlug(q.question);
+    if (!qSlug) continue;
+    const categorySlug = getCategorySlug(q.category);
+    const subSlug = getQuestionSubcategorySlug(q.category, q.question);
+    const qUrl = subSlug
+      ? `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${subSlug}/${qSlug}`
+      : `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${qSlug}`;
+    sitemapUrls.push({ loc: qUrl, priority: '0.7', changefreq: 'monthly', lastmod: q.created_at ? q.created_at.split('T')[0] : today });
+  }
+
+  const sitemapXmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapUrls.map(u => `  <url>
+    <loc>${esc(u.loc)}</loc>
+    <lastmod>${u.lastmod || today}</lastmod>
+    <changefreq>${u.changefreq || 'monthly'}</changefreq>
+    <priority>${u.priority || '0.7'}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.join(__dirname, 'dist', 'sitemap.xml'), sitemapXmlContent);
+  const publicDir = path.join(__dirname, 'public');
+  if (fs.existsSync(publicDir)) {
+    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXmlContent);
+  }
+  console.log(`[seo-pages] Successfully generated static sitemap.xml with ${sitemapUrls.length} URLs.`);
 
   console.log(`[seo-pages] Successfully generated ${count} per-route static HTML files.`);
 

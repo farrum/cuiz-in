@@ -315,7 +315,7 @@ const QuizQuestionPage: React.FC = () => {
         'text': question.question,
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': question.correctAnswer,
+          'text': (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer'),
           'url': `${questionUrl}#answer`,
           'author': {
             '@type': 'Organization',
@@ -334,6 +334,7 @@ const QuizQuestionPage: React.FC = () => {
   // Generate FAQPage schema for FAQ-style rich results in Google Search
   const generateFAQPageSchema = () => {
     if (!question) return null;
+    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer');
     
     return {
       '@context': 'https://schema.org',
@@ -343,7 +344,7 @@ const QuizQuestionPage: React.FC = () => {
         'name': question.question,
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': `The correct answer is: ${question.correctAnswer}. ${question.explanation || `This is a ${question.difficulty} level ${question.category} question.`}`
+          'text': `The correct answer is: ${safeAns}. ${question.explanation || `This is a ${question.difficulty} level ${question.category} question.`}`
         }
       }]
     };
@@ -364,6 +365,7 @@ const QuizQuestionPage: React.FC = () => {
       : `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${canonicalSlug}`;
     const datePublishedStr = question.createdAt ? new Date(question.createdAt).toISOString() : '2024-01-01T00:00:00Z';
     const dateModifiedStr = factReviewMeta.isoModifiedDate;
+    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer');
     
     return {
       '@context': 'https://schema.org',
@@ -388,7 +390,7 @@ const QuizQuestionPage: React.FC = () => {
       },
       'acceptedAnswer': {
         '@type': 'Answer',
-        'text': question.correctAnswer,
+        'text': safeAns,
         'url': `${questionUrl}#answer`,
         'datePublished': datePublishedStr,
         'dateModified': dateModifiedStr,
@@ -659,7 +661,7 @@ const QuizQuestionPage: React.FC = () => {
                 <Button
                   onClick={goToNextQuestion}
                   disabled={loadingNext}
-                  className="w-full"
+                  className="w-full btn-royal-gold"
                   size="lg"
                 >
                   {loadingNext ? 'Loading…' : 'Next Question →'}

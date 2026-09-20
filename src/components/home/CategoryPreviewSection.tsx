@@ -44,14 +44,20 @@ const CategoryPreviewSection: React.FC<CategoryPreviewSectionProps> = ({ classNa
   return (
     <section className={cn("w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", className)}>
       {/* Section header */}
-      <div className="text-center mb-10">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-          Explore Quiz Categories
-        </h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Choose from 8+ categories covering everything from science to entertainment. 
-          Find your expertise and start earning!
-        </p>
+      <div className="flex items-center gap-3 mb-8 max-w-3xl mx-auto">
+        <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+        <div className="text-center px-4">
+          <span className="text-xs font-black tracking-[0.25em] uppercase text-amber-900/70 block font-cinzel">
+            📜 Royal Archive &amp; Domains
+          </span>
+          <h2 className="text-xl md:text-2xl font-black text-amber-950 font-cinzel">
+            Explore Realm Knowledge
+          </h2>
+          <p className="text-xs text-amber-800/70 font-semibold mt-0.5">
+            Test thy expertise across 12,400+ questions in sciences, history, and lore
+          </p>
+        </div>
+        <span className="h-px flex-1 section-divider-shimmer rounded-full" />
       </div>
 
       {/* Categories grid */}
@@ -63,13 +69,12 @@ const CategoryPreviewSection: React.FC<CategoryPreviewSectionProps> = ({ classNa
             className="group"
           >
             <div className={cn(
-              "category-card relative h-full",
-              `bg-gradient-to-br ${getCategoryGradient(index)}`
+              "scroll-paper rounded-2xl p-5 relative h-full border-2 border-amber-600/30 shadow-md transition-all duration-300 hover:border-amber-500 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between"
             )}>
               {/* Badge */}
               {category.badge && (
                 <div className={cn(
-                  "absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-semibold text-white",
+                  "absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm",
                   getBadgeStyle(category.badge)
                 )}>
                   {category.badge === 'Most Popular' && <Star className="w-3 h-3 inline mr-1" />}
@@ -78,23 +83,28 @@ const CategoryPreviewSection: React.FC<CategoryPreviewSectionProps> = ({ classNa
                 </div>
               )}
 
-              {/* Icon */}
-              <span className="category-icon block">{category.icon}</span>
+              <div>
+                {/* Icon */}
+                <span className="text-3xl mb-3 block drop-shadow-sm">{category.icon}</span>
 
-              {/* Content */}
-              <h3 className="text-lg font-semibold mb-1 group-hover:text-primary transition-colors">
-                {category.name}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                {category.description}
-              </p>
+                {/* Content */}
+                <h3 className="text-base font-black font-cinzel text-amber-950 mb-1 group-hover:text-amber-700 transition-colors">
+                  {category.name}
+                </h3>
+                <p className="text-xs text-amber-900/70 line-clamp-2 mb-4 font-semibold">
+                  {category.description}
+                </p>
+              </div>
 
               {/* Question count */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {category.questionCount}+ questions
+              <div className="flex items-center justify-between pt-2 border-t border-amber-600/20">
+                <span className="text-[11px] font-black text-amber-900/60 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                  {category.questionCount}+ queries
                 </span>
-                <ArrowRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 group-hover:text-amber-950 transition-colors">
+                  <span>Explore</span>
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
               </div>
             </div>
           </Link>
@@ -103,12 +113,13 @@ const CategoryPreviewSection: React.FC<CategoryPreviewSectionProps> = ({ classNa
 
       {/* View all button */}
       <div className="text-center mt-8">
-        <Button asChild variant="outline" size="lg" className="group">
-          <Link to="/categories">
-            View All Categories
-            <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </Button>
+        <Link 
+          to="/categories" 
+          className="inline-flex items-center btn-royal-gold py-3 px-8 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg group"
+        >
+          View All Knowledge Domains
+          <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </Link>
       </div>
     </section>
   );

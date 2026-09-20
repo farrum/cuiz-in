@@ -31,35 +31,35 @@ export const MiniGamesPavilion: React.FC = () => {
           <span className="h-px flex-1 section-divider-shimmer rounded-full" />
         </div>
 
-        {/* 3 Games Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {minigames.slice(0, 3).map((game, idx) => (
+        {/* 4 Games Grid for Desktop Web */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {minigames.slice(0, 4).map((game, idx) => (
             <motion.div
               key={game.id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08, duration: 0.35 }}
-              whileHover={{ y: -4 }}
-              className="scroll-paper rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300"
+              whileHover={{ y: -5, scale: 1.01 }}
+              className="scroll-paper rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 border-2 border-amber-600/35 shadow-lg hover:shadow-2xl hover:border-amber-500"
             >
               {/* Subtle top shimmer banner */}
               <div 
-                className="absolute -top-12 -right-12 w-28 h-28 rounded-full opacity-20 blur-xl pointer-events-none"
+                className="absolute -top-12 -right-12 w-28 h-28 rounded-full opacity-25 blur-xl pointer-events-none"
                 style={{ background: 'radial-gradient(circle, #f59e0b, transparent)' }}
               />
 
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-3xl drop-shadow-md">{game.emoji}</span>
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/25">
-                    {game.playCount || '1.2k'} plays
+                <div className="flex items-center justify-between mb-3.5">
+                  <span className="text-3.5xl drop-shadow-md p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">{game.emoji}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30">
+                    {game.playCount || '1.8k'} plays
                   </span>
                 </div>
 
-                <h3 className="font-cinzel font-black text-base text-amber-950 mb-1">
+                <h3 className="font-cinzel font-black text-base text-amber-950 mb-1.5">
                   {game.name}
                 </h3>
-                <p className="text-xs text-amber-900/70 line-clamp-2 mb-4 leading-relaxed font-medium">
+                <p className="text-xs text-amber-900/75 line-clamp-2 mb-5 leading-relaxed font-semibold">
                   {game.description}
                 </p>
               </div>
@@ -67,11 +67,7 @@ export const MiniGamesPavilion: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handlePlayGame(game.id)}
-                className="btn-3d w-full py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider text-stone-950 flex items-center justify-center gap-1.5 shadow-md"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(42 90% 50%) 0%, hsl(34 92% 44%) 100%)',
-                  boxShadow: '0 2px 0 hsl(34 92% 28%), 0 4px 12px rgba(245, 158, 11, 0.2)',
-                }}
+                className="btn-royal-gold w-full py-3 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 Play Challenge

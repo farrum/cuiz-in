@@ -1081,3 +1081,95 @@ html.native-app body {
   box-shadow: 0 1px 0 rgba(255,255,255,0.95) inset, 0 8px 24px rgba(120,80,20,0.12);
 }
 
+/* ── Royal Jewel Buttons & Interactive Tactile Styling ── */
+.btn-royal-gold {
+  background: linear-gradient(135deg, hsl(43 96% 52%) 0%, hsl(36 92% 44%) 100%);
+  color: #1a0f02;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 0 hsl(34 92% 26%), 0 8px 20px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-royal-gold:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 hsl(34 92% 26%), 0 12px 24px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn-royal-gold:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 hsl(34 92% 26%), 0 4px 10px rgba(245, 158, 11, 0.25) !important;
+}
+
+.btn-royal-emerald {
+  background: linear-gradient(135deg, hsl(152 76% 44%) 0%, hsl(158 84% 32%) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 0 hsl(158 84% 20%), 0 8px 20px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-royal-emerald:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 hsl(158 84% 20%), 0 12px 24px rgba(16, 185, 129, 0.45);
+}
+.btn-royal-emerald:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 hsl(158 84% 20%) !important;
+}
+
+.btn-royal-sapphire {
+  background: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(224 76% 48%) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 0 hsl(224 76% 32%), 0 8px 20px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-royal-sapphire:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 hsl(224 76% 32%), 0 12px 24px rgba(59, 130, 246, 0.45);
+}
+.btn-royal-sapphire:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 hsl(224 76% 32%) !important;
+}
+
+.btn-royal-ruby {
+  background: linear-gradient(135deg, hsl(346 84% 54%) 0%, hsl(352 80% 42%) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 0 hsl(352 80% 26%), 0 8px 20px rgba(244, 63, 94, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-royal-ruby:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 hsl(352 80% 26%), 0 12px 24px rgba(244, 63, 94, 0.45);
+}
+.btn-royal-ruby:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 hsl(352 80% 26%) !important;
+}
+
+/* ── Imperial Slate Card Casing ── */
+.card-royal-slate {
+  background: linear-gradient(160deg, #161c28 0%, #0d121c 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 
+    0 0 0 1px rgba(245, 158, 11, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 36px -8px rgba(0, 0, 0, 0.45);
+  border-radius: 1.5rem;
+}
+
+/* ── Jewel Icon Container ── */
+.jewel-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+

@@ -169,8 +169,10 @@ serve(async (req) => {
       160
     );
     
-    // Only use QAPage schema - avoid Quiz schema which causes Google's
-    // "Invalid object type for field '<parent_node>'" error in Review snippets
+    const safeAns = (q.correct_answer && String(q.correct_answer).trim())
+      ? String(q.correct_answer).trim()
+      : (options[0] ? String(options[0]) : 'Verified Answer');
+
     const qaPageSchema = {
       "@context": "https://schema.org",
       "@type": "QAPage",
@@ -187,14 +189,12 @@ serve(async (req) => {
         "text": q.question,
         "answerCount": 1,
         "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-        ...(q.correct_answer ? {
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": q.correct_answer,
-            "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
-          }
-        } : {}),
-        "suggestedAnswer": options.filter(opt => opt !== q.correct_answer).map(opt => ({
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": safeAns,
+          "dateCreated": q.created_at ? q.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        },
+        "suggestedAnswer": options.filter(opt => opt !== safeAns).map(opt => ({
           "@type": "Answer",
           "text": String(opt)
         }))

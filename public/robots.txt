@@ -18,7 +18,7 @@ Disallow: /archived-challenges/
 Allow: /editorial-policy
 Allow: /our-sources
 Allow: /corrections
-Allow: /answer/
+Disallow: /answer/
 Allow: /quiz
 Allow: /quiz/question/
 Allow: /browse

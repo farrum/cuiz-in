@@ -278,7 +278,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           onCountdownComplete={proceedToAnswerPage}
           initialSeconds={5}
           disabled={!selectedOption || isSubmitting}
-          className={`w-full ${selectedOption ? 'fun-button' : ''}`}
+          className={`w-full ${selectedOption ? 'btn-royal-gold' : ''}`}
           icon={<Sparkles className="h-4 w-4" />}
         >
           Submit Answer

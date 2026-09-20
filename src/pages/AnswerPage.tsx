@@ -166,16 +166,17 @@ const AnswerPage: React.FC = () => {
   // Create consistent slug for canonical URL using the same createSlug function
   const answerSlug = selectedOption ? createSlug(selectedOption, 50) : '';
 
+  const primaryQuestionUrl = question ? `https://cuiz.in${createQuestionUrl(question.id, question.question, question.category)}` : undefined;
+
   return (
     <PageLayout>
       <SEO
         title={pageTitle}
         description={pageDescription}
-        canonicalUrl={question && answerSlug ? `https://cuiz.in/answer/${questionId}/${answerSlug}` : undefined}
-        schemaType="QAPage"
-        schemaData={generateAnswerSchema()}
+        canonicalUrl={primaryQuestionUrl}
+        schemaType="WebPage"
         keywords={keywords}
-        noindex={false}
+        noindex={true}
       />
       
       <main className="flex-1 container max-w-4xl pt-24 pb-12 px-4">

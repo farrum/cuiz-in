@@ -334,6 +334,9 @@ const TopicPage: React.FC = () => {
       'itemListElement': questions.slice(0, 20).map((q, i) => {
         const catSlug = getCategorySlug(q.category);
         const qSlug = createSlug(q.question);
+        const answerText = (q.correct_answer && String(q.correct_answer).trim()) 
+          ? String(q.correct_answer).trim() 
+          : (Array.isArray(q.options) && q.options[0] ? String(q.options[0]) : 'Verified Answer');
         return {
           '@type': 'ListItem',
           'position': i + 1,
@@ -343,7 +346,7 @@ const TopicPage: React.FC = () => {
             'url': `https://cuiz.in/quiz/question/${q.id}/${catSlug}/${qSlug}`,
             'acceptedAnswer': {
               '@type': 'Answer',
-              'text': q.correct_answer || ''
+              'text': answerText
             }
           }
         };

@@ -45,7 +45,13 @@ const TryQuestionSection: React.FC = () => {
         body: { question_id: question.id, selected_answer: answer },
       });
       if (!error && data) {
-        setIsCorrect(!!data.is_correct);
+        const correct = !!data.is_correct;
+        setIsCorrect(correct);
+        if (correct) {
+          try {
+            import('canvas-confetti').then(m => m.default({ particleCount: 50, spread: 60, origin: { y: 0.6 } }));
+          } catch {}
+        }
         // Hydrate the question so the UI can display correct answer / explanation
         setQuestion((prev) => prev ? {
           ...prev,
@@ -71,23 +77,18 @@ const TryQuestionSection: React.FC = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          {/* Fixed height to prevent CLS */}
-          <div className="max-w-3xl mx-auto min-h-[400px] md:min-h-[350px]">
-            <Card className="border-2 border-primary/20 shadow-2xl">
-              <CardContent className="p-8">
-                <div className="space-y-4" aria-hidden="true">
-                  <div className="h-8 bg-muted rounded w-3/4 mx-auto animate-pulse" />
-                  <div className="h-4 bg-muted rounded w-1/2 mx-auto animate-pulse" />
-                  <div className="grid grid-cols-2 gap-4 mt-8">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="h-14 bg-muted rounded-xl animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="max-w-3xl mx-auto min-h-[380px]">
+            <div className="scroll-paper rounded-3xl p-8 border border-amber-600/30 shadow-xl space-y-5 animate-pulse">
+              <div className="h-6 bg-amber-500/15 rounded-full w-1/3 mx-auto" />
+              <div className="h-8 bg-amber-500/20 rounded-xl w-3/4 mx-auto" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-16 bg-amber-500/10 rounded-2xl" />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -95,50 +96,50 @@ const TryQuestionSection: React.FC = () => {
   }
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-accent/5 rounded-full blur-3xl" />
-      </div>
-
+    <section className="py-12 md:py-16 relative overflow-hidden" aria-labelledby="try-question-heading">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Brain className="w-4 h-4" />
-            Try Before You Play
+        {/* Imperial Trial Header */}
+        <div className="flex items-center gap-3 mb-8 max-w-3xl mx-auto">
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
+          <div className="text-center px-4">
+            <span className="text-xs font-black tracking-[0.25em] uppercase text-amber-900/70 block font-cinzel">
+              ⚔️ Imperial Trial Arena
+            </span>
+            <h2 id="try-question-heading" className="text-xl md:text-2xl font-black text-amber-950 font-cinzel">
+              Test Thy Wit &amp; Claim Royal Bounty
+            </h2>
+            <p className="text-xs text-amber-800/70 font-semibold mt-0.5">
+              Solve this ancient query before thee enter the Grand Citadel
+            </p>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Test Your <span className="text-primary">Knowledge</span>
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Answer this question to see how our quiz works. No registration required!
-          </p>
+          <span className="h-px flex-1 section-divider-shimmer rounded-full" />
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <div className="scroll-paper rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden border border-amber-700/30">
-            {/* Ambient watermarks */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="scroll-paper rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden border-2 border-amber-600/40">
+            {/* Corner Gold Highlights */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Category badge */}
+            {/* Category & Gem Bounty Badges */}
             <div className="flex items-center justify-between mb-6">
-              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-950 border border-amber-600/30 px-3.5 py-1 rounded-full text-xs font-bold font-cinzel">
-                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500/25 to-yellow-500/15 text-amber-950 border border-amber-600/40 px-4 py-1.5 rounded-full text-xs font-black tracking-wide font-cinzel shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
                 {question?.category || 'General Knowledge'}
               </span>
-              <span className="text-xs font-black text-amber-900/70 bg-white/70 px-2.5 py-1 rounded-full border border-amber-600/20">
-                +{question?.gems || 10} 💎 Gems
+              <span className="inline-flex items-center gap-1 text-xs font-black text-amber-950 bg-amber-500/15 px-3 py-1.5 rounded-full border border-amber-600/30 shadow-sm">
+                <span>+{question?.gems || 10}</span>
+                <span>💎 Gems</span>
               </span>
             </div>
 
             {/* Question */}
-            <h3 className="text-xl md:text-2xl font-bold text-center mb-8 leading-relaxed font-cinzel text-amber-950">
+            <h3 className="text-lg md:text-xl font-black text-center mb-8 leading-relaxed font-cinzel text-amber-950">
               {question?.question}
             </h3>
 
             {/* Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
               {question?.options.map((option, index) => {
                 const isSelected = selectedAnswer === option;
                 const isCorrectAnswer = option === question.correctAnswer;
@@ -146,12 +147,12 @@ const TryQuestionSection: React.FC = () => {
                 const baseClasses = "relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left font-semibold shadow-sm";
 
                 const stateClasses = !isAnswered
-                  ? "bg-white border-amber-800/20 text-amber-950 hover:bg-amber-50/80 hover:border-amber-600/60 hover:shadow-md hover:scale-[1.01]"
+                  ? "bg-white/95 border-amber-800/25 text-amber-950 hover:bg-amber-50 hover:border-amber-500 hover:shadow-md hover:scale-[1.01]"
                   : isCorrectAnswer
-                  ? "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-400/60 font-bold"
+                  ? "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-400/60 font-bold shadow-md shadow-emerald-500/10"
                   : isSelected && !isCorrectAnswer
-                  ? "bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-400/60"
-                  : "bg-stone-100 border-stone-200 text-stone-500 opacity-60";
+                  ? "bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-400/60 shadow-md shadow-rose-500/10"
+                  : "bg-stone-100/80 border-stone-200 text-stone-400 opacity-60";
 
                 return (
                   <button
@@ -162,18 +163,18 @@ const TryQuestionSection: React.FC = () => {
                   >
                     <span className="flex items-center gap-3">
                       <span className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center text-xs font-black",
+                        "flex-shrink-0 w-8 h-8 rounded-xl border flex items-center justify-center text-xs font-black shadow-sm",
                         !isAnswered
-                          ? "bg-amber-100 text-amber-900 border-amber-300"
+                          ? "bg-gradient-to-b from-amber-100 to-amber-200 text-amber-950 border-amber-400/80"
                           : isCorrectAnswer
-                          ? "bg-emerald-200 text-emerald-900 border-emerald-400"
+                          ? "bg-emerald-200 text-emerald-950 border-emerald-500"
                           : isSelected && !isCorrectAnswer
-                          ? "bg-rose-200 text-rose-900 border-rose-400"
+                          ? "bg-rose-200 text-rose-950 border-rose-500"
                           : "bg-stone-200 text-stone-500 border-stone-300"
                       )}>
                         {String.fromCharCode(65 + index)}
                       </span>
-                      <span className="text-sm font-medium">{option}</span>
+                      <span className="text-sm font-bold leading-snug">{option}</span>
                     </span>
                     {isAnswered && isCorrectAnswer && (
                       <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
@@ -189,23 +190,25 @@ const TryQuestionSection: React.FC = () => {
             {/* Result message */}
             {isAnswered && (
               <div className={cn(
-                "p-4 rounded-2xl text-center mb-6 animate-fade-in",
-                isCorrect ? "bg-emerald-500/15 border border-emerald-600/30 text-emerald-950" : "bg-amber-500/15 border border-amber-600/30 text-amber-950"
+                "p-4 rounded-2xl text-center mb-6 animate-fade-in shadow-sm",
+                isCorrect 
+                  ? "bg-emerald-500/15 border border-emerald-600/30 text-emerald-950" 
+                  : "bg-amber-500/15 border border-amber-600/30 text-amber-950"
               )}>
                 {isCorrect ? (
                   <div className="flex items-center justify-center gap-2">
-                    <Trophy className="w-5 h-5 text-emerald-600" />
-                    <span className="font-bold text-sm">
+                    <Trophy className="w-5 h-5 text-emerald-600 animate-bounce" />
+                    <span className="font-black text-sm">
                       Thy answer is true! Awarded +{question?.gems || 10} Royal Gems!
                     </span>
                   </div>
                 ) : (
                   <div>
-                    <p className="font-bold text-sm text-rose-900 mb-1">
+                    <p className="font-black text-sm text-rose-900 mb-1">
                       Alas, incorrect! The true path was: {question?.correctAnswer}
                     </p>
                     {question?.explanation && (
-                      <p className="text-xs text-amber-900/80 font-medium">{question.explanation}</p>
+                      <p className="text-xs text-amber-900/80 font-semibold">{question.explanation}</p>
                     )}
                   </div>
                 )}
@@ -215,32 +218,27 @@ const TryQuestionSection: React.FC = () => {
             {/* Action buttons */}
             {isAnswered && (
               <div className="flex flex-col sm:flex-row gap-3 animate-fade-in">
-                <Button
+                <button
+                  type="button"
                   onClick={handlePlayMore}
-                  size="lg"
-                  className="flex-1 btn-3d font-black uppercase text-xs tracking-wider text-stone-950 border-0 shadow-lg"
-                  style={{
-                    background: 'linear-gradient(135deg, hsl(42 90% 50%) 0%, hsl(34 92% 44%) 100%)',
-                    boxShadow: '0 3px 0 hsl(34 92% 26%), 0 6px 18px rgba(245, 158, 11, 0.25)',
-                  }}
+                  className="flex-1 btn-royal-gold py-3.5 px-6 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center cursor-pointer shadow-lg"
                 >
                   <Trophy className="w-4 h-4 mr-2" />
                   Continue Imperial Quest
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button
+                </button>
+                <button
+                  type="button"
                   onClick={handleTryAnother}
-                  variant="outline"
-                  size="lg"
-                  className="btn-3d border-2 border-amber-800/40 bg-white/70 text-amber-950 font-black text-xs uppercase tracking-wider hover:bg-white"
+                  className="btn-3d py-3.5 px-6 rounded-xl border-2 border-amber-700/40 bg-white/80 text-amber-950 font-black text-xs uppercase tracking-wider hover:bg-white cursor-pointer shadow-sm"
                 >
                   Next Trial
-                </Button>
+                </button>
               </div>
             )}
 
             {!isAnswered && (
-              <p className="text-center text-xs text-amber-900/60 font-semibold mt-4">
+              <p className="text-center text-xs text-amber-900/70 font-bold mt-4">
                 Choose an answer above to test thy wit!
               </p>
             )}
