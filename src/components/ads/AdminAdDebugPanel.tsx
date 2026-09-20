@@ -83,9 +83,12 @@ const AdminAdDebugPanel: React.FC<{ className?: string }> = ({ className = '' })
               providers[slot.position] = 'Google AdSense';
             } else if (
               slot.code.includes('highperformanceformat') ||
-              slot.code.includes('profitableratecpm')
+              slot.code.includes('highrevenueformat') ||
+              slot.code.includes('profitableratecpmnetwork')
             ) {
-              providers[slot.position] = 'Adsterra';
+              providers[slot.position] = slot.code.includes('b6b3b267c8adb2049f83eee731786d86')
+                ? 'Adsterra Native'
+                : 'Adsterra';
             } else if (slot.code.includes('monetag')) {
               providers[slot.position] = 'Monetag';
             } else if (slot.code.includes('propellerads')) {

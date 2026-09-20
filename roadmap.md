@@ -10,3 +10,4 @@
 - [x] Route homepage mini-game buttons to the web mini-game pages
 
 - [x] Advisor shard lifelines usable in quiz, quests and daily challenge; shards persist until spent
+- [x] Replace all web Adsterra placements with the native banner unit

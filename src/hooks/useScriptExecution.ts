@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { containsBlockedContent } from '@/utils/adProviderScripts';
+import { isAdsterraNativeCode } from '@/utils/adsterraNative';
 
 /**
  * Hook to execute scripts from ad content
@@ -45,22 +46,24 @@ export const useScriptExecution = (
       return;
     }
 
-    // ── Adsterra / highperformanceformat isolation ──────────────────────────
-    // These ads rely on a GLOBAL `atOptions` variable that invoke.js reads at
-    // runtime. Multiple slots on one page all overwrite the same global, so
-    // only one ad ever renders. Render each such ad inside its own sandboxed
-    // iframe so every slot gets an isolated window scope (and its own atOptions).
+    // ── Adsterra isolation ───────────────────────────────────────────────────
+    // Both direct banners and native units assume globally unique state. The
+    // native unit also ships a fixed container id. Isolating every placement in
+    // its own iframe lets the same unit render more than once on a page.
+    const isNativeAdsterra = isAdsterraNativeCode(content);
     const isIframeKeyAd =
-      /atOptions/i.test(content) &&
-      /highperformanceformat\.com|profitableratecpm\.com|invoke\.js/i.test(content);
+      isNativeAdsterra ||
+      (/atOptions/i.test(content) &&
+        /highperformanceformat\.com|highrevenueformat\.com|profitableratecpmnetwork\.com|invoke\.js/i.test(content));
 
     if (isIframeKeyAd) {
       try {
-        // Pull width/height from the atOptions block (fallback to 728x90 banner).
+        // Native units are responsive and need room for their card grid. Direct
+        // banners keep the configured dimensions from their atOptions block.
         const widthMatch = content.match(/['"]width['"]\s*:\s*(\d+)/i);
         const heightMatch = content.match(/['"]height['"]\s*:\s*(\d+)/i);
-        const adWidth = widthMatch ? parseInt(widthMatch[1], 10) : 728;
-        const adHeight = heightMatch ? parseInt(heightMatch[1], 10) : 90;
+        const adWidth = isNativeAdsterra ? '100%' : String(widthMatch ? parseInt(widthMatch[1], 10) : 728);
+        const adHeight = isNativeAdsterra ? 320 : (heightMatch ? parseInt(heightMatch[1], 10) : 90);
 
         // Strip the size-metadata comment so only the real scripts go inside.
         const innerHtml = content.replace(/<!-- size: \d+x\d+ -->/g, '').trim();
@@ -69,16 +72,32 @@ export const useScriptExecution = (
         const iframe = document.createElement('iframe');
         iframe.setAttribute('data-ad-script', 'true');
         iframe.title = 'Sponsored advertisement';
-        iframe.width = String(adWidth);
+        iframe.width = adWidth;
         iframe.height = String(adHeight);
         iframe.scrolling = 'no';
         iframe.frameBorder = '0';
         iframe.style.border = '0';
         iframe.style.maxWidth = '100%';
+        iframe.style.width = isNativeAdsterra ? '100%' : `${adWidth}px`;
         iframe.style.display = 'block';
         iframe.style.margin = '0 auto';
-        iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;}</style></head><body>${innerHtml}</body></html>`;
+        iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;}</style></head><body>${innerHtml}</body></html>`;
         container.appendChild(iframe);
+
+        if (isNativeAdsterra) {
+          const resizeNativeFrame = () => {
+            try {
+              const bodyHeight = iframe.contentDocument?.body?.scrollHeight ?? 0;
+              if (bodyHeight > 20) iframe.height = String(Math.min(1200, bodyHeight));
+            } catch {
+              // The fixed initial height remains when a cross-origin creative
+              // prevents measuring its contents.
+            }
+          };
+          iframe.addEventListener('load', resizeNativeFrame);
+          const resizeTimer = window.setInterval(resizeNativeFrame, 500);
+          window.setTimeout(() => window.clearInterval(resizeTimer), 10000);
+        }
 
         if (mountedRef.current) setExecutionStatus('Isolated iframe ad rendered');
       } catch (e) {
