@@ -163,16 +163,21 @@ async function hydrateUserFromSession(userId: string) {
   }
 }
 
-function clearUserCache() {
+function clearUserCache(clearOwnedItems = false) {
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);
   localStorage.removeItem(STORAGE_KEYS.USER_GEMS);
   localStorage.removeItem(STORAGE_KEYS.USER_STARS);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
   localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
-  import('@/utils/advisorShards').then(m => m.clearLocalShardCache()).catch(() => {});
-  import('@/utils/shopData').then(m => m.clearPurchasesCache()).catch(() => {});
+  // Owned shards / shop items are only wiped on an explicit sign-out. On a plain
+  // guest reload they must survive, since guests have no server copy to restore.
+  if (clearOwnedItems) {
+    import('@/utils/advisorShards').then(m => m.clearLocalShardCache()).catch(() => {});
+    import('@/utils/shopData').then(m => m.clearPurchasesCache()).catch(() => {});
+  }
 }
+
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
