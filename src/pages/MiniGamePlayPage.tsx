@@ -348,7 +348,7 @@ export const MiniGamePlayPage: React.FC = () => {
       case 'treasurechest':
         return <TreasureChest />;
       case 'wheel':
-        return <SpinTheWheel paidPlay={!isFirstPlayToday()} />;
+        return <SpinTheWheel paidPlay={playMode === 'paid'} />;
       case 'scratch':
         if (scratchLoading) {
           return (
