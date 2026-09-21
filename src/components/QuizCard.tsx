@@ -228,41 +228,63 @@ const QuizCard: React.FC<QuizCardProps> = ({
             const isSelected = selectedOption === option;
             const reveal = hasSubmitted; // answer submitted — reveal correct/incorrect
 
-            let optionClasses = '';
+            let optionStyleClass = 'quiz-option-card-neutral';
             if (reveal && isCorrectOption) {
-              optionClasses = 'border-emerald-500 bg-emerald-500/15 text-emerald-900 dark:text-emerald-100';
+              optionStyleClass = 'quiz-option-card-correct font-bold ring-2 ring-emerald-500/50';
             } else if (reveal && isSelected && !isCorrectOption) {
-              optionClasses = 'border-destructive bg-destructive/10 text-destructive';
+              optionStyleClass = 'quiz-option-card-wrong ring-2 ring-rose-500/50';
             } else if (isSelected) {
-              optionClasses = 'border-primary bg-primary/10 transform scale-105';
-            } else {
-              optionClasses = reveal
-                ? 'opacity-70'
-                : 'hover:bg-accent hover:border-accent hover:shadow-md';
+              optionStyleClass = 'quiz-option-card-selected animate-royal-pulse font-bold';
+            } else if (reveal) {
+              optionStyleClass = 'quiz-option-card-dimmed';
             }
 
             return (
               <div
                 key={index}
-                className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${optionClasses} ${isAnimating && isSelected ? 'bounce-in' : ''}`}
+                style={{ animationDelay: `${index * 60}ms` }}
+                className={cn(
+                  "quiz-option-card animate-option-glide group text-left",
+                  optionStyleClass,
+                  isAnimating && isSelected ? 'scale-[0.98]' : ''
+                )}
                 onClick={() => !hasSubmitted && handleSelectOption(option)}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border ${
+                <div className="flex items-center gap-3.5 flex-1 min-w-0 pr-2 text-left">
+                  <div className={cn(
+                    "flex items-center justify-center w-9 h-9 rounded-xl text-sm font-black shrink-0 transition-all border shadow-xs",
                     reveal && isCorrectOption
-                      ? 'border-emerald-500 bg-emerald-500 text-white'
+                      ? 'border-emerald-700 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm'
                       : reveal && isSelected
-                        ? 'border-destructive bg-destructive text-white'
+                        ? 'border-rose-700 bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-sm'
                         : isSelected
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-muted-foreground'
-                  }`}>
+                          ? 'border-amber-600 bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 shadow-sm'
+                          : 'border-amber-300/80 bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 group-hover:border-amber-400'
+                  )}>
                     {String.fromCharCode(65 + index)}
                   </div>
-                  <div className="flex-1">{option}</div>
-                  {reveal && isCorrectOption && <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">✓ Correct</span>}
-                  {reveal && isSelected && !isCorrectOption && <span className="text-destructive font-semibold text-sm">✗ Your pick</span>}
+                  <span className={cn(
+                    "flex-1 min-w-0 text-left font-semibold text-[15px] sm:text-[16px] leading-snug tracking-normal",
+                    reveal && isCorrectOption ? "text-emerald-950 dark:text-emerald-100 font-bold" :
+                    reveal && isSelected ? "text-rose-950 dark:text-rose-100 font-bold" :
+                    isSelected ? "text-amber-950 font-bold" :
+                    "text-stone-900 dark:text-stone-100 group-hover:text-amber-950"
+                  )}>
+                    {option}
+                  </span>
                 </div>
+
+                {reveal && isCorrectOption && (
+                  <div className="flex items-center gap-1.5 shrink-0 bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs animate-bounce">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Correct</span>
+                  </div>
+                )}
+                {reveal && isSelected && !isCorrectOption && (
+                  <div className="flex items-center gap-1.5 shrink-0 bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs">
+                    <span>Your Pick</span>
+                  </div>
+                )}
               </div>
             );
           })}

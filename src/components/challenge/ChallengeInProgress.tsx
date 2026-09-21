@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Challenge } from '@/hooks/challenge/challengeTypes';
 import { QuizQuestion } from '@/utils/quizData';
 import QuizCard from '@/components/QuizCard';
@@ -200,31 +201,58 @@ const ChallengeInProgress: React.FC<ChallengeInProgressProps> = ({
               <h3 className="text-lg font-medium mb-4">{questions[currentQuestionIndex].question}</h3>
               
               <div className="space-y-3">
-                {questions[currentQuestionIndex].options.filter((o) => !eliminatedOptions.includes(o)).map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => handleSelectOption(option)}
-                    className={`w-full text-left p-3 rounded-md border transition-all ${
-                      answerSubmitted && option === questions[currentQuestionIndex].correctAnswer
-                        ? "bg-green-100 dark:bg-green-900/30 border-green-500"
-                        : answerSubmitted && option === selectedOption
-                        ? "bg-red-100 dark:bg-red-900/30 border-red-500"
-                        : selectedOption === option
-                        ? "bg-primary/10 border-primary"
-                        : "bg-accent/50 border-border hover:bg-accent"
-                    }`}
-                    disabled={answerSubmitted}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span>{option}</span>
+                {questions[currentQuestionIndex].options.filter((o) => !eliminatedOptions.includes(o)).map((option, idx) => {
+                  const isCorrect = answerSubmitted && option === questions[currentQuestionIndex].correctAnswer;
+                  const isSelected = selectedOption === option;
+                  const isWrong = answerSubmitted && isSelected && !isCorrect;
+
+                  let optionStyleClass = 'quiz-option-card-neutral';
+                  if (isCorrect) {
+                    optionStyleClass = 'quiz-option-card-correct font-bold ring-2 ring-emerald-500/50';
+                  } else if (isWrong) {
+                    optionStyleClass = 'quiz-option-card-wrong ring-2 ring-rose-500/50';
+                  } else if (isSelected) {
+                    optionStyleClass = 'quiz-option-card-selected animate-royal-pulse font-bold';
+                  } else if (answerSubmitted) {
+                    optionStyleClass = 'quiz-option-card-dimmed';
+                  }
+
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleSelectOption(option)}
+                      disabled={answerSubmitted}
+                      style={{ animationDelay: `${idx * 60}ms` }}
+                      className={cn(
+                        "quiz-option-card animate-option-glide group text-left",
+                        optionStyleClass
+                      )}
+                    >
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0 pr-2 text-left">
+                        <div className={cn(
+                          "flex items-center justify-center w-9 h-9 rounded-xl text-sm font-black shrink-0 transition-all border shadow-xs",
+                          isCorrect
+                            ? 'border-emerald-700 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm'
+                            : isWrong
+                              ? 'border-rose-700 bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-sm'
+                              : isSelected
+                                ? 'border-amber-600 bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 shadow-sm'
+                                : 'border-amber-300/80 bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 group-hover:border-amber-400'
+                        )}>
+                          {String.fromCharCode(65 + idx)}
+                        </div>
+                        <span className="flex-1 min-w-0 text-left font-semibold text-[15px] sm:text-[16px] leading-snug tracking-normal">
+                          {option}
+                        </span>
+                      </div>
                       {audiencePoll && !answerSubmitted && (
-                        <span className="text-xs font-bold text-muted-foreground tabular-nums">
+                        <span className="text-xs font-black text-amber-800 tabular-nums shrink-0 ml-2">
                           {audiencePoll[option] || 0}%
                         </span>
                       )}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
 
               {!answerSubmitted && (

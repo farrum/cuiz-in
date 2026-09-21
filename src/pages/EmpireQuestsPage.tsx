@@ -1320,14 +1320,19 @@ export default function EmpireQuestsPage() {
                           disabled={hasAnswered || isEliminated}
                           onClick={() => handleSelectAnswer(opt)}
                           className={cn(
-                            "p-4 rounded-2xl border text-left text-sm font-bold transition-all flex items-center justify-between",
+                            "p-3.5 md:p-4 rounded-2xl border text-left text-sm font-bold transition-all flex items-center justify-between",
                             btnStyle,
                             isEliminated && "opacity-20 cursor-not-allowed line-through"
                           )}
                         >
-                          <span>{opt}</span>
-                          {hasAnswered && isOptionCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-200" />}
-                          {hasAnswered && isSelected && !isOptionCorrect && <XCircle className="w-5 h-5 text-rose-200" />}
+                          <div className="flex items-center gap-3 flex-1 min-w-0 pr-2 text-left">
+                            <span className="w-8 h-8 rounded-xl bg-white/10 text-amber-300 flex items-center justify-center font-black text-xs shrink-0 border border-white/15">
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            <span className="flex-1 text-left font-semibold text-sm leading-snug">{opt}</span>
+                          </div>
+                          {hasAnswered && isOptionCorrect && <CheckCircle2 className="w-5 h-5 text-emerald-200 shrink-0" />}
+                          {hasAnswered && isSelected && !isOptionCorrect && <XCircle className="w-5 h-5 text-rose-200 shrink-0" />}
                         </button>
                       );
                     })}

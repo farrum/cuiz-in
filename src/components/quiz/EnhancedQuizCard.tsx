@@ -19,6 +19,7 @@ import { confetti } from '@/utils/animations';
 import { emitQuizReward } from '@/components/quiz/FloatingReward';
 import { useWebRewardedAd } from '@/hooks/useWebRewardedAd';
 import { asUuidOrNull } from '@/utils/uuid';
+import { EmberBackground } from '@/mobile/components/EmberBackground';
 import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
 import {
   ADVISOR_LIFELINES,
@@ -407,6 +408,7 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
         haptics('success');
         audioManager.playSFX('correct');
         if (soundEnabled) playCorrectSound();
+        try { confetti(); } catch (_) {}
       } else {
         haptics('warning');
         audioManager.playSFX('wrong');
@@ -542,23 +544,23 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
   const getOptionStyle = (option: string) => {
     if (!isAnswered || !revealReady) {
       if (ramanujanUsed && option === question.correctAnswer) {
-        return 'border-purple-500 bg-purple-500/10 cursor-pointer animate-pulse ring-2 ring-purple-400 font-bold';
+        return 'quiz-option-card-selected ring-2 ring-purple-400 font-bold';
       }
       if (isAnswered && option === selectedAnswer) {
-        return 'border-amber-600 bg-amber-500/15 animate-pulse font-bold';
+        return 'quiz-option-card-selected animate-royal-pulse font-bold';
       }
-      return 'border-amber-900/25 bg-white/70 hover:bg-white hover:border-amber-600 cursor-pointer active:scale-[0.98] shadow-sm btn-3d text-amber-950 font-semibold';
+      return 'quiz-option-card-neutral font-semibold';
     }
 
     if (option === question.correctAnswer) {
-      return 'border-emerald-600 bg-emerald-500/15 text-emerald-950 font-bold ring-2 ring-emerald-500/40';
+      return 'quiz-option-card-correct font-bold ring-2 ring-emerald-500/50';
     }
 
     if (option === selectedAnswer && option !== question.correctAnswer) {
-      return 'border-rose-600 bg-rose-500/15 text-rose-950 ring-2 ring-rose-500/40';
+      return 'quiz-option-card-wrong ring-2 ring-rose-500/50';
     }
 
-    return 'border-amber-900/10 opacity-40 bg-stone-100/50';
+    return 'quiz-option-card-dimmed';
   };
 
   const getTimerColor = () => {
@@ -588,10 +590,15 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
 
   return (
     <>
-      <div className="scroll-paper rounded-3xl overflow-hidden shadow-2xl relative border border-amber-700/30">
+      <div className="scroll-paper rounded-3xl overflow-hidden shadow-2xl relative border-2 border-amber-600/35">
+        {/* Subtle Animated Ember Sparkles */}
+        <div className="absolute inset-0 pointer-events-none opacity-35 overflow-hidden">
+          <EmberBackground count={10} />
+        </div>
+
         {/* Animated Timer Bar */}
         {timerStarted && !isAnswered && (
-          <div className="h-2 bg-muted/50 overflow-hidden relative">
+          <div className="h-2 bg-muted/50 overflow-hidden relative z-10">
             {/* Background glow for urgency */}
             {isTimeLow && (
               <div className="absolute inset-0 bg-destructive/20 animate-pulse" />
@@ -739,10 +746,12 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
 
           {/* Question */}
-          <h3 className="text-lg md:text-xl font-semibold mb-5 leading-relaxed flex items-start gap-2">
-            <Sparkles className="w-5 h-5 text-primary shrink-0 mt-1" />
-            {question.question}
-          </h3>
+          <div className="mb-6">
+            <h3 className="text-xl md:text-2xl font-black text-stone-950 dark:text-stone-100 leading-snug tracking-tight flex items-start gap-2.5 text-left font-sans">
+              <Sparkles className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+              <span className="flex-1">{question.question}</span>
+            </h3>
+          </div>
 
           {/* Shield Status Effect */}
           {isShieldActive && (
@@ -771,56 +780,78 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
           )}
 
           {/* Options */}
-          <div className="space-y-3">
+          <div className="space-y-3 mb-6">
             {question.options.map((option, index) => {
               if (eliminatedOptions.includes(option)) return null;
+              const isCorrect = isAnswered && option === question.correctAnswer;
+              const isSelected = option === selectedAnswer;
+              const isWrong = isAnswered && isSelected && !isCorrect;
+
               return (
                 <button
                   key={index}
                   onClick={() => handleAnswerSelect(option)}
                   disabled={isAnswered}
+                  style={{ animationDelay: `${index * 60}ms` }}
                   className={cn(
-                    "w-full flex items-center justify-between p-3.5 md:p-4 rounded-xl border-2 transition-all duration-200 text-left",
+                    "quiz-option-card animate-option-glide group text-left",
                     getOptionStyle(option)
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0 pr-2 text-left">
+                    {/* 3D Embossed Letter Badge */}
                     <span className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors",
-                      isAnswered && option === question.correctAnswer
-                        ? "bg-accent text-accent-foreground"
-                        : isAnswered && option === selectedAnswer
-                        ? "bg-destructive text-destructive-foreground"
-                        : selectedAnswer === option
-                        ? "bg-primary text-primary-foreground"
-                        : !isAnswered && ramanujanUsed && option === question.correctAnswer
-                        ? "bg-purple-500 text-white"
-                        : "bg-muted"
+                      "w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all shadow-xs border",
+                      !isAnswered
+                        ? isSelected
+                          ? "bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 border-amber-500 shadow-sm"
+                          : "bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 border-amber-300/80 group-hover:border-amber-500"
+                        : isCorrect
+                          ? "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-700 shadow-sm"
+                          : isWrong
+                            ? "bg-gradient-to-b from-rose-500 to-rose-600 text-white border-rose-700 shadow-sm"
+                            : "bg-stone-100 text-stone-400 border-stone-200"
                     )}>
                       {String.fromCharCode(65 + index)}
                     </span>
-                    <span className="font-medium text-foreground dark:text-white">{option}</span>
+
+                    {/* Left-aligned Answer Text with Crystal Clear Readability */}
+                    <span className={cn(
+                      "flex-1 min-w-0 text-left font-semibold text-[15px] sm:text-[16px] leading-snug tracking-normal",
+                      isCorrect ? "text-emerald-950 dark:text-emerald-100 font-bold" :
+                      isWrong ? "text-rose-950 dark:text-rose-100 font-bold" :
+                      isSelected ? "text-amber-950 font-bold" :
+                      "text-stone-900 dark:text-stone-100 group-hover:text-amber-950"
+                    )}>
+                      {option}
+                    </span>
                   </div>
 
                   {audiencePoll && !isAnswered && (
-                    <span className="flex items-center gap-2 shrink-0 ml-3">
-                      <span className="hidden sm:block w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <span className="flex items-center gap-2 shrink-0 ml-2">
+                      <span className="hidden sm:block w-20 h-2 rounded-full bg-amber-900/10 overflow-hidden">
                         <span
-                          className="block h-full bg-rose-400"
+                          className="block h-full bg-gradient-to-r from-amber-400 to-rose-500 rounded-full transition-all duration-500"
                           style={{ width: `${audiencePoll[option] || 0}%` }}
                         />
                       </span>
-                      <span className="text-xs font-bold text-muted-foreground tabular-nums">
+                      <span className="text-xs font-black text-amber-800 tabular-nums">
                         {audiencePoll[option] || 0}%
                       </span>
                     </span>
                   )}
 
-                  {isAnswered && option === question.correctAnswer && (
-                    <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
+                  {isAnswered && isCorrect && (
+                    <div className="flex items-center gap-1.5 shrink-0 bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs animate-bounce">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Correct</span>
+                    </div>
                   )}
-                  {isAnswered && option === selectedAnswer && option !== question.correctAnswer && (
-                    <XCircle className="w-5 h-5 text-destructive shrink-0" />
+                  {isAnswered && isWrong && (
+                    <div className="flex items-center gap-1.5 shrink-0 bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs">
+                      <XCircle className="w-4 h-4" />
+                      <span className="hidden sm:inline">Your Pick</span>
+                    </div>
                   )}
                 </button>
               );

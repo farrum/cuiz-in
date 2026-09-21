@@ -144,43 +144,60 @@ const TryQuestionSection: React.FC = () => {
                 const isSelected = selectedAnswer === option;
                 const isCorrectAnswer = option === question.correctAnswer;
 
-                const baseClasses = "relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer text-left font-semibold shadow-sm";
-
-                const stateClasses = !isAnswered
-                  ? "bg-white/95 border-amber-800/25 text-amber-950 hover:bg-amber-50 hover:border-amber-500 hover:shadow-md hover:scale-[1.01]"
-                  : isCorrectAnswer
-                  ? "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-400/60 font-bold shadow-md shadow-emerald-500/10"
-                  : isSelected && !isCorrectAnswer
-                  ? "bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-400/60 shadow-md shadow-rose-500/10"
-                  : "bg-stone-100/80 border-stone-200 text-stone-400 opacity-60";
+                let optionStyleClass = 'quiz-option-card-neutral';
+                if (isAnswered) {
+                  if (isCorrectAnswer) {
+                    optionStyleClass = 'quiz-option-card-correct font-bold ring-2 ring-emerald-500/50';
+                  } else if (isSelected) {
+                    optionStyleClass = 'quiz-option-card-wrong ring-2 ring-rose-500/50';
+                  } else {
+                    optionStyleClass = 'quiz-option-card-dimmed';
+                  }
+                } else if (isSelected) {
+                  optionStyleClass = 'quiz-option-card-selected animate-royal-pulse font-bold';
+                }
 
                 return (
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(option)}
                     disabled={isAnswered}
-                    className={cn(baseClasses, stateClasses)}
+                    style={{ animationDelay: `${index * 60}ms` }}
+                    className={cn(
+                      "quiz-option-card animate-option-glide group text-left",
+                      optionStyleClass
+                    )}
                   >
-                    <span className="flex items-center gap-3">
+                    <div className="flex items-center gap-3.5 flex-1 min-w-0 pr-2 text-left">
                       <span className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-xl border flex items-center justify-center text-xs font-black shadow-sm",
+                        "flex-shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-black shadow-xs transition-all",
                         !isAnswered
-                          ? "bg-gradient-to-b from-amber-100 to-amber-200 text-amber-950 border-amber-400/80"
+                          ? isSelected
+                            ? "bg-gradient-to-b from-amber-400 to-amber-600 text-stone-950 border-amber-500 shadow-sm"
+                            : "bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 border-amber-300/80 group-hover:border-amber-400"
                           : isCorrectAnswer
-                          ? "bg-emerald-200 text-emerald-950 border-emerald-500"
-                          : isSelected && !isCorrectAnswer
-                          ? "bg-rose-200 text-rose-950 border-rose-500"
-                          : "bg-stone-200 text-stone-500 border-stone-300"
+                            ? "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-700 shadow-sm"
+                            : isSelected && !isCorrectAnswer
+                              ? "bg-gradient-to-b from-rose-500 to-rose-600 text-white border-rose-700 shadow-sm"
+                              : "bg-stone-100 text-stone-400 border-stone-200"
                       )}>
                         {String.fromCharCode(65 + index)}
                       </span>
-                      <span className="text-sm font-bold leading-snug">{option}</span>
-                    </span>
+                      <span className="flex-1 text-left font-semibold text-[15px] sm:text-[16px] leading-snug tracking-normal text-stone-900">
+                        {option}
+                      </span>
+                    </div>
                     {isAnswered && isCorrectAnswer && (
-                      <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                      <div className="flex items-center gap-1.5 shrink-0 bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs animate-bounce">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">Correct</span>
+                      </div>
                     )}
                     {isAnswered && isSelected && !isCorrectAnswer && (
-                      <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-600" />
+                      <div className="flex items-center gap-1.5 shrink-0 bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-black shadow-xs">
+                        <XCircle className="w-4 h-4" />
+                        <span className="hidden sm:inline">Your Pick</span>
+                      </div>
                     )}
                   </button>
                 );
