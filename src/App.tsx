@@ -289,7 +289,8 @@ function App() {
             hydrateUserFromSession(session.user.id);
           }, 0);
         } else if (event === 'SIGNED_OUT') {
-          clearUserCache();
+          clearUserCache(true);
+
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Silently refresh cache
           setTimeout(() => {
