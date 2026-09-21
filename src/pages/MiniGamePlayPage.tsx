@@ -97,14 +97,8 @@ export const MiniGamePlayPage: React.FC = () => {
   }, [balanceUpdateTrigger]);
 
   useEffect(() => {
-    if (gameId === 'true-false' || gameId === 'image') {
-      loadQuestions();
-    } else if (gameId === 'scratch') {
-      initScratchCard();
-    } else if (gameId === 'riddlevault') {
-      loadRiddle();
-    }
-    
+    setHasPaid(false);
+    setPlayMode('free');
     // Check Chest Claim Status
     const today = getTodayString();
     if (gameId) {
@@ -112,6 +106,20 @@ export const MiniGamePlayPage: React.FC = () => {
       setIsChestClaimed(claimed === 'true');
     }
   }, [gameId]);
+
+  // Content for a game round only loads once the play (free or paid) is started
+  useEffect(() => {
+    if (!hasPaid) return;
+    if (gameId === 'true-false' || gameId === 'image') {
+      loadQuestions();
+    } else if (gameId === 'scratch') {
+      initScratchCard();
+    } else if (gameId === 'riddlevault') {
+      loadRiddle();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId, hasPaid, playToken]);
+
 
   const getTodayString = () => {
     return new Date().toISOString().split('T')[0];
