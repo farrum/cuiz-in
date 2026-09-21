@@ -242,7 +242,7 @@ export const MiniGamePlayPage: React.FC = () => {
       }
       
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily', p_paid: !isFirstPlayToday() });
+      const { data, error } = await supabase.rpc('process_scratch_card' as any, { p_context: 'daily', p_paid: playMode === 'paid' });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r: any = data;
       if (error || r?.error) {
