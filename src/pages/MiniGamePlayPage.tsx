@@ -118,6 +118,66 @@ export const MiniGamePlayPage: React.FC = () => {
     const lastPlay = localStorage.getItem(`cuizin-last-play-${gameId}`);
     return lastPlay !== today;
   };
+
+  const handlePayAndStart = () => {
+    if (isFirstPlayToday()) {
+      setPlayMode('free');
+      setHasPaid(true);
+    } else {
+      // Server-backed games (wheel / scratch) charge the 5 Gem fee on the server
+      const serverCharged = gameId === 'wheel' || gameId === 'scratch';
+      const { gems } = getUserBalances();
+      if (gems < 5) {
+        alert('You need at least 5 Gems to play again today! Play quizzes or claim daily mystery boxes to earn more.');
+        return;
+      }
+      if (!serverCharged) {
+        updateUserBalances(-5, 0);
+        setBalanceUpdateTrigger((t) => t + 1);
+      }
+      setPlayMode('paid');
+      setHasPaid(true);
+    }
+    setPlayToken((t) => t + 1);
+  };
+
+  const handleRoundComplete = () => {
+    if (gameId) localStorage.setItem(`cuizin-last-play-${gameId}`, getTodayString());
+  };
+
+  useEffect(() => {
+    const onDone = () => handleRoundComplete();
+    window.addEventListener('miniGameRoundComplete', onDone);
+    return () => window.removeEventListener('miniGameRoundComplete', onDone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
+  const renderLaunchScreen = () => {
+    const isFree = isFirstPlayToday();
+    const { gems } = getUserBalances();
+
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-4 max-w-sm mx-auto space-y-6">
+        <span className="text-6xl select-none">{activeGame?.emoji ?? '🎮'}</span>
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-wider text-white mb-2">
+            {activeGame?.name ?? 'Mini Game'}
+          </h2>
+          <p className="text-sm text-slate-400">{activeGame?.description}</p>
+        </div>
+        <div className="w-full bg-slate-950 border border-yellow-500/20 rounded-2xl p-4">
+          <p className="text-sm font-bold text-slate-300">
+            {isFree ? 'Your free daily play is ready!' : 'You already played today — one more round costs 5 Gems.'}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">Your balance: {gems} Gems</p>
+        </div>
+        <Button className="w-full font-black uppercase tracking-wider" onClick={handlePayAndStart}>
+          {isFree ? 'Play Free Round' : 'Pay 5 Gems & Play'}
+        </Button>
+      </div>
+    );
+  };
+
   const handleOpenDailyChest = async () => {
     if (isChestClaimed || chestAnimState !== 'idle' || !gameId) return;
 
