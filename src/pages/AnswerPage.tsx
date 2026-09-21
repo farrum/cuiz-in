@@ -17,7 +17,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { extractKeywords } from '@/services/keywordService';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getGuestQuestionsPlayed } from '@/utils/guestPlayService';
 import { trackGuestPageView } from '@/utils/guestAnalytics';

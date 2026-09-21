@@ -13,6 +13,7 @@ import { isUserLoggedIn, canGuestPlay, incrementGuestPlay, getRemainingGuestPlay
 import GuestPlayLimitModal from './GuestPlayLimitModal';
 import { trackGuestEvent } from '@/utils/guestAnalytics';
 import { asUuidOrNull } from '@/utils/uuid';
+import { cn } from '@/lib/utils';
 
 interface QuizCardProps {
   question: QuizQuestion;
