@@ -634,7 +634,7 @@ export const MiniGamePlayPage: React.FC = () => {
           )}
 
           <div className="w-full bg-slate-900 border-4 border-double border-yellow-500/30 rounded-3xl p-6 md:p-10 shadow-xl shadow-yellow-500/5 min-h-[450px] flex items-center justify-center">
-            {renderGameContent()}
+            {hasPaid ? <div key={playToken} className="w-full">{renderGameContent()}</div> : renderLaunchScreen()}
           </div>
           
           {/* Ad slot directly underneath the game */}
