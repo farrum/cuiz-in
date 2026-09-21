@@ -37,6 +37,10 @@ export const MiniGamePlayPage: React.FC = () => {
 
   // Gamification Play State
   const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [playMode, setPlayMode] = useState<'free' | 'paid'>('free');
+  const [playToken, setPlayToken] = useState(0);
+
 
   // States for True/False and Image trivia
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
