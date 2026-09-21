@@ -150,7 +150,10 @@ export const MiniGamePlayPage: React.FC = () => {
       setPlayMode('paid');
       setHasPaid(true);
     }
+    // The free daily play is consumed as soon as the round starts
+    if (gameId) localStorage.setItem(`cuizin-last-play-${gameId}`, getTodayString());
     setPlayToken((t) => t + 1);
+
   };
 
   const handleRoundComplete = () => {
