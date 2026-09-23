@@ -58,9 +58,9 @@ const HeroSectionEnhanced: React.FC<HeroSectionEnhancedProps> = ({
             </div>
 
             <h1 id="hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-amber-950 font-cinzel tracking-tight drop-shadow-sm">
-              Speed Quizzing,{' '}
+              CuizIN —{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600">
-                Unmatched Trivia
+                Speed Quizzing, Unmatched Trivia
               </span>
             </h1>
 
