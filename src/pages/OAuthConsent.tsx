@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,11 @@ export default function OAuthConsent() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-12 bg-background text-foreground">
+      <Helmet>
+        <title>Authorize an App | CuizIN</title>
+        <meta name="description" content="Review and approve which apps can connect to your CuizIN account. You're always in control of your profile, quiz stats, and quiz content access." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-sm text-center">
         {error ? (
           <>

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -87,6 +88,11 @@ const AuthCallback: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
+      <Helmet>
+        <title>Signing You In | CuizIN</title>
+        <meta name="description" content="Completing your CuizIN sign-in. You'll be redirected to your quizzes in a moment — thank you for playing CuizIN." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="text-center space-y-3">
         <div className="h-10 w-10 mx-auto rounded-full border-2 border-primary border-t-transparent animate-spin" />
         <p className="text-sm text-muted-foreground">Completing sign-in…</p>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
@@ -56,7 +57,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function TeamLeaderDashboardPage() {
+function TeamLeaderDashboardPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const {
