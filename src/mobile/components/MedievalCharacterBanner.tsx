@@ -143,6 +143,25 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
     }
   };
 
+  const getRankAlt = (r: string) => {
+    switch (r.toLowerCase()) {
+      case 'admin':
+      case 'king':
+        return 'Illustrated portrait of a medieval King in golden regalia';
+      case 'baron':
+      case 'team_leader':
+        return 'Illustrated portrait of a medieval Baron in amber robes';
+      case 'knight':
+        return 'Illustrated portrait of a medieval Knight in steel armor';
+      case 'officer':
+      case 'junior_team_leader':
+        return 'Illustrated portrait of a medieval Officer in emerald livery';
+      case 'infantry':
+      default:
+        return 'Illustrated portrait of a medieval Infantry soldier';
+    }
+  };
+
   return (
     <div
       className={cn("relative select-none overflow-hidden rounded-3xl border-2 bg-slate-900 shadow-md", className)}
