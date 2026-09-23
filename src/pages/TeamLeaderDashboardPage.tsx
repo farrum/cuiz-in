@@ -1239,3 +1239,16 @@ function TeamLeaderDashboardPage() {
     </PageLayout>
   );
 }
+
+export default function TeamLeaderDashboardPageWithSEO() {
+  return (
+    <>
+      <Helmet>
+        <title>War Room | CuizIN</title>
+        <meta name="description" content="Manage your CuizIN squad from the War Room — track member activity, attendance, and team progress, assign tasks, and lead your troops up the ranks." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <TeamLeaderDashboardPage />
+    </>
+  );
+}
