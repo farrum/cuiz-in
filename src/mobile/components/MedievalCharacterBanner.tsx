@@ -171,7 +171,7 @@ export function MedievalCharacterBanner({ compact = false, className }: Medieval
       <div className={cn("relative w-full", compact ? "h-36" : "h-48")}>
         <img
           src={getRankImage(role)}
-          alt={getRankName(role)}
+          alt={getRankAlt(role)}
           className="absolute inset-0 w-full h-full object-cover object-top scale-105"
           loading="lazy"
         />
