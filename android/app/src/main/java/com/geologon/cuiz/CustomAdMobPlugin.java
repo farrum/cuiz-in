@@ -31,6 +31,14 @@ import com.ironsource.mediationsdk.sdk.LevelPlayBannerListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener;
 
+// LevelPlay (SDK 8.x) ad-unit based banner API — required so banner requests
+// are attributed to the dashboard ad unit and its configured ad sources.
+import com.unity3d.mediation.LevelPlayAdError;
+import com.unity3d.mediation.LevelPlayAdInfo;
+import com.unity3d.mediation.LevelPlayAdSize;
+import com.unity3d.mediation.banner.LevelPlayBannerAdView;
+import com.unity3d.mediation.banner.LevelPlayBannerAdViewListener;
+
 // Standalone Unity Ads SDK (Secondary / Direct Fallback)
 import com.unity3d.ads.IUnityAdsInitializationListener;
 import com.unity3d.ads.IUnityAdsLoadListener;
