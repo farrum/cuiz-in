@@ -488,17 +488,10 @@ public class CustomAdMobPlugin extends Plugin {
         Log.d(TAG, "Refreshing banner ad...");
         lastBannerLoadTime = now;
 
-        if (levelPlayBanner != null && !levelPlayBanner.isDestroyed() && isLpBannerLoaded) {
-            isBannerLoading = true;
-            try {
-                IronSource.loadBanner(levelPlayBanner);
-            } catch (Exception e) {
-                Log.w(TAG, "Error in IronSource.loadBanner refresh: " + e.getMessage());
-                isBannerLoading = false;
-                // Keep the current creative visible. Destructive recreation here
-                // caused the native surface to disappear while WebView repainted.
-                notifyBannerState("failed", currentBannerHeightDp, e.getMessage());
-            }
+        if (levelPlayBanner != null && isLpBannerLoaded) {
+            // LevelPlay refreshes this ad unit on its own cadence; forcing an
+            // extra reload only burns requests and hurts availability.
+            return;
         } else if (unityBannerView != null && isUnityBannerLoaded) {
             unityBannerView.load();
         } else {
