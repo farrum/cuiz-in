@@ -73,7 +73,7 @@ public class CustomAdMobPlugin extends Plugin {
 
     // Banner container & views
     private FrameLayout bannerContainer;
-    private IronSourceBannerLayout levelPlayBanner;
+    private LevelPlayBannerAdView levelPlayBanner;
     private BannerView unityBannerView;
 
     private boolean isLpBannerLoaded = false;
