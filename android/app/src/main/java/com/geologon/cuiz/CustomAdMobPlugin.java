@@ -155,9 +155,18 @@ public class CustomAdMobPlugin extends Plugin {
                     Log.i(TAG, "Initializing LevelPlay with App Key: " + lpKey);
                     IronSource.setAdaptersDebug(true);
                     setupLevelPlayListeners();
-                    IronSource.init(getActivity(), lpKey, new InitializationListener() {
+                    // SDK 8 initialization. Interstitial + rewarded still use the
+                    // legacy APIs here, so they are declared as legacy ad formats;
+                    // the banner runs on the ad-unit based API.
+                    LevelPlayInitRequest initRequest = new LevelPlayInitRequest.Builder(lpKey)
+                        .withLegacyAdFormats(Arrays.asList(
+                            LevelPlay.AdFormat.INTERSTITIAL,
+                            LevelPlay.AdFormat.REWARDED
+                        ))
+                        .build();
+                    LevelPlay.init(getActivity(), initRequest, new LevelPlayInitListener() {
                         @Override
-                        public void onInitializationComplete() {
+                        public void onInitSuccess(LevelPlayConfiguration configuration) {
                             Log.i(TAG, "LevelPlay init completed successfully");
                             isLevelPlayInit = true;
                             if (getActivity() != null) {
@@ -172,11 +181,13 @@ public class CustomAdMobPlugin extends Plugin {
                                 loadLevelPlayInterstitialInternal();
                             });
                         }
-                    },
-                        IronSource.AD_UNIT.REWARDED_VIDEO, 
-                        IronSource.AD_UNIT.INTERSTITIAL, 
-                        IronSource.AD_UNIT.BANNER
-                    );
+
+                        @Override
+                        public void onInitFailed(LevelPlayInitError error) {
+                            Log.e(TAG, "LevelPlay init failed: " + error);
+                            lastInitError = String.valueOf(error);
+                        }
+                    });
                 } catch (Exception e) {
                     Log.e(TAG, "LevelPlay init exception:", e);
                     lastInitError = String.valueOf(e);
