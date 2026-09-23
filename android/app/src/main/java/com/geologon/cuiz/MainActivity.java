@@ -3,12 +3,10 @@ package com.geologon.cuiz;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.view.Window;
-import android.view.View;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.ActionBar;
 
 import com.getcapacitor.BridgeActivity;
-import com.ironsource.mediationsdk.IronSource;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -21,7 +19,6 @@ public class MainActivity extends BridgeActivity {
         getWindow().getDecorView().setBackgroundColor(Color.rgb(247, 243, 232));
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().setBackgroundColor(Color.rgb(247, 243, 232));
-            getBridge().getWebView().setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -32,17 +29,5 @@ public class MainActivity extends BridgeActivity {
             nativeBar.hide();
         }
         setTitle("");
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        IronSource.onResume(this);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        IronSource.onPause(this);
     }
 }

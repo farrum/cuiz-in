@@ -441,8 +441,24 @@ export default function EmpireQuestsPage() {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gameplayStatusRef = useRef<'idle' | 'playing' | 'ended'>('idle');
+  const activeStageRef = useRef<QuestStage | null>(null);
+  const pendingNextIndexRef = useRef<number | null>(null);
   const { toast } = useToast();
   const haptics = useHaptics();
+
+  useEffect(() => {
+    gameplayStatusRef.current = gameplayStatus;
+  }, [gameplayStatus]);
+
+  useEffect(() => {
+    activeStageRef.current = activeStage;
+  }, [activeStage]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   // Load User Data & Progress
   const fetchUserData = async () => {
@@ -751,9 +767,12 @@ export default function EmpireQuestsPage() {
       
       setQuestQuestions(shuffled);
       setActiveStage(stage);
+      activeStageRef.current = stage;
+      pendingNextIndexRef.current = null;
       setCurrentQIndex(0);
       setScore(0);
       setGameplayStatus('playing');
+      gameplayStatusRef.current = 'playing';
       setFeedbackMsg(`Stage ${stage.stageNumber}: ${stage.name} - Battle Initiated!`);
       
       // Reset Lifelines
@@ -1003,7 +1022,7 @@ export default function EmpireQuestsPage() {
     }
   };
 
-  const handleNextQuestion = () => {
+  const advanceToQuestion = (targetIndex: number, stage: QuestStage) => {
     setHasAnswered(false);
     setUsedLifelines([]);
     setQuestPoll(null);
@@ -1013,34 +1032,63 @@ export default function EmpireQuestsPage() {
     setRevealedCorrectAnswer(null);
     setRevealedExplanation(null);
 
+    setCurrentQIndex(targetIndex);
+    startTimer(stage);
+    setFeedbackMsg(`Question ${targetIndex + 1}/${questQuestions.length}`);
+  };
+
+  const handleAdFinished = () => {
+    setWebAdBreakOpen(false);
+    setInterstitialOpen(false);
+
+    const targetIndex = pendingNextIndexRef.current;
+    pendingNextIndexRef.current = null;
+
+    const currentStage = activeStageRef.current || activeStage;
+    if (targetIndex !== null && currentStage && gameplayStatusRef.current === 'playing') {
+      advanceToQuestion(targetIndex, currentStage);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (webAdBreakOpen || interstitialOpen || pendingNextIndexRef.current !== null) return;
+
     const nextIndex = currentQIndex + 1;
 
-    // Web-only interstitial ad network after every 2 answered questions
-    if (nextIndex > 0 && nextIndex % 2 === 0) {
-      triggerWebInterstitial();
-      if (!Capacitor.isNativePlatform()) {
-        setAdSeed((s) => s + 1);
-        setWebAdBreakOpen(true);
-      } else {
-        setAdSeed((s) => s + 1);
-        setInterstitialOpen(true);
-      }
-    }
-
-    if (nextIndex < questQuestions.length) {
-      setCurrentQIndex(nextIndex);
-      startTimer(activeStage!);
-      setFeedbackMsg(`Question ${nextIndex + 1}/${questQuestions.length}`);
-    } else {
+    if (nextIndex >= questQuestions.length) {
       const finalScore = score + (isCorrect ? 0 : 0);
       const passed = finalScore >= 3;
       endQuest(passed, finalScore);
+      return;
     }
+
+    // Interstitial ad break after every 2 answered questions (e.g. before question 3 and question 5)
+    // Defer question timer until the user returns from viewing the ad.
+    const isAdTurn = nextIndex > 0 && nextIndex % 2 === 0;
+    if (isAdTurn) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      pendingNextIndexRef.current = nextIndex;
+
+      triggerWebInterstitial();
+      setAdSeed((s) => s + 1);
+
+      if (!Capacitor.isNativePlatform()) {
+        setWebAdBreakOpen(true);
+      } else {
+        setInterstitialOpen(true);
+      }
+      return;
+    }
+
+    advanceToQuestion(nextIndex, activeStage!);
   };
 
   const endQuest = async (passed: boolean, finalScore: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    pendingNextIndexRef.current = null;
+    setWebAdBreakOpen(false);
     setGameplayStatus('ended');
+    gameplayStatusRef.current = 'ended';
 
     if (passed && activeStage) {
       haptics('success');
@@ -1103,8 +1151,12 @@ export default function EmpireQuestsPage() {
 
   const exitGameplay = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    pendingNextIndexRef.current = null;
+    setWebAdBreakOpen(false);
     setGameplayStatus('idle');
+    gameplayStatusRef.current = 'idle';
     setActiveStage(null);
+    activeStageRef.current = null;
     setQuestQuestions([]);
     setRevealedCorrectAnswer(null);
     setRevealedExplanation(null);
@@ -1973,14 +2025,14 @@ export default function EmpireQuestsPage() {
       {webAdBreakOpen && (
         <div className="fixed inset-0 z-[120] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-lg">
-            <QuizInterstitial onContinue={() => setWebAdBreakOpen(false)} countdownSeconds={8} />
+            <QuizInterstitial onContinue={handleAdFinished} countdownSeconds={8} />
           </div>
         </div>
       )}
 
       <InterstitialAd
         open={interstitialOpen}
-        onClose={() => setInterstitialOpen(false)}
+        onClose={handleAdFinished}
         seed={adSeed}
       />
     </PageLayout>

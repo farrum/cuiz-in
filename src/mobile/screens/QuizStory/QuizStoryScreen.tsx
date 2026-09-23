@@ -29,8 +29,8 @@ import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine } from '@/mobile/mascots/useMoodEngine';
 import { Mascot } from '@/mobile/components/Mascot';
-import { NativeBannerAd } from '@/mobile/ads/NativeBannerAd';
-import { showInterstitial, showRewarded } from '@/mobile/ads/adManager';
+import { showRewarded } from '@/mobile/ads/adManager';
+import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { Capacitor } from '@capacitor/core';
 import { asUuidOrNull } from '@/utils/uuid';
 import { cn } from '@/lib/utils';
@@ -81,6 +81,8 @@ export default function QuizStoryScreen() {
 
   // Question answer counter for interstitial ads (every 2 questions)
   const answerCount = useRef(0);
+  const [interstitialOpen, setInterstitialOpen] = useState(false);
+  const [adSeed, setAdSeed] = useState(0);
 
   // Daily challenge progress (1 to 5)
   const [dailyStep, setDailyStep] = useState(1);
@@ -347,11 +349,19 @@ export default function QuizStoryScreen() {
     }, 1000);
   };
 
+  const handleAdFinished = () => {
+    setInterstitialOpen(false);
+    if (isDailyMode) {
+      setDailyStep((s) => s + 1);
+    }
+    loadNext();
+  };
+
   /**
    * Called when the 10-second countdown ends OR when user taps "Skip →" / "Next Trial ⚔️".
    * Triggers an interstitial ad after every 2 questions, then loads next.
    */
-  const handleAdvanceAfterPause = async () => {
+  const handleAdvanceAfterPause = () => {
     clearTimers();
 
     // Check if daily challenge completed
@@ -364,11 +374,9 @@ export default function QuizStoryScreen() {
     const shouldShowAd = answerCount.current % 2 === 0;
 
     if (shouldShowAd && Capacitor.isNativePlatform()) {
-      try {
-        await showInterstitial(2500);
-      } catch (e) {
-        console.warn('[QuizStory] Interstitial failed:', e);
-      }
+      setAdSeed((s) => s + 1);
+      setInterstitialOpen(true);
+      return;
     }
 
     if (isDailyMode) {
@@ -1034,6 +1042,12 @@ export default function QuizStoryScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <InterstitialAd
+        open={interstitialOpen}
+        onClose={handleAdFinished}
+        seed={adSeed}
+      />
     </div>
   );
 }
