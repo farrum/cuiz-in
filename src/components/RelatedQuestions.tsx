@@ -65,7 +65,7 @@ const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
 
           return (
             <Card key={q.id} className="p-4 hover:shadow-md hover:border-primary/40 transition-all group flex flex-col justify-between bg-card text-card-foreground">
-              <Link to={targetUrl} className="block space-y-2">
+              <Link to={targetUrl} className="block space-y-2" aria-label={`Answer this ${q.category} trivia question: ${q.question}`}>
                 <h3 className="font-semibold text-xs sm:text-sm group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                   {q.question}
                 </h3>
@@ -107,6 +107,7 @@ const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
                 key={slug}
                 to={`/categories/${slug}`}
                 className="text-xs px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors border border-border"
+                aria-label={`Browse ${slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} trivia questions`}
               >
                 {slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </Link>

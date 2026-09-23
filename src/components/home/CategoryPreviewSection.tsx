@@ -63,10 +63,11 @@ const CategoryPreviewSection: React.FC<CategoryPreviewSectionProps> = ({ classNa
       {/* Categories grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {featuredCategories.map((category, index) => (
-          <Link 
+          <Link
             key={category.id}
             to={`/categories/${category.slug}`}
             className="group"
+            aria-label={`Explore ${category.name} quizzes – ${category.description}`}
           >
             <div className={cn(
               "scroll-paper rounded-2xl p-5 relative h-full border-2 border-amber-600/30 shadow-md transition-all duration-300 hover:border-amber-500 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between"

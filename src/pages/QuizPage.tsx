@@ -231,7 +231,8 @@ const QuizPage: React.FC = () => {
             {/* Header with mode selector */}
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                {config.name}
+                Play Quiz and Earn Rewards
+                <span className="text-xs font-normal text-muted-foreground hidden sm:inline">| CuizIN</span>
                 {currentMode === 'streak' && streak > 0 && (
                   <span className="text-primary text-base">🔥 {streak}</span>
                 )}

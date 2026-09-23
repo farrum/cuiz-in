@@ -304,7 +304,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
               )}>
                 <img
                   src={advisor.portrait}
-                  alt={advisor.name}
+                  alt={`Portrait of ${advisor.name}, ${advisor.title} – ${advisor.ability} lifeline`}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -425,7 +425,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
                 </button>
 
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/40 mx-auto mb-1.5 shadow-md">
-                  <img src={selectedAdvisor.portrait} alt={selectedAdvisor.name} className="w-full h-full object-cover" />
+                  <img src={selectedAdvisor.portrait} alt={`Portrait of ${selectedAdvisor.name}, ${selectedAdvisor.title}`} className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-sm font-black text-white uppercase tracking-wider drop-shadow-sm">
                   {selectedAdvisor.name}
