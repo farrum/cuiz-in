@@ -389,29 +389,24 @@ public class CustomAdMobPlugin extends Plugin {
         isBannerLoading = true;
         lastBannerLoadTime = System.currentTimeMillis();
 
-        Log.d(TAG, "Requesting LevelPlay Adaptive Banner...");
+        Log.d(TAG, "Requesting LevelPlay banner for ad unit " + DEFAULT_LP_BANNER_ID);
         try {
             if (levelPlayBanner != null) {
-                IronSource.destroyBanner(levelPlayBanner);
+                try { levelPlayBanner.destroy(); } catch (Exception ignored) {}
                 bannerContainer.removeView(levelPlayBanner);
                 levelPlayBanner = null;
             }
 
-            ISBannerSize bannerSize = ISBannerSize.BANNER;
             currentBannerHeightDp = 50;
             updateBannerPosition();
 
-            levelPlayBanner = IronSource.createBanner(getActivity(), bannerSize);
-            if (levelPlayBanner == null) {
-                Log.w(TAG, "IronSource.createBanner returned null, falling back to Unity Banner");
-                loadUnityBannerFallback();
-                return;
-            }
+            levelPlayBanner = new LevelPlayBannerAdView(getActivity(), DEFAULT_LP_BANNER_ID);
+            levelPlayBanner.setAdSize(LevelPlayAdSize.BANNER);
 
-            levelPlayBanner.setLevelPlayBannerListener(new LevelPlayBannerListener() {
+            levelPlayBanner.setBannerListener(new LevelPlayBannerAdViewListener() {
                 @Override
-                public void onAdLoaded(AdInfo adInfo) {
-                    Log.i(TAG, "LevelPlay Adaptive Banner loaded successfully!");
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                    Log.i(TAG, "LevelPlay banner loaded from " + (adInfo != null ? adInfo.getAdNetwork() : "?"));
                     isLpBannerLoaded = true;
                     isBannerLoading = false;
                     lastBannerLoadTime = System.currentTimeMillis();
@@ -433,15 +428,14 @@ public class CustomAdMobPlugin extends Plugin {
                                 bannerContainer.setVisibility(View.VISIBLE);
                                 updateBannerPosition();
                                 notifyBannerState("loaded", currentBannerHeightDp, null);
-                                scheduleBannerRefresh();
                             }
                         }
                     });
                 }
 
                 @Override
-                public void onAdLoadFailed(IronSourceError error) {
-                    Log.w(TAG, "LevelPlay Banner load failed: " + error + " -> trying Unity Ads fallback");
+                public void onAdLoadFailed(LevelPlayAdError error) {
+                    Log.w(TAG, "LevelPlay banner load failed: " + error + " -> trying Unity Ads fallback");
                     lastBannerError = String.valueOf(error);
                     isLpBannerLoaded = false;
                     isBannerLoading = false;
@@ -449,24 +443,37 @@ public class CustomAdMobPlugin extends Plugin {
                 }
 
                 @Override
-                public void onAdClicked(AdInfo adInfo) { }
+                public void onAdDisplayed(LevelPlayAdInfo adInfo) { }
 
                 @Override
-                public void onAdScreenPresented(AdInfo adInfo) { }
+                public void onAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error) {
+                    lastBannerError = String.valueOf(error);
+                }
 
                 @Override
-                public void onAdScreenDismissed(AdInfo adInfo) { }
+                public void onAdClicked(LevelPlayAdInfo adInfo) { }
 
                 @Override
-                public void onAdLeftApplication(AdInfo adInfo) { }
+                public void onAdExpanded(LevelPlayAdInfo adInfo) { }
+
+                @Override
+                public void onAdCollapsed(LevelPlayAdInfo adInfo) { }
+
+                @Override
+                public void onAdLeftApplication(LevelPlayAdInfo adInfo) { }
             });
 
-            IronSource.loadBanner(levelPlayBanner);
+            // The ad unit's own refresh setting (configured in the LevelPlay
+            // dashboard) drives reloads from here on — no manual reload loop.
+            levelPlayBanner.loadAd();
         } catch (Exception e) {
-            Log.e(TAG, "Exception creating LevelPlay adaptive banner:", e);
+            Log.e(TAG, "Exception creating LevelPlay banner:", e);
+            lastBannerError = String.valueOf(e);
+            isBannerLoading = false;
             loadUnityBannerFallback();
         }
     }
+
 
     private void refreshBannerInternal() {
         if (getActivity() == null || !bannerWanted || fullScreenAdShowing) return;
