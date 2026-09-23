@@ -304,7 +304,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
               )}>
                 <img
                   src={advisor.portrait}
-                  alt={`Portrait of ${advisor.name}, ${advisor.title} – ${advisor.ability} lifeline`}
+                  alt={`Portrait of ${advisor.name}, ${advisor.title}`}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
