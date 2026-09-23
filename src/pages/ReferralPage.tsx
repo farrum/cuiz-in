@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import PageLayout from '@/components/layout/PageLayout';
 import ReferralSection from '@/components/ReferralSection';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
@@ -7,6 +8,10 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 const ReferralPage = () => {
   return (
     <PageLayout hidePreFooterAd={true}>
+      <Helmet>
+        <title>Referral Program | CuizIN</title>
+        <meta name="description" content="Invite friends to CuizIN and grow your squad. Earn bonus gems and points for every friend who joins, plays quizzes, and becomes part of your team." />
+      </Helmet>
       <main className="flex-1 container mx-auto px-4 py-24 md:py-24 max-w-4xl">
         <SimpleAdBanner position="top" className="mb-6" />
         

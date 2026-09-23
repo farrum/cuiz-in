@@ -1,6 +1,7 @@
 
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft, Home } from "lucide-react";
 
@@ -16,6 +17,11 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
+      <Helmet>
+        <title>Page Not Found | CuizIN</title>
+        <meta name="description" content="The page you're looking for doesn't exist on CuizIN. Head back to the homepage to play free quizzes, earn gems and points, and climb the leaderboard." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="text-center max-w-md px-4">
         <div className="flex justify-center mb-6">
           <div className="bg-red-100 p-3 rounded-full">
