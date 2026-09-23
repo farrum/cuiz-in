@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import Header from '@/components/Header';
@@ -244,4 +245,14 @@ const ChallengePlayPage = () => {
   );
 };
 
-export default ChallengePlayPage;
+const ChallengePlayPageWithSEO: React.FC = () => (
+  <>
+    <Helmet>
+      <title>Play a Challenge | CuizIN</title>
+      <meta name="description" content="Take on a CuizIN challenge — answer timed quiz questions, score points and gems, and climb the rankings before the challenge clock runs out." />
+    </Helmet>
+    <ChallengePlayPage />
+  </>
+);
+
+export default ChallengePlayPageWithSEO;

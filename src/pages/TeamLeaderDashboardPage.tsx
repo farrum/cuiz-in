@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
@@ -56,7 +57,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function TeamLeaderDashboardPage() {
+function TeamLeaderDashboardPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const {
@@ -1236,5 +1237,18 @@ export default function TeamLeaderDashboardPage() {
 
       </div>
     </PageLayout>
+  );
+}
+
+export default function TeamLeaderDashboardPageWithSEO() {
+  return (
+    <>
+      <Helmet>
+        <title>War Room | CuizIN</title>
+        <meta name="description" content="Manage your CuizIN squad from the War Room — track member activity, attendance, and team progress, assign tasks, and lead your troops up the ranks." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <TeamLeaderDashboardPage />
+    </>
   );
 }

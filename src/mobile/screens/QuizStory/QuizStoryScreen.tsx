@@ -28,6 +28,7 @@ import { GemCounter } from '@/mobile/components/GemCounter';
 import { StreakFlame } from '@/mobile/components/StreakFlame';
 import { MascotReveal } from '@/mobile/mascots/MascotReveal';
 import { moodEngine } from '@/mobile/mascots/useMoodEngine';
+import NativeBannerAd from '@/mobile/ads/NativeBannerAd';
 import { Mascot } from '@/mobile/components/Mascot';
 import { showRewarded } from '@/mobile/ads/adManager';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';

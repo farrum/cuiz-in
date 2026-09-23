@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
@@ -513,6 +514,10 @@ export const MiniGamePlayPage: React.FC = () => {
 
   return (
     <PageLayout showNewsTicker={true}>
+      <Helmet>
+        <title>{activeGame?.name ? `${activeGame.name} | CuizIN Mini Games` : 'Mini Games | CuizIN'}</title>
+        <meta name="description" content={activeGame?.description ? `${activeGame.description} Play free on CuizIN and win gems and stars.` : 'Play free mini games on CuizIN and win extra gems and stars between quiz rounds.'} />
+      </Helmet>
       <div className="min-h-screen bg-[#090d16] pb-12">
         {/* Navigation / Header bar */}
         <div className="bg-slate-950 border-b border-yellow-500/10 py-4 px-6 sticky top-16 z-30 shadow-md">

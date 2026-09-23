@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import PageLayout from '@/components/layout/PageLayout';
 import { minigames } from '@/components/gamification/minigamesData';
 import { MiniGameCard } from '@/components/gamification/MiniGameCard';
@@ -34,6 +35,10 @@ export const MiniGamesList: React.FC = () => {
 
   return (
     <PageLayout showNewsTicker={true}>
+      <Helmet>
+        <title>Mini Games | CuizIN</title>
+        <meta name="description" content="Play free mini games on CuizIN — spin the wheel, scratch cards and more. Enjoy a free daily round and win extra gems and stars between quizzes." />
+      </Helmet>
       <div className="mini-games-list-container">
         <div className="gallery-header">
           <span className="gallery-badge">Cuiz.in Minis</span>

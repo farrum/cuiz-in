@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -1171,6 +1172,10 @@ export default function EmpireQuestsPage() {
 
   return (
     <PageLayout>
+      <Helmet>
+        <title>Empire Quests | CuizIN</title>
+        <meta name="description" content="Take on CuizIN Empire Quests — daily missions, mystery boxes and hero challenges. Complete quests to earn gems, stars and shards for your council." />
+      </Helmet>
       <div className="min-h-screen stone-wall text-foreground pb-16">
         
         {/* REDESIGNED IMPERIAL HEADER & BATTLE COUNCIL BAR */}

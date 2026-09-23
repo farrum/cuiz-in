@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import SuspendedAccountHandler from '@/components/SuspendedAccountHandler';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { useProfileData } from '@/hooks/profile';
@@ -42,8 +43,13 @@ const ProfilePage: React.FC = () => {
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <Helmet>
+        <title>My Profile | CuizIN</title>
+        <meta name="description" content="View and manage your CuizIN profile — track your quiz progress, points, gems, streaks, achievements, and team rank all in one place." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Header />
-      
+
       <main className="flex-1 container max-w-4xl pt-6 pb-8 px-4">
         <SimpleAdBanner position="top" className="mb-4" />
         

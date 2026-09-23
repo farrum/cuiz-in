@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -556,6 +557,10 @@ export default function KingdomsPage() {
 
   return (
     <PageLayout>
+      <Helmet>
+        <title>Kingdoms | CuizIN</title>
+        <meta name="description" content="Explore the CuizIN kingdoms, claim your realm and rise through the ranks. Earn gems and point bonuses as your kingdom climbs the royal leaderboard." />
+      </Helmet>
       <div className="min-h-screen bg-[#f4faff] pb-16 text-foreground font-sans bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
         
         {/* Banner Title */}
