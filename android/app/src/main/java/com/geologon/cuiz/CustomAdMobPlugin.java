@@ -919,7 +919,7 @@ public class CustomAdMobPlugin extends Plugin {
         cancelBannerRefresh();
         if (levelPlayBanner != null) {
             try {
-                IronSource.destroyBanner(levelPlayBanner);
+                levelPlayBanner.destroy();
             } catch (Exception ignored) {}
             levelPlayBanner = null;
         }
