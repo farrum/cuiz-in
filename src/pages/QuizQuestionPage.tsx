@@ -42,6 +42,7 @@ import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import { triggerAdRefresh } from '@/utils/adService';
 
 import { createSlug } from '@/utils/urlUtils';
+import { isUuid } from '@/utils/uuid';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
 import { generateQuestionSocialMeta } from '@/utils/canonicalUrl';
@@ -92,6 +93,11 @@ const QuizQuestionPage: React.FC = () => {
     const fetchQuestionData = async () => {
       setIsLoading(true);
       setAnswered(null);
+
+      if (!questionId || !isUuid(questionId)) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
         // Fetch current question

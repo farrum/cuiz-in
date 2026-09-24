@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuizQuestion } from '@/utils/quizData';
 import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
+import { isUuid } from '@/utils/uuid';
 import { getGuestQuestionsPlayed } from '@/utils/guestPlayService';
 import { trackGuestPageView } from '@/utils/guestAnalytics';
 
@@ -84,12 +85,16 @@ const AnswerPage: React.FC = () => {
   const fetchSimilarQuestions = async (keywords: string[], currentQuestionId: string, category: string) => {
     try {
       // First try to get questions in the same category
-      const { data } = await supabase
+      let query = supabase
         .from('quiz_questions')
         .select('*')
-        .eq('category', category)
-        .neq('id', currentQuestionId)
-        .limit(3);
+        .eq('category', category);
+
+      if (isUuid(currentQuestionId)) {
+        query = query.neq('id', currentQuestionId);
+      }
+
+      const { data } = await query.limit(3);
       
       if (data && data.length > 0) {
         const formattedQuestions = data.map(q => ({

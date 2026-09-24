@@ -33,7 +33,7 @@ import { Mascot } from '@/mobile/components/Mascot';
 import { showRewarded } from '@/mobile/ads/adManager';
 import { InterstitialAd } from '@/mobile/ads/InterstitialAd';
 import { Capacitor } from '@capacitor/core';
-import { asUuidOrNull } from '@/utils/uuid';
+import { asUuidOrNull, isUuid } from '@/utils/uuid';
 import { cn } from '@/lib/utils';
 import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
 import type { AdvisorId, LifelineKind } from '@/utils/advisorShards';
@@ -49,6 +49,7 @@ export default function QuizStoryScreen() {
   const { toast } = useToast();
 
   const isDailyMode = searchParams.get('mode') === 'daily';
+  const challengeId = searchParams.get('challengeId');
   const queryCategory = searchParams.get('category');
   const isImageMode = searchParams.get('type') === 'image';
 
@@ -390,11 +391,11 @@ export default function QuizStoryScreen() {
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem(`daily_challenge_completed_${today}`, 'true');
     const uid = localStorage.getItem(STORAGE_KEYS.USER_ID);
-    if (uid) {
+    if (uid && challengeId && isUuid(challengeId)) {
       void supabase.from('user_challenge_progress').upsert(
         {
           user_id: uid,
-          challenge_id: 'daily-' + today,
+          challenge_id: challengeId,
           completed: true,
           completed_at: new Date().toISOString(),
         },

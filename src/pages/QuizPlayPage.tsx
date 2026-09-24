@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import { getRandomQuestion, getBatchQuestions, QuizQuestion } from '@/utils/quizData';
 import { createSlug } from '@/utils/urlUtils';
+import { isUuid } from '@/utils/uuid';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { usePersistentQuizStats } from '@/hooks/quiz/usePersistentQuizStats';
 import { useGameMode } from '@/hooks/quiz/useGameMode';
@@ -104,6 +105,15 @@ const QuizPlayPage: React.FC = () => {
           if (!cancelled) setBatchQuestions(batch);
         } else {
           // Normal single question fetch
+          if (!isUuid(questionId)) {
+            // Fall back to a random question
+            const fallback = await getRandomQuestion();
+            if (!cancelled) {
+              navigate(`/quiz/play/${fallback.id}/${createSlug(fallback.question, 80)}`, { replace: true });
+            }
+            return;
+          }
+
           const { data, error } = await supabase
             .from('quiz_questions')
             .select('id, question, options, category, difficulty, explanation, gems:points, image_url, question_type, created_at')

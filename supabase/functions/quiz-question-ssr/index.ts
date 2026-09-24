@@ -12,6 +12,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-version, x-app-platform',
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function escapeHtml(text: string): string {
   if (!text) return '';
   return String(text)
@@ -130,6 +132,11 @@ serve(async (req) => {
     if (!questionId) {
       console.error('No question ID provided in query or path');
       return new Response('Question ID required', { status: 400, headers: corsHeaders });
+    }
+
+    if (!UUID_RE.test(questionId.trim())) {
+      console.warn(`Invalid question UUID format rejected: ${questionId}`);
+      return new Response('Question not found', { status: 404, headers: corsHeaders });
     }
 
     console.log(`SSR request for question: ${questionId}`);

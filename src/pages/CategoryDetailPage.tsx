@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
 import { createSlug } from '@/utils/urlUtils';
+import { isUuid } from '@/utils/uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
 import { generateCategorySocialMeta } from '@/utils/canonicalUrl';
@@ -320,12 +321,21 @@ const CategoryDetailPage: React.FC = () => {
                         </span>
                       </div>
                       <div className="mt-3">
-                        <Link 
-                          to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question, 50)}`}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Answer this question
-                        </Link>
+                        {isUuid(question.id) ? (
+                          <Link 
+                            to={`/quiz/question/${question.id}/${getCategorySlug(question.category || category.name)}/${createSlug(question.question, 50)}`}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Answer this question
+                          </Link>
+                        ) : (
+                          <Link 
+                            to={`/quiz?category=${encodeURIComponent(category.name)}`}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Practice {category.name} Quiz
+                          </Link>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

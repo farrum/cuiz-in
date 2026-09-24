@@ -8,6 +8,7 @@ import { NativeBannerAd } from '../../ads/NativeBannerAd';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
+import { isUuid } from '@/utils/uuid';
 
 interface DailyChallenge {
   id: string;
@@ -53,12 +54,13 @@ export default function DailyChallengeStoryScreen() {
 
         // Check user completion from Supabase
         const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        if (userId) {
+        const challengeId = data?.id;
+        if (userId && challengeId && isUuid(challengeId)) {
           const { data: progress } = await supabase
             .from('user_challenge_progress')
             .select('completed')
             .eq('user_id', userId)
-            .eq('challenge_id', 'daily-' + today)
+            .eq('challenge_id', challengeId)
             .maybeSingle();
 
           if (progress?.completed) {
@@ -79,6 +81,9 @@ export default function DailyChallengeStoryScreen() {
   const startChallenge = () => {
     haptics('medium');
     const params = new URLSearchParams({ mode: 'daily' });
+    if (challenge?.id && isUuid(challenge.id)) {
+      params.set('challengeId', challenge.id);
+    }
     if (challenge?.category) params.set('category', challenge.category);
     navigate(`/quiz?${params.toString()}`);
   };
