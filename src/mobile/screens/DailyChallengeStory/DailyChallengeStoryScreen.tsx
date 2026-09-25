@@ -54,7 +54,7 @@ export default function DailyChallengeStoryScreen() {
 
         // Check user completion from Supabase
         const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-        const challengeId = data?.id;
+        const challengeId = (data as unknown as DailyChallenge | null)?.id;
         if (userId && challengeId && isUuid(challengeId)) {
           const { data: progress } = await supabase
             .from('user_challenge_progress')
