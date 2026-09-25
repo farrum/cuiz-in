@@ -204,7 +204,7 @@ serve(async (req) => {
 
     if (error) {
       console.error('Error fetching quiz questions for sitemap:', error);
-      return new Response(await compressGzip(generateXml(standardUrls)), {
+      return new Response((await compressGzip(generateXml(standardUrls))) as unknown as BodyInit, {
         headers: corsHeaders,
       });
     }
@@ -246,7 +246,7 @@ serve(async (req) => {
     const compressedXml = await compressGzip(xml);
 
     // Return the compressed XML with appropriate headers
-    return new Response(compressedXml, { headers: corsHeaders });
+    return new Response(compressedXml as unknown as BodyInit, { headers: corsHeaders });
   } catch (error) {
     console.error('Error generating sitemap:', error);
     return new Response('Error generating sitemap', { status: 500, headers: corsHeaders });
