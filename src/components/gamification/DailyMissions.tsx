@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Coins, Dices, Layers, CheckCircle2, Trophy } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 
 interface Mission {
   id: string;

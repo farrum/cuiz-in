@@ -9,7 +9,7 @@ import { MascotPlayer } from '@/mobile/mascots/MascotPlayer';
 import { characterOfTheDay } from '@/mobile/mascots/registry';
 import { moodEngine } from '@/mobile/mascots/useMoodEngine';
 import { audioManager } from '@/utils/audioManager';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 
 const ROUND_SIZE = 10;
 
@@ -124,7 +124,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
         const total = ROUND_SIZE * rounds;
         const currentScore = correct ? score + 1 : score;
         if (currentScore / total >= 0.7) {
-          confetti({ particleCount: 150, spread: 80, origin: { y: 0.45 } });
+          safeCelebration({ particleCount: 36, origin: { y: 0.45 } });
         }
         showVideoAd(() => {
           setFinished(true);

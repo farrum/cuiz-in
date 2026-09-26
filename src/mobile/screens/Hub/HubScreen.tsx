@@ -86,13 +86,11 @@ export default function HubScreen() {
         setTributeStreak(status.streak);
         setTributeShow(true);
         haptics('success');
-        if (!Capacitor.isNativePlatform()) {
-          try {
-            import('canvas-confetti').then((m) =>
-              m.default({ particleCount: 60, spread: 50, origin: { y: 0.55 } }),
-            );
-          } catch {}
-        }
+        try {
+          import('@/utils/celebration').then((m) =>
+            m.safeCelebration({ particleCount: 28, origin: { y: 0.55 } }),
+          );
+        } catch {}
       }
     };
 

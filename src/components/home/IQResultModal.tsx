@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Brain, Trophy, Target, RefreshCw, UserPlus, LogIn, Sparkles, Award, Share2 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { useQuizSounds } from '@/hooks/useQuizSounds';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -87,32 +87,13 @@ const IQResultModal: React.FC<IQResultModalProps> = ({
         playCorrectSound();
       }
 
-      // Trigger confetti for good performance
+      // Trigger safe celebration for good performance
       if (accuracy >= 60) {
-        const duration = 2000;
-        const end = Date.now() + duration;
-
-        const frame = () => {
-          confetti({
-            particleCount: 3,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#ffd700', '#22c55e', '#a855f7'],
-          });
-          confetti({
-            particleCount: 3,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#ffd700', '#22c55e', '#a855f7'],
-          });
-
-          if (Date.now() < end) {
-            requestAnimationFrame(frame);
-          }
-        };
-        frame();
+        safeCelebration({ particleCount: 36, origin: { x: 0.5, y: 0.4 } });
+        const timer = window.setTimeout(() => {
+          safeCelebration({ particleCount: 28, origin: { x: 0.5, y: 0.5 } });
+        }, 400);
+        return () => window.clearTimeout(timer);
       }
     }
   }, [isOpen, iq, accuracy, isNewBest, onNewBestIQ, soundEnabled]);

@@ -23,7 +23,7 @@ import {
   HelpCircle, Timer, AlertTriangle, CheckCircle2, XCircle, ArrowRight, Lock,
   Trophy, Crown, Play, Award, Zap, ChevronRight, Check, RefreshCw, UserCheck
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 import AdvisorLifelineBar from '@/components/quiz/AdvisorLifelineBar';
@@ -1094,7 +1094,7 @@ export default function EmpireQuestsPage() {
     if (passed && activeStage) {
       haptics('success');
       window.dispatchEvent(new CustomEvent('baronTaskAction', { detail: { type: 'quests' } }));
-      confetti({ particleCount: 100, spread: 70 });
+      safeCelebration({ particleCount: 30, origin: { y: 0.5 } });
       
       let earnedStars = 1;
       if (finalScore >= 5) earnedStars = 3;

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from '@/hooks/use-toast';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { Sparkles, Coins, Star, Ticket, User, Gift, Lock, Shield } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 import { cn } from '@/lib/utils';
 import { TorchSparks } from '@/mobile/components/TorchSparks';
 

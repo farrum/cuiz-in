@@ -49,7 +49,7 @@ const TryQuestionSection: React.FC = () => {
         setIsCorrect(correct);
         if (correct) {
           try {
-            import('canvas-confetti').then(m => m.default({ particleCount: 50, spread: 60, origin: { y: 0.6 } }));
+            import('@/utils/celebration').then(m => m.safeCelebration({ particleCount: 26, origin: { y: 0.6 } }));
           } catch {}
         }
         // Hydrate the question so the UI can display correct answer / explanation

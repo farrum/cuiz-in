@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins, Sparkles, Dices, AlertCircle } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 
 const faceRotations = {
   1: { x: 0, y: 0 },

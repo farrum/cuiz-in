@@ -8,7 +8,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins, Sparkles, Gift, Lock, Star } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 
 interface Chest {
   id: number;

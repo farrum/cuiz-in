@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { Shield, Sparkles, Star, User, Lock, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 import { TorchSparks } from '@/mobile/components/TorchSparks';
 
 export interface HeroData {

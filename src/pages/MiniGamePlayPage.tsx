@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { ArrowLeft, Gamepad2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserBalances, updateUserBalances } from '@/utils/shopData';
 import { Star, Coins, Sparkles, AlertCircle } from 'lucide-react';
@@ -320,7 +320,7 @@ export const MiniGamePlayPage: React.FC = () => {
     showVideoAd(() => {
       setScratchRevealed(true);
       if (scratchPrize && scratchPrize.value > 0) {
-        confetti({ particleCount: 100, spread: 70 });
+        safeCelebration({ particleCount: 30, origin: { y: 0.6 } });
       }
     });
   };
@@ -475,7 +475,7 @@ export const MiniGamePlayPage: React.FC = () => {
             setCurrentImageIndex(nextIndex);
           } else {
             setImageComplete(true);
-            confetti({ particleCount: 80, spread: 60 });
+            safeCelebration({ particleCount: 30, origin: { y: 0.5 } });
           }
         };
 

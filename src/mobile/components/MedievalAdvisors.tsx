@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { showRewarded } from '@/mobile/ads/adManager';
 import { supabase } from '@/integrations/supabase/client';
 import { awardAdvisorShards, syncAdvisorShards, type AdvisorId } from '@/utils/advisorShards';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 
 export interface Advisor {
   id: string;
@@ -172,7 +172,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     window.dispatchEvent(new CustomEvent('advisorShardsUpdated'));
     setShardTick((t) => t + 1);
 
-    confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+    safeCelebration({ particleCount: 30, origin: { y: 0.6 } });
     toast({
       title: '✨ Shards Forged!',
       description: `Acquired +5 ${selectedAdvisor.name} Shards!`,
@@ -192,7 +192,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
         window.dispatchEvent(new CustomEvent('advisorShardsUpdated'));
         setShardTick((t) => t + 1);
 
-        confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+        safeCelebration({ particleCount: 30, origin: { y: 0.6 } });
         toast({
           title: '🎁 Royal Reward!',
           description: `Granted +2 ${selectedAdvisor.name} Shards!`,
@@ -236,7 +236,7 @@ export function MedievalAdvisors({ compact = false, onAdvisorTap }: MedievalAdvi
     window.dispatchEvent(new CustomEvent('advisorShardsUpdated'));
     setShardTick((t) => t + 1);
 
-    confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 } });
+    safeCelebration({ particleCount: 36, origin: { y: 0.5 } });
     toast({
       title: '⚡ COUNCILLOR ASCENDED!',
       description: `${selectedAdvisor.name} is now Level ${nextLevel}!`,

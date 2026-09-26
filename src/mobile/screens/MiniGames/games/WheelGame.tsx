@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
@@ -154,9 +154,8 @@ export function WheelGame({ paidPlay = false, chanceLabel = 'Free daily spin', o
           });
 
           if (value > 0) {
-            confetti({ 
-              particleCount: value > 50 ? 200 : 120, 
-              spread: 80, 
+            safeCelebration({ 
+              particleCount: value > 50 ? 36 : 24, 
               origin: { y: 0.45 } 
             });
           }

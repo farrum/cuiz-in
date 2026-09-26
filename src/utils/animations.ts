@@ -1,20 +1,16 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import canvasConfetti from "canvas-confetti";
+import { safeCelebration, confetti as safeConfetti } from "./celebration";
 
 // Utility function for merging class names
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Export confetti function
-export const confetti = () => {
-  canvasConfetti({
-    particleCount: 150,
-    spread: 70,
-    origin: { y: 0.6 }
-  });
+// Export confetti function using safe, canvas-free DOM celebration
+export const confetti = (options?: { particleCount?: number; spread?: number; origin?: { x?: number; y?: number } }) => {
+  safeConfetti(options);
 };
 
 // Animation variants for staggered animations

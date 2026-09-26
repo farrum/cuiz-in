@@ -7,7 +7,7 @@ import { checkMinigameStatus, incrementMinigamePlays } from '@/utils/minigameAdm
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins, Sparkles, AlertCircle } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 
 interface Balloon {
   id: number;

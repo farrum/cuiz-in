@@ -408,7 +408,6 @@ const EnhancedQuizCard: React.FC<EnhancedQuizCardProps> = ({
         haptics('success');
         audioManager.playSFX('correct');
         if (soundEnabled) playCorrectSound();
-        try { confetti(); } catch (_) {}
       } else {
         haptics('warning');
         audioManager.playSFX('wrong');

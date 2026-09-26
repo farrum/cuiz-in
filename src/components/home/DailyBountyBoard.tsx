@@ -4,7 +4,7 @@ import { updateUserBalances } from '@/utils/shopData';
 import { useToast } from '@/hooks/use-toast';
 import { ClipboardList, Coins, Star, Gift, Gamepad2, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Quest {

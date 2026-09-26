@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { Shield, Sparkles, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { STORAGE_KEYS } from '@/utils/quizData';
@@ -68,25 +68,18 @@ export function PromotionAnimation() {
           setRankName(name);
           setShow(true);
 
-          // Confetti explosion
-          confetti({
-            particleCount: 150,
-            spread: 80,
+          // Safe celebration explosion
+          safeCelebration({
+            particleCount: 36,
             origin: { y: 0.6 },
             colors: ['#f59e0b', '#d97706', '#fbbf24', '#ffffff', '#1e3a8a']
           });
 
-          // Extra bursts
+          // Extra burst
           setTimeout(() => {
-            confetti({
-              particleCount: 100,
-              spread: 60,
-              origin: { x: 0.3, y: 0.5 }
-            });
-            confetti({
-              particleCount: 100,
-              spread: 60,
-              origin: { x: 0.7, y: 0.5 }
+            safeCelebration({
+              particleCount: 30,
+              origin: { x: 0.5, y: 0.5 }
             });
           }, 400);
         }
@@ -103,9 +96,8 @@ export function PromotionAnimation() {
       const customEvent = e as CustomEvent;
       setRankName(customEvent.detail?.rank || 'Officer');
       setShow(true);
-      confetti({
-        particleCount: 120,
-        spread: 70,
+      safeCelebration({
+        particleCount: 32,
         origin: { y: 0.6 }
       });
     };

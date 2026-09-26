@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Play,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { safeCelebration, cleanupCelebrations, getCelebrationMode, setCelebrationMode, type CelebrationMode } from '@/utils/celebration';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -103,6 +103,7 @@ export default function QuizStoryScreen() {
 
   // Modals & UI
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [celebrationMode, setCelebrationModeState] = useState<CelebrationMode>(getCelebrationMode);
   const [exitSummaryOpen, setExitSummaryOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [doubleGemsAdShowing, setDoubleGemsAdShowing] = useState(false);
@@ -189,11 +190,13 @@ export default function QuizStoryScreen() {
   };
 
   useEffect(() => {
+    cleanupCelebrations();
     loadNext();
     getAvailableCategories().then(setCategories).catch(() => {});
     return () => {
       mountedRef.current = false;
       clearTimers();
+      cleanupCelebrations();
     };
   }, []);
 
@@ -294,7 +297,7 @@ export default function QuizStoryScreen() {
 
         setFloatReward(earned);
         setTimeout(() => setFloatReward(null), 1100);
-        confetti({ particleCount: 75, spread: 75, origin: { y: 0.45 }, ticks: 120 });
+        safeCelebration({ particleCount: 28, origin: { y: 0.45 } });
         setPulseOpt(option);
         setTimeout(() => setPulseOpt(null), 700);
 
@@ -353,6 +356,7 @@ export default function QuizStoryScreen() {
 
   const handleAdFinished = () => {
     setInterstitialOpen(false);
+    cleanupCelebrations();
     if (isDailyMode) {
       setDailyStep((s) => s + 1);
     }
@@ -403,7 +407,7 @@ export default function QuizStoryScreen() {
       );
     }
     setDailyComplete(true);
-    confetti({ particleCount: 160, spread: 95, origin: { y: 0.4 } });
+    safeCelebration({ particleCount: 36, origin: { y: 0.4 } });
     haptics('success');
   };
 
@@ -972,6 +976,44 @@ export default function QuizStoryScreen() {
                     {category === c && <Check className="w-4 h-4" />}
                   </button>
                 ))}
+              </div>
+
+              {/* Correct Answer Celebration Setting */}
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-800/60 mb-2">
+                Celebration Bursts
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCelebrationMode('dom');
+                    setCelebrationModeState('dom');
+                    safeCelebration({ particleCount: 24, origin: { y: 0.5 } });
+                  }}
+                  className={cn(
+                    'rounded-xl py-2 px-2 text-xs font-black transition-all border flex items-center justify-center gap-1.5',
+                    celebrationMode === 'dom'
+                      ? 'bg-amber-600 text-white border-amber-700 shadow-sm'
+                      : 'bg-white/80 text-amber-900 border-amber-900/15',
+                  )}
+                >
+                  <span>✨ Royal Bursts</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCelebrationMode('off');
+                    setCelebrationModeState('off');
+                  }}
+                  className={cn(
+                    'rounded-xl py-2 px-2 text-xs font-black transition-all border flex items-center justify-center gap-1.5',
+                    celebrationMode === 'off'
+                      ? 'bg-amber-600 text-white border-amber-700 shadow-sm'
+                      : 'bg-white/80 text-amber-900 border-amber-900/15',
+                  )}
+                >
+                  <span>🚫 Disabled</span>
+                </button>
               </div>
 
               <Button

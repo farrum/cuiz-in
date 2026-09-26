@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMiniGameVideoAd } from '@/hooks/useMiniGameVideoAd';
 import { motion } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import { supabase } from '@/integrations/supabase/client';
 import { useHaptics } from '@/mobile/hooks/useHaptics';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,7 @@ export function ScratchGame({ paidPlay = false, onRoundComplete }: { paidPlay?: 
           setPrize({ label: r.label, value: r.value || 0 });
           setRevealed(true);
           haptics('success');
-          if (r.value > 0) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+          if (r.value > 0) safeCelebration({ particleCount: 30, origin: { y: 0.6 } });
           onRoundComplete?.();
         });
       }

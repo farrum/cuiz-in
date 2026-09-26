@@ -10,7 +10,7 @@ import { LOCAL_TRIVIA_QUESTIONS } from '@/utils/localTriviaPool';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { MysteryBoxOpener } from './MysteryBoxOpener';
 import { Sparkles, Coins, Star, HelpCircle, AlertCircle, Landmark, Swords, Shield, Flame } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 import { audioManager } from '@/utils/audioManager';
 import { cn } from '@/lib/utils';
 

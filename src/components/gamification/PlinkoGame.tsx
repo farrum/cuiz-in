@@ -8,7 +8,7 @@ import { STORAGE_KEYS } from '@/utils/quizData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Coins, Sparkles } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { confetti } from '@/utils/celebration';
 
 const MULTIPLIERS = [5.0, 1.5, 0.2, 0.2, 1.5, 5.0];
 

@@ -8,7 +8,7 @@ import {
   markMilestoneCelebrated,
   getGuestSessionGems 
 } from '@/utils/guestPlayService';
-import confetti from 'canvas-confetti';
+import { safeCelebration } from '@/utils/celebration';
 import SocialShareButtons from './SocialShareButtons';
 
 interface MilestoneCelebrationProps {
@@ -25,31 +25,13 @@ const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({ triggerChec
       setMilestone(uncelebrated);
       setIsOpen(true);
       
-      // Fire confetti!
-      const duration = 3000;
-      const end = Date.now() + duration;
+      // Fire safe celebrations!
+      safeCelebration({ particleCount: 36, origin: { x: 0.5, y: 0.4 } });
+      const timer = window.setTimeout(() => {
+        safeCelebration({ particleCount: 30, origin: { x: 0.5, y: 0.5 } });
+      }, 400);
 
-      const frame = () => {
-        confetti({
-          particleCount: 3,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0, y: 0.8 },
-          colors: ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'],
-        });
-        confetti({
-          particleCount: 3,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1, y: 0.8 },
-          colors: ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'],
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-      frame();
+      return () => window.clearTimeout(timer);
     }
   }, [triggerCheck]);
 
