@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, ArrowRight, BrainCircuit, CheckCircle2 } from 'lucide-react';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug } from '@/utils/subcategoryConfig';
 
@@ -56,12 +56,7 @@ const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
       
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {questions.map(q => {
-          const catSlug = getCategorySlug(q.category);
-          const subSlug = getQuestionSubcategorySlug(q.category, q.question);
-          const qSlug = createSlug(q.question, 50);
-          const targetUrl = subSlug
-            ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}`
-            : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
+          const targetUrl = createQuestionUrl(q.id, q.question, q.category);
 
           return (
             <Card key={q.id} className="p-4 hover:shadow-md hover:border-primary/40 transition-all group flex flex-col justify-between bg-card text-card-foreground">

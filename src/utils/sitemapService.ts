@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { getCategorySlug } from '@/utils/categoryMapping';
+import { createQuestionUrl } from '@/utils/urlUtils';
 
 interface SitemapEntry {
   loc: string;
@@ -189,15 +190,12 @@ export const sitemapService = {
 
       return questions
         .map(question => {
-          const slug = createSlug(question.question);
-          if (!slug) return null;
-          
           const lastmod = question.created_at 
             ? new Date(question.created_at).toISOString().split('T')[0]
             : today;
           
           return {
-            loc: `https://cuiz.in/quiz/question/${question.id}/${getCategorySlug(question.category)}/${slug}`,
+            loc: `https://cuiz.in${createQuestionUrl(question.id, question.question, question.category)}`,
             lastmod: lastmod,
             changefreq: 'monthly',
             priority: '0.7'

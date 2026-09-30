@@ -11,7 +11,13 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 # Redirect ads.txt to AdsTxtManager
 RewriteRule ^ads\.txt$ https://srv.adstxtmanager.com/19390/cuiz.in [R=301,L]
 
-# Sitemap Proxies & SSR Rules (Canonical - Restructured paths)
+# Serve static sitemaps directly if they exist on disk (prevents timeouts & redirects)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^sitemap.*\.xml$ - [L]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^sitemaps/.*\.xml$ - [L]
+
+# Sitemap Proxies & SSR Rules (Canonical - Restructured paths fallback)
 <IfModule mod_proxy.c>
   SSLProxyEngine on
   RewriteRule ^sitemap\.xml$ https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static?type=index [P,L]

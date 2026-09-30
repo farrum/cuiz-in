@@ -41,7 +41,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import SidebarVideoAd from '@/components/ads/SidebarVideoAd';
 import { triggerAdRefresh } from '@/utils/adService';
 
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { isUuid } from '@/utils/uuid';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug, getSubcategory } from '@/utils/subcategoryConfig';
@@ -123,6 +123,14 @@ const QuizQuestionPage: React.FC = () => {
           };
           
           setQuestion(formattedQuestion);
+          
+          // Silently normalize non-canonical URL in browser history so user/crawlers share the canonical version
+          if (typeof window !== 'undefined' && window.location) {
+            const canonicalPath = createQuestionUrl(formattedQuestion.id, formattedQuestion.question, formattedQuestion.category);
+            if (window.location.pathname !== canonicalPath && !window.location.pathname.startsWith(canonicalPath)) {
+              window.history.replaceState(null, '', canonicalPath + window.location.search + window.location.hash);
+            }
+          }
           
           // Extract keywords for SEO
           const questionKeywords = extractKeywords(formattedQuestion.question);
@@ -258,7 +266,7 @@ const QuizQuestionPage: React.FC = () => {
       if (next.id === questionId) {
         next = await getRandomQuestion();
       }
-      navigate(`/quiz/question/${next.id}/${getCategorySlug(next.category)}/${createSlug(next.question, 80)}`);
+      navigate(createQuestionUrl(next.id, next.question, next.category));
     } catch (e) {
       console.error('Failed to load next question', e);
     } finally {
@@ -780,11 +788,7 @@ const QuizQuestionPage: React.FC = () => {
             <div className="flex justify-between mt-8">
               {(() => {
                 if (!prevQuestion) return <div></div>;
-                const prevCatSlug = getCategorySlug(prevQuestion.category);
-                const prevSubSlug = getQuestionSubcategorySlug(prevQuestion.category, prevQuestion.question);
-                const prevUrl = prevSubSlug
-                  ? `/quiz/question/${prevQuestion.id}/${prevCatSlug}/${prevSubSlug}/${createSlug(prevQuestion.question, 50)}`
-                  : `/quiz/question/${prevQuestion.id}/${prevCatSlug}/${createSlug(prevQuestion.question, 50)}`;
+                const prevUrl = createQuestionUrl(prevQuestion.id, prevQuestion.question, prevQuestion.category);
                 return (
                   <Button 
                     variant="outline" 
@@ -800,14 +804,10 @@ const QuizQuestionPage: React.FC = () => {
               
               {(() => {
                 if (!nextQuestion) return null;
-                const nextCatSlug = getCategorySlug(nextQuestion.category);
-                const nextSubSlug = getQuestionSubcategorySlug(nextQuestion.category, nextQuestion.question);
-                const nextUrl = nextSubSlug
-                  ? `/quiz/question/${nextQuestion.id}/${nextCatSlug}/${nextSubSlug}/${createSlug(nextQuestion.question, 50)}`
-                  : `/quiz/question/${nextQuestion.id}/${nextCatSlug}/${createSlug(nextQuestion.question, 50)}`;
+                const nextUrl = createQuestionUrl(nextQuestion.id, nextQuestion.question, nextQuestion.category);
                 return (
                   <Button 
-                    variant="outline"
+                    variant="outline" 
                     className="flex items-center gap-2"
                     asChild
                   >

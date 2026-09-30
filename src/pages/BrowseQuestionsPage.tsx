@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { supabase } from '@/integrations/supabase/client';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -160,7 +160,7 @@ const BrowseQuestionsPage: React.FC = () => {
       'itemListElement': questions.slice(0, 10).map((q, index) => ({
         '@type': 'ListItem',
         'position': (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
-        'url': `https://cuiz.in/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`
+        'url': `https://cuiz.in${createQuestionUrl(q.id, q.question, q.category)}`
       }))
     }
   };
@@ -260,7 +260,7 @@ const BrowseQuestionsPage: React.FC = () => {
                         </span>
                         <div className="flex-1">
                           <Link 
-                            to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question)}`}
+                            to={createQuestionUrl(question.id, question.question, question.category)}
                             className="text-foreground hover:text-primary transition-colors font-medium"
                           >
                             {question.question}

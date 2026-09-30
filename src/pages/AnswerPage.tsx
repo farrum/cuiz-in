@@ -166,7 +166,7 @@ const AnswerPage: React.FC = () => {
 
   // Use consistent slug generation from urlUtils
   const categorySlug = question ? createSlug(question.category) : '';
-  const questionSlug = question ? createSlug(question.question, 50) : '';
+  const questionSlug = question ? createSlug(question.question, 80) : '';
   
   // Create consistent slug for canonical URL using the same createSlug function
   const answerSlug = selectedOption ? createSlug(selectedOption, 50) : '';
@@ -210,7 +210,7 @@ const AnswerPage: React.FC = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/quiz/question/${questionId}/${getCategorySlug(question.category)}/${questionSlug}`}>Question</Link>
+                    <Link to={createQuestionUrl(questionId!, question.question, question.category)}>Question</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -334,7 +334,7 @@ const AnswerPage: React.FC = () => {
                         className="mt-3"
                         asChild
                       >
-                        <Link to={`/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question, 50)}`}>
+                        <Link to={createQuestionUrl(q.id, q.question, q.category)}>
                           <ArrowRight className="h-4 w-4 mr-1" /> Try This Question
                         </Link>
                       </Button>

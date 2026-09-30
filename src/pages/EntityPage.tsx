@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ENTITY_REGISTRY, EntityMetadata, EntityType, getEntityBySlug } from '@/utils/entityData';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { getQuestionSubcategorySlug } from '@/utils/subcategoryConfig';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
@@ -142,15 +142,11 @@ export const EntityPage: React.FC<EntityPageProps> = ({ entityType }) => {
     'description': entity.summary,
     'url': canonicalUrl,
     'sameAs': entity.sameAs,
-    'subjectOf': questions.map(q => {
-      const qSlug = createSlug(q.question);
-      const catSlug = getCategorySlug(q.category);
-      return {
-        '@type': 'Question',
-        'name': q.question,
-        'url': `https://cuiz.in/quiz/question/${q.id}/${catSlug}/${qSlug}`
-      };
-    })
+    'subjectOf': questions.map(q => ({
+      '@type': 'Question',
+      'name': q.question,
+      'url': `https://cuiz.in${createQuestionUrl(q.id, q.question, q.category)}`
+    }))
   };
 
   // Related entities in registry
@@ -276,12 +272,7 @@ export const EntityPage: React.FC<EntityPageProps> = ({ entityType }) => {
                 ) : (
                   <div className="grid gap-3">
                     {questions.map(q => {
-                      const catSlug = getCategorySlug(q.category);
-                      const subSlug = getQuestionSubcategorySlug(q.category, q.question);
-                      const qSlug = createSlug(q.question, 50);
-                      const targetUrl = subSlug
-                        ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}`
-                        : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
+                      const targetUrl = createQuestionUrl(q.id, q.question, q.category);
                       const ans = q.correct_answer || (Array.isArray(q.options) ? q.options[0] : '');
 
                       return (

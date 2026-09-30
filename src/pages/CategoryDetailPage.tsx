@@ -14,7 +14,7 @@ import { ChevronLeft, Search, Filter, Trophy, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { getCategoryData, categoriesArray } from '@/utils/categoryData';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { isUuid } from '@/utils/uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { isValidCategorySlug, getCategoriesForSlug, getCategoryDisplayName, getCategorySlug } from '@/utils/categoryMapping';
@@ -323,7 +323,7 @@ const CategoryDetailPage: React.FC = () => {
                       <div className="mt-3">
                         {isUuid(question.id) ? (
                           <Link 
-                            to={`/quiz/question/${question.id}/${getCategorySlug(question.category || category.name)}/${createSlug(question.question, 50)}`}
+                            to={createQuestionUrl(question.id, question.question, question.category || category?.name)}
                             className="text-sm text-primary hover:underline"
                           >
                             Answer this question

@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { supabase } from '@/integrations/supabase/client';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { Loader2, ArrowLeft, Trophy, BookOpen } from 'lucide-react';
 import {
@@ -332,8 +332,6 @@ const TopicPage: React.FC = () => {
       '@type': 'ItemList',
       'numberOfItems': questions.length,
       'itemListElement': questions.slice(0, 20).map((q, i) => {
-        const catSlug = getCategorySlug(q.category);
-        const qSlug = createSlug(q.question);
         const answerText = (q.correct_answer && String(q.correct_answer).trim()) 
           ? String(q.correct_answer).trim() 
           : (Array.isArray(q.options) && q.options[0] ? String(q.options[0]) : 'Verified Answer');
@@ -343,7 +341,7 @@ const TopicPage: React.FC = () => {
           'item': {
             '@type': 'Question',
             'name': q.question,
-            'url': `https://cuiz.in/quiz/question/${q.id}/${catSlug}/${qSlug}`,
+            'url': `https://cuiz.in${createQuestionUrl(q.id, q.question, q.category)}`,
             'acceptedAnswer': {
               '@type': 'Answer',
               'text': answerText
@@ -453,7 +451,7 @@ const TopicPage: React.FC = () => {
                     </span>
                     <div className="flex-1">
                       <Link
-                        to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question)}`}
+                        to={createQuestionUrl(question.id, question.question, question.category)}
                         className="text-foreground hover:text-primary transition-colors font-medium text-base block mb-1"
                       >
                         {question.question}
@@ -489,7 +487,7 @@ const TopicPage: React.FC = () => {
                           )}
                           <div className="pt-1">
                             <Link
-                              to={`/quiz/question/${question.id}/${getCategorySlug(question.category)}/${createSlug(question.question)}`}
+                              to={createQuestionUrl(question.id, question.question, question.category)}
                               className="text-primary hover:underline font-medium text-xs"
                             >
                               View full question page &amp; citations →

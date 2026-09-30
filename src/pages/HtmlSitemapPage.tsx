@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import PageLayout from '@/components/layout/PageLayout';
 import { supabase } from '@/integrations/supabase/client';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { getCategorySlug } from '@/utils/categoryMapping';
 import { Loader2 } from 'lucide-react';
 
@@ -150,19 +150,16 @@ const HtmlSitemapPage: React.FC = () => {
                   {category} <span className="text-muted-foreground text-sm font-normal">({questionsByCategory[category].length} questions)</span>
                 </h2>
                 <ul className="space-y-1 text-sm">
-                  {questionsByCategory[category].map(q => {
-                    const questionSlug = createSlug(q.question);
-                    return (
-                      <li key={q.id} className="py-1 border-b border-border/30">
-                        <Link
-                          to={`/quiz/question/${q.id}/${getCategorySlug(category)}/${questionSlug}`}
-                          className="text-foreground hover:text-primary transition-colors"
-                        >
-                          {q.question}
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {questionsByCategory[category].map(q => (
+                    <li key={q.id} className="py-1 border-b border-border/30">
+                      <Link
+                        to={createQuestionUrl(q.id, q.question, category)}
+                        className="text-foreground hover:text-primary transition-colors"
+                      >
+                        {q.question}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </section>
             ))

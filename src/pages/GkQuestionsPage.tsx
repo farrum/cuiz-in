@@ -6,7 +6,7 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { createSlug } from '@/utils/urlUtils';
+import { createSlug, createQuestionUrl } from '@/utils/urlUtils';
 import { Loader2 } from 'lucide-react';
 import {
   Breadcrumb,
@@ -252,7 +252,7 @@ const GkQuestionsPage: React.FC = () => {
                               <p className="text-sm text-muted-foreground mt-2">{q.explanation}</p>
                             )}
                             <Link
-                              to={`/quiz/question/${q.id}/${createSlug(q.question)}`}
+                              to={createQuestionUrl(q.id, q.question, q.category)}
                               className="text-sm text-primary underline mt-3 inline-block"
                             >
                               Read the full explanation for this question

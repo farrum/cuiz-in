@@ -2017,6 +2017,45 @@ function getKnowledgeClaimId(questionId) {
         });
       }
 
+      // Also generate 2-segment legacy URL (/quiz/question/:id/:slug) as static HTML file
+      // so Googlebot crawling legacy URLs gets full question content + canonical pointing to canonical URL (preventing Soft 404)
+      const legacyRoutePath = `/quiz/question/${q.id}/${qSlug}`;
+      write(legacyRoutePath, {
+        title,
+        description,
+        canonical,
+        bodyHtml,
+        jsonLd
+      });
+
+      // If 50-char slug differs from 80-char slug, generate 50-char slug fallbacks so legacy links resolve with 200 OK & canonical
+      const qSlug50 = createSlug(q.question, 50);
+      if (qSlug50 && qSlug50 !== qSlug) {
+        write(`/quiz/question/${q.id}/${qSlug50}`, {
+          title,
+          description,
+          canonical,
+          bodyHtml,
+          jsonLd
+        });
+        write(`/quiz/question/${q.id}/${categorySlug}/${qSlug50}`, {
+          title,
+          description,
+          canonical,
+          bodyHtml,
+          jsonLd
+        });
+        if (subSlug) {
+          write(`/quiz/question/${q.id}/${categorySlug}/${subSlug}/${qSlug50}`, {
+            title,
+            description,
+            canonical,
+            bodyHtml,
+            jsonLd
+          });
+        }
+      }
+
       qCount++;
     }
     console.log(`[seo-pages] Successfully pre-rendered ${qCount} quiz question pages.`);
@@ -2066,61 +2105,30 @@ function getKnowledgeClaimId(questionId) {
   fs.writeFileSync(path.join(apiDir, 'entities.json'), JSON.stringify(entitiesApiData, null, 2));
   console.log('[seo-pages] Successfully generated public /api/v1/questions.json and /api/v1/entities.json endpoints.');
 
-  // 8. GENERATE STATIC SITEMAP.XML (Direct 200 OK without 302 redirects)
-  const sitemapUrls = [
-    { loc: `${SITE_URL}/`, priority: '1.0', changefreq: 'daily' },
-    { loc: `${SITE_URL}/quiz`, priority: '0.9', changefreq: 'daily' },
-    { loc: `${SITE_URL}/categories`, priority: '0.9', changefreq: 'weekly' },
-    { loc: `${SITE_URL}/topics`, priority: '0.8', changefreq: 'weekly' },
-    { loc: `${SITE_URL}/all-questions`, priority: '0.8', changefreq: 'daily' },
-    { loc: `${SITE_URL}/how-to-play`, priority: '0.7', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/editorial-policy`, priority: '0.6', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/our-sources`, priority: '0.6', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/corrections`, priority: '0.6', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/terms`, priority: '0.4', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/privacy`, priority: '0.4', changefreq: 'monthly' },
-    { loc: `${SITE_URL}/disclaimer`, priority: '0.4', changefreq: 'monthly' },
-  ];
-
-  // Add distinct category URLs
-  const uniqueCategorySlugs = Array.from(new Set(Object.values(categoryToSlugMap)));
-  for (const cSlug of uniqueCategorySlugs) {
-    sitemapUrls.push({ loc: `${SITE_URL}/categories/${cSlug}`, priority: '0.8', changefreq: 'weekly' });
+  // 8. PRESERVE MODULAR SITEMAP INDEX (Lightweight, no timeouts, optimal crawl budget)
+  const categories = Object.keys(slugToCategoriesMap);
+  let indexXml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  indexXml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  indexXml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+  for (const cat of categories) {
+    indexXml += `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/category/${cat}/sitemap.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
   }
+  indexXml += '</sitemapindex>';
 
-  // Add entity hub URLs
-  for (const e of ENTITY_REGISTRY) {
-    sitemapUrls.push({ loc: `${SITE_URL}/${entityTypePrefixMap[e.type]}/${e.slug}`, priority: '0.8', changefreq: 'weekly' });
-  }
-
-  // Add question URLs
-  for (const q of allQuestions) {
-    const qSlug = createSlug(q.question);
-    if (!qSlug) continue;
-    const categorySlug = getCategorySlug(q.category);
-    const subSlug = getQuestionSubcategorySlug(q.category, q.question);
-    const qUrl = subSlug
-      ? `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${subSlug}/${qSlug}`
-      : `${SITE_URL}/quiz/question/${q.id}/${categorySlug}/${qSlug}`;
-    sitemapUrls.push({ loc: qUrl, priority: '0.7', changefreq: 'monthly', lastmod: q.created_at ? q.created_at.split('T')[0] : today });
-  }
-
-  const sitemapXmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapUrls.map(u => `  <url>
-    <loc>${esc(u.loc)}</loc>
-    <lastmod>${u.lastmod || today}</lastmod>
-    <changefreq>${u.changefreq || 'monthly'}</changefreq>
-    <priority>${u.priority || '0.7'}</priority>
-  </url>`).join('\n')}
-</urlset>`;
-
-  fs.writeFileSync(path.join(__dirname, 'dist', 'sitemap.xml'), sitemapXmlContent);
+  fs.writeFileSync(path.join(DIST, 'sitemap.xml'), indexXml, 'utf8');
   const publicDir = path.join(__dirname, 'public');
   if (fs.existsSync(publicDir)) {
-    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXmlContent);
+    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), indexXml, 'utf8');
   }
-  console.log(`[seo-pages] Successfully generated static sitemap.xml with ${sitemapUrls.length} URLs.`);
+
+  // Ensure public/sitemaps directory is copied to dist/sitemaps
+  const publicSitemapsDir = path.join(publicDir, 'sitemaps');
+  const distSitemapsDir = path.join(DIST, 'sitemaps');
+  if (fs.existsSync(publicSitemapsDir) && fs.existsSync(DIST)) {
+    fs.cpSync(publicSitemapsDir, distSitemapsDir, { recursive: true });
+    console.log('[seo-pages] Ensured all category sitemaps are present in dist/sitemaps/.');
+  }
+  console.log('[seo-pages] Successfully generated modular sitemap index in dist/sitemap.xml and public/sitemap.xml.');
 
   console.log(`[seo-pages] Successfully generated ${count} per-route static HTML files.`);
 
