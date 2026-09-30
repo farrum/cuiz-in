@@ -329,11 +329,22 @@ function buildHtml({ title, description, canonical, bodyHtml, jsonLd }) {
   return html;
 }
 
+// Hosting rejects builds over 50,000 files. Cap prerendered pages well below that;
+// anything beyond is served by the SPA fallback / quiz-question-ssr edge route.
+const MAX_PRERENDER_PAGES = Number(process.env.MAX_PRERENDER_PAGES) || 30000;
+let writtenPages = 0;
+let skippedPages = 0;
+process.on('exit', () => {
+  console.log(`[seo-pages] prerendered ${writtenPages} pages, skipped ${skippedPages} (cap ${MAX_PRERENDER_PAGES})`);
+});
+
 function write(routePath, meta) {
+  if (writtenPages >= MAX_PRERENDER_PAGES) { skippedPages++; return; }
   const clean = routePath.replace(/^\/+|\/+$/g, '');
   const outDir = path.join(DIST, clean);
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'index.html'), buildHtml(meta), 'utf8');
+  writtenPages++;
 }
 
 // --- Main quiz categories (each gets its own name in the title) ---
