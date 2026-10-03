@@ -289,7 +289,7 @@ export default function MarketingAdmin() {
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 <div><Label>Test email</Label><Input placeholder="you@example.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} /></div>
-                <Button variant="secondary" onClick={sendTest}>Send test</Button>
+                <Button variant="secondary" onClick={sendTest} disabled={testBusy}>{testBusy ? 'Sending…' : 'Send test'}</Button>
               </div>
               <div className="flex gap-2">
                 <Button onClick={startCampaign} disabled={sending}><Send className="h-4 w-4 mr-1" />Send campaign</Button>
@@ -299,6 +299,15 @@ export default function MarketingAdmin() {
                 <div className="space-y-1">
                   <Progress value={((progress.sent + progress.failed) / Math.max(1, progress.total)) * 100} />
                   <p className="text-sm">{progress.sent} sent · {progress.failed} failed · {progress.total} total</p>
+                </div>
+              )}
+              {lastResult && (
+                <div className={`rounded-md border p-3 text-sm font-medium ${lastResult.failed === 0 && !lastResult.aborted ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400' : 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400'}`}>
+                  {lastResult.aborted
+                    ? `Campaign stopped early — ${lastResult.sent} sent, ${lastResult.failed} failed.`
+                    : lastResult.failed === 0
+                      ? `Campaign complete — all ${lastResult.sent} emails sent successfully.`
+                      : `Campaign finished — ${lastResult.sent} sent, ${lastResult.failed} failed. See the log below.`}
                 </div>
               )}
               {log.length > 0 && <pre className="text-xs bg-muted p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap">{log.join('\n')}</pre>}
