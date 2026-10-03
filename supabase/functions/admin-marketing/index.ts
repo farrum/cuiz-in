@@ -34,6 +34,14 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    // Public email image: GET ?img=<file>  (served from the private email-assets bucket)
+    const img = url.searchParams.get('img');
+    if (img) {
+      if (!/^[\w-]+\.(png|jpg|gif|webp)$/.test(img)) return new Response('Not found', { status: 404 });
+      const { data, error } = await admin.storage.from('email-assets').download(img);
+      if (error || !data) return new Response('Not found', { status: 404 });
+      return new Response(data, { headers: { 'Content-Type': data.type || 'image/png', 'Cache-Control': 'public, max-age=31536000, immutable', 'Access-Control-Allow-Origin': '*' } });
+    }
     // Public unsubscribe link: GET ?unsubscribe=<uid>&t=<sig>
     const unsub = url.searchParams.get('unsubscribe');
     if (unsub) {
