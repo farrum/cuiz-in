@@ -6,7 +6,6 @@ import { useHomePageState } from '@/hooks/useHomePageState';
 import HeroSectionEnhanced from '@/components/home/HeroSectionEnhanced';
 import TryQuestionSection from '@/components/home/TryQuestionSection';
 import HowItWorksSection from '@/components/home/HowItWorksSection';
-import TestimonialsSection from '@/components/home/TestimonialsSection';
 import CallToAction from '@/components/home/CallToAction';
 import DailyStreakTracker from '@/components/home/DailyStreakTracker';
 import ReferralPreview from '@/components/home/ReferralPreview';
@@ -49,29 +48,6 @@ const Index: React.FC = () => {
         'url': 'https://cuiz.in/og-image.png'
       }
     },
-    'aggregateRating': {
-      '@type': 'AggregateRating',
-      'ratingValue': '4.8',
-      'reviewCount': '3250',
-      'bestRating': '5',
-      'worstRating': '1'
-    },
-    'review': [
-      {
-        '@type': 'Review',
-        'author': { '@type': 'Person', 'name': 'Priya S.' },
-        'datePublished': '2025-12-15',
-        'reviewBody': 'Amazing quiz app! I love learning new things while competing on the leaderboard.',
-        'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
-      },
-      {
-        '@type': 'Review',
-        'author': { '@type': 'Person', 'name': 'Rahul K.' },
-        'datePublished': '2025-11-20',
-        'reviewBody': 'Great variety of questions across categories. Highly recommended!',
-        'reviewRating': { '@type': 'Rating', 'ratingValue': '5', 'bestRating': '5' }
-      }
-    ],
     'potentialAction': {
       '@type': 'SearchAction',
       'target': 'https://cuiz.in/quiz?search={search_term_string}',
@@ -191,11 +167,6 @@ const Index: React.FC = () => {
       {/* How It Works Section */}
       <section className="py-6 md:py-8 bg-muted/30">
         <HowItWorksSection />
-      </section>
-
-      {/* Testimonials - Lazy loaded */}
-      <section className="py-6 md:py-8 px-4">
-        <TestimonialsSection />
       </section>
 
       {/* Final CTA */}

@@ -7,7 +7,6 @@ export { default as FeatureCard } from './FeatureCard';
 export { default as HowToEarnSection } from './HowToEarnSection';
 export { default as HowItWorksSection } from './HowItWorksSection';
 export { default as InfoSection } from './InfoSection';
-export { default as TestimonialsSection } from './TestimonialsSection';
 export { default as CallToAction } from './CallToAction';
 export { default as HelpSection } from './HelpSection';
 export { default as AnimatedBackgrounds } from './AnimatedBackgrounds';
