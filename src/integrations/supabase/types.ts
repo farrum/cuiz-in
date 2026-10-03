@@ -831,6 +831,86 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          audience: string | null
+          created_at: string
+          created_by: string | null
+          failed_count: number
+          id: string
+          name: string
+          sent_count: number
+          status: string
+          subject: string
+          template_id: string | null
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          name: string
+          sent_count?: number
+          status?: string
+          subject: string
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          name?: string
+          sent_count?: number
+          status?: string
+          subject?: string
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_email_templates: {
+        Row: {
+          created_at: string
+          html_content: string
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_content: string
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_content?: string
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       monthly_points: {
         Row: {
           created_at: string | null
@@ -1026,6 +1106,7 @@ export type Database = {
           is_admin: boolean | null
           last_platform: string | null
           last_seen_at: string | null
+          marketing_unsubscribed: boolean
           phone: string | null
           points: number | null
           profile_picture: string | null
@@ -1049,6 +1130,7 @@ export type Database = {
           is_admin?: boolean | null
           last_platform?: string | null
           last_seen_at?: string | null
+          marketing_unsubscribed?: boolean
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
@@ -1072,6 +1154,7 @@ export type Database = {
           is_admin?: boolean | null
           last_platform?: string | null
           last_seen_at?: string | null
+          marketing_unsubscribed?: boolean
           phone?: string | null
           points?: number | null
           profile_picture?: string | null
