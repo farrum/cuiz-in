@@ -125,10 +125,20 @@ export default function MarketingAdmin() {
 
   const sendTest = async () => {
     if (!tpl || !testEmail) return toast.error('Pick a template and enter a test email');
+    setTestBusy(true);
+    const toastId = toast.loading(`Sending test email to ${testEmail}…`);
     try {
       const r = await callFn({ action: 'send', subject: `[TEST] ${tpl.subject}`, html: tpl.html_content, recipients: [{ email: testEmail, display_name: 'Admin' }] });
-      r.sent ? toast.success('Test email sent') : toast.error('Test failed');
-    } catch (e) { toast.error((e as Error).message); }
+      if (r.sent) {
+        toast.success(`Test email sent to ${testEmail} — check the inbox (and spam folder)`, { id: toastId, duration: 8000 });
+      } else {
+        const detail = r.error ? `${r.error}${r.details ? ` — ${String(r.details).slice(0, 300)}` : ''}` : 'the email provider accepted nothing';
+        toast.error(`Test email failed: ${detail}`, { id: toastId, duration: 12000 });
+        setLog((l) => [...l, `Test to ${testEmail}: FAILED — ${detail}`]);
+      }
+    } catch (e) {
+      toast.error(`Test email failed: ${(e as Error).message}`, { id: toastId, duration: 12000 });
+    } finally { setTestBusy(false); }
   };
 
   const startCampaign = async () => {
