@@ -48,9 +48,13 @@ Deno.serve(async (req) => {
     // Admin auth
     const authHeader = req.headers.get('Authorization') ?? '';
     if (!authHeader.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401);
-    const authClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', { global: { headers: { Authorization: authHeader } } });
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return json({ error: 'Unauthorized' }, 401);
+    const token = authHeader.slice(7).trim();
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    const user = userData?.user;
+    if (!user) {
+      console.error('admin-marketing auth failed', userErr?.message);
+      return json({ error: 'Your session expired. Please sign in again.' }, 401);
+    }
     const { data: role } = await admin.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
     if (!role) return json({ error: 'Admin access required' }, 403);
 
