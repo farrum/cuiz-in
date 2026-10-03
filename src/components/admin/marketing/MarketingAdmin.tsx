@@ -66,6 +66,8 @@ export default function MarketingAdmin() {
   const [testEmail, setTestEmail] = useState('');
   const [progress, setProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
   const [sending, setSending] = useState(false);
+  const [testBusy, setTestBusy] = useState(false);
+  const [lastResult, setLastResult] = useState<{ sent: number; failed: number; aborted: boolean } | null>(null);
   const abortRef = useRef(false);
   const [log, setLog] = useState<string[]>([]);
 
@@ -125,10 +127,20 @@ export default function MarketingAdmin() {
 
   const sendTest = async () => {
     if (!tpl || !testEmail) return toast.error('Pick a template and enter a test email');
+    setTestBusy(true);
+    const toastId = toast.loading(`Sending test email to ${testEmail}…`);
     try {
       const r = await callFn({ action: 'send', subject: `[TEST] ${tpl.subject}`, html: tpl.html_content, recipients: [{ email: testEmail, display_name: 'Admin' }] });
-      r.sent ? toast.success('Test email sent') : toast.error('Test failed');
-    } catch (e) { toast.error((e as Error).message); }
+      if (r.sent) {
+        toast.success(`Test email sent to ${testEmail} — check the inbox (and spam folder)`, { id: toastId, duration: 8000 });
+      } else {
+        const detail = r.error ? `${r.error}${r.details ? ` — ${String(r.details).slice(0, 300)}` : ''}` : 'the email provider accepted nothing';
+        toast.error(`Test email failed: ${detail}`, { id: toastId, duration: 12000 });
+        setLog((l) => [...l, `Test to ${testEmail}: FAILED — ${detail}`]);
+      }
+    } catch (e) {
+      toast.error(`Test email failed: ${(e as Error).message}`, { id: toastId, duration: 12000 });
+    } finally { setTestBusy(false); }
   };
 
   const startCampaign = async () => {
@@ -144,9 +156,11 @@ export default function MarketingAdmin() {
     abortRef.current = false;
     setSending(true);
     setLog([]);
+    setLastResult(null);
     let sent = 0, failed = 0;
     const size = Math.max(1, Math.min(100, batchSize));
     setProgress({ sent, failed, total: recipients.length });
+    toast.info(`Campaign started: ${recipients.length} recipients in batches of ${size}`);
     for (let i = 0; i < recipients.length; i += size) {
       if (abortRef.current) break;
       const batch = recipients.slice(i, i + size);
@@ -163,7 +177,14 @@ export default function MarketingAdmin() {
     }
     await db.from('marketing_campaigns').update({ status: abortRef.current ? 'aborted' : 'completed' }).eq('id', camp.id);
     setSending(false);
-    toast.success(`Campaign finished: ${sent} sent, ${failed} failed`);
+    setLastResult({ sent, failed, aborted: abortRef.current });
+    if (abortRef.current) {
+      toast.warning(`Campaign stopped early: ${sent} sent, ${failed} failed`, { duration: 10000 });
+    } else if (failed === 0) {
+      toast.success(`Campaign complete — all ${sent} emails sent`, { duration: 10000 });
+    } else {
+      toast.warning(`Campaign finished: ${sent} sent, ${failed} failed — see the log below for details`, { duration: 10000 });
+    }
     load();
   };
 
@@ -268,7 +289,7 @@ export default function MarketingAdmin() {
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 <div><Label>Test email</Label><Input placeholder="you@example.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} /></div>
-                <Button variant="secondary" onClick={sendTest}>Send test</Button>
+                <Button variant="secondary" onClick={sendTest} disabled={testBusy}>{testBusy ? 'Sending…' : 'Send test'}</Button>
               </div>
               <div className="flex gap-2">
                 <Button onClick={startCampaign} disabled={sending}><Send className="h-4 w-4 mr-1" />Send campaign</Button>
@@ -278,6 +299,15 @@ export default function MarketingAdmin() {
                 <div className="space-y-1">
                   <Progress value={((progress.sent + progress.failed) / Math.max(1, progress.total)) * 100} />
                   <p className="text-sm">{progress.sent} sent · {progress.failed} failed · {progress.total} total</p>
+                </div>
+              )}
+              {lastResult && (
+                <div className={`rounded-md border p-3 text-sm font-medium ${lastResult.failed === 0 && !lastResult.aborted ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400' : 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400'}`}>
+                  {lastResult.aborted
+                    ? `Campaign stopped early — ${lastResult.sent} sent, ${lastResult.failed} failed.`
+                    : lastResult.failed === 0
+                      ? `Campaign complete — all ${lastResult.sent} emails sent successfully.`
+                      : `Campaign finished — ${lastResult.sent} sent, ${lastResult.failed} failed. See the log below.`}
                 </div>
               )}
               {log.length > 0 && <pre className="text-xs bg-muted p-2 rounded max-h-40 overflow-auto whitespace-pre-wrap">{log.join('\n')}</pre>}
