@@ -17,8 +17,24 @@ type Recipient = { email: string; user_id?: string | null; display_name?: string
 
 const db = supabase as any;
 
+async function getAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  let session = data.session;
+  // Refresh if missing or about to expire
+  if (!session || (session.expires_at && session.expires_at * 1000 < Date.now() + 60_000)) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    session = refreshed.session ?? session;
+  }
+  return session?.access_token ?? null;
+}
+
 async function callFn(body: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke('admin-marketing', { body });
+  const token = await getAccessToken();
+  if (!token) throw new Error('You are not signed in. Please sign in again as an admin.');
+  const { data, error } = await supabase.functions.invoke('admin-marketing', {
+    body,
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (error) {
     let details = error.message;
     try { details = await (error as any).context?.text?.() || details; } catch { /* ignore */ }
