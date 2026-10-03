@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
 
 export const PLAY_STORE_URL =
-  'https://play.google.com/store/apps/details?id=com.geologon.cuiz';
+  'https://play.google.com/store/apps/details?id=com.geologon.cuiz&pli=1';
 
 export const isNativeApp = (() => {
   try {

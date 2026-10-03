@@ -9,7 +9,7 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
 const SITE_URL = 'https://cuiz.in';
-const APP_URL = 'https://play.google.com/store/apps/details?id=com.geologon.cuiz';
+const APP_URL = 'https://play.google.com/store/apps/details?id=com.geologon.cuiz&pli=1';
 const FROM = 'CuizIN <noreply@cuiz.in>';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
