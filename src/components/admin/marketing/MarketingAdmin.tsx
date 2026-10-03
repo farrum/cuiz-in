@@ -66,6 +66,8 @@ export default function MarketingAdmin() {
   const [testEmail, setTestEmail] = useState('');
   const [progress, setProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
   const [sending, setSending] = useState(false);
+  const [testBusy, setTestBusy] = useState(false);
+  const [lastResult, setLastResult] = useState<{ sent: number; failed: number; aborted: boolean } | null>(null);
   const abortRef = useRef(false);
   const [log, setLog] = useState<string[]>([]);
 
