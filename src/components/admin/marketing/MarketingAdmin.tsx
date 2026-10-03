@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Sparkles, Save, Trash2, Send, Plus, Mail } from 'lucide-react';
+import { Sparkles, Save, Trash2, Send, Plus, Mail, Image as ImageIcon, Upload } from 'lucide-react';
 
 type Template = { id: string; name: string; subject: string; html_content: string; updated_at: string };
 type Campaign = { id: string; name: string; audience: string | null; total_recipients: number; sent_count: number; failed_count: number; status: string; created_at: string };
@@ -101,14 +101,58 @@ export default function MarketingAdmin() {
     load();
   };
 
-  const generate = async () => {
-    if (!aiPrompt.trim()) return;
+  const canEdit = editing.html_content.trim().length > 0;
+
+  const generate = async (mode: 'generate' | 'edit') => {
+    if (!aiPrompt.trim()) return toast.error(mode === 'edit' ? 'Describe what to change' : 'Describe the email you want');
     setAiBusy(true);
     try {
-      const r = await callFn({ action: 'generate', prompt: aiPrompt });
-      setEditing({ name: r.name || 'AI draft', subject: r.subject || '', html_content: r.html || '' });
-      toast.success('Draft generated — review and save');
+      const r = await callFn(mode === 'edit'
+        ? { action: 'edit', prompt: aiPrompt, name: editing.name, subject: editing.subject, html: editing.html_content }
+        : { action: 'generate', prompt: aiPrompt });
+      setEditing({
+        id: mode === 'edit' ? editing.id : undefined,
+        name: r.name || editing.name || 'AI draft',
+        subject: r.subject || editing.subject,
+        html_content: r.html || editing.html_content,
+      });
+      toast.success(mode === 'edit' ? 'Changes applied — review and click Save template' : 'Draft generated — review and save');
     } catch (e) { toast.error((e as Error).message); } finally { setAiBusy(false); }
+  };
+
+  const [imgPrompt, setImgPrompt] = useState('');
+  const [imgBusy, setImgBusy] = useState(false);
+  const [lastImg, setLastImg] = useState('');
+  const insertImage = (url: string) => {
+    const tag = `<img src="${url}" alt="CuizIN" width="560" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:8px;margin:0 auto 16px" />`;
+    setEditing((ed) => {
+      const h = ed.html_content;
+      const m = /<body[^>]*>/i.exec(h);
+      return { ...ed, html_content: m ? h.replace(m[0], m[0] + tag) : tag + h };
+    });
+    setLastImg(url);
+  };
+  const makeImage = async () => {
+    if (!imgPrompt.trim()) return toast.error('Describe the image');
+    setImgBusy(true);
+    const id = toast.loading('Creating image… this can take up to a minute');
+    try {
+      const r = await callFn({ action: 'image', prompt: imgPrompt });
+      insertImage(r.url);
+      toast.success('Image added to the top of the email — save the template to keep it', { id });
+    } catch (e) { toast.error((e as Error).message, { id }); } finally { setImgBusy(false); }
+  };
+  const uploadImage = async (file?: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error('Image must be under 5 MB');
+    setImgBusy(true);
+    const id = toast.loading('Uploading image…');
+    try {
+      const dataUrl = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.onerror = rej; fr.readAsDataURL(file); });
+      const r = await callFn({ action: 'upload', dataUrl });
+      insertImage(r.url);
+      toast.success('Image added to the top of the email — save the template to keep it', { id });
+    } catch (e) { toast.error((e as Error).message, { id }); } finally { setImgBusy(false); }
   };
 
   const loadAudience = async () => {
@@ -226,9 +270,23 @@ export default function MarketingAdmin() {
               <CardHeader><CardTitle className="text-base">{editing.id ? 'Edit template' : 'New template'}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded border border-primary/30 bg-primary/5 p-3 space-y-2">
-                  <Label className="flex items-center gap-1"><Sparkles className="h-4 w-4" />Generate with AI</Label>
-                  <Textarea rows={2} placeholder="e.g. Remind players inactive for a week to come back for today's daily challenge" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
-                  <Button size="sm" onClick={generate} disabled={aiBusy}>{aiBusy ? 'Generating…' : 'Generate draft'}</Button>
+                  <Label className="flex items-center gap-1"><Sparkles className="h-4 w-4" />AI assistant</Label>
+                  <Textarea rows={2} placeholder={canEdit ? "e.g. Make the tone more exciting, shorten the intro, change the button to 'Play now'" : "e.g. Remind players inactive for a week to come back for today's daily challenge"} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
+                  <div className="flex flex-wrap gap-2">
+                    {canEdit && <Button size="sm" onClick={() => generate('edit')} disabled={aiBusy}>{aiBusy ? 'Working…' : 'Improve this template'}</Button>}
+                    <Button size="sm" variant={canEdit ? 'outline' : 'default'} onClick={() => generate('generate')} disabled={aiBusy}>{aiBusy ? 'Working…' : 'Generate new draft'}</Button>
+                  </div>
+                </div>
+                <div className="rounded border p-3 space-y-2">
+                  <Label className="flex items-center gap-1"><ImageIcon className="h-4 w-4" />Images</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Input className="flex-1 min-w-[200px]" placeholder="e.g. A knight raising a golden trophy in a castle hall" value={imgPrompt} onChange={(e) => setImgPrompt(e.target.value)} />
+                    <Button size="sm" variant="secondary" onClick={makeImage} disabled={imgBusy}>{imgBusy ? 'Working…' : 'Create with AI'}</Button>
+                    <Button size="sm" variant="outline" asChild disabled={imgBusy}>
+                      <label className="cursor-pointer"><Upload className="h-4 w-4 mr-1" />Upload<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={(e) => { uploadImage(e.target.files?.[0]); e.target.value = ''; }} /></label>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Images are stored on CuizIN and inserted at the top of the email with a permanent link, so they show up in recipients' inboxes.{lastImg && <> Last image: <a className="underline" href={lastImg} target="_blank" rel="noreferrer">open</a></>}</p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div><Label>Name</Label><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
