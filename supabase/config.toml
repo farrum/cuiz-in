@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.search-console]
 verify_jwt = false
+
+[functions.admin-marketing]
+verify_jwt = false
