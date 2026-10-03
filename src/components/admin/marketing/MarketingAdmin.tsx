@@ -156,9 +156,11 @@ export default function MarketingAdmin() {
     abortRef.current = false;
     setSending(true);
     setLog([]);
+    setLastResult(null);
     let sent = 0, failed = 0;
     const size = Math.max(1, Math.min(100, batchSize));
     setProgress({ sent, failed, total: recipients.length });
+    toast.info(`Campaign started: ${recipients.length} recipients in batches of ${size}`);
     for (let i = 0; i < recipients.length; i += size) {
       if (abortRef.current) break;
       const batch = recipients.slice(i, i + size);
