@@ -177,7 +177,14 @@ export default function MarketingAdmin() {
     }
     await db.from('marketing_campaigns').update({ status: abortRef.current ? 'aborted' : 'completed' }).eq('id', camp.id);
     setSending(false);
-    toast.success(`Campaign finished: ${sent} sent, ${failed} failed`);
+    setLastResult({ sent, failed, aborted: abortRef.current });
+    if (abortRef.current) {
+      toast.warning(`Campaign stopped early: ${sent} sent, ${failed} failed`, { duration: 10000 });
+    } else if (failed === 0) {
+      toast.success(`Campaign complete — all ${sent} emails sent`, { duration: 10000 });
+    } else {
+      toast.warning(`Campaign finished: ${sent} sent, ${failed} failed — see the log below for details`, { duration: 10000 });
+    }
     load();
   };
 
