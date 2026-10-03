@@ -131,31 +131,41 @@ Deno.serve(async (req) => {
       return json({ sent: emails.length, failed: skipped });
     }
 
-    if (action === 'generate') {
+    if (action === 'generate' || action === 'edit') {
       const key = Deno.env.get('LOVABLE_API_KEY');
-      if (!key) return json({ error: 'AI is not configured' }, 500);
+      if (!key) return json({ error: 'AI is not configured (LOVABLE_API_KEY missing)' }, 500);
       const prompt = String(body.prompt ?? '').slice(0, 2000);
       if (!prompt) return json({ error: 'prompt is required' }, 400);
-      const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: `You write marketing emails for CuizIN (cuiz.in), a medieval-themed, purely points-based trivia quiz platform with a web site and an Android app. Never mention money, cash or prizes of monetary value. Return ONLY JSON: {"name": short template name, "subject": subject line, "html": email HTML}. HTML must use inline styles only, max-width 560px, dark parchment theme (background #1a1410, text #f5e6c8, gold #c9a227/#e8c35a, Georgia serif), one clear CTA button. You may use merge tags {{display_name}}, {{points}}, {{web_url}}, {{app_download_url}}. Do not add an unsubscribe footer.` },
-            { role: 'user', content: prompt },
-          ],
-          response_format: { type: 'json_object' },
-        }),
-      });
-      if (!resp.ok) {
-        const t = await resp.text();
-        const msg = resp.status === 429 ? 'AI rate limit reached, try again shortly' : resp.status === 402 ? 'AI credits exhausted' : 'AI request failed';
-        return json({ error: msg, details: t }, resp.status);
+      let userMsg = prompt;
+      if (action === 'edit') {
+        const curHtml = String(body.html ?? '').slice(0, 60000);
+        if (!curHtml) return json({ error: 'There is no template content to edit' }, 400);
+        userMsg = `Here is an existing email template. Apply ONLY the requested changes and keep everything else (structure, styling, merge tags, image URLs) intact.\n\nREQUESTED CHANGES:\n${prompt}\n\nCURRENT NAME: ${String(body.name ?? '')}\nCURRENT SUBJECT: ${String(body.subject ?? '')}\nCURRENT HTML:\n${curHtml}`;
       }
-      const data = await resp.json();
-      let content = String(data?.choices?.[0]?.message?.content ?? '').trim().replace(/^```(json)?/i, '').replace(/```$/, '');
-      try { return json(JSON.parse(content)); } catch { return json({ error: 'AI returned invalid output', raw: content }, 500); }
+      const r = await aiText(key, SYSTEM_PROMPT, userMsg);
+      if ('error' in r) return json(r, 200);
+      const content = r.text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+      try { return json(JSON.parse(content)); } catch { return json({ error: 'AI returned invalid output, please try again' }, 200); }
+    }
+
+    if (action === 'image') {
+      const key = Deno.env.get('LOVABLE_API_KEY');
+      if (!key) return json({ error: 'AI is not configured (LOVABLE_API_KEY missing)' }, 500);
+      const prompt = String(body.prompt ?? '').slice(0, 1500);
+      if (!prompt) return json({ error: 'Describe the image you want' }, 400);
+      const r = await aiImage(key, `${prompt}. Style: rich medieval fantasy illustration, warm gold and parchment tones, suitable as a wide email banner. No text or lettering in the image.`);
+      if ('error' in r) return json(r, 200);
+      const bytes = Uint8Array.from(atob(r.b64), (c) => c.charCodeAt(0));
+      return json({ url: await storeImage(admin, supabaseUrl, bytes, 'image/png', 'png') });
+    }
+
+    if (action === 'upload') {
+      const m = /^data:(image\/(png|jpeg|jpg|gif|webp));base64,(.+)$/.exec(String(body.dataUrl ?? ''));
+      if (!m) return json({ error: 'Please choose a PNG, JPG, GIF or WebP image' }, 400);
+      const bytes = Uint8Array.from(atob(m[3]), (c) => c.charCodeAt(0));
+      if (bytes.length > 5 * 1024 * 1024) return json({ error: 'Image must be under 5 MB' }, 400);
+      const ext = m[2] === 'jpeg' ? 'jpg' : m[2];
+      return json({ url: await storeImage(admin, supabaseUrl, bytes, m[1], ext) });
     }
 
     return json({ error: 'Unknown action' }, 400);
