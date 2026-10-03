@@ -14,6 +14,8 @@ import AdminReferralsTracker from '@/components/admin/AdminReferralsTracker';
 import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
 import AdminReports from '@/components/admin/AdminReports';
 import FunMessagesAdmin from '@/components/admin/FunMessagesAdmin';
+import MarketingAdmin from '@/components/admin/marketing/MarketingAdmin';
+import { Mail as MailIcon } from 'lucide-react';
 import NewsTickerAdmin from '@/components/admin/NewsTickerAdmin';
 import { QuizManagement } from '@/components/admin/quiz-management';
 import { RealtimeStatus } from '@/components/admin/RealtimeStatus';
@@ -94,6 +96,7 @@ const AdminPage: React.FC = () => {
     }
     else if (path.includes('/badges')) tab = 'badges';
     else if (path.includes('/reports')) tab = 'reports';
+    else if (path.includes('/marketing')) tab = 'marketing';
     else if (path.includes('/messages')) tab = 'messages';
     else if (path.includes('/ticker')) tab = 'ticker';
     else if (path.includes('/icons')) tab = 'icons';
@@ -208,6 +211,7 @@ const AdminPage: React.FC = () => {
       items: [
         { value: 'requests', label: 'Support Requests', icon: AlertCircle },
         { value: 'ticker', label: 'News Tickers', icon: Volume2 },
+        { value: 'marketing', label: 'Email Marketing', icon: MailIcon },
         { value: 'messages', label: 'Fun Feedback Msg', icon: MessageSquare },
         { value: 'seo', label: 'SEO & Sitemap', icon: Search },
         { value: 'search-console', label: 'Search Console', icon: BarChart },
@@ -411,6 +415,9 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="reports" className="mt-0 outline-none">
               <AdminReports />
+            </TabsContent>
+            <TabsContent value="marketing" className="mt-0 outline-none">
+              <MarketingAdmin />
             </TabsContent>
             <TabsContent value="messages" className="mt-0 outline-none">
               <FunMessagesAdmin />
