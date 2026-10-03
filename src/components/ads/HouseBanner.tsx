@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 const PLAY_STORE_URL =
-  'https://play.google.com/store/apps/details?id=com.geologon.cuiz';
+  'https://play.google.com/store/apps/details?id=com.geologon.cuiz&pli=1';
 
 interface HouseBannerProps {
   /** 'banner' = wide strip, 'box' = 300x250-ish sidebar/interstitial block. */
