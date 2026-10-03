@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       console.error('admin-marketing: missing Authorization header');
       return json({ error: 'Not signed in. Please sign in again as an admin.' }, 401);
     }
-    const token = authHeader.slice(7).trim();
+    const token = authHeader.replace(/^bearer\s+/i, '').trim();
     const { data: userData, error: userErr } = await admin.auth.getUser(token);
     const user = userData?.user;
     if (!user) {
