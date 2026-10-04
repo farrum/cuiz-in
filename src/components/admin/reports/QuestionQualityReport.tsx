@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { PaginatedDataTable } from "@/components/ui/paginated-data-table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
@@ -348,10 +348,11 @@ export const QuestionQualityReport: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable
+          <PaginatedDataTable
             columns={columns}
             data={filteredQuestions}
             isLoading={loading}
+            pageSize={25}
           />
         </CardContent>
       </Card>
