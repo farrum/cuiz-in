@@ -188,3 +188,76 @@ async function bump(admin: any, id: string, sent: number, failed: number) {
   if (!data) return;
   await admin.from('marketing_campaigns').update({ sent_count: data.sent_count + sent, failed_count: data.failed_count + failed }).eq('id', id);
 }
+
+const SYSTEM_PROMPT = `You write marketing emails for CuizIN (cuiz.in), a medieval-themed, purely points-based trivia quiz platform with a web site and an Android app. Never mention money, cash or prizes of monetary value. Return ONLY a JSON object: {"name": short template name, "subject": subject line, "html": email HTML}. HTML must use inline styles only, max-width 560px, dark parchment theme (background #1a1410, text #f5e6c8, gold #c9a227/#e8c35a, Georgia serif), one clear CTA button. Images must use absolute https URLs only (keep any existing ones unchanged); never invent image URLs. You may use merge tags {{display_name}}, {{points}}, {{web_url}}, {{app_download_url}}. Do not add an unsubscribe footer.`;
+
+const GATEWAY = 'https://ai.gateway.lovable.dev/v1';
+
+function gatewayError(status: number, t: string) {
+  let msg = 'AI request failed';
+  try { const j = JSON.parse(t); msg = j?.error?.message || j?.message || msg; } catch { /* ignore */ }
+  if (status === 429) msg = 'AI is busy right now, please try again in a minute';
+  if (status === 402) msg = 'AI credits are used up. Add credits in Settings → Plans & credits';
+  console.error(`AI gateway ${status}: ${t.slice(0, 500)}`);
+  return { error: msg, status };
+}
+
+async function* sse(resp: Response) {
+  const reader = resp.body!.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!line.startsWith('data:')) continue;
+      const d = line.slice(5).trim();
+      if (!d || d === '[DONE]') continue;
+      try { yield JSON.parse(d); } catch { /* partial */ }
+    }
+  }
+}
+
+async function aiText(key: string, system: string, user: string): Promise<{ text: string } | { error: string; status?: number }> {
+  const resp = await fetch(`${GATEWAY}/responses`, {
+    method: 'POST',
+    headers: { 'Lovable-API-Key': key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Lovable-AIG-SDK': 'fetch' },
+    body: JSON.stringify({ model: 'openai/gpt-6-astra', instructions: system, input: [{ role: 'user', content: user }], reasoning: { effort: 'low' }, store: false, stream: true }),
+  });
+  if (!resp.ok) return gatewayError(resp.status, await resp.text());
+  let text = '';
+  for await (const ev of sse(resp)) {
+    if (ev.type === 'response.output_text.delta') text += ev.delta ?? '';
+    else if (ev.type === 'response.failed' || ev.type === 'error') return { error: ev?.response?.error?.message || ev?.message || 'AI request failed' };
+  }
+  if (!text.trim()) return { error: 'AI returned no content' };
+  return { text };
+}
+
+async function aiImage(key: string, prompt: string): Promise<{ b64: string } | { error: string; status?: number }> {
+  const resp = await fetch(`${GATEWAY}/images/generations`, {
+    method: 'POST',
+    headers: { 'Lovable-API-Key': key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'X-Lovable-AIG-SDK': 'fetch' },
+    body: JSON.stringify({ model: 'openai/gpt-image-2.5-sunburst', prompt, size: '1536x1024', stream: true, partial_images: 1 }),
+  });
+  if (!resp.ok) return gatewayError(resp.status, await resp.text());
+  let b64 = '';
+  for await (const ev of sse(resp)) {
+    if (ev.type === 'error' || ev.error) return { error: ev?.error?.message || ev?.message || 'Image generation failed' };
+    if (ev.b64_json) b64 = ev.b64_json;
+    else if (ev?.data?.[0]?.b64_json) b64 = ev.data[0].b64_json;
+  }
+  if (!b64) return { error: 'No image was returned' };
+  return { b64 };
+}
+
+async function storeImage(admin: any, supabaseUrl: string, bytes: Uint8Array, contentType: string, ext: string) {
+  const name = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await admin.storage.from('email-assets').upload(name, bytes, { contentType, upsert: false });
+  if (error) throw new Error(`Could not store image: ${error.message}`);
+  return `${supabaseUrl}/functions/v1/admin-marketing?img=${name}`;
+}
