@@ -1,4 +1,5 @@
 
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, User, Award, Gift, LogIn, LogOut, Settings, Target, Sparkles, PartyPopper, Brain, BarChartIcon } from 'lucide-react';
@@ -13,8 +14,7 @@ const MobileNav: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem(STORAGE_KEYS.USER_NAME));
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'admin');
   const [isTeamLeader, setIsTeamLeader] = useState(
-    localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'team_leader' || 
-    localStorage.getItem(STORAGE_KEYS.USER_ROLE) === 'teamleader'
+    isLeadershipRole(localStorage.getItem(STORAGE_KEYS.USER_ROLE))
   );
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -29,7 +29,7 @@ const MobileNav: React.FC = () => {
       const role = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
       setIsAuthenticated(!!userName && !!userId);
       setIsAdmin(role === 'admin');
-      setIsTeamLeader(role === 'team_leader' || role === 'teamleader');
+      setIsTeamLeader(isLeadershipRole(role));
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {

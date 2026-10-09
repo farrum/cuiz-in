@@ -1,4 +1,5 @@
 
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import { useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '@/utils/quizData';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,11 +15,7 @@ interface AuthState {
 }
 
 const getHighestRole = (roles?: { role: string | null }[] | null): string => {
-  const roleSet = new Set((roles || []).map((item) => item.role).filter(Boolean));
-  if (roleSet.has('admin')) return 'admin';
-  if (roleSet.has('team_leader') || roleSet.has('teamleader')) return 'team_leader';
-  if (roleSet.has('junior_team_leader')) return 'junior_team_leader';
-  return 'player';
+  return resolveHighestRole((roles || []).map((item) => item.role));
 };
 
 export const useAuthCheck = () => {
@@ -55,7 +52,7 @@ export const useAuthCheck = () => {
         const profile = profileResult.data;
         const isSuspended = profile?.suspended || false;
         const userRole = getHighestRole(roleResult.data);
-        const isTeamLeader = userRole === 'team_leader' || userRole === 'junior_team_leader';
+        const isTeamLeader = isLeadershipRole(userRole);
         const isAdmin = userRole === 'admin';
         
         // Cache in localStorage for display purposes

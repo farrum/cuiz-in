@@ -1,4 +1,5 @@
 
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import React, { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { STORAGE_KEYS } from '../utils/quizData';
@@ -103,7 +104,7 @@ const ReferralSection: React.FC = () => {
       setUserName(userName);
     }
     
-    if (userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader') {
+    if (isLeadershipRole(userRole)) {
       setIsTeamLeader(true);
       console.log('User is a team leader based on role:', userRole);
     }
@@ -113,7 +114,7 @@ const ReferralSection: React.FC = () => {
       const parsedReferrals = JSON.parse(savedReferrals);
       setReferrals(parsedReferrals);
       
-      if (userRole !== 'team_leader' && userRole !== 'teamleader' && userRole !== 'junior_team_leader') {
+      if (!isLeadershipRole(userRole)) {
         const activeReferrals = parsedReferrals.filter((r: any) => r.status === 'active').length;
         const shouldBeTeamLeader = activeReferrals >= 10;
         
@@ -129,7 +130,7 @@ const ReferralSection: React.FC = () => {
     
     const handleRoleUpdate = () => {
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-      setIsTeamLeader(userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader');
+      setIsTeamLeader(isLeadershipRole(userRole));
       console.log('Role update received in ReferralSection, new role:', userRole);
     };
     
@@ -147,7 +148,7 @@ const ReferralSection: React.FC = () => {
     
     try {
       const userRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
-      if (userRole === 'team_leader' || userRole === 'teamleader' || userRole === 'junior_team_leader') {
+      if (isLeadershipRole(userRole)) {
         setIsTeamLeader(true);
         fetchTeamMembers(userId);
         calculateEarnings(userId);
@@ -164,7 +165,7 @@ const ReferralSection: React.FC = () => {
         console.error('Error checking team leader role:', error);
       } else if (data) {
         const role = data.role;
-        const isTeamLeaderRole = role === 'team_leader' || role === 'teamleader' || role === 'junior_team_leader';
+        const isTeamLeaderRole = isLeadershipRole(role);
         
         if (isTeamLeaderRole) {
           setIsTeamLeader(true);
