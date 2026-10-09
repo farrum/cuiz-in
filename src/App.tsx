@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useParams } from 'react-router-dom';
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { HelmetProvider } from 'react-helmet-async';
@@ -148,7 +149,7 @@ async function hydrateUserFromSession(userId: string) {
     }
 
     const roles = new Set((roleResult.data || []).map((item) => item.role).filter(Boolean));
-    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') || roles.has('teamleader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
+    const role = resolveHighestRole(roles as Set<string>);
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
 
     if (role === 'admin') {

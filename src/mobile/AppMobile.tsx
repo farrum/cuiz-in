@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
@@ -61,7 +62,7 @@ async function hydrateMobileSession(userId: string) {
       localStorage.setItem(STORAGE_KEYS.USER_GEMS, String(pd.gems ?? 0));
     }
     const roles = new Set((roleResult.data || []).map((r) => r.role).filter(Boolean));
-    const role = roles.has('admin') ? 'admin' : roles.has('team_leader') ? 'team_leader' : roles.has('junior_team_leader') ? 'junior_team_leader' : 'player';
+    const role = resolveHighestRole(roles as Set<string>);
     localStorage.setItem(STORAGE_KEYS.USER_ROLE, role);
 
     // Sync advisor shards & shop purchases across devices

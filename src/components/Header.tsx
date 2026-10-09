@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isLeadershipRole, resolveHighestRole } from '@/utils/leadershipRoles';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Award, User, Home, Target, Shield, LogIn, BarChartIcon, 
@@ -60,7 +61,7 @@ const Header: React.FC = () => {
       setUserName(name);
       setUserRole(role);
       setIsAdmin(role === 'admin');
-      setIsTeamLeader(role === 'team_leader' || role === 'teamleader');
+      setIsTeamLeader(isLeadershipRole(role));
       
       if (!userLoggedIn) {
         setTodayGems(0);
