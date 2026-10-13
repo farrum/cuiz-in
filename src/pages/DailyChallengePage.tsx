@@ -1,5 +1,5 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import DailyChallenges from '@/components/challenges/DailyChallenges';
@@ -9,14 +9,11 @@ import SimpleAdBanner from '@/components/ads/SimpleAdBanner';
 const DailyChallengePage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Helmet>
-        <title>Daily Challenge | CuizIN</title>
-        <meta
-          name="description"
-          content="Take on today's CuizIN daily challenge, keep your streak alive and earn extra points and gems."
-        />
-        <link rel="canonical" href="https://cuiz.in/daily" />
-      </Helmet>
+      <SEO
+        title="Daily Challenge | CuizIN"
+        description="Take on today's CuizIN daily challenge: fresh trivia questions every day. Keep your streak alive, climb the leaderboard and collect bonus points and gems."
+        canonicalUrl="https://cuiz.in/daily"
+      />
 
       <Header />
 
