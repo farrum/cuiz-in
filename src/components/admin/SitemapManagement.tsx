@@ -27,7 +27,7 @@ const SitemapManagement = () => {
               <p>• <code>/sitemap.xml</code> → Sitemap Index</p>
                 <p>• <code>/sitemaps/main.xml</code> → Static + Blog + FAQ + Answers</p>
                 <p>• <code>/sitemaps/category/history/sitemap.xml</code> → History questions</p>
-                <p>• ...8 category sitemaps total (path-based, Netlify-compatible)</p>
+                <p>• Every child sitemap is discovered from the live index, including nested indexes.</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -35,7 +35,7 @@ const SitemapManagement = () => {
               <div className="space-y-1">
                 <Badge variant="outline" className="w-fit"><CheckCircle className="w-3 h-3 mr-1" />IndexNow on new questions</Badge>
                 <Badge variant="outline" className="w-fit"><CheckCircle className="w-3 h-3 mr-1" />5-min edge function cache</Badge>
-                <Badge variant="outline" className="w-fit"><CheckCircle className="w-3 h-3 mr-1" />All content auto-included</Badge>
+                <Badge variant="outline" className="w-fit"><CheckCircle className="w-3 h-3 mr-1" />Database question coverage checked</Badge>
               </div>
             </div>
           </div>
