@@ -5,7 +5,7 @@ const Module = require('node:module');
 const ts = require('typescript');
 const compiled = ts.transpileModule(fs.readFileSync(`${__dirname}/sitemapAudit.ts`, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } });
 const loaded = new Module(`${__dirname}/sitemapAudit.ts`);
-loaded._compile(compiled.outputText, loaded.filename);
+loaded._compile(compiled.outputText, `${__dirname}/sitemapAudit.ts`);
 const { sitemapRequestUrl, summarizeSitemapUrls } = loaded.exports;
 const edge = 'https://example.supabase.co/functions/v1/sitemap-static';
 

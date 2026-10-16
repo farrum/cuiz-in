@@ -1,6 +1,6 @@
 # Current work
 
-- [ ] Make the admin sitemap counter and validator discover all sitemaps and compare unique question coverage with the full database
+- [x] Make the admin sitemap counter and validator discover all sitemaps and compare unique question coverage with the full database
 
 - [x] Unify native banner ownership and route spacers
 - [x] Correct measured banner placement and 20-second refresh
