@@ -1,165 +1,69 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle, Globe, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { auditAllSitemaps, type SitemapAuditResult } from '@/utils/adminSitemapAudit';
+import SitemapAuditSummary from './SitemapAuditSummary';
 
-const EDGE_BASE = 'https://pgywvtphfidouakypdno.supabase.co/functions/v1/sitemap-static';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneXd2dHBoZmlkb3Vha3lwZG5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwMjcwOTQsImV4cCI6MjA1NzYwMzA5NH0.YazHsLiGkw-Uo-TYYAObWVzlf0HcZBDQjI5pP-F7Eco';
-
-interface ValidationResult {
-  name: string;
-  param: string;
-  urlCount: number;
-  status: 'success' | 'error' | 'warning';
-  message: string;
-  sampleUrls?: string[];
-  responseTime?: number;
-}
-
-const ENDGEMS = [
-  { name: 'Index', param: '?type=index' },
-  { name: 'Main (Static+Blog+FAQ)', param: '?type=main' },
-  { name: 'History', param: '?type=category&category=history' },
-  { name: 'Science', param: '?type=category&category=science' },
-  { name: 'Geography', param: '?type=category&category=geography' },
-  { name: 'Literature', param: '?type=category&category=literature' },
-  { name: 'Entertainment', param: '?type=category&category=entertainment' },
-  { name: 'Sports', param: '?type=category&category=sports' },
-  { name: 'Technology', param: '?type=category&category=technology' },
-  { name: 'General Knowledge', param: '?type=category&category=general-knowledge' },
-  { name: 'Guinness World Records', param: '?type=category&category=guinness-world-records' },
-];
-
-const SitemapValidator: React.FC = () => {
+const SitemapValidator = () => {
   const [isValidating, setIsValidating] = useState(false);
-  const [results, setResults] = useState<ValidationResult[]>([]);
-  const [progress, setProgress] = useState(0);
-  const [currentName, setCurrentName] = useState('');
-
-  const validate = async (ep: typeof ENDGEMS[0]): Promise<ValidationResult> => {
-    const start = Date.now();
-    try {
-      const sep = ep.param.includes('?') ? '&' : '?';
-      const res = await fetch(`${EDGE_BASE}${ep.param}${sep}_=${Date.now()}`, {
-        headers: { 'Accept': 'application/xml', 'apikey': ANON_KEY },
-        cache: 'no-store',
-      });
-      const responseTime = Date.now() - start;
-      if (!res.ok) return { ...ep, urlCount: 0, status: 'error', message: `HTTP ${res.status}`, responseTime };
-      
-      const xml = await res.text();
-      const isIndex = xml.includes('<sitemapindex');
-      
-      if (isIndex) {
-        const count = (xml.match(/<sitemap>/g) || []).length;
-        return { ...ep, urlCount: count, status: 'success', message: `Index with ${count} children`, responseTime };
-      }
-      
-      const count = (xml.match(/<url>/g) || []).length;
-      const locs = xml.match(/<loc>([^<]+)<\/loc>/g);
-      const sampleUrls = locs?.slice(0, 3).map(m => m.replace(/<\/?loc>/g, '')) || [];
-      
-      if (count === 0) return { ...ep, urlCount: 0, status: 'warning', message: 'Empty sitemap', responseTime, sampleUrls };
-      return { ...ep, urlCount: count, status: 'success', message: `${count.toLocaleString()} URLs`, responseTime, sampleUrls };
-    } catch (err) {
-      return { ...ep, urlCount: 0, status: 'error', message: err instanceof Error ? err.message : 'Unknown error', responseTime: Date.now() - start };
-    }
-  };
+  const [result, setResult] = useState<SitemapAuditResult | null>(null);
+  const [progress, setProgress] = useState({ done: 0, total: 1 });
+  const [error, setError] = useState('');
 
   const runValidation = async () => {
     setIsValidating(true);
-    setResults([]);
-    setProgress(0);
-    const all: ValidationResult[] = [];
-    
-    for (let i = 0; i < ENDGEMS.length; i++) {
-      setCurrentName(ENDGEMS[i].name);
-      setProgress(((i + 1) / ENDGEMS.length) * 100);
-      const r = await validate(ENDGEMS[i]);
-      all.push(r);
-      setResults([...all]);
-      await new Promise(res => setTimeout(res, 200));
-    }
-    
-    setIsValidating(false);
-    setCurrentName('');
-    const errors = all.filter(r => r.status === 'error').length;
-    const total = all.filter(r => r.status === 'success' && !r.message.includes('Index')).reduce((s, r) => s + r.urlCount, 0);
-    if (errors === 0) toast.success(`All valid! ${total.toLocaleString()} total URLs`);
-    else toast.error(`${errors} endgems failed`);
+    setResult(null);
+    setError('');
+    setProgress({ done: 0, total: 1 });
+    try {
+      const audit = await auditAllSitemaps((done, total) => setProgress({ done, total }));
+      setResult(audit);
+      const hasWarnings = audit.rows.some(row => row.status !== 'success') || audit.databaseError || audit.summary.missingCount || audit.summary.questionCount > (audit.databaseCount ?? 0);
+      if (hasWarnings) toast.warning('Validation complete with coverage warnings');
+      else toast.success(`All sitemaps valid: ${audit.summary.questionCount.toLocaleString()} questions covered`);
+    } catch (failure) {
+      const message = failure instanceof Error ? failure.message : 'Sitemap validation failed';
+      setError(message);
+      toast.error(message);
+    } finally { setIsValidating(false); }
   };
 
-  const totalUrls = results.filter(r => r.status === 'success' && !r.message.includes('Index')).reduce((s, r) => s + r.urlCount, 0);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" />Sitemap Validator</CardTitle>
-        <CardDescription>Validates all sitemap endgems directly via edge function</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button onClick={runValidation} disabled={isValidating} className="flex items-center gap-2">
-          {isValidating ? <><Loader2 className="w-4 h-4 animate-spin" />Validating {currentName}...</> : <><RefreshCw className="w-4 h-4" />Validate All Endgems</>}
-        </Button>
-        
-        {isValidating && (
-          <div className="space-y-2">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground">{currentName} ({Math.round(progress)}%)</p>
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <>
-            <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{totalUrls.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total URLs</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-500">{results.filter(r => r.status === 'success').length}</p>
-                <p className="text-xs text-muted-foreground">Valid</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-500">{results.filter(r => r.status === 'error').length}</p>
-                <p className="text-xs text-muted-foreground">Errors</p>
+  return <Card>
+    <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" />Sitemap Validator</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      <Button onClick={runValidation} disabled={isValidating} className="gap-2">
+        {isValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+        {isValidating ? 'Validating…' : 'Validate All Sitemaps'}
+      </Button>
+      {isValidating && <div className="space-y-2">
+        <Progress value={progress.done / progress.total * 100} className="h-2" />
+        <p role="status" className="text-sm text-muted-foreground">{progress.done} / {progress.total} discovered sitemaps checked</p>
+      </div>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {result && <>
+        <SitemapAuditSummary result={result} />
+        <div className="divide-y rounded-lg border">
+          {result.rows.map(row => <div key={row.publicUrl} className="flex flex-wrap items-start justify-between gap-3 p-3">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              {row.status === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0 text-secondary" /> : row.status === 'error' ? <XCircle className="h-4 w-4 shrink-0 text-destructive" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-primary" />}
+              <div className="min-w-0">
+                <a href={row.requestUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium capitalize text-primary hover:underline">{row.name}</a>
+                <p className="text-xs text-muted-foreground">{row.message}</p>
+                {!row.isIndex && row.urls.slice(0, 3).map(url => <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block max-w-sm truncate text-xs text-primary hover:underline">{url}</a>)}
               </div>
             </div>
-
-            <div className="divide-y border rounded-lg">
-              {results.map((r, i) => (
-                <div key={i} className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {r.status === 'success' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> :
-                     r.status === 'error' ? <XCircle className="w-4 h-4 text-red-500" /> :
-                     <AlertTriangle className="w-4 h-4 text-yellow-500" />}
-                    <div>
-                      <p className="font-medium text-sm">{r.name}</p>
-                      <p className="text-xs text-muted-foreground">{r.message}</p>
-                      {r.sampleUrls?.map((url, j) => (
-                        <a key={j} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline block truncate max-w-[300px]">{url}</a>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {r.responseTime && <span className="text-xs text-muted-foreground">{r.responseTime}ms</span>}
-                    <Badge variant={r.status === 'error' ? 'destructive' : 'outline'}
-                      className={r.status === 'success' ? 'bg-green-500/10 text-green-600 border-green-500/30' :
-                                 r.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' : ''}>
-                      {r.urlCount.toLocaleString()} {r.message.includes('Index') ? 'children' : 'URLs'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">{row.responseTime}ms</span>
+              <Badge variant={row.status === 'error' ? 'destructive' : 'outline'}>{row.urls.length.toLocaleString()} {row.isIndex ? 'children' : 'URLs'}</Badge>
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
+          </div>)}
+        </div>
+      </>}
+    </CardContent>
+  </Card>;
 };
-
 export default SitemapValidator;
