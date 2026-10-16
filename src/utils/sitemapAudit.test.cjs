@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const Module = require('node:module');
 const ts = require('typescript');
-const compiled = ts.transpileModule(fs.readFileSync(`${__dirname}/sitemapAudit.ts`, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } });
+const compiled = ts.transpileModule(fs.readFileSync(`${__dirname}/sitemapAudit.ts`, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } });
 const loaded = new Module(`${__dirname}/sitemapAudit.ts`);
 loaded._compile(compiled.outputText, `${__dirname}/sitemapAudit.ts`);
 const { sitemapRequestUrl, summarizeSitemapUrls } = loaded.exports;
