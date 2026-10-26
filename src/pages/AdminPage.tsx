@@ -15,6 +15,7 @@ import AdminBadgeManagement from '@/components/admin/AdminBadgeManagement';
 import AdminReports from '@/components/admin/AdminReports';
 import FunMessagesAdmin from '@/components/admin/FunMessagesAdmin';
 import MarketingAdmin from '@/components/admin/marketing/MarketingAdmin';
+import PushAdmin from '@/components/admin/marketing/PushAdmin';
 import { Mail as MailIcon } from 'lucide-react';
 import NewsTickerAdmin from '@/components/admin/NewsTickerAdmin';
 import { QuizManagement } from '@/components/admin/quiz-management';
@@ -418,6 +419,7 @@ const AdminPage: React.FC = () => {
             </TabsContent>
             <TabsContent value="marketing" className="mt-0 outline-none">
               <MarketingAdmin />
+              <PushAdmin />
             </TabsContent>
             <TabsContent value="messages" className="mt-0 outline-none">
               <FunMessagesAdmin />

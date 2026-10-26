@@ -136,6 +136,7 @@ async function hydrateUserFromSession(userId: string) {
   try {
     // Stamp this session's platform (android / ios / web) for admin visibility
     import('@/utils/sessionPlatform').then(m => m.reportSessionPlatform(userId)).catch(() => {});
+    import('@/utils/pushNotifications').then(m => m.enablePush(false)).catch(() => {});
     const [profileResult, roleResult] = await Promise.all([
       (supabase as any).from('profiles').select('username, gems:points, stars').eq('id', userId).maybeSingle(),
       (supabase as any).from('user_roles').select('role').eq('user_id', userId),

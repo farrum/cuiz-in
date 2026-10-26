@@ -166,6 +166,17 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
             <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 px-1 mb-3">
               <span>Showing {filteredList.length} alert{filteredList.length !== 1 ? 's' : ''}</span>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={async () => {
+                    const m = await import('@/utils/pushNotifications');
+                    const r = await m.enablePush(true);
+                    const { toast } = await import('sonner');
+                    (r === 'registered' ? toast.success : toast)(m.PUSH_MESSAGES[r]);
+                  }}
+                  className="hover:text-amber-400 transition-colors"
+                >
+                  🔔 Turn on alerts
+                </button>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
