@@ -13,3 +13,7 @@
 
 - [x] Advisor shard lifelines usable in quiz, quests and daily challenge; shards persist until spent
 - [x] Replace all web Adsterra placements with the native banner unit
+- [x] Push notifications: device registration (web + Android), admin Push panel with Infantry / inactive / all segments
+- [ ] Add FIREBASE_SERVICE_ACCOUNT secret (Firebase service account JSON) — waiting on user
+- [ ] Add android/app/google-services.json and rebuild APK for Android push — waiting on user
+- [ ] Automated daily streak / Infantry reminders (schedule) — after manual sends are confirmed working
