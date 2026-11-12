@@ -1851,6 +1851,7 @@ export type Database = {
       }
       check_admin_access: { Args: never; Returns: boolean }
       claim_referral: { Args: { p_ref_code: string }; Returns: Json }
+      cleanup_old_ad_views: { Args: never; Returns: number }
       consume_advisor_shards: {
         Args: { p_amount?: number; p_character_id: string }
         Returns: Json
