@@ -273,7 +273,7 @@ export const EntityPage: React.FC<EntityPageProps> = ({ entityType }) => {
                   <div className="grid gap-3">
                     {questions.map(q => {
                       const targetUrl = createQuestionUrl(q.id, q.question, q.category);
-                      const ans = q.correct_answer || (Array.isArray(q.options) ? q.options[0] : '');
+                      const ans = q.correct_answer || '';
 
                       return (
                         <div 
@@ -288,11 +288,15 @@ export const EntityPage: React.FC<EntityPageProps> = ({ entityType }) => {
                               {q.question}
                             </Link>
                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Ans: {ans}
-                              </span>
-                              <span>&bull;</span>
+                              {ans && (
+                                <>
+                                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Ans: {ans}
+                                  </span>
+                                  <span>&bull;</span>
+                                </>
+                              )}
                               <span className="capitalize">{q.difficulty || 'medium'}</span>
                             </div>
                           </div>

@@ -534,7 +534,7 @@ async function buildQuestionPage(supabase: any, id: string): Promise<{html: stri
 
   const safePrerenderAns = (q.correct_answer && String(q.correct_answer).trim())
     ? String(q.correct_answer).trim()
-    : (Array.isArray(q.options) && q.options[0] ? String(q.options[0]) : 'Verified Answer');
+    : '';
 
   const schema = [
     {

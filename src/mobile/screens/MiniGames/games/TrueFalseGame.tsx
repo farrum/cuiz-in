@@ -31,7 +31,7 @@ function decodeHtmlEntities(str: string): string {
 }
 
 function buildCard(q: QuizQuestion): Card {
-  const correct = q.correctAnswer || q.options?.[0] || '';
+  const correct = q.correctAnswer || '';
   const wrongOptions = (q.options || []).filter((o) => o && o !== correct);
   // 50/50 true vs false; fall back to true if no wrong option exists
   const makeTrue = wrongOptions.length === 0 ? true : Math.random() < 0.5;
@@ -335,7 +335,7 @@ export function TrueFalseGame({ onRoundComplete }: { onRoundComplete?: () => voi
                 <div className="px-6 mt-3 text-center">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Correct Answer</span>
                   <p className="font-black text-sm text-slate-800 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-                    "{decodeHtmlEntities(card.q.correctAnswer || card.q.options?.[0] || '')}"
+                    "{decodeHtmlEntities(card.q.correctAnswer || '')}"
                   </p>
                 </div>
               )}

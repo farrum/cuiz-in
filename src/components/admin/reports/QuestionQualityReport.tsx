@@ -90,7 +90,7 @@ export const QuestionQualityReport: React.FC = () => {
           question: q.question,
           category: q.category || 'General',
           difficulty: q.difficulty || 'medium',
-          correct_answer: q.correct_answer || (Array.isArray(q.options) ? q.options[0] : ''),
+          correct_answer: q.correct_answer || '',
           explanation: q.explanation || '',
           has_source: hasSource,
           report_count: repCount,

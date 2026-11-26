@@ -335,7 +335,7 @@ export const QuestionQualityDeduplicationPanel: React.FC<QuestionQualityDeduplic
                         <div className="text-[10px] font-mono text-muted-foreground">ID: {pair.q1.id}</div>
                         <p className="text-xs sm:text-sm font-semibold text-foreground">{pair.q1.question}</p>
                         <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          Ans: {pair.q1.correct_answer || (Array.isArray(pair.q1.options) ? pair.q1.options[0] : '')}
+                          Ans: {pair.q1.correct_answer || '—'}
                         </div>
                         {pair.q1.explanation && (
                           <p className="text-[11px] text-muted-foreground italic line-clamp-2">
@@ -364,7 +364,7 @@ export const QuestionQualityDeduplicationPanel: React.FC<QuestionQualityDeduplic
                         <div className="text-[10px] font-mono text-muted-foreground">ID: {pair.q2.id}</div>
                         <p className="text-xs sm:text-sm font-semibold text-foreground">{pair.q2.question}</p>
                         <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          Ans: {pair.q2.correct_answer || (Array.isArray(pair.q2.options) ? pair.q2.options[0] : '')}
+                          Ans: {pair.q2.correct_answer || '—'}
                         </div>
                         {pair.q2.explanation && (
                           <p className="text-[11px] text-muted-foreground italic line-clamp-2">
@@ -420,7 +420,7 @@ export const QuestionQualityDeduplicationPanel: React.FC<QuestionQualityDeduplic
                       </div>
                       <p className="text-xs sm:text-sm font-semibold text-foreground">{q.question}</p>
                       <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                        Ans: {q.correct_answer || (Array.isArray(q.options) ? q.options[0] : '')}
+                        Ans: {q.correct_answer || '—'}
                       </div>
                     </div>
 

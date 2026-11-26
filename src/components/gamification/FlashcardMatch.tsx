@@ -43,7 +43,7 @@ export const FlashcardMatch: React.FC<FlashcardMatchProps> = ({
     let generatedCards: CardType[] = [];
     
     gameQuestions.forEach(q => {
-      const correctOption = q.correctAnswer || q.options[0];
+      const correctOption = q.correctAnswer;
       if (!correctOption) return;
 
       generatedCards.push({

@@ -336,7 +336,7 @@ const QuizQuestionPage: React.FC = () => {
         'text': question.question,
         'acceptedAnswer': {
           '@type': 'Answer',
-          'text': (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer'),
+          'text': (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : '',
           'url': `${questionUrl}#answer`,
           'author': {
             '@type': 'Organization',
@@ -355,7 +355,7 @@ const QuizQuestionPage: React.FC = () => {
   // Generate FAQPage schema for FAQ-style rich results in Google Search
   const generateFAQPageSchema = () => {
     if (!question) return null;
-    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer');
+    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : '';
     
     return {
       '@context': 'https://schema.org',
@@ -386,7 +386,7 @@ const QuizQuestionPage: React.FC = () => {
       : `https://cuiz.in/quiz/question/${question.id}/${categorySlug}/${canonicalSlug}`;
     const datePublishedStr = question.createdAt ? new Date(question.createdAt).toISOString() : '2024-01-01T00:00:00Z';
     const dateModifiedStr = factReviewMeta.isoModifiedDate;
-    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : (Array.isArray(question.options) && question.options[0] ? String(question.options[0]) : 'Verified Answer');
+    const safeAns = (question.correctAnswer && String(question.correctAnswer).trim()) ? String(question.correctAnswer).trim() : '';
     
     return {
       '@context': 'https://schema.org',

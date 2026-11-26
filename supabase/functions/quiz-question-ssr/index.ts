@@ -178,7 +178,7 @@ serve(async (req) => {
     
     const safeAns = (q.correct_answer && String(q.correct_answer).trim())
       ? String(q.correct_answer).trim()
-      : (options[0] ? String(options[0]) : 'Verified Answer');
+      : '';
 
     const qaPageSchema = {
       "@context": "https://schema.org",
