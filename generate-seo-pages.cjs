@@ -376,6 +376,7 @@ const CATEGORIES = [
 
 // --- Static content / utility pages (unique titles + descriptions) ---
 // --- Static content / utility pages (unique titles + descriptions + crawler text) ---
+const { buildGkQuizBody, buildGkQuizJsonLd } = require('./gk-quiz-content.cjs');
 const STATIC_PAGES = {
   '/': {
     title: 'CuizIN - Play Quiz | Free Online Quiz Game',
@@ -466,13 +467,10 @@ const STATIC_PAGES = {
     `
   },
   '/gk-quiz': {
-    title: 'GK Quiz: 200+ General Knowledge Questions (India & World) | CuizIN',
-    description: 'Play India\'s favorite GK quiz online. Practice general knowledge questions covering current affairs, history, geography, science, and Indian polity.',
-    bodyHtml: `
-      <h1>GK Quiz — General Knowledge Questions & Answers</h1>
-      <p>Practice daily with bite-sized GK quizzes that mirror competitive exam formats like SSC, UPSC, and banking. Learn explanations while earning points.</p>
-      <p><a href="/categories/general-knowledge"><strong>Start Playing GK Quiz &rarr;</strong></a></p>
-    `
+    title: 'GK Quiz: 30 General Knowledge Questions with Answers | CuizIN',
+    description: 'Free GK quiz with 30 general knowledge questions, answers and explanations on Indian polity, history, geography, science and sports. Practice for SSC & UPSC.',
+    bodyHtml: buildGkQuizBody(),
+    jsonLd: buildGkQuizJsonLd()
   },
   '/gk-questions': {
     title: '1000+ GK Questions with Answers for Competitive Exams | CuizIN',
