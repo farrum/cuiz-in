@@ -10,7 +10,9 @@ export const trackAdImpression = async (
 ): Promise<void> => {
   try {
     const sessionId = localStorage.getItem('ad_tracking_session_id') || null;
-    const userId = localStorage.getItem('quiz_app_user_id') || localStorage.getItem('cuizin_user_id') || localStorage.getItem('user_id') || null;
+    // Must match the signed-in session (or be null for guests) to satisfy access rules
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id ?? null;
     const pageUrl = window.location.href;
     const deviceInfo = navigator.userAgent;
     
@@ -46,7 +48,9 @@ export const trackAdClick = async (
 ): Promise<void> => {
   try {
     const sessionId = localStorage.getItem('ad_tracking_session_id') || null;
-    const userId = localStorage.getItem('quiz_app_user_id') || localStorage.getItem('cuizin_user_id') || localStorage.getItem('user_id') || null;
+    // Must match the signed-in session (or be null for guests) to satisfy access rules
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id ?? null;
     const pageUrl = window.location.href;
     const deviceInfo = navigator.userAgent;
     
