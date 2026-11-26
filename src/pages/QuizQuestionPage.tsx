@@ -96,6 +96,8 @@ const QuizQuestionPage: React.FC = () => {
 
       if (!questionId || !isUuid(questionId)) {
         setIsLoading(false);
+        // Broken addresses like /quiz/question/undefined/ go to the public categories page.
+        navigate('/categories', { replace: true });
         return;
       }
       
@@ -263,8 +265,13 @@ const QuizQuestionPage: React.FC = () => {
     setLoadingNext(true);
     try {
       let next = await getRandomQuestion();
-      if (next.id === questionId) {
+      if (next.id === questionId || !isUuid(String(next.id || ''))) {
         next = await getRandomQuestion();
+      }
+      // Never build a link from a question without a real ID (avoids /quiz/question/undefined/).
+      if (!next?.id || !isUuid(String(next.id)) || !next.question) {
+        navigate('/categories');
+        return;
       }
       navigate(createQuestionUrl(next.id, next.question, next.category));
     } catch (e) {

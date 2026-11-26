@@ -154,7 +154,8 @@ export const getRandomQuestion = async (filter?: QuestionFilter): Promise<QuizQu
     sampled = await fetchRandomQuestionPage();
   }
   // Last resort: the small cached pool already in localStorage.
-  let questions = sampled.length > 0 ? sampled : getQuestionsFromLocalStorage();
+  let questions = (sampled.length > 0 ? sampled : getQuestionsFromLocalStorage())
+    .filter(q => q && typeof q.id === 'string' && q.id && q.id !== 'undefined' && !!q.question);
 
   // Apply user-selected category / difficulty / questionType preferences when provided
   if (filter && (filter.category || filter.difficulty || filter.questionType)) {

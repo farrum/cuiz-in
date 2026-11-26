@@ -21,6 +21,12 @@
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+// Only ever show the stored correct answer; never guess from option order.
+function getVerifiedAnswer(q) {
+  const v = (q && (q.correct_answer ?? q.correctAnswer));
+  return v != null && String(v).trim() ? String(v).trim() : '';
+}
+
 
 const DIST = path.join(__dirname, 'dist');
 const TEMPLATE = path.join(DIST, 'index.html');
@@ -729,7 +735,7 @@ async function run() {
       while (hasMore) {
         const { data, error } = await supabase
           .from('quiz_questions')
-          .select('id, question, options, category, difficulty, explanation, created_at')
+          .select('id, question, options, correct_answer, category, difficulty, explanation, created_at')
           .order('id')
           .range(from, from + batchSize - 1);
 
@@ -906,11 +912,11 @@ async function run() {
           const urlPath = subSlug
             ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}`
             : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
-          const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+          const ans = getVerifiedAnswer(q);
           return `
             <li style="margin-bottom: 12px; padding: 12px 14px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; list-style: none;">
               <div style="font-weight: 600; margin-bottom: 4px;"><a href="${urlPath}">${esc(q.question)}</a></div>
-              <div style="font-size: 13px; color: #0f172a;"><strong>Verified Answer:</strong> ${esc(ans)}</div>
+              ${ans ? `<div style="font-size: 13px; color: #0f172a;"><strong>Verified Answer:</strong> ${esc(ans)}</div>` : ''}
               ${q.explanation ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">${esc(q.explanation)}</div>` : ''}
             </li>
           `;
@@ -951,10 +957,7 @@ async function run() {
           "itemListElement": matchedQuestions.slice(0, 20).map((q, idx) => {
             const qSlug = createSlug(q.question);
             const catSlug = getCategorySlug(q.category);
-            const ans = (q.correct_answer && String(q.correct_answer).trim())
-              || (q.correctAnswer && String(q.correctAnswer).trim())
-              || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
-              || 'Verified Answer';
+            const ans = getVerifiedAnswer(q);
             return {
               "@type": "ListItem",
               "position": idx + 1,
@@ -1381,11 +1384,11 @@ async function run() {
       const catSlug = getCategorySlug(q.category);
       const subSlug = getQuestionSubcategorySlug(q.category, q.question);
       const qUrl = subSlug ? `/quiz/question/${q.id}/${catSlug}/${subSlug}/${qSlug}` : `/quiz/question/${q.id}/${catSlug}/${qSlug}`;
-      const ans = q.correct_answer || q.correctAnswer || (Array.isArray(q.options) ? q.options[0] : '');
+      const ans = getVerifiedAnswer(q);
       return `
         <li style="margin-bottom:12px;background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #e2e8f0;">
           <a href="${qUrl}" style="font-weight:600;font-size:14px;color:#2563eb;text-decoration:none;">${esc(q.question)}</a>
-          <div style="font-size:12px;color:#475569;margin-top:4px;">Ans: <strong>${esc(ans)}</strong> &bull; <span style="text-transform:capitalize;">${esc(q.difficulty || 'medium')}</span></div>
+          <div style="font-size:12px;color:#475569;margin-top:4px;">${ans ? `Ans: <strong>${esc(ans)}</strong> &bull; ` : ''}<span style="text-transform:capitalize;">${esc(q.difficulty || 'medium')}</span></div>
         </li>
       `;
     }).join('');
@@ -1851,11 +1854,7 @@ function getKnowledgeClaimId(questionId) {
         .map(opt => `<li>${esc(opt)}</li>`)
         .join('\n');
 
-      const correctAnswer = (q.correct_answer && String(q.correct_answer).trim())
-        || (q.correctAnswer && String(q.correctAnswer).trim())
-        || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
-        || (q.options && typeof q.options === 'object' ? String(Object.values(q.options)[0]).trim() : '')
-        || 'Verified Answer';
+      const correctAnswer = getVerifiedAnswer(q);
       const authorities = getAuthorities(q.category);
       const dynamic = isDynamicFact(q.question, q.category);
       const badgeLabel = dynamic ? `⏱️ Verified for ${new Date().getFullYear()}` : '✓ Fact-Verified';
@@ -1894,14 +1893,11 @@ function getKnowledgeClaimId(questionId) {
               const rCatSlug = getCategorySlug(rq.category);
               const rSubSlug = getQuestionSubcategorySlug(rq.category, rq.question);
               const rUrl = rSubSlug ? `/quiz/question/${rq.id}/${rCatSlug}/${rSubSlug}/${rqSlug}` : `/quiz/question/${rq.id}/${rCatSlug}/${rqSlug}`;
-              const rAns = (rq.correct_answer && String(rq.correct_answer).trim())
-                || (rq.correctAnswer && String(rq.correctAnswer).trim())
-                || (Array.isArray(rq.options) && rq.options[0] ? String(rq.options[0]).trim() : '')
-                || 'Verified Answer';
+              const rAns = getVerifiedAnswer(rq);
               return `
                 <div style="padding:10px 12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
                   <a href="${rUrl}" style="font-weight:600;font-size:13px;color:#2563eb;text-decoration:none;display:block;margin-bottom:4px;">${esc(rq.question)}</a>
-                  <div style="font-size:11px;color:#64748b;">Ans: <strong>${esc(rAns)}</strong> &bull; <span style="text-transform:capitalize;">${esc(rq.difficulty || 'medium')}</span></div>
+                  <div style="font-size:11px;color:#64748b;">${rAns ? `Ans: <strong>${esc(rAns)}</strong> &bull; ` : ''}<span style="text-transform:capitalize;">${esc(rq.difficulty || 'medium')}</span></div>
                 </div>
               `;
             }).join('')}
@@ -1942,10 +1938,10 @@ function getKnowledgeClaimId(questionId) {
           
           ${entityBadgeHtml}
 
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;padding:14px 16px;border-radius:8px;margin:16px 0;">
+          ${correctAnswer ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;padding:14px 16px;border-radius:8px;margin:16px 0;">
             <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Verified Answer</div>
             <div style="font-size:18px;font-weight:700;color:#0f172a;">${esc(correctAnswer)}</div>
-          </div>
+          </div>` : ''}
 
           <h2>Quiz Options</h2>
           <ul>
@@ -2089,10 +2085,7 @@ function getKnowledgeClaimId(questionId) {
       question: q.question,
       category: q.category,
       difficulty: q.difficulty || 'medium',
-      correctAnswer: (q.correct_answer && String(q.correct_answer).trim())
-        || (q.correctAnswer && String(q.correctAnswer).trim())
-        || (Array.isArray(q.options) && q.options[0] ? String(q.options[0]).trim() : '')
-        || 'Verified Answer',
+      correctAnswer: getVerifiedAnswer(q),
       canonicalUrl: `${SITE_URL}/quiz/question/${q.id}/${getCategorySlug(q.category)}/${createSlug(q.question)}`
     }))
   };

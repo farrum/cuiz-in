@@ -33,6 +33,8 @@ export const createQuestionUrl = (
   question: string,
   category?: string
 ): string => {
+  // Guard: a missing ID would produce /quiz/question/undefined/ links.
+  if (!id || id === 'undefined' || id === 'null') return '/categories';
   const slug = createSlug(question, 80);
 
   if (category) {
